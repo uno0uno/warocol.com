@@ -75,10 +75,11 @@
     </div>
 
     <!-- Fila 3: controles de cantidad + acciones -->
-    <div class="mt-2.5 pl-[2.125rem] flex items-center gap-2">
+    <div v-if="!hideLineControls" class="mt-2.5 pl-[2.125rem] flex items-center gap-2">
       <!-- Cantidad -->
       <div class="flex items-center border border-violet-200 rounded-lg bg-white">
         <button
+          type="button"
           class="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:bg-violet-50 rounded-l-lg disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="item.quantity <= 1"
           aria-label="Reducir cantidad"
@@ -90,6 +91,8 @@
         </button>
         <span class="w-6 text-center text-xs font-medium text-text-primary">{{ item.quantity }}</span>
         <button
+          v-if="!lockIncrement"
+          type="button"
           class="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:bg-violet-50 rounded-r-lg"
           aria-label="Aumentar cantidad"
           @click.stop="$emit('increment')"
@@ -104,6 +107,8 @@
 
       <!-- Duplicar -->
       <button
+        v-if="!hideEditDuplicate"
+        type="button"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         aria-label="Duplicar ítem"
         @click.stop="$emit('duplicate')"
@@ -115,7 +120,8 @@
 
       <!-- Editar (oculto para reventa y venta libre) -->
       <button
-        v-if="!item.is_resale && !item.is_open_sale"
+        v-if="!hideEditDuplicate && !item.is_resale && !item.is_open_sale"
+        type="button"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         aria-label="Editar ítem"
         @click.stop="$emit('edit')"
@@ -127,6 +133,7 @@
 
       <!-- Eliminar -->
       <button
+        type="button"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-red-50 border border-red-300 text-red-500 hover:bg-red-100 theme-transition"
         aria-label="Eliminar ítem"
         @click.stop="$emit('remove')"
@@ -170,6 +177,12 @@ interface Props {
   promoSavings?: number
   /** When set, overrides computed gross (e.g. mesa tab subtotal). */
   grossTotal?: number | null
+  /** Tab lines: hide edit/duplicate (modifiers locked once on the tab). */
+  hideEditDuplicate?: boolean
+  /** Fired to kitchen: block qty + (edit/duplicate via hideEditDuplicate). */
+  lockIncrement?: boolean
+  /** Hide entire action row (e.g. delivered/cancelled). */
+  hideLineControls?: boolean
 }
 
 interface Emits {
@@ -184,6 +197,9 @@ const props = withDefaults(defineProps<Props>(), {
   showFulfillmentStatus: false,
   promoSavings: 0,
   grossTotal: null,
+  hideEditDuplicate: false,
+  lockIncrement: false,
+  hideLineControls: false,
 })
 defineEmits<Emits>()
 

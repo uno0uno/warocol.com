@@ -112,8 +112,10 @@
           :promo-title="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null"
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
+          :hide-edit-duplicate="true"
+          :lock-increment="isTabLineFired(item)"
+          :hide-line-controls="isTabLineTerminal(item)"
           :class="[
-            pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
             showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
           ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
@@ -531,5 +533,20 @@ const formatCurrency = (value: number) => {
     currency: 'COP',
     minimumFractionDigits: 0
   }).format(value)
+}
+
+function tabLineStatus(item: TabItem): string {
+  return item.fulfillmentStatus ?? 'new'
+}
+
+/** Line already fired to kitchen — qty+ locked; qty−/delete use confirm modal (#956). */
+function isTabLineFired(item: TabItem): boolean {
+  return props.comandasEnabled && tabLineStatus(item) !== 'new'
+}
+
+/** Terminal fulfillment — no cart mutations. */
+function isTabLineTerminal(item: TabItem): boolean {
+  const status = tabLineStatus(item)
+  return status === 'delivered' || status === 'cancelled'
 }
 </script>

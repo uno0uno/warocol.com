@@ -7,7 +7,7 @@ import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { useOpenSale } from '~/composables/useOpenSale'
 import { registerTableSessionRefresh } from '~/composables/useTableSessionSync'
-import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import type { ComandaPrintPayload, FireTableResponse } from '~/composables/useComandaPrint'
 import {
   mapComandasForPrint,
   orderItemIdsFromComandas,
@@ -415,11 +415,25 @@ function applyFireResult(rawComandas: unknown[], firedCount: number) {
           ? firedIds.has(item.orderItemId)
           : item.fulfillmentStatus === 'new'
         return shouldMarkSent
-          ? { ...item, fulfillmentStatus: 'sent' as const, sentAt: new Date().toISOString() }
+          ? { ...item, fulfillmentStatus: 'sent' as const, sentAt: item.sentAt ?? new Date().toISOString() }
           : item
       }),
     )
     selectedTabItemIds.value = []
+  }
+}
+
+async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
+  await refreshTableSession()
+  if (!comandasEnabled.value || addedCount <= 0) return
+  const { comandas, fired_items_count } = parseFireTableResponse(addRes as FireTableResponse)
+  applyFireResult(comandas, fired_items_count)
+  if (fired_items_count > 0) {
+    tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+    setTimeout(() => { tabSuccess.value = null }, 3000)
+  } else {
+    tabError.value = 'Ítems agregados a la mesa pero no se enviaron a cocina. Verifica que el producto tenga estación de cocina.'
+    setTimeout(() => { tabError.value = null }, 6000)
   }
 }
 
@@ -455,8 +469,8 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
       quantity: Number(m.quantity) || 1,
     })),
     notes: i.notes ?? null,
-    fulfillmentStatus: i.fulfillmentStatus ?? 'new',
-    sentAt: i.sentAt ?? null,
+    fulfillmentStatus: i.fulfillmentStatus ?? i.fulfillment_status ?? 'new',
+    sentAt: i.sentAt ?? i.sent_at ?? null,
   }))
 
 const applyTableSessionFromApi = (
@@ -828,6 +842,7 @@ const updateTabItemQuantity = async (orderItemId: string, quantity: number, reas
 }
 
 const incrementTabItem = (orderItemId: string) => {
+  if (comandasEnabled.value && isTabItemFired(orderItemId)) return
   const item = storeTabItems.value.find(t => t.orderItemId === orderItemId)
   if (item) updateTabItemQuantity(orderItemId, item.quantity + 1)
 }
@@ -874,19 +889,7 @@ const addToTab = async () => {
     })
     // Clear cart — items committed to tab
     await posStore.clearCart()
-    // tab/add already auto-fires when comandas enabled; use its payload for print (#753)
-    if (comandasEnabled.value) {
-      const { comandas, fired_items_count } = parseFireTableResponse(addRes as any)
-      if (comandas.length > 0 || fired_items_count > 0) {
-        applyFireResult(comandas, fired_items_count)
-        if (fired_items_count > 0) {
-          tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
-          setTimeout(() => { tabSuccess.value = null }, 3000)
-        }
-      }
-    }
-    // Refresh session + tab items
-    await refreshTableSession()
+    await syncTabAfterAdd(addRes, items.length)
   } catch (e: any) {
     tabError.value = e?.data?.detail ?? `Error al agregar a la ${tableSingularLower.value}`
   } finally {
@@ -1178,16 +1181,10 @@ const addOpenSaleToTab = async (amount: number, description?: string) => {
       body: { items: [tabItem] },
     })
     if (comandasEnabled.value) {
-      const { comandas, fired_items_count } = parseFireTableResponse(addRes as any)
-      if (comandas.length > 0 || fired_items_count > 0) {
-        applyFireResult(comandas, fired_items_count)
-        if (fired_items_count > 0) {
-          tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
-          setTimeout(() => { tabSuccess.value = null }, 3000)
-        }
-      }
+      await syncTabAfterAdd(addRes, 1)
+    } else {
+      await refreshTableSession()
     }
-    await refreshTableSession()
   } catch (e: any) {
     tabError.value = e?.data?.detail ?? e?.data?.message ?? `Error al agregar a la ${tableSingularLower.value}`
     throw e
