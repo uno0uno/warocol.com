@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
+import type { TabItem } from '~/stores/usePOSStore'
 import type { CartModifier } from '~/stores/online_cart'
 import {
   mapApiModifierToSaleOption,
@@ -173,7 +175,14 @@ const editCartIndex = computed(() => {
   return editParam !== undefined ? parseInt(editParam as string) : null
 })
 
+const editTabItemId = computed(() => {
+  const tabItemParam = route.query.tabItem
+  return typeof tabItemParam === 'string' && tabItemParam ? tabItemParam : null
+})
+
 const isEditMode = computed(() => editCartIndex.value !== null)
+const isTabItemEditMode = computed(() => editTabItemId.value !== null)
+const isLineEditMode = computed(() => isEditMode.value || isTabItemEditMode.value)
 
 // Type definitions
 interface ModifierOption extends SaleModifierOption {
@@ -584,7 +593,48 @@ const addToCart = async () => {
       category: product.value.category,
     }
 
-    if (isEditMode.value && editCartIndex.value !== null) {
+    if (isTabItemEditMode.value && editTabItemId.value) {
+      const tableId = posStore.activeTableSession?.tableId
+      if (!tableId) {
+        router.push('/pos')
+        return
+      }
+      const res = await $fetch<{ success: boolean; data: { subtotal: number; notes: string | null; modifiers: TabItem['modifiers'] } }>(
+        `/api/tables/${tableId}/tab/items/${editTabItemId.value}/content`,
+        {
+          method: 'PATCH',
+          body: {
+            modifiers: selectedModifiers.value.map(m => ({
+              id: m.id,
+              name: m.name,
+              price: m.price,
+              quantity: m.quantity ?? 1,
+            })),
+            notes: notes.value || null,
+          },
+        },
+      )
+      const patch = res?.data
+      if (patch) {
+        posStore.setTabItems(
+          posStore.tabItems.map((item) =>
+            item.orderItemId === editTabItemId.value
+              ? {
+                  ...item,
+                  subtotal: patch.subtotal,
+                  notes: patch.notes,
+                  modifiers: (patch.modifiers ?? []).map(m => ({
+                    id: m.id ?? '',
+                    name: m.name,
+                    price: Number(m.price) || 0,
+                    quantity: Number(m.quantity) || 1,
+                  })),
+                }
+              : item,
+          ),
+        )
+      }
+    } else if (isEditMode.value && editCartIndex.value !== null) {
       await posStore.updateCartItem(editCartIndex.value, {
         product: productPayload,
         modifiers: [...selectedModifiers.value],
@@ -636,17 +686,30 @@ watch(cachedProduct, (p) => {
   }
 }, { immediate: true })
 
-// Load cart item data if in edit mode
+// Load cart or tab item data in edit mode
 watch(product, (newProduct) => {
-  if (newProduct && isEditMode.value && editCartIndex.value !== null) {
+  if (!newProduct) return
+  if (isEditMode.value && editCartIndex.value !== null) {
     const cartItem = posStore.getCartItem(editCartIndex.value)
     if (cartItem) {
-      // Don't load quantity - always work with quantity 1
       selectedModifiers.value = cartItem.modifiers.map(m => ({
         ...m,
         quantity: m.quantity ?? 1,
       }))
       notes.value = cartItem.notes || ''
+    }
+    return
+  }
+  if (isTabItemEditMode.value && editTabItemId.value) {
+    const tabItem = posStore.tabItems.find(i => i.orderItemId === editTabItemId.value)
+    if (tabItem) {
+      selectedModifiers.value = (tabItem.modifiers ?? []).map(m => ({
+        id: m.id,
+        name: m.name,
+        price: m.price,
+        quantity: m.quantity ?? 1,
+      }))
+      notes.value = tabItem.notes || ''
     }
   }
 }, { immediate: true })
@@ -726,7 +789,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Quantity + per-unit wizard (online cart parity #1023) -->
-        <section v-if="!isEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
+        <section v-if="!isLineEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
           <div v-if="wizardMode" class="flex items-center justify-between">
             <h3 class="text-base md:text-lg font-bold text-text-primary">
               Ítem {{ wizardStep + 1 }} de {{ quantity }}
@@ -956,7 +1019,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Add to Cart Button -->
-          <template v-if="wizardMode && !isEditMode">
+          <template v-if="wizardMode && !isLineEditMode">
             <div class="flex gap-2">
               <button
                 type="button"
@@ -999,7 +1062,7 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-              {{ isEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
+              {{ isLineEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
             </template>
           </button>
         </div>
@@ -1048,7 +1111,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Add to Cart Button -->
-        <template v-if="wizardMode && !isEditMode">
+        <template v-if="wizardMode && !isLineEditMode">
           <div class="flex gap-2">
             <button
               type="button"
@@ -1091,7 +1154,7 @@ onUnmounted(() => {
           </template>
           <template v-else>
             <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-            {{ isEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
+            {{ isLineEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
           </template>
         </button>
       </div>

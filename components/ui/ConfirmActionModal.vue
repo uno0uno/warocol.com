@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50"
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50"
         role="alertdialog"
         aria-modal="true"
         :aria-labelledby="titleId"
