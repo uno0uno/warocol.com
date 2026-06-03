@@ -1161,6 +1161,31 @@ const editCartItem = (cartIndex: number, productId: string) => {
   router.push(`/pos/producto/${productId}?edit=${cartIndex}`)
 }
 
+const tabEditBlockedOpen = ref(false)
+const tabEditBlockedMessage = ref('')
+
+const editTabItem = async (orderItemId: string, productId: string) => {
+  if (!posStore.activeTableSession || !tableSessionBackendReady.value) return
+  const tableId = posStore.activeTableSession.tableId
+  try {
+    await $fetch(
+      `/api/tables/${tableId}/tab/items/${orderItemId}/edit-eligibility?record_attempt=true`,
+    )
+    sessionStorage.setItem('posNavigation', 'true')
+    router.push(`/pos/producto/${productId}?tabItem=${orderItemId}`)
+  } catch (e: any) {
+    const status = e?.statusCode ?? e?.response?.status
+    const detail = e?.data?.detail ?? e?.data?.message
+    const message = typeof detail === 'string' ? detail : null
+    if (status === 409) {
+      tabEditBlockedMessage.value = message ?? 'La cocina ya aceptó este ítem. No se pueden cambiar modificadores ni notas.'
+      tabEditBlockedOpen.value = true
+      return
+    }
+    tabError.value = message ?? 'No se pudo verificar si el ítem es editable'
+  }
+}
+
 const handleOpenSaleClick = () => {
   if (!openSaleEnabled.value) {
     toast.warning(openSaleDisabledReason.value ?? 'Venta libre no disponible', { title: 'Venta libre' })
@@ -1804,6 +1829,7 @@ onUnmounted(() => {
         :served-by-member-id="posStore.cartServedByMemberId"
         :members="tenantMembers"
         @edit-item="editCartItem"
+        @edit-tab-item="editTabItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
         @decrement-item="decrementCartItem"
@@ -1835,6 +1861,12 @@ onUnmounted(() => {
     :error="destructiveError"
     @confirm="confirmDestructiveFlow"
     @cancel="cancelDestructiveFlow"
+  />
+
+  <UiErrorAlertModal
+    v-model="tabEditBlockedOpen"
+    title="No se puede editar"
+    :message="tabEditBlockedMessage"
   />
 
   <PosOpenSaleModal
@@ -1927,6 +1959,7 @@ onUnmounted(() => {
       :served-by-member-id="posStore.cartServedByMemberId"
       :members="tenantMembers"
       @edit-item="editCartItem"
+      @edit-tab-item="editTabItem"
       @remove-item="removeFromCart"
       @increment-item="incrementCartItem"
       @decrement-item="decrementCartItem"

@@ -112,9 +112,10 @@
           :promo-title="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null"
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
-          :hide-edit-duplicate="true"
+          :hide-duplicate="true"
           :lock-increment="isTabLineFired(item)"
           :hide-line-controls="isTabLineTerminal(item)"
+          @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"
           :class="[
             showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
           ]"
@@ -444,6 +445,7 @@ interface Emits {
   (e: 'clear-cart'): void
   (e: 'add-to-tab'): void
   (e: 'request-bill'): void
+  (e: 'edit-tab-item', orderItemId: string, productId: string): void
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void

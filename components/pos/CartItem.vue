@@ -107,7 +107,7 @@
 
       <!-- Duplicar -->
       <button
-        v-if="!hideEditDuplicate"
+        v-if="!hideDuplicate"
         type="button"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         aria-label="Duplicar ítem"
@@ -120,7 +120,7 @@
 
       <!-- Editar (oculto para reventa y venta libre) -->
       <button
-        v-if="!hideEditDuplicate && !item.is_resale && !item.is_open_sale"
+        v-if="!hideEdit && !item.is_resale && !item.is_open_sale"
         type="button"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         aria-label="Editar ítem"
@@ -178,6 +178,9 @@ interface Props {
   /** When set, overrides computed gross (e.g. mesa tab subtotal). */
   grossTotal?: number | null
   /** Tab lines: hide edit/duplicate (modifiers locked once on the tab). */
+  hideEdit?: boolean
+  hideDuplicate?: boolean
+  /** @deprecated use hideEdit / hideDuplicate */
   hideEditDuplicate?: boolean
   /** Fired to kitchen: block qty + (edit/duplicate via hideEditDuplicate). */
   lockIncrement?: boolean
@@ -197,11 +200,16 @@ const props = withDefaults(defineProps<Props>(), {
   showFulfillmentStatus: false,
   promoSavings: 0,
   grossTotal: null,
+  hideEdit: false,
+  hideDuplicate: false,
   hideEditDuplicate: false,
   lockIncrement: false,
   hideLineControls: false,
 })
 defineEmits<Emits>()
+
+const hideEdit = computed(() => props.hideEdit || props.hideEditDuplicate)
+const hideDuplicate = computed(() => props.hideDuplicate || props.hideEditDuplicate)
 
 const itemTotal = computed(() => {
   const basePrice = Number(props.item.product.price) || 0
