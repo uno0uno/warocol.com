@@ -138,8 +138,10 @@
 
   <!-- Bottom Navigation - Mobile Only -->
   <div
-    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg"
+    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg transition-opacity"
+    :class="posMobileCartSheetOpen ? 'pointer-events-none opacity-0' : ''"
     style="padding-bottom: env(safe-area-inset-bottom, 0px)"
+    :aria-hidden="posMobileCartSheetOpen"
   >
     <PosCartBottomBar
       v-if="showPosMobileCartBar"
@@ -1186,7 +1188,7 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 }, { immediate: true })
 
 // Inject cart data from POS page
-const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart } = usePosMobileCart()
+const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart, sheetOpen: posMobileCartSheetOpen } = usePosMobileCart()
 
 const showPosMobileCartBar = computed(() =>
   route.path === '/pos' && posMobileCartItemCount.value > 0,

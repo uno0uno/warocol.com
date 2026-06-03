@@ -1116,11 +1116,15 @@ const mobileCartItemCount = computed(() =>
 const mobileCartDisplayTotal = computed(() => mobileCartNetTotal.value)
 const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
 
-const { setMobileCart, setOpenCartHandler, clearMobileCart } = usePosMobileCart()
+const { setMobileCart, setOpenCartHandler, setMobileCartSheetOpen, clearMobileCart } = usePosMobileCart()
 
 watchEffect(() => {
   setMobileCart(mobileCartItemCount.value, mobileCartFormattedTotal.value)
 })
+
+watch(showMobileCartSheet, (open) => {
+  setMobileCartSheetOpen(open)
+}, { immediate: true })
 
 // Navigate to product customization page or add directly to cart
 const selectProduct = async (product: any) => {
@@ -1898,9 +1902,9 @@ onUnmounted(() => {
   />
 
   <!-- warocol.com#1032 — mobile/tablet cart sheet (bar lives in dashboard layout) -->
-  <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl">
+  <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl" fill-content>
     <PosCartPanel
-      class="border-0 shadow-none rounded-none max-h-[70vh]"
+      class="border-0 shadow-none rounded-none h-full min-h-0"
       :items="posStore.cart"
       :total="cartTotal"
       :mesa-mode="isKitchenServiceMode"
