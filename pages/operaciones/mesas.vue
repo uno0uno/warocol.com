@@ -63,6 +63,15 @@ const statusOptions = [
   { value: 'bill_requested', label: 'Pidiendo cuenta' },
 ]
 
+const hasActiveTableFilters = computed(() =>
+  !!(searchTerm.value || statusFilter.value)
+)
+
+const clearTableFilters = () => {
+  searchTerm.value = ''
+  statusFilter.value = ''
+}
+
 // Active tables: is_active true, not bar
 const activeTables = computed(() => {
   let result = tables.value.filter((t: any) => !t.is_bar && t.is_active)
@@ -413,15 +422,22 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       </div>
 
       <!-- Filters -->
-      <SharedFiltersBar
+      <UiAdvancedFiltersBar
         v-model:search="searchTerm"
-        v-model:status-filter="statusFilter"
-        :status-options="statusOptions"
         :search-placeholder="`Buscar ${singularLower}...`"
-        status-label="Estado"
-        status-placeholder="Todos los estados"
-        show-status-filter
-      />
+        :show-date-range="false"
+        :show-clear="hasActiveTableFilters"
+        @clear="clearTableFilters"
+      >
+        <template #additional-filters>
+          <UiFilterSelect
+            v-model="statusFilter"
+            placeholder="Todos los estados"
+            :options="statusOptions"
+            aria-label="Estado"
+          />
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- ══════ ACTIVE TABLES ══════ -->
       <HealthSemaphore :is-unlocked="true" :title="`${plural} configuradas`">
