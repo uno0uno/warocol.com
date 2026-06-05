@@ -5,227 +5,41 @@
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Main Content -->
-    <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Stats Cards -->
-      <UiStats>
-        <UiStatsCard
-          label="Total Ingredientes"
-          :value="stats.total_ingredients"
-          icon="beaker"
-        />
-        <UiStatsCard
-          label="Stock Bajo"
-          :value="stats.low_stock_count"
-          icon="exclamation"
-        />
-        <UiStatsCard
-          label="Stock Crítico"
-          :value="stats.critical_count"
-          icon="exclamation-circle"
-        />
-        <UiStatsCard
-          label="Valor Total"
-          :value="formatCurrency(stats.total_inventory_value)"
-          icon="currency-dollar"
-        />
-      </UiStats>
-
-      <UiAdvancedFiltersBar
-        v-model:search="localSearchTerm"
-        :search-fields="[]"
-        search-placeholder="Buscar ingredientes..."
-        :show-date-range="false"
-        :show-clear="hasActiveFilters"
-        @search="performSearch"
-        @clear="clearFilters"
-      >
-        <template #additional-filters>
-          <select
-            v-model="categoryFilter"
-            :class="filterSelectClass"
-            aria-label="Filtrar por categoría"
-          >
-            <option value="">Categoría</option>
-            <option v-for="category in categories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
-
-          <select
-            v-model="statusFilter"
-            :class="filterSelectClass"
-            aria-label="Filtrar por estado"
-            @change="currentPage = 1"
-          >
-            <option value="all">Estado</option>
-            <option value="critical">Crítico</option>
-            <option value="low">Bajo</option>
-            <option value="ok">Normal</option>
-          </select>
-
-          <select
-            v-model="unitFilter"
-            :class="filterSelectClass"
-            aria-label="Filtrar por unidad"
-          >
-            <option value="">Unidad</option>
-            <option v-for="unit in units" :key="unit" :value="unit">
-              {{ unit }}
-            </option>
-          </select>
-        </template>
-      </UiAdvancedFiltersBar>
-
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Stock de Inventario">
-      <UiResponsiveDataView
-        row-size="sm"
-        :columns="stockTableColumns"
-        :data="displayInventory"
-        :sort-field="sortField"
-        :sort-direction="sortDirection"
-        @sort="handleSort"
-        empty-message="No hay ingredientes en inventario"
-        empty-sub-message="Comienza recibiendo compras en Abastecimiento"
-        variant="default"
-      >
-        <!-- Mobile Card -->
-        <template #card="{ item, index }">
-          <div
-            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
-            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-          >
-            <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
-              <p class="text-xs text-text-secondary mt-0.5">{{ item.unit }} · mín {{ formatNumber(item.minimum_stock) }}{{ item.maximum_stock ? ` · máx ${formatNumber(item.maximum_stock)}` : '' }}</p>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <div class="flex flex-col items-end gap-1.5">
-                <span class="text-sm font-bold tabular-nums text-text-primary">{{ formatNumber(item.current_stock) }}</span>
-                <UiStatusBadge
-                  :value="getStatusLabel(item.status)"
-                  :variant="getStockVariant(item.status)"
-                  size="sm"
-                  format="text"
-                />
-              </div>
-              <button
-                @click.stop="navigateTo(`/inventario/ajustes/crear?ingredientId=${item.ingredient_id}`)"
-                title="Ajustar stock"
-                class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </template>
-
-        <!-- Desktop Table Cells -->
-        <template #cell-ingredient_name="{ value }">
-          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
-        </template>
-
-        <template #cell-unit="{ value }">
-          <span class="text-sm text-text-secondary">{{ value }}</span>
-        </template>
-
-        <template #cell-current_stock="{ value }">
-          <span class="text-sm font-bold text-text-primary">{{ formatNumber(value) }}</span>
-        </template>
-
-        <template #cell-minimum_stock="{ value }">
-          <span class="text-sm text-text-primary">{{ formatNumber(value) }}</span>
-        </template>
-
-        <template #cell-maximum_stock="{ value }">
-          <span class="text-sm text-text-primary">{{ value ? formatNumber(value) : '-' }}</span>
-        </template>
-
-        <template #cell-stock_percentage="{ row }">
-          <div v-if="row.maximum_stock" class="w-full bg-surface-secondary rounded-full h-2">
-            <div
-              class="h-2 rounded-full transition-all"
-              :class="{
-                'bg-destructive': row.status === 'critical',
-                'bg-warning': row.status === 'low',
-                'bg-success': row.status === 'ok'
-              }"
-              :style="{ width: `${Math.min(getStockPercentage(row.current_stock, row.minimum_stock, row.maximum_stock), 100)}%` }"
-            />
-          </div>
-          <span v-else class="text-xs text-text-secondary">-</span>
-        </template>
-
-        <template #cell-unit_cost="{ value }">
-          <span class="text-sm font-bold text-primary">{{ value ? formatCurrency(value) : '-' }}</span>
-        </template>
-
-        <template #cell-total_value="{ value }">
-          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
-        </template>
-
-        <template #cell-status="{ value, row }">
-          <UiStatusBadge
-            :label="getStatusLabel(value)"
-            :variant="getStockVariant(value)"
-          />
-        </template>
-
-        <template #cell-actions="{ row }">
-          <div class="flex justify-center">
-            <button
-              @click="navigateTo(`/inventario/ajustes/crear?ingredientId=${row.ingredient_id}`)"
-              title="Ajustar stock"
-              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-primary"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </button>
-          </div>
-        </template>
-      </UiResponsiveDataView>
-
-      <div
-        v-if="(inventoryData?.total ?? 0) > itemsPerPage"
-        class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
-      >
-        <p class="text-sm text-titan-700">
-          Mostrando <span class="font-medium">{{ startItem }}</span> a
-          <span class="font-medium">{{ endItem }}</span> de
-          <span class="font-medium">{{ inventoryData?.total ?? 0 }}</span>
-        </p>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            :disabled="!canGoPrevious"
-            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
-            @click="previousPage"
-          >
-            Anterior
-          </button>
-          <button
-            type="button"
-            :disabled="!canGoNext"
-            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
-            @click="nextPage"
-          >
-            Siguiente
-          </button>
-        </div>
-      </div>
-    </HealthSemaphore>
-    </div>
+    <InventarioStockInventoryView
+      v-else
+      v-model:search="localSearchTerm"
+      v-model:category-filter="categoryFilter"
+      v-model:unit-filter="unitFilter"
+      :status-filter="statusFilter"
+      :stats="stats"
+      :inventory="displayInventory"
+      :total="inventoryData?.total ?? 0"
+      :items-per-page="itemsPerPage"
+      :start-item="startItem"
+      :end-item="endItem"
+      :can-go-previous="canGoPrevious"
+      :can-go-next="canGoNext"
+      :has-active-filters="hasActiveFilters"
+      :categories="categories"
+      :units="units"
+      :sort-field="sortField"
+      :sort-direction="sortDirection"
+      adjustment-path="/inventario/ajustes/crear"
+      :copy="stockCopy"
+      :status-options="stockStatusOptions"
+      show-mobile-stock-limits
+      @update:status-filter="updateStatusFilter"
+      @search="performSearch"
+      @clear="clearFilters"
+      @sort="handleSort"
+      @previous-page="previousPage"
+      @next-page="nextPage"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Stock' })
 
@@ -255,7 +69,20 @@ const performSearch = () => applySearch(() => { currentPage.value = 1 })
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 const sortField = ref('current_stock')
-const sortDirection = ref('desc')
+const sortDirection = ref<'asc' | 'desc'>('desc')
+
+const stockCopy = {
+  statsTotal: 'Total Ingredientes',
+  searchPlaceholder: 'Buscar ingredientes...',
+  emptyMessage: 'No hay ingredientes en inventario',
+  ingredientColumn: 'Ingrediente',
+}
+
+const stockStatusOptions = [
+  { value: 'critical', label: 'Crítico', variant: 'destructive' },
+  { value: 'low', label: 'Bajo', variant: 'warning' },
+  { value: 'ok', label: 'Normal', variant: 'success' },
+]
 
 const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'stock', currentTenant.value?.id, {
@@ -342,6 +169,11 @@ const nextPage = () => {
   if (canGoNext.value) currentPage.value++
 }
 
+const updateStatusFilter = (value: string) => {
+  statusFilter.value = value
+  currentPage.value = 1
+}
+
 const handleSort = (field: string) => {
   if (sortField.value === field) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
@@ -358,118 +190,6 @@ const clearFilters = () => {
   statusFilter.value = 'all'
   unitFilter.value = ''
   currentPage.value = 1
-}
-
-// Table columns configuration
-const stockTableColumns = [
-  {
-    key: 'ingredient_name',
-    title: 'Ingrediente',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'unit',
-    title: 'Unidad',
-    sortable: false,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'current_stock',
-    title: 'Stock Actual',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'minimum_stock',
-    title: 'Stock Mín',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'maximum_stock',
-    title: 'Stock Máx',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'stock_percentage',
-    title: '% Stock',
-    sortable: false,
-    format: 'custom',
-    align: 'center'
-  },
-  {
-    key: 'unit_cost',
-    title: 'Costo Unit.',
-    sortable: true,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'total_value',
-    title: 'Valor Total',
-    sortable: true,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'status',
-    title: 'Estado',
-    sortable: true,
-    format: 'badge',
-    align: 'center'
-  },
-  {
-    key: 'actions',
-    title: 'Acciones',
-    sortable: false,
-    format: 'custom',
-    align: 'center'
-  }
-]
-
-const getStockPercentage = (current: number, min: number, max: number) => {
-  if (!max || max === 0) return 0
-  return Math.round((current / max) * 100)
-}
-
-const getStockVariant = (status: string) => {
-  const variants = {
-    critical: 'destructive',
-    low: 'warning',
-    ok: 'success'
-  }
-  return variants[status] || 'default'
-}
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    critical: 'Crítico',
-    low: 'Bajo',
-    ok: 'Normal'
-  }
-  return labels[status] || status
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(value)
 }
 
 // Set refresh handler for layout
