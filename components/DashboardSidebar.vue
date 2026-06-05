@@ -132,44 +132,22 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { computed, nextTick, ref } from 'vue'
-import type { FunctionalComponent } from 'vue'
-import { useTenantReactive } from '@/composables/useTenantReactive'
-import type { Module } from '~/stores/access'
+import { computed, ref } from 'vue'
 import {
-  AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
-  BanknotesIcon,
-  BuildingStorefrontIcon,
-  ChartBarIcon,
-  CheckIcon,
-  ComputerDesktopIcon,
-  CreditCardIcon,
-  CubeIcon,
-  DocumentTextIcon,
-  KeyIcon,
-  MagnifyingGlassIcon,
-  MapPinIcon,
-  QueueListIcon,
-  ShoppingCartIcon,
   Squares2X2Icon,
-  TruckIcon,
-  UserGroupIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline'
+import {
+  dashboardCuentaItems,
+  dashboardPrimaryItems,
+  dashboardSecondaryItems,
+  type ActivePage,
+} from '~/constants/dashboardNavigation'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'propinas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas' | 'facturacion'
+  activePage?: ActivePage
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
-
-interface SidebarItem {
-  to: string
-  page: string
-  label: string
-  icon: FunctionalComponent
-  module: Module
-}
 
 const isLoggingOut = ref(false)
 const router = useRouter()
@@ -178,47 +156,21 @@ const { hasCriticalAlerts } = useDataQualityStatus()
 
 const authStore = useAuthStore()
 
-// ── Nav items ──────────────────────────────────────────────
-const { businessProfile } = useTenantReactive()
-
 // Epic 4 (#559): each item declares the backend module it requires.
 // useModuleAccess().can() fails open while enforcementMode !== 'enforce',
 // so today's sidebar (every module visible) is preserved until Epic 6
 // flips a tenant.
-const primaryItems = computed<SidebarItem[]>(() => [
-  { to: '/pos',                 page: 'pos',      label: 'POS',      icon: ComputerDesktopIcon, module: 'pos' },
-  { to: '/ventas',              page: 'ventas',   label: 'Ventas',   icon: ShoppingCartIcon,    module: 'ventas' },
-  { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon,          module: 'despacho' },
-])
-
-const secondaryItems: SidebarItem[] = [
-  { to: '/analitica',                        page: 'analytics',      label: 'Analítica Ventas', icon: ChartBarIcon,              module: 'analitica' },
-  { to: '/finanzas/arqueo',                  page: 'finanzas',       label: 'Finanzas',         icon: BanknotesIcon,             module: 'finanzas' },
-  { to: '/facturacion',                      page: 'facturacion',    label: 'Facturación',      icon: DocumentTextIcon,          module: 'facturacion' },
-  { to: '/menu/productos',                   page: 'menu',           label: 'Menú',             icon: CubeIcon,                  module: 'menu' },
-  { to: '/operaciones/comandas',             page: 'operaciones',    label: 'Operaciones',      icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
-  { to: '/abastecimiento/compras-directas',  page: 'abastecimiento', label: 'Abastecimiento',   icon: TruckIcon,                 module: 'abastecimiento' },
-  { to: '/equipo/miembros',                  page: 'equipo',         label: 'Equipo',           icon: UserGroupIcon,             module: 'equipo' },
-  { to: '/integraciones',                    page: 'integraciones',  label: 'Integraciones',    icon: KeyIcon,                   module: 'integraciones' },
-]
-
-const cuentaItems: SidebarItem[] = [
-  { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
-  { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon,         module: 'mi_plan' },
-]
-
-// ── Module-based filtering (#559) ──────────────────────────────
 const { can } = useModuleAccess()
 const accessStore = useAccessStore()
 
 const visiblePrimaryItems = computed(() =>
-  primaryItems.value.filter((item) => can(item.module).value)
+  dashboardPrimaryItems.filter((item) => can(item.module).value)
 )
 const visibleSecondaryItems = computed(() =>
-  secondaryItems.filter((item) => can(item.module).value)
+  dashboardSecondaryItems.filter((item) => can(item.module).value)
 )
 const visibleCuentaItems = computed(() =>
-  cuentaItems.filter((item) => can(item.module).value)
+  dashboardCuentaItems.filter((item) => can(item.module).value)
 )
 
 // Eventos is special: Module.EVENTOS was removed from the backend enum
