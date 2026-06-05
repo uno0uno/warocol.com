@@ -25,19 +25,33 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- Filters -->
-      <SharedFiltersBar
-        v-model:status-filter="statusFilter"
-        v-model:date-filter="dateFilter"
-        v-model:supplier-filter="restaurantFilter"
-        :suppliers="restaurantOptions"
-        :status-options="statusOptions"
+      <UiAdvancedFiltersBar
         :show-search="false"
-        show-status-filter
-        show-date-filter
-        show-supplier-filter
-        status-placeholder="Todos los estados"
-        @clear-filters="clearFilters"
-      />
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <UiFilterSelect
+            v-model="restaurantFilter"
+            placeholder="Todos los restaurantes"
+            :options="restaurantOptions"
+            aria-label="Restaurante"
+          />
+          <UiFilterSelect
+            v-model="statusFilter"
+            placeholder="Todos los estados"
+            :options="statusOptions"
+            aria-label="Estado"
+          />
+          <UiFilterSelect
+            v-model="dateFilter"
+            placeholder="Todos"
+            :options="dateOptions"
+            aria-label="Periodo"
+          />
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Table -->
       <UiResponsiveDataView
@@ -174,6 +188,15 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelado' },
 ]
 
+const dateOptions = [
+  { value: 'today', label: 'Hoy' },
+  { value: 'yesterday', label: 'Ayer' },
+  { value: 'last_week', label: 'Semana Pasada' },
+  { value: '15_days', label: 'Últimos 15 días' },
+  { value: '1_month', label: 'Último mes' },
+  { value: '3_months', label: 'Últimos 3 meses' },
+]
+
 // Fetch — status filter is server-side
 const { data: ordersData, pending, error, refresh } = useFetch<{ data: OrderSummary[] }>('/api/customer/orders', {
   query: computed(() => ({
@@ -189,7 +212,7 @@ const orders = computed<OrderSummary[]>(() => ordersData.value?.data ?? [])
 const restaurantOptions = computed(() =>
   [...new Set(orders.value.map(o => o.restaurant_name))]
     .sort()
-    .map(name => ({ id: name, name }))
+    .map(name => ({ value: name, label: name }))
 )
 
 // Date filter helper (local midnight boundaries)

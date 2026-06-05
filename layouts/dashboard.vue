@@ -58,6 +58,7 @@
       :show-pos-cart-bar="showPosMobileCartBar"
       :pos-cart-item-count="posMobileCartItemCount"
       :pos-cart-formatted-total="posMobileCartFormattedTotal"
+      :pos-cart-sheet-open="posMobileCartSheetOpen"
       @open-cart="openPosMobileCart"
     />
 
@@ -242,7 +243,7 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 }, { immediate: true })
 
 // Inject cart data from POS page
-const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart } = usePosMobileCart()
+const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart, sheetOpen: posMobileCartSheetOpen } = usePosMobileCart()
 
 const showPosMobileCartBar = computed(() =>
   route.path === '/pos' && posMobileCartItemCount.value > 0,

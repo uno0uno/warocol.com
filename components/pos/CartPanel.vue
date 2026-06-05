@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-col lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm">
+  <div class="flex flex-col min-h-0 h-full lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm">
     <!-- Cart Header -->
     <div class="px-4 py-3.5 border-b border-border bg-surface">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-text-primary tracking-wide">Orden Actual</h2>
-        <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold bg-primary/10 text-primary border border-primary/20">
+        <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
           {{ displayItemCount }} {{ displayItemCount === 1 ? 'ítem' : 'ítems' }}
         </span>
       </div>
@@ -56,24 +56,24 @@
     </div>
 
     <!-- Items list: tab items (committed) + current cart items -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 space-y-2.5">
 
       <!-- Skeleton while loading tab items, adding to tab, or clearing -->
       <template v-if="isLoadingTabItems || isAddingToTab || isClearingTab">
-        <div v-for="n in 3" :key="n" class="p-3 border border-border rounded-xl animate-pulse">
-          <div class="flex items-start gap-2.5">
-            <div class="w-6 h-6 rounded-full bg-surface-secondary flex-shrink-0" />
+        <div v-for="n in 3" :key="n" class="rounded-xl border border-border bg-surface-secondary/40 p-3 animate-pulse">
+          <div class="flex items-start gap-2">
+            <div class="h-7 w-7 shrink-0 rounded-full bg-surface-secondary" />
             <div class="flex-1 space-y-1.5">
-              <div class="h-3 bg-surface-secondary rounded w-3/4" />
+              <div class="h-3.5 bg-surface-secondary rounded w-3/4" />
               <div class="h-2.5 bg-surface-secondary rounded w-1/3" />
             </div>
-            <div class="h-3 bg-surface-secondary rounded w-12 flex-shrink-0" />
+            <div class="h-3.5 bg-surface-secondary rounded w-12 shrink-0" />
           </div>
-          <div class="mt-3 pl-[2.125rem] flex items-center gap-2">
-            <div class="h-6 w-20 bg-surface-secondary rounded-lg" />
+          <div class="mt-2.5 pl-9 flex items-center gap-1.5">
+            <div class="h-9 w-20 bg-surface-secondary rounded-lg" />
             <div class="flex-1" />
-            <div class="h-7 w-7 bg-surface-secondary rounded" />
-            <div class="h-7 w-7 bg-surface-secondary rounded" />
+            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
+            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
           </div>
         </div>
       </template>
@@ -112,8 +112,11 @@
           :promo-title="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null"
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
+          :hide-duplicate="true"
+          :lock-increment="isTabLineFired(item)"
+          :hide-line-controls="isTabLineTerminal(item)"
+          @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"
           :class="[
-            pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
             showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
           ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
@@ -122,10 +125,11 @@
           @duplicate="() => {}"
         />
 
-        <!-- Loading overlay -->
+        <!-- Loading overlay — only while that line is mutating -->
         <div
           v-if="tabItemsLoading.has(item.orderItemId)"
-          class="absolute inset-0 rounded-xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px]"
+          class="absolute inset-0 z-20 rounded-xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px] pointer-events-auto"
+          aria-hidden="true"
         >
           <UiLoadingDots size="9px" />
         </div>
@@ -169,7 +173,7 @@
     </div>
 
     <!-- Cart Footer -->
-    <div class="px-4 py-4 border-t border-border space-y-3 bg-surface-secondary/40">
+    <div class="flex-shrink-0 px-4 py-4 border-t border-border space-y-3 bg-surface-secondary/40">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"
@@ -441,6 +445,7 @@ interface Emits {
   (e: 'clear-cart'): void
   (e: 'add-to-tab'): void
   (e: 'request-bill'): void
+  (e: 'edit-tab-item', orderItemId: string, productId: string): void
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
@@ -530,5 +535,20 @@ const formatCurrency = (value: number) => {
     currency: 'COP',
     minimumFractionDigits: 0
   }).format(value)
+}
+
+function tabLineStatus(item: TabItem): string {
+  return item.fulfillmentStatus ?? 'new'
+}
+
+/** Line already fired to kitchen — qty+ locked; qty−/delete use confirm modal (#956). */
+function isTabLineFired(item: TabItem): boolean {
+  return props.comandasEnabled && tabLineStatus(item) !== 'new'
+}
+
+/** Terminal fulfillment — no cart mutations. */
+function isTabLineTerminal(item: TabItem): boolean {
+  const status = tabLineStatus(item)
+  return status === 'delivered' || status === 'cancelled'
 }
 </script>

@@ -1,7 +1,9 @@
 <template>
   <div
-    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg"
+    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg transition-opacity"
+    :class="posCartSheetOpen ? 'pointer-events-none opacity-0' : ''"
     style="padding-bottom: env(safe-area-inset-bottom, 0px)"
+    :aria-hidden="posCartSheetOpen"
   >
     <PosCartBottomBar
       v-if="showPosCartBar"
@@ -26,6 +28,7 @@ defineProps<{
   showPosCartBar: boolean
   posCartItemCount: number
   posCartFormattedTotal: string
+  posCartSheetOpen: boolean
 }>()
 
 defineEmits<{
