@@ -221,44 +221,22 @@
 
 <script setup lang="ts">
 import {
-  AdjustmentsHorizontalIcon,
-  BanknotesIcon,
   Bars3Icon,
   BellAlertIcon,
   BellIcon,
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
-  BuildingStorefrontIcon,
-  ChartBarIcon,
   CheckCircleIcon,
   Cog6ToothIcon,
-  ComputerDesktopIcon,
-  CreditCardIcon,
-  CubeIcon,
-  DocumentTextIcon,
   HomeIcon,
-  KeyIcon,
-  MapPinIcon,
-  ReceiptPercentIcon,
   ShoppingBagIcon,
-  ShoppingCartIcon,
-  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
-import type { FunctionalComponent } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
-import type { Module } from '~/stores/access'
-
-type ActivePage =
-  | 'dashboard'
-  | 'ventas' | 'pos' | 'despacho' | 'comandas'
-  | 'financiero' | 'finanzas' | 'facturacion'
-  | 'abastecimiento' | 'inventario' | 'menu' | 'operaciones'
-  | 'analytics' | 'analitica' | 'reportes' | 'pagos'
-  | 'equipo' | 'integraciones'
-  | 'negocio' | 'admin' | 'configuracion'
+import { dashboardMobileGridItems, type ActivePage } from '~/constants/dashboardNavigation'
+import type { Tenant } from '~/stores/tenants'
 
 interface Props {
   activePage?: ActivePage
@@ -270,50 +248,16 @@ const props = withDefaults(defineProps<Props>(), {
   notificationsCount: 0,
 })
 
-// Epic 4 (#560): each grid item declares the backend module it requires.
-// useModuleAccess().can() fails open while enforcementMode !== 'enforce',
-// so today's full grid is preserved until Epic 6 flips a tenant.
-interface GridItem {
-  to: string
-  page: ActivePage
-  label: string
-  icon: FunctionalComponent
-  module: Module
-  showCriticalDot?: boolean
-}
-
-const gridItems: GridItem[] = [
-  { to: '/ventas',                          page: 'ventas',         label: 'Ventas',         icon: ShoppingCartIcon,          module: 'ventas' },
-  { to: '/pos',                             page: 'pos',            label: 'POS',            icon: ComputerDesktopIcon,       module: 'pos' },
-  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: DocumentTextIcon,          module: 'abastecimiento', showCriticalDot: true },
-  { to: '/menu/productos',                  page: 'menu',           label: 'Menú',           icon: CubeIcon,                  module: 'menu' },
-  { to: '/operaciones/comandas',            page: 'operaciones',    label: 'Operaciones',    icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
-  { to: '/analitica',                       page: 'analytics',      label: 'Analítica',      icon: ChartBarIcon,              module: 'analitica' },
-  { to: '/finanzas/cartera',                page: 'finanzas',       label: 'Finanzas',       icon: BanknotesIcon,             module: 'finanzas' },
-  { to: '/facturacion',                     page: 'facturacion',    label: 'Facturación',    icon: ReceiptPercentIcon,        module: 'facturacion' },
-  { to: '/equipo/miembros',                 page: 'equipo',         label: 'Equipo',         icon: UserGroupIcon,             module: 'equipo' },
-  { to: '/integraciones',                   page: 'integraciones',  label: 'Integraciones',  icon: KeyIcon,                   module: 'integraciones' },
-  { to: '/despacho/domicilios',             page: 'despacho',       label: 'Domicilios',     icon: MapPinIcon,                module: 'despacho' },
-  { to: '/negocio',                         page: 'negocio',        label: 'Mi Negocio',     icon: BuildingStorefrontIcon,    module: 'mi_negocio' },
-  { to: '/gestion/billing',                 page: 'admin',          label: 'Mi Plan',        icon: CreditCardIcon,            module: 'mi_plan' },
-]
-
 const { can } = useModuleAccess()
-const visibleGridItems = computed(() => gridItems.filter((item) => can(item.module).value))
+const visibleGridItems = computed(() => dashboardMobileGridItems.filter((item) => can(item.module).value))
 
 // Data quality dot indicator
 const { hasCriticalAlerts } = useDataQualityStatus()
-const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
+const { selectTenantWithBillingGuard } = useDashboardTenantSwitch()
 
 const { triggerRefresh, isRefreshing, isProgressiveLoading } = useLayoutActions()
 const handleRefresh = triggerRefresh
 const isLoading = computed(() => isRefreshing.value || isProgressiveLoading.value)
-
-interface Tenant {
-  id: string
-  name: string
-  slug: string
-}
 
 // Modal state
 const showTenantModal = ref(false)
@@ -374,26 +318,10 @@ const isSuperuser = computed(() =>
   authStore.session?.user?.role === 'superuser'
 )
 
-const router = useRouter()
-
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
   showTenantModal.value = false  // close immediately, don't wait
-  const success = await tenantsStore.selectTenant(tenant)
-
-  if (!success) return
-
-  // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
-  // Check billing directly for the new tenant and redirect if no active subscription.
-  // stores/tenants.ts already invalidated ['billing'] on tenant switch — query auto-refetches.
-  if (billingSubscription.value === undefined) {
-    try { await fetchBillingSubscription() } catch { return }
-  }
-  const status = billingSubscription.value?.status
-  const hasAccess = status === 'active' || status === 'past_due'
-  if (!hasAccess) {
-    await router.replace('/gestion/billing')
-  }
+  await selectTenantWithBillingGuard(tenant)
 }
 </script>
 

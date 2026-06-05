@@ -80,18 +80,13 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
 import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon, UserIcon } from '@heroicons/vue/24/outline'
-import { useBilling } from '~/composables/useBilling'
-import { useTenantsStore } from '~/stores/tenants'
+import type { Tenant } from '~/stores/tenants'
 import { useAuthStore } from '~/stores/auth'
-
-interface Tenant { id: string; name: string; slug: string }
 
 const showTenantModal = ref(false)
 const tenantSearch = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
-const router = useRouter()
 
 const filteredTenants = computed(() =>
   tenantSearch.value.trim()
@@ -106,11 +101,11 @@ const openTenantModal = () => {
 }
 const closeTenantModal = () => { showTenantModal.value = false }
 
-const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
 const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const isLoadingTenants = computed(() => tenantsStore.isLoading)
+const { selectTenantWithBillingGuard } = useDashboardTenantSwitch()
 
 const authStore = useAuthStore()
 const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
@@ -122,16 +117,6 @@ const userInitials = computed(() => {
 
 const selectTenant = async (tenant: Tenant) => {
   closeTenantModal()
-  const success = await tenantsStore.selectTenant(tenant)
-  if (!success) return
-
-  if (billingSubscription.value === undefined) {
-    try { await fetchBillingSubscription() } catch { return }
-  }
-  const status = billingSubscription.value?.status
-  const hasAccess = status === 'active' || status === 'past_due'
-  if (!hasAccess) {
-    await router.replace('/gestion/billing')
-  }
+  await selectTenantWithBillingGuard(tenant)
 }
 </script>
