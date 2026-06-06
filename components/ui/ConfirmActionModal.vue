@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50"
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-overlay-backdrop/50"
         role="alertdialog"
         aria-modal="true"
         :aria-labelledby="titleId"
@@ -36,7 +36,7 @@
                 :class="[
                   'w-16 h-16 rounded-full flex items-center justify-center',
                   variant === 'destructive'
-                    ? 'bg-amber-100 dark:bg-amber-900/30'
+                    ? 'bg-state-warning-bg'
                     : 'bg-primary/10',
                 ]"
               >
@@ -44,7 +44,7 @@
                   :class="[
                     'w-8 h-8',
                     variant === 'destructive'
-                      ? 'text-amber-600 dark:text-amber-400'
+                      ? 'text-state-warning-icon'
                       : 'text-primary',
                   ]"
                   aria-hidden="true"

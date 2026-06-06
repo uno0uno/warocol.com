@@ -42,7 +42,7 @@ const statsVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-gray-800",
+        default: "border-border",
         compact: "",
         cards: "grid gap-4",
         balance: "grid gap-4"

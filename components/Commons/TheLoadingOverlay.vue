@@ -1,8 +1,8 @@
 <template>
   <Teleport to="body">
-    <div 
+    <div
       v-if="show"
-      class="loading-overlay"
+      class="fixed inset-0 z-[9999] flex items-center justify-center bg-overlay-backdrop/50 backdrop-blur-sm"
     >
       <CommonsTheLoading />
     </div>
@@ -17,19 +17,3 @@ defineProps({
   }
 });
 </script>
-
-<style scoped>
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-</style>

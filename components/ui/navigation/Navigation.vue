@@ -20,8 +20,8 @@ const props = defineProps({
         <NuxtLink 
           :to="item.href"
           :class="cn(
-            'text-sm text-gray-300 hover:text-white transition-colors',
-            item.active && 'text-white font-medium'
+            'text-sm text-text-tertiary hover:text-text-primary transition-colors',
+            item.active && 'text-text-primary font-medium'
           )"
         >
           {{ item.label }}

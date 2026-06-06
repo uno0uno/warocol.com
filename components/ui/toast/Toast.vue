@@ -11,7 +11,7 @@
       v-if="visible"
       :class="[
         'flex items-start gap-3 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm min-w-[300px]',
-        'bg-card/95 border-border ring-1 ring-white/10',
+        'bg-card/95 border-border ring-1 ring-border/40',
         variantClasses,
         sizeClasses
       ]"
@@ -27,7 +27,7 @@
       </div>
       <button
         @click="close"
-        class="flex-shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors"
+        class="flex-shrink-0 p-1 rounded-md hover:bg-control-action-hover-bg transition-colors"
       >
         <Icon name="heroicons:x-mark" class="w-4 h-4" />
       </button>
@@ -77,10 +77,10 @@ const visible = ref(false)
 
 const variantClasses = computed(() => {
   const variants = {
-    success: 'border-green-500/30',
-    error: 'border-red-500/30', 
-    warning: 'border-yellow-500/30',
-    info: 'border-blue-500/30'
+    success: 'border-state-success-border',
+    error: 'border-state-danger-border',
+    warning: 'border-state-warning-border',
+    info: 'border-state-info-border'
   }
   return variants[props.type]
 })
@@ -106,20 +106,32 @@ const iconName = computed(() => {
 
 const iconClasses = computed(() => {
   const classes = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400'
+    success: 'text-state-success-icon',
+    error: 'text-state-danger-icon',
+    warning: 'text-state-warning-icon',
+    info: 'text-state-info-icon'
   }
   return `w-5 h-5 flex-shrink-0 ${classes[props.type]}`
 })
 
 const titleClasses = computed(() => {
-  return `font-medium text-${props.type === 'success' ? 'green' : props.type === 'error' ? 'red' : props.type === 'warning' ? 'yellow' : 'blue'}-100`
+  const classes = {
+    success: 'text-state-success-text',
+    error: 'text-state-danger-text',
+    warning: 'text-state-warning-text',
+    info: 'text-state-info-text'
+  }
+  return `font-medium ${classes[props.type]}`
 })
 
 const messageClasses = computed(() => {
-  return `text-${props.type === 'success' ? 'green' : props.type === 'error' ? 'red' : props.type === 'warning' ? 'yellow' : 'blue'}-200 ${props.title ? 'text-xs' : ''}`
+  const classes = {
+    success: 'text-state-success-text',
+    error: 'text-state-danger-text',
+    warning: 'text-state-warning-text',
+    info: 'text-state-info-text'
+  }
+  return `${classes[props.type]} ${props.title ? 'text-xs' : ''}`
 })
 
 const close = () => {

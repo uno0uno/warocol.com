@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+        class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-overlay-backdrop/50 p-0 sm:p-4"
         @click="closeModal"
       >
         <Transition
@@ -23,20 +23,20 @@
         >
           <div
             v-if="modelValue"
-            class="bg-surface w-full sm:max-w-md flex flex-col shadow-xl rounded-t-2xl sm:rounded-2xl max-h-[90vh]"
+            class="bg-modal-surface-bg w-full sm:max-w-md flex flex-col shadow-xl rounded-t-2xl sm:rounded-2xl max-h-[90vh]"
             :class="maxHeightClass"
             @click.stop
           >
             <!-- Header -->
-            <div class="flex-shrink-0 border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl sm:rounded-t-2xl">
-              <h3 class="text-lg font-semibold text-text-primary">{{ title }}</h3>
+            <div class="flex-shrink-0 border-b border-modal-header-border px-6 py-4 flex items-center justify-between rounded-t-2xl sm:rounded-t-2xl">
+              <h3 class="text-lg font-semibold text-modal-surface-text">{{ title }}</h3>
               <button
                 type="button"
-                class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-surface-secondary rounded-lg transition-colors"
+                class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring rounded-lg transition-colors"
                 aria-label="Cerrar"
                 @click="closeModal"
               >
-                <XMarkIcon class="w-5 h-5 text-text-secondary" />
+                <XMarkIcon class="w-5 h-5 text-icon-button-neutral-text" />
               </button>
             </div>
 
@@ -46,7 +46,7 @@
             </div>
 
             <!-- Footer (optional, sticky) -->
-            <div v-if="$slots.footer" class="flex-shrink-0 border-t border-border rounded-b-2xl">
+            <div v-if="$slots.footer" class="flex-shrink-0 border-t border-modal-footer-border rounded-b-2xl">
               <slot name="footer" />
             </div>
           </div>

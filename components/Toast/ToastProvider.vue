@@ -25,7 +25,7 @@
           <!-- Close button -->
           <button
             @click="remove(toast.id)"
-            class="flex-shrink-0 ml-3 p-1 hover:bg-black/10 rounded-full transition-colors"
+            class="flex-shrink-0 ml-3 p-1 hover:bg-control-action-hover-bg rounded-full transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -44,16 +44,16 @@ const { toasts, remove } = useToast()
 
 // Clases CSS para cada tipo de toast
 const toastClasses = {
-  success: 'bg-green-50 border-green-200 text-green-800',
-  error: 'bg-red-50 border-red-200 text-red-800',
-  warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-  info: 'bg-blue-50 border-blue-200 text-blue-800'
+  success: 'bg-state-success-bg border-state-success-border text-state-success-text',
+  error: 'bg-state-danger-bg border-state-danger-border text-state-danger-text',
+  warning: 'bg-state-warning-bg border-state-warning-border text-state-warning-text',
+  info: 'bg-state-info-bg border-state-info-border text-state-info-text'
 }
 
 // Iconos para cada tipo
 const toastIcons = {
   success: () => h('svg', {
-    class: 'text-green-600',
+    class: 'text-state-success-icon',
     fill: 'currentColor',
     viewBox: '0 0 20 20'
   }, h('path', {
@@ -63,7 +63,7 @@ const toastIcons = {
   })),
   
   error: () => h('svg', {
-    class: 'text-red-600',
+    class: 'text-state-danger-icon',
     fill: 'currentColor',
     viewBox: '0 0 20 20'
   }, h('path', {
@@ -73,7 +73,7 @@ const toastIcons = {
   })),
   
   warning: () => h('svg', {
-    class: 'text-yellow-600',
+    class: 'text-state-warning-icon',
     fill: 'currentColor',
     viewBox: '0 0 20 20'
   }, h('path', {
@@ -83,7 +83,7 @@ const toastIcons = {
   })),
   
   info: () => h('svg', {
-    class: 'text-blue-600',
+    class: 'text-state-info-icon',
     fill: 'currentColor',
     viewBox: '0 0 20 20'
   }, h('path', {

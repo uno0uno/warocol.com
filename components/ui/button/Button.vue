@@ -15,8 +15,8 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        'titan-outline': 'border border-titan-400 bg-transparent text-titan-800 hover:bg-titan-100 dark:border-titan-600 dark:text-titan-300 dark:hover:bg-titan-800/20',
-        'crocus-outline': 'border border-crocus-400 bg-transparent text-crocus-800 hover:bg-crocus-100 dark:border-crocus-300 dark:text-crocus-200 dark:hover:bg-crocus-900/20',
+        'titan-outline': 'border border-border bg-transparent text-text-secondary hover:bg-surface-secondary hover:text-text-primary',
+        'crocus-outline': 'border border-primary bg-transparent text-primary hover:bg-primary/10',
       },
       size: {
         default: 'h-10 px-4 py-2',
