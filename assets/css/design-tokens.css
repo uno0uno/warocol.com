@@ -1,4 +1,13 @@
 /* Warocol Design System - Purple Theme Tokens */
+/*
+  Token migration rules:
+  1. Primitive tokens define raw brand scales such as crocus, titan, ebony, and status hues.
+  2. Semantic tokens describe shared intent such as primary, surface, text, focus, and state.
+  3. Component tokens describe repeated UI states such as nav, data-table, control-toggle, and chips.
+
+  Data/user colors are intentional exceptions. Values such as station colors should be wrapped for
+  contrast and fallback behavior, not forced into brand tokens.
+*/
 :root {
   /* === TITAN WHITE (Grises Claros) - HSL Tokens === */
   --titan-50: 0 0% 100%; /* #FFFFFF */
@@ -85,6 +94,93 @@
   --info: 218 68% 47%; /* Azul información — separado del primary púrpura */
   --info-foreground: 0 0% 100%; /* Texto información */
 
+  /* === SEMANTIC STATE TOKENS === */
+  --state-danger-bg: 0 86% 97%;
+  --state-danger-border: 0 72% 88%;
+  --state-danger-text: 0 74% 42%;
+  --state-danger-icon: var(--destructive);
+  --state-danger-action-bg: var(--destructive);
+  --state-danger-action-text: var(--destructive-foreground);
+
+  --state-warning-bg: 43 96% 94%;
+  --state-warning-border: 43 96% 82%;
+  --state-warning-text: 32 95% 32%;
+  --state-warning-icon: 32 95% 44%;
+  --state-warning-action-bg: 38 92% 50%;
+  --state-warning-action-text: 0 0% 100%;
+
+  --state-success-bg: 145 81% 94%;
+  --state-success-border: 145 63% 78%;
+  --state-success-text: 150 78% 28%;
+  --state-success-icon: var(--success);
+  --state-success-action-bg: var(--success);
+  --state-success-action-text: var(--success-foreground);
+
+  --state-info-bg: 214 95% 95%;
+  --state-info-border: 214 90% 84%;
+  --state-info-text: 218 68% 37%;
+  --state-info-icon: var(--info);
+  --state-info-action-bg: var(--info);
+  --state-info-action-text: var(--info-foreground);
+
+  /* === FOCUS AND CONTROL TOKENS === */
+  --focus-ring: var(--ring);
+  --focus-ring-subtle: var(--crocus-300);
+  --control-toggle-track-off: var(--border);
+  --control-toggle-track-on: var(--primary);
+  --control-toggle-thumb: 0 0% 100%;
+  --control-toggle-focus-ring: var(--focus-ring-subtle);
+  --control-action-hover-bg: var(--crocus-50);
+  --control-action-hover-text: var(--primary);
+
+  /* === COMPONENT TOKENS: DASHBOARD NAV === */
+  --nav-item-hover-bg: var(--crocus-600);
+  --nav-item-active-bg: var(--crocus-600);
+  --nav-icon-idle: var(--crocus-300);
+  --nav-icon-hover: var(--crocus-300);
+  --nav-icon-active: var(--crocus-300);
+  --nav-label-idle: var(--titan-300);
+  --nav-label-hover: var(--titan-300);
+  --nav-label-active: var(--titan-300);
+  --nav-section-label: var(--titan-300);
+  --nav-divider: var(--titan-300);
+
+  /* === COMPONENT TOKENS: DATA TABLE === */
+  --data-table-container-bg: var(--surface);
+  --data-table-header-bg: var(--surface-secondary);
+  --data-table-header-text: var(--text-secondary);
+  --data-table-row-bg: var(--surface);
+  --data-table-row-alt-bg: var(--surface-secondary);
+  --data-table-row-hover-bg: var(--surface-secondary);
+  --data-table-row-selected-bg: var(--crocus-50);
+  --data-table-row-new-bg: var(--crocus-50);
+  --data-table-border: var(--border);
+  --data-table-cell-text: var(--text-primary);
+  --data-table-cell-muted: var(--text-secondary);
+  --data-table-footer-bg: var(--surface-secondary);
+
+  /* === COMPONENT TOKENS: FILTERS AND STATUS CHIPS === */
+  --filter-surface-bg: var(--surface);
+  --filter-surface-border: var(--border);
+  --filter-control-bg: var(--input);
+  --filter-control-text: var(--text-primary);
+  --filter-control-placeholder: var(--text-tertiary);
+  --filter-control-focus-ring: var(--focus-ring-subtle);
+  --status-chip-bg: var(--surface-secondary);
+  --status-chip-text: var(--text-secondary);
+  --status-chip-border: var(--border);
+
+  /* === DENSE UI TYPOGRAPHY TOKENS === */
+  --type-dense-label-size: 0.75rem;
+  --type-dense-label-line-height: 1rem;
+  --type-dense-label-weight: 600;
+  --type-dense-value-size: 0.875rem;
+  --type-dense-value-line-height: 1.25rem;
+  --type-dense-value-weight: 500;
+  --type-dense-meta-size: 0.6875rem;
+  --type-dense-meta-line-height: 0.875rem;
+  --type-dense-meta-weight: 500;
+
   /* === STATUS BADGE TOKENS (OKLCH — perceptualmente uniformes) ===
      Backgrounds: chroma muy bajo (~0.04) para no saturar tablas densas
      Texts: chroma medio (~0.16–0.18) para legibilidad con buen contraste
@@ -154,6 +250,82 @@
   
   --info: 218 68% 60%; /* Azul información — más claro para tema oscuro */
   --info-foreground: var(--ebony-900); /* Texto información */
+
+  /* === SEMANTIC STATE TOKENS OSCUROS === */
+  --state-danger-bg: 0 62% 18%;
+  --state-danger-border: 0 52% 34%;
+  --state-danger-text: 0 86% 78%;
+  --state-danger-icon: 0 86% 68%;
+  --state-danger-action-bg: 0 62% 51%;
+  --state-danger-action-text: var(--titan-100);
+
+  --state-warning-bg: 35 76% 16%;
+  --state-warning-border: 35 70% 31%;
+  --state-warning-text: 43 96% 76%;
+  --state-warning-icon: 43 96% 68%;
+  --state-warning-action-bg: 38 92% 50%;
+  --state-warning-action-text: var(--ebony-900);
+
+  --state-success-bg: 150 68% 14%;
+  --state-success-border: 150 52% 29%;
+  --state-success-text: 145 66% 72%;
+  --state-success-icon: 145 66% 62%;
+  --state-success-action-bg: 142 71% 45%;
+  --state-success-action-text: var(--titan-100);
+
+  --state-info-bg: 218 58% 18%;
+  --state-info-border: 218 52% 34%;
+  --state-info-text: 214 90% 78%;
+  --state-info-icon: 214 90% 70%;
+  --state-info-action-bg: var(--info);
+  --state-info-action-text: var(--info-foreground);
+
+  /* === FOCUS AND CONTROL TOKENS OSCUROS === */
+  --focus-ring: var(--ring);
+  --focus-ring-subtle: var(--crocus-500);
+  --control-toggle-track-off: var(--border);
+  --control-toggle-track-on: var(--primary);
+  --control-toggle-thumb: var(--ebony-900);
+  --control-toggle-focus-ring: var(--focus-ring-subtle);
+  --control-action-hover-bg: var(--ebony-700);
+  --control-action-hover-text: var(--primary);
+
+  /* === COMPONENT TOKENS OSCUROS: DASHBOARD NAV === */
+  --nav-item-hover-bg: var(--crocus-400);
+  --nav-item-active-bg: var(--crocus-400);
+  --nav-icon-idle: var(--crocus-300);
+  --nav-icon-hover: var(--crocus-300);
+  --nav-icon-active: var(--crocus-300);
+  --nav-label-idle: var(--titan-300);
+  --nav-label-hover: var(--titan-200);
+  --nav-label-active: var(--titan-100);
+  --nav-section-label: var(--titan-500);
+  --nav-divider: var(--titan-500);
+
+  /* === COMPONENT TOKENS OSCUROS: DATA TABLE === */
+  --data-table-container-bg: var(--surface);
+  --data-table-header-bg: var(--surface-secondary);
+  --data-table-header-text: var(--text-secondary);
+  --data-table-row-bg: var(--surface);
+  --data-table-row-alt-bg: var(--surface-secondary);
+  --data-table-row-hover-bg: var(--surface-tertiary);
+  --data-table-row-selected-bg: var(--ebony-700);
+  --data-table-row-new-bg: var(--ebony-700);
+  --data-table-border: var(--border);
+  --data-table-cell-text: var(--text-primary);
+  --data-table-cell-muted: var(--text-secondary);
+  --data-table-footer-bg: var(--surface-secondary);
+
+  /* === COMPONENT TOKENS OSCUROS: FILTERS AND STATUS CHIPS === */
+  --filter-surface-bg: var(--surface);
+  --filter-surface-border: var(--border);
+  --filter-control-bg: var(--input);
+  --filter-control-text: var(--text-primary);
+  --filter-control-placeholder: var(--text-tertiary);
+  --filter-control-focus-ring: var(--focus-ring-subtle);
+  --status-chip-bg: var(--surface-secondary);
+  --status-chip-text: var(--text-secondary);
+  --status-chip-border: var(--border);
 }
 
 /* === TEMA CLARO EXPLÍCITO === */
@@ -203,4 +375,80 @@
   
   --info: 218 68% 47%; /* Azul información */
   --info-foreground: var(--titan-50); /* Texto información */
+
+  /* === SEMANTIC STATE TOKENS CLAROS === */
+  --state-danger-bg: 0 86% 97%;
+  --state-danger-border: 0 72% 88%;
+  --state-danger-text: 0 74% 42%;
+  --state-danger-icon: var(--destructive);
+  --state-danger-action-bg: var(--destructive);
+  --state-danger-action-text: var(--destructive-foreground);
+
+  --state-warning-bg: 43 96% 94%;
+  --state-warning-border: 43 96% 82%;
+  --state-warning-text: 32 95% 32%;
+  --state-warning-icon: 32 95% 44%;
+  --state-warning-action-bg: 38 92% 50%;
+  --state-warning-action-text: 0 0% 100%;
+
+  --state-success-bg: 145 81% 94%;
+  --state-success-border: 145 63% 78%;
+  --state-success-text: 150 78% 28%;
+  --state-success-icon: var(--success);
+  --state-success-action-bg: var(--success);
+  --state-success-action-text: var(--success-foreground);
+
+  --state-info-bg: 214 95% 95%;
+  --state-info-border: 214 90% 84%;
+  --state-info-text: 218 68% 37%;
+  --state-info-icon: var(--info);
+  --state-info-action-bg: var(--info);
+  --state-info-action-text: var(--info-foreground);
+
+  /* === FOCUS AND CONTROL TOKENS CLAROS === */
+  --focus-ring: var(--ring);
+  --focus-ring-subtle: var(--crocus-300);
+  --control-toggle-track-off: var(--border);
+  --control-toggle-track-on: var(--primary);
+  --control-toggle-thumb: 0 0% 100%;
+  --control-toggle-focus-ring: var(--focus-ring-subtle);
+  --control-action-hover-bg: var(--crocus-50);
+  --control-action-hover-text: var(--primary);
+
+  /* === COMPONENT TOKENS CLAROS: DASHBOARD NAV === */
+  --nav-item-hover-bg: var(--crocus-600);
+  --nav-item-active-bg: var(--crocus-600);
+  --nav-icon-idle: var(--crocus-300);
+  --nav-icon-hover: var(--crocus-300);
+  --nav-icon-active: var(--crocus-300);
+  --nav-label-idle: var(--titan-300);
+  --nav-label-hover: var(--titan-300);
+  --nav-label-active: var(--titan-300);
+  --nav-section-label: var(--titan-300);
+  --nav-divider: var(--titan-300);
+
+  /* === COMPONENT TOKENS CLAROS: DATA TABLE === */
+  --data-table-container-bg: var(--surface);
+  --data-table-header-bg: var(--surface-secondary);
+  --data-table-header-text: var(--text-secondary);
+  --data-table-row-bg: var(--surface);
+  --data-table-row-alt-bg: var(--surface-secondary);
+  --data-table-row-hover-bg: var(--surface-secondary);
+  --data-table-row-selected-bg: var(--crocus-50);
+  --data-table-row-new-bg: var(--crocus-50);
+  --data-table-border: var(--border);
+  --data-table-cell-text: var(--text-primary);
+  --data-table-cell-muted: var(--text-secondary);
+  --data-table-footer-bg: var(--surface-secondary);
+
+  /* === COMPONENT TOKENS CLAROS: FILTERS AND STATUS CHIPS === */
+  --filter-surface-bg: var(--surface);
+  --filter-surface-border: var(--border);
+  --filter-control-bg: var(--input);
+  --filter-control-text: var(--text-primary);
+  --filter-control-placeholder: var(--text-tertiary);
+  --filter-control-focus-ring: var(--focus-ring-subtle);
+  --status-chip-bg: var(--surface-secondary);
+  --status-chip-text: var(--text-secondary);
+  --status-chip-border: var(--border);
 }
