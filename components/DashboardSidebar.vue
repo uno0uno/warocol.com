@@ -200,18 +200,8 @@ const handleLogout = async () => {
 
 <style scoped>
 /*
-  Jerarquía monochromática — misma familia crocus/titan, solo opacidad varía.
-  ─────────────────────────────────────────────────────────────────────────
-  Group label   titan-300/35   ← lo más tenue (espaciador visual)
-  Icon idle     crocus-400/45  ← cohesión con el acento, no gris puro
-  Label idle    titan-300/60   ← legible pero recede
-  Icon hover    crocus-400/75
-  Label hover   titan-300/85
-  Bg hover      crocus-600/8   ← píldora muy sutil
-  Icon active   crocus-400     ← 100%, único elemento a plena saturación
-  Label active  titan-300      ← 100%, font-medium
-  Bg active     crocus-600/15  ← píldora de posición
-  Divider       titan-300/6
+  Sidebar navigation states read semantic nav tokens. Alpha remains local here
+  because the sidebar hierarchy depends on subtle idle/hover/active emphasis.
 */
 
 /* ── Nav item base ── */
@@ -221,7 +211,7 @@ const handleLogout = async () => {
   gap: 0.75rem;
   padding: 0.25rem 0.75rem;
   border-radius: 0.5rem;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
   font-size: 0.9375rem;
   width: 100%;
   text-decoration: none;
@@ -233,11 +223,15 @@ const handleLogout = async () => {
   padding-right: 0;
 }
 .nav-item--active {
-  background-color: rgba(124, 58, 237, 0.15);
+  background-color: hsl(var(--nav-item-active-bg) / 0.15);
   font-weight: 500;
 }
 .nav-item--idle:hover {
-  background-color: rgba(124, 58, 237, 0.08);
+  background-color: hsl(var(--nav-item-hover-bg) / 0.08);
+}
+.nav-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--focus-ring-subtle) / 0.85);
 }
 
 /* ── Nav icon ── */
@@ -247,9 +241,9 @@ const handleLogout = async () => {
   flex-shrink: 0;
   transition: color 0.15s;
 }
-.nav-item--active .nav-icon   { color: #A78BFA; }
-.nav-item--idle .nav-icon     { color: rgba(167, 139, 250, 0.65); } /* 3.5:1 — pasa WCAG AA UI */
-.nav-item--idle:hover .nav-icon { color: rgba(167, 139, 250, 0.85); }
+.nav-item--active .nav-icon   { color: hsl(var(--nav-icon-active)); }
+.nav-item--idle .nav-icon     { color: hsl(var(--nav-icon-idle) / 0.65); } /* 3.5:1 — pasa WCAG AA UI */
+.nav-item--idle:hover .nav-icon { color: hsl(var(--nav-icon-hover) / 0.85); }
 
 /* ── Label text ── */
 .nav-label-text {
@@ -261,9 +255,9 @@ const handleLogout = async () => {
 }
 .nav-label-text--hidden { max-width: 0; opacity: 0; }
 
-.nav-item--active .nav-label-text { color: #E0E5EB; }
-.nav-item--idle .nav-label-text   { color: rgba(224, 229, 235, 0.60); }
-.nav-item--idle:hover .nav-label-text { color: rgba(224, 229, 235, 0.90); }
+.nav-item--active .nav-label-text { color: hsl(var(--nav-label-active)); }
+.nav-item--idle .nav-label-text   { color: hsl(var(--nav-label-idle) / 0.60); }
+.nav-item--idle:hover .nav-label-text { color: hsl(var(--nav-label-hover) / 0.90); }
 
 /* ── Section label ── */
 .nav-section-label {
@@ -273,12 +267,12 @@ const handleLogout = async () => {
   letter-spacing: 0.1em;
   font-weight: 600;
   white-space: nowrap;
-  color: rgba(224, 229, 235, 0.30);
+  color: hsl(var(--nav-section-label) / 0.30);
 }
 
 /* ── Dividers ── */
 .nav-divider {
-  border-color: rgba(224, 229, 235, 0.06);
+  border-color: hsl(var(--nav-divider) / 0.06);
 }
 
 /* ── Quitar focus ring nativo del input de búsqueda ── */
