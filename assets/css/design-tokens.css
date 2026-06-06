@@ -33,6 +33,10 @@
   --crocus-800: 262 72% 42%; /* #5B21B6 */
   --crocus-900: 263 69% 34%; /* #4C1D95 */
 
+  /* === NEUTRAL INK (Negros neutros sin tinte de marca) === */
+  --neutral-850: 0 0% 16%; /* #292929 */
+  --neutral-950: 0 0% 0%; /* #000000 */
+
   /* === EBONY CLAY (Grises Oscuros) - HSL Tokens === */
   --ebony-50: 220 13% 95%; /* #F0F1F3 */
   --ebony-100: 220 11% 88%; /* #DBDDE2 */
@@ -134,16 +138,28 @@
   --control-action-hover-text: var(--primary);
 
   /* === COMPONENT TOKENS: DASHBOARD NAV === */
-  --nav-item-hover-bg: var(--crocus-600);
-  --nav-item-active-bg: var(--crocus-600);
-  --nav-icon-idle: var(--crocus-300);
-  --nav-icon-hover: var(--crocus-300);
-  --nav-icon-active: var(--crocus-300);
+  --nav-surface-bg: var(--neutral-950);
+  --nav-surface-border: var(--neutral-850);
+  --nav-item-hover-bg: var(--titan-50);
+  --nav-item-active-bg: var(--titan-50);
+  --nav-icon-idle: var(--titan-300);
+  --nav-icon-hover: var(--titan-200);
+  --nav-icon-active: var(--titan-100);
   --nav-label-idle: var(--titan-300);
   --nav-label-hover: var(--titan-300);
   --nav-label-active: var(--titan-300);
   --nav-section-label: var(--titan-300);
   --nav-divider: var(--titan-300);
+  --nav-focus-ring: var(--titan-50);
+  --nav-overlay-bg: var(--neutral-950);
+  --nav-overlay-card-bg: var(--titan-50);
+  --nav-overlay-title: var(--ebony-900);
+  --nav-overlay-message: var(--titan-400);
+  --nav-loading-spinner: var(--neutral-850);
+  --nav-logout-text: var(--titan-500);
+  --nav-logout-icon: var(--titan-500);
+  --nav-logout-hover-bg: var(--state-danger-action-bg);
+  --nav-logout-hover-text: var(--state-danger-text);
 
   /* === COMPONENT TOKENS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
@@ -291,16 +307,28 @@
   --control-action-hover-text: var(--primary);
 
   /* === COMPONENT TOKENS OSCUROS: DASHBOARD NAV === */
-  --nav-item-hover-bg: var(--crocus-400);
-  --nav-item-active-bg: var(--crocus-400);
-  --nav-icon-idle: var(--crocus-300);
-  --nav-icon-hover: var(--crocus-300);
-  --nav-icon-active: var(--crocus-300);
+  --nav-surface-bg: var(--neutral-950);
+  --nav-surface-border: var(--neutral-850);
+  --nav-item-hover-bg: var(--titan-50);
+  --nav-item-active-bg: var(--titan-50);
+  --nav-icon-idle: var(--titan-300);
+  --nav-icon-hover: var(--titan-200);
+  --nav-icon-active: var(--titan-100);
   --nav-label-idle: var(--titan-300);
   --nav-label-hover: var(--titan-200);
   --nav-label-active: var(--titan-100);
   --nav-section-label: var(--titan-500);
   --nav-divider: var(--titan-500);
+  --nav-focus-ring: var(--titan-50);
+  --nav-overlay-bg: var(--neutral-950);
+  --nav-overlay-card-bg: var(--titan-50);
+  --nav-overlay-title: var(--ebony-900);
+  --nav-overlay-message: var(--titan-400);
+  --nav-loading-spinner: var(--neutral-850);
+  --nav-logout-text: var(--titan-500);
+  --nav-logout-icon: var(--titan-500);
+  --nav-logout-hover-bg: var(--state-danger-action-bg);
+  --nav-logout-hover-text: var(--state-danger-text);
 
   /* === COMPONENT TOKENS OSCUROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
@@ -416,16 +444,28 @@
   --control-action-hover-text: var(--primary);
 
   /* === COMPONENT TOKENS CLAROS: DASHBOARD NAV === */
-  --nav-item-hover-bg: var(--crocus-600);
-  --nav-item-active-bg: var(--crocus-600);
-  --nav-icon-idle: var(--crocus-300);
-  --nav-icon-hover: var(--crocus-300);
-  --nav-icon-active: var(--crocus-300);
+  --nav-surface-bg: var(--neutral-950);
+  --nav-surface-border: var(--neutral-850);
+  --nav-item-hover-bg: var(--titan-50);
+  --nav-item-active-bg: var(--titan-50);
+  --nav-icon-idle: var(--titan-300);
+  --nav-icon-hover: var(--titan-200);
+  --nav-icon-active: var(--titan-100);
   --nav-label-idle: var(--titan-300);
   --nav-label-hover: var(--titan-300);
   --nav-label-active: var(--titan-300);
   --nav-section-label: var(--titan-300);
   --nav-divider: var(--titan-300);
+  --nav-focus-ring: var(--titan-50);
+  --nav-overlay-bg: var(--neutral-950);
+  --nav-overlay-card-bg: var(--titan-50);
+  --nav-overlay-title: var(--ebony-900);
+  --nav-overlay-message: var(--titan-400);
+  --nav-loading-spinner: var(--neutral-850);
+  --nav-logout-text: var(--titan-500);
+  --nav-logout-icon: var(--titan-500);
+  --nav-logout-hover-bg: var(--state-danger-action-bg);
+  --nav-logout-hover-text: var(--state-danger-text);
 
   /* === COMPONENT TOKENS CLAROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);

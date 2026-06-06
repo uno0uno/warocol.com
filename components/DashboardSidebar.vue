@@ -2,13 +2,13 @@
   <div>
   <!-- Loading Global Overlay -->
   <Teleport to="body">
-    <div v-if="isLoggingOut" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-      <div class="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
+    <div v-if="isLoggingOut" class="logout-overlay fixed inset-0 flex items-center justify-center z-[9999]">
+      <div class="logout-card rounded-2xl shadow-xl p-8 flex flex-col items-center">
         <div class="w-16 h-16 mb-4">
-          <div class="w-16 h-16 border-4 border-crocus-500 border-t-transparent rounded-full animate-spin"></div>
+          <div class="logout-spinner w-16 h-16 border-4 rounded-full animate-spin"></div>
         </div>
-        <p class="text-lg font-medium text-ebony-900">Cerrando sesión...</p>
-        <p class="text-sm text-titan-400 mt-2">Por favor espera</p>
+        <p class="logout-title text-lg font-medium">Cerrando sesión...</p>
+        <p class="logout-message text-sm mt-2">Por favor espera</p>
       </div>
     </div>
   </Teleport>
@@ -115,7 +115,7 @@
         @click="handleLogout"
         :disabled="isLoggingOut"
         :class="[
-          'nav-item nav-item--idle group w-full text-titan-500 hover:bg-red-900/20 hover:text-red-400',
+          'nav-item nav-item--idle nav-item--logout group w-full',
           collapsed ? 'justify-center' : '',
         ]"
         title="Cerrar sesión"
@@ -199,6 +199,27 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.logout-overlay {
+  background-color: hsl(var(--nav-overlay-bg) / 0.5);
+}
+
+.logout-card {
+  background-color: hsl(var(--nav-overlay-card-bg));
+}
+
+.logout-spinner {
+  border-color: hsl(var(--nav-loading-spinner));
+  border-top-color: transparent;
+}
+
+.logout-title {
+  color: hsl(var(--nav-overlay-title));
+}
+
+.logout-message {
+  color: hsl(var(--nav-overlay-message));
+}
+
 /*
   Sidebar navigation states read semantic nav tokens. Alpha remains local here
   because the sidebar hierarchy depends on subtle idle/hover/active emphasis.
@@ -229,9 +250,16 @@ const handleLogout = async () => {
 .nav-item--idle:hover {
   background-color: hsl(var(--nav-item-hover-bg) / 0.08);
 }
+.nav-item--logout {
+  color: hsl(var(--nav-logout-text));
+}
+.nav-item--logout:hover {
+  background-color: hsl(var(--nav-logout-hover-bg) / 0.2);
+  color: hsl(var(--nav-logout-hover-text));
+}
 .nav-item:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--focus-ring-subtle) / 0.85);
+  box-shadow: 0 0 0 2px hsl(var(--nav-focus-ring) / 0.85);
 }
 
 /* ── Nav icon ── */
@@ -244,6 +272,8 @@ const handleLogout = async () => {
 .nav-item--active .nav-icon   { color: hsl(var(--nav-icon-active)); }
 .nav-item--idle .nav-icon     { color: hsl(var(--nav-icon-idle) / 0.65); } /* 3.5:1 — pasa WCAG AA UI */
 .nav-item--idle:hover .nav-icon { color: hsl(var(--nav-icon-hover) / 0.85); }
+.nav-item--logout .nav-icon { color: hsl(var(--nav-logout-icon)); }
+.nav-item--logout:hover .nav-icon { color: hsl(var(--nav-logout-hover-text)); }
 
 /* ── Label text ── */
 .nav-label-text {

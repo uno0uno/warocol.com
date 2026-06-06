@@ -2,12 +2,12 @@
   <aside
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    class="group bg-ebony-900 h-screen border-r border-ebony-700 flex-shrink-0 shadow-xl flex flex-col w-16 hover:w-56 transition-all duration-200 ease-in-out overflow-hidden"
+    class="base-sidebar group h-screen border-r flex-shrink-0 shadow-xl flex flex-col w-16 hover:w-56 transition-all duration-200 ease-in-out overflow-hidden"
   >
     <!-- Header: Logo & Selector -->
     <div class="p-2 pb-3 flex-shrink-0">
       <!-- Logo -->
-      <div class="flex border border-ebony-700 px-2 py-2 rounded-lg mb-4 justify-center">
+      <div class="base-sidebar-logo flex border px-2 py-2 rounded-lg mb-4 justify-center">
         <div class="rounded-lg flex items-center justify-center overflow-hidden">
           <img
             :src="logoSrc"
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Footer Slot (User info) — only when expanded and slot has content -->
-    <div v-if="$slots.footer" class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-20 group-hover:opacity-100 transition-all duration-200 border-t border-ebony-700/0 group-hover:border-ebony-700">
+    <div v-if="$slots.footer" class="base-sidebar-footer max-h-0 opacity-0 overflow-hidden group-hover:max-h-20 group-hover:opacity-100 transition-all duration-200 border-t">
       <div class="p-3">
         <slot name="footer" />
       </div>
@@ -51,6 +51,23 @@ const isHovered = ref(false)
 </script>
 
 <style scoped>
+.base-sidebar {
+  background-color: hsl(var(--nav-surface-bg));
+  border-color: hsl(var(--nav-surface-border));
+}
+
+.base-sidebar-logo {
+  border-color: hsl(var(--nav-surface-border));
+}
+
+.base-sidebar-footer {
+  border-color: hsl(var(--nav-surface-border) / 0);
+}
+
+.base-sidebar:hover .base-sidebar-footer {
+  border-color: hsl(var(--nav-surface-border));
+}
+
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
