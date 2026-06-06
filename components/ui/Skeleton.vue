@@ -51,9 +51,9 @@ const shapeClasses = computed(() => {
 
 const variantClasses = computed(() => {
   const variants = {
-    default: 'bg-gray-200/60 dark:bg-gray-700/60',
-    light: 'bg-gray-100/80 dark:bg-gray-600/40',
-    profile: 'bg-white/20 backdrop-blur-sm'
+    default: 'bg-muted/70',
+    light: 'bg-muted/45',
+    profile: 'bg-surface/20 backdrop-blur-sm'
   }
   return variants[props.variant] || variants.default
 })

@@ -12,7 +12,7 @@ const props = defineProps({
     overlay ? 'h-screen' : 'h-full'
   ]">
     <div class="loader"></div>
-    <div class="text-4xl font-medium text-left font-principal italic">Momentico..</div>
+    <div class="text-4xl font-medium text-left font-principal italic text-text-primary">Momentico..</div>
   </div>
 </template>
 
@@ -23,8 +23,8 @@ const props = defineProps({
   height: 78px;
   border-radius: 50%;
   box-sizing: border-box;
-  background: #fff;
-  border: 8px solid #131a1d;
+  background: hsl(var(--surface));
+  border: 8px solid hsl(var(--text-primary));
   overflow: hidden;
 }
 
@@ -35,9 +35,9 @@ const props = defineProps({
   top: -50%;
   width: 100%;
   height: 100%;
-  background: #263238;
+  background: hsl(var(--text-secondary));
   z-index: 5;
-  border-bottom: 8px solid #131a1d;
+  border-bottom: 8px solid hsl(var(--text-primary));
   box-sizing: border-box;
   animation: eyeShade 3s infinite;
 }
@@ -50,7 +50,7 @@ const props = defineProps({
   width: 32px;
   z-index: 2;
   height: 32px;
-  background: #111;
+  background: hsl(var(--text-primary));
   border-radius: 50%;
   animation: eyeMove 3s infinite;
 }

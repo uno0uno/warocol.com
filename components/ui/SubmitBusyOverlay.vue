@@ -61,7 +61,7 @@ const hintId = computed(() => props.hint ? `${labelId.value}-hint` : undefined)
         >
           <div class="relative flex flex-col items-center gap-5 text-center">
             <div
-              class="inline-flex items-center gap-2 rounded-full border border-crocus-200 bg-crocus-100/90 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-crocus-700"
+              class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary"
             >
               Submit busy
             </div>

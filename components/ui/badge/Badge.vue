@@ -27,8 +27,8 @@ const badgeVariants = cva(
         warning: 'rounded-full border-transparent bg-warning text-warning-foreground hover:bg-warning/80 px-2.5 py-0.5',
         info: 'rounded-full border-transparent bg-info text-info-foreground hover:bg-info/80 px-2.5 py-0.5',
         profile: 'rounded-md border border-border bg-surface text-text-secondary hover:bg-surface-secondary px-3 py-1',
-        titan: 'rounded-md border border-titan-400 bg-titan-200 text-titan-800 hover:bg-titan-300 px-3 py-1',
-        crocus: 'rounded-md border border-crocus-400 bg-crocus-100 text-crocus-800 hover:bg-crocus-200 px-3 py-1'
+        titan: 'rounded-md border border-badge-neutral-border bg-badge-neutral-bg text-badge-neutral-text hover:bg-muted px-3 py-1',
+        crocus: 'rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/15 px-3 py-1'
       },
     },
     defaultVariants: {

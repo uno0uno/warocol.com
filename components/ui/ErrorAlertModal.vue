@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50"
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-overlay-backdrop/50"
         role="alertdialog"
         aria-modal="true"
         :aria-labelledby="titleId"
@@ -32,8 +32,8 @@
             @click.stop
           >
             <div class="flex justify-center mb-4">
-              <div class="w-16 h-16 rounded-full flex items-center justify-center bg-red-100 dark:bg-red-900/30">
-                <ExclamationTriangleIcon class="w-8 h-8 text-red-600 dark:text-red-400" aria-hidden="true" />
+              <div class="w-16 h-16 rounded-full flex items-center justify-center bg-state-danger-bg">
+                <ExclamationTriangleIcon class="w-8 h-8 text-state-danger-icon" aria-hidden="true" />
               </div>
             </div>
 
@@ -46,7 +46,7 @@
 
             <div
               v-if="dependents && dependents.length > 0"
-              class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40 rounded-lg px-4 py-3 mb-6 space-y-2"
+              class="bg-state-danger-bg border border-state-danger-border rounded-lg px-4 py-3 mb-6 space-y-2"
             >
               <div
                 v-for="dep in dependents"
@@ -54,7 +54,7 @@
                 class="flex items-center justify-between"
               >
                 <span class="text-sm font-medium text-text-primary">{{ dep.label }}</span>
-                <span class="text-sm font-bold text-red-700 dark:text-red-300">{{ dep.count }}</span>
+                <span class="text-sm font-bold text-state-danger-text">{{ dep.count }}</span>
               </div>
             </div>
 
