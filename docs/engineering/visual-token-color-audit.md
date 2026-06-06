@@ -1,0 +1,37 @@
+# Visual Token Color Audit
+
+Issue: #1172
+Epic: #1173
+
+## Search Counts
+
+Search scope excludes `node_modules`, lock files, build output, `.nuxt`, `public`, and this audit note.
+
+| Search | Before | After | Notes |
+|---|---:|---:|---|
+| `purple|violet` | 39 | 7 | Remaining refs are token comments, a blog gradient variant name, and one documented data palette. |
+| 6-digit hex colors | 145 | 145 | Mostly token comments, data visualization palettes, social brands, and user-configurable color fallbacks. |
+| Crocus brand hex values | 1 | 1 | `#7C3AED` remains in a POS product category palette. |
+
+## Converted
+
+- Supplier and purchase preparation statuses now use semantic warning state tokens instead of purple utilities.
+- Received supplier transition state now uses semantic success state tokens.
+- POS cart preparation state now uses semantic warning state tokens.
+- Digital payment icons and finance digital badges now use semantic info state tokens.
+- WaRos checkout balance card now uses primary/surface/border tokens instead of violet utilities.
+- Accounting class color helpers now use status chip tokens for the third class family.
+- Auth logo, cierre period badges, loyalty frequency rule styling, and brand-avatar comments no longer use purple/violet literals.
+
+## Intentional Exceptions
+
+- Data and category palettes: POS product category colors, menu product swatches, team member color palettes, and event gradients are visualization colors rather than brand state colors.
+- User-configurable station colors: kitchen station dots, station forms, inherited station colors, and station fallback hex values preserve operator-selected colors.
+- Third-party brand colors: WhatsApp, Facebook, and Instagram hover colors keep their external brand identity.
+- Chart colors: analytics chart series and grid colors are chart configuration, not page chrome.
+- Print/content CSS: print tickets, docs layout surfaces, and article CTA hard white/black values are scoped rendering contexts.
+- Token comments: primitive token files document source hex values for maintainability.
+
+## Follow-Up Rule
+
+New UI state colors should use semantic tokens such as `state-*`, `status-*`, `status-chip-*`, `data-table-*`, `control-*`, or `primary`, not direct `purple-*`, `violet-*`, or brand hex utilities.

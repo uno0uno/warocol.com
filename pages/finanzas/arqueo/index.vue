@@ -130,9 +130,9 @@
           </NuxtLink>
           <NuxtLink
             :to="`/finanzas/arqueo/z?mode=custom&start=${today}&end=${today}`"
-            class="flex items-start gap-3 p-4 rounded-lg border-2 border-violet-200 bg-violet-50/40 hover:border-violet-300 hover:bg-violet-50 transition-colors min-h-[44px]"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-state-info-border bg-state-info-bg hover:border-state-info-border/80 hover:bg-state-info-bg/80 transition-colors min-h-[44px]"
           >
-            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-800" aria-hidden="true">
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-state-info-bg flex items-center justify-center text-state-info-icon" aria-hidden="true">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

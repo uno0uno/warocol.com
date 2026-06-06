@@ -305,7 +305,7 @@ function getStatusBadgeClass(status: string): string {
     quotation: 'bg-yellow-500/10 text-yellow-600',
     pending: 'bg-blue-500/10 text-blue-600',
     confirmed: 'bg-green-500/10 text-green-600',
-    preparing: 'bg-purple-500/10 text-purple-600',
+    preparing: 'bg-state-warning-bg text-state-warning-text',
     shipped: 'bg-cyan-500/10 text-cyan-600',
     partially_received: 'bg-orange-500/10 text-orange-600',
     received: 'bg-emerald-500/10 text-emerald-600',

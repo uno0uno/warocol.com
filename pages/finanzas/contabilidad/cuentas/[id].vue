@@ -34,11 +34,11 @@ const CLASS_VARIANTS: Record<string, string> = {
   '4': 'success', '5': 'destructive', '6': 'warning',
 }
 const CLASS_BG: Record<string, string> = {
-  '1': 'bg-primary/10', '2': 'bg-amber-100', '3': 'bg-violet-100',
+  '1': 'bg-primary/10', '2': 'bg-amber-100', '3': 'bg-status-chip-bg',
   '4': 'bg-green-100',  '5': 'bg-red-100',   '6': 'bg-amber-100',
 }
 const CLASS_TEXT: Record<string, string> = {
-  '1': 'text-primary',   '2': 'text-amber-600',  '3': 'text-violet-600',
+  '1': 'text-primary',   '2': 'text-amber-600',  '3': 'text-status-chip-text',
   '4': 'text-green-600', '5': 'text-red-600',     '6': 'text-amber-600',
 }
 const pucLevel = (code: string) => {

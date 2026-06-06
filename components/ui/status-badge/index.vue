@@ -18,7 +18,7 @@ const statusBadgeVariants = cva(
         info:        'bg-status-info-bg text-status-info-text',
         // Secondary: neutral values
         secondary:   'bg-secondary text-secondary-foreground',
-        // Primary: brand-highlighted values — purple
+        // Primary: brand-highlighted values
         primary:     'bg-primary/10 text-primary'
       },
       size: {

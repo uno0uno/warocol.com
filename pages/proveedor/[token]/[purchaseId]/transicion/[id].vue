@@ -416,7 +416,7 @@ function getStatusBadgeClass(status: string): string {
     confirmed: 'border-success text-success',
     preparing: 'border-blue-500 text-blue-500',
     shipped: 'border-blue-600 text-blue-600',
-    received: 'border-purple-500 text-purple-500',
+    received: 'border-state-success-border text-state-success-text',
     verified: 'border-indigo-500 text-indigo-500',
     invoiced: 'border-orange-500 text-orange-500',
     paid: 'border-success text-success',
