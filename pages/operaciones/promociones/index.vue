@@ -466,8 +466,7 @@ const filteredPromotions = computed(() => {
   return rows
 })
 
-const promoRowClass = (_row: PromotionRow, index: number) =>
-  index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+const promoRowClass = (_row: PromotionRow, _index: number) => ''
 
 const getRowClass = (row: PromotionRow) => {
   const index = filteredPromotions.value.findIndex((p) => p.id === row.id)
