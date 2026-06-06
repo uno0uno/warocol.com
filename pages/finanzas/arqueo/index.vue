@@ -61,7 +61,7 @@
           <NuxtLink
             v-if="openTablesCount > 0"
             to="/mesas"
-            class="h-10 px-3 rounded-lg border-2 border-amber-300 bg-amber-50 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1.5"
+            class="h-10 px-3 rounded-lg border-2 border-state-warning-border bg-state-warning-bg text-xs font-medium text-state-warning-text hover:bg-state-warning-bg/80 transition-colors flex items-center gap-1.5"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -250,7 +250,7 @@
   <!-- Delete confirmation modal -->
   <Teleport to="body">
     <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/50" @click="closeDeleteModal" />
+      <div class="absolute inset-0 bg-overlay-backdrop/50" @click="closeDeleteModal" />
       <div class="relative bg-surface rounded-xl shadow-xl w-full max-w-sm p-6">
         <div class="text-center">
           <div class="mx-auto mb-4 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -273,7 +273,7 @@
             <button
               @click="handleDelete"
               :disabled="deleting"
-              class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              class="flex-1 min-h-[44px] px-4 py-2 bg-action-destructive-bg text-action-destructive-text rounded-lg text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50"
             >
               {{ deleting ? 'Eliminando...' : 'Eliminar' }}
             </button>

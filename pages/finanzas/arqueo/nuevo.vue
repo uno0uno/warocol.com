@@ -10,8 +10,8 @@
 
     <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
     <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-        <svg class="w-9 h-9 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
+        <svg class="w-9 h-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
@@ -46,7 +46,7 @@
         </div>
         <div class="flex justify-between px-4 py-2.5 text-sm">
           <span class="text-text-secondary">Diferencia</span>
-          <span class="font-semibold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-emerald-600' : 'text-destructive'">
+          <span class="font-semibold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
             {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
           </span>
         </div>
@@ -233,21 +233,21 @@
           </div>
 
           <!-- Mesas abiertas: bloquear o continuar -->
-          <div v-if="xPreviewData.openTablesCount > 0" class="bg-surface border-2 border-amber-300 rounded-lg p-4 flex items-start gap-3">
-            <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
-              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div v-if="xPreviewData.openTablesCount > 0" class="bg-surface border-2 border-state-warning-border rounded-lg p-4 flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-state-warning-bg border border-state-warning-border flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-amber-800">{{ xPreviewData.openTablesCount }} {{ xPreviewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta</p>
-              <p class="text-xs text-amber-700 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
+              <p class="text-sm font-semibold text-state-warning-text">{{ xPreviewData.openTablesCount }} {{ xPreviewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta</p>
+              <p class="text-xs text-state-warning-text/90 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
               <div class="flex flex-wrap gap-2 mt-3">
-                <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">
+                <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-action-warning-bg text-action-warning-text text-xs font-semibold hover:bg-action-warning-hover-bg transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   Ir al POS
                 </NuxtLink>
-                <button @click="refetchXPreview()" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors">
+                <button @click="refetchXPreview()" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-state-warning-border bg-state-warning-bg text-state-warning-text text-xs font-medium hover:bg-state-warning-bg/80 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Verificar de nuevo
                 </button>
@@ -256,7 +256,7 @@
           </div>
           <div
             v-if="!shiftOpenForWindow"
-            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 mb-3"
+            class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3 text-sm text-state-warning-text mb-3"
           >
             Debes abrir el turno y declarar el fondo de caja antes de cerrar.
             <NuxtLink :to="aperturaLink" class="font-semibold underline ml-1">Abrir turno</NuxtLink>
@@ -477,7 +477,7 @@
                 <span
                   class="text-xs font-semibold px-2 py-0.5 rounded-full"
                   :class="methodDiff(method) >= 0
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    ? 'bg-state-success-bg text-state-success-text border border-state-success-border'
                     : 'bg-destructive/10 text-destructive border border-destructive/20'"
                 >
                   {{ methodDiff(method) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(method)) }}
@@ -570,18 +570,18 @@
             <!-- Diferencia — accent row -->
             <div
               class="px-3 py-2.5 border-t-2 flex items-center justify-between"
-              :class="cashDiff >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-destructive/5 border-destructive/20'"
+              :class="cashDiff >= 0 ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
             >
               <div class="flex items-center gap-1.5">
-                <svg v-if="cashDiff >= 0" class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg v-if="cashDiff >= 0" class="w-3.5 h-3.5 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
                 <svg v-else class="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">Diferencia</span>
+                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">Diferencia</span>
               </div>
-              <span class="text-sm font-bold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">
+              <span class="text-sm font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
                 {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
               </span>
             </div>
@@ -673,10 +673,10 @@
           <!-- Diferencia caja -->
           <div
             class="rounded-lg border-2 px-3 py-2.5"
-            :class="cashDiff >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-destructive/5 border-destructive/20'"
+            :class="cashDiff >= 0 ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
           >
-            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">Diferencia caja</p>
-            <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">
+            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">Diferencia caja</p>
+            <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
             </p>
           </div>
@@ -686,18 +686,18 @@
         <div class="flex items-start gap-3 p-3 rounded-lg border mb-3 transition-colors"
           :class="confirmArmed
             ? 'bg-destructive/10 border-destructive/30'
-            : 'bg-amber-50 border-amber-200'"
+            : 'bg-state-warning-bg border-state-warning-border'"
         >
           <svg class="w-4 h-4 flex-shrink-0 mt-0.5 transition-colors"
-            :class="confirmArmed ? 'text-destructive' : 'text-amber-600'"
+            :class="confirmArmed ? 'text-destructive' : 'text-state-warning-icon'"
             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-amber-800'">
+            <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-state-warning-text'">
               {{ confirmArmed ? 'Confirma para cerrar definitivamente' : 'Esta acción no se puede deshacer' }}
             </p>
-            <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-amber-700'">
+            <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-state-warning-text/90'">
               El cierre Z quedará registrado y el período se bloqueará.
             </p>
           </div>
@@ -724,7 +724,7 @@
             :disabled="isSubmitting || !shiftOpenForWindow"
             class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             :class="confirmArmed
-              ? 'bg-destructive text-white hover:bg-destructive/90 ring-2 ring-destructive/30'
+              ? 'bg-action-destructive-bg text-action-destructive-text hover:bg-action-destructive-hover-bg ring-2 ring-action-destructive-focus-ring/30'
               : 'bg-primary text-primary-foreground hover:bg-primary/90'"
           >
             <svg v-if="isSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -967,10 +967,10 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
-  cash:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
-  card:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200'         },
+  cash:    { dot: 'bg-state-success-icon', badge: 'bg-state-success-bg text-state-success-text border border-state-success-border' },
+  card:    { dot: 'bg-state-info-icon',    badge: 'bg-state-info-bg text-state-info-text border border-state-info-border'         },
   digital: { dot: 'bg-state-info-icon',  badge: 'bg-state-info-bg text-state-info-text border border-state-info-border'   },
-  credit:  { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border border-amber-200'      },
+  credit:  { dot: 'bg-state-warning-icon',   badge: 'bg-state-warning-bg text-state-warning-text border border-state-warning-border'      },
 }
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
@@ -1033,8 +1033,8 @@ const methodDiff = (method: BreakdownMethod) =>
   (parseInt(methodAmounts.value[method.key]) || 0) - method.total
 
 const diffResultClass = computed(() => {
-  if (cashDiff.value >= 0) return 'border-emerald-200 bg-emerald-50 text-emerald-800'
-  if (Math.abs(cashDiff.value) < (previewData.value?.cashExpected ?? 1) * 0.02) return 'border-amber-200 bg-amber-50 text-amber-800'
+  if (cashDiff.value >= 0) return 'border-state-success-border bg-state-success-bg text-state-success-text'
+  if (Math.abs(cashDiff.value) < (previewData.value?.cashExpected ?? 1) * 0.02) return 'border-state-warning-border bg-state-warning-bg text-state-warning-text'
   return 'border-destructive/30 bg-destructive/5 text-destructive'
 })
 

@@ -616,10 +616,10 @@
                 <td class="py-3 px-4">
                   <span
                     :class="{
-                      'bg-green-100 text-green-800': instance.status === 'paid',
-                      'bg-yellow-100 text-yellow-800': instance.status === 'pending',
-                      'bg-gray-100 text-gray-800': instance.status === 'skipped',
-                      'bg-red-100 text-red-800': instance.status === 'cancelled'
+                      'bg-state-success-bg text-state-success-text': instance.status === 'paid',
+                      'bg-state-warning-bg text-state-warning-text': instance.status === 'pending',
+                      'bg-status-chip-bg text-status-chip-text': instance.status === 'skipped',
+                      'bg-state-danger-bg text-state-danger-text': instance.status === 'cancelled'
                     }"
                     class="px-2 py-1 rounded-full text-xs font-medium"
                   >
@@ -649,7 +649,7 @@
                     <button
                       v-if="instance.status === 'pending'"
                       @click="markAsPaid(instance)"
-                      class="text-green-600 hover:text-green-700"
+                      class="text-state-success-text hover:text-state-success-text/80"
                       title="Marcar como pagado"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

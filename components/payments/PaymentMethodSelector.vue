@@ -21,10 +21,10 @@
           :class="[
             modelValue.slug === group.slug
               ? (group.triggersCartera
-                  ? 'border-amber-500 bg-amber-50 shadow-sm dark:bg-amber-950/20'
+                  ? 'border-state-warning-border bg-state-warning-bg shadow-sm'
                   : 'border-primary bg-primary/5 shadow-sm')
               : (group.triggersCartera
-                  ? 'border-border hover:border-amber-400/40'
+                  ? 'border-border hover:border-state-warning-border/40'
                   : 'border-border hover:border-primary/30'),
             disabled ? 'opacity-50 cursor-not-allowed' : '',
           ]"
@@ -33,7 +33,7 @@
             <!-- Per-slug icon -->
             <div
               v-if="group.slug === 'cash'"
-              class="bg-green-100 text-green-700 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              class="bg-state-success-bg text-state-success-icon w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
             >
               <svg class="h-4 w-4 md:h-5 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
@@ -41,7 +41,7 @@
             </div>
             <div
               v-else-if="group.slug === 'card'"
-              class="bg-blue-100 text-blue-700 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              class="bg-state-info-bg text-state-info-icon w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
             >
               <svg class="h-4 w-4 md:h-5 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
@@ -57,7 +57,7 @@
             </div>
             <div
               v-else-if="group.triggersCartera"
-              class="bg-amber-100 text-amber-700 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              class="bg-state-warning-bg text-state-warning-icon w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0"
             >
               <svg class="h-4 w-4 md:h-5 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -77,7 +77,7 @@
               class="h-4 w-4 transition-all hidden md:block"
               :class="[
                 modelValue.slug === group.slug ? 'opacity-100' : 'opacity-0',
-                group.triggersCartera ? 'text-amber-600' : 'text-primary',
+                group.triggersCartera ? 'text-state-warning-icon' : 'text-primary',
               ]"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
               aria-hidden="true"
@@ -90,7 +90,7 @@
           <div class="text-center md:text-left w-full">
             <div
               class="font-semibold text-xs md:text-sm leading-tight"
-              :class="modelValue.slug === group.slug && group.triggersCartera ? 'text-amber-700' : 'text-text-primary'"
+              :class="modelValue.slug === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
             >
               {{ group.name }}
             </div>
@@ -100,7 +100,7 @@
           <div
             v-if="modelValue.slug === group.slug"
             class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden"
-            :class="group.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+            :class="group.triggersCartera ? 'bg-state-warning-icon' : 'bg-primary'"
           />
         </div>
       </label>
@@ -146,7 +146,7 @@
           class="relative min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           :class="modelValue.id === method.id
             ? (selectedGroup.triggersCartera
-                ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm'
+                ? 'border-state-warning-border bg-state-warning-bg text-state-warning-text shadow-sm'
                 : 'border-primary bg-primary/10 text-primary shadow-sm')
             : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
           @click="onMethodToggle(method.id)"
@@ -155,7 +155,7 @@
           <span
             v-if="modelValue.id === method.id"
             class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full"
-            :class="selectedGroup.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+            :class="selectedGroup.triggersCartera ? 'bg-state-warning-icon' : 'bg-primary'"
           />
         </button>
       </div>
@@ -171,7 +171,7 @@
             class="w-full flex items-center justify-between px-4 py-3 text-sm transition-colors active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             :class="modelValue.id === method.id
               ? (selectedGroup.triggersCartera
-                  ? 'bg-amber-50 text-amber-700 font-semibold'
+                  ? 'bg-state-warning-bg text-state-warning-text font-semibold'
                   : 'bg-primary/8 text-primary font-semibold')
               : 'text-text-primary hover:bg-surface-secondary/50'"
             @click="onMethodToggle(method.id)"
@@ -180,7 +180,7 @@
             <svg
               v-if="modelValue.id === method.id"
               class="w-4 h-4 flex-shrink-0"
-              :class="selectedGroup.triggersCartera ? 'text-amber-600' : 'text-primary'"
+              :class="selectedGroup.triggersCartera ? 'text-state-warning-icon' : 'text-primary'"
               fill="none" stroke="currentColor" viewBox="0 0 24 24"
               aria-hidden="true"
             >

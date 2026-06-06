@@ -101,8 +101,8 @@ const reasonLabel = (reason: string) => {
 }
 
 const reasonClass = (reason: string) => {
-  if (reason === 'matias_ya_validado') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-  if (reason?.startsWith('matias_')) return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+  if (reason === 'matias_ya_validado') return 'bg-state-warning-bg text-state-warning-text'
+  if (reason?.startsWith('matias_')) return 'bg-state-danger-bg text-state-danger-text'
   return 'bg-surface-secondary text-text-secondary'
 }
 </script>

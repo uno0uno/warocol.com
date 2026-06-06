@@ -97,7 +97,7 @@
               :disabled="savingId === item.id"
               class="text-xs px-2.5 py-1.5 rounded border transition-colors min-h-[32px] disabled:opacity-50"
               :class="item.isActive
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                ? 'border-state-success-border bg-state-success-bg text-state-success-text hover:bg-state-success-bg/80'
                 : 'border-border bg-background text-text-secondary hover:text-text-primary'"
               @click.stop="toggleActive(item)"
             >
@@ -145,7 +145,7 @@
           :disabled="savingId === row.id"
           class="text-xs px-2.5 py-1.5 rounded border transition-colors min-h-[32px] disabled:opacity-50 disabled:cursor-not-allowed"
           :class="row.isActive
-            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            ? 'border-state-success-border bg-state-success-bg text-state-success-text hover:bg-state-success-bg/80'
             : 'border-border bg-background text-text-secondary hover:text-text-primary'"
           :aria-label="row.isActive ? `Desactivar ${row.name}` : `Activar ${row.name}`"
           @click.stop="toggleActive(row)"
@@ -194,7 +194,7 @@
     >
       <div
         v-if="showPanel"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
         aria-hidden="true"
         @click="closePanel"
       />
@@ -309,9 +309,9 @@
           <!-- Warning: group has no default account configured -->
           <div
             v-else-if="panelMode === 'create' && group?.slug !== 'cash' && !group?.glAccountCode"
-            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20"
+            class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
           >
-            <p class="text-xs text-amber-700 dark:text-amber-400 leading-snug flex items-start gap-1.5">
+            <p class="text-xs text-state-warning-text leading-snug flex items-start gap-1.5">
               <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>

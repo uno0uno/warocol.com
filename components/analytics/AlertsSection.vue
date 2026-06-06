@@ -28,54 +28,54 @@ const getIcon = (type: string) => {
   }
 };
 
-// Color classes based on alert type
+// Semantic classes based on alert type
 const getColorClasses = (type: string) => {
   switch (type) {
     case 'critical':
       return {
-        bg: 'bg-red-50',
-        border: 'border-red-100',
-        iconBg: 'bg-white',
-        iconText: 'text-red-500',
-        titleText: 'text-red-700',
-        descText: 'text-red-600/80',
-        actionText: 'text-red-700'
+        bg: 'bg-state-danger-bg',
+        border: 'border-state-danger-border',
+        iconBg: 'bg-surface',
+        iconText: 'text-state-danger-icon',
+        titleText: 'text-state-danger-text',
+        descText: 'text-state-danger-text/80',
+        actionText: 'text-state-danger-text'
       };
     case 'warning':
       return {
-        bg: 'bg-orange-50',
-        border: 'border-orange-100',
-        iconBg: 'bg-white',
-        iconText: 'text-orange-500',
-        titleText: 'text-orange-700',
-        descText: 'text-orange-600/80',
-        actionText: 'text-orange-700'
+        bg: 'bg-state-warning-bg',
+        border: 'border-state-warning-border',
+        iconBg: 'bg-surface',
+        iconText: 'text-state-warning-icon',
+        titleText: 'text-state-warning-text',
+        descText: 'text-state-warning-text/80',
+        actionText: 'text-state-warning-text'
       };
     default:
       return {
-        bg: 'bg-blue-50',
-        border: 'border-blue-100',
-        iconBg: 'bg-white',
-        iconText: 'text-blue-500',
-        titleText: 'text-blue-700',
-        descText: 'text-blue-600/80',
-        actionText: 'text-blue-700'
+        bg: 'bg-state-info-bg',
+        border: 'border-state-info-border',
+        iconBg: 'bg-surface',
+        iconText: 'text-state-info-icon',
+        titleText: 'text-state-info-text',
+        descText: 'text-state-info-text/80',
+        actionText: 'text-state-info-text'
       };
   }
 };
 </script>
 
 <template>
-  <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm opacity-100 transition-opacity duration-300">
+  <section class="bg-surface p-6 rounded-2xl border border-border shadow-sm opacity-100 transition-opacity duration-300">
     <h3 class="text-lg font-bold flex items-center gap-2 mb-4">
-      <span class="w-2 h-6 bg-red-500 rounded-full"></span>
+      <span class="w-2 h-6 bg-state-danger-icon rounded-full"></span>
       Alertas
     </h3>
 
     <div v-if="!alerts || alerts.length === 0" class="text-center py-8">
-      <Info :size="48" class="text-slate-300 mx-auto mb-3" />
-      <p class="text-slate-500 text-sm">No hay alertas en este momento</p>
-      <p class="text-slate-400 text-xs mt-1">Todo está funcionando correctamente ✅</p>
+      <Info :size="48" class="text-text-tertiary mx-auto mb-3" />
+      <p class="text-text-secondary text-sm">No hay alertas en este momento</p>
+      <p class="text-text-tertiary text-xs mt-1">Todo está funcionando correctamente ✅</p>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">

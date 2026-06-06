@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
     <div class="max-w-md mx-auto flex items-center justify-center min-h-[400px]">
-      <p v-if="debugError" class="text-xs text-red-500 absolute top-4 left-4 right-4 break-all">{{ debugError }}</p>
+      <p v-if="debugError" class="text-xs text-form-control-error absolute top-4 left-4 right-4 break-all">{{ debugError }}</p>
       <!-- Loading -->
       <div v-if="isLoading" class="text-center space-y-4">
         <div class="flex justify-center">
@@ -16,8 +16,8 @@
       <!-- Approved -->
       <div v-else-if="isApproved" class="text-center space-y-5">
         <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
+            <svg class="w-8 h-8 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -37,8 +37,8 @@
       <!-- Pending -->
       <div v-else-if="isPending" class="text-center space-y-5">
         <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center">
-            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 rounded-full bg-state-warning-bg flex items-center justify-center">
+            <svg class="w-8 h-8 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -58,8 +58,8 @@
       <!-- Failure / other -->
       <div v-else class="text-center space-y-5">
         <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 rounded-full bg-state-danger-bg flex items-center justify-center">
+            <svg class="w-8 h-8 text-state-danger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>

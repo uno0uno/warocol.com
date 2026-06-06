@@ -9,8 +9,8 @@
     />
 
     <div v-if="openSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-        <svg class="w-9 h-9 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
+        <svg class="w-9 h-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
@@ -104,7 +104,7 @@
 
         <div
           v-if="isShiftOpen(existingShift)"
-          class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800"
+          class="rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2.5 text-sm text-state-success-text"
         >
           Este turno ya está abierto con fondo {{ formatCurrency(existingShift.openingCash) }}.
           <NuxtLink v-if="closeLink" :to="closeLink" class="font-semibold underline ml-1">Ir al cierre</NuxtLink>

@@ -9,7 +9,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="modelValue" class="fixed inset-0 z-40 bg-black/40" @click="close" aria-hidden="true" />
+      <div v-if="modelValue" class="fixed inset-0 z-40 bg-overlay-backdrop/40" @click="close" aria-hidden="true" />
     </Transition>
 
     <!-- Panel -->
@@ -25,7 +25,7 @@
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-surface-tertiary" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -115,7 +115,7 @@
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm font-semibold">
                   <span class="text-text-primary">Diferencia</span>
-                  <span :class="detail.cashDifference >= 0 ? 'text-emerald-600' : 'text-destructive'">
+                  <span :class="detail.cashDifference >= 0 ? 'text-state-success-text' : 'text-destructive'">
                     {{ detail.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(detail.cashDifference) }}
                   </span>
                 </div>
@@ -170,7 +170,7 @@
               <button
                 @click="handleDelete"
                 :disabled="deleting"
-                class="min-h-[44px] flex-1 px-4 py-2 rounded-lg bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                class="min-h-[44px] flex-1 px-4 py-2 rounded-lg bg-action-destructive-bg text-action-destructive-text text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50"
               >
                 {{ deleting ? 'Eliminando...' : 'Sí, eliminar' }}
               </button>
