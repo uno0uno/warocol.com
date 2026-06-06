@@ -353,11 +353,11 @@
 
   /* === COMPONENT TOKENS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--surface-secondary);
-  --data-table-header-text: var(--text-secondary);
+  --data-table-header-bg: var(--neutral-200);
+  --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--surface-secondary);
-  --data-table-row-hover-bg: var(--surface-secondary);
+  --data-table-row-alt-bg: var(--neutral-100);
+  --data-table-row-hover-bg: var(--neutral-200);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);
@@ -544,11 +544,11 @@
 
   /* === COMPONENT TOKENS OSCUROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--surface-secondary);
-  --data-table-header-text: var(--text-secondary);
+  --data-table-header-bg: var(--neutral-600);
+  --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--surface-secondary);
-  --data-table-row-hover-bg: var(--surface-tertiary);
+  --data-table-row-alt-bg: var(--neutral-700);
+  --data-table-row-hover-bg: var(--neutral-600);
   --data-table-row-selected-bg: var(--neutral-700);
   --data-table-row-new-bg: var(--neutral-700);
   --data-table-border: var(--border);
@@ -681,11 +681,11 @@
 
   /* === COMPONENT TOKENS CLAROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--surface-secondary);
-  --data-table-header-text: var(--text-secondary);
+  --data-table-header-bg: var(--neutral-200);
+  --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--surface-secondary);
-  --data-table-row-hover-bg: var(--surface-secondary);
+  --data-table-row-alt-bg: var(--neutral-100);
+  --data-table-row-hover-bg: var(--neutral-200);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);

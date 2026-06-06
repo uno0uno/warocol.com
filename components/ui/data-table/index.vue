@@ -47,7 +47,7 @@ const tableHeaderVariants = cva(
     variants: {
       variant: {
         default: 'bg-data-table-header-bg border-data-table-border',
-        minimal: 'bg-data-table-container-bg border-data-table-border',
+        minimal: 'bg-data-table-header-bg border-data-table-border',
         elevated: 'bg-data-table-header-bg border-data-table-border'
       }
     },
@@ -63,7 +63,7 @@ const tableRowVariants = cva(
     variants: {
       variant: {
         default: 'border-data-table-border hover:bg-data-table-row-hover-bg',
-        minimal: 'border-data-table-border hover:bg-data-table-row-hover-bg/50',
+        minimal: 'border-data-table-border hover:bg-data-table-row-hover-bg',
         elevated: 'border-data-table-border hover:bg-data-table-row-hover-bg'
       },
       rowType: {
@@ -330,7 +330,7 @@ watch(
             :key="getRowKey(row, index)"
             :class="[
               tableRowVariants({ variant, rowType: 'normal' }),
-              rowClass?.(row) || (index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg/30'),
+              rowClass?.(row) || (index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'),
               recentRowKeys.has(getRowKey(row, index)) && 'table-row-new',
               'cursor-pointer hover:bg-data-table-row-hover-bg transition-colors'
             ]"
