@@ -56,14 +56,14 @@
                 <div class="w-2 h-2 rounded-full bg-amber-400" />
                 <label class="text-[10px] font-bold text-text-secondary uppercase">Aviso Amarillo</label>
               </div>
-              <input v-model.number="form.alert_threshold_1_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 transition-all text-sm text-text-primary" />
+              <input v-model.number="form.alert_threshold_1_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-state-warning-border/20 focus:border-state-warning-border transition-all text-sm text-text-primary" />
             </div>
             <div class="space-y-1.5">
               <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-red-500" />
+                <div class="w-2 h-2 rounded-full bg-state-danger-icon" />
                 <label class="text-[10px] font-bold text-text-secondary uppercase">Aviso Rojo</label>
               </div>
-              <input v-model.number="form.alert_threshold_2_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm text-text-primary" />
+              <input v-model.number="form.alert_threshold_2_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-state-danger-border transition-all text-sm text-text-primary" />
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@
           <button type="button" @click="$emit('close')" class="flex-1 px-4 py-2.5 text-sm font-medium text-text-secondary bg-surface-secondary rounded-xl hover:bg-border transition-colors">
             Cancelar
           </button>
-          <button type="submit" form="station-form-desktop" :disabled="loading" class="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 min-h-[44px]">
+          <button type="submit" form="station-form-desktop" :disabled="loading" class="flex-[2] px-4 py-2.5 text-sm font-bold text-action-primary-text bg-action-primary-bg rounded-xl hover:bg-action-primary-hover-bg transition-all disabled:opacity-50 min-h-[44px]">
             {{ loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Estación') }}
           </button>
         </div>
@@ -136,14 +136,14 @@
                 <div class="w-2 h-2 rounded-full bg-amber-400" />
                 <label class="text-[10px] font-bold text-text-secondary uppercase">Aviso Amarillo</label>
               </div>
-              <input v-model.number="form.alert_threshold_1_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400 transition-all text-sm text-text-primary" />
+              <input v-model.number="form.alert_threshold_1_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-state-warning-border/20 focus:border-state-warning-border transition-all text-sm text-text-primary" />
             </div>
             <div class="space-y-1.5">
               <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-red-500" />
+                <div class="w-2 h-2 rounded-full bg-state-danger-icon" />
                 <label class="text-[10px] font-bold text-text-secondary uppercase">Aviso Rojo</label>
               </div>
-              <input v-model.number="form.alert_threshold_2_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm text-text-primary" />
+              <input v-model.number="form.alert_threshold_2_min" type="number" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-state-danger-border transition-all text-sm text-text-primary" />
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@
           <button type="button" @click="$emit('close')" class="flex-1 px-4 py-2.5 text-sm font-medium text-text-secondary bg-surface-secondary rounded-xl hover:bg-border transition-colors">
             Cancelar
           </button>
-          <button type="submit" form="station-form-mobile" :disabled="loading" class="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 min-h-[44px]">
+          <button type="submit" form="station-form-mobile" :disabled="loading" class="flex-[2] px-4 py-2.5 text-sm font-bold text-action-primary-text bg-action-primary-bg rounded-xl hover:bg-action-primary-hover-bg transition-all disabled:opacity-50 min-h-[44px]">
             {{ loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Estación') }}
           </button>
         </div>

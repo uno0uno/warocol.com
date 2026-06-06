@@ -44,7 +44,7 @@
       <button
         type="button"
         :aria-label="`Ver historial de ${table.name}`"
-        class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+        class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
         @click="emit('view-history')"
       >
         <ClockIcon class="w-4 h-4" aria-hidden="true" />

@@ -91,7 +91,7 @@
         >
           <input
             type="checkbox"
-            class="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            class="h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
             :checked="selectedTabItemIds.includes(item.orderItemId)"
             :aria-label="`Seleccionar ${item.productName} para reimprimir comanda`"
             @change="$emit('toggle-tab-selection', item.orderItemId)"
@@ -180,7 +180,7 @@
         class="flex items-center justify-between text-xs"
       >
         <span class="font-medium text-text-tertiary">Descuentos promoción</span>
-        <span class="font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
+        <span class="font-semibold text-state-success-text  tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
       </div>
       <div class="flex items-center justify-between">
         <span class="text-xs font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
@@ -200,7 +200,7 @@
             type="button"
             :aria-disabled="!openSaleEnabled"
             :title="openSaleTooltip ?? undefined"
-            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            class="w-full h-12 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
             @click="$emit('open-sale')"
           >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -228,7 +228,7 @@
             v-if="hasCartItems && !hideProcessOrder"
             type="button"
             :disabled="isDeleting"
-            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            class="w-full h-12 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
             @click="$emit('process-order')"
           >
             <svg v-if="isDeleting" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@
             type="button"
             :aria-disabled="!openSaleEnabled"
             :title="openSaleTooltip ?? undefined"
-            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            class="w-full h-12 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
             @click="$emit('open-sale')"
           >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -291,7 +291,7 @@
           v-if="showBarProcessOrder"
           type="button"
           :disabled="items.length === 0 || isDeleting"
-          class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          class="w-full h-12 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           @click="$emit('process-order')"
         >
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -350,7 +350,7 @@
         <button
           type="button"
           :disabled="items.length === 0 || isDeleting || isAddingToTab"
-          class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          class="w-full h-12 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           :aria-label="`Agregar items a la ${tableSingularLower}`"
           @click="$emit('add-to-tab')"
         >

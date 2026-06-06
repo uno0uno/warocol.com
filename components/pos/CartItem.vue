@@ -18,16 +18,16 @@
                 </p>
                 <span
                   v-if="item.fulfillmentStatus === 'new' && showFulfillmentStatus"
-                  class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400"
+                  class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-state-warning-text bg-state-warning-bg  "
                 >Sin enviar</span>
                 <span
                   v-else-if="item.fulfillmentStatus && item.fulfillmentStatus !== 'new'"
                   class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
                   :class="{
-                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': item.fulfillmentStatus === 'sent',
+                    'bg-state-info-bg text-state-info-text  ': item.fulfillmentStatus === 'sent',
                     'bg-state-warning-bg text-state-warning-text': item.fulfillmentStatus === 'preparing',
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400': item.fulfillmentStatus === 'ready',
-                    'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400': item.fulfillmentStatus === 'delivered' || item.fulfillmentStatus === 'cancelled',
+                    'bg-state-success-bg text-state-success-text': item.fulfillmentStatus === 'ready',
+                    'bg-status-chip-bg text-status-chip-text': item.fulfillmentStatus === 'delivered' || item.fulfillmentStatus === 'cancelled',
                   }"
                 >
                   {{
@@ -39,7 +39,7 @@
                 </span>
                 <span
                   v-if="promoLabel"
-                  class="shrink-0 max-w-full rounded px-2 py-0.5 text-[10px] font-semibold leading-tight text-white bg-emerald-500"
+                  class="shrink-0 max-w-full rounded px-2 py-0.5 text-[10px] font-semibold leading-tight text-badge-success-text bg-badge-success-bg"
                   :title="promoTitle || promoLabel"
                 >{{ promoLabel }}</span>
               </div>
@@ -57,7 +57,7 @@
               >{{ formatCurrency(netTotal) }}</p>
               <p
                 v-if="promoSavings > 0"
-                class="mt-0.5 text-[10px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400"
+                class="mt-0.5 text-[10px] font-semibold tabular-nums text-state-success-text"
               >-{{ formatCurrency(promoSavings) }}</p>
             </div>
           </div>

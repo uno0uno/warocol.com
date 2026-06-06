@@ -21,11 +21,11 @@
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2">
         <!-- APPROVE FORM -->
-        <div v-if="purchase?.status === 'pending'" class="bg-surface border-2 border-success rounded-xl overflow-hidden shadow-sm">
-          <div class="p-6 border-b-2 border-success/20" style="background-color: hsl(var(--success) / 0.05);">
+        <div v-if="purchase?.status === 'pending'" class="bg-surface border-2 border-state-success-border rounded-xl overflow-hidden shadow-sm">
+          <div class="p-6 border-b-2 border-state-success-border bg-state-success-bg">
             <div class="flex items-center gap-4">
-              <div class="p-3 rounded-lg bg-success/10">
-                <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="p-3 rounded-lg bg-state-success-bg">
+                <svg class="w-8 h-8 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -49,7 +49,7 @@
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">Notas (Opcional)</label>
                 <textarea v-model="approveFormData.notes" rows="3"
-                  class="w-full px-4 py-3 bg-surface border-2 border-border rounded-lg text-text-primary placeholder-text-secondary focus:border-success focus:ring-2 focus:ring-success/20 transition-all resize-none"
+                  class="w-full px-4 py-3 bg-form-control-bg border-2 border-form-control-border rounded-lg text-form-control-text placeholder:text-form-control-placeholder focus:border-form-control-focus-border focus:ring-2 focus:ring-form-control-focus-ring transition-all resize-none"
                   placeholder="Agrega notas sobre la confirmación..."></textarea>
               </div>
             </div>
@@ -58,8 +58,8 @@
 
         <!-- RECEIVE FORM -->
         <div v-if="purchase?.status === 'shipped' || purchase?.status === 'partially_received'"
-          class="bg-surface border-2 border-primary rounded-xl overflow-hidden shadow-sm">
-          <div class="p-6 border-b-2 border-primary/20" style="background-color: hsl(var(--primary) / 0.05);">
+          class="bg-surface border-2 border-badge-primary-border rounded-xl overflow-hidden shadow-sm">
+          <div class="p-6 border-b-2 border-badge-primary-border bg-badge-primary-bg">
             <div class="flex items-center gap-4">
               <div class="p-3 rounded-lg bg-primary/10">
                 <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@
             Esta orden no tiene acciones que puedas realizar en este momento
           </p>
           <NuxtLink :to="`/abastecimiento/compra/${purchaseId}`"
-            class="inline-flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            class="inline-flex items-center gap-2 px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -127,9 +127,9 @@
             </div>
             <div>
               <p class="text-sm text-text-secondary mb-1">Estado</p>
-              <span class="px-2 py-1 rounded text-xs font-medium" :class="getStatusBadgeClass(purchase?.status)">
+              <UiStatusBadge :variant="getStatusVariant(purchase?.status)" size="sm">
                 {{ getStatusText(purchase?.status) }}
-              </span>
+              </UiStatusBadge>
             </div>
           </div>
 
@@ -140,7 +140,7 @@
               <button 
                 @click="handleApprove"
                 :disabled="isApproving"
-                class="w-full py-3 bg-success text-white rounded-lg hover:bg-success/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-success/20">
+                class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-success-bg/20">
                 <CommonsTheCustomLoader v-if="isApproving" size="small" />
                 <span>{{ isApproving ? 'Aprobando...' : 'Aprobar Orden' }}</span>
               </button>
@@ -151,7 +151,7 @@
               <button 
                 @click="handleReceiveSubmit"
                 :disabled="isSubmitting"
-                class="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-primary/20">
+                class="w-full py-3 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-primary-bg/20">
                 <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
                 <span>{{ isSubmitting ? 'Procesando...' : 'Registrar Recepción' }}</span>
               </button>
@@ -298,24 +298,6 @@ function getStatusText(status: string) {
     overdue: 'Vencido'
   }
   return texts[status] || status
-}
-
-function getStatusBadgeClass(status: string): string {
-  const classes: Record<string, string> = {
-    quotation: 'bg-yellow-500/10 text-yellow-600',
-    pending: 'bg-blue-500/10 text-blue-600',
-    confirmed: 'bg-green-500/10 text-green-600',
-    preparing: 'bg-state-warning-bg text-state-warning-text',
-    shipped: 'bg-cyan-500/10 text-cyan-600',
-    partially_received: 'bg-orange-500/10 text-orange-600',
-    received: 'bg-emerald-500/10 text-emerald-600',
-    verified: 'bg-green-600/10 text-green-700',
-    invoiced: 'bg-indigo-500/10 text-indigo-600',
-    paid: 'bg-green-600/10 text-green-700',
-    cancelled: 'bg-destructive/10 text-destructive',
-    overdue: 'bg-destructive/10 text-destructive'
-  }
-  return classes[status] || 'bg-surface-secondary text-text-secondary'
 }
 
 // Generate confirmation number

@@ -2589,7 +2589,7 @@ onUnmounted(() => {
               class="px-3 py-2.5 md:p-4 flex gap-2.5 md:gap-4 items-start group hover:bg-surface-secondary/50 theme-transition"
             >
               <!-- Order Number -->
-              <div class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold mt-0.5">
+              <div class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-action-primary-bg text-action-primary-text flex items-center justify-center text-xs font-bold mt-0.5">
                 {{ index + 1 }}
               </div>
 
@@ -2605,14 +2605,14 @@ onUnmounted(() => {
                     <h3 class="font-semibold text-text-primary text-sm leading-tight truncate">{{ item.product.name }}</h3>
                     <span
                       v-if="getLinePromoLabel(item)"
-                      class="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                      class="text-[10px] bg-state-success-bg text-state-success-text  px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
                       :title="getLinePromoTypeLabel(item) || undefined"
                     >
                       {{ getLinePromoLabel(item) }}
                     </span>
                     <span
                       v-if="getLinePromoSavings(item) > 0"
-                      class="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium flex-shrink-0"
+                      class="text-[10px] text-state-success-text  font-medium flex-shrink-0"
                     >
                       - {{ formatCurrency(getLinePromoSavings(item)) }}
                     </span>
@@ -2657,7 +2657,7 @@ onUnmounted(() => {
                       :disabled="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '')"
                       @change="toggleLinePromoApply(item, ($event.target as HTMLInputElement).checked)"
                     />
-                    <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                    <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                   </span>
                 </label>
               </div>
@@ -2682,7 +2682,7 @@ onUnmounted(() => {
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
               <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
-              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-emerald-700 dark:text-emerald-400 truncate mt-0.5 flex items-center gap-1">
+              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-state-success-text  truncate mt-0.5 flex items-center gap-1">
                 <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                 Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
               </p>
@@ -2698,7 +2698,7 @@ onUnmounted(() => {
                 />
                 <span
                   v-else
-                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
                 >
                   Wallet: {{ formatCurrency(walletBalanceCop) }}
                 </span>
@@ -2758,14 +2758,14 @@ onUnmounted(() => {
               <div
                 class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
                 :class="selectedPaymentMethod === group.slug
-                  ? (group.triggersCartera ? 'border-amber-500 bg-amber-50 shadow-sm dark:bg-amber-950/20' : 'border-primary bg-primary/5 shadow-sm')
-                  : (group.triggersCartera ? 'border-border hover:border-amber-400/40' : 'border-border hover:border-primary/30')"
+                  ? (group.triggersCartera ? 'border-state-warning-border bg-state-warning-bg shadow-sm ' : 'border-primary bg-primary/5 shadow-sm')
+                  : (group.triggersCartera ? 'border-border hover:border-state-warning-border/40' : 'border-border hover:border-primary/30')"
               >
                 <div class="flex items-center justify-between w-full">
                   <!-- Icon — cash -->
                   <div
                     v-if="group.slug === 'cash'"
-                    class="bg-green-100 text-green-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="bg-state-success-bg text-state-success-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
                   >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
@@ -2774,7 +2774,7 @@ onUnmounted(() => {
                   <!-- Icon — card -->
                   <div
                     v-else-if="group.slug === 'card'"
-                    class="bg-blue-100 text-blue-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="bg-state-info-bg text-state-info-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
                   >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
@@ -2793,7 +2793,7 @@ onUnmounted(() => {
                   <!-- Icon — wallet anticipo -->
                   <div
                     v-else-if="group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet"
-                    class="bg-emerald-100 text-emerald-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="bg-state-success-bg text-state-success-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
                   >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
@@ -2802,7 +2802,7 @@ onUnmounted(() => {
                   <!-- Icon — credit / triggersCartera -->
                   <div
                     v-else-if="group.triggersCartera"
-                    class="bg-amber-100 text-amber-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="bg-state-warning-bg text-state-warning-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
                   >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -2823,7 +2823,7 @@ onUnmounted(() => {
                     class="h-4 w-4 transition-all hidden md:block"
                     :class="[
                       selectedPaymentMethod === group.slug ? 'opacity-100' : 'opacity-0',
-                      group.triggersCartera ? 'text-amber-600' : 'text-primary'
+                      group.triggersCartera ? 'text-state-warning-text' : 'text-primary'
                     ]"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                   >
@@ -2835,7 +2835,7 @@ onUnmounted(() => {
                 <div class="text-center md:text-left w-full">
                   <div
                     class="font-semibold text-xs md:text-sm leading-tight"
-                    :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-amber-700' : 'text-text-primary'"
+                    :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
                   >
                     {{ group.name }}
                   </div>
@@ -2845,7 +2845,7 @@ onUnmounted(() => {
                 <div
                   v-if="selectedPaymentMethod === group.slug"
                   class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden"
-                  :class="group.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+                  :class="group.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
                 ></div>
               </div>
             </label>
@@ -2891,7 +2891,7 @@ onUnmounted(() => {
                 class="relative min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
                 :class="selectedPaymentMethodId === method.id
                   ? (selectedGroup.triggersCartera
-                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm'
+                      ? 'border-state-warning-border bg-state-warning-bg text-state-warning-text shadow-sm'
                       : 'border-primary bg-primary/10 text-primary shadow-sm')
                   : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
               >
@@ -2899,7 +2899,7 @@ onUnmounted(() => {
                 <span
                   v-if="selectedPaymentMethodId === method.id"
                   class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full"
-                  :class="selectedGroup.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+                  :class="selectedGroup.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
                 />
               </button>
             </div>
@@ -2918,7 +2918,7 @@ onUnmounted(() => {
                   class="w-full flex items-center justify-between px-4 py-3 text-sm transition-colors active:scale-[0.99]"
                   :class="selectedPaymentMethodId === method.id
                     ? (selectedGroup.triggersCartera
-                        ? 'bg-amber-50 text-amber-700 font-semibold'
+                        ? 'bg-state-warning-bg text-state-warning-text font-semibold'
                         : 'bg-primary/8 text-primary font-semibold')
                     : 'text-text-primary hover:bg-surface-secondary/50'"
                 >
@@ -2926,7 +2926,7 @@ onUnmounted(() => {
                   <svg
                     v-if="selectedPaymentMethodId === method.id"
                     class="w-4 h-4 flex-shrink-0"
-                    :class="selectedGroup.triggersCartera ? 'text-amber-600' : 'text-primary'"
+                    :class="selectedGroup.triggersCartera ? 'text-state-warning-text' : 'text-primary'"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -2940,14 +2940,14 @@ onUnmounted(() => {
           </div>
 
           <!-- Credit due date (optional) — shown only when a triggersCartera group is selected -->
-          <div v-if="selectedGroup?.triggersCartera && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
-              Fecha límite de pago <span class="font-normal text-amber-600">(opcional)</span>
+          <div v-if="selectedGroup?.triggersCartera && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-state-warning-bg  border border-state-warning-border  rounded-xl">
+            <label class="block text-xs font-semibold text-state-warning-text  mb-1.5">
+              Fecha límite de pago <span class="font-normal text-state-warning-text">(opcional)</span>
             </label>
             <input
               v-model="creditDueDate"
               type="date"
-              class="w-full h-9 px-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400"
+              class="w-full h-9 px-3 rounded-lg border border-state-warning-border  bg-white  text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-state-warning-border"
             />
           </div>
         </div>
@@ -2971,7 +2971,7 @@ onUnmounted(() => {
               :class="discountEnabled ? 'bg-primary' : 'bg-border'"
             >
               <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-control-toggle-thumb shadow transform ring-0 transition duration-200"
                 :class="discountEnabled ? 'translate-x-5' : 'translate-x-0'"
               />
             </button>
@@ -3044,7 +3044,7 @@ onUnmounted(() => {
             <input
               v-model="tipTaxable"
               type="checkbox"
-              class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+              class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
               aria-label="Propina gravada con impuesto al consumo"
             />
             <span class="text-sm text-text-primary leading-snug">
@@ -3083,7 +3083,7 @@ onUnmounted(() => {
                 :disabled="!isDeliveryEligible"
                 aria-label="Activar domicilio para esta orden"
               />
-              <div class="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-11 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 
@@ -3219,7 +3219,7 @@ onUnmounted(() => {
                 <span>Subtotal ({{ cartItems.length }} productos)</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
               </div>
-              <div v-if="promoSavings > 0" class="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+              <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
                 <span>Promoción</span>
                 <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
               </div>
@@ -3227,7 +3227,7 @@ onUnmounted(() => {
                 v-for="(promo, promoIdx) in displayPromoBreakdown"
                 v-show="displayPromoBreakdown.length > 1"
                 :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
-                class="flex justify-between text-xs text-emerald-700/90 dark:text-emerald-400/90 pl-3"
+                class="flex justify-between text-xs text-state-success-text/90  pl-3"
               >
                 <span>{{ promo.promotion_name }}</span>
                 <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
@@ -3243,7 +3243,7 @@ onUnmounted(() => {
                 <span>Descuento manual</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
-              <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-amber-700">
+              <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
                 <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
                 <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
               </div>
@@ -3295,11 +3295,11 @@ onUnmounted(() => {
             @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
             class="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
           >
-            <svg class="h-4 w-4 text-amber-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg class="h-4 w-4 text-state-warning-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
             </svg>
             <span class="font-semibold text-sm text-text-primary">Waros</span>
-            <span v-if="!isLoadingWaros" class="ml-auto text-sm font-bold tabular-nums text-amber-700">
+            <span v-if="!isLoadingWaros" class="ml-auto text-sm font-bold tabular-nums text-state-warning-text">
               {{ warosBalance.toLocaleString('es-CO') }}
             </span>
             <svg
@@ -3330,7 +3330,7 @@ onUnmounted(() => {
               </div>
               <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
                 <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
-                <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-emerald-700' : 'text-text-tertiary'">
+                <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                   <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
                   <span v-else-if="!warosEarnEligible">—</span>
                   <span v-else-if="estimatedWaros === null">—</span>
@@ -3365,7 +3365,7 @@ onUnmounted(() => {
                             :disabled="warosBalance < reward.waros_cost"
                             @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
                           />
-                          <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                          <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                         </span>
                       </span>
                     </label>
@@ -3397,7 +3397,7 @@ onUnmounted(() => {
               :class="splitMode ? 'bg-primary' : 'bg-border'"
             >
               <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-control-toggle-thumb shadow transform ring-0 transition duration-200"
                 :class="splitMode ? 'translate-x-5' : 'translate-x-0'"
               />
             </button>
@@ -3425,7 +3425,7 @@ onUnmounted(() => {
                   class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm"
                 >
                   <!-- Check icon -->
-                  <svg class="h-4 w-4 text-green-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="h-4 w-4 text-state-success-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
                   </svg>
                   <span class="text-text-secondary flex-1">#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
@@ -3479,9 +3479,9 @@ onUnmounted(() => {
             <!-- Remaining counter -->
             <div
               class="flex items-center justify-between px-3 py-2.5 rounded-lg"
-              :class="splitIsComplete ? 'bg-green-50 dark:bg-green-900/20' : 'bg-primary/10'"
+              :class="splitIsComplete ? 'bg-state-success-bg ' : 'bg-primary/10'"
             >
-              <span class="text-sm font-medium flex items-center gap-1.5" :class="splitIsComplete ? 'text-green-700 dark:text-green-400' : 'text-primary'">
+              <span class="text-sm font-medium flex items-center gap-1.5" :class="splitIsComplete ? 'text-state-success-text ' : 'text-primary'">
                 <svg v-if="splitIsComplete" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                 </svg>
@@ -3489,7 +3489,7 @@ onUnmounted(() => {
               </span>
               <span
                 class="text-sm font-bold tabular-nums"
-                :class="splitIsComplete ? 'text-green-700 dark:text-green-400' : 'text-text-primary'"
+                :class="splitIsComplete ? 'text-state-success-text ' : 'text-text-primary'"
                 aria-live="polite"
               >{{ formatCurrency(splitRemaining) }}</span>
             </div>
@@ -3525,7 +3525,7 @@ onUnmounted(() => {
               type="button"
               :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid"
               @click="addSplitPayment"
-              class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <UiLoadingDots v-if="isAddingPayment" size="10px" />
               <span v-else>Cobrar {{ formatCurrency(splitAmountToCharge) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
@@ -3534,10 +3534,10 @@ onUnmounted(() => {
         </div>
 
         <!-- Error Message -->
-        <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+        <div v-if="processingError" class="bg-state-danger-bg  border-2 border-state-danger-border  rounded-xl p-4">
           <div class="flex items-start gap-3">
             <span class="text-xl">⚠️</span>
-            <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
+            <p class="text-sm text-state-danger-text ">{{ processingError }}</p>
           </div>
         </div>
 
@@ -3553,15 +3553,15 @@ onUnmounted(() => {
         <div
           v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
           role="status"
-          class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl"
+          class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
         >
-          <div class="flex-shrink-0 bg-amber-100 p-1.5 rounded-lg">
-            <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
+            <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
             </svg>
           </div>
-          <p class="text-sm text-amber-800 font-medium">Los ítems serán enviados a cocina al cobrar</p>
+          <p class="text-sm text-state-warning-text font-medium">Los ítems serán enviados a cocina al cobrar</p>
         </div>
 
         <!-- Action Buttons (always visible) -->
@@ -3570,7 +3570,7 @@ onUnmounted(() => {
             @click="processOrder"
             v-if="!splitMode"
             :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
             <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -3596,7 +3596,7 @@ onUnmounted(() => {
             :disabled="prefacturaDisabled"
             :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
             @click="printPrefactura"
-            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
             aria-label="Imprimir prefactura para revisión del cliente"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
@@ -3609,7 +3609,7 @@ onUnmounted(() => {
           <button
             v-if="expediterEnabled && comandasEnabled && (isMesaMode || posStore.activeTableSession)"
             type="button"
-            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
             aria-label="Ver estado de comandas"
             @click="showExpediterPanel = true"
           >
@@ -3719,7 +3719,7 @@ onUnmounted(() => {
               <span>Subtotal ({{ cartItems.length }} productos)</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
             </div>
-            <div v-if="promoSavings > 0" class="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+            <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
               <span>Promoción</span>
               <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
             </div>
@@ -3727,7 +3727,7 @@ onUnmounted(() => {
               v-for="(promo, promoIdx) in displayPromoBreakdown"
               v-show="displayPromoBreakdown.length > 1"
               :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
-              class="flex justify-between text-xs text-emerald-700/90 dark:text-emerald-400/90 pl-3"
+              class="flex justify-between text-xs text-state-success-text/90  pl-3"
             >
               <span>{{ promo.promotion_name }}</span>
               <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
@@ -3739,11 +3739,11 @@ onUnmounted(() => {
               <span>Subtotal con promoción</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(subtotalAfterPromos) }}</span>
             </div>
-            <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
+            <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-state-success-text ">
               <span>Descuento manual</span>
               <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
             </div>
-            <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-amber-700">
+            <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
               <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
               <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
             </div>
@@ -3793,7 +3793,7 @@ onUnmounted(() => {
         <div class="px-5 py-4 space-y-4">
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold text-text-primary text-sm">Waros</h3>
-            <span v-if="!isLoadingWaros" class="text-sm font-bold tabular-nums text-amber-700">
+            <span v-if="!isLoadingWaros" class="text-sm font-bold tabular-nums text-state-warning-text">
               {{ warosBalance.toLocaleString('es-CO') }}
             </span>
           </div>
@@ -3815,7 +3815,7 @@ onUnmounted(() => {
             </div>
             <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
               <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
-              <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-emerald-700' : 'text-text-tertiary'">
+              <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                 <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
                 <span v-else-if="!warosEarnEligible">—</span>
                 <span v-else-if="estimatedWaros === null">—</span>
@@ -3845,7 +3845,7 @@ onUnmounted(() => {
                           :disabled="warosBalance < reward.waros_cost"
                           @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
                         />
-                        <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                        <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                       </span>
                     </span>
                   </label>
@@ -3858,10 +3858,10 @@ onUnmounted(() => {
       </div>
 
       <!-- Error Message -->
-      <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+      <div v-if="processingError" class="bg-state-danger-bg  border-2 border-state-danger-border  rounded-xl p-4">
         <div class="flex items-start gap-3">
           <span class="text-xl">⚠️</span>
-          <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
+          <p class="text-sm text-state-danger-text ">{{ processingError }}</p>
         </div>
       </div>
 
@@ -3869,15 +3869,15 @@ onUnmounted(() => {
       <div
         v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
         role="status"
-        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl"
+        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
       >
-        <div class="flex-shrink-0 bg-amber-100 p-1.5 rounded-lg">
-          <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
+          <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
           </svg>
         </div>
-        <p class="text-sm text-amber-800 font-medium">Los ítems serán enviados a cocina al cobrar</p>
+        <p class="text-sm text-state-warning-text font-medium">Los ítems serán enviados a cocina al cobrar</p>
       </div>
 
       <!-- Issue #524 — Cash tender (mobile / tablet; desktop uses right column) -->
@@ -3894,7 +3894,7 @@ onUnmounted(() => {
           @click="processOrder"
           v-if="!splitMode"
             :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
-          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -3911,7 +3911,7 @@ onUnmounted(() => {
           :disabled="prefacturaDisabled"
           :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
           @click="printPrefactura"
-          class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30"
+          class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
           aria-label="Imprimir prefactura para revisión del cliente"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
@@ -3947,7 +3947,7 @@ onUnmounted(() => {
         aria-modal="true"
         aria-labelledby="void-payment-title"
       >
-        <div class="absolute inset-0 bg-black/50" @click="closeVoidPaymentModal" />
+        <div class="absolute inset-0 bg-overlay-backdrop/50" @click="closeVoidPaymentModal" />
         <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 rounded-full flex items-center justify-center bg-destructive/10">
@@ -3965,7 +3965,7 @@ onUnmounted(() => {
 
           <p
             v-if="voidPaymentTarget.payment_method === 'cash'"
-            class="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4"
+            class="flex items-start gap-2 text-sm text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg p-3 mb-4"
           >
             <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -3982,7 +3982,7 @@ onUnmounted(() => {
             rows="2"
             :disabled="isVoidingPayment === voidPaymentTarget.id"
             placeholder="Ej: cobro registrado por error"
-            class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50"
           />
 
           <p v-if="voidPaymentError" class="mt-3 text-sm text-destructive flex items-start gap-2">
@@ -4003,7 +4003,7 @@ onUnmounted(() => {
               type="button"
               :disabled="isVoidingPayment === voidPaymentTarget.id"
               @click="confirmVoidPayment"
-              class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg bg-action-destructive-bg text-action-destructive-text text-sm font-semibold hover:bg-action-destructive-hover-bg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isVoidingPayment === voidPaymentTarget.id" size="8px" />
               <span v-else>Eliminar pago</span>
@@ -4019,15 +4019,15 @@ onUnmounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="absolute inset-0 bg-overlay-backdrop/50"></div>
 
         <!-- Modal -->
         <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
           <!-- Icon -->
           <div class="flex justify-center mb-4">
-            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-state-success-bg ">
               <svg
-                class="w-8 h-8 text-green-600 dark:text-green-400"
+                class="w-8 h-8 text-state-success-text "
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -4046,12 +4046,12 @@ onUnmounted(() => {
           </p>
 
           <!-- Credit notice banner -->
-          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl space-y-2">
             <div class="flex items-start gap-2">
-              <svg class="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <svg class="h-4 w-4 text-state-warning-text flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <p class="text-xs text-amber-800">Para registrar abonos, accede al perfil del cliente donde encontrarás el estado de su cartera, historial de pagos y saldo pendiente.</p>
+              <p class="text-xs text-state-warning-text">Para registrar abonos, accede al perfil del cliente donde encontrarás el estado de su cartera, historial de pagos y saldo pendiente.</p>
             </div>
           </div>
 
@@ -4073,16 +4073,16 @@ onUnmounted(() => {
               :key="promo.promotion_id ?? promo.promotion_name"
               class="flex items-center justify-between"
             >
-              <span class="text-sm text-emerald-700 dark:text-emerald-400">{{ promo.promotion_name }}</span>
-              <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400">-{{ formatCurrency(promo.savings) }}</span>
+              <span class="text-sm text-state-success-text ">{{ promo.promotion_name }}</span>
+              <span class="text-sm font-medium text-state-success-text ">-{{ formatCurrency(promo.savings) }}</span>
             </div>
             <div v-if="orderResult.discount_amount" class="flex items-center justify-between">
               <span class="text-sm text-primary">Descuento manual</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
             <div v-if="orderResultWaroDiscountCop > 0" class="flex items-center justify-between">
-              <span class="text-sm text-amber-700">{{ orderResultWaroLineLabel }}</span>
-              <span class="text-sm font-medium text-amber-700">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
+              <span class="text-sm text-state-warning-text">{{ orderResultWaroLineLabel }}</span>
+              <span class="text-sm font-medium text-state-warning-text">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
             </div>
             <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? 'Impuesto' }}</span>
@@ -4181,7 +4181,7 @@ onUnmounted(() => {
                 />
               </div>
 
-              <p v-if="fiscalWizardError" class="text-xs text-red-600 dark:text-red-400">{{ fiscalWizardError }}</p>
+              <p v-if="fiscalWizardError" class="text-xs text-state-danger-text ">{{ fiscalWizardError }}</p>
 
               <div class="flex gap-2 pt-1">
                 <button
@@ -4196,7 +4196,7 @@ onUnmounted(() => {
                   type="button"
                   :disabled="!fiscalWizardCanSubmit || fiscalWizardSaving"
                   @click="submitFiscalAndInvoice"
-                  class="flex-1 min-h-[44px] px-3 py-2 text-sm bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  class="flex-1 min-h-[44px] px-3 py-2 text-sm bg-action-primary-bg text-action-primary-text font-semibold rounded-lg hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <svg v-if="fiscalWizardSaving" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -4216,23 +4216,23 @@ onUnmounted(() => {
             <!-- Success — show ONLY invoice number -->
             <div
               v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
-              class="rounded-lg border border-green-200 bg-green-50 p-3 text-center"
+              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center"
             >
-              <p class="text-xs font-semibold text-green-800">Factura generada</p>
-              <p class="text-sm font-semibold text-green-700 mt-1">
+              <p class="text-xs font-semibold text-state-success-text">Factura generada</p>
+              <p class="text-sm font-semibold text-state-success-text mt-1">
                 {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
               </p>
             </div>
 
             <!-- Error -->
-            <div v-else-if="invoiceError" class="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
-              <div class="flex items-center gap-2 text-red-700">
+            <div v-else-if="invoiceError" class="rounded-lg border border-state-danger-border bg-state-danger-bg p-3 space-y-2">
+              <div class="flex items-center gap-2 text-state-danger-text">
                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
                 <span class="text-sm font-medium">{{ invoiceError }}</span>
               </div>
               <button
                 @click="requestInvoice"
-                class="text-xs font-medium text-red-600 hover:underline"
+                class="text-xs font-medium text-state-danger-text hover:underline"
               >
                 Reintentar
               </button>
@@ -4252,7 +4252,7 @@ onUnmounted(() => {
                   <button
                     @click="sendReceiptEmail"
                     :disabled="!receiptEmail || isSendingEmail"
-                    class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90"
+                    class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
                   >
                     <span v-if="isSendingEmail">Enviando...</span>
                     <span v-else>Confirmar envío</span>
@@ -4262,7 +4262,7 @@ onUnmounted(() => {
 
               <!-- When email was sent (from profile or manual) -->
               <template v-else-if="emailSent">
-                <div class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700">
+                <div class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text">
                   <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                   <span class="text-sm font-medium">Recibo enviado a {{ receiptEmail }}</span>
                 </div>
@@ -4308,7 +4308,7 @@ onUnmounted(() => {
           <!-- Accept Button -->
           <button
             @click="closeSuccessModal"
-            class="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            class="w-full py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-medium hover:bg-action-primary-hover-bg transition-colors"
           >
             Nueva Venta
           </button>

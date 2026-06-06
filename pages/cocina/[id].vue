@@ -278,7 +278,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           <button
             type="button"
             :disabled="isAuthorizingAudio"
-            class="flex-1 min-h-[60px] px-6 rounded-2xl bg-primary text-white text-base md:text-lg font-bold shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="flex-1 min-h-[60px] px-6 rounded-2xl bg-action-primary-bg text-action-primary-text text-base md:text-lg font-bold shadow-md hover:bg-action-primary-hover-bg active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-action-primary-focus-ring/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="authorizeAudio"
           >
             <UiLoadingDots v-if="isAuthorizingAudio" size="9px" color="currentColor" />

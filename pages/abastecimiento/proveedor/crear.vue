@@ -96,7 +96,7 @@
             <button
               type="button"
               @click="openAgreementModal()"
-              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+              class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm font-medium"
             >
               + Nuevo Acuerdo
             </button>
@@ -130,7 +130,7 @@
                     </span>
                     <span
                       v-if="agreement.auto_apply"
-                      class="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-600"
+                      class="px-2 py-0.5 rounded text-xs font-medium bg-state-info-bg text-state-info-text"
                     >
                       Auto-aplicar
                     </span>
@@ -182,7 +182,7 @@
               v-model="form.is_active"
               type="checkbox"
               id="is_active"
-              class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              class="h-4 w-4 text-primary focus:ring-action-primary-focus-ring border-border rounded"
             />
             <label for="is_active" class="text-sm font-medium text-text-primary">
               Proveedor activo
@@ -228,7 +228,7 @@
               'w-full py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold',
               isSubmitting
                 ? 'bg-background border border-border text-text-primary shadow-none'
-                : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'
+                : 'bg-action-success-bg text-action-success-text hover:bg-action-success-hover-bg shadow-lg shadow-action-success-bg/20'
             ]">
             <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
             <span>{{ isSubmitting ? 'Creando...' : 'Crear Proveedor' }}</span>
@@ -247,7 +247,7 @@
   <!-- Modal para Acuerdos de Pago -->
   <div
     v-if="showAgreementModal"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    class="fixed inset-0 bg-overlay-backdrop/50 flex items-center justify-center z-50 p-4"
     @click.self="closeAgreementModal"
   >
     <div class="bg-surface rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -347,7 +347,7 @@
               v-model="agreementForm.is_active"
               type="checkbox"
               id="agreement_active"
-              class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              class="h-4 w-4 text-primary focus:ring-action-primary-focus-ring border-border rounded"
             />
             <label for="agreement_active" class="ml-2 text-sm font-medium text-text-primary">
               Acuerdo activo
@@ -359,7 +359,7 @@
               v-model="agreementForm.auto_apply"
               type="checkbox"
               id="agreement_auto_apply"
-              class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              class="h-4 w-4 text-primary focus:ring-action-primary-focus-ring border-border rounded"
             />
             <label for="agreement_auto_apply" class="ml-2 text-sm font-medium text-text-primary">
               Auto-aplicar
@@ -371,7 +371,7 @@
         <div class="flex gap-3 pt-4 border-t border-border">
           <button
             type="submit"
-            class="flex-1 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+            class="flex-1 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors font-medium"
           >
             {{ editingIndex !== null ? 'Actualizar' : 'Agregar' }} Acuerdo
           </button>

@@ -152,14 +152,14 @@ const cardClass = (firedAt: string, selected: boolean): string => {
   const tier = agingTier(firedAt)
   if (selected) return 'bg-primary/5 border-primary'
   if (tier === 'urgent')  return 'bg-destructive/5 border-destructive'
-  if (tier === 'warning') return 'bg-amber-50/60 border-amber-300'
-  return 'bg-surface border-emerald-200'
+  if (tier === 'warning') return 'bg-state-warning-bg/60 border-state-warning-border'
+  return 'bg-surface border-state-success-border'
 }
 const chipClass = (firedAt: string): string => {
   const tier = agingTier(firedAt)
   if (tier === 'urgent')  return 'bg-destructive/10 text-destructive'
-  if (tier === 'warning') return 'bg-amber-100 text-amber-800'
-  return 'bg-emerald-50 text-emerald-700'
+  if (tier === 'warning') return 'bg-state-warning-bg text-state-warning-text'
+  return 'bg-state-success-bg text-state-success-text'
 }
 const ageLabel = (firedAt: string): string => {
   const m = ageMinutes(firedAt)
@@ -224,7 +224,7 @@ const submit = async () => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="modelValue" class="fixed inset-0 z-40 bg-black/40" aria-hidden="true" @click="close" />
+      <div v-if="modelValue" class="fixed inset-0 z-40 bg-overlay-backdrop/40" aria-hidden="true" @click="close" />
     </Transition>
 
     <Transition name="panel">
@@ -239,7 +239,7 @@ const submit = async () => {
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -260,7 +260,7 @@ const submit = async () => {
             <button
               type="button"
               aria-label="Cerrar panel"
-              class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
               <XMarkIcon class="w-4 h-4" />
@@ -283,7 +283,7 @@ const submit = async () => {
               <span
                 class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[11px] font-bold tabular-nums"
                 :class="activeTab === 'ready'
-                  ? 'bg-primary text-white'
+                  ? 'bg-action-primary-bg text-action-primary-text'
                   : 'bg-surface-secondary text-text-tertiary'"
               >{{ readyComandas.length }}</span>
             </button>
@@ -299,7 +299,7 @@ const submit = async () => {
               <span
                 class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[11px] font-bold tabular-nums"
                 :class="activeTab === 'preparing'
-                  ? 'bg-primary text-white'
+                  ? 'bg-action-primary-bg text-action-primary-text'
                   : 'bg-surface-secondary text-text-tertiary'"
               >{{ preparingComandas.length }}</span>
             </button>
@@ -335,7 +335,7 @@ const submit = async () => {
               class="w-full text-left rounded-xl border-2 p-3.5 transition-all"
               :class="[
                 cardClass(c.fired_at, selectedIds.has(c.id)),
-                flashIds.has(c.id) ? 'animate-pulse ring-2 ring-emerald-400' : '',
+                flashIds.has(c.id) ? 'animate-pulse ring-2 ring-state-success-border' : '',
               ]"
               @click="toggleSelected(c.id)"
             >
@@ -343,7 +343,7 @@ const submit = async () => {
                 <input
                   type="checkbox"
                   :checked="selectedIds.has(c.id)"
-                  class="mt-1 h-4 w-4 rounded text-primary focus:ring-2 focus:ring-primary/30 cursor-pointer"
+                  class="mt-1 h-4 w-4 rounded text-primary focus:ring-2 focus:ring-action-primary-focus-ring/30 cursor-pointer"
                   @click.stop
                   @change="toggleSelected(c.id)"
                 />
@@ -412,7 +412,7 @@ const submit = async () => {
           <button
             type="button"
             :disabled="selectedIds.size === 0 || submitting"
-            class="w-full min-h-[52px] rounded-xl bg-primary text-white text-base font-bold transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="w-full min-h-[52px] rounded-xl bg-action-primary-bg text-action-primary-text text-base font-bold transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="submit"
           >
             <UiLoadingDots v-if="submitting" size="9px" color="currentColor" />

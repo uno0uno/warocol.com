@@ -52,7 +52,7 @@
                 type="button"
                 :aria-label="`Editar ${item.name}`"
                 title="Editar"
-                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="openEdit(item)"
               >
                 <PencilSquareIcon class="w-4 h-4" />
@@ -62,7 +62,7 @@
                 type="button"
                 :aria-label="`Desactivar ${item.name}`"
                 title="Desactivar"
-                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-amber-600 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-colors"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
                 @click="requestDeactivate(item)"
               >
                 <NoSymbolIcon class="w-4 h-4" />
@@ -72,7 +72,7 @@
                 type="button"
                 :aria-label="`Reactivar ${item.name}`"
                 title="Reactivar"
-                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="reactivate(item)"
               >
                 <ArrowPathIcon class="w-4 h-4" />
@@ -104,7 +104,7 @@
               type="button"
               :aria-label="`Editar ${row.name}`"
               title="Editar"
-              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="openEdit(row)"
             >
               <PencilSquareIcon class="w-4 h-4" />
@@ -114,7 +114,7 @@
               type="button"
               :aria-label="`Desactivar ${row.name}`"
               title="Desactivar"
-              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-amber-600 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-colors"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
               @click="requestDeactivate(row)"
             >
               <NoSymbolIcon class="w-4 h-4" />
@@ -124,7 +124,7 @@
               type="button"
               :aria-label="`Reactivar ${row.name}`"
               title="Reactivar"
-              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="reactivate(row)"
             >
               <ArrowPathIcon class="w-4 h-4" />

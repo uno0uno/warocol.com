@@ -185,7 +185,7 @@ const submit = () => {
       </button>
       <button
         type="submit"
-        class="min-h-[44px] px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        class="min-h-[44px] px-4 py-2 text-sm font-semibold bg-action-primary-bg text-action-primary-text rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring/30"
         :disabled="!isValid || loading"
       >
         {{ loading ? 'Guardando...' : 'Guardar dirección' }}

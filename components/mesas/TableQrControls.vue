@@ -94,7 +94,7 @@ const regenerateToken = async () => {
           @change="toggleQr"
         >
         <div
-          class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+          class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
         />
       </label>
     </div>
@@ -125,7 +125,7 @@ const regenerateToken = async () => {
         <button
           v-if="showRegenerate && !showRegenerateConfirm"
           type="button"
-          class="h-9 px-3 rounded-lg border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/30 transition-colors"
+          class="h-9 px-3 rounded-lg border border-state-warning-border text-xs font-semibold text-state-warning-text hover:bg-state-warning-bg    transition-colors"
           @click="showRegenerateConfirm = true"
         >
           Regenerar enlace
@@ -133,9 +133,9 @@ const regenerateToken = async () => {
       </div>
       <div
         v-if="showRegenerate && showRegenerateConfirm"
-        class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-950/20"
+        class="rounded-lg border border-state-warning-border bg-state-warning-bg p-3  "
       >
-        <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+        <p class="text-xs text-state-warning-text  leading-relaxed">
           Los QR impresos dejarán de funcionar. ¿Continuar?
         </p>
         <div class="flex gap-2 mt-2">
@@ -149,7 +149,7 @@ const regenerateToken = async () => {
           <button
             type="button"
             :disabled="isRegenerating"
-            class="h-8 px-3 rounded-lg text-xs font-bold bg-amber-500 text-white disabled:opacity-50"
+            class="h-8 px-3 rounded-lg text-xs font-bold bg-action-warning-bg text-action-primary-text disabled:opacity-50"
             @click="regenerateToken"
           >
             {{ isRegenerating ? 'Regenerando…' : 'Sí, regenerar' }}
@@ -177,7 +177,7 @@ const regenerateToken = async () => {
         @change="toggleQr"
       >
       <div
-        class="w-8 h-5 bg-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-3"
+        class="w-8 h-5 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-3"
       />
     </label>
     <button

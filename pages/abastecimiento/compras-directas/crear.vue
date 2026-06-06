@@ -152,7 +152,7 @@
                   <p class="font-medium text-warning mb-1">¿Es este tu proveedor?</p>
                   <p class="text-text-secondary mb-3">Encontramos "<strong>{{ similarSupplier?.name }}</strong>", similar a "<em>{{ ocrSupplierName }}</em>" en la factura.</p>
                   <div class="flex gap-2">
-                    <button type="button" @click="selectSimilarSupplier" class="px-3 py-1.5 bg-warning text-white rounded-lg text-xs font-medium hover:bg-warning/90 transition-colors">
+                    <button type="button" @click="selectSimilarSupplier" class="px-3 py-1.5 bg-action-warning-bg text-action-warning-text rounded-lg text-xs font-medium hover:bg-action-warning-hover-bg transition-colors">
                       Sí, usar ese
                     </button>
                     <button type="button" @click="supplierScanStatus = 'not_found'; similarSupplier = null" class="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-medium hover:bg-background transition-colors">
@@ -166,7 +166,7 @@
                     type="button"
                     @click="createSupplierFromOcr"
                     :disabled="isCreatingSupplier"
-                    class="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    class="px-3 py-1.5 bg-action-primary-bg text-action-primary-text rounded-lg text-xs font-medium hover:bg-action-primary-hover-bg disabled:opacity-50 transition-colors"
                   >
                     {{ isCreatingSupplier ? 'Creando...' : `+ Crear "${ocrSupplierName}"` }}
                   </button>
@@ -228,7 +228,7 @@
                 <button
                   type="button"
                   @click="addItem"
-                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm min-h-[44px]"
+                  class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm min-h-[44px]"
                 >
                   + Agregar ítem
                 </button>
@@ -412,7 +412,7 @@
                         </div>
                         <div
                           v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
-                          class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
+                          class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-state-warning-bg border border-state-warning-border text-xs text-state-warning-text flex-1"
                         >
                           <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -590,7 +590,7 @@
                   <button
                     type="submit"
                     :disabled="isSubmitting"
-                    class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-success text-white hover:bg-success/90 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-action-success-bg text-action-success-text hover:bg-action-success-hover-bg active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
                     <svg v-if="!isSubmitting" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -617,7 +617,7 @@
   <!-- Quota exceeded modal -->
   <div
     v-if="showQuotaModal"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    class="fixed inset-0 bg-overlay-backdrop/50 flex items-center justify-center z-50 p-4"
     role="dialog"
     aria-modal="true"
     aria-labelledby="quota-modal-title"

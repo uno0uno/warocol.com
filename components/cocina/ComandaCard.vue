@@ -164,8 +164,8 @@ onUnmounted(() => {
       />
 
       <!-- Comanda Notes -->
-      <div v-if="comanda.notes" class="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
-        <p class="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase">
+      <div v-if="comanda.notes" class="mt-2 p-2 bg-state-warning-bg  rounded-lg border border-state-warning-border ">
+        <p class="text-[11px] font-bold text-state-warning-text  uppercase">
           📝 Nota: {{ comanda.notes }}
         </p>
       </div>

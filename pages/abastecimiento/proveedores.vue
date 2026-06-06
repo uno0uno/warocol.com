@@ -144,20 +144,20 @@
       </HealthSemaphore>
 
       <!-- Pagination -->
-      <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+      <div class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
         <div class="flex-1 flex justify-between sm:hidden">
           <button @click="prevPage" :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            class="relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
             Anterior
           </button>
           <button @click="nextPage" :disabled="currentPage === totalPages"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
             Siguiente
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
-            <p class="text-sm text-titan-700">
+            <p class="text-sm text-text-secondary">
               Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex }}</span>
               de <span class="font-medium">{{ totalSuppliers }}</span> resultados
             </p>
@@ -165,17 +165,17 @@
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
               <button @click="prevPage" :disabled="currentPage === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
               <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
-                'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium',
-                currentPage === page ? 'bg-crocus-50 border-crocus-500 text-crocus-600' : 'bg-white text-titan-700 hover:bg-titan-50'
+                'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium',
+                currentPage === page ? 'bg-badge-primary-bg border-badge-primary-border text-badge-primary-text' : 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg'
               ]">
                 {{ page }}
               </button>
               <button @click="nextPage" :disabled="currentPage === totalPages"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
             </nav>

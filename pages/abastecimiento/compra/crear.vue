@@ -87,7 +87,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 1,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
                   'border-border text-text-secondary bg-transparent': currentStep < 1
                 }"
@@ -112,7 +112,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 2,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
                   'border-border text-text-secondary bg-transparent': currentStep < 2
                 }"
@@ -136,7 +136,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 3,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
                   'border-border text-text-secondary bg-transparent': currentStep < 3
                 }"
@@ -204,7 +204,7 @@
                           type="checkbox" 
                           class="sr-only peer"
                         >
-                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-control-toggle-track-on"></div>
                       </div>
                     </label>
                   </div>
@@ -324,7 +324,7 @@
                 @click="selectedIngredientType = typeOption.value"
                 class="flex-1 min-w-[100px] px-3 py-2 text-sm font-medium rounded-md transition-all"
                 :class="selectedIngredientType === typeOption.value
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface'"
               >
                 {{ typeOption.label }}
@@ -343,7 +343,7 @@
                     type="button"
                     @click="removeItem(index)"
                     :disabled="form.items.length === 1"
-                    class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                    class="text-state-danger-text hover:text-state-danger-text disabled:opacity-50 disabled:cursor-not-allowed p-1"
                   >
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

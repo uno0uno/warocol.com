@@ -213,7 +213,7 @@ const tableStatusTheme = (status: string) => {
     name: 'text-text-secondary',
     divider: 'bg-border',
     dot: 'bg-text-tertiary',
-    moveHover: 'hover:bg-black/5 focus-visible:ring-border/60',
+    moveHover: 'hover:bg-surface-secondary/50 focus-visible:ring-border/60',
   }
 }
 
@@ -369,7 +369,7 @@ onUnmounted(() => {
                   <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
                     <span class="relative flex h-2 w-2 flex-shrink-0">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
                     </span>
                   </template>
                 </div>

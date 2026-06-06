@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/50"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
@@ -62,7 +62,7 @@
               rows="2"
               :disabled="loading"
               :placeholder="reasonPlaceholder"
-              class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+              class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50"
             />
             <p v-if="error" class="mt-2 text-sm text-destructive">
               {{ error }}
@@ -83,8 +83,8 @@
               :disabled="loading || !reason.trim()"
               class="flex-1 min-h-[44px] rounded-xl text-sm font-semibold active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               :class="variant === 'warning'
-                ? 'bg-slate-700 text-white hover:bg-slate-800 focus-visible:ring-slate-500'
-                : 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive'"
+                ? 'bg-action-secondary-bg text-action-secondary-text hover:bg-action-secondary-hover-bg focus-visible:ring-action-secondary-focus-ring'
+                : 'bg-action-destructive-bg text-action-destructive-text hover:bg-action-destructive-hover-bg focus-visible:ring-action-destructive-focus-ring'"
               @click="submit"
             >
               <UiLoadingDots v-if="loading" size="9px" :color="variant === 'warning' ? 'white' : 'white'" />

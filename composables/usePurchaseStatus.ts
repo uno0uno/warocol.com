@@ -7,6 +7,7 @@ export const usePurchaseStatus = () => {
       confirmed: 'Confirmada',
       preparing: 'En Preparación',
       shipped: 'Enviada',
+      partially_received: 'Parcialmente recibida',
       received: 'Recibida',
       verified: 'Verificada',
       invoiced: 'Facturada',
@@ -37,6 +38,7 @@ export const usePurchaseStatus = () => {
         return 'info'
 
       // 📦 Recibida (Verde claro - Éxito parcial)
+      case 'partially_received':
       case 'received':
         return 'success'
 

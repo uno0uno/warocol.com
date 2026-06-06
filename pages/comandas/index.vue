@@ -129,7 +129,7 @@ onUnmounted(() => {
       v-if="!comandasEnabled && businessProfile !== undefined"
       class="flex flex-col items-center justify-center h-full text-center p-8 bg-surface border-2 border-dashed border-border rounded-2xl"
     >
-      <div class="w-16 h-16 bg-titan-200 rounded-full flex items-center justify-center mb-4 text-primary">
+      <div class="w-16 h-16 bg-surface-secondary rounded-full flex items-center justify-center mb-4 text-primary">
         <Icon name="lucide:queue" size="32" />
       </div>
       <h3 class="text-lg font-bold text-text-primary">Comandas no activadas</h3>
@@ -138,7 +138,7 @@ onUnmounted(() => {
       </p>
       <NuxtLink
         to="/negocio"
-        class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold transition-colors hover:bg-primary/90"
+        class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold transition-colors hover:bg-action-primary-hover-bg"
       >
         <Icon name="lucide:settings" class="w-4 h-4" />
         Ir a Mi Negocio
@@ -186,7 +186,7 @@ onUnmounted(() => {
             type="button"
             class="px-3 rounded-md text-xs font-semibold transition-all min-h-[44px]"
             :class="selectedSourceType === src.value
-              ? 'bg-primary text-white shadow-sm'
+              ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
               : 'text-text-secondary hover:bg-surface-tertiary'"
             @click="selectedSourceType = src.value"
           >
@@ -198,7 +198,7 @@ onUnmounted(() => {
         <select
           v-if="activeStations.length > 0"
           v-model="selectedStationId"
-          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0"
+          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 flex-shrink-0"
         >
           <option value="">Todas las estaciones</option>
           <option v-for="station in activeStations" :key="station.id" :value="station.id">
@@ -209,7 +209,7 @@ onUnmounted(() => {
         <!-- Status dropdown -->
         <select
           v-model="selectedStatus"
-          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0"
+          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 flex-shrink-0"
         >
           <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">
             {{ opt.label }}
@@ -220,7 +220,7 @@ onUnmounted(() => {
         <input
           v-model="selectedDate"
           type="date"
-          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0"
+          class="min-h-[44px] px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 flex-shrink-0"
         />
       </div>
 
@@ -244,7 +244,7 @@ onUnmounted(() => {
           v-else-if="!allComandas.length"
           class="flex flex-col items-center justify-center h-full text-center p-8 bg-surface/50 border border-border rounded-2xl min-h-[300px]"
         >
-          <div class="w-16 h-16 bg-titan-100 rounded-full flex items-center justify-center mb-4 text-titan-500">
+          <div class="w-16 h-16 bg-surface-secondary rounded-full flex items-center justify-center mb-4 text-text-tertiary">
             <Icon name="lucide:check-circle-2" size="32" />
           </div>
           <h3 class="text-lg font-bold text-text-primary">
@@ -266,7 +266,7 @@ onUnmounted(() => {
               <h2 class="text-sm font-black uppercase tracking-wider text-text-secondary">Activas</h2>
               <span
                 v-if="activeComandas.length > 0"
-                class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-primary text-white text-[10px] font-black"
+                class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-action-primary-bg text-action-primary-text text-[10px] font-black"
               >
                 {{ activeComandas.length }}
               </span>
@@ -296,7 +296,7 @@ onUnmounted(() => {
               <h2 class="text-sm font-black uppercase tracking-wider text-success">Listas para entregar</h2>
               <span
                 v-if="readyComandas.length > 0"
-                class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-success text-white text-[10px] font-black"
+                class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-action-success-bg text-action-success-text text-[10px] font-black"
               >
                 {{ readyComandas.length }}
               </span>

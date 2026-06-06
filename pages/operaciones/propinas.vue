@@ -220,7 +220,7 @@ const saveConfig = async () => {
             :disabled="isToggling"
             @change="toggleTipEnabled"
           />
-          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
       </div>
 
@@ -250,14 +250,14 @@ const saveConfig = async () => {
               :disabled="isTogglingTaxable"
               @change="toggleTipTaxableDefault"
             />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
         <!-- Fixed informational banner (Ley 1935 framing) -->
-        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3">
-          <span aria-hidden="true" class="text-amber-700 mt-0.5">⚠</span>
-          <p class="text-sm text-amber-900 leading-snug">
+        <div class="rounded-xl border border-state-warning-border bg-state-warning-bg px-4 py-3 flex gap-3">
+          <span aria-hidden="true" class="text-state-warning-text mt-0.5">⚠</span>
+          <p class="text-sm text-state-warning-text leading-snug">
             En este momento las propinas se asignan directamente al mesero de la orden. La distribución entre el equipo (cocina, auxiliares, etc.) es responsabilidad del dueño.
           </p>
         </div>
@@ -342,7 +342,7 @@ const saveConfig = async () => {
               :disabled="draftPresets.length === 0"
               @change="draftPreselect = !draftPreselect"
             />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -354,7 +354,7 @@ const saveConfig = async () => {
           <button
             type="button"
             :disabled="!hasChanges || isSavingConfig"
-            class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            class="min-h-[44px] px-4 py-2 rounded-lg bg-action-primary-bg text-action-primary-text font-medium text-sm transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
             @click="saveConfig"
           >
             {{ isSavingConfig ? 'Guardando...' : 'Guardar cambios' }}

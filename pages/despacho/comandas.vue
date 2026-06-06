@@ -291,7 +291,7 @@ const getComandaStatusVariant = (status: string): string => {
               class="h-9 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               :class="status === 'cancelled'
                 ? 'border border-destructive text-destructive hover:bg-destructive/10'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'"
+                : 'bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg'"
               @click="executeBulkUpdate(status)"
             >
               <UiLoadingDots v-if="isBulkUpdating" size="8px" color="currentColor" />
@@ -326,7 +326,7 @@ const getComandaStatusVariant = (status: string): string => {
         <div class="flex items-center justify-center">
           <label class="cursor-pointer">
             <input type="checkbox" class="sr-only peer" :checked="allPageSelected" @change="toggleSelectAll" />
-            <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+            <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-control-toggle-track-on peer-checked:border-primary transition-colors flex items-center justify-center text-action-primary-text">
               <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
                 <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -339,7 +339,7 @@ const getComandaStatusVariant = (status: string): string => {
       <template #cell-_select="{ row }">
         <label @click.stop class="flex items-center justify-center cursor-pointer">
           <input type="checkbox" class="sr-only peer" :checked="selectedIds.includes(row.id)" @change.stop="toggleSelect(row.id)" />
-          <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+          <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-control-toggle-track-on peer-checked:border-primary transition-colors flex items-center justify-center text-action-primary-text">
             <svg v-if="selectedIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
               <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -375,7 +375,7 @@ const getComandaStatusVariant = (status: string): string => {
                 {{ item.kitchen_name }}
               </span>
               <span v-if="item.status === 'cancelled'" class="text-[10px] font-semibold text-destructive bg-destructive/10 px-1 rounded">✕</span>
-              <span v-if="item.notes" class="text-amber-500 text-[10px]" :title="item.notes">📝</span>
+              <span v-if="item.notes" class="text-state-warning-icon text-[10px]" :title="item.notes">📝</span>
             </div>
         </div>
       </template>

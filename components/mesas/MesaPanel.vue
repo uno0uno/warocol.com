@@ -9,7 +9,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="modelValue" class="fixed inset-0 z-40 bg-black/40" aria-hidden="true" @click="close" />
+      <div v-if="modelValue" class="fixed inset-0 z-40 bg-overlay-backdrop/40" aria-hidden="true" @click="close" />
     </Transition>
 
     <!-- Panel: bottom sheet on mobile, slide-over on desktop -->
@@ -25,7 +25,7 @@
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -49,7 +49,7 @@
             <button
               type="button"
               aria-label="Cerrar panel"
-              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -164,7 +164,7 @@
           <button
             type="button"
             :disabled="saving"
-            class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
+            class="flex-1 h-11 rounded-lg bg-action-primary-bg text-sm font-semibold text-action-primary-text transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-action-primary-bg/30"
             @click="submit"
           >
             <span v-if="saving">Guardando...</span>

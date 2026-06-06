@@ -92,7 +92,7 @@
                     v-if="!kdsTokens[st.id]"
                     @click="generateKdsToken(st.id)"
                     :disabled="generatingToken === st.id"
-                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50"
                   >
                     {{ generatingToken === st.id ? 'Generando...' : 'Generar enlace' }}
                   </button>
@@ -108,7 +108,7 @@
                     <button
                       @click="revokeKdsToken(st.id)"
                       :disabled="revokingToken === st.id"
-                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
                       aria-label="Revocar enlace KDS"
                     >
                       {{ revokingToken === st.id ? '...' : 'Revocar' }}
@@ -160,7 +160,7 @@
         </div>
         <button
           @click="openCreateStation"
-          class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors min-h-[36px]"
+          class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors min-h-[36px]"
         >
           <PlusIcon class="w-3.5 h-3.5" />
           Nueva
@@ -309,7 +309,7 @@
       >
         <div
           v-if="deactivateModalOpen"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/60 backdrop-blur-sm"
           @click.self="deactivateModalOpen = false"
         >
           <Transition
