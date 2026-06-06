@@ -5,7 +5,7 @@
       @click="openModal"
       :disabled="isUpdating"
       :aria-label="businessProfile.is_currently_open ? 'Restaurante abierto — click para cerrar' : 'Restaurante cerrado — click para abrir'"
-      class="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
       :class="businessProfile.is_currently_open
         ? 'bg-status-success-bg border-status-success-text text-status-success-text hover:opacity-80'
         : 'bg-status-critical-bg border-status-critical-text text-status-critical-text hover:opacity-80'"
