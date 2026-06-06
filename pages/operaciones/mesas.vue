@@ -333,20 +333,20 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         class="rounded-xl border-2 transition-colors divide-y divide-border"
         :class="businessProfile.tables_enabled
           ? 'border-border bg-surface'
-          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+          : 'border-state-warning-border bg-state-warning-bg'"
       >
         <!-- Tables module -->
         <div class="flex items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
             <p
               class="text-sm font-semibold leading-snug"
-              :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
+              :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-state-warning-text'"
             >
               {{ businessProfile.tables_enabled ? `Gestión de ${pluralLower} activa` : `Gestión de ${pluralLower} desactivada` }}
             </p>
             <p
               class="text-xs mt-0.5 leading-snug"
-              :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
+              :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-state-warning-text/80'"
             >
               {{ businessProfile.tables_enabled ? `El flujo de ${pluralLower} está disponible en el punto de venta` : `Actívala para usar el flujo de ${pluralLower} en el punto de venta` }}
             </p>
@@ -363,7 +363,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleTablesEnabled"
               :disabled="isTogglingTables"
             />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -390,7 +390,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleWaiterAttribution"
               :disabled="isTogglingWaiterAttribution"
             />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -416,7 +416,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleTableQrModule"
               :disabled="isTogglingTableQrModule"
             >
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
       </div>
@@ -444,7 +444,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #header-actions>
           <button
             type="button"
-            class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
+              class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
             @click="openPanel(null)"
           >
             <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
@@ -501,7 +501,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <button :aria-label="`Editar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors" @click="openPanel(item)">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
-                <button :aria-label="`Desactivar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-amber-50 hover:text-amber-600 transition-colors" @click="openDeactivateModal(item)">
+                <button :aria-label="`Desactivar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors" @click="openDeactivateModal(item)">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                 </button>
                 <button :aria-label="`Eliminar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors" @click="openDeleteModal(item)">
@@ -533,7 +533,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <template #cell-mesero="{ row }">
             <span
               v-if="row.assigned_member_name"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-status-chip-bg text-status-chip-text border border-status-chip-border"
             >
               {{ row.assigned_member_name }}
             </span>
@@ -567,7 +567,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               <button :aria-label="`Editar ${row.name}`" title="Editar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30" @click="openPanel(row)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
               </button>
-              <button :aria-label="`Desactivar ${row.name}`" title="Desactivar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-amber-50 hover:text-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/30" @click="openDeactivateModal(row)">
+              <button :aria-label="`Desactivar ${row.name}`" title="Desactivar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors focus:outline-none focus:ring-2 focus:ring-state-warning-border" @click="openDeactivateModal(row)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
               </button>
               <button :aria-label="`Eliminar ${row.name}`" title="Eliminar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/30" @click="openDeleteModal(row)">
@@ -597,11 +597,11 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
-                <span class="text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-full bg-surface-secondary text-text-tertiary border border-border">Inactiva</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-full bg-status-chip-bg text-status-chip-text border border-status-chip-border">Inactiva</span>
                 <button
                   :aria-label="`Activar ${item.name}`"
                   :disabled="activatingId === item.id"
-                  class="flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-success border border-success/40 hover:bg-success/10 transition-colors disabled:opacity-50"
+                  class="flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors disabled:opacity-50"
                   @click="activateTable(item.id)"
                 >
                   <svg v-if="activatingId !== item.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -638,7 +638,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               <button
                 :aria-label="`Activar ${row.name}`"
                 :disabled="activatingId === row.id"
-                class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-success border border-success/40 hover:bg-success/10 transition-colors focus:outline-none focus:ring-2 focus:ring-success/30 disabled:opacity-50"
+                class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors focus:outline-none focus:ring-2 focus:ring-state-success-border disabled:opacity-50"
                 @click="activateTable(row.id)"
               >
                 <svg v-if="activatingId !== row.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -692,8 +692,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <div v-if="deactivateModalOpen" class="bg-surface rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
               <div class="relative px-5 pt-5 pb-4 border-b border-border/60">
                 <div class="flex items-start gap-3">
-                  <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/40">
-                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-state-warning-bg border border-state-warning-border">
+                    <svg class="w-5 h-5 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                   </div>
                   <div class="min-w-0 flex-1 pt-0.5">
                     <h3 class="text-base font-bold text-text-primary leading-tight">{{ `Desactivar ${singularLower}` }}</h3>
@@ -730,7 +730,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <button
                   type="button"
                   :disabled="isDeactivating"
-                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-state-warning-action-bg text-state-warning-action-text hover:bg-state-warning-action-bg/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                   @click="confirmDeactivate"
                 >
                   <UiLoadingDots v-if="isDeactivating" size="8px" color="currentColor" />
@@ -790,40 +790,40 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
 
               <div class="px-5 py-4 flex flex-col gap-3">
                 <!-- Blocked: open session -->
-                <div v-if="hasOpenSession" class="rounded-xl bg-destructive/8 border border-destructive/20 p-4">
+                <div v-if="hasOpenSession" class="rounded-xl bg-state-danger-bg border border-state-danger-border p-4">
                   <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <svg class="w-4 h-4 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <div class="w-8 h-8 rounded-lg bg-state-danger-bg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-state-danger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <div>
-                      <p class="text-sm font-semibold text-destructive leading-snug">No se puede eliminar ahora</p>
-                      <p class="text-xs text-destructive/80 mt-1 leading-relaxed">{{ `Esta ${singularLower} tiene una sesión activa. Ciérrala antes de eliminarla.` }}</p>
+                      <p class="text-sm font-semibold text-state-danger-text leading-snug">No se puede eliminar ahora</p>
+                      <p class="text-xs text-state-danger-text/80 mt-1 leading-relaxed">{{ `Esta ${singularLower} tiene una sesión activa. Ciérrala antes de eliminarla.` }}</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Archive warning: has closed history -->
-                <div v-else-if="hasHistory" class="rounded-xl bg-amber-50 border border-amber-200/70 p-4 dark:bg-amber-950/20 dark:border-amber-800/40">
+                <div v-else-if="hasHistory" class="rounded-xl bg-state-warning-bg border border-state-warning-border p-4">
                   <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                    <div class="w-8 h-8 rounded-lg bg-state-warning-bg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                     </div>
                     <div>
-                      <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-snug">{{ `Esta ${singularLower} se archivará` }}</p>
-                      <p class="text-xs text-amber-700/80 dark:text-amber-400 mt-1 leading-relaxed">Tiene historial de sesiones. Se archivará para preservar los reportes y dejará de aparecer en el sistema.</p>
+                      <p class="text-sm font-semibold text-state-warning-text leading-snug">{{ `Esta ${singularLower} se archivará` }}</p>
+                      <p class="text-xs text-state-warning-text/80 mt-1 leading-relaxed">Tiene historial de sesiones. Se archivará para preservar los reportes y dejará de aparecer en el sistema.</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Safe: no history, hard delete -->
-                <div v-else class="rounded-xl bg-emerald-50 border border-emerald-200/70 p-4 dark:bg-emerald-950/20 dark:border-emerald-800/40">
+                <div v-else class="rounded-xl bg-state-success-bg border border-state-success-border p-4">
                   <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <div class="w-8 h-8 rounded-lg bg-state-success-bg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                     </div>
                     <div>
-                      <p class="text-sm font-semibold text-emerald-800 dark:text-emerald-300 leading-snug">Sin historial — eliminación permanente</p>
-                      <p class="text-xs text-emerald-700/80 dark:text-emerald-400 mt-1 leading-relaxed">{{ `Esta ${singularLower} no tiene sesiones registradas. Se eliminará de forma definitiva.` }}</p>
+                      <p class="text-sm font-semibold text-state-success-text leading-snug">Sin historial — eliminación permanente</p>
+                      <p class="text-xs text-state-success-text/80 mt-1 leading-relaxed">{{ `Esta ${singularLower} no tiene sesiones registradas. Se eliminará de forma definitiva.` }}</p>
                     </div>
                   </div>
                 </div>
@@ -844,7 +844,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <button
                   type="button"
                   :disabled="hasOpenSession || isDeleting"
-                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-destructive text-white hover:bg-destructive/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-state-danger-action-bg text-state-danger-action-text hover:bg-state-danger-action-bg/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                   @click="confirmDelete"
                 >
                   <UiLoadingDots v-if="isDeleting" size="8px" color="currentColor" />
