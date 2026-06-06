@@ -188,12 +188,12 @@ const clearSelection = () => {
 
 const orderRowClass = (row: { id: string }, index: number) => {
   if (selectedIds.value.includes(row.id)) return 'bg-primary/10'
-  return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+  return index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'
 }
 
 const getRowClass = (row: { id: string }) => {
-  const index = orders.value.findIndex((o: { id: string }) => o.id === row.id)
-  return orderRowClass(row, index >= 0 ? index : 0)
+  if (selectedIds.value.includes(row.id)) return 'bg-primary/10'
+  return ''
 }
 
 const bulkUpdateStatus = () => {
@@ -565,7 +565,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-data-table-row-hover-bg"
             :class="orderRowClass(item, index)"
           >
             <!-- Left: order info -->

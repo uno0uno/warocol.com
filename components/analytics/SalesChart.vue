@@ -41,6 +41,21 @@ const formatValue = (value: number): string => {
   return `$${Math.round(value)}`;
 };
 
+const hslToken = (name: string, fallback: string, seen = new Set<string>()): string => {
+  if (!import.meta.client) return fallback;
+  if (seen.has(name)) return fallback;
+  seen.add(name);
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+
+  const alias = value.match(/^var\((--[^)]+)\)$/);
+  if (alias) return hslToken(alias[1], fallback, seen);
+
+  return value ? `hsl(${value})` : fallback;
+};
+
 const series = computed(() => [
   {
     name: props.comparisonLabel,
@@ -75,25 +90,27 @@ const chartOptions = computed(() => ({
       opacityTo: 0.30,
     },
   },
-  // Chart palette exception: Apex requires literal series/axis colors.
-  colors: ['#f59e0b', '#4f46e5'],
+  colors: [
+    hslToken('--state-warning-icon', '#d97706'),
+    hslToken('--state-info-icon', '#2563eb'),
+  ],
   xaxis: {
     categories: data.value.map(d => d.name),
-    axisBorder: { color: '#e2e8f0' },
+    axisBorder: { color: hslToken('--data-table-border', '#e2e8f0') },
     axisTicks: { show: false },
     labels: {
-      style: { colors: '#64748b', fontSize: '11px' },
+      style: { colors: hslToken('--data-table-cell-muted', '#64748b'), fontSize: '11px' },
     },
     tooltip: { enabled: false },
   },
   yaxis: {
     labels: {
-      style: { colors: '#64748b', fontSize: '11px' },
+      style: { colors: hslToken('--data-table-cell-muted', '#64748b'), fontSize: '11px' },
       formatter: formatValue,
     },
   },
   grid: {
-    borderColor: '#f1f5f9',
+    borderColor: hslToken('--data-table-border', '#f1f5f9'),
     strokeDashArray: 4,
     xaxis: { lines: { show: false } },
     yaxis: { lines: { show: true } },
@@ -102,7 +119,7 @@ const chartOptions = computed(() => ({
   dataLabels: { enabled: false },
   markers: {
     size: [4, 6],
-    strokeColors: '#fff',
+    strokeColors: hslToken('--data-table-container-bg', '#fff'),
     strokeWidth: 2,
     hover: { size: 7 },
   },
