@@ -35,7 +35,7 @@
           </h2>
 
           <button
-            class="w-10 h-10 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="w-10 h-10 flex items-center justify-center bg-icon-button-neutral-bg rounded-lg text-icon-button-neutral-text hover:bg-icon-button-neutral-hover-bg hover:text-icon-button-neutral-hover-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
             aria-label="Cerrar carrito"
             @click="close"
           >
@@ -73,7 +73,7 @@
           <h3 class="text-base font-bold text-foreground mb-1">Tu carrito está vacío</h3>
           <p class="text-sm text-muted-foreground mb-4">Agrega productos para comenzar tu pedido</p>
           <button
-            class="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
             @click="close"
           >
             Explorar Menú
@@ -124,14 +124,14 @@
                 <div v-if="confirmClear" key="confirm" class="flex items-center gap-2 justify-center py-1">
                   <span class="text-sm text-muted-foreground">¿Vaciar carrito?</span>
                   <button
-                    class="px-3 py-1.5 text-sm font-semibold bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    class="px-3 py-1.5 text-sm font-semibold bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                     :disabled="cartStore.isLoading"
                     @click="confirmAndClearCart"
                   >
                     Sí, vaciar
                   </button>
                   <button
-                    class="px-3 py-1.5 text-sm font-semibold bg-muted text-foreground rounded-lg hover:bg-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    class="px-3 py-1.5 text-sm font-semibold bg-action-secondary-bg text-action-secondary-text rounded-lg hover:bg-action-secondary-hover-bg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                     @click="confirmClear = false"
                   >
                     Cancelar
@@ -140,7 +140,7 @@
                 <button
                   v-else
                   key="trigger"
-                  class="w-full py-2 text-sm font-semibold text-destructive hover:bg-destructive/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  class="w-full py-2 text-sm font-semibold text-action-destructive-text hover:bg-action-destructive-hover-bg rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                   @click="confirmClear = true"
                 >
                   Vaciar Carrito

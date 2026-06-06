@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="bar-slide">
-      <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders" class="cart-bottom-bar bg-white border-t border-border shadow-2xl">
+      <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders" class="cart-bottom-bar bg-surface border-t border-border shadow-2xl">
         <!-- Inner container — aligned with body content
              (max-w-7xl mx-auto px-4 — same shape PublicMenu and
              RestaurantHeader use). Previous `md:px-16 2xl:px-[30rem]`

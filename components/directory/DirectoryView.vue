@@ -70,15 +70,15 @@ useHead({
       />
       <div class="absolute inset-0 bg-foreground/50" />
       <div class="relative max-w-6xl mx-auto text-center w-full px-4 py-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-action-primary-text">
           Restaurantes en {{ cityName }}
         </h1>
-        <p class="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
+        <p class="text-lg md:text-xl text-action-primary-text/90 mb-6 max-w-2xl mx-auto">
           Descubre los mejores restaurantes de la ciudad
         </p>
         <span
           v-if="!pending && restaurants.length > 0"
-          class="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold text-white"
+          class="inline-block px-4 py-1.5 bg-surface/20 backdrop-blur-sm rounded-full text-sm font-semibold text-action-primary-text"
         >
           {{ restaurants.length }} restaurante{{ restaurants.length !== 1 ? 's' : '' }}
         </span>
@@ -100,7 +100,7 @@ useHead({
         <h2 class="text-2xl font-bold text-foreground mb-4">Error al cargar restaurantes</h2>
         <p class="text-muted-foreground mb-6">{{ error }}</p>
         <button
-          class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          class="px-6 py-3 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors"
           @click="refreshNuxtData(`restaurants-${props.citySlug}`)"
         >
           Reintentar
@@ -168,7 +168,7 @@ useHead({
           </div>
 
           <div class="p-6">
-            <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+            <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-badge-primary-text transition-colors">
               {{ (restaurant as any).display_name }}
             </h3>
 
@@ -189,7 +189,7 @@ useHead({
             </div>
 
             <div class="mt-4 pt-4 border-t border-border">
-              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary/10 text-primary rounded-xl text-sm font-semibold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-badge-primary-bg text-badge-primary-text rounded-xl text-sm font-semibold group-hover:bg-primary group-hover:text-badge-primary-text-foreground transition-colors">
                 Ver menú
                 <ChevronRightIcon class="w-4 h-4" aria-hidden="true" />
               </span>
@@ -207,7 +207,7 @@ useHead({
         <p class="text-muted-foreground mb-6">Estamos sumando restaurantes en esta ciudad. Pronto vas a encontrar opciones aquí.</p>
         <NuxtLink
           to="/"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors"
         >
           Ver otras ciudades
           <ChevronRightIcon class="w-4 h-4" aria-hidden="true" />

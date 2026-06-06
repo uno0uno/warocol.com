@@ -43,7 +43,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
       <NuxtLink
         v-if="index === 0"
         :to="item.path || '/'"
-        class="text-ebony-500 hover:text-crocus-600 transition-colors"
+        class="text-text-secondary hover:text-badge-primary-text transition-colors"
         aria-label="Inicio"
       >
         <svg
@@ -59,7 +59,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
       <template v-else>
         <!-- Separator -->
         <svg
-          class="w-5 h-5 text-ebony-400"
+          class="w-5 h-5 text-text-tertiary"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -74,13 +74,13 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
         <NuxtLink
           v-if="item.path"
           :to="item.path"
-          class="text-ebony-600 hover:text-crocus-600 capitalize transition-colors whitespace-nowrap"
+          class="text-text-secondary hover:text-badge-primary-text capitalize transition-colors whitespace-nowrap"
         >
           {{ item.label }}
         </NuxtLink>
         <span
           v-else
-          class="text-ebony-900 capitalize whitespace-nowrap font-medium"
+          class="text-text-primary capitalize whitespace-nowrap font-medium"
           aria-current="page"
         >
           {{ item.label }}

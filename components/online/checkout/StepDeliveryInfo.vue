@@ -40,7 +40,7 @@
       <template v-else>
         <div
           v-if="addressFormValid"
-          class="flex items-center justify-between gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
+          class="flex items-center justify-between gap-2 p-3 rounded-md bg-state-success-bg border border-state-success-border text-state-success-text text-sm font-medium"
         >
           <div class="flex items-center gap-2">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,7 @@
           </div>
           <button
             type="button"
-            class="text-xs font-medium text-green-700 underline hover:text-green-900 flex-shrink-0"
+            class="text-xs font-medium text-state-success-text underline hover:text-state-success-icon flex-shrink-0"
             @click="addressFormValid = false"
           >
             Cambiar
@@ -98,7 +98,7 @@
           class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left"
           :class="!isScheduled
             ? 'border-primary bg-primary/10 text-primary'
-            : 'border-border bg-card text-foreground hover:border-primary/50'"
+            : 'border-border bg-card text-foreground hover:border-action-outline-focus-ring'"
           @click="isScheduled = false"
         >
           <svg class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,7 +119,7 @@
           class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left"
           :class="isScheduled
             ? 'border-primary bg-primary/10 text-primary'
-            : 'border-border bg-card text-foreground hover:border-primary/50'"
+            : 'border-border bg-card text-foreground hover:border-action-outline-focus-ring'"
           @click="isScheduled = true"
         >
           <svg class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

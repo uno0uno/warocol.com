@@ -15,7 +15,7 @@
         <h2 class="mt-4 text-xl font-bold text-text-primary">Error</h2>
         <p class="mt-2 text-text-secondary">{{ error }}</p>
         <button @click="loadPurchase"
-          class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+          class="mt-4 px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors">
           Reintentar
         </button>
       </div>
@@ -81,7 +81,7 @@
               <h3 class="text-lg font-semibold text-text-primary">No hay acciones pendientes</h3>
               <p class="text-text-secondary mt-2">Esta orden no requiere ninguna acción de tu parte en este momento.</p>
               <button @click="navigateTo(`/proveedor/${token}/${purchaseId}`)"
-                class="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                class="mt-6 px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors">
                 Volver al detalle
               </button>
             </div>
@@ -129,7 +129,7 @@
                 type="button"
                 @click="handleFormSubmit('completePrices')"
                 :disabled="isFormSubmitting"
-                class="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-green-500/20">
+                class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-success-bg/20">
                 <CommonsTheCustomLoader v-if="isFormSubmitting" size="small" />
                 <span>{{ isFormSubmitting ? 'Enviando...' : 'Enviar Cotización' }}</span>
               </button>
@@ -141,7 +141,7 @@
                 type="button"
                 @click="handleFormSubmit('invoice')"
                 :disabled="isFormSubmitting"
-                class="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-orange-500/20">
+                class="w-full py-3 bg-action-warning-bg text-action-warning-text rounded-lg hover:bg-action-warning-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-warning-bg/20">
                 <CommonsTheCustomLoader v-if="isFormSubmitting" size="small" />
                 <span>{{ isFormSubmitting ? 'Registrando...' : 'Registrar Factura' }}</span>
               </button>
@@ -153,7 +153,7 @@
                 type="button"
                 @click="handleFormSubmit('ship')"
                 :disabled="isFormSubmitting"
-                class="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-blue-500/20">
+                class="w-full py-3 bg-action-info-bg text-action-info-text rounded-lg hover:bg-action-info-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-info-bg/20">
                 <CommonsTheCustomLoader v-if="isFormSubmitting" size="small" />
                 <span>{{ isFormSubmitting ? 'Registrando...' : 'Marcar como Enviado' }}</span>
               </button>
@@ -164,15 +164,15 @@
               v-if="purchase?.status === 'quotation' || canShowInvoiceForm || purchase?.status === 'invoiced'"
               type="button"
               @click="navigateTo(`/proveedor/${token}/${purchaseId}`)"
-              class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium">
+              class="w-full py-3 border-2 border-action-outline-border rounded-lg text-action-outline-text hover:text-action-outline-hover-text hover:bg-action-outline-hover-bg transition-colors font-medium">
               Cancelar
             </button>
           </div>
           <!-- Action Help Text -->
-          <div class="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+          <div class="mt-6 p-4 bg-state-info-bg border border-state-info-border rounded-lg">
             <div class="flex gap-3">
               <div class="flex-shrink-0">
-                <svg class="w-5 h-5 text-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-state-info-icon mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -281,23 +281,23 @@ const headerIcon = computed(() => {
 })
 
 const headerClass = computed(() => {
-  if (purchase.value?.status === 'quotation') return 'bg-green-500/5 border-green-500/20'
-  if (canShowInvoiceForm.value) return 'bg-orange-500/5 border-orange-500/20'
-  if (purchase.value?.status === 'invoiced') return 'bg-blue-500/5 border-blue-500/20'
+  if (purchase.value?.status === 'quotation') return 'bg-state-success-bg border-state-success-border'
+  if (canShowInvoiceForm.value) return 'bg-state-warning-bg border-state-warning-border'
+  if (purchase.value?.status === 'invoiced') return 'bg-state-info-bg border-state-info-border'
   return 'bg-surface'
 })
 
 const iconBgClass = computed(() => {
-  if (purchase.value?.status === 'quotation') return 'bg-green-500/10'
-  if (canShowInvoiceForm.value) return 'bg-orange-500/10'
-  if (purchase.value?.status === 'invoiced') return 'bg-blue-500/10'
+  if (purchase.value?.status === 'quotation') return 'bg-state-success-bg'
+  if (canShowInvoiceForm.value) return 'bg-state-warning-bg'
+  if (purchase.value?.status === 'invoiced') return 'bg-state-info-bg'
   return 'bg-surface-secondary'
 })
 
 const iconColorClass = computed(() => {
-  if (purchase.value?.status === 'quotation') return 'text-green-500'
-  if (canShowInvoiceForm.value) return 'text-orange-500'
-  if (purchase.value?.status === 'invoiced') return 'text-blue-500'
+  if (purchase.value?.status === 'quotation') return 'text-state-success-icon'
+  if (canShowInvoiceForm.value) return 'text-state-warning-icon'
+  if (purchase.value?.status === 'invoiced') return 'text-state-info-icon'
   return 'text-text-secondary'
 })
 
@@ -311,14 +311,14 @@ function formatDate(dateString: string): string {
 
 function getStatusBadgeClass(status: string): string {
   const classes: Record<string, string> = {
-    'quotation': 'bg-yellow-500/10 text-yellow-600',
-    'pending': 'bg-blue-500/10 text-blue-600',
-    'confirmed': 'bg-green-500/10 text-green-600',
+    'quotation': 'bg-badge-warning-bg text-badge-warning-text',
+    'pending': 'bg-state-info-bg text-badge-info-text',
+    'confirmed': 'bg-state-success-bg text-badge-success-text',
     'preparing': 'bg-state-warning-bg text-state-warning-text',
-    'invoiced': 'bg-orange-500/10 text-orange-600',
+    'invoiced': 'bg-state-warning-bg text-badge-warning-text',
     'shipped': 'bg-cyan-500/10 text-cyan-600',
-    'received': 'bg-emerald-500/10 text-emerald-600',
-    'paid': 'bg-green-600/10 text-green-700'
+    'received': 'bg-badge-success-bg text-badge-success-text',
+    'paid': 'bg-badge-success-bg text-badge-success-text'
   }
   return classes[status] || 'bg-surface-secondary text-text-secondary'
 }

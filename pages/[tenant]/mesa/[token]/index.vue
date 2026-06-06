@@ -84,7 +84,7 @@ const handleCheckout = async () => {
     </div>
   </div>
 
-  <div v-else-if="resolve" class="min-h-screen bg-gray-50 pb-24">
+  <div v-else-if="resolve" class="min-h-screen bg-background pb-24">
     <div class="bg-card border-b border-border">
       <div class="max-w-7xl mx-auto px-4 py-6">
         <p class="text-xs font-semibold uppercase tracking-wide text-primary mb-1">Pedido en mesa</p>

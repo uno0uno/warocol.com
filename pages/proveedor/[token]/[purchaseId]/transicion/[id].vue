@@ -15,7 +15,7 @@
         <p class="mt-2 text-text-secondary">{{ error }}</p>
         <button
           @click="navigateTo(`/proveedor/${token}/${purchaseId}`)"
-          class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          class="mt-4 px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors"
         >
           Volver al detalle de la orden
         </button>
@@ -211,21 +211,21 @@
             <!-- Image Preview (clickable) -->
             <a v-if="isImageFile(attachment.file_name)" :href="attachment.s3_url" target="_blank"
               rel="noopener noreferrer"
-              class="relative aspect-video bg-gray-100 block cursor-pointer hover:opacity-90 transition-opacity">
+              class="relative aspect-video bg-surface-secondary block cursor-pointer hover:opacity-90 transition-opacity">
               <img :src="attachment.s3_url" :alt="attachment.file_name" class="w-full h-full object-contain"
                 loading="lazy" />
             </a>
             <!-- PDF Preview (clickable) -->
             <a v-else-if="isPdfFile(attachment.file_name)" :href="attachment.s3_url" target="_blank"
               rel="noopener noreferrer"
-              class="relative aspect-video bg-gray-100 block cursor-pointer hover:opacity-90 transition-opacity overflow-hidden">
+              class="relative aspect-video bg-surface-secondary block cursor-pointer hover:opacity-90 transition-opacity overflow-hidden">
               <embed :src="`${attachment.s3_url}#toolbar=0&navpanes=0&scrollbar=0`" type="application/pdf"
                 class="w-full h-full pointer-events-none" />
               <div class="absolute inset-0 bg-transparent"></div>
             </a>
             <!-- File Icon for other files (clickable) -->
             <a v-else :href="attachment.s3_url" target="_blank" rel="noopener noreferrer"
-              class="relative aspect-video bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors">
+              class="relative aspect-video bg-surface-secondary flex items-center justify-center cursor-pointer hover:bg-surface-tertiary transition-colors">
               <svg class="w-20 h-20 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   :d="getFileIcon(attachment.file_name)" />
@@ -273,7 +273,7 @@
             <button 
               @click="handleUploadFiles" 
               :disabled="isUploading"
-              class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium">
+              class="px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium">
               <CommonsTheCustomLoader v-if="isUploading" size="small" />
               <span>{{ isUploading ? 'Subiendo...' : 'Subir Archivos' }}</span>
             </button>
@@ -414,11 +414,11 @@ function getStatusBadgeClass(status: string): string {
     quotation: 'border-accent text-accent',
     pending: 'border-warning text-warning',
     confirmed: 'border-success text-success',
-    preparing: 'border-blue-500 text-blue-500',
-    shipped: 'border-blue-600 text-blue-600',
+    preparing: 'border-badge-info-border text-badge-info-text',
+    shipped: 'border-badge-info-border text-badge-info-text',
     received: 'border-state-success-border text-state-success-text',
-    verified: 'border-indigo-500 text-indigo-500',
-    invoiced: 'border-orange-500 text-orange-500',
+    verified: 'border-badge-primary-border text-badge-primary-text',
+    invoiced: 'border-badge-warning-border text-badge-warning-text',
     paid: 'border-success text-success',
     cancelled: 'border-destructive text-destructive'
   }

@@ -184,7 +184,7 @@ useHead({
 </script>
 
 <template>
-  <div class="bg-white">
+  <div class="bg-surface">
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center min-h-screen">
       <CommonsTheCustomLoader size="large" />
@@ -193,11 +193,11 @@ useHead({
     <!-- Error State -->
     <div v-else-if="fetchError" class="flex items-center justify-center min-h-screen">
       <div class="text-center px-4">
-        <p class="text-2xl font-bold text-ebony-900 mb-2">Error al cargar el artículo</p>
-        <p class="text-lg text-ebony-600 mb-4">{{ fetchError.message }}</p>
+        <p class="text-2xl font-bold text-text-primary mb-2">Error al cargar el artículo</p>
+        <p class="text-lg text-text-secondary mb-4">{{ fetchError.message }}</p>
         <NuxtLink
           to="/blog"
-          class="text-lg text-crocus-600 hover:text-crocus-700 underline"
+          class="text-lg text-badge-primary-text hover:text-badge-primary-text underline"
         >
           Volver al blog
         </NuxtLink>
@@ -266,10 +266,10 @@ useHead({
     <!-- Not Found State -->
     <div v-else class="flex items-center justify-center min-h-screen">
       <div class="text-center px-4">
-        <p class="text-2xl font-bold text-ebony-900 mb-2">Artículo no encontrado</p>
+        <p class="text-2xl font-bold text-text-primary mb-2">Artículo no encontrado</p>
         <NuxtLink
           to="/blog"
-          class="text-lg text-crocus-600 hover:text-crocus-700 underline"
+          class="text-lg text-badge-primary-text hover:text-badge-primary-text underline"
         >
           Volver al blog
         </NuxtLink>

@@ -13,7 +13,7 @@
           class="py-3 px-4 border-2 rounded-lg text-sm font-semibold text-center cursor-pointer transition-all"
           :class="formData.address_type === type.value
             ? 'bg-primary border-primary text-primary-foreground'
-            : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'"
+            : 'bg-background border-border text-muted-foreground hover:border-action-outline-focus-ring hover:text-action-outline-hover-text'"
           @click="formData.address_type = type.value"
         >
           {{ type.icon }} {{ type.label }}
@@ -31,8 +31,8 @@
         v-model="formData.address_line1"
         type="text"
         class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground
-               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-               focus:border-ring transition-all"
+               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+               focus:border-form-control-focus-border transition-all"
         placeholder="Calle 100 # 20-30"
         required
       />
@@ -48,8 +48,8 @@
         v-model="formData.address_line2"
         type="text"
         class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground
-               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-               focus:border-ring transition-all"
+               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+               focus:border-form-control-focus-border transition-all"
         placeholder="Apto 501, Torre B (opcional)"
       />
     </div>
@@ -65,8 +65,8 @@
           v-model="formData.city"
           type="text"
           class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground
-                 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-                 focus:border-ring transition-all"
+                 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+                 focus:border-form-control-focus-border transition-all"
           placeholder="Bogotá"
           required
         />
@@ -81,8 +81,8 @@
           v-model="formData.state"
           type="text"
           class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground
-                 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-                 focus:border-ring transition-all"
+                 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+                 focus:border-form-control-focus-border transition-all"
           placeholder="Cundinamarca"
           required
         />
@@ -99,8 +99,8 @@
         v-model="formData.postal_code"
         type="text"
         class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground
-               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-               focus:border-ring transition-all"
+               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+               focus:border-form-control-focus-border transition-all"
         placeholder="110111"
         maxlength="10"
       />
@@ -115,8 +115,8 @@
         id="delivery_notes"
         v-model="formData.delivery_notes"
         class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground
-               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-               focus:border-ring transition-all resize-y min-h-[80px] font-[inherit]"
+               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-form-control-focus-ring
+               focus:border-form-control-focus-border transition-all resize-y min-h-[80px] font-[inherit]"
         placeholder="Ej: Portería con citófono - timbre 501, entregar al portero"
         rows="3"
         maxlength="500"
@@ -146,7 +146,7 @@
       <button
         type="button"
         class="sm:w-auto w-full py-3 px-6 text-sm font-semibold rounded-lg transition-all
-               bg-muted text-muted-foreground hover:bg-muted/80
+               bg-action-secondary-bg text-action-secondary-text hover:bg-action-secondary-hover-bg
                disabled:opacity-50 disabled:cursor-not-allowed"
         @click="$emit('cancel')"
         :disabled="loading"
@@ -156,7 +156,7 @@
       <button
         type="submit"
         class="sm:w-auto w-full py-3 px-6 text-sm font-semibold rounded-lg transition-all
-               bg-primary text-primary-foreground hover:bg-primary/90
+               bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg
                disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="loading || !isFormValid"
       >

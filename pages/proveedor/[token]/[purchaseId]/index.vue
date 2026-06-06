@@ -15,7 +15,7 @@
         <h2 class="mt-4 text-xl font-bold text-text-primary">Error</h2>
         <p class="mt-2 text-text-secondary">{{ error }}</p>
         <button @click="navigateTo(`/proveedor/${token}`)"
-          class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+          class="mt-4 px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors">
           Volver al listado
         </button>
       </div>
@@ -203,8 +203,8 @@
                           v-if="item.ingredient_type && item.ingredient_type !== 'food'"
                           class="px-1.5 py-0.5 text-[10px] font-medium rounded"
                           :class="{
-                            'bg-blue-100 text-blue-700': item.ingredient_type === 'service',
-                            'bg-amber-100 text-amber-700': item.ingredient_type === 'supply'
+                            'bg-badge-info-bg text-badge-info-text': item.ingredient_type === 'service',
+                            'bg-badge-warning-bg text-badge-warning-text': item.ingredient_type === 'supply'
                           }"
                         >
                           {{ item.ingredient_type === 'service' ? 'Servicio' : 'Insumo' }}
@@ -399,10 +399,10 @@ function getStatusBadgeClass(status: string): string {
     quotation: 'border-accent text-accent',
     pending: 'border-warning text-warning',
     confirmed: 'border-success text-success',
-    preparing: 'border-blue-500 text-blue-500',
-    shipped: 'border-blue-600 text-blue-600',
+    preparing: 'border-badge-info-border text-badge-info-text',
+    shipped: 'border-badge-info-border text-badge-info-text',
     received: 'border-success text-success',
-    invoiced: 'border-orange-500 text-orange-500',
+    invoiced: 'border-badge-warning-border text-badge-warning-text',
     paid: 'border-success text-success',
     cancelled: 'border-destructive text-destructive'
   }

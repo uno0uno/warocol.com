@@ -38,7 +38,7 @@
         <div class="flex items-center gap-1.5 bg-muted rounded-lg p-1">
           <button
             class="w-8 h-8 flex items-center justify-center bg-background rounded-md text-muted-foreground
-                   hover:bg-primary hover:text-primary-foreground transition-colors
+                   hover:bg-action-primary-bg hover:text-action-primary-text transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             :disabled="loading"
@@ -64,7 +64,7 @@
 
           <button
             class="w-8 h-8 flex items-center justify-center bg-background rounded-md text-muted-foreground
-                   hover:bg-primary hover:text-primary-foreground transition-colors
+                   hover:bg-action-primary-bg hover:text-action-primary-text transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             :disabled="loading || restaurantClosed"
@@ -92,7 +92,7 @@
         <!-- Remove button -->
         <button
           class="w-8 h-8 flex items-center justify-center bg-transparent border border-border rounded-md text-destructive
-                 hover:bg-destructive/10 hover:border-destructive transition-colors
+                 hover:bg-icon-button-destructive-hover-bg hover:border-action-destructive-border transition-colors
                  disabled:opacity-50 disabled:cursor-not-allowed
                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           :disabled="loading"

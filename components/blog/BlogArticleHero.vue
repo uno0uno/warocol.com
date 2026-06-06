@@ -29,8 +29,8 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
 </script>
 
 <template>
-  <!-- Light surface hero — superficie blanca elevada sobre titan-100 -->
-  <div class="w-full bg-white relative overflow-hidden border-b border-titan-200 shadow-sm pt-8 pb-8 sm:pt-12 sm:pb-12 lg:pt-20 lg:pb-20">
+  <!-- Light elevated article hero over the content surface -->
+  <div class="w-full bg-surface relative overflow-hidden border-b border-border shadow-sm pt-8 pb-8 sm:pt-12 sm:pb-12 lg:pt-20 lg:pb-20">
 
     <!-- Textura food emoji — misma técnica que blog index y home -->
     <div class="food-bg" aria-hidden="true">
@@ -64,7 +64,7 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
 
           <!-- Title -->
           <h1
-            class="text-3xl sm:text-4xl md:text-5xl font-black leading-[1.1] tracking-tight text-ebony-900"
+            class="text-3xl sm:text-4xl md:text-5xl font-black leading-[1.1] tracking-tight text-text-primary"
             itemprop="headline"
           >
             {{ title }}
@@ -75,25 +75,25 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
             <!-- Avatar -->
             <div
               v-if="author.profilePicture"
-              class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-titan-200 flex-shrink-0"
+              class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-border flex-shrink-0"
             >
               <img :src="author.profilePicture" :alt="author.name" class="w-full h-full object-cover">
             </div>
             <div
               v-else
-              class="w-9 h-9 rounded-full bg-crocus-100 flex items-center justify-center flex-shrink-0"
+              class="w-9 h-9 rounded-full bg-badge-primary-bg flex items-center justify-center flex-shrink-0"
             >
-              <span class="text-crocus-700 text-sm font-bold">{{ author.name?.charAt(0) || 'W' }}</span>
+              <span class="text-badge-primary-text text-sm font-bold">{{ author.name?.charAt(0) || 'W' }}</span>
             </div>
 
             <!-- Meta text -->
-            <div class="flex flex-wrap items-center gap-1.5 text-sm text-ebony-500">
-              <span class="font-semibold text-ebony-700" itemprop="author">{{ author.name }}</span>
-              <span class="text-titan-500">·</span>
+            <div class="flex flex-wrap items-center gap-1.5 text-sm text-text-secondary">
+              <span class="font-semibold text-text-primary" itemprop="author">{{ author.name }}</span>
+              <span class="text-text-tertiary">·</span>
               <time :datetime="new Date(publishedDate).toISOString()" itemprop="datePublished">
                 {{ formattedDate }}
               </time>
-              <span class="text-titan-500">·</span>
+              <span class="text-text-tertiary">·</span>
               <span>{{ readingTime }} min de lectura</span>
             </div>
           </div>
@@ -103,7 +103,7 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
         <div class="hidden lg:block lg:col-span-5 lg:pt-14">
           <p
             v-if="description"
-            class="text-base lg:text-lg leading-relaxed text-ebony-600 border-l-2 border-crocus-300 pl-5"
+            class="text-base lg:text-lg leading-relaxed text-text-secondary border-l-2 border-badge-primary-border pl-5"
             itemprop="description"
           >
             {{ description }}

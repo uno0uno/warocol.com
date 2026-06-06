@@ -11,7 +11,7 @@
             class="px-4 py-2 min-h-[44px] rounded-xl font-medium whitespace-nowrap transition-all duration-200"
             :class="selectedCategory === category.id
               ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground hover:bg-secondary'"
+              : 'bg-action-secondary-bg text-action-secondary-text hover:bg-action-secondary-hover-bg'"
           >
             {{ category.name }}
             <span class="ml-2 text-xs opacity-75">

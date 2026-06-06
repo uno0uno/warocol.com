@@ -109,11 +109,11 @@ const goToPage = (page: number) => {
 
 // Gradient classes for article images (fallback when no cover)
 const gradientClasses = [
-  'bg-gradient-to-br from-crocus-200 via-crocus-100 to-titan-200',
-  'bg-gradient-to-br from-ebony-200 via-titan-200 to-crocus-100',
-  'bg-gradient-to-br from-crocus-100 via-titan-300 to-ebony-100',
-  'bg-gradient-to-br from-titan-300 via-crocus-100 to-titan-200',
-  'bg-gradient-to-br from-ebony-100 via-crocus-50 to-titan-300'
+  'bg-gradient-to-br from-badge-primary-border via-badge-primary-bg to-surface-tertiary',
+  'bg-gradient-to-br from-surface-tertiary via-border to-badge-primary-bg',
+  'bg-gradient-to-br from-badge-primary-bg via-surface-tertiary to-surface-secondary',
+  'bg-gradient-to-br from-surface-tertiary via-badge-primary-bg to-border',
+  'bg-gradient-to-br from-surface-secondary via-badge-primary-bg to-surface-tertiary'
 ]
 
 const getGradientClass = (index: number) => gradientClasses[index % gradientClasses.length]
@@ -153,47 +153,47 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-titan-100 flex flex-col font-sans">
+  <div class="min-h-screen bg-surface-secondary flex flex-col font-sans">
 
     <!-- ════════════════════════════════════════
          HERO SECTION
          Fondo blanco con dot-grid sutil + gradiente lateral púrpura
     ════════════════════════════════════════ -->
-    <section class="relative bg-white overflow-hidden border-b border-titan-200">
+    <section class="relative bg-surface overflow-hidden border-b border-border">
       <!-- Dot grid background -->
       <div class="dot-grid" aria-hidden="true"></div>
       <!-- Gradiente de color lateral izquierdo -->
-      <div class="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-crocus-50/60 to-transparent pointer-events-none" aria-hidden="true"></div>
+      <div class="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-badge-primary-bg/60 to-transparent pointer-events-none" aria-hidden="true"></div>
       <!-- Accent blob superior derecho -->
-      <div class="absolute -top-32 -right-32 w-96 h-96 bg-crocus-100/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+      <div class="absolute -top-32 -right-32 w-96 h-96 bg-badge-primary-bg/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-5 lg:px-12 pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
         <!-- Eyebrow badge -->
         <div class="inline-flex items-center gap-2 mb-5 lg:mb-7">
-          <span class="w-5 h-px bg-crocus-400"></span>
-          <span class="text-xs font-bold uppercase tracking-[0.25em] text-crocus-600">Blog & Recursos</span>
-          <span class="w-5 h-px bg-crocus-400"></span>
+          <span class="w-5 h-px bg-badge-primary-border"></span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-badge-primary-text">Blog & Recursos</span>
+          <span class="w-5 h-px bg-badge-primary-border"></span>
         </div>
 
         <!-- Título con typewriter -->
-        <h1 class="font-quantico text-[1.85rem] sm:text-4xl lg:text-[4.5rem] font-black mb-5 lg:mb-7 text-ebony-900 tracking-tight leading-tight lg:leading-[1] uppercase">
+        <h1 class="font-quantico text-[1.85rem] sm:text-4xl lg:text-[4.5rem] font-black mb-5 lg:mb-7 text-text-primary tracking-tight leading-tight lg:leading-[1] uppercase">
           {{ displayedTitle }}
         </h1>
 
         <!-- Subtítulo -->
-        <p class="text-sm sm:text-base text-ebony-500 leading-relaxed font-light">
+        <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-light">
           Guías prácticas y estrategias probadas para controlar costos, optimizar inventarios y tomar decisiones con datos.
         </p>
 
         <!-- Stats pill -->
-        <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-titan-100 rounded-full border border-titan-300 text-xs sm:text-sm text-ebony-500">
+        <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-surface-secondary rounded-full border border-border text-xs sm:text-sm text-text-secondary">
           <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-crocus-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <svg class="w-4 h-4 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Contenido para restaurantes
           </span>
-          <span class="w-px h-4 bg-titan-400"></span>
+          <span class="w-px h-4 bg-border"></span>
           <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-crocus-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg class="w-4 h-4 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Lectura rápida
           </span>
         </div>
@@ -213,9 +213,9 @@ useHead({
       <!-- Error State -->
       <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
         <div class="text-center">
-          <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los artículos</p>
-          <p class="text-sm text-ebony-600 mb-4">{{ fetchError.message }}</p>
-          <button @click="refresh" class="px-4 py-2 bg-crocus-600 text-white rounded-lg hover:bg-crocus-700 transition-colors">
+          <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los artículos</p>
+          <p class="text-sm text-text-secondary mb-4">{{ fetchError.message }}</p>
+          <button @click="refresh" class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors">
             Reintentar
           </button>
         </div>
@@ -253,7 +253,7 @@ useHead({
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle, hsl(var(--titan-400)) 1px, transparent 1px);
+  background-image: radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px);
   background-size: 28px 28px;
   opacity: 0.45;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);

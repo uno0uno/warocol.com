@@ -20,7 +20,7 @@
     <!-- Invoices Content -->
     <div v-else class="flex flex-col gap-4">
       <!-- Filters -->
-      <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
+      <div class="bg-filter-surface-bg rounded-lg shadow-sm border border-filter-surface-border p-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Document Type Filter -->
           <div>
@@ -28,7 +28,7 @@
               Tipo de Documento
             </label>
             <select v-model="filters.documentType" @change="applyFilters"
-              class="w-full px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              class="w-full px-4 py-2 border border-form-control-border bg-form-control-bg text-form-control-text rounded-lg focus:ring-2 focus:ring-form-control-focus-ring focus:border-form-control-focus-border">
               <option value="">Todos</option>
               <option value="factura">Factura</option>
               <option value="remision">Remisión</option>
@@ -41,7 +41,7 @@
               Proveedor
             </label>
             <select v-model="filters.supplierId" @change="applyFilters"
-              class="w-full px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              class="w-full px-4 py-2 border border-form-control-border bg-form-control-bg text-form-control-text rounded-lg focus:ring-2 focus:ring-form-control-focus-ring focus:border-form-control-focus-border">
               <option value="">Todos</option>
               <option v-for="sup in uniqueSuppliers" :key="sup.id" :value="sup.id">
                 {{ sup.name }}
@@ -55,7 +55,7 @@
               Fecha Desde
             </label>
             <input v-model="filters.startDate" @change="applyFilters" type="date"
-              class="w-full px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+              class="w-full px-4 py-2 border border-form-control-border bg-form-control-bg text-form-control-text rounded-lg focus:ring-2 focus:ring-form-control-focus-ring focus:border-form-control-focus-border" />
           </div>
 
           <!-- End Date Filter -->
@@ -64,14 +64,14 @@
               Fecha Hasta
             </label>
             <input v-model="filters.endDate" @change="applyFilters" type="date"
-              class="w-full px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+              class="w-full px-4 py-2 border border-form-control-border bg-form-control-bg text-form-control-text rounded-lg focus:ring-2 focus:ring-form-control-focus-ring focus:border-form-control-focus-border" />
           </div>
         </div>
 
         <!-- Clear Filters Button -->
         <div class="mt-4 flex justify-end">
           <button @click="clearFilters"
-            class="px-4 py-2 text-sm text-text-secondary hover:text-text-primary border border-titan-300 rounded-lg hover:border-crocus-500 transition-all">
+            class="px-4 py-2 text-sm text-action-outline-text hover:text-action-outline-hover-text border border-action-outline-border rounded-lg hover:border-action-outline-focus-ring hover:bg-action-outline-hover-bg transition-all">
             Limpiar Filtros
           </button>
         </div>
@@ -90,11 +90,11 @@
           </div>
           <div class="flex space-x-2">
             <button @click="clearSelection"
-              class="px-4 py-2 text-sm border-2 border-border rounded-lg hover:border-destructive hover:text-destructive transition-all">
+              class="px-4 py-2 text-sm border-2 border-action-destructive-border rounded-lg text-action-destructive-text hover:bg-action-destructive-hover-bg hover:text-action-destructive-hover-text transition-all">
               Cancelar
             </button>
             <button @click="showLegalInvoiceModal = true" :disabled="!canAttachLegalInvoice"
-              class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              class="px-4 py-2 text-sm bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               Adjuntar Factura Legal
             </button>
           </div>
@@ -125,13 +125,13 @@
         <template #cell-select="{ row }">
           <input type="checkbox" :checked="isSelected(row.id)" @change="toggleSelection(row)"
             :disabled="row.tipo !== 'Remisión'"
-            class="w-4 h-4 text-primary border-border rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed" />
+            class="w-4 h-4 text-form-control-focus-border border-form-control-border rounded focus:ring-form-control-focus-ring disabled:opacity-50 disabled:cursor-not-allowed" />
         </template>
 
         <template #cell-numero="{ value, row }">
           <div>
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-            <div class="text-xs text-titan-600">OC: {{ row.purchaseNumber }}</div>
+            <div class="text-sm font-medium text-text-primary">{{ value }}</div>
+            <div class="text-xs text-text-secondary">OC: {{ row.purchaseNumber }}</div>
             <div v-if="row.legalInvoiceNumber" class="text-xs text-success mt-1">
               Factura Legal: {{ row.legalInvoiceNumber }}
             </div>
@@ -139,7 +139,7 @@
         </template>
 
         <template #cell-proveedor="{ value }">
-          <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+          <div class="text-sm font-medium text-text-primary">{{ value }}</div>
         </template>
 
         <template #cell-tipo="{ value }">
@@ -147,13 +147,13 @@
         </template>
 
         <template #cell-fecha="{ value }">
-          <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-primary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-monto="{ value, row }">
           <div>
-            <div class="text-sm font-medium text-ebony-800">{{ formatCurrency(value) }}</div>
-            <div class="text-xs text-titan-600">+{{ formatCurrency(row.taxAmount) }} IVA</div>
+            <div class="text-sm font-medium text-text-primary">{{ formatCurrency(value) }}</div>
+            <div class="text-xs text-text-secondary">+{{ formatCurrency(row.taxAmount) }} IVA</div>
           </div>
         </template>
 
@@ -166,7 +166,7 @@
 
     <!-- Legal Invoice Modal -->
     <div v-if="showLegalInvoiceModal" class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="closeLegalInvoiceModal"></div>
+      <div class="fixed inset-0 bg-overlay-backdrop/50 transition-opacity" @click="closeLegalInvoiceModal"></div>
 
       <div class="flex min-h-full items-center justify-center p-4">
         <div class="relative w-full max-w-2xl bg-surface rounded-xl shadow-2xl border-2 border-border">
@@ -174,7 +174,7 @@
           <div class="border-b-2 border-border p-6">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <div class="bg-primary/10 p-3 rounded-lg">
+                <div class="bg-badge-primary-bg p-3 rounded-lg">
                   <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -205,7 +205,7 @@
                 v-model="legalInvoiceForm.number"
                 type="text"
                 required
-                class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary"
+                class="w-full px-4 py-2 bg-form-control-bg border-2 border-form-control-border rounded-lg text-form-control-text focus:border-form-control-focus-border focus:ring-2 focus:ring-form-control-focus-ring"
                 placeholder="Ej: FAC-2025-001"
               />
             </div>
@@ -219,7 +219,7 @@
                 v-model="legalInvoiceForm.date"
                 type="datetime-local"
                 required
-                class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary"
+                class="w-full px-4 py-2 bg-form-control-bg border-2 border-form-control-border rounded-lg text-form-control-text focus:border-form-control-focus-border focus:ring-2 focus:ring-form-control-focus-ring"
               />
             </div>
 
@@ -232,14 +232,14 @@
                 type="button"
                 @click="closeLegalInvoiceModal"
                 :disabled="isSubmitting"
-                class="px-6 py-2 border-2 border-border rounded-lg text-text-primary hover:bg-background transition-colors disabled:opacity-50"
+                class="px-6 py-2 border-2 border-action-outline-border rounded-lg text-action-outline-text hover:bg-action-outline-hover-bg transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 :disabled="isSubmitting"
-                class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-2"
+                class="px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 flex items-center space-x-2"
               >
                 <svg v-if="isSubmitting" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

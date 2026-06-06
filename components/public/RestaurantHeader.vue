@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <!-- Banner / Hero -->
-    <div class="relative h-48 md:h-64 gradient-crocus overflow-hidden">
+    <div class="relative h-48 md:h-64 bg-gradient-to-br from-badge-primary-text via-action-primary-bg to-action-primary-hover-bg overflow-hidden">
       <img
         v-if="restaurant.banner_url && restaurant.banner_url.startsWith('http')"
         :src="restaurant.banner_url"
@@ -13,7 +13,7 @@
       </div>
 
       <!-- Overlay gradient -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      <div class="absolute inset-0 bg-gradient-to-t from-overlay-backdrop-strong/60 to-transparent" />
     </div>
 
     <!-- Restaurant Info -->

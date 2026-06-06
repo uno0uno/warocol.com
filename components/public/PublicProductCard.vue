@@ -11,7 +11,7 @@
     @keydown.space.prevent="handleClick"
   >
     <!-- Product Image/Emoji -->
-    <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+    <div class="relative h-48 bg-gradient-to-br from-surface-secondary to-surface-tertiary overflow-hidden">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
@@ -24,7 +24,7 @@
 
       <!-- Availability badge -->
       <div v-if="!product.is_available" class="absolute top-3 right-3">
-        <span class="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-full">
+        <span class="px-3 py-1 text-xs font-semibold bg-state-danger-action-bg text-state-danger-action-text rounded-full">
           No disponible
         </span>
       </div>
@@ -61,7 +61,7 @@
           v-if="!isInCart"
           @click.stop="handleClick"
           :disabled="!product.is_available || restaurantClosed"
-          class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+          class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text text-xl font-bold hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >+</button>
 
@@ -70,7 +70,7 @@
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
-            class="w-10 h-10 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-icon-button-neutral-bg hover:bg-icon-button-destructive-hover-bg text-icon-button-neutral-text hover:text-icon-button-destructive-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
             aria-label="Quitar uno"
           >−</button>
           <span class="min-w-[1.5rem] text-center font-bold text-foreground text-sm">
@@ -79,7 +79,7 @@
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
-            class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
         </div>
@@ -112,7 +112,7 @@
     @keydown.space.prevent="handleClick"
   >
     <!-- Left: square image 96×96 -->
-    <div class="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+    <div class="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-surface-secondary to-surface-tertiary overflow-hidden">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
@@ -124,8 +124,8 @@
       </div>
 
       <!-- Availability badge (horizontal) -->
-      <div v-if="!product.is_available" class="absolute inset-0 flex items-center justify-center bg-black/40">
-        <span class="px-1.5 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full text-center leading-tight">
+      <div v-if="!product.is_available" class="absolute inset-0 flex items-center justify-center bg-overlay-backdrop/40">
+        <span class="px-1.5 py-0.5 text-xs font-semibold bg-state-danger-action-bg text-state-danger-action-text rounded-full text-center leading-tight">
           No disponible
         </span>
       </div>
@@ -163,7 +163,7 @@
           v-if="!isInCart"
           @click.stop="handleClick"
           :disabled="!product.is_available || restaurantClosed"
-          class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+          class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text text-lg font-bold hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >+</button>
 
@@ -172,7 +172,7 @@
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
-            class="w-11 h-11 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-icon-button-neutral-bg hover:bg-icon-button-destructive-hover-bg text-icon-button-neutral-text hover:text-icon-button-destructive-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
             aria-label="Quitar uno"
           >−</button>
           <span class="min-w-[1.25rem] text-center font-bold text-foreground text-sm">
@@ -181,7 +181,7 @@
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
-            class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
         </div>
