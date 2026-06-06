@@ -385,17 +385,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Trial balance table -->
-      <div v-else class="rounded-xl border border-border overflow-hidden">
+      <div v-else class="rounded-xl border border-data-table-border overflow-hidden bg-data-table-container-bg">
         <div class="overflow-x-auto">
           <table class="w-full text-sm" role="table" aria-label="Balance de comprobación">
             <thead>
-              <tr class="border-b border-border bg-surface-secondary">
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider whitespace-nowrap w-28">Código</th>
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider">Cuenta</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider whitespace-nowrap">Saldo inicial</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider whitespace-nowrap">Débitos</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider whitespace-nowrap">Créditos</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-text-secondary uppercase tracking-wider whitespace-nowrap">Saldo final</th>
+              <tr class="border-b border-data-table-border bg-data-table-header-bg">
+                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap w-28">Código</th>
+                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider">Cuenta</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Saldo inicial</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Débitos</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Créditos</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Saldo final</th>
               </tr>
             </thead>
             <tbody>
@@ -404,9 +404,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <template v-for="group in groupedRows" :key="group.classCode">
 
                 <!-- Class header row -->
-                <tr class="bg-surface-secondary/60 border-t border-border">
+                <tr class="bg-data-table-footer-bg border-t border-data-table-border">
                   <td colspan="6" class="py-2 px-3">
-                    <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                    <span class="text-xs font-bold text-data-table-cell-muted uppercase tracking-wider">
                       {{ group.classCode }} · {{ group.label }}
                     </span>
                   </td>
@@ -416,8 +416,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <tr
                   v-for="(row, idx) in group.items"
                   :key="row.accountId"
-                  class="border-t border-border/50 hover:bg-surface-secondary/30 transition-colors"
-                  :class="idx % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/20'"
+                  class="border-t border-data-table-border/50 hover:bg-data-table-row-hover-bg transition-colors"
+                  :class="idx % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
                 >
                   <td class="py-2 px-3">
                     <span class="text-xs font-mono text-text-secondary tabular-nums">{{ row.code }}</span>
@@ -445,7 +445,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </tr>
 
                 <!-- Class subtotal row -->
-                <tr class="border-t border-border bg-surface-secondary/40">
+                <tr class="border-t border-data-table-border bg-data-table-footer-bg">
                   <td class="py-2 px-3" />
                   <td class="py-2 px-3">
                     <span class="text-xs font-bold text-text-secondary">Subtotal {{ group.label }}</span>
@@ -467,7 +467,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               </template>
 
               <!-- Grand totals row -->
-              <tr class="border-t-2 border-border bg-surface-secondary">
+              <tr class="border-t-2 border-data-table-border bg-data-table-footer-bg">
                 <td class="py-3 px-3" />
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2">
