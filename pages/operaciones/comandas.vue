@@ -33,20 +33,20 @@
                   :checked="businessProfile?.comandas_enabled"
                   @change="handleToggleComandas"
                 />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
           </div>
           <!-- Inline disable-warning banner -->
-          <div v-if="showDisableComandasWarning" class="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start justify-between gap-3">
-            <p class="text-xs text-amber-800 leading-relaxed">
+          <div v-if="showDisableComandasWarning" class="rounded-xl border border-state-warning-border bg-state-warning-bg p-3 flex items-start justify-between gap-3">
+            <p class="text-xs text-state-warning-text leading-relaxed">
               Las comandas activas no serán afectadas. Los nuevos pedidos no generarán comandas mientras esté desactivado.
             </p>
             <div class="flex items-center gap-2 flex-shrink-0">
-              <button @click="showDisableComandasWarning = false" class="text-xs text-amber-700 font-medium hover:underline">Cancelar</button>
+              <button @click="showDisableComandasWarning = false" class="text-xs text-state-warning-text font-medium hover:underline">Cancelar</button>
               <button
                 @click="confirmDisableComandas"
-                class="text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1 rounded-lg transition-colors min-h-[32px]"
+                class="text-xs font-bold text-state-warning-action-text bg-state-warning-action-bg hover:bg-state-warning-action-bg/90 px-3 py-1 rounded-lg transition-colors min-h-[32px]"
               >
                 Sí, desactivar
               </button>
@@ -74,7 +74,7 @@
                   :checked="businessProfile?.kds_enabled"
                   @change="handleToggleKds"
                 />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
           </div>
@@ -92,7 +92,7 @@
                     v-if="!kdsTokens[st.id]"
                     @click="generateKdsToken(st.id)"
                     :disabled="generatingToken === st.id"
-                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                   >
                     {{ generatingToken === st.id ? 'Generando...' : 'Generar enlace' }}
                   </button>
@@ -142,7 +142,7 @@
                   :checked="businessProfile?.expediter_enabled"
                   @change="handleToggleExpediter"
                 />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
           </div>
@@ -160,7 +160,7 @@
         </div>
         <button
           @click="openCreateStation"
-          class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors min-h-[36px]"
+          class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors min-h-[36px]"
         >
           <PlusIcon class="w-3.5 h-3.5" />
           Nueva
@@ -217,7 +217,7 @@
               @click="handleToggleStation(st)"
               :disabled="togglingStationId === st.id"
               class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-              :class="st.is_active ? 'text-amber-600 hover:bg-amber-50 border border-amber-200' : 'text-emerald-600 hover:bg-emerald-50 border border-emerald-200'"
+              :class="st.is_active ? 'text-state-warning-text hover:bg-state-warning-bg border border-state-warning-border' : 'text-state-success-text hover:bg-state-success-bg border border-state-success-border'"
             >
               <UiLoadingDots v-if="togglingStationId === st.id" size="7px" color="currentColor" />
               <span v-else>{{ st.is_active ? 'Desactivar' : 'Activar' }}</span>
@@ -324,8 +324,8 @@
             <div v-if="deactivateModalOpen" class="bg-surface rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
               <div class="relative px-5 pt-5 pb-4 border-b border-border/60">
                 <div class="flex items-start gap-3">
-                  <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200">
-                    <ExclamationTriangleIcon class="w-5 h-5 text-amber-600" />
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-state-warning-bg border border-state-warning-border">
+                    <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon" />
                   </div>
                   <div class="min-w-0 flex-1 pt-0.5">
                     <h3 class="text-base font-bold text-text-primary leading-tight">Desactivar estación</h3>
@@ -355,44 +355,44 @@
                 </div>
 
                 <template v-else-if="deactivateInfo">
-                  <div v-if="deactivateInfo.active_comandas_count > 0" class="rounded-xl bg-destructive/8 border border-destructive/20 p-4">
+                  <div v-if="deactivateInfo.active_comandas_count > 0" class="rounded-xl bg-state-danger-bg border border-state-danger-border p-4">
                     <div class="flex items-start gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                        <ExclamationTriangleIcon class="w-4 h-4 text-destructive" />
+                      <div class="w-8 h-8 rounded-lg bg-state-danger-bg flex items-center justify-center flex-shrink-0">
+                        <ExclamationTriangleIcon class="w-4 h-4 text-state-danger-icon" />
                       </div>
                       <div>
-                        <p class="text-sm font-semibold text-destructive leading-snug">No se puede desactivar ahora</p>
-                        <p class="text-xs text-destructive/80 mt-1 leading-relaxed">
+                        <p class="text-sm font-semibold text-state-danger-text leading-snug">No se puede desactivar ahora</p>
+                        <p class="text-xs text-state-danger-text/80 mt-1 leading-relaxed">
                           Hay <strong>{{ deactivateInfo.active_comandas_count }} comanda{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }} activa{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }}</strong> en esta estación. Resuélvelas antes de desactivarla.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="deactivateInfo.affected_categories.length > 0" class="rounded-xl bg-amber-50 border border-amber-200/70 p-4">
-                    <p class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">
+                  <div v-if="deactivateInfo.affected_categories.length > 0" class="rounded-xl bg-state-warning-bg border border-state-warning-border p-4">
+                    <p class="text-xs font-bold text-state-warning-text uppercase tracking-wider mb-2">
                       {{ deactivateInfo.affected_categories.length }} categoría{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }} afectada{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }}
                     </p>
-                    <p class="text-xs text-amber-700/80 leading-relaxed mb-3">
+                    <p class="text-xs text-state-warning-text/80 leading-relaxed mb-3">
                       Sus productos dejarán de generar comandas mientras la estación esté inactiva.
                     </p>
                     <div class="flex flex-wrap gap-1.5">
                       <span
                         v-for="cat in deactivateInfo.affected_categories"
                         :key="cat.id"
-                        class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-800"
+                        class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-surface border border-state-warning-border text-state-warning-text"
                       >{{ cat.name }}</span>
                     </div>
                   </div>
 
                   <div
                     v-if="deactivateInfo.affected_categories.length === 0 && deactivateInfo.active_comandas_count === 0"
-                    class="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200/70 px-4 py-3"
+                    class="flex items-center gap-3 rounded-xl bg-state-success-bg border border-state-success-border px-4 py-3"
                   >
-                    <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <div class="w-7 h-7 rounded-full bg-state-success-bg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5 text-state-success-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <p class="text-sm text-emerald-700 leading-snug">Sin impacto activo. Se puede desactivar de forma segura.</p>
+                    <p class="text-sm text-state-success-text leading-snug">Sin impacto activo. Se puede desactivar de forma segura.</p>
                   </div>
                 </template>
               </div>
@@ -409,7 +409,7 @@
                   v-if="deactivateInfo"
                   type="button"
                   :disabled="deactivateInfo.active_comandas_count > 0 || isConfirmingDeactivate"
-                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-destructive text-white hover:bg-destructive/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-state-danger-action-bg text-state-danger-action-text hover:bg-state-danger-action-bg/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                   @click="confirmDeactivateStation"
                 >
                   <UiLoadingDots v-if="isConfirmingDeactivate" size="8px" color="currentColor" />
