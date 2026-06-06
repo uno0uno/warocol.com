@@ -12,7 +12,7 @@
         <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-sheet-surface-bg sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
           <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sheet-border flex-shrink-0">
             <p class="text-sm font-semibold text-modal-surface-text">Cambiar negocio</p>
-            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-icon-button-neutral-text hover:bg-icon-button-neutral-hover-bg hover:text-icon-button-neutral-hover-text focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors">
+            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-shell-notification-muted-text hover:bg-shell-notification-hover-bg hover:text-shell-notification-text focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors">
               <XMarkIcon class="w-4 h-4" />
             </button>
           </div>
@@ -41,11 +41,11 @@
               @click="selectTenant(tenant)"
               :disabled="isLoadingTenants"
               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left disabled:opacity-50"
-              :class="selectedTenant?.id === tenant.id ? 'bg-icon-button-primary-bg text-icon-button-primary-text font-medium' : 'text-text-secondary hover:bg-icon-button-neutral-hover-bg'"
+              :class="selectedTenant?.id === tenant.id ? 'bg-shell-notification-accent-bg text-shell-notification-text font-medium' : 'text-shell-notification-muted-text hover:bg-shell-notification-hover-bg'"
             >
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'" />
+              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-shell-account-indicator-bg' : 'bg-badge-neutral-bg'" />
               <span class="truncate">{{ tenant.name }}</span>
-              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-primary flex-shrink-0" />
+              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-shell-account-icon-text flex-shrink-0" />
             </button>
           </div>
         </div>
@@ -60,18 +60,18 @@
       @click="openTenantModal"
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
-      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-action-border rounded-lg text-sm font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg text-sm font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <span class="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+      <span class="w-2 h-2 bg-shell-account-indicator-bg rounded-full flex-shrink-0" />
       <span class="truncate max-w-[150px]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
-      <ChevronDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
+      <ChevronDownIcon class="w-3.5 h-3.5 text-shell-account-chevron-text flex-shrink-0" />
     </button>
 
     <!-- User info — name + purple avatar icon -->
-    <div class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-action-border rounded-lg">
-      <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
-      <div class="w-8 h-8 bg-surface-secondary border border-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-        <UserIcon class="w-4 h-4 text-primary" />
+    <div class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg">
+      <span class="text-sm font-medium text-shell-account-text truncate max-w-[120px]">{{ userName }}</span>
+      <div class="w-8 h-8 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-lg flex items-center justify-center flex-shrink-0">
+        <UserIcon class="w-4 h-4 text-shell-account-icon-text" />
       </div>
     </div>
   </div>

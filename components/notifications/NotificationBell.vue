@@ -7,11 +7,11 @@
       :aria-expanded="isOpen"
       aria-haspopup="true"
       aria-label="Notificaciones"
-      class="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
+      class="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-shell-notification-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
     >
       <!-- Animated bell icon: solid when there are unread notifications -->
-      <BellAlertIcon v-if="unreadCount > 0" class="w-6 h-6 text-primary" aria-hidden="true" />
-      <BellIcon v-else class="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+      <BellAlertIcon v-if="unreadCount > 0" class="w-6 h-6 text-shell-notification-accent" aria-hidden="true" />
+      <BellIcon v-else class="w-6 h-6 text-shell-notification-muted-text" aria-hidden="true" />
 
       <!-- Unread count badge -->
       <span
@@ -41,15 +41,15 @@
       >
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-3 border-b border-border gap-2">
-          <h2 class="text-sm font-semibold text-text-primary">Notificaciones</h2>
+          <h2 class="text-sm font-semibold text-shell-notification-text">Notificaciones</h2>
           <div class="flex items-center gap-1">
             <button
               type="button"
               @click="handleToggleSound"
               :title="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
               :aria-label="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
-              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
-              :class="soundEnabled ? 'text-text-primary' : 'text-muted-foreground'"
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-shell-notification-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+              :class="soundEnabled ? 'text-shell-notification-text' : 'text-shell-notification-muted-text'"
             >
               <SpeakerWaveIcon v-if="soundEnabled" class="w-4 h-4" aria-hidden="true" />
               <SpeakerXMarkIcon v-else class="w-4 h-4" aria-hidden="true" />
@@ -57,7 +57,7 @@
             <button
               v-if="notifications.length > 0"
               @click="handleMarkAllRead"
-              class="text-xs text-primary hover:text-primary/80 font-medium transition-colors whitespace-nowrap"
+              class="text-xs text-shell-notification-accent hover:text-shell-notification-text font-medium transition-colors whitespace-nowrap"
             >
               Marcar todo como leído
             </button>
@@ -66,13 +66,13 @@
 
         <!-- Loading state -->
         <div v-if="isLoading" class="flex items-center justify-center py-10">
-          <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="Cargando notificaciones" />
+          <div class="w-5 h-5 border-2 border-shell-notification-accent border-t-transparent rounded-full animate-spin" aria-label="Cargando notificaciones" />
         </div>
 
         <!-- Empty state -->
         <div v-else-if="notifications.length === 0" class="flex flex-col items-center justify-center py-10 px-4 gap-2">
-          <BellIcon class="w-8 h-8 text-muted-foreground/40" aria-hidden="true" />
-          <p class="text-sm text-muted-foreground text-center">Sin notificaciones nuevas</p>
+          <BellIcon class="w-8 h-8 text-shell-notification-muted-text/40" aria-hidden="true" />
+          <p class="text-sm text-shell-notification-muted-text text-center">Sin notificaciones nuevas</p>
         </div>
 
         <!-- Notification list -->
@@ -84,19 +84,19 @@
             <NuxtLink
               :to="notificationDespachoPath(notification)"
               @click="handleMarkAsRead(notification.id); close()"
-              class="flex gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors"
+              class="flex gap-3 px-4 py-3 hover:bg-shell-notification-hover-bg transition-colors"
             >
               <!-- Icon -->
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                <ShoppingBagIcon class="w-4 h-4 text-primary" aria-hidden="true" />
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-shell-notification-accent-bg flex items-center justify-center mt-0.5">
+                <ShoppingBagIcon class="w-4 h-4 text-shell-notification-accent" aria-hidden="true" />
               </div>
 
               <!-- Content -->
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary leading-snug">
+                <p class="text-sm font-medium text-shell-notification-text leading-snug">
                   {{ notificationDespachoTitle(notification) }}
                 </p>
-                <p class="text-xs text-muted-foreground mt-0.5">
+                <p class="text-xs text-shell-notification-muted-text mt-0.5">
                   {{ formatRelativeTime(notification.created_at) }}
                 </p>
               </div>
@@ -104,7 +104,7 @@
               <!-- Unread dot -->
               <div
                 v-if="!notification.read_at"
-                class="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5"
+                class="flex-shrink-0 w-2 h-2 rounded-full bg-shell-notification-accent mt-1.5"
                 aria-hidden="true"
               />
             </NuxtLink>

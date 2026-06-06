@@ -3,11 +3,11 @@
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-2 sm:gap-4 min-w-0">
         <div class="min-w-0">
-          <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-text-primary leading-tight truncate">
+          <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-shell-title-text leading-tight truncate">
             {{ title }}
             <span v-if="isTypingTitle" class="title-caret" aria-hidden="true" />
           </h1>
-          <p v-if="subtitle" class="text-xs text-muted-foreground mt-0.5 truncate">{{ subtitle }}</p>
+          <p v-if="subtitle" class="text-xs text-shell-subtitle-text mt-0.5 truncate">{{ subtitle }}</p>
         </div>
       </div>
 
@@ -21,7 +21,7 @@
         <NuxtLink
           key="upload-invoice"
           to="/abastecimiento/compras-directas/crear"
-          class="flex items-center gap-1 md:gap-2 h-11 bg-primary text-primary-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+          class="flex items-center gap-1 md:gap-2 h-11 bg-shell-cta-bg text-shell-cta-text px-2 md:px-4 rounded-xl font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
           title="Cargar Factura IA"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></svg>
@@ -44,7 +44,7 @@
         <button
           v-if="headerAction"
           key="dynamic-header-action"
-          class="h-11 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring transition-colors flex items-center gap-2"
+          class="h-11 px-4 bg-shell-cta-bg text-shell-cta-text rounded-lg font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-colors flex items-center gap-2"
           @click="headerAction.handler"
         >
           <svg v-if="headerAction.icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
