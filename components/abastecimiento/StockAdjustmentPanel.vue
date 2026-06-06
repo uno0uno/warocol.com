@@ -241,7 +241,7 @@
             <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
               Sin unidades de compra configuradas. Podés ajustar usando la unidad base ({{ selectedIngredient.unit }}) o
-              <a :href="`/abastecimiento/ingredientes?highlight=${selectedIngredient.id}`" class="underline font-medium">configurar unidades</a>.
+              <a :href="`/abastecimiento/ingredientes-propios?highlight=${selectedIngredient.id}`" class="underline font-medium">configurar unidades</a>.
             </p>
           </div>
 

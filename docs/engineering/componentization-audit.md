@@ -46,7 +46,7 @@ parallel system.
 | `CommonsTheErrorState` | Common page/error state. | Keep until #1156 defines whether error states live in `components/ui` or `Commons`. |
 | `CommonsInlineDots` | Small inline busy indicator. | Compare with `UiLoadingDots` before consolidation. |
 | `CommonsImageUploadModal` | Domain-ish shared modal. | Keep unless replaced by a specific upload primitive. |
-| `CommonsDataTable` | Legacy TanStack table wrapper, separate from `UiDataTable`. | Verify consumers before deciding whether it migrates or stays. |
+| `CommonsDataTable` | Removed in #1160 after no active tag/import/path references remained. | Use `UiDataTable` or `UiResponsiveDataView`. |
 | `CommonsToastContainer` | Bridge around `UiToast`. | Review with toast ownership in #1156. |
 
 ### Layout and Shell Components
@@ -64,7 +64,7 @@ parallel system.
 | Pattern | Current state | Target batch |
 | --- | --- | --- |
 | Responsive list/table pages | Many modules already use `UiResponsiveDataView`; a few pages still have custom table/list compositions. | #1156, #1158 |
-| Filters/toolbars | `UiAdvancedFiltersBar` is the newer pattern; `components/shared/FiltersBar.vue` is deprecated. | #1156 |
+| Filters/toolbars | `UiAdvancedFiltersBar` is the current shared pattern; deprecated `components/shared/FiltersBar.vue` was removed in #1160. | #1156, #1160 |
 | Loading/error/empty states | `CommonsTheCustomLoader`, `CommonsTheErrorState`, `UiLoadingDots`, `UiLoadingMatrix`, `UiSkeleton`, and `UiTableEmpty` overlap. | #1156 |
 | Module landing navigation | `UiModuleNavigation` is shared across module landing pages. | #1157 |
 | Dashboard shell header actions | `layouts/dashboard.vue` owns route title, dynamic actions, refresh, tenant selector, notifications, status, and business toggle. | #1157 |
@@ -75,7 +75,7 @@ parallel system.
 
 1. #1156: define shared UI ownership around `components/ui`.
 2. #1156: decide loading/error/empty-state ownership before migrating `Commons` usage.
-3. #1156: migrate the two remaining `SharedFiltersBar` consumers to `UiAdvancedFiltersBar`.
+3. #1156/#1160: migrated the remaining `SharedFiltersBar` consumers to `UiAdvancedFiltersBar`, then removed the deprecated component.
 4. #1157: split `layouts/dashboard.vue` by shell parts without changing module access, tenant, billing, notification, or POS mobile-cart behavior.
 5. #1158: extract operational pages by subflow, starting with list/table/filter patterns before POS checkout internals.
 6. #1159: resolve `.article-style` ownership before editing blog/content pages.
@@ -83,15 +83,15 @@ parallel system.
 
 ## Cleanup Candidates
 
-These are candidates, not deletions for this batch.
+These candidates were reviewed during the cleanup batch. Completed rows include the verification outcome.
 
 | Candidate | Evidence | Required verification before deletion |
 | --- | --- | --- |
-| `components/shared/FiltersBar.vue` | File is marked deprecated and points new list pages to `UiAdvancedFiltersBar`; current known consumers are `pages/operaciones/mesas.vue` and `pages/mis-pedidos/index.vue`. | Migrate both consumers, then search tags/imports/references. |
-| `components/Commons/DataTable.vue` | Separate table wrapper from canonical `UiDataTable`/`UiResponsiveDataView`. | Search component tags, imports, Nuxt auto-import names, and dynamic references before deciding. |
+| `components/shared/FiltersBar.vue` | Removed in #1160 after active consumers migrated to `UiAdvancedFiltersBar`; final tag/import/path searches only found this audit doc. | Completed. |
+| `components/Commons/DataTable.vue` | Removed in #1160 after final tag/import/path searches only found this audit doc; canonical table paths are `UiDataTable`/`UiResponsiveDataView`. | Completed. |
 | Duplicate `.article-style` rules | Defined in both `main.scss` and `design-system.css`. | Decide owner, compare blog article rendering, then remove duplicate rules in a public/content PR. |
 | Duplicate Tailwind layer imports | Both `main.scss` and `design-system.css` include Tailwind layer directives. | Confirm intended CSS entrypoint and run visual smoke after any change. |
-| `pages/abastecimiento/ingredientes.vue.disabled` | Disabled route file exists. | Check git history, route usage, and product intent before removal. |
+| `pages/abastecimiento/ingredientes.vue.disabled` | Removed in #1160 after git history confirmed it was disabled by the ingredient matching refactor; active links now target `/abastecimiento/ingredientes-propios`. | Completed. |
 | Unused global utility classes | Classes such as older button/card/input helpers may overlap with `components/ui`. | Search class usage in pages/components before removing. |
 
 ## Verification Method
