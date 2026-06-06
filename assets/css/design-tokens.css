@@ -4,6 +4,8 @@
   1. Primitive tokens define raw brand scales such as crocus, titan, ebony, and status hues.
   2. Semantic tokens describe shared intent such as primary, surface, text, focus, and state.
   3. Component tokens describe repeated UI states such as nav, data-table, control-toggle, and chips.
+  4. Hardcoded color exceptions must be documented by category: token source, data/graph
+     palette, external brand, print, user-configured color, content/static legacy, or no-used.
 
   Data/user colors are intentional exceptions. Values such as station colors should be wrapped for
   contrast and fallback behavior, not forced into brand tokens.
@@ -136,6 +138,168 @@
   --control-toggle-focus-ring: var(--focus-ring-subtle);
   --control-action-hover-bg: var(--crocus-50);
   --control-action-hover-text: var(--primary);
+
+  /* === COMPONENT TOKENS: OVERLAYS AND DIALOGS === */
+  --overlay-backdrop-bg: var(--neutral-950);
+  --overlay-backdrop-subtle-bg: var(--neutral-950);
+  --overlay-backdrop-strong-bg: var(--neutral-950);
+  --modal-surface-bg: var(--surface);
+  --modal-surface-text: var(--text-primary);
+  --modal-header-border: var(--border);
+  --modal-footer-border: var(--border);
+  --sheet-surface-bg: var(--surface);
+  --sheet-header-bg: var(--surface);
+  --sheet-footer-bg: var(--surface);
+  --sheet-border: var(--border);
+
+  /* === COMPONENT TOKENS: ACTIONS AND ICON BUTTONS === */
+  --action-primary-bg: var(--primary);
+  --action-primary-text: var(--primary-foreground);
+  --action-primary-border: var(--primary);
+  --action-primary-hover-bg: var(--crocus-700);
+  --action-primary-hover-text: var(--primary-foreground);
+  --action-primary-focus-ring: var(--focus-ring);
+  --action-primary-active-bg: var(--crocus-800);
+  --action-primary-disabled-bg: var(--muted);
+  --action-primary-disabled-text: var(--muted-foreground);
+
+  --action-secondary-bg: var(--surface);
+  --action-secondary-text: var(--text-primary);
+  --action-secondary-border: var(--border);
+  --action-secondary-hover-bg: var(--surface-secondary);
+  --action-secondary-hover-text: var(--text-primary);
+  --action-secondary-focus-ring: var(--focus-ring);
+  --action-secondary-active-bg: var(--surface-tertiary);
+  --action-secondary-disabled-bg: var(--muted);
+  --action-secondary-disabled-text: var(--muted-foreground);
+
+  --action-ghost-bg: var(--surface);
+  --action-ghost-text: var(--text-secondary);
+  --action-ghost-hover-bg: var(--surface-secondary);
+  --action-ghost-hover-text: var(--text-primary);
+  --action-ghost-focus-ring: var(--focus-ring-subtle);
+  --action-ghost-active-bg: var(--surface-tertiary);
+  --action-ghost-disabled-text: var(--muted-foreground);
+
+  --action-outline-bg: var(--surface);
+  --action-outline-text: var(--text-primary);
+  --action-outline-border: var(--border);
+  --action-outline-hover-bg: var(--surface-secondary);
+  --action-outline-hover-text: var(--text-primary);
+  --action-outline-focus-ring: var(--focus-ring);
+  --action-outline-active-bg: var(--surface-tertiary);
+  --action-outline-disabled-bg: var(--muted);
+  --action-outline-disabled-text: var(--muted-foreground);
+
+  --action-destructive-bg: var(--state-danger-action-bg);
+  --action-destructive-text: var(--state-danger-action-text);
+  --action-destructive-border: var(--state-danger-action-bg);
+  --action-destructive-hover-bg: 0 72% 51%;
+  --action-destructive-hover-text: var(--state-danger-action-text);
+  --action-destructive-focus-ring: var(--destructive);
+  --action-destructive-active-bg: 0 74% 42%;
+  --action-destructive-disabled-bg: var(--muted);
+  --action-destructive-disabled-text: var(--muted-foreground);
+
+  --action-success-bg: var(--state-success-action-bg);
+  --action-success-text: var(--state-success-action-text);
+  --action-success-border: var(--state-success-action-bg);
+  --action-success-hover-bg: 142 72% 36%;
+  --action-success-hover-text: var(--state-success-action-text);
+  --action-success-focus-ring: var(--success);
+  --action-success-active-bg: 150 78% 28%;
+  --action-success-disabled-bg: var(--muted);
+  --action-success-disabled-text: var(--muted-foreground);
+
+  --action-warning-bg: var(--state-warning-action-bg);
+  --action-warning-text: var(--state-warning-action-text);
+  --action-warning-border: var(--state-warning-action-bg);
+  --action-warning-hover-bg: 32 95% 44%;
+  --action-warning-hover-text: var(--state-warning-action-text);
+  --action-warning-focus-ring: var(--warning);
+  --action-warning-active-bg: 32 95% 32%;
+  --action-warning-disabled-bg: var(--muted);
+  --action-warning-disabled-text: var(--muted-foreground);
+
+  --action-info-bg: var(--state-info-action-bg);
+  --action-info-text: var(--state-info-action-text);
+  --action-info-border: var(--state-info-action-bg);
+  --action-info-hover-bg: 218 68% 37%;
+  --action-info-hover-text: var(--state-info-action-text);
+  --action-info-focus-ring: var(--info);
+  --action-info-active-bg: 218 68% 32%;
+  --action-info-disabled-bg: var(--muted);
+  --action-info-disabled-text: var(--muted-foreground);
+
+  --icon-button-neutral-bg: var(--surface);
+  --icon-button-neutral-text: var(--text-secondary);
+  --icon-button-neutral-hover-bg: var(--surface-secondary);
+  --icon-button-neutral-hover-text: var(--text-primary);
+  --icon-button-primary-bg: var(--surface-secondary);
+  --icon-button-primary-text: var(--primary);
+  --icon-button-primary-hover-bg: var(--control-action-hover-bg);
+  --icon-button-primary-hover-text: var(--control-action-hover-text);
+  --icon-button-destructive-bg: var(--state-danger-bg);
+  --icon-button-destructive-text: var(--state-danger-text);
+  --icon-button-destructive-hover-bg: var(--state-danger-border);
+  --icon-button-focus-ring: var(--focus-ring);
+  --icon-button-disabled-bg: var(--muted);
+  --icon-button-disabled-text: var(--muted-foreground);
+
+  /* === COMPONENT TOKENS: FORMS, SHELL AND BADGES === */
+  --form-control-bg: var(--input);
+  --form-control-text: var(--text-primary);
+  --form-control-border: var(--border);
+  --form-control-placeholder: var(--text-tertiary);
+  --form-control-focus-border: var(--focus-ring);
+  --form-control-focus-ring: var(--focus-ring-subtle);
+  --form-control-disabled-bg: var(--muted);
+  --form-control-disabled-text: var(--muted-foreground);
+  --form-help-text: var(--text-secondary);
+  --form-error-text: var(--state-danger-text);
+  --form-error-border: var(--state-danger-border);
+  --form-error-ring: var(--state-danger-icon);
+
+  --shell-header-bg: var(--surface);
+  --shell-header-border: var(--border);
+  --shell-action-bg: var(--surface);
+  --shell-action-text: var(--text-primary);
+  --shell-action-border: var(--surface-secondary);
+  --shell-action-hover-bg: var(--surface-secondary);
+  --shell-action-focus-ring: var(--focus-ring);
+  --shell-icon-bg: var(--surface-secondary);
+  --shell-icon-text: var(--primary);
+  --shell-icon-hover-bg: var(--control-action-hover-bg);
+  --shell-mobile-bg: var(--surface);
+  --shell-mobile-border: var(--border);
+  --shell-account-bg: var(--surface);
+  --shell-account-text: var(--text-primary);
+  --shell-account-hover-bg: var(--surface-secondary);
+
+  --badge-neutral-bg: var(--status-chip-bg);
+  --badge-neutral-text: var(--status-chip-text);
+  --badge-neutral-border: var(--status-chip-border);
+  --badge-neutral-hover-bg: var(--surface-tertiary);
+  --badge-primary-bg: var(--crocus-50);
+  --badge-primary-text: var(--primary);
+  --badge-primary-border: var(--focus-ring-subtle);
+  --badge-primary-hover-bg: var(--crocus-100);
+  --badge-success-bg: var(--state-success-bg);
+  --badge-success-text: var(--state-success-text);
+  --badge-success-border: var(--state-success-border);
+  --badge-warning-bg: var(--state-warning-bg);
+  --badge-warning-text: var(--state-warning-text);
+  --badge-warning-border: var(--state-warning-border);
+  --badge-danger-bg: var(--state-danger-bg);
+  --badge-danger-text: var(--state-danger-text);
+  --badge-danger-border: var(--state-danger-border);
+  --badge-info-bg: var(--state-info-bg);
+  --badge-info-text: var(--state-info-text);
+  --badge-info-border: var(--state-info-border);
+  --badge-profile-bg: var(--surface);
+  --badge-profile-text: var(--text-secondary);
+  --badge-profile-border: var(--border);
+  --badge-profile-hover-bg: var(--surface-secondary);
 
   /* === COMPONENT TOKENS: DASHBOARD NAV === */
   --nav-surface-bg: var(--neutral-950);
@@ -305,6 +469,27 @@
   --control-toggle-focus-ring: var(--focus-ring-subtle);
   --control-action-hover-bg: var(--ebony-700);
   --control-action-hover-text: var(--primary);
+
+  /* === COMPONENT TOKENS OSCUROS: ACTIONS AND BADGES === */
+  --action-primary-hover-bg: var(--crocus-300);
+  --action-primary-active-bg: var(--crocus-500);
+  --action-destructive-hover-bg: 0 62% 44%;
+  --action-destructive-active-bg: 0 62% 38%;
+  --action-success-hover-bg: 142 71% 38%;
+  --action-warning-hover-bg: 38 92% 45%;
+  --action-info-hover-bg: 218 68% 52%;
+  --badge-neutral-hover-bg: var(--surface-tertiary);
+  --badge-primary-bg: var(--ebony-700);
+  --badge-primary-border: var(--crocus-500);
+  --badge-primary-hover-bg: var(--ebony-600);
+  --badge-success-bg: var(--state-success-bg);
+  --badge-success-text: var(--state-success-text);
+  --badge-warning-bg: var(--state-warning-bg);
+  --badge-warning-text: var(--state-warning-text);
+  --badge-danger-bg: var(--state-danger-bg);
+  --badge-danger-text: var(--state-danger-text);
+  --badge-info-bg: var(--state-info-bg);
+  --badge-info-text: var(--state-info-text);
 
   /* === COMPONENT TOKENS OSCUROS: DASHBOARD NAV === */
   --nav-surface-bg: var(--neutral-950);
