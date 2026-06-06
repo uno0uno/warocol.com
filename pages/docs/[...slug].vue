@@ -99,13 +99,13 @@ function handleClick(e: MouseEvent) {
 <template>
   <!-- Loading -->
   <div v-if="status === 'pending'" class="flex items-center justify-center min-h-[40vh]">
-    <p class="text-sm text-ebony-400">Cargando...</p>
+    <p class="text-sm text-text-tertiary">Cargando...</p>
   </div>
 
   <!-- 404 -->
   <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-    <p class="text-ebony-500">Documento no encontrado.</p>
-    <NuxtLink to="/docs" class="text-sm text-crocus-600 hover:underline">
+    <p class="text-text-secondary">Documento no encontrado.</p>
+    <NuxtLink to="/docs" class="text-sm text-badge-primary-text hover:underline">
       Volver al índice
     </NuxtLink>
   </div>
@@ -114,7 +114,7 @@ function handleClick(e: MouseEvent) {
   <div v-else class="doc-card" @click="handleClick">
     <article class="article-style">
       <h1>
-        {{ displayedTitle }}<span class="animate-pulse text-crocus-500 font-light">|</span>
+        {{ displayedTitle }}<span class="animate-pulse text-badge-primary-text font-light">|</span>
       </h1>
       <div v-html="renderedContent"></div>
     </article>
@@ -123,12 +123,12 @@ function handleClick(e: MouseEvent) {
 
 <style scoped>
 .doc-card {
-  background: #fff;
+  background: hsl(var(--surface));
   border: 1px solid hsl(220 13% 91%);
   border-radius: 14px;
   padding: 48px 56px 64px;
   max-width: 860px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px hsl(var(--overlay-backdrop-bg) / 0.04);
 }
 
 /* Tablet */

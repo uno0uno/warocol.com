@@ -9,8 +9,8 @@
         :key="address.id"
         class="relative flex flex-col sm:flex-row gap-3 p-4 bg-background border-2 border-border rounded-xl
                text-left cursor-pointer transition-all duration-200 w-full
-               hover:border-primary hover:shadow-sm"
-        :class="{ 'border-primary bg-primary/10': selectedId === address.id }"
+               hover:border-action-outline-focus-ring hover:shadow-sm"
+        :class="{ 'border-action-primary-border bg-badge-primary-bg': selectedId === address.id }"
         @click="$emit('select', address.id)"
       >
         <!-- Selection Indicator -->
@@ -28,8 +28,8 @@
             <span
               class="text-xs font-semibold px-2.5 py-1 rounded-xl"
               :class="{
-                'bg-blue-100 text-blue-800': address.address_type === 'home',
-                'bg-yellow-100 text-yellow-800': address.address_type === 'work',
+                'bg-badge-info-bg text-badge-info-text': address.address_type === 'home',
+                'bg-badge-warning-bg text-badge-warning-text': address.address_type === 'work',
                 'bg-muted text-muted-foreground': address.address_type === 'other',
               }"
             >
@@ -37,7 +37,7 @@
             </span>
             <span
               v-if="address.is_default"
-              class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-badge-success-bg text-badge-success-text"
             >
               Predeterminada
             </span>
@@ -64,7 +64,7 @@
         <div v-if="!readonly" class="flex gap-1.5 items-start" @click.stop>
           <button
             class="min-h-[44px] min-w-[44px] flex items-center justify-center bg-background border border-border rounded-lg
-                   transition-all text-primary hover:bg-primary/10 hover:border-primary"
+                   transition-all text-icon-button-primary-text hover:bg-icon-button-primary-hover-bg hover:border-action-outline-focus-ring"
             @click="$emit('edit', address.id)"
             aria-label="Editar dirección"
           >
@@ -83,7 +83,7 @@
           </button>
           <button
             class="min-h-[44px] min-w-[44px] flex items-center justify-center bg-background border border-border rounded-lg
-                   transition-all text-destructive hover:bg-destructive/10 hover:border-destructive"
+                   transition-all text-icon-button-destructive-text hover:bg-icon-button-destructive-hover-bg hover:border-action-destructive-border"
             @click="$emit('delete', address.id)"
             aria-label="Eliminar dirección"
           >
@@ -116,7 +116,7 @@
       class="w-full flex items-center justify-center gap-2 py-3.5 px-5
              bg-background border-2 border-dashed border-border rounded-xl
              text-primary text-sm font-semibold cursor-pointer transition-all
-             hover:border-primary hover:bg-primary/10"
+             hover:border-action-outline-focus-ring hover:bg-action-outline-hover-bg"
       @click="$emit('add-new')"
     >
       <svg

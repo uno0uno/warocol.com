@@ -14,11 +14,11 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
-      <header class="bg-white border-b border-titan-300 px-4 md:px-8 py-4 flex-shrink-0">
+      <header class="bg-shell-header-bg border-b border-shell-header-border px-4 md:px-8 py-4 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
-            <p class="text-xs md:text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-shell-title-text">{{ pageTitle }}</h1>
+            <p class="text-xs md:text-sm text-shell-subtitle-text mt-1">{{ currentDateTime }}</p>
           </div>
           <div class="flex items-center gap-2 md:gap-3">
             <!-- Refresh Button - Always show when there's a refresh handler -->
@@ -26,7 +26,7 @@
               v-if="refreshHandler"
               @click="handleRefresh"
               :disabled="isRefreshing"
-              class="hidden md:flex h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
+              class="hidden md:flex h-[42px] px-4 py-2 bg-shell-action-bg border-2 border-shell-action-border rounded-lg text-shell-action-text hover:bg-shell-action-hover-bg hover:border-shell-action-focus-ring transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring group disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refrescar"
             >
               <svg
@@ -45,7 +45,7 @@
             <button
               v-if="showBackButton"
               @click="goBack"
-              class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all text-sm font-medium"
+              class="px-4 py-2 bg-shell-action-bg border-2 border-shell-action-border rounded-lg text-shell-action-text hover:bg-shell-action-hover-bg hover:border-shell-action-focus-ring transition-all text-sm font-medium"
             >
               Volver
             </button>
@@ -196,13 +196,13 @@ const supplier = useState<any>('supplier-portal-supplier', () => null)
 <style scoped>
 /* Main Content */
 main {
-  background: hsl(220, 14%, 97%);
+  background: hsl(var(--background));
 }
 
 /* Footer Styles */
 .footer-main {
-  background: hsla(0, 0%, 100%, 0.95);
-  border-top: 1px solid hsl(220, 11%, 90%);
+  background: hsl(var(--surface) / 0.95);
+  border-top: 1px solid hsl(var(--border));
   padding: 16px 40px;
 }
 
@@ -222,12 +222,12 @@ main {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: hsl(220, 13%, 46%);
+  color: hsl(var(--text-secondary));
 }
 
 .footer-copyright {
   font-size: 14px;
-  color: hsl(220, 13%, 46%);
+  color: hsl(var(--text-secondary));
 }
 
 .footer-links {
@@ -235,17 +235,17 @@ main {
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: hsl(220, 13%, 46%);
+  color: hsl(var(--text-secondary));
 }
 
 .footer-links a {
   text-decoration: none;
-  color: hsl(220, 13%, 46%);
+  color: hsl(var(--text-secondary));
   transition: color 0.3s;
 }
 
 .footer-links a:hover {
-  color: hsl(262, 83%, 58%);
+  color: hsl(var(--primary));
 }
 
 /* Responsive */

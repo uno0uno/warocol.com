@@ -13,7 +13,7 @@
         class="w-11 h-14 sm:w-[52px] sm:h-16 text-2xl sm:text-3xl font-bold text-center
                rounded-xl border-2 transition-all duration-200
                border-border bg-background text-foreground
-               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10
+               focus:outline-none focus:border-form-control-focus-border focus:ring-2 focus:ring-form-control-focus-ring
                disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
         :class="{
           'border-primary bg-primary/10': digits[index] !== '' && !hasError,

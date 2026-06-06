@@ -17,7 +17,7 @@
         :class="[
           cartStore.orderType === type.value
             ? 'border-primary bg-primary/10 text-primary'
-            : 'border-border bg-card text-foreground hover:border-primary/50',
+            : 'border-border bg-card text-foreground hover:border-action-outline-focus-ring',
           !isAvailable(type.value) && 'opacity-40 cursor-not-allowed pointer-events-none'
         ]"
         :disabled="!isAvailable(type.value)"

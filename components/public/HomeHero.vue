@@ -42,7 +42,7 @@ h1 {
   margin-bottom: 24px;
   text-transform: uppercase;
   line-height: 0.95;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px hsl(var(--overlay-backdrop-bg) / 0.1);
 }
 
 .subtitle {
@@ -80,7 +80,7 @@ h1 {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px hsl(var(--overlay-backdrop-bg) / 0.1);
   min-width: 160px;
 }
 
@@ -94,7 +94,7 @@ h1 {
   background: hsl(262, 83%, 58%);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(141, 54, 235, 0.2);
+  box-shadow: 0 6px 20px hsl(var(--action-primary-bg) / 0.2);
 }
 
 @media (max-width: 768px) {

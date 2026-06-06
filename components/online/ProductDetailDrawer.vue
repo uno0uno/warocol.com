@@ -663,7 +663,7 @@ onMounted(() => {
   z-index: 101;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  box-shadow: -4px 0 20px hsl(var(--overlay-backdrop-bg) / 0.15);
   overflow: hidden;
 }
 
@@ -1065,7 +1065,7 @@ onMounted(() => {
   border-radius: 50%;
   background: hsl(var(--card));
   transition: transform 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px hsl(var(--overlay-backdrop-bg) / 0.2);
 }
 
 .toggle-switch.on .toggle-knob {
@@ -1242,7 +1242,7 @@ onMounted(() => {
     max-width: 100%;
     max-height: 92vh;
     border-radius: 20px 20px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 -4px 20px hsl(var(--overlay-backdrop-bg) / 0.15);
   }
 
   .product-slide-enter-from,

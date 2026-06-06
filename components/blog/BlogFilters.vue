@@ -25,8 +25,8 @@ const handleFilterClick = (filter: string) => {
       :class="[
         'px-4 py-2 rounded-full text-sm font-medium transition-all',
         activeFilter === filter
-          ? 'bg-ebony-900 text-white'
-          : 'bg-transparent text-ebony-600 hover:bg-titan-100 hover:text-ebony-900'
+          ? 'bg-action-primary-bg text-action-primary-text'
+          : 'bg-transparent text-text-secondary hover:bg-surface-secondary hover:text-text-primary'
       ]"
       @click="handleFilterClick(filter)"
     >

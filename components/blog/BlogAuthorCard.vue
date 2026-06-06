@@ -29,7 +29,7 @@ const locationText = computed(() => {
 
 <template>
   <div
-    class="w-full lg:max-w-3xl p-6 lg:p-8 flex flex-col gap-6 bg-white border-2 border-crocus-600/30 rounded shadow-sm hover:border-crocus-600/80 transition-colors duration-300"
+    class="w-full lg:max-w-3xl p-6 lg:p-8 flex flex-col gap-6 bg-surface border-2 border-badge-primary-border/30 rounded shadow-sm hover:border-badge-primary-border/80 transition-colors duration-300"
     itemscope
     itemtype="https://schema.org/Person"
   >
@@ -37,7 +37,7 @@ const locationText = computed(() => {
     <div class="flex items-start gap-6">
       <!-- Avatar -->
       <div class="flex-shrink-0">
-        <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl overflow-hidden ring-2 ring-titan-200">
+        <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl overflow-hidden ring-2 ring-border">
           <img
             :src="author.profilePicture"
             :alt="`${author.name} profile picture`"
@@ -51,14 +51,14 @@ const locationText = computed(() => {
       <div class="flex flex-col gap-2 flex-1">
         <div>
           <h3
-            class="text-xl lg:text-2xl font-semibold text-ebony-900"
+            class="text-xl lg:text-2xl font-semibold text-text-primary"
             itemprop="name"
           >
             {{ author.name }}
           </h3>
           <p
             v-if="author.userName"
-            class="text-sm lg:text-base text-ebony-500"
+            class="text-sm lg:text-base text-text-secondary"
           >
             @{{ author.userName }}
           </p>
@@ -67,7 +67,7 @@ const locationText = computed(() => {
         <!-- Location -->
         <div v-if="locationText" class="flex items-center gap-2">
           <svg
-            class="w-4 h-4 lg:w-5 lg:h-5 text-ebony-400"
+            class="w-4 h-4 lg:w-5 lg:h-5 text-text-tertiary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -79,7 +79,7 @@ const locationText = computed(() => {
               d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <p class="text-sm lg:text-base text-ebony-600 capitalize">
+          <p class="text-sm lg:text-base text-text-secondary capitalize">
             <span itemprop="addressLocality">{{ author.city }}</span>
             <span v-if="author.city && author.country">, </span>
             <span itemprop="addressCountry">{{ author.country }}</span>
@@ -91,7 +91,7 @@ const locationText = computed(() => {
     <!-- Description -->
     <div v-if="author.description" class="w-full">
       <p
-        class="text-base lg:text-lg text-ebony-600 leading-relaxed"
+        class="text-base lg:text-lg text-text-secondary leading-relaxed"
         itemprop="description"
       >
         {{ author.description }}
@@ -101,7 +101,7 @@ const locationText = computed(() => {
     <!-- Social Links -->
     <div
       v-if="author.socialLinks && Object.keys(author.socialLinks).length > 0"
-      class="flex gap-4 pt-2 border-t border-titan-200"
+      class="flex gap-4 pt-2 border-t border-border"
     >
       <!-- Twitter -->
       <a
@@ -109,7 +109,7 @@ const locationText = computed(() => {
         :href="author.socialLinks.twitter"
         target="_blank"
         rel="noopener noreferrer"
-        class="text-ebony-500 hover:text-crocus-600 transition-colors"
+        class="text-text-secondary hover:text-badge-primary-text transition-colors"
         aria-label="Twitter profile"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ const locationText = computed(() => {
         :href="author.socialLinks.linkedin"
         target="_blank"
         rel="noopener noreferrer"
-        class="text-ebony-500 hover:text-crocus-600 transition-colors"
+        class="text-text-secondary hover:text-badge-primary-text transition-colors"
         aria-label="LinkedIn profile"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ const locationText = computed(() => {
         :href="author.socialLinks.website"
         target="_blank"
         rel="noopener noreferrer"
-        class="text-ebony-500 hover:text-crocus-600 transition-colors"
+        class="text-text-secondary hover:text-badge-primary-text transition-colors"
         aria-label="Personal website"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

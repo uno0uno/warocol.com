@@ -103,14 +103,14 @@ onMounted(() => {
 
 <template>
   <div>
-  <!-- Barra de progreso fija en el top — 2px, crocus-600 -->
+  <!-- Fixed top reading progress bar -->
   <div
     class="reading-progress-bar"
     :style="{ width: readingProgress + '%' }"
     aria-hidden="true"
   />
 
-  <div class="w-full bg-titan-100 py-6 sm:py-10 lg:py-14">
+  <div class="w-full bg-surface-secondary py-6 sm:py-10 lg:py-14">
     <div class="article-container">
 
       <!-- Breadcrumb -->
@@ -131,7 +131,7 @@ onMounted(() => {
         <slot name="cta" />
 
         <!-- Separador antes del autor -->
-        <hr class="my-12 border-0 h-px bg-gradient-to-r from-transparent via-titan-300 to-transparent">
+        <hr class="my-12 border-0 h-px bg-gradient-to-r from-transparent via-border to-transparent">
 
         <!-- Author Card -->
         <slot name="author" />
@@ -148,7 +148,7 @@ onMounted(() => {
   top: 0;
   left: 0;
   height: 2px;
-  background-color: hsl(var(--crocus-600));
+  background-color: hsl(var(--primary));
   z-index: 9999;
   transition: width 80ms linear;
   pointer-events: none;
@@ -161,12 +161,12 @@ onMounted(() => {
   gap: 1rem;
   padding: 1rem;
   margin: 2rem 0 1.75rem;
-  border: 1px solid hsl(var(--crocus-200));
+  border: 1px solid hsl(var(--badge-primary-border));
   border-radius: 0.5rem;
   background:
-    linear-gradient(135deg, hsl(var(--crocus-50)), #ffffff 58%),
-    hsl(var(--titan-50));
-  box-shadow: 0 10px 28px hsl(var(--ebony-900) / 0.08);
+    linear-gradient(135deg, hsl(var(--badge-primary-bg)), hsl(var(--surface)) 58%),
+    hsl(var(--surface));
+  box-shadow: 0 10px 28px hsl(var(--overlay-backdrop-bg) / 0.08);
 }
 
 :deep([data-mid-cta-content]) {
@@ -180,8 +180,8 @@ onMounted(() => {
   padding: 0 0.5rem;
   margin-bottom: 0.5rem;
   border-radius: 999px;
-  background-color: hsl(var(--crocus-100));
-  color: hsl(var(--crocus-800));
+  background-color: hsl(var(--badge-primary-hover-bg));
+  color: hsl(var(--action-primary-active-bg));
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1;
@@ -189,7 +189,7 @@ onMounted(() => {
 
 :deep([data-mid-cta-headline]) {
   margin: 0;
-  color: hsl(var(--ebony-900));
+  color: hsl(var(--text-primary));
   font-size: 0.9375rem;
   font-weight: 750;
   line-height: 1.35;
@@ -197,7 +197,7 @@ onMounted(() => {
 
 :deep([data-mid-cta-body]) {
   margin: 0.25rem 0 0;
-  color: hsl(var(--ebony-600));
+  color: hsl(var(--text-secondary));
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.45;
@@ -209,8 +209,8 @@ onMounted(() => {
   padding: 0.5rem 0.875rem;
   border: none;
   border-radius: 0.4375rem;
-  background-color: hsl(var(--crocus-600));
-  color: #ffffff;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--action-primary-text));
   cursor: pointer;
   font-family: inherit;
   font-size: 0.8125rem;
@@ -221,7 +221,7 @@ onMounted(() => {
 }
 
 :deep([data-blog-cta-btn]:hover) {
-  background-color: hsl(var(--crocus-700));
+  background-color: hsl(var(--action-primary-hover-bg));
 }
 
 :deep([data-blog-cta-btn]:active) {
@@ -229,7 +229,7 @@ onMounted(() => {
 }
 
 :deep([data-blog-cta-btn]:focus-visible) {
-  outline: 2px solid hsl(var(--crocus-300));
+  outline: 2px solid hsl(var(--focus-ring-subtle));
   outline-offset: 3px;
 }
 

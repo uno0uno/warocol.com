@@ -11,8 +11,8 @@
 
     <!-- Already verified -->
     <div v-else-if="subStep === 'verified'" class="flex flex-col items-center gap-3 py-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-        <Icon name="heroicons:check-circle" class="w-9 h-9 text-green-600" />
+      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
+        <Icon name="heroicons:check-circle" class="w-9 h-9 text-state-success-icon" />
       </div>
       <div>
         <p class="font-semibold text-foreground">Identidad verificada</p>
@@ -58,7 +58,7 @@
         <div
           v-for="warning in customerWarnings"
           :key="warning"
-          class="flex items-start gap-2 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm"
+          class="flex items-start gap-2 p-3 rounded-md bg-state-warning-bg border border-state-warning-border text-state-warning-text text-sm"
         >
           <Icon name="heroicons:information-circle" class="w-4 h-4 flex-shrink-0 mt-0.5" />
           {{ warning }}
@@ -91,7 +91,7 @@
         </p>
       </div>
 
-      <div v-if="countdown > 0" class="text-center text-sm font-medium text-amber-600">
+      <div v-if="countdown > 0" class="text-center text-sm font-medium text-state-warning-text">
         <Icon name="heroicons:clock" class="w-4 h-4 inline mr-1" />
         Reenviar disponible en {{ countdown }}s
       </div>

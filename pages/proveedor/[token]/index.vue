@@ -36,23 +36,23 @@
         <!-- Desktop Table Cells -->
         <template #cell-numero="{ value, row }">
           <div>
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-            <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
+            <div class="text-sm font-medium text-text-primary">{{ value }}</div>
+            <div class="text-xs text-text-secondary">{{ row.invoice_number || 'Sin factura' }}</div>
           </div>
         </template>
 
         <template #cell-proveedor="{ value }">
-          <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+          <div class="text-sm font-bold text-text-primary">{{ value }}</div>
         </template>
 
         <template #cell-fecha="{ value }">
-          <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-primary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-valorTotal="{ value, row }">
           <div>
-            <div class="text-sm font-medium text-ebony-800">{{ formatCurrency(value) }}</div>
-            <div class="text-xs text-titan-600">+{{ formatCurrency(row.impuestos) }} IVA</div>
+            <div class="text-sm font-medium text-text-primary">{{ formatCurrency(value) }}</div>
+            <div class="text-xs text-text-secondary">+{{ formatCurrency(row.impuestos) }} IVA</div>
           </div>
         </template>
 
@@ -65,15 +65,15 @@
         </template>
 
         <template #cell-fechaEntrega="{ value }">
-          <div class="text-sm text-ebony-800">
+          <div class="text-sm text-text-primary">
             <div v-if="value">{{ formatDate(value) }}</div>
-            <div v-else class="text-ebony-800">Sin programar</div>
+            <div v-else class="text-text-primary">Sin programar</div>
           </div>
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
-            <button @click="navigateToPurchase(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            <button @click="navigateToPurchase(row)" class="text-action-ghost-text hover:text-action-ghost-hover-text transition-colors"
               title="Ver orden">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

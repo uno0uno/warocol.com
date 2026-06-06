@@ -56,7 +56,7 @@
 
     <!-- Verified email -->
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
-      <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 text-state-success-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
       <div class="text-sm">
@@ -136,17 +136,17 @@
         <!-- Saldo actual -->
         <div class="flex items-center justify-between px-4 py-3.5">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Saldo actual</p>
-          <p class="text-lg font-bold text-slate-800 tabular-nums">
+          <p class="text-lg font-bold text-text-primary tabular-nums">
             {{ warosBalance !== null ? warosBalance.toLocaleString('es-CO') : '—' }}
           </p>
         </div>
 
         <!-- Ganarás con este pedido -->
-        <div v-if="warosEstimate !== null" class="flex items-center justify-between px-4 py-3.5 bg-emerald-50">
-          <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Ganarás con este pedido</p>
+        <div v-if="warosEstimate !== null" class="flex items-center justify-between px-4 py-3.5 bg-state-success-bg">
+          <p class="text-xs font-semibold text-state-success-text uppercase tracking-wider">Ganarás con este pedido</p>
           <p
             class="text-lg font-extrabold tabular-nums"
-            :class="warosEstimate > 0 ? 'text-emerald-600' : 'text-slate-300'"
+            :class="warosEstimate > 0 ? 'text-state-success-text' : 'text-text-tertiary'"
           >
             {{ warosEstimate > 0 ? `+${warosEstimate.toLocaleString('es-CO')}` : '—' }}
           </p>
@@ -185,12 +185,12 @@
     <Transition name="fade">
       <div
         v-if="showSuccessModal"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-5"
+        class="fixed inset-0 bg-overlay-backdrop-strong/60 backdrop-blur-sm z-50 flex items-center justify-center p-5"
       >
         <div class="bg-background rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
           <!-- Check icon -->
-          <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
-            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-20 h-20 rounded-full bg-state-success-bg flex items-center justify-center mx-auto mb-5">
+            <svg class="w-10 h-10 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -204,13 +204,13 @@
           <!-- Pickup PIN -->
           <div
             v-if="confirmedOrder?.pickup_pin || otpAuthStore.pickupPin"
-            class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5"
+            class="bg-state-warning-bg border-2 border-state-warning-border rounded-xl p-5 mb-5"
           >
-            <p class="text-xs font-semibold text-amber-800 mb-2 uppercase tracking-wide">Tu PIN de recogida</p>
-            <p class="text-4xl font-extrabold text-amber-900 tracking-[0.2em] mb-2">
+            <p class="text-xs font-semibold text-state-warning-text mb-2 uppercase tracking-wide">Tu PIN de recogida</p>
+            <p class="text-4xl font-extrabold text-state-warning-text tracking-[0.2em] mb-2">
               {{ confirmedOrder?.pickup_pin || otpAuthStore.pickupPin }}
             </p>
-            <p class="text-xs text-amber-700">Muestra este PIN al recoger tu pedido</p>
+            <p class="text-xs text-state-warning-text">Muestra este PIN al recoger tu pedido</p>
           </div>
 
           <!-- ETA message -->

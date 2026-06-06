@@ -317,6 +317,8 @@ module.exports = {
           },
         },
         nav: {
+          "surface-bg": "hsl(var(--nav-surface-bg) / <alpha-value>)",
+          "surface-border": "hsl(var(--nav-surface-border) / <alpha-value>)",
           "item-hover-bg": "hsl(var(--nav-item-hover-bg) / <alpha-value>)",
           "item-active-bg": "hsl(var(--nav-item-active-bg) / <alpha-value>)",
           "icon-idle": "hsl(var(--nav-icon-idle) / <alpha-value>)",
