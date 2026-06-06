@@ -1,0 +1,42 @@
+issue: 1195
+title: "Restaurar contraste visual en tablas componentizadas"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/warocol.com
+stack: nuxt
+branch: wr-1195-table-contrast
+
+paths:
+  - components/ui/data-table/index.vue
+  - components/ui/ResponsiveDataView.vue
+  - assets/css/design-tokens.css
+  - tailwind.config.js
+
+ac:
+  - Desktop table headers have a clearly differentiated data-table token surface.
+  - Alternating rows show a perceptible zebra without breaking dark mode or custom rowClass.
+  - Row hover is visible and consistent in UiResponsiveDataView/UiDataTable.
+  - Manual smoke scope is listed for 2-3 representative list/table routes.
+  - No API/data/layout/column redesign.
+
+out_of_scope:
+  - Backend/API changes.
+  - Migrating raw tables that do not use UiDataTable.
+  - Business-column or route-layout redesigns.
+
+hints:
+  entry: "components/ui/data-table/index.vue"
+  pattern: "assets/css/design-tokens.css data-table tokens currently make header, zebra, and hover too similar."
+  tests: "git diff --check; targeted rg for direct colors in touched component/tokens."
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits:
+    - full build/typecheck unless explicitly requested
+    - dev server unless explicitly requested
+
+next:
+  after_pr: "none"
