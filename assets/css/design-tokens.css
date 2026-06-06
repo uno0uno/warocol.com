@@ -356,8 +356,8 @@
   --data-table-header-bg: var(--neutral-200);
   --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-100);
-  --data-table-row-hover-bg: var(--neutral-200);
+  --data-table-row-alt-bg: var(--neutral-200);
+  --data-table-row-hover-bg: var(--neutral-300);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);
@@ -547,8 +547,8 @@
   --data-table-header-bg: var(--neutral-600);
   --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-700);
-  --data-table-row-hover-bg: var(--neutral-600);
+  --data-table-row-alt-bg: var(--neutral-600);
+  --data-table-row-hover-bg: var(--neutral-500);
   --data-table-row-selected-bg: var(--neutral-700);
   --data-table-row-new-bg: var(--neutral-700);
   --data-table-border: var(--border);
@@ -684,8 +684,8 @@
   --data-table-header-bg: var(--neutral-200);
   --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-100);
-  --data-table-row-hover-bg: var(--neutral-200);
+  --data-table-row-alt-bg: var(--neutral-200);
+  --data-table-row-hover-bg: var(--neutral-300);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);
