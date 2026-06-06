@@ -37,7 +37,7 @@
         :aria-labelledby="'modal-title-' + _uid"
       >
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50" @click="closeModal" />
+        <div class="absolute inset-0 bg-overlay-backdrop/50" @click="closeModal" />
 
         <!-- Dialog -->
         <div class="relative bg-surface border border-border rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
@@ -82,13 +82,13 @@
             <button
               @click="confirmToggle"
               :disabled="isUpdating"
-              class="flex-1 min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg text-primary-foreground transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :class="businessProfile.is_manually_open
                 ? 'bg-destructive hover:bg-destructive/90 focus:ring-destructive'
                 : 'bg-success hover:bg-success/90 focus:ring-success'"
             >
               <span v-if="isUpdating" class="flex items-center justify-center gap-2">
-                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                <span class="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                 Guardando...
               </span>
               <span v-else>

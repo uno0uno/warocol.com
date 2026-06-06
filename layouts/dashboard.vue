@@ -33,14 +33,14 @@
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
               <li class="inline-flex items-center">
                 <NuxtLink to="/financiero"
-                  class="text-sm font-medium text-titan-600 hover:text-crocus-600 transition-colors">
+                  class="text-sm font-medium text-text-secondary hover:text-primary transition-colors">
                   Financiero
                 </NuxtLink>
               </li>
               <li v-if="breadcrumbPage">
                 <div class="flex items-center">
-                  <ChevronRightIcon class="w-4 h-4 text-titan-400" />
-                  <span class="ml-1 text-sm font-medium text-ebony-800">{{ breadcrumbPage }}</span>
+                  <ChevronRightIcon class="w-4 h-4 text-text-tertiary" />
+                  <span class="ml-1 text-sm font-medium text-text-primary">{{ breadcrumbPage }}</span>
                 </div>
               </li>
             </ol>
@@ -303,15 +303,15 @@ main::-webkit-scrollbar {
 }
 
 main::-webkit-scrollbar-track {
-  background: hsl(var(--titan-100));
+  background: hsl(var(--surface-secondary));
 }
 
 main::-webkit-scrollbar-thumb {
-  background: hsl(var(--titan-300));
+  background: hsl(var(--surface-tertiary));
   border-radius: 4px;
 }
 
 main::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--titan-400));
+  background: hsl(var(--border));
 }
 </style>
