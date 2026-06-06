@@ -768,7 +768,7 @@ onUnmounted(() => {
                 </span>
                 <span
                   v-if="productPromoBadge"
-                  class="text-xs font-semibold bg-emerald-500/90 text-white px-2 py-0.5 rounded-full"
+                  class="text-xs font-semibold bg-badge-success-bg text-badge-success-text px-2 py-0.5 rounded-full"
                   :title="productPromoBadge.title || productPromoBadge.label"
                 >
                   {{ productPromoBadge.label }}
@@ -824,7 +824,7 @@ onUnmounted(() => {
             <label class="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
                 :checked="wizardPending"
                 @change="enableWizard"
               />
@@ -1032,7 +1032,7 @@ onUnmounted(() => {
               <button
                 v-if="wizardStep < quantity - 1"
                 type="button"
-                class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl"
+                class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl"
                 @click="goToNextStep"
               >
                 Siguiente →
@@ -1041,7 +1041,7 @@ onUnmounted(() => {
                 v-else
                 @click="addToCart"
                 :disabled="isAdding"
-                class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
+                class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
               >
                 Agregar {{ quantity }} ítems
               </button>
@@ -1051,7 +1051,7 @@ onUnmounted(() => {
             v-else
             @click="addToCart"
             :disabled="isAdding"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <template v-if="isAdding">
               <svg class="animate-spin h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1124,7 +1124,7 @@ onUnmounted(() => {
             <button
               v-if="wizardStep < quantity - 1"
               type="button"
-              class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl"
+              class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl"
               @click="goToNextStep"
             >
               Siguiente →
@@ -1133,7 +1133,7 @@ onUnmounted(() => {
               v-else
               @click="addToCart"
               :disabled="isAdding"
-              class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
+              class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
             >
               Agregar {{ quantity }} ítems
             </button>
@@ -1143,7 +1143,7 @@ onUnmounted(() => {
           v-else
           @click="addToCart"
           :disabled="isAdding"
-          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <template v-if="isAdding">
             <svg class="animate-spin h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

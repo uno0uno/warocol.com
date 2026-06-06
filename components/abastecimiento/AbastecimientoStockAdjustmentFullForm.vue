@@ -26,7 +26,7 @@
               <!-- Ingredient Selection -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  {{ WAREHOUSE_COPY.warehouseItemColumn }} <span class="text-red-500">*</span>
+                  {{ WAREHOUSE_COPY.warehouseItemColumn }} <span class="text-destructive">*</span>
                 </label>
                 <!-- If ingredient is pre-selected from URL, show it as read-only -->
                 <div v-if="route.query.ingredientId && selectedIngredient" class="w-full px-4 py-3 border-2 border-border rounded-lg bg-surface-secondary text-text-primary">
@@ -113,7 +113,7 @@
               <!-- Adjustment Type -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-3">
-                  Tipo de Ajuste <span class="text-red-500">*</span>
+                  Tipo de Ajuste <span class="text-destructive">*</span>
                 </label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
@@ -121,12 +121,12 @@
                     @click="form.adjustmentType = 'increment'"
                     class="p-4 border-2 rounded-lg transition-all hover:shadow-md"
                     :class="form.adjustmentType === 'increment'
-                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                      : 'border-border hover:border-green-300'"
+                      ? 'border-state-success-border bg-state-success-bg'
+                      : 'border-border hover:border-state-success-border'"
                   >
                     <div class="flex items-center justify-center gap-2">
-                      <Icon name="heroicons:arrow-up-circle" class="w-6 h-6 text-green-600" />
-                      <span class="font-semibold" :class="form.adjustmentType === 'increment' ? 'text-green-700 dark:text-green-400' : 'text-text-primary'">
+                      <Icon name="heroicons:arrow-up-circle" class="w-6 h-6 text-state-success-icon" />
+                      <span class="font-semibold" :class="form.adjustmentType === 'increment' ? 'text-state-success-text' : 'text-text-primary'">
                         Incremento
                       </span>
                     </div>
@@ -138,12 +138,12 @@
                     @click="form.adjustmentType = 'decrement'"
                     class="p-4 border-2 rounded-lg transition-all hover:shadow-md"
                     :class="form.adjustmentType === 'decrement'
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      : 'border-border hover:border-red-300'"
+                      ? 'border-state-danger-border bg-state-danger-bg'
+                      : 'border-border hover:border-state-danger-border'"
                   >
                     <div class="flex items-center justify-center gap-2">
-                      <Icon name="heroicons:arrow-down-circle" class="w-6 h-6 text-red-600" />
-                      <span class="font-semibold" :class="form.adjustmentType === 'decrement' ? 'text-red-700 dark:text-red-400' : 'text-text-primary'">
+                      <Icon name="heroicons:arrow-down-circle" class="w-6 h-6 text-state-danger-icon" />
+                      <span class="font-semibold" :class="form.adjustmentType === 'decrement' ? 'text-state-danger-text' : 'text-text-primary'">
                         Decremento
                       </span>
                     </div>
@@ -155,12 +155,12 @@
                     @click="form.adjustmentType = 'set'"
                     class="p-4 border-2 rounded-lg transition-all hover:shadow-md"
                     :class="form.adjustmentType === 'set'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-border hover:border-blue-300'"
+                      ? 'border-state-info-border bg-state-info-bg'
+                      : 'border-border hover:border-state-info-border'"
                   >
                     <div class="flex items-center justify-center gap-2">
-                      <Icon name="heroicons:arrows-right-left" class="w-6 h-6 text-blue-600" />
-                      <span class="font-semibold" :class="form.adjustmentType === 'set' ? 'text-blue-700 dark:text-blue-400' : 'text-text-primary'">
+                      <Icon name="heroicons:arrows-right-left" class="w-6 h-6 text-state-info-icon" />
+                      <span class="font-semibold" :class="form.adjustmentType === 'set' ? 'text-state-info-text' : 'text-text-primary'">
                         Ajustar a
                       </span>
                     </div>
@@ -174,7 +174,7 @@
                 <!-- Quantity -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    {{ form.adjustmentType === 'set' ? 'Nuevo Stock' : 'Cantidad' }} <span class="text-red-500">*</span>
+                    {{ form.adjustmentType === 'set' ? 'Nuevo Stock' : 'Cantidad' }} <span class="text-destructive">*</span>
                   </label>
                   <UiDecimalInput
                     v-model="form.quantity"
@@ -189,7 +189,7 @@
                 <!-- Unit Selection -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Unidad <span class="text-red-500">*</span>
+                    Unidad <span class="text-destructive">*</span>
                   </label>
                   <select
                     v-model="form.unit"
@@ -237,13 +237,13 @@
               </div>
 
               <!-- Preview of new stock -->
-              <div v-if="form.quantity && form.quantity > 0" class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p class="text-sm text-blue-900 dark:text-blue-300">
+              <div v-if="form.quantity && form.quantity > 0" class="mt-2 p-3 bg-state-info-bg border border-state-info-border rounded-lg">
+                <p class="text-sm text-state-info-text">
                   <span class="font-semibold">Resultado:</span>
                   Stock {{ form.adjustmentType === 'increment' ? 'aumentará' : form.adjustmentType === 'decrement' ? 'disminuirá' : 'se establecerá' }} a
                   <span class="font-bold">{{ formatNumber(newStockInBase) }} {{ selectedIngredient?.unit }}</span>
                 </p>
-                <p v-if="form.cost_per_unit && form.adjustmentType === 'increment'" class="text-xs text-blue-800 dark:text-blue-400 mt-1">
+                <p v-if="form.cost_per_unit && form.adjustmentType === 'increment'" class="text-xs text-state-info-text mt-1">
                   Costo unitario: ${{ form.cost_per_unit.toLocaleString('es-CO') }} por {{ form.unit }}
                 </p>
               </div>
@@ -251,7 +251,7 @@
               <!-- Reason Selection -->
               <div v-if="form.adjustmentType">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Motivo del Ajuste <span class="text-red-500">*</span>
+                  Motivo del Ajuste <span class="text-destructive">*</span>
                 </label>
                 <select
                   v-model="form.reason"
@@ -266,7 +266,7 @@
               <!-- Notes -->
               <div v-if="form.reason">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Notas <span v-if="form.reason === 'other'" class="text-red-500">*</span>
+                  Notas <span v-if="form.reason === 'other'" class="text-destructive">*</span>
                   <span v-else class="text-xs text-text-secondary font-normal">(opcional)</span>
                 </label>
                 <textarea
@@ -279,13 +279,13 @@
               </div>
 
               <!-- Warning Message -->
-              <div v-if="showLargeWarning" class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded">
+              <div v-if="showLargeWarning" class="bg-state-warning-bg border-l-4 border-state-warning-border p-4 rounded">
                 <div class="flex">
                   <div class="flex-shrink-0">
-                    <Icon name="heroicons:exclamation-triangle" class="h-5 w-5 text-yellow-400" />
+                    <Icon name="heroicons:exclamation-triangle" class="h-5 w-5 text-state-warning-icon" />
                   </div>
                   <div class="ml-3">
-                    <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                    <p class="text-sm text-state-warning-text">
                       <span class="font-semibold">Advertencia:</span> Este ajuste representa un cambio mayor al 50% del stock actual. Por favor, verifica los datos antes de continuar.
                     </p>
                   </div>
@@ -326,9 +326,9 @@
                 <span
                   class="px-2 py-1 rounded text-xs font-medium"
                   :class="{
-                    'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400': form.adjustmentType === 'increment',
-                    'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400': form.adjustmentType === 'decrement',
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400': form.adjustmentType === 'set'
+                    'bg-state-success-bg text-state-success-text': form.adjustmentType === 'increment',
+                    'bg-state-danger-bg text-state-danger-text': form.adjustmentType === 'decrement',
+                    'bg-state-info-bg text-state-info-text': form.adjustmentType === 'set'
                   }"
                 >
                   {{ form.adjustmentType === 'increment' ? 'Incremento' : form.adjustmentType === 'decrement' ? 'Decremento' : 'Ajustar a' }}
@@ -352,7 +352,7 @@
             <button
               type="submit"
               :disabled="!isFormValid || isSubmitting"
-              class="w-full py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20"
+              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-success-bg/20"
             >
               <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
               <span v-else>

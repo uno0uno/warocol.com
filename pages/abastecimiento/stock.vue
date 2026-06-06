@@ -40,7 +40,7 @@
         <button
           type="button"
           title="Ajustar stock"
-          class="min-h-[44px] h-10 px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors flex-shrink-0"
+          class="min-h-[44px] h-10 px-3 inline-flex items-center gap-1.5 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors flex-shrink-0"
           @click="showAdjustmentPanel = true"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

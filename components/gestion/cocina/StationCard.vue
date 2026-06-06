@@ -21,7 +21,7 @@
           </div>
           <!-- Threshold 2 -->
           <div class="flex items-center gap-1.5">
-            <div class="w-2 h-2 rounded-full bg-red-500" />
+            <div class="w-2 h-2 rounded-full bg-state-danger-icon" />
             <span class="text-xs text-text-secondary font-medium">{{ station.alert_threshold_2_min }}m</span>
           </div>
         </div>
@@ -37,7 +37,7 @@
         </button>
         <button
           class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-          :class="station.is_active ? 'text-amber-600 hover:bg-amber-50 border border-amber-200' : 'text-emerald-600 hover:bg-emerald-50 border border-emerald-200'"
+          :class="station.is_active ? 'text-state-warning-text hover:bg-state-warning-bg border border-state-warning-border' : 'text-state-success-text hover:bg-state-success-bg border border-state-success-border'"
           :disabled="isToggling"
           @click="$emit('toggle', station)"
         >

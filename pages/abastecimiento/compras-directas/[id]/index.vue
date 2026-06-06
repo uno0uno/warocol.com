@@ -55,7 +55,7 @@
           <UiStatusBadge
             :value="isEditMode ? 'Editando' : getStatusText(purchase.status)"
             format="text"
-            :class="isEditMode ? 'bg-yellow-100 text-yellow-800 border-0' : ['border-0', getStatusClass(purchase.status)]"
+            :variant="isEditMode ? 'warning' : getStatusVariant(purchase.status)"
           />
         </PurchasesPurchaseInfoCard>
 
@@ -103,7 +103,7 @@
             <button
               @click="saveChanges"
               :disabled="!isFormValid || isSaving"
-              class="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-1"
+              class="px-3 py-1.5 text-xs font-medium text-action-primary-text bg-action-primary-bg rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 flex items-center space-x-1"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -220,7 +220,7 @@
                 type="button"
                 @click="removeItem(index)"
                 :disabled="editItems.length === 1"
-                class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                class="text-state-danger-text hover:text-state-danger-text disabled:opacity-50 disabled:cursor-not-allowed p-1"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -399,7 +399,7 @@
                 type="button"
                 @click="addNewItem"
                 :disabled="!newItem.ingredient_id || newItem.purchase_quantity <= 0"
-                class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                class="w-full px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -940,13 +940,13 @@ const getStatusText = (status: string) => {
   return statusMap[status] || status
 }
 
-const getStatusClass = (status: string) => {
-  const classMap: Record<string, string> = {
-    'received': 'bg-blue-100 text-blue-800',
-    'invoiced': 'bg-yellow-100 text-yellow-800',
-    'paid': 'bg-green-100 text-green-800'
+const getStatusVariant = (status: string) => {
+  const variantMap: Record<string, 'success' | 'warning' | 'info' | 'secondary'> = {
+    received: 'info',
+    invoiced: 'warning',
+    paid: 'success'
   }
-  return classMap[status] || 'bg-gray-100 text-gray-800'
+  return variantMap[status] || 'secondary'
 }
 
 

@@ -59,7 +59,7 @@ const toggleStatus = async () => {
         <span
           v-for="(mod, idx) in item.modifiers_snapshot"
           :key="idx"
-          class="text-[10px] font-bold bg-titan-200 text-titan-800 px-1.5 py-0.5 rounded uppercase"
+          class="text-[10px] font-bold bg-surface-secondary text-text-secondary px-1.5 py-0.5 rounded uppercase"
         >
           + {{ mod.name }}
         </span>
@@ -88,8 +88,8 @@ const toggleStatus = async () => {
         :disabled="isUpdating"
         class="h-7 w-7 rounded-lg flex items-center justify-center transition-all border active:scale-90"
         :class="item.status === 'ready'
-          ? 'bg-success border-success text-white shadow-sm shadow-success/30'
-          : 'bg-surface border-border text-titan-300 hover:border-primary hover:text-primary'"
+          ? 'bg-action-success-bg border-action-success-border text-action-success-text shadow-sm shadow-action-success-bg/30'
+          : 'bg-surface border-border text-text-tertiary hover:border-primary hover:text-primary'"
       >
         <UiLoadingMatrix v-if="isUpdating" size="4px" />
         <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

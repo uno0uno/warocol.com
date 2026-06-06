@@ -140,7 +140,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
         aria-hidden="true"
         @click="close"
       />
@@ -159,7 +159,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -182,7 +182,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             <button
               type="button"
               aria-label="Cerrar panel"
-              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
               <X :size="20" aria-hidden="true" />
@@ -258,7 +258,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
               </div>
 
               <!-- Notes -->
-              <p v-if="item.notes && item.status !== 'cancelled'" class="flex items-center gap-1.5 text-xs text-amber-700 font-medium bg-amber-50 rounded-lg px-2.5 py-1.5 pl-1">
+              <p v-if="item.notes && item.status !== 'cancelled'" class="flex items-center gap-1.5 text-xs text-state-warning-text font-medium bg-state-warning-bg rounded-lg px-2.5 py-1.5 pl-1">
                 <MessageSquare :size="12" aria-hidden="true" class="flex-shrink-0" />
                 {{ item.notes }}
               </p>
@@ -276,7 +276,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             class="h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             :class="status === 'cancelled'
               ? 'px-4 border border-border text-text-secondary hover:bg-destructive/10 hover:text-destructive hover:border-destructive'
-              : 'flex-1 bg-primary text-primary-foreground hover:bg-primary/90'"
+              : 'flex-1 bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg'"
             @click="updateStatus(status)"
           >
             <UiLoadingDots v-if="isUpdating && status !== 'cancelled'" size="9px" color="currentColor" />

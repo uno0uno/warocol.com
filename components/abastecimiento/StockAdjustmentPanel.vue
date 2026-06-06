@@ -11,7 +11,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
         @click="close"
         aria-hidden="true"
       />
@@ -31,7 +31,7 @@
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -52,7 +52,7 @@
               type="button"
               aria-label="Cerrar panel"
               :disabled="isSubmitting"
-              class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 transition-colors"
+              class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
               @click="close"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -64,11 +64,11 @@
 
         <!-- ─── Success state ─────────────────────────────────────────────── -->
         <div v-if="state === 'success'" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          <div class="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-700/40 dark:bg-green-900/20">
-            <CheckCircleIcon class="w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div class="flex items-start gap-3 rounded-xl border border-state-success-border bg-state-success-bg p-4">
+            <CheckCircleIcon class="w-5 h-5 text-state-success-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold text-green-900 dark:text-green-200">Ajuste registrado</p>
-              <p class="text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-words">
+              <p class="text-sm font-semibold text-state-success-text">Ajuste registrado</p>
+              <p class="text-xs text-state-success-text mt-0.5 leading-snug break-words">
                 {{ successMessage }}
               </p>
             </div>
@@ -236,10 +236,10 @@
           <!-- 4b. Amber empty-state for ingredients without purchase units -->
           <div
             v-if="selectedIngredient && !purchaseUnitsApi.isLoading(form.ingredientId) && purchaseUnitOptions.length === 0"
-            class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/40 dark:bg-amber-900/20"
+            class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
           >
-            <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p class="text-xs text-state-warning-text leading-snug">
               Sin unidades de compra configuradas. Podés ajustar usando la unidad base ({{ selectedIngredient.unit }}) o
               <a :href="`/abastecimiento/ingredientes-propios?highlight=${selectedIngredient.id}`" class="underline font-medium">configurar unidades</a>.
             </p>
@@ -313,10 +313,10 @@
           <!-- 9. Large adjustment warning -->
           <div
             v-if="showLargeWarning"
-            class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/40 dark:bg-amber-900/20"
+            class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
           >
-            <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p class="text-xs text-state-warning-text leading-snug">
               <strong>Advertencia:</strong> este ajuste representa un cambio mayor al 50% del stock actual. Verificá los datos antes de registrar.
             </p>
           </div>
@@ -344,7 +344,7 @@
             </button>
             <button
               type="button"
-              class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/40 active:scale-95 transition-all"
+              class="flex-1 min-h-[44px] py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-xl font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary/40 active:scale-95 transition-all"
               @click="resetForAnother"
             >
               Hacer otro ajuste
@@ -362,7 +362,7 @@
             <button
               type="button"
               :disabled="!isFormValid || isSubmitting"
-              class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all inline-flex items-center justify-center gap-2"
+              class="flex-1 min-h-[44px] py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-xl font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all inline-flex items-center justify-center gap-2"
               @click="onSubmit"
             >
               <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
@@ -415,9 +415,9 @@ const notesId = `stock-adj-notes-${uid}`
 const REASONS = ADJUSTMENT_REASONS
 
 const TYPE_OPTIONS = [
-  { value: 'increment' as const, label: 'Incremento', icon: ArrowUpCircleIcon,    activeClass: 'border-green-500 bg-green-50 dark:bg-green-900/20', iconClass: 'text-green-600', labelClass: 'text-green-700 dark:text-green-400' },
-  { value: 'decrement' as const, label: 'Decremento', icon: ArrowDownCircleIcon,  activeClass: 'border-red-500 bg-red-50 dark:bg-red-900/20',       iconClass: 'text-red-600',   labelClass: 'text-red-700 dark:text-red-400' },
-  { value: 'set'       as const, label: 'Ajustar a',  icon: ArrowsRightLeftIcon,  activeClass: 'border-primary bg-primary/5',                      iconClass: 'text-primary',   labelClass: 'text-primary' },
+  { value: 'increment' as const, label: 'Incremento', icon: ArrowUpCircleIcon,    activeClass: 'border-state-success-border bg-state-success-bg', iconClass: 'text-state-success-icon', labelClass: 'text-state-success-text' },
+  { value: 'decrement' as const, label: 'Decremento', icon: ArrowDownCircleIcon,  activeClass: 'border-state-danger-border bg-state-danger-bg',   iconClass: 'text-state-danger-icon',  labelClass: 'text-state-danger-text' },
+  { value: 'set'       as const, label: 'Ajustar a',  icon: ArrowsRightLeftIcon,  activeClass: 'border-state-info-border bg-state-info-bg',       iconClass: 'text-state-info-icon',    labelClass: 'text-state-info-text' },
 ]
 
 const purchaseUnitsApi = useIngredientPurchaseUnits()

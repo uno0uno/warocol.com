@@ -2,7 +2,7 @@
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-black/50"
+      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-overlay-backdrop/50"
       @click.self="handleClose"
     >
       <div
@@ -35,7 +35,7 @@
         <form class="p-5 space-y-4" @submit.prevent="handleSubmit">
           <div>
             <label for="open-sale-amount" class="block text-sm font-medium text-text-primary mb-1.5">
-              Monto (COP) <span class="text-red-500">*</span>
+              Monto (COP) <span class="text-destructive">*</span>
             </label>
             <input
               id="open-sale-amount"
@@ -65,7 +65,7 @@
             />
           </div>
 
-          <p v-if="errorMessage" class="text-sm text-red-600" role="alert">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="text-sm text-state-danger-text" role="alert">{{ errorMessage }}</p>
 
           <div class="flex gap-2 pt-1">
             <button
@@ -78,7 +78,7 @@
             <button
               type="submit"
               :disabled="isSubmitting"
-              class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-action-primary-bg text-action-primary-text font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ isSubmitting ? 'Agregando...' : confirmLabel }}
             </button>

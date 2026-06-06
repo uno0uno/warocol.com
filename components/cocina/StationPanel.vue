@@ -31,7 +31,7 @@
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -54,7 +54,7 @@
               @click="close"
               type="button"
               aria-label="Cerrar panel"
-              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -77,7 +77,7 @@
               required
               maxlength="100"
               placeholder="Ej: Cocina Principal, Bar, Parrilla"
-              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm text-text-primary bg-surface"
               autocomplete="off"
               :disabled="loading"
             />
@@ -102,7 +102,7 @@
                 placeholder="#6B7280"
                 aria-label="Código de color en hex"
                 :disabled="loading"
-                class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono uppercase text-text-primary bg-surface"
+                class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm font-mono uppercase text-text-primary bg-surface"
               />
             </div>
             <p class="text-xs text-text-tertiary">
@@ -120,7 +120,7 @@
               type="text"
               maxlength="50"
               placeholder="Ej: K1, BAR-01"
-              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm text-text-primary bg-surface"
               autocomplete="off"
               :disabled="loading"
             />
@@ -139,7 +139,7 @@
               type="number"
               min="0"
               placeholder="0"
-              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm text-text-primary bg-surface"
               :disabled="loading"
             />
             <p class="text-xs text-text-tertiary">
@@ -165,7 +165,7 @@
             type="button"
             @click="close"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg"
+            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 rounded-lg"
           >
             Cancelar
           </button>
@@ -173,7 +173,7 @@
             type="button"
             @click="submit"
             :disabled="loading || !canSubmit"
-            class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors flex items-center gap-2"
+            class="min-h-[44px] px-5 py-2 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring focus:ring-offset-2 transition-colors flex items-center gap-2"
           >
             <template v-if="loading">
               <span>Creando</span>

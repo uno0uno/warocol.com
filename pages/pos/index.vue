@@ -1523,22 +1523,22 @@ onUnmounted(() => {
       </div>
 
       <!-- Barra Banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-amber-300/40 rounded-2xl mb-4 p-3.5 shadow-sm">
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-2xl mb-4 p-3.5 shadow-sm">
         <div class="flex items-center gap-3">
-          <div class="bg-amber-50 p-2.5 rounded-xl flex-shrink-0">
-            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="bg-state-warning-bg p-2.5 rounded-xl flex-shrink-0">
+            <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
             </svg>
           </div>
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex-shrink-0">Barra</span>
+            <span class="text-[10px] font-bold text-state-warning-text uppercase tracking-widest flex-shrink-0">Barra</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary">
               {{ comandasEnabled ? 'Agregar y enviar a cocina antes de cobrar' : 'Venta directa en barra' }}
             </span>
             <template v-if="comandasEnabled && unfiredCount > 0">
               <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-              <span class="flex items-center gap-1 text-xs font-semibold text-red-600 flex-shrink-0">
+              <span class="flex items-center gap-1 text-xs font-semibold text-state-danger-text flex-shrink-0">
                 {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
               </span>
             </template>
@@ -1573,11 +1573,11 @@ onUnmounted(() => {
               </p>
               <p
                 v-if="comandasEnabled && unfiredCount > 0"
-                class="flex items-center gap-1 text-xs font-semibold text-red-600 mt-1.5"
+                class="flex items-center gap-1 text-xs font-semibold text-state-danger-text mt-1.5"
               >
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
                 </span>
                 {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
               </p>
@@ -1669,22 +1669,22 @@ onUnmounted(() => {
           {{ tabError }}
         </p>
         <!-- Tab success (fire to kitchen) -->
-        <p v-if="tabSuccess" class="mt-2 text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5 border border-emerald-200">
+        <p v-if="tabSuccess" class="mt-2 text-xs text-state-success-text bg-state-success-bg rounded-lg px-3 py-1.5 border border-state-success-border">
           {{ tabSuccess }}
         </p>
       </div>
 
       <!-- Customer Header (when customer is identified and no mesa mode) -->
-      <div v-else-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
+      <div v-else-if="posStore.currentCustomer" class="bg-badge-primary-bg border border-badge-primary-border rounded-xl mb-4 p-4">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="bg-crocus-600/10 p-3 rounded-xl border border-crocus-500/20 flex-shrink-0">
-              <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-badge-primary-bg p-3 rounded-xl border border-badge-primary-border flex-shrink-0">
+              <svg class="w-5 h-5 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div class="min-w-0">
-              <p class="text-[10px] font-bold text-crocus-600 uppercase tracking-widest">
+              <p class="text-[10px] font-bold text-badge-primary-text uppercase tracking-widest">
                 Cliente Actual
               </p>
               <p class="text-base font-bold text-text-primary leading-tight truncate">
@@ -1705,7 +1705,7 @@ onUnmounted(() => {
                 />
                 <span
                   v-else
-                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
                 >
                   Wallet: {{ formatCurrency(posWalletBalance) }}
                 </span>
@@ -1716,7 +1716,7 @@ onUnmounted(() => {
                 />
                 <span
                   v-else
-                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text border border-state-warning-border"
                 >
                   WaRos: {{ posWarosBalance.toLocaleString('es-CO') }} pts
                 </span>
@@ -1725,7 +1725,7 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
-            class="flex-shrink-0 text-xs font-semibold text-crocus-700 hover:text-crocus-800 px-3 py-2 rounded-lg border border-crocus-500/30 hover:bg-crocus-600/10 transition-colors min-h-[44px]"
+            class="flex-shrink-0 text-xs font-semibold text-badge-primary-text hover:text-badge-primary-text px-3 py-2 rounded-lg border border-badge-primary-border hover:bg-badge-primary-bg transition-colors min-h-[44px]"
             @click="showCustomerModal = true"
           >
             Cambiar
@@ -1737,7 +1737,7 @@ onUnmounted(() => {
       <div v-else class="mb-4">
         <button
           type="button"
-          class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-crocus-500/40 text-crocus-700 font-semibold text-sm hover:bg-crocus-600/5 transition-colors"
+          class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-badge-primary-border text-badge-primary-text font-semibold text-sm hover:bg-badge-primary-bg transition-colors"
           @click="showCustomerModal = true"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1769,7 +1769,7 @@ onUnmounted(() => {
             :key="cat"
             class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
             :class="selectedCategory === cat
-              ? 'bg-text-primary text-white shadow-md'
+              ? 'bg-action-primary-bg text-action-primary-text shadow-md'
               : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
             @click="selectedCategory = cat"
           >
@@ -1888,8 +1888,8 @@ onUnmounted(() => {
         type="button"
         :aria-label="readyComandasCount > 0 ? `Estado de comandas — ${readyComandasCount} listas` : 'Estado de comandas'"
         :title="readyComandasCount > 0 ? `${readyComandasCount} comanda${readyComandasCount === 1 ? '' : 's'} lista${readyComandasCount === 1 ? '' : 's'}` : 'Estado de comandas'"
-        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-white text-text-primary text-sm font-medium hover:bg-surface-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary mr-1.5 md:mr-2 px-2.5 sm:px-3 md:px-4"
-        :class="readyComandasCount > 0 ? 'ring-1 ring-emerald-300/60' : ''"
+        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-action-secondary-bg text-action-secondary-text text-sm font-medium hover:bg-action-secondary-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action-secondary-focus-ring mr-1.5 md:mr-2 px-2.5 sm:px-3 md:px-4"
+        :class="readyComandasCount > 0 ? 'ring-1 ring-state-success-border/60' : ''"
         @click="showExpediterPanel = true"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1901,13 +1901,13 @@ onUnmounted(() => {
         <!-- Count badge: numeric on sm+, dot indicator on mobile -->
         <span
           v-if="readyComandasCount > 0"
-          class="hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold tabular-nums"
+          class="hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-action-success-bg text-action-success-text text-[11px] font-bold tabular-nums"
         >
           {{ readyComandasCount }}
         </span>
         <span
           v-if="readyComandasCount > 0"
-          class="sm:hidden absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white tabular-nums ring-2 ring-surface"
+          class="sm:hidden absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-badge-success-bg px-1 text-[10px] font-bold text-badge-success-text tabular-nums ring-2 ring-surface"
           aria-hidden="true"
         >
           {{ readyComandasCount > 9 ? '9+' : readyComandasCount }}

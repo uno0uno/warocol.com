@@ -296,7 +296,7 @@ const tableNameFor = (row: OperationEventRow) =>
     >
       <div
         v-if="detailOpen && selectedEvent"
-        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-overlay-backdrop/50"
         @click.self="closeDetail"
       >
         <div
@@ -347,7 +347,7 @@ const tableNameFor = (row: OperationEventRow) =>
           <div class="px-5 pb-5 pt-2 border-t border-border">
             <button
               type="button"
-              class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+              class="w-full min-h-[44px] rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg transition-colors"
               @click="closeDetail"
             >
               Cerrar

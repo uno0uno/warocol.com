@@ -33,7 +33,7 @@
             @change="togglePromoLineOptOutSetting"
           />
           <div
-            class="relative h-6 w-10 shrink-0 overflow-hidden rounded-full bg-border peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
+            class="relative h-6 w-10 shrink-0 overflow-hidden rounded-full bg-control-toggle-track-off peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-control-toggle-thumb after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
           />
         </label>
       </div>
@@ -141,7 +141,7 @@
                 type="button"
                 :aria-label="`Editar ${item.name}`"
                 title="Editar"
-                class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="openEdit(item)"
               >
                 <PencilSquareIcon class="w-4 h-4" />
@@ -211,7 +211,7 @@
                 type="button"
                 :aria-label="`Editar ${item.name}`"
                 title="Editar"
-                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="openEdit(item)"
               >
                 <PencilSquareIcon class="w-4 h-4" />

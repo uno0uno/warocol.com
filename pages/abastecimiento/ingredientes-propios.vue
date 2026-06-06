@@ -40,7 +40,7 @@
             :class="[
               'h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5',
               showArchived
-                ? 'border-amber-400 bg-amber-50 text-amber-700'
+                ? 'border-state-warning-border bg-state-warning-bg text-state-warning-text'
                 : 'border-border bg-background text-text-secondary hover:border-border hover:text-text-primary'
             ]"
           >
@@ -83,7 +83,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
+                <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">Archivado</span>
               </div>
               <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span class="text-xs text-text-secondary font-mono">{{ item.unit }}{{ item.unit_weight_gr ? ` · ${item.unit_weight_gr} gr/und` : '' }}</span>
@@ -101,7 +101,7 @@
         <template #cell-name="{ value, row }">
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold capitalize" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
-            <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
+            <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">Archivado</span>
           </div>
         </template>
 
@@ -149,7 +149,7 @@
               @click="openArchiveModal(row)"
               :aria-label="`Archivar ${row.name}`"
               title="Archivar"
-              class="p-1.5 rounded-md hover:bg-amber-50 transition-colors text-text-secondary hover:text-amber-600"
+              class="p-1.5 rounded-md hover:bg-state-warning-bg transition-colors text-text-secondary hover:text-state-warning-text"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
@@ -187,11 +187,11 @@
     <!-- Archive Confirmation Modal -->
     <Teleport to="body">
       <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
-        <div v-if="showArchiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" @click.self="showArchiveModal = false">
+        <div v-if="showArchiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/40" @click.self="showArchiveModal = false">
           <div class="bg-surface rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
             <div class="flex items-start gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-state-warning-bg flex items-center justify-center">
+                <svg class="w-5 h-5 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
                 </svg>
               </div>
@@ -223,7 +223,7 @@
                 type="button"
                 @click="confirmArchive"
                 :disabled="archiving"
-                class="flex-1 h-10 rounded-lg bg-amber-500 text-sm font-semibold text-white hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="flex-1 h-10 rounded-lg bg-action-warning-bg text-action-warning-text text-sm font-semibold text-action-primary-text hover:bg-action-warning-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="archiving">Archivando...</span>
                 <span v-else>Archivar</span>

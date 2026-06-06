@@ -136,7 +136,7 @@
           <UiStatusBadge
             :value="getStatusText(value)"
             format="text"
-            :class="['border-0', getStatusClass(value)]"
+            :variant="getStatusVariant(value)"
             size="sm"
           />
         </template>
@@ -160,14 +160,14 @@
       </HealthSemaphore>
 
       <!-- Pagination -->
-      <div v-if="purchasesData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+      <div v-if="purchasesData.total > itemsPerPage" class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
         <div class="flex-1 flex justify-between sm:hidden">
           <button
             @click="previousPage"
             :disabled="!canGoPrevious"
             :class="[
-              'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-              canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+              'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+              canGoPrevious ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
             ]">
             Anterior
           </button>
@@ -175,15 +175,15 @@
             @click="nextPage"
             :disabled="!canGoNext"
             :class="[
-              'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-              canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+              'ml-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+              canGoNext ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
             ]">
             Siguiente
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
-            <p class="text-sm text-titan-700">
+            <p class="text-sm text-text-secondary">
               Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span> de
               <span class="font-medium">{{ purchasesData.total }}</span> resultados
             </p>
@@ -194,20 +194,20 @@
                 @click="previousPage"
                 :disabled="!canGoPrevious"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
-                  canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-300 cursor-not-allowed'
+                  'relative inline-flex items-center px-2 py-2 rounded-l-md border border-action-outline-border text-sm font-medium',
+                  canGoPrevious ? 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg' : 'bg-action-outline-disabled-bg text-action-outline-disabled-text cursor-not-allowed'
                 ]">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
-              <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
+              <span class="relative inline-flex items-center px-4 py-2 border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text">
                 {{ currentPage }} / {{ totalPages }}
               </span>
               <button
                 @click="nextPage"
                 :disabled="!canGoNext"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
-                  canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-300 cursor-not-allowed'
+                  'relative inline-flex items-center px-2 py-2 rounded-r-md border border-action-outline-border text-sm font-medium',
+                  canGoNext ? 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg' : 'bg-action-outline-disabled-bg text-action-outline-disabled-text cursor-not-allowed'
                 ]">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
@@ -574,26 +574,6 @@ const handleSort = (field) => {
 // Helper functions
 const { formatDate, formatDateShort } = useFormatters()
 
-// Helper function for status variants
-// Helper function for status classes (matching acciones.vue)
-function getStatusClass(status) {
-  const classes = {
-    quotation: '!bg-yellow-500/10 !text-yellow-600',
-    pending: '!bg-blue-500/10 !text-blue-600',
-    confirmed: '!bg-teal-500/10 !text-teal-600',
-    preparing: '!bg-state-warning-bg !text-state-warning-text',
-    shipped: '!bg-cyan-500/10 !text-cyan-600',
-    partially_received: '!bg-orange-500/10 !text-orange-600',
-    received: '!bg-emerald-500/10 !text-emerald-600',
-    verified: '!bg-green-600/10 !text-green-700',
-    invoiced: '!bg-indigo-500/10 !text-indigo-600',
-    paid: '!bg-green-600/10 !text-green-700',
-    cancelled: '!bg-destructive/10 !text-destructive',
-    overdue: '!bg-destructive/10 !text-destructive'
-  }
-  return classes[status] || 'bg-titan-200 text-titan-700'
-}
-
 const getStatusVariant = (status) => {
   const variants: Record<string, string> = {
     quotation: 'secondary',
@@ -601,6 +581,7 @@ const getStatusVariant = (status) => {
     confirmed: 'primary',
     preparing: 'info',
     shipped: 'info',
+    partially_received: 'success',
     received: 'success',
     verified: 'success',
     invoiced: 'secondary',

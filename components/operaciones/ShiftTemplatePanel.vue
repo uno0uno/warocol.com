@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
         aria-hidden="true"
         @click="close"
       />
@@ -25,7 +25,7 @@
         class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
         </div>
 
         <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
@@ -47,7 +47,7 @@
               type="button"
               aria-label="Cerrar panel"
               :disabled="saving"
-              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 transition-colors"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
               @click="close"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -107,7 +107,7 @@
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
               <input v-model="form.crosses_midnight" type="checkbox" class="sr-only peer" />
-              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 
@@ -128,7 +128,7 @@
             <button
               type="button"
               :disabled="saving || !form.name.trim()"
-              class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              class="flex-1 min-h-[44px] py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               @click="submit"
             >
               <UiLoadingDots v-if="saving" size="8px" color="currentColor" />

@@ -10,7 +10,7 @@
     <div :style="iconSlotStyle" class="relative w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
       <span
         v-if="promoBadge"
-        class="absolute top-1 left-1 right-1 z-10 max-w-full text-[9px] md:text-[10px] bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+        class="absolute top-1 left-1 right-1 z-10 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
         :title="promoBadge.title || promoBadge.label"
       >
         {{ promoBadge.label }}
@@ -31,7 +31,7 @@
     </p>
 
     <!-- Price -->
-    <div class="w-full mt-1.5 md:mt-2.5 pt-1.5 md:pt-2.5 border-t border-black/15">
+    <div class="w-full mt-1.5 md:mt-2.5 pt-1.5 md:pt-2.5 border-t border-border/60">
       <p class="text-[10px] md:text-sm font-bold text-primary text-center">
         {{ formatCurrency(product.price) }}
       </p>

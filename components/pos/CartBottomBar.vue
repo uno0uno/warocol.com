@@ -25,7 +25,7 @@
           </div>
           <button
             type="button"
-            class="flex items-center gap-2 flex-shrink-0 min-h-[44px] py-2.5 px-4 sm:px-6 bg-primary text-primary-foreground rounded-lg font-semibold text-sm sm:text-base transition-opacity hover:opacity-90 active:opacity-80"
+            class="flex items-center gap-2 flex-shrink-0 min-h-[44px] py-2.5 px-4 sm:px-6 bg-action-primary-bg text-action-primary-text rounded-lg font-semibold text-sm sm:text-base transition-opacity hover:opacity-90 active:opacity-80"
             aria-label="Ver orden actual"
             @click="$emit('open-cart')"
           >

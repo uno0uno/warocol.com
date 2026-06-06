@@ -261,7 +261,7 @@
             <button 
               @click="handleUploadFiles" 
               :disabled="isUploading"
-              class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium">
+              class="px-6 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium">
               <CommonsTheCustomLoader v-if="isUploading" size="small" />
               <span>{{ isUploading ? 'Subiendo...' : 'Subir Archivos' }}</span>
             </button>

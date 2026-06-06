@@ -444,7 +444,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #header-actions>
           <button
             type="button"
-              class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
+              class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
             @click="openPanel(null)"
           >
             <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
@@ -564,7 +564,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <!-- Desktop: actions -->
           <template #cell-actions="{ row }">
             <div class="flex items-center justify-end gap-1">
-              <button :aria-label="`Editar ${row.name}`" title="Editar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30" @click="openPanel(row)">
+              <button :aria-label="`Editar ${row.name}`" title="Editar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30" @click="openPanel(row)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
               </button>
               <button :aria-label="`Desactivar ${row.name}`" title="Desactivar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors focus:outline-none focus:ring-2 focus:ring-state-warning-border" @click="openDeactivateModal(row)">
@@ -677,7 +677,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       >
         <div
           v-if="deactivateModalOpen"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/60 backdrop-blur-sm"
           @click.self="deactivateModalOpen = false"
         >
           <Transition
@@ -755,7 +755,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       >
         <div
           v-if="deleteModalOpen"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/60 backdrop-blur-sm"
           @click.self="deleteModalOpen = false"
         >
           <Transition

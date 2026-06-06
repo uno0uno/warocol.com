@@ -68,7 +68,7 @@ const handleClose = () => {
     >
       <!-- Backdrop -->
       <div
-        class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        class="absolute inset-0 bg-overlay-backdrop/40 backdrop-blur-sm"
         @click="handleClose"
       />
 
@@ -101,7 +101,7 @@ const handleClose = () => {
           <!-- Error message -->
           <div
             v-if="moveError"
-            class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700"
+            class="mb-4 px-4 py-3 rounded-xl bg-state-danger-bg border border-state-danger-border text-sm text-state-danger-text"
           >
             {{ moveError }}
           </div>
@@ -147,7 +147,7 @@ const handleClose = () => {
               </span>
               <span
                 v-if="table.status !== 'free'"
-                class="text-[9px] font-bold text-amber-600 uppercase tracking-wide mt-0.5"
+                class="text-[9px] font-bold text-state-warning-text uppercase tracking-wide mt-0.5"
               >
                 Ocupada
               </span>
@@ -179,7 +179,7 @@ const handleClose = () => {
           </button>
           <button
             type="button"
-            class="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-bold transition-colors hover:bg-action-primary-hover-bg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             :disabled="!selectedTableId || isMoving"
             @click="handleConfirm"
           >

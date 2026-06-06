@@ -76,7 +76,7 @@ const ADDRESS_TYPE_LABELS: Record<string, string> = {
     <!-- Add new button -->
     <button
       type="button"
-      class="w-full min-h-[44px] py-2.5 px-4 border-2 border-dashed border-border rounded-xl text-sm font-semibold text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      class="w-full min-h-[44px] py-2.5 px-4 border-2 border-dashed border-border rounded-xl text-sm font-semibold text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring/30"
       @click="$emit('add-new')"
     >
       + Agregar nueva dirección

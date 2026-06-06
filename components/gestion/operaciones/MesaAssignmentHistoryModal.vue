@@ -10,7 +10,7 @@
     >
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay-backdrop/50"
         @click.self="$emit('close')"
       >
         <div class="bg-surface rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
@@ -23,7 +23,7 @@
             <button
               type="button"
               aria-label="Cerrar"
-              class="flex-shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="$emit('close')"
             >
               <XMarkIcon class="w-5 h-5" />
@@ -90,7 +90,7 @@
           <div class="flex-shrink-0 px-5 py-3 border-t border-border bg-surface-secondary/40">
             <button
               type="button"
-              class="w-full min-h-[44px] rounded-lg bg-surface border border-border text-sm font-semibold text-text-primary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="w-full min-h-[44px] rounded-lg bg-surface border border-border text-sm font-semibold text-text-primary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="$emit('close')"
             >
               Cerrar

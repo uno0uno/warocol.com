@@ -475,7 +475,7 @@ onUnmounted(() => {
       >
         <div
           v-if="paymentModal.open"
-          class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-black/50"
+          class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-overlay-backdrop/50"
           role="dialog"
           aria-modal="true"
           aria-labelledby="payment-modal-title"
@@ -507,7 +507,7 @@ onUnmounted(() => {
                   type="button"
                   :disabled="isStatusUpdating"
                   aria-label="Cerrar"
-                  class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 transition-colors"
+                  class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
                   @click="closePaymentModal"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -542,7 +542,7 @@ onUnmounted(() => {
                 <button
                   type="button"
                   :disabled="!canConfirmDelivered || isStatusUpdating"
-                  class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  class="flex-1 min-h-[44px] py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                   @click="confirmDelivered"
                 >
                   <UiLoadingDots v-if="isStatusUpdating" size="8px" color="currentColor" />

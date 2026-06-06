@@ -90,7 +90,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 1,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
                   'border-border text-text-secondary bg-transparent': currentStep < 1
                 }"
@@ -114,7 +114,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 2,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
                   'border-border text-text-secondary bg-transparent': currentStep < 2
                 }"
@@ -139,7 +139,7 @@
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
+                  'bg-action-primary-bg text-action-primary-text border-primary': currentStep === 3,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
                   'border-border text-text-secondary bg-transparent': currentStep < 3
                 }"
@@ -172,7 +172,7 @@
               <button
                 type="button"
                 @click="addItem"
-                class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+                class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm"
               >
                 + Agregar Item
               </button>

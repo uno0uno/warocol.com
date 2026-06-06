@@ -54,7 +54,7 @@ function rewardSubtitle(reward: WaroReward) {
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4 bg-black/50"
+      class="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4 bg-overlay-backdrop/50"
       @click.self="close"
     >
       <div
@@ -93,7 +93,7 @@ function rewardSubtitle(reward: WaroReward) {
                 type="button"
                 class="w-full text-left p-4 rounded-xl border transition-colors min-h-[44px]"
                 :class="warosBalance >= reward.waros_cost
-                  ? 'border-border hover:border-amber-400 hover:bg-amber-50/50'
+                  ? 'border-border hover:border-state-warning-border hover:bg-state-warning-bg/50'
                   : 'border-border opacity-50 cursor-not-allowed'"
                 :disabled="warosBalance < reward.waros_cost"
                 @click="pick(reward)"

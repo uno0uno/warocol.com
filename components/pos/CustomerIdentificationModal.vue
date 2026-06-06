@@ -2,7 +2,7 @@
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-black/50"
+      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-overlay-backdrop/50"
       @click.self="handleClose"
     >
       <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[85vh] md:max-h-[90vh]" @click.stop>
@@ -124,7 +124,7 @@
               <div class="space-y-3">
                 <button
                   @click="state = 'create'"
-                  class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 active:scale-95 transition-all"
+                  class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all"
                 >
                   Crear cliente nuevo
                 </button>
@@ -182,7 +182,7 @@
               <!-- Phone -->
               <div class="flex flex-col gap-1">
                 <label for="new-phone" class="text-sm font-medium text-text-primary">
-                  Teléfono <span class="text-red-500">*</span>
+                  Teléfono <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="new-phone"
@@ -249,7 +249,7 @@
                   <!-- Tipo doc -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-type" class="text-sm font-medium text-text-primary">
-                      Tipo de documento <span class="text-red-500">*</span>
+                      Tipo de documento <span class="text-destructive">*</span>
                     </label>
                     <select
                       id="new-fiscal-type"
@@ -269,7 +269,7 @@
                   <!-- Número doc -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-id" class="text-sm font-medium text-text-primary">
-                      Número de documento <span class="text-red-500">*</span>
+                      Número de documento <span class="text-destructive">*</span>
                     </label>
                     <input
                       id="new-fiscal-id"
@@ -288,7 +288,7 @@
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-name" class="text-sm font-medium text-text-primary">
                       {{ createForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
-                      <span class="text-red-500">*</span>
+                      <span class="text-destructive">*</span>
                     </label>
                     <input
                       id="new-fiscal-name"
@@ -303,11 +303,11 @@
               </div>
 
               <!-- Error -->
-              <div v-if="createError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
-                <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <div v-if="createError" class="bg-state-danger-bg  border border-state-danger-border  rounded-xl p-4 flex items-start gap-3">
+                <svg class="h-5 w-5 text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
-                <p class="text-sm text-red-800 dark:text-red-200">{{ createError }}</p>
+                <p class="text-sm text-state-danger-text ">{{ createError }}</p>
               </div>
 
             </div>
@@ -324,7 +324,7 @@
               <button
                 type="submit"
                 :disabled="!canSubmitCreate || isCreating"
-                class="flex-1 min-h-[44px] px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <CommonsTheCustomLoader v-if="isCreating" size="small" />
                 <span>{{ isCreating ? 'Guardando...' : 'Guardar y continuar' }}</span>
@@ -345,7 +345,7 @@
               <!-- Tipo doc -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-type" class="text-sm font-medium text-text-primary">
-                  Tipo de documento <span class="text-red-500">*</span>
+                  Tipo de documento <span class="text-destructive">*</span>
                 </label>
                 <select
                   id="edit-fiscal-type"
@@ -365,7 +365,7 @@
               <!-- Número doc -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-id" class="text-sm font-medium text-text-primary">
-                  Número de documento <span class="text-red-500">*</span>
+                  Número de documento <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="edit-fiscal-id"
@@ -384,7 +384,7 @@
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-name" class="text-sm font-medium text-text-primary">
                   {{ fiscalForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
-                  <span class="text-red-500">*</span>
+                  <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="edit-fiscal-name"
@@ -397,11 +397,11 @@
               </div>
 
               <!-- Error -->
-              <div v-if="createError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
-                <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <div v-if="createError" class="bg-state-danger-bg  border border-state-danger-border  rounded-xl p-4 flex items-start gap-3">
+                <svg class="h-5 w-5 text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
-                <p class="text-sm text-red-800 dark:text-red-200">{{ createError }}</p>
+                <p class="text-sm text-state-danger-text ">{{ createError }}</p>
               </div>
 
             </div>
@@ -418,7 +418,7 @@
               <button
                 type="submit"
                 :disabled="!canSubmitFiscal || isCreating"
-                class="flex-1 min-h-[44px] px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <CommonsTheCustomLoader v-if="isCreating" size="small" />
                 <span>{{ isCreating ? 'Guardando...' : 'Guardar datos' }}</span>
