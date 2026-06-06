@@ -209,8 +209,8 @@ const viewRequest = (request: TableQrRequestRow) => {
         >
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
-              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              class="flex items-center gap-3 py-3 px-3 border-b border-data-table-border cursor-pointer transition-colors hover:bg-data-table-row-hover-bg"
+              :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
               @click="viewRequest(item)"
             >
               <div class="flex-1 min-w-0">
