@@ -1378,18 +1378,17 @@ const costDriftProductIds = computed(() => {
 
 const bannerDismissed = ref(false)
 
-const catalogRowBaseClass = (row: { id: string }, index: number) => {
+const catalogRowBaseClass = (row: { id: string }) => {
   if (costIssueProductIds.value.has(row.id)) return 'bg-status-critical-bg'
   if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
-  return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+  return ''
 }
 
-const catalogRowClass = (row: { id: string }, index: number) =>
-  catalogRowSelectionClass(row.id, catalogRowBaseClass(row, index))
+const catalogRowClass = (row: { id: string }, _index?: number) =>
+  catalogRowSelectionClass(row.id, catalogRowBaseClass(row))
 
 const getRowClass = (row: any): string => {
-  const index = displayProducts.value.findIndex((p: { id: string }) => p.id === row.id)
-  return catalogRowClass(row, index >= 0 ? index : 0)
+  return catalogRowClass(row)
 }
 
 // Inject refresh handler setter from layout
