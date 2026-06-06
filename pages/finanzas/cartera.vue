@@ -79,40 +79,40 @@ const { data: agingData, refetch: refetchAging } = useQuery({
 const agingBuckets = computed(() => agingData.value?.data ?? [])
 
 const agingDots = [
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-orange-500',
-  'bg-red-500',
+  'bg-state-success-icon',
+  'bg-state-warning-icon',
+  'bg-state-warning-icon',
+  'bg-state-danger-icon',
 ]
 
 const agingColors = [
   {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    border: 'border-emerald-200 dark:border-emerald-800',
-    text: 'text-emerald-700 dark:text-emerald-400',
-    amount: 'text-emerald-800 dark:text-emerald-300',
-    active: 'ring-2 ring-emerald-400 dark:ring-emerald-500',
+    bg: 'bg-state-success-bg',
+    border: 'border-state-success-border',
+    text: 'text-state-success-text',
+    amount: 'text-state-success-text',
+    active: 'ring-2 ring-state-success-icon',
   },
   {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-400',
-    amount: 'text-amber-800 dark:text-amber-300',
-    active: 'ring-2 ring-amber-400 dark:ring-amber-500',
+    bg: 'bg-state-warning-bg',
+    border: 'border-state-warning-border',
+    text: 'text-state-warning-text',
+    amount: 'text-state-warning-text',
+    active: 'ring-2 ring-state-warning-icon',
   },
   {
-    bg: 'bg-orange-50 dark:bg-orange-950/30',
-    border: 'border-orange-200 dark:border-orange-800',
-    text: 'text-orange-700 dark:text-orange-400',
-    amount: 'text-orange-800 dark:text-orange-300',
-    active: 'ring-2 ring-orange-400 dark:ring-orange-500',
+    bg: 'bg-state-warning-bg',
+    border: 'border-state-warning-border',
+    text: 'text-state-warning-text',
+    amount: 'text-state-warning-text',
+    active: 'ring-2 ring-state-warning-icon',
   },
   {
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    border: 'border-red-200 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-400',
-    amount: 'text-red-800 dark:text-red-300',
-    active: 'ring-2 ring-red-400 dark:ring-red-500',
+    bg: 'bg-state-danger-bg',
+    border: 'border-state-danger-border',
+    text: 'text-state-danger-text',
+    amount: 'text-state-danger-text',
+    active: 'ring-2 ring-state-danger-icon',
   },
 ]
 
@@ -284,12 +284,12 @@ onUnmounted(() => {
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <span class="text-sm font-bold" :class="item.status === 'overdue' ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'">
+              <span class="text-sm font-bold" :class="item.status === 'overdue' ? 'text-state-danger-text' : 'text-state-warning-text'">
                 {{ formatCurrency(item.total_outstanding) }}
               </span>
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                :class="item.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
+                :class="item.status === 'overdue' ? 'bg-state-danger-bg text-state-danger-text' : 'bg-state-warning-bg text-state-warning-text'"
               >
                 {{ item.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
               </span>

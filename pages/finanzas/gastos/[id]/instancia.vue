@@ -351,8 +351,8 @@ watch(expenseData, (data) => {
             </div>
 
             <!-- Error message -->
-            <div v-if="error" class="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-              <p class="text-sm text-red-600 font-medium">{{ error }}</p>
+            <div v-if="error" class="mt-6 p-4 bg-state-danger-bg border-2 border-state-danger-border rounded-lg">
+              <p class="text-sm text-state-danger-text font-medium">{{ error }}</p>
             </div>
 
             <!-- Actions -->

@@ -106,7 +106,7 @@
             <span class="text-text-secondary">{{ tablePlural }} abiertas</span>
             <span
               class="font-medium"
-              :class="previewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'"
+              :class="previewData.openTablesCount > 0 ? 'text-state-warning-text font-semibold' : 'text-text-primary'"
             >
               {{ previewData.openTablesCount }}
             </span>
@@ -260,10 +260,10 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
-  cash:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700' },
-  card:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700'       },
+  cash:    { dot: 'bg-state-success-icon', badge: 'bg-state-success-bg text-state-success-text' },
+  card:    { dot: 'bg-state-info-icon',    badge: 'bg-state-info-bg text-state-info-text'       },
   digital: { dot: 'bg-state-info-icon',  badge: 'bg-state-info-bg text-state-info-text'   },
-  credit:  { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700'     },
+  credit:  { dot: 'bg-state-warning-icon',   badge: 'bg-state-warning-bg text-state-warning-text'     },
 }
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }

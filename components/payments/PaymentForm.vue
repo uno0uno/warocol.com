@@ -111,13 +111,13 @@
         <div class="mt-6 pt-6 border-t-2 border-border">
           <div class="flex justify-between items-end mb-6">
             <span class="text-text-secondary font-medium">Total a Pagar</span>
-            <span class="text-2xl font-bold text-emerald-500">{{ formatCurrency(totalAmount) }}</span>
+            <span class="text-2xl font-bold text-state-success-text">{{ formatCurrency(totalAmount) }}</span>
           </div>
 
           <!-- Actions -->
           <div class="space-y-3">
             <button type="submit" :disabled="loading"
-              class="w-full py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20">
+              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-primary/20">
               <CommonsTheCustomLoader v-if="loading" size="small" />
               <span>{{ loading ? 'Procesando...' : 'Confirmar Pago' }}</span>
             </button>

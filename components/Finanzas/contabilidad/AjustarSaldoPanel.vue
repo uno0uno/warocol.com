@@ -254,7 +254,7 @@ const submit = async () => {
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
         aria-hidden="true"
         @click="close"
       />
@@ -273,7 +273,7 @@ const submit = async () => {
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-surface-tertiary" aria-hidden="true" />
         </div>
 
         <!-- Header -->
@@ -345,15 +345,15 @@ const submit = async () => {
             v-if="sign !== 'zero'"
             class="rounded-xl px-4 py-3 border-2"
             :class="sign === 'positive'
-              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/40 dark:bg-emerald-950/20'
-              : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+              ? 'border-state-success-border bg-state-success-bg'
+              : 'border-state-warning-border bg-state-warning-bg'"
           >
             <p class="text-xs uppercase tracking-wider font-medium mb-1"
-               :class="sign === 'positive' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">
+               :class="sign === 'positive' ? 'text-state-success-text' : 'text-state-warning-text'">
               Diferencia
             </p>
             <p class="text-2xl font-bold flex items-center gap-2"
-               :class="sign === 'positive' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">
+               :class="sign === 'positive' ? 'text-state-success-text' : 'text-state-warning-text'">
               <svg v-if="sign === 'positive'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
@@ -363,7 +363,7 @@ const submit = async () => {
               {{ sign === 'positive' ? '+' : '−' }} {{ formatCOP(Math.abs(diferencia)) }}
             </p>
             <p class="text-xs leading-snug mt-1"
-               :class="sign === 'positive' ? 'text-emerald-700/80 dark:text-emerald-400/80' : 'text-amber-700/80 dark:text-amber-400/80'">
+               :class="sign === 'positive' ? 'text-state-success-text/80' : 'text-state-warning-text/80'">
               {{ sign === 'positive'
                 ? 'Tu cuenta tiene más plata que lo que dicen los libros.'
                 : 'Tu cuenta tiene menos plata que lo que dicen los libros.' }}
@@ -417,7 +417,7 @@ const submit = async () => {
             </p>
             <p
               v-if="selectedMotivo.pendingReview"
-              class="text-xs text-amber-700 dark:text-amber-400 leading-snug mt-2 flex items-start gap-1.5"
+              class="text-xs text-state-warning-text leading-snug mt-2 flex items-start gap-1.5"
             >
               <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -445,7 +445,7 @@ const submit = async () => {
           <button
             type="button"
             :disabled="!canSubmit"
-            class="flex-1 min-h-[44px] rounded-lg bg-primary text-white text-sm font-bold transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="flex-1 min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-bold transition-colors hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="submit"
           >
             <UiLoadingDots v-if="submitting" size="8px" color="currentColor" />

@@ -75,6 +75,7 @@ const chartOptions = computed(() => ({
       opacityTo: 0.30,
     },
   },
+  // Chart palette exception: Apex requires literal series/axis colors.
   colors: ['#f59e0b', '#4f46e5'],
   xaxis: {
     categories: data.value.map(d => d.name),
@@ -121,18 +122,18 @@ const chartOptions = computed(() => ({
     <!-- Legend -->
     <div class="flex justify-end gap-6 text-xs font-medium mb-2 px-2">
       <div class="flex items-center gap-2">
-        <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
-        <span class="text-slate-700 whitespace-nowrap">{{ currentLabel }}</span>
+        <span class="w-3 h-3 rounded-full bg-state-info-icon"></span>
+        <span class="text-text-primary whitespace-nowrap">{{ currentLabel }}</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-        <span class="text-slate-700 whitespace-nowrap">{{ comparisonLabel }}</span>
+        <span class="w-3 h-3 rounded-full bg-state-warning-icon"></span>
+        <span class="text-text-primary whitespace-nowrap">{{ comparisonLabel }}</span>
       </div>
     </div>
 
     <div class="h-[250px]">
       <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div class="w-6 h-6 border-2 border-state-info-icon border-t-transparent rounded-full animate-spin" />
       </div>
       <apexchart
         v-else

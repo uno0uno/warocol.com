@@ -65,15 +65,15 @@ const tableColumns: MatrixColumn[] = [
 const getCategoryStyles = (category: string) => {
   switch (category) {
     case 'Star':
-      return { bg: 'bg-green-100', text: 'text-green-700', icon: Star, label: 'Excelente' }
+      return { bg: 'bg-state-success-bg', text: 'text-state-success-text', icon: Star, label: 'Excelente' }
     case 'Plowhorse':
-      return { bg: 'bg-blue-100', text: 'text-blue-700', icon: Shield, label: 'Popular' }
+      return { bg: 'bg-state-info-bg', text: 'text-state-info-text', icon: Shield, label: 'Popular' }
     case 'Puzzle':
-      return { bg: 'bg-orange-100', text: 'text-orange-700', icon: Puzzle, label: 'Potencial' }
+      return { bg: 'bg-state-warning-bg', text: 'text-state-warning-text', icon: Puzzle, label: 'Potencial' }
     case 'Dog':
-      return { bg: 'bg-red-100', text: 'text-red-700', icon: AlertTriangle, label: 'Crítico' }
+      return { bg: 'bg-state-danger-bg', text: 'text-state-danger-text', icon: AlertTriangle, label: 'Crítico' }
     default:
-      return { bg: 'bg-slate-100', text: 'text-slate-700', icon: Star, label: 'Unknown' }
+      return { bg: 'bg-status-chip-bg', text: 'text-status-chip-text', icon: Star, label: 'Unknown' }
   }
 }
 
@@ -226,7 +226,7 @@ const totals = computed(() => {
         <div class="text-right">
           <span
             v-if="marginRealPct(marginRow(row)) !== null"
-            :class="(marginRealPct(marginRow(row)) ?? 0) >= 40 ? 'text-green-600 font-bold' : 'text-text-primary'"
+            :class="(marginRealPct(marginRow(row)) ?? 0) >= 40 ? 'text-state-success-text font-bold' : 'text-text-primary'"
           >
             {{ marginRealPct(marginRow(row))!.toFixed(1) }}%
           </span>
@@ -266,7 +266,7 @@ const totals = computed(() => {
       </template>
 
       <template #cell-total_profit="{ value }">
-        <div class="text-right text-green-600 font-bold">{{ value ? formatCurrency(value) : '—' }}</div>
+        <div class="text-right text-state-success-text font-bold">{{ value ? formatCurrency(value) : '—' }}</div>
       </template>
     </UiResponsiveDataView>
   </div>

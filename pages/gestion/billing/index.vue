@@ -449,7 +449,7 @@ watch(() => currentTenant.value?.id, loadAll)
       :aria-label="wizardStep === 1 ? 'Seleccionar plan' : 'Confirmar pago'"
     >
       <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showModal = false" />
+      <div class="absolute inset-0 bg-overlay-backdrop/50 backdrop-blur-sm" @click="showModal = false" />
 
       <!-- Modal -->
       <div :class="['relative bg-surface rounded-2xl shadow-xl border border-border w-full max-h-[90vh] overflow-y-auto transition-all', wizardStep === 1 && activePlans.length > 1 ? 'max-w-2xl' : 'max-w-md']">

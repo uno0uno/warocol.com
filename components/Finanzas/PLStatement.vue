@@ -226,7 +226,7 @@ const prevPeriodLabel = computed(() => {
           <span class="text-text-secondary">Total:</span>
           <span
             class="font-bold tabular-nums"
-            :class="current.primeCost.status === 'ok' ? 'text-emerald-600' : 'text-amber-600'"
+            :class="current.primeCost.status === 'ok' ? 'text-state-success-text' : 'text-state-warning-text'"
           >
             {{ formatPct(current.primeCost.totalPct) }}
           </span>
@@ -564,14 +564,14 @@ const prevPeriodLabel = computed(() => {
         <span class="flex-1 text-base font-bold text-text-primary">Ingreso neto</span>
         <span
           class="w-36 text-right tabular-nums text-base font-bold"
-          :class="isNegative(current.netIncome) ? 'text-destructive' : 'text-emerald-600'"
+          :class="isNegative(current.netIncome) ? 'text-destructive' : 'text-state-success-text'"
         >
           {{ formatCurrency(current.netIncome) }}
         </span>
         <span
           v-if="hasPrevious"
           class="w-36 text-right tabular-nums text-base font-bold"
-          :class="isNegative(previous!.netIncome) ? 'text-destructive' : 'text-emerald-600'"
+          :class="isNegative(previous!.netIncome) ? 'text-destructive' : 'text-state-success-text'"
         >
           {{ formatCurrency(previous!.netIncome) }}
         </span>
@@ -603,7 +603,7 @@ const prevPeriodLabel = computed(() => {
             <span class="text-text-secondary">Total:</span>
             <span
               class="font-bold tabular-nums"
-              :class="current.primeCost.status === 'ok' ? 'text-emerald-600' : 'text-amber-600'"
+              :class="current.primeCost.status === 'ok' ? 'text-state-success-text' : 'text-state-warning-text'"
             >
               {{ formatPct(current.primeCost.totalPct) }}
             </span>

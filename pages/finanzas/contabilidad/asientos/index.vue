@@ -456,7 +456,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- ── Void reason modal ───────────────────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="showVoidModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50" @click="closeVoidModal" />
+        <div class="absolute inset-0 bg-overlay-backdrop/50" @click="closeVoidModal" />
         <div class="relative bg-surface rounded-xl shadow-xl w-full max-w-sm p-6">
           <div class="text-center mb-4">
             <div class="mx-auto mb-3 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -494,7 +494,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <button
               type="button"
               :disabled="voiding || !voidReason.trim()"
-              class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              class="flex-1 min-h-[44px] px-4 py-2 bg-action-destructive-bg text-action-destructive-text rounded-lg text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               @click="handleVoid"
             >
               <svg v-if="voiding" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">

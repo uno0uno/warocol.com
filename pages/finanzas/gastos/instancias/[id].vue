@@ -37,10 +37,10 @@
           <div class="flex items-center gap-3">
             <span
               :class="{
-                'bg-green-100 text-green-800': instance.status === 'paid',
-                'bg-yellow-100 text-yellow-800': instance.status === 'pending',
-                'bg-gray-100 text-gray-800': instance.status === 'skipped',
-                'bg-red-100 text-red-800': instance.status === 'cancelled'
+                'bg-state-success-bg text-state-success-text': instance.status === 'paid',
+                'bg-state-warning-bg text-state-warning-text': instance.status === 'pending',
+                'bg-status-chip-bg text-status-chip-text': instance.status === 'skipped',
+                'bg-state-danger-bg text-state-danger-text': instance.status === 'cancelled'
               }"
               class="px-4 py-2 rounded-full text-sm font-semibold"
             >
@@ -227,7 +227,7 @@
                 type="button"
                 @click="uploadFiles"
                 :disabled="isUploading"
-                class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm font-medium"
+                class="w-full px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg disabled:opacity-50 text-sm font-medium"
               >
                 {{ isUploading ? 'Subiendo...' : `Subir ${selectedFiles.length} archivo(s)` }}
               </button>
@@ -243,7 +243,7 @@
           <button
             @click="markAsPaid"
             :disabled="isSubmitting"
-            class="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 font-semibold flex items-center gap-2"
+            class="px-6 py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 font-semibold flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

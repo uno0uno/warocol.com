@@ -349,7 +349,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <!-- isBalanced badge -->
         <span
           v-if="isBalanced && rows.length > 0"
-          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-badge-success-bg text-badge-success-text border border-badge-success-border"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -474,7 +474,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                     <span class="text-sm font-bold text-text-primary">TOTALES</span>
                     <span
                       v-if="isBalanced"
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-badge-success-bg text-badge-success-text"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />

@@ -248,15 +248,15 @@ const docTypeShort: Record<string, string> = {
 }
 
 const progressColor = (percent: number) => {
-  if (percent >= 90) return 'bg-red-500'
-  if (percent >= 70) return 'bg-amber-500'
-  return 'bg-green-500'
+  if (percent >= 90) return 'bg-state-danger-icon'
+  if (percent >= 70) return 'bg-state-warning-icon'
+  return 'bg-state-success-icon'
 }
 
 const progressTextColor = (percent: number) => {
-  if (percent >= 90) return 'text-red-600 dark:text-red-400'
-  if (percent >= 70) return 'text-amber-600 dark:text-amber-400'
-  return 'text-emerald-700 dark:text-emerald-400'
+  if (percent >= 90) return 'text-state-danger-text'
+  if (percent >= 70) return 'text-state-warning-text'
+  return 'text-state-success-text'
 }
 
 const resolutionColumns = [
@@ -381,63 +381,63 @@ const taxLevels = [
       <!-- Dev flag disabled — only WARO team can flip this -->
       <div
         v-if="!readinessChecks.dev_flag_enabled"
-        class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700/40 dark:bg-amber-900/20"
+        class="flex items-start gap-3 rounded-lg border border-state-warning-border bg-state-warning-bg p-4"
         role="status"
       >
-        <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">Cuenta no habilitada para facturación electrónica</p>
-          <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5">Tu cuenta aún no está habilitada por el equipo de WARO. Contáctanos para activarla.</p>
+          <p class="text-sm font-semibold text-state-warning-text">Cuenta no habilitada para facturación electrónica</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">Tu cuenta aún no está habilitada por el equipo de WARO. Contáctanos para activarla.</p>
         </div>
       </div>
 
       <!-- Fiscal data incomplete -->
       <div
         v-if="!readinessChecks.fiscal_data_complete"
-        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        class="flex items-start gap-3 rounded-lg border border-state-info-border bg-state-info-bg p-4"
         role="status"
       >
-        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">Faltan datos fiscales</p>
-          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Completa NIT, razón social, teléfono y email en la sección <span class="font-medium">Datos Fiscales del Negocio</span>.</p>
+          <p class="text-sm font-semibold text-state-info-text">Faltan datos fiscales</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Completa NIT, razón social, teléfono y email en la sección <span class="font-medium">Datos Fiscales del Negocio</span>.</p>
         </div>
       </div>
 
       <!-- No active DIAN resolution -->
       <div
         v-if="!readinessChecks.active_resolution"
-        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        class="flex items-start gap-3 rounded-lg border border-state-info-border bg-state-info-bg p-4"
         role="status"
       >
-        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">Sin resolución DIAN vigente</p>
-          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Configura una resolución activa con numeración disponible en la sección <span class="font-medium">Resolución DIAN</span>.</p>
+          <p class="text-sm font-semibold text-state-info-text">Sin resolución DIAN vigente</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Configura una resolución activa con numeración disponible en la sección <span class="font-medium">Resolución DIAN</span>.</p>
         </div>
       </div>
 
       <!-- No taxes configured (4th check — added in plan amendment) -->
       <div
         v-if="!readinessChecks.taxes_configured"
-        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        class="flex items-start gap-3 rounded-lg border border-state-info-border bg-state-info-bg p-4"
         role="status"
       >
-        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">No hay impuestos configurados</p>
-          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> en la sección <span class="font-medium">Configuración fiscal</span> para poder emitir facturas.</p>
+          <p class="text-sm font-semibold text-state-info-text">No hay impuestos configurados</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> en la sección <span class="font-medium">Configuración fiscal</span> para poder emitir facturas.</p>
         </div>
       </div>
 
       <!-- All four checks passed — ready to invoice -->
       <div
         v-if="isInvoicingReady"
-        class="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-700/40 dark:bg-green-900/20"
+        class="flex items-center gap-3 rounded-lg border border-state-success-border bg-state-success-bg p-3"
         role="status"
       >
-        <CheckCircleIcon class="w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
-        <p class="text-sm font-medium text-green-900 dark:text-green-200">Tu cuenta está lista para emitir facturas electrónicas.</p>
+        <CheckCircleIcon class="w-5 h-5 text-state-success-icon flex-shrink-0" aria-hidden="true" />
+        <p class="text-sm font-medium text-state-success-text">Tu cuenta está lista para emitir facturas electrónicas.</p>
       </div>
     </div>
 
@@ -450,7 +450,7 @@ const taxLevels = [
         </h3>
         <button
           @click="openNewResolution"
-          class="min-h-[44px] px-3 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1"
+          class="min-h-[44px] px-3 py-2 text-sm font-semibold rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors flex items-center gap-1"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Agregar
@@ -461,22 +461,22 @@ const taxLevels = [
       <NuxtLink
         v-if="hasRecentGaps"
         to="/facturacion/audit"
-        class="block mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 hover:bg-amber-100/70 transition-colors dark:border-amber-700/40 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+        class="block mb-4 rounded-lg border border-state-warning-border bg-state-warning-bg p-3 hover:bg-state-warning-bg/80 transition-colors"
       >
         <div class="flex items-start gap-3">
-          <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            <p class="text-sm font-semibold text-state-warning-text">
               Números quemados detectados en tu numeración
             </p>
-            <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-snug">
+            <p class="text-xs text-state-warning-text/90 mt-0.5 leading-snug">
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_24h ?? 0 }}</span> en 24h ·
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_7d ?? 0 }}</span> en 7d ·
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_30d ?? 0 }}</span> en 30d.
               DIAN no permite reutilizarlos — revisa la bitácora.
             </p>
           </div>
-          <svg class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </div>
@@ -487,7 +487,7 @@ const taxLevels = [
         <DocumentTextIcon class="w-10 h-10 mx-auto text-text-tertiary mb-2" />
         <p class="text-sm text-text-secondary">Sin resoluciones DIAN configuradas</p>
         <p class="text-xs text-text-tertiary mt-1">Configura la resolución que registraste en el portal de Matias (número, prefijo, rango)</p>
-        <button @click="openNewResolution" class="mt-3 min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+        <button @click="openNewResolution" class="mt-3 min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors">
           Configurar resolución
         </button>
       </div>
@@ -497,19 +497,19 @@ const taxLevels = [
         <h4 class="text-sm font-bold text-text-primary">{{ editingResolutionId ? 'Editar resolución' : 'Nueva resolución' }}</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Número de resolución <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Número de resolución <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.resolution_number" type="text" placeholder="18764074347312" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Prefijo <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Prefijo <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.prefix" type="text" placeholder="LZT" maxlength="10" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary uppercase" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Rango desde <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Rango desde <span class="text-form-control-error">*</span></label>
             <input v-model.number="resolutionForm.from_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Rango hasta <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Rango hasta <span class="text-form-control-error">*</span></label>
             <input v-model.number="resolutionForm.to_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <!-- warocol.com#589 — `current_number` solo visible al editar.
@@ -543,11 +543,11 @@ const taxLevels = [
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Fecha desde <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Fecha desde <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.date_from" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Fecha hasta <span class="text-red-500">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">Fecha hasta <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.date_to" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
         </div>
@@ -558,7 +558,7 @@ const taxLevels = [
           <button
             @click="saveResolution"
             :disabled="isSavingResolution || !resolutionForm.prefix || !resolutionForm.resolution_number || !resolutionForm.date_from || !resolutionForm.date_to || isCurrentNumberInvalid"
-            class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <CheckIcon v-if="!isSavingResolution" class="w-4 h-4" aria-hidden="true" />
             <span>{{ isSavingResolution ? 'Guardando...' : (editingResolutionId ? 'Actualizar' : 'Crear resolución') }}</span>
@@ -624,7 +624,7 @@ const taxLevels = [
           <div class="inline-flex items-center gap-2 justify-center">
             <span
               class="text-xs font-semibold"
-              :class="row.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
+              :class="row.is_active ? 'text-state-success-text' : 'text-text-secondary'"
             >
               {{ row.is_active ? 'Activa' : 'Inactiva' }}
             </span>
@@ -674,7 +674,7 @@ const taxLevels = [
                 </button>
                 <span
                   class="text-xs font-semibold"
-                  :class="row.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
+                  :class="row.is_active ? 'text-state-success-text' : 'text-text-secondary'"
                 >
                   {{ row.is_active ? 'Activa' : 'Inactiva' }}
                 </span>
@@ -725,7 +725,7 @@ const taxLevels = [
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- NIT -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">NIT <span class="text-red-500">*</span></label>
+          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">NIT <span class="text-form-control-error">*</span></label>
           <input
             id="fiscal-nit"
             v-model="fiscalForm.nit"
@@ -737,7 +737,7 @@ const taxLevels = [
 
         <!-- Razón social -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-name" class="text-sm font-medium text-text-primary">Razón social <span class="text-red-500">*</span></label>
+          <label for="fiscal-name" class="text-sm font-medium text-text-primary">Razón social <span class="text-form-control-error">*</span></label>
           <input
             id="fiscal-name"
             v-model="fiscalForm.business_name"
@@ -837,7 +837,7 @@ const taxLevels = [
         <button
           @click="saveFiscalData"
           :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name"
-          class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+          class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
           <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
@@ -908,7 +908,7 @@ const taxLevels = [
           type="button"
           @click="savePrintSettings"
           :disabled="isSavingFiscal"
-          class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+          class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
           <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar personalización' }}</span>
@@ -1046,7 +1046,7 @@ const taxLevels = [
         <button
           @click="saveTaxConfig"
           :disabled="isSavingTax"
-          class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+          class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingTax" class="w-4 h-4" aria-hidden="true" />
           <span>{{ isSavingTax ? 'Guardando...' : 'Guardar configuración' }}</span>
@@ -1065,7 +1065,7 @@ const taxLevels = [
         <!-- Environment -->
         <div class="flex items-center justify-between py-1">
           <span class="text-sm text-text-secondary">Entorno</span>
-          <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+          <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-badge-warning-bg text-badge-warning-text">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
             {{ facturacionStatus?.environment || 'No configurado' }}
           </span>
