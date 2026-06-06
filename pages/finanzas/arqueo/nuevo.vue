@@ -969,7 +969,7 @@ const GROUP_LABELS: Record<string, string> = {
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
   cash:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
   card:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200'         },
-  digital: { dot: 'bg-violet-500',  badge: 'bg-violet-50 text-violet-700 border border-violet-200'   },
+  digital: { dot: 'bg-state-info-icon',  badge: 'bg-state-info-bg text-state-info-text border border-state-info-border'   },
   credit:  { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border border-amber-200'      },
 }
 

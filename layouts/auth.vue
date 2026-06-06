@@ -7,8 +7,8 @@
     <header class="w-full px-4 py-6">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold text-xl">W</span>
+          <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <span class="text-primary-foreground font-bold text-xl">W</span>
           </div>
           <h1 class="text-2xl font-bold text-gray-900">{{ organizationName }}</h1>
         </div>

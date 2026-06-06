@@ -67,7 +67,7 @@
       <ChevronDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
     </button>
 
-    <!-- User info — name + purple avatar icon -->
+    <!-- User info — name + brand avatar icon -->
     <div class="flex items-center gap-2 h-11 px-3 bg-white border-2 border-surface-secondary rounded-lg">
       <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
       <div class="w-8 h-8 bg-surface-secondary border border-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">

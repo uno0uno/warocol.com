@@ -51,7 +51,7 @@ export function useCierrePeriod() {
 
   const periodBadgeClass = (cierre: CierrePeriodLike | null | undefined): string => {
     if (isTemplateCierre(cierre)) return 'bg-primary/10 text-primary'
-    if (hasTimeWindow(cierre)) return 'bg-violet-50 text-violet-800 border border-violet-200'
+    if (hasTimeWindow(cierre)) return 'bg-state-info-bg text-state-info-text border border-state-info-border'
     return 'bg-surface-secondary text-text-secondary'
   }
 

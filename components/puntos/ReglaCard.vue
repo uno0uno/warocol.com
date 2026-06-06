@@ -192,7 +192,7 @@ const iconZoneBg = computed(() => {
   switch (props.rule.rule_type) {
     case 'ticket_value':   return 'bg-orange-50'
     case 'purchase_count': return 'bg-blue-50'
-    case 'frequency':      return 'bg-violet-50'
+    case 'frequency':      return 'bg-state-info-bg'
     case 'per_ticket_qty': return 'bg-emerald-50'
     default:               return 'bg-slate-50'
   }
@@ -202,7 +202,7 @@ const iconContainerBg = computed(() => {
   switch (props.rule.rule_type) {
     case 'ticket_value':   return 'bg-orange-100'
     case 'purchase_count': return 'bg-blue-100'
-    case 'frequency':      return 'bg-violet-100'
+    case 'frequency':      return 'bg-state-info-bg'
     case 'per_ticket_qty': return 'bg-emerald-100'
     default:               return 'bg-slate-100'
   }
@@ -213,7 +213,7 @@ const iconColor = computed(() => {
   switch (props.rule.rule_type) {
     case 'ticket_value':   return 'text-orange-600'
     case 'purchase_count': return 'text-blue-600'
-    case 'frequency':      return 'text-violet-600'
+    case 'frequency':      return 'text-state-info-icon'
     case 'per_ticket_qty': return 'text-emerald-600'
     default:               return 'text-slate-600'
   }
@@ -223,7 +223,7 @@ const activeBorderClass = computed(() => {
   switch (props.rule.rule_type) {
     case 'ticket_value':   return 'border-orange-200 bg-orange-50/30'
     case 'purchase_count': return 'border-blue-200 bg-blue-50/30'
-    case 'frequency':      return 'border-violet-200 bg-violet-50/30'
+    case 'frequency':      return 'border-state-info-border bg-state-info-bg/30'
     case 'per_ticket_qty': return 'border-emerald-200 bg-emerald-50/30'
     default:               return 'border-primary/20'
   }
@@ -233,7 +233,7 @@ const activeSwitchBg = computed(() => {
   switch (props.rule.rule_type) {
     case 'ticket_value':   return 'bg-orange-500'
     case 'purchase_count': return 'bg-blue-500'
-    case 'frequency':      return 'bg-violet-500'
+    case 'frequency':      return 'bg-state-info-action-bg'
     case 'per_ticket_qty': return 'bg-emerald-500'
     default:               return 'bg-primary'
   }
