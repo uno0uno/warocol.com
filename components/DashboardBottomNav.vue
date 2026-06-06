@@ -5,14 +5,14 @@
       <!-- User Profile -->
       <div class="flex items-center gap-3">
         <div class="relative flex-shrink-0">
-          <div class="w-10 h-10 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-sm">
+          <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-semibold text-primary-foreground text-sm">
             {{ userInitials }}
           </div>
-          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success border-2 border-shell-mobile-bg rounded-full"></span>
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-semibold text-ebony-800 leading-tight">{{ userName }}</span>
-          <span class="text-xs text-titan-500 leading-tight">{{ selectedTenant?.name || 'Sin tenant' }}</span>
+          <span class="text-sm font-semibold text-text-primary leading-tight">{{ userName }}</span>
+          <span class="text-xs text-text-tertiary leading-tight">{{ selectedTenant?.name || 'Sin tenant' }}</span>
         </div>
       </div>
 
@@ -23,11 +23,11 @@
           @click="handleRefresh"
           :disabled="isLoading"
           aria-label="Actualizar página"
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingMatrix v-if="isLoading" size="5.5px" />
           <svg v-else
-            class="w-5 h-5 text-titan-500 transition-transform duration-300 hover:rotate-180"
+            class="w-5 h-5 text-icon-button-neutral-text transition-transform duration-300 hover:rotate-180"
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
@@ -37,13 +37,13 @@
         <button
           @click="openNotificationsModal"
           aria-label="Ver notificaciones"
-          class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+          class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
           <BellAlertIcon v-if="notificationsCount > 0" class="w-5 h-5 text-primary" aria-hidden="true" />
-          <BellIcon v-else class="w-5 h-5 text-titan-500" aria-hidden="true" />
+          <BellIcon v-else class="w-5 h-5 text-icon-button-neutral-text" aria-hidden="true" />
           <span
             v-if="notificationsCount > 0"
-            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-crocus-500 text-white text-[10px] font-bold rounded-full leading-none"
+            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
             aria-hidden="true"
           >
             {{ notificationsCount > 9 ? '9+' : notificationsCount }}
@@ -54,18 +54,18 @@
         <button
           @click="showMenuModal = true"
           aria-label="Abrir navegación"
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
-          <Bars3Icon class="w-5 h-5 text-titan-500" />
+          <Bars3Icon class="w-5 h-5 text-icon-button-neutral-text" />
         </button>
 
         <!-- Configuración/Tenant -->
         <button
           @click="showTenantModal = true"
           aria-label="Configuración"
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
-          <Cog6ToothIcon class="w-5 h-5 text-titan-500" />
+          <Cog6ToothIcon class="w-5 h-5 text-icon-button-neutral-text" />
         </button>
       </div>
     </div>
@@ -85,21 +85,21 @@
             <div class="relative">
               <div
                 class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activePage === item.page ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+                :class="activePage === item.page ? 'bg-icon-button-primary-bg' : 'bg-badge-neutral-bg hover:bg-badge-neutral-hover-bg'"
               >
                 <component
                   :is="item.icon"
                   class="w-6 h-6"
-                  :class="activePage === item.page ? 'text-crocus-600' : 'text-titan-600'"
+                  :class="activePage === item.page ? 'text-icon-button-primary-text' : 'text-badge-neutral-text'"
                 />
               </div>
               <span
                 v-if="item.showCriticalDot && hasCriticalAlerts"
-                class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive border-2 border-white rounded-full"
+                class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive border-2 border-shell-mobile-bg rounded-full"
                 :aria-label="`Alertas críticas en ${item.label.toLowerCase()}`"
               />
             </div>
-            <span class="text-[10px] text-titan-600">{{ item.label }}</span>
+            <span class="text-[10px] text-badge-neutral-text">{{ item.label }}</span>
           </NuxtLink>
         </div>
 
@@ -110,10 +110,10 @@
             class="flex flex-col items-center gap-1"
             @click="showMenuModal = false"
           >
-            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-crocus-100">
-              <HomeIcon class="w-6 h-6 text-crocus-600" />
+            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-icon-button-primary-bg">
+              <HomeIcon class="w-6 h-6 text-icon-button-primary-text" />
             </div>
-            <span class="text-[10px] text-titan-600">Inicio</span>
+            <span class="text-[10px] text-badge-neutral-text">Inicio</span>
           </NuxtLink>
         </div>
       </div>
@@ -121,14 +121,14 @@
 
     <!-- Notifications Modal -->
     <UiBottomSheetModal v-model="showNotificationsModal" title="Notificaciones" max-height="lg">
-      <div class="flex items-center justify-between px-4 py-2 border-b border-titan-100">
-        <span class="text-xs text-titan-600">Sonido de alertas</span>
+      <div class="flex items-center justify-between px-4 py-2 border-b border-sheet-border">
+        <span class="text-xs text-text-secondary">Sonido de alertas</span>
         <button
           type="button"
           @click="handleToggleDespachoSound"
           :aria-label="despachoSoundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-titan-100 transition-colors"
-          :class="despachoSoundEnabled ? 'text-ebony-800' : 'text-titan-400'"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
+          :class="despachoSoundEnabled ? 'text-text-primary' : 'text-icon-button-neutral-text'"
         >
           <SpeakerWaveIcon v-if="despachoSoundEnabled" class="w-4 h-4" aria-hidden="true" />
           <SpeakerXMarkIcon v-else class="w-4 h-4" aria-hidden="true" />
@@ -140,24 +140,24 @@
         <p class="text-sm text-muted-foreground text-center">Sin notificaciones nuevas</p>
       </div>
       <!-- List -->
-      <ul v-else class="divide-y divide-titan-100">
+      <ul v-else class="divide-y divide-sheet-border">
         <li v-for="notification in notifications" :key="notification.id">
           <NuxtLink
             :to="notificationDespachoPath(notification)"
             @click="handleMarkAsRead(notification.id); showNotificationsModal = false"
-            class="flex items-start gap-3 px-4 py-3 hover:bg-titan-50 transition-colors"
-            :class="!notification.read_at ? 'bg-crocus-50/40' : ''"
+            class="flex items-start gap-3 px-4 py-3 hover:bg-icon-button-neutral-hover-bg transition-colors"
+            :class="!notification.read_at ? 'bg-icon-button-primary-bg/40' : ''"
           >
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-crocus-100 flex items-center justify-center mt-0.5">
-              <ShoppingBagIcon class="w-4 h-4 text-crocus-600" aria-hidden="true" />
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-icon-button-primary-bg flex items-center justify-center mt-0.5">
+              <ShoppingBagIcon class="w-4 h-4 text-icon-button-primary-text" aria-hidden="true" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-ebony-800 leading-snug">
+              <p class="text-sm font-semibold text-text-primary leading-snug">
                 {{ notificationDespachoTitle(notification) }}
               </p>
-              <p class="text-xs text-titan-500 mt-0.5">{{ formatRelativeTime(notification.created_at) }}</p>
+              <p class="text-xs text-text-tertiary mt-0.5">{{ formatRelativeTime(notification.created_at) }}</p>
             </div>
-            <span v-if="!notification.read_at" class="flex-shrink-0 w-2 h-2 rounded-full bg-crocus-500 mt-1.5" aria-hidden="true" />
+            <span v-if="!notification.read_at" class="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" aria-hidden="true" />
           </NuxtLink>
         </li>
       </ul>
@@ -168,12 +168,12 @@
       <div class="p-4 space-y-6">
         <!-- Tenant Selector -->
         <div>
-          <label class="text-sm text-titan-600 font-medium mb-2 block">Seleccionar Tenant</label>
+          <label class="text-sm text-text-secondary font-medium mb-2 block">Seleccionar Tenant</label>
           <div class="space-y-2">
-            <div v-if="isLoadingTenants" class="text-sm text-titan-600 py-2">
+            <div v-if="isLoadingTenants" class="text-sm text-text-secondary py-2">
               Cargando tenants...
             </div>
-            <div v-else-if="tenants.length === 0" class="text-sm text-titan-600 py-2">
+            <div v-else-if="tenants.length === 0" class="text-sm text-text-secondary py-2">
               No hay tenants disponibles
             </div>
             <button
@@ -184,33 +184,33 @@
               :disabled="isLoadingTenants"
               class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               :class="selectedTenant?.id === tenant.id
-                ? 'border-crocus-600 bg-crocus-50'
-                : 'border-titan-200 hover:border-crocus-300 hover:bg-titan-50'"
+                ? 'border-primary bg-icon-button-primary-bg'
+                : 'border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg'"
             >
               <div class="flex items-center gap-3">
                 <div
                   class="w-3 h-3 rounded-full"
-                  :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600' : 'bg-titan-400'"
+                  :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'"
                 ></div>
-                <span class="font-medium text-ebony-800">{{ tenant.name }}</span>
+                <span class="font-medium text-text-primary">{{ tenant.name }}</span>
               </div>
               <CheckCircleIcon
                 v-if="selectedTenant?.id === tenant.id"
-                class="w-5 h-5 text-crocus-600"
+                class="w-5 h-5 text-primary"
               />
             </button>
           </div>
         </div>
 
         <!-- User Info -->
-        <div class="pt-4 border-t border-titan-300">
-          <div class="flex items-center gap-3 px-4 py-3 bg-titan-50 rounded-lg">
-            <div class="w-10 h-10 bg-ebony-800 rounded-full flex items-center justify-center font-bold text-white text-sm">
+        <div class="pt-4 border-t border-sheet-border">
+          <div class="flex items-center gap-3 px-4 py-3 bg-shell-account-hover-bg rounded-lg">
+            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-bold text-primary-foreground text-sm">
               {{ userInitials }}
             </div>
             <div>
-              <div class="font-semibold text-sm text-ebony-800">{{ userName }}</div>
-              <div class="text-xs text-titan-600">{{ userEmail }}</div>
+              <div class="font-semibold text-sm text-text-primary">{{ userName }}</div>
+              <div class="text-xs text-text-secondary">{{ userEmail }}</div>
             </div>
           </div>
         </div>

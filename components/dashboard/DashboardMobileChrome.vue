@@ -1,6 +1,6 @@
 <template>
   <div
-    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg transition-opacity"
+    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg transition-opacity"
     :class="posCartSheetOpen ? 'pointer-events-none opacity-0' : ''"
     style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     :aria-hidden="posCartSheetOpen"

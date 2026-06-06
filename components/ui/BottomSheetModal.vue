@@ -11,7 +11,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black/50 z-[70] lg:hidden"
+        class="fixed inset-0 bg-overlay-backdrop/50 z-[70] lg:hidden"
         aria-hidden="true"
         @click="closeModal"
       />
@@ -27,22 +27,22 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-x-0 bottom-0 z-[71] lg:hidden bg-white rounded-t-2xl w-full flex flex-col overflow-hidden shadow-2xl touch-manipulation"
+        class="fixed inset-x-0 bottom-0 z-[71] lg:hidden bg-sheet-surface-bg rounded-t-2xl w-full flex flex-col overflow-hidden shadow-2xl touch-manipulation"
         :class="maxHeightClass"
         role="dialog"
         aria-modal="true"
         :aria-label="title"
       >
         <!-- Header -->
-        <div class="flex-shrink-0 bg-white border-b border-titan-300 px-4 py-4 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-ebony-800">{{ title }}</h3>
+        <div class="flex-shrink-0 bg-sheet-header-bg border-b border-sheet-border px-4 py-4 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-modal-surface-text">{{ title }}</h3>
           <button
             type="button"
             @click="closeModal"
-            class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-titan-100 rounded-lg transition-colors"
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring rounded-lg transition-colors"
             aria-label="Cerrar"
           >
-            <XMarkIcon class="w-5 h-5 text-titan-500" />
+            <XMarkIcon class="w-5 h-5 text-icon-button-neutral-text" />
           </button>
         </div>
 
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Footer (optional, sticky) -->
-        <div v-if="$slots.footer" class="flex-shrink-0 bg-white border-t border-titan-300">
+        <div v-if="$slots.footer" class="flex-shrink-0 bg-sheet-footer-bg border-t border-sheet-border">
           <slot name="footer" />
         </div>
       </div>

@@ -7,7 +7,7 @@
       :aria-expanded="isOpen"
       aria-haspopup="true"
       aria-label="Notificaciones"
-      class="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+      class="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
     >
       <!-- Animated bell icon: solid when there are unread notifications -->
       <BellAlertIcon v-if="unreadCount > 0" class="w-6 h-6 text-primary" aria-hidden="true" />
@@ -18,7 +18,7 @@
         v-if="unreadCount > 0"
         aria-live="polite"
         aria-atomic="true"
-        class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full leading-none"
+        class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
@@ -48,7 +48,7 @@
               @click="handleToggleSound"
               :title="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
               :aria-label="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
-              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
               :class="soundEnabled ? 'text-text-primary' : 'text-muted-foreground'"
             >
               <SpeakerWaveIcon v-if="soundEnabled" class="w-4 h-4" aria-hidden="true" />

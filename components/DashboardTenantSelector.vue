@@ -8,32 +8,32 @@
         class="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center"
         @click.self="closeTenantModal"
       >
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeTenantModal" />
-        <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-white sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
-          <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-titan-200 flex-shrink-0">
-            <p class="text-sm font-semibold text-ebony-800">Cambiar negocio</p>
-            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-titan-400 hover:bg-titan-100 hover:text-ebony-700 transition-colors">
+        <div class="absolute inset-0 bg-overlay-backdrop-strong/60 backdrop-blur-sm" @click="closeTenantModal" />
+        <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-sheet-surface-bg sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
+          <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sheet-border flex-shrink-0">
+            <p class="text-sm font-semibold text-modal-surface-text">Cambiar negocio</p>
+            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-icon-button-neutral-text hover:bg-icon-button-neutral-hover-bg hover:text-icon-button-neutral-hover-text focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors">
               <XMarkIcon class="w-4 h-4" />
             </button>
           </div>
           <div class="px-4 py-3 flex-shrink-0">
-            <div class="flex items-center gap-2 px-3 py-2 border-b border-titan-200 focus-within:border-crocus-400 transition-colors">
-              <MagnifyingGlassIcon class="w-4 h-4 text-titan-400 flex-shrink-0" />
+            <div class="flex items-center gap-2 px-3 py-2 border-b border-form-control-border focus-within:border-form-control-focus-border transition-colors">
+              <MagnifyingGlassIcon class="w-4 h-4 text-form-control-placeholder flex-shrink-0" />
               <input
                 ref="searchInputRef"
                 v-model="tenantSearch"
                 type="text"
                 placeholder="Buscar negocio..."
-                class="flex-1 bg-transparent text-sm text-ebony-800 placeholder-titan-400 outline-none"
+                class="flex-1 bg-transparent text-sm text-form-control-text placeholder-form-control-placeholder outline-none"
               />
-              <button v-if="tenantSearch" @click="tenantSearch = ''" class="text-titan-400 hover:text-ebony-700">
+              <button v-if="tenantSearch" @click="tenantSearch = ''" class="text-form-control-placeholder hover:text-form-control-text">
                 <XMarkIcon class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
           <div class="overflow-y-auto px-3 pb-4 space-y-0.5">
-            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-titan-400 text-center">Cargando...</div>
-            <div v-else-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-titan-400 text-center">Sin resultados</div>
+            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-form-control-help text-center">Cargando...</div>
+            <div v-else-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-form-control-help text-center">Sin resultados</div>
             <button
               v-else
               v-for="tenant in filteredTenants"
@@ -41,11 +41,11 @@
               @click="selectTenant(tenant)"
               :disabled="isLoadingTenants"
               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left disabled:opacity-50"
-              :class="selectedTenant?.id === tenant.id ? 'bg-crocus-50 text-crocus-700 font-medium' : 'text-ebony-700 hover:bg-titan-50'"
+              :class="selectedTenant?.id === tenant.id ? 'bg-icon-button-primary-bg text-icon-button-primary-text font-medium' : 'text-text-secondary hover:bg-icon-button-neutral-hover-bg'"
             >
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-300'" />
+              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'" />
               <span class="truncate">{{ tenant.name }}</span>
-              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-crocus-500 flex-shrink-0" />
+              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-primary flex-shrink-0" />
             </button>
           </div>
         </div>
@@ -60,15 +60,15 @@
       @click="openTenantModal"
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
-      class="flex items-center gap-2 h-11 px-3 bg-white border-2 border-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-action-border rounded-lg text-sm font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span class="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
       <span class="truncate max-w-[150px]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
       <ChevronDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
     </button>
 
-    <!-- User info — name + brand avatar icon -->
-    <div class="flex items-center gap-2 h-11 px-3 bg-white border-2 border-surface-secondary rounded-lg">
+    <!-- User info — name + purple avatar icon -->
+    <div class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-action-border rounded-lg">
       <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
       <div class="w-8 h-8 bg-surface-secondary border border-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
         <UserIcon class="w-4 h-4 text-primary" />
