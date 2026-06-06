@@ -14,9 +14,9 @@ const tableContainerVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-surface border-border',
-        minimal: 'bg-surface border-border/50',
-        elevated: 'bg-surface border-border shadow-lg'
+        default: 'bg-data-table-container-bg border-data-table-border',
+        minimal: 'bg-data-table-container-bg border-data-table-border/50',
+        elevated: 'bg-data-table-container-bg border-data-table-border shadow-lg'
       }
     },
     defaultVariants: {
@@ -30,9 +30,9 @@ const headerSectionVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-surface',
-        minimal: 'bg-surface',
-        elevated: 'bg-surface'
+        default: 'bg-data-table-container-bg',
+        minimal: 'bg-data-table-container-bg',
+        elevated: 'bg-data-table-container-bg'
       }
     },
     defaultVariants: {
@@ -46,9 +46,9 @@ const tableHeaderVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-surface-secondary border-border',
-        minimal: 'bg-surface border-border',
-        elevated: 'bg-surface-tertiary border-border'
+        default: 'bg-data-table-header-bg border-data-table-border',
+        minimal: 'bg-data-table-container-bg border-data-table-border',
+        elevated: 'bg-data-table-header-bg border-data-table-border'
       }
     },
     defaultVariants: {
@@ -62,13 +62,13 @@ const tableRowVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-border hover:bg-surface-secondary',
-        minimal: 'border-border hover:bg-surface-tertiary/50',
-        elevated: 'border-border hover:bg-surface-secondary'
+        default: 'border-data-table-border hover:bg-data-table-row-hover-bg',
+        minimal: 'border-data-table-border hover:bg-data-table-row-hover-bg/50',
+        elevated: 'border-data-table-border hover:bg-data-table-row-hover-bg'
       },
       rowType: {
         normal: '',
-        totals: 'font-semibold border-t-2'
+        totals: 'font-semibold border-t-2 bg-data-table-footer-bg'
       }
     },
     defaultVariants: {
@@ -186,10 +186,8 @@ function handleSort(column: TableColumn) {
   emit('sort', column.key)
 }
 
-// All table cell values should be black (governance rule)
 function getCellColor(value: any, column: TableColumn): string {
-  // All numbers must be black - use StatusBadge for colored indicators
-  return 'text-text-primary'
+  return 'text-data-table-cell-text'
 }
 
 function getRowKey(row: Record<string, any>, index: number): string | number {
@@ -247,10 +245,10 @@ watch(
     <!-- Header Section -->
     <div v-if="title || subtitle || $slots.header" :class="headerSectionVariants({ variant })">
       <slot name="header">
-        <h3 v-if="title" class="text-lg font-bold text-text-primary">
+        <h3 v-if="title" class="text-lg font-bold text-data-table-cell-text">
           {{ title }}
         </h3>
-        <p v-if="subtitle" class="text-text-secondary text-sm">
+        <p v-if="subtitle" class="text-data-table-cell-muted text-sm">
           {{ subtitle }}
         </p>
       </slot>
@@ -258,7 +256,7 @@ watch(
 
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="text-text-secondary">Loading table data...</div>
+      <div class="text-data-table-cell-muted">Loading table data...</div>
     </div>
 
     <!-- Table Body -->
@@ -272,7 +270,7 @@ watch(
               :key="column.key"
               :class="cn(
                 rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3 px-4',
-                'border-r border-dashed border-border/60 last:border-r-0',
+                'border-r border-dashed border-data-table-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -285,7 +283,7 @@ watch(
                   v-if="column.sortable"
                   @click="handleSort(column)"
                   :class="cn(
-                    'text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1 transition-colors hover:text-primary w-full',
+                    'text-xs font-semibold text-data-table-header-text uppercase tracking-wider flex items-center gap-1 transition-colors hover:text-data-table-cell-text w-full',
                     column.align === 'left' && 'justify-start',
                     column.align === 'center' && 'justify-center',
                     column.align === 'right' && 'justify-end'
@@ -303,7 +301,7 @@ watch(
                 <span
                   v-else
                   :class="cn(
-                    'text-xs font-semibold text-text-secondary uppercase tracking-wider block',
+                    'text-xs font-semibold text-data-table-header-text uppercase tracking-wider block',
                     (!column.align || column.align === 'left') && 'text-left',
                     column.align === 'center' && 'text-center',
                     column.align === 'right' && 'text-right'
@@ -320,7 +318,7 @@ watch(
         <tbody>
           <!-- Empty State -->
           <tr v-if="data.length === 0">
-            <td :colspan="columns.length" class="py-8 text-center text-text-secondary">
+            <td :colspan="columns.length" class="py-8 text-center text-data-table-cell-muted">
               {{ emptyMessage }}
             </td>
           </tr>
@@ -332,9 +330,9 @@ watch(
             :key="getRowKey(row, index)"
             :class="[
               tableRowVariants({ variant, rowType: 'normal' }),
-              rowClass?.(row) || (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'),
+              rowClass?.(row) || (index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg/30'),
               recentRowKeys.has(getRowKey(row, index)) && 'table-row-new',
-              'cursor-pointer hover:bg-surface-secondary transition-colors'
+              'cursor-pointer hover:bg-data-table-row-hover-bg transition-colors'
             ]"
             @click="emit('rowClick', row)"
           >
@@ -343,7 +341,7 @@ watch(
               :key="column.key"
               :class="cn(
                 rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3.5 px-4',
-                'text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
+                'text-sm font-medium border-r border-dashed border-data-table-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
@@ -371,7 +369,7 @@ watch(
               v-for="column in columns"
               :key="`total-${column.key}`"
               :class="cn(
-                'py-3.5 px-4 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
+                'py-3.5 px-4 text-sm text-data-table-cell-text font-semibold border-r border-dashed border-data-table-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -393,7 +391,7 @@ watch(
     </div>
 
     <!-- Footer Section (outside table) -->
-    <div v-if="$slots.footer" class="p-6 border-t border-border bg-surface-secondary">
+    <div v-if="$slots.footer" class="p-6 border-t border-data-table-border bg-data-table-footer-bg">
       <slot name="footer" />
     </div>
   </div>
@@ -419,13 +417,13 @@ tbody tr.table-row-new > td {
   0% {
     opacity: 0;
     transform: translateX(-16px);
-    background-color: color-mix(in srgb, hsl(var(--primary)) 12%, transparent);
+    background-color: color-mix(in srgb, hsl(var(--data-table-row-new-bg)) 60%, transparent);
   }
 
   55% {
     opacity: 1;
     transform: translateX(0);
-    background-color: color-mix(in srgb, hsl(var(--primary)) 8%, transparent);
+    background-color: color-mix(in srgb, hsl(var(--data-table-row-new-bg)) 40%, transparent);
   }
 
   100% {
