@@ -26,7 +26,6 @@
     </div>
 
     <!-- Months table -->
-    <HealthSemaphore :is-unlocked="true" title="Períodos contables">
       <UiResponsiveDataView
         row-size="sm"
         :columns="columns"
@@ -107,7 +106,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-    </HealthSemaphore>
 
     <!-- Confirmation modal -->
     <Teleport to="body">
@@ -158,8 +156,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre contable - Warocol' })

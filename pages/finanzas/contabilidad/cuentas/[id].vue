@@ -2,8 +2,6 @@
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, startOfMonth } from 'date-fns'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -663,8 +661,7 @@ const openEntryDetail = (entry: { id: string }) => {
       </div>
 
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
-      <HealthSemaphore :is-unlocked="true" title="Libro mayor de la cuenta">
-        <div class="[&_td]:!py-1 [&_th]:!py-1.5">
+      <div class="[&_td]:!py-1 [&_th]:!py-1.5">
           <UiResponsiveDataView
             row-size="sm"
             :columns="tableColumns"
@@ -740,8 +737,7 @@ const openEntryDetail = (entry: { id: string }) => {
               <UiStatusBadge :value="STATUS_LABELS[value] || value" format="text" :variant="STATUS_VARIANTS[value] || 'secondary'" size="sm" />
             </template>
           </UiResponsiveDataView>
-        </div>
-      </HealthSemaphore>
+      </div>
 
       <!-- Pagination -->
       <div v-if="totalEntries > PAGE_SIZE" class="flex items-center justify-end px-1 py-2">
