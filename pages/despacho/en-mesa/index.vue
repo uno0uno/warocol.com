@@ -79,6 +79,12 @@ const tableOptions = computed(() =>
     name: t.table_name,
   })),
 )
+const tableHeaderOptions = computed(() =>
+  tableOptions.value.map(t => ({
+    value: t.id,
+    label: t.name,
+  })),
+)
 
 const requests = computed<TableQrRequestRow[]>(() =>
   (pendingData.value?.data?.tables ?? []).flatMap(t =>
@@ -150,7 +156,11 @@ onMounted(() => {
 onUnmounted(() => { clearRefreshHandler(refetchPending) })
 registerProgressiveLoading(isRefreshing)
 
-const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
+const handleSort = (event: string | { field: string; direction?: 'asc' | 'desc' }) => {
+  const field = typeof event === 'string' ? event : event.field
+  const direction = typeof event === 'string'
+    ? (sortField.value === event && sortDirection.value === 'asc' ? 'desc' : 'asc')
+    : event.direction ?? 'asc'
   sortField.value = field
   sortDirection.value = direction
 }
@@ -182,6 +192,7 @@ const viewRequest = (request: TableQrRequestRow) => {
           <select
             v-model="tableFilterId"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por mesa"
           >
             <option value="">Mesa</option>
@@ -204,6 +215,21 @@ const viewRequest = (request: TableQrRequestRow) => {
           @sort="handleSort"
           @row-click="viewRequest"
         >
+          <template #header-table_name>
+            <UiTableHeaderFilter
+              v-model="tableFilterId"
+              title="Mesa"
+              column-key="table_name"
+              sortable
+              :sort-field="sortField"
+              :sort-direction="sortDirection"
+              filter-type="select"
+              :options="tableHeaderOptions"
+              all-label="Todas"
+              @sort="handleSort"
+            />
+          </template>
+
           <template #card="{ item, index }">
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-data-table-border cursor-pointer transition-colors hover:bg-data-table-row-hover-bg"

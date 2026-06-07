@@ -26,6 +26,27 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 
 const channelFilter = ref<string | null>(null)
 const actionFilter = ref<string | null>(null)
+const channelHeaderFilter = computed({
+  get: () => channelFilter.value ?? '',
+  set: (value: string | boolean) => {
+    channelFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+const actionHeaderFilter = computed({
+  get: () => actionFilter.value ?? '',
+  set: (value: string | boolean) => {
+    actionFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+const channelHeaderOptions = [
+  { value: 'mesa', label: CHANNEL_LABELS.mesa },
+  { value: 'barra', label: CHANNEL_LABELS.barra },
+  { value: 'mostrador', label: CHANNEL_LABELS.mostrador },
+]
+const actionHeaderOptions = OPERATION_EVENT_ACTIONS.map(action => ({
+  value: action,
+  label: ACTION_LABELS[action],
+}))
 const currentPage = ref(1)
 const detailOpen = ref(false)
 const selectedEvent = ref<OperationEventRow | null>(null)
@@ -150,6 +171,7 @@ const tableNameFor = (row: OperationEventRow) =>
           <select
             v-model="channelFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por canal"
           >
             <option :value="null">Todos los canales</option>
@@ -161,6 +183,7 @@ const tableNameFor = (row: OperationEventRow) =>
           <select
             v-model="actionFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por acción"
           >
             <option :value="null">Todas las acciones</option>
@@ -193,6 +216,28 @@ const tableNameFor = (row: OperationEventRow) =>
         row-size="sm"
         @row-click="openDetail"
       >
+        <template #header-channel>
+          <UiTableHeaderFilter
+            v-model="channelHeaderFilter"
+            title="Canal"
+            filter-type="select"
+            :options="channelHeaderOptions"
+            all-label="Todos"
+            align="center"
+          />
+        </template>
+
+        <template #header-action>
+          <UiTableHeaderFilter
+            v-model="actionHeaderFilter"
+            title="Acción"
+            filter-type="select"
+            :options="actionHeaderOptions"
+            all-label="Todas"
+            align="left"
+          />
+        </template>
+
         <template #cell-created_at="{ value }">
           <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDateTime(value) }}</span>
         </template>

@@ -16,6 +16,12 @@ const selectedSourceType = ref('')
 const selectedStationId = ref('')
 const selectedStatus = ref('pending,preparing,ready')
 const selectedDate = ref('')
+const selectedStatusHeaderFilter = computed({
+  get: () => selectedStatus.value === 'pending,preparing,ready' ? '' : selectedStatus.value,
+  set: (value: string | boolean) => {
+    selectedStatus.value = typeof value === 'string' && value ? value : 'pending,preparing,ready'
+  },
+})
 
 const filters = computed(() => ({
   source_type: selectedSourceType.value || undefined,
@@ -46,6 +52,9 @@ const SOURCE_LABELS = computed<Record<string, string>>(() => ({
   delivery: 'Domicilio',
   pickup:   'Recogida',
 }))
+const sourceHeaderOptions = computed(() =>
+  Object.entries(SOURCE_LABELS.value).map(([value, label]) => ({ value, label })),
+)
 
 const COMANDA_STATUS_LABELS: Record<string, string> = {
   pending:   'Pendiente',
@@ -54,6 +63,14 @@ const COMANDA_STATUS_LABELS: Record<string, string> = {
   delivered: 'Entregada',
   cancelled: 'Cancelada',
 }
+const comandaStatusHeaderOptions = [
+  { value: 'ready', label: 'Listas' },
+  { value: 'pending', label: 'Pendientes' },
+  { value: 'preparing', label: 'En preparación' },
+  { value: 'delivered', label: 'Entregadas' },
+  { value: 'cancelled', label: 'Canceladas' },
+  { value: 'pending,preparing,ready,delivered,cancelled', label: 'Todas' },
+]
 
 const columns: Column[] = [
   { key: '_select',            title: '',          sortable: false, align: 'center' as const, width: '44px', class: '!px-0' },
@@ -221,6 +238,7 @@ const getComandaStatusVariant = (status: string): string => {
           <select
             v-model="selectedSourceType"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por origen"
           >
             <option value="">Origen</option>
@@ -242,6 +260,7 @@ const getComandaStatusVariant = (status: string): string => {
           <select
             v-model="selectedStatus"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por estado"
           >
             <option value="pending,preparing,ready">Activas</option>
@@ -330,6 +349,28 @@ const getComandaStatusVariant = (status: string): string => {
             </span>
           </label>
       </div>
+      </template>
+
+      <template #header-source_type>
+        <UiTableHeaderFilter
+          v-model="selectedSourceType"
+          title="Origen"
+          filter-type="select"
+          :options="sourceHeaderOptions"
+          all-label="Todos"
+          align="left"
+        />
+      </template>
+
+      <template #header-status>
+        <UiTableHeaderFilter
+          v-model="selectedStatusHeaderFilter"
+          title="Estado"
+          filter-type="select"
+          :options="comandaStatusHeaderOptions"
+          all-label="Activas"
+          align="left"
+        />
       </template>
 
       <!-- Checkbox cell -->

@@ -51,6 +51,7 @@
           <select
             v-model="statusFilter"
             :class="filterSelectClassFor(statusFilter)"
+            class="md:hidden"
             aria-label="Filtrar por estado"
           >
             <option value="">Estado</option>
@@ -61,6 +62,7 @@
           <select
             v-model="promoTypeFilter"
             :class="filterSelectClassFor(promoTypeFilter)"
+            class="md:hidden"
             aria-label="Filtrar por tipo"
           >
             <option value="">Tipo</option>
@@ -89,6 +91,28 @@
         variant="default"
         row-size="sm"
       >
+          <template #header-promo_type>
+            <UiTableHeaderFilter
+              v-model="promoTypeFilter"
+              title="Tipo"
+              filter-type="select"
+              :options="promoTypeHeaderOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
+          <template #header-status>
+            <UiTableHeaderFilter
+              v-model="statusFilter"
+              title="Estado"
+              filter-type="select"
+              :options="statusHeaderOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
           <template #card="{ item, index }">
             <div
               v-if="item"
@@ -319,6 +343,15 @@ const scopePopoverPromo = ref<PromotionRow | null>(null)
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const statusFilter = ref<'' | 'active' | 'inactive'>('')
 const promoTypeFilter = ref<'' | 'percent_off' | 'fixed_off' | 'bogo'>('')
+const statusHeaderOptions = [
+  { value: 'active', label: 'Activas' },
+  { value: 'inactive', label: 'Inactivas' },
+]
+const promoTypeHeaderOptions = [
+  { value: 'percent_off', label: '% descuento' },
+  { value: 'fixed_off', label: 'Descuento fijo' },
+  { value: 'bogo', label: '2x1 / BOGO' },
+]
 
 const hasActiveFilters = computed(
   () =>

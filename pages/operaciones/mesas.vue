@@ -431,6 +431,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #additional-filters>
           <UiFilterSelect
             v-model="statusFilter"
+            class="md:hidden"
             placeholder="Todos los estados"
             :options="statusOptions"
             aria-label="Estado"
@@ -456,6 +457,17 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         variant="default"
         row-size="sm"
       >
+          <template #header-status>
+            <UiTableHeaderFilter
+              v-model="statusFilter"
+              title="Estado"
+              filter-type="select"
+              :options="statusOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
           <!-- Mobile card -->
           <template #card="{ item }">
             <div class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
