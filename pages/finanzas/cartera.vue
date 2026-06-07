@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
@@ -38,6 +39,15 @@ const hasActiveFilters = computed(
 const clearFilters = () => {
   statusFilter.value = 'all'
   agingFilter.value = null
+}
+
+const statusFilterOptions = [
+  { label: 'Vencidas', value: 'overdue' },
+  { label: 'Al día', value: 'current' },
+]
+
+const setStatusFilter = (value: string | boolean) => {
+  statusFilter.value = typeof value === 'string' && value ? value as 'overdue' | 'current' : 'all'
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────
@@ -245,12 +255,13 @@ onUnmounted(() => {
         <template #additional-filters>
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
           >
             <option value="all">Estado</option>
-            <option value="overdue">Vencidas</option>
-            <option value="current">Al día</option>
+            <option v-for="option in statusFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -264,6 +275,17 @@ onUnmounted(() => {
         empty-sub-message="No hay clientes con saldo pendiente en este momento"
         variant="default"
       >
+        <template #header-status>
+          <UiTableHeaderFilter
+            :model-value="statusFilter === 'all' ? '' : statusFilter"
+            title="Estado"
+            filter-type="select"
+            :options="statusFilterOptions"
+            all-label="Todos"
+            @update:model-value="setStatusFilter"
+          />
+        </template>
+
         <!-- Mobile card -->
         <template #card="{ item, index }">
           <div

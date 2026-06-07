@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({
@@ -15,8 +16,8 @@ const { currentTenant } = useTenantReactive()
 const defaultMonth = () => new Date().toISOString().slice(0, 7)
 const currentMonth = ref(defaultMonth())
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const categoryFilter = ref<string | null>(null)
-const expenseTypeFilter = ref<string | null>(null)
+const categoryFilter = ref('')
+const expenseTypeFilter = ref('')
 
 const hasActiveFilters = computed(
   () =>
@@ -37,6 +38,8 @@ const EXPENSE_TYPE_LABELS: Record<string, string> = {
   other_expense: 'Otro gasto',
 }
 
+const expenseTypeFilterOptions = Object.entries(EXPENSE_TYPE_LABELS).map(([value, label]) => ({ value, label }))
+
 // Load categories from API
 const { data: categoriesData } = useQuery({
   key: () => ['finance', 'expense-categories', currentTenant.value?.id],
@@ -46,6 +49,12 @@ const { data: categoriesData } = useQuery({
 })
 
 const categories = computed(() => (categoriesData.value as any)?.data || [])
+const categoryFilterOptions = computed(() =>
+  categories.value.map((cat: any) => ({
+    label: cat.categoryName,
+    value: cat.id,
+  })),
+)
 
 // Load expenses from API
 const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
@@ -76,8 +85,8 @@ const stats = computed(() => expensesData.value?.stats || null)
 
 const clearFilters = () => {
   clearSearch()
-  categoryFilter.value = null
-  expenseTypeFilter.value = null
+  categoryFilter.value = ''
+  expenseTypeFilter.value = ''
   currentMonth.value = defaultMonth()
 }
 
@@ -168,31 +177,28 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           <input
             v-model="currentMonth"
             type="month"
-            :class="filterSelectClass"
-            class="min-w-[9rem] cursor-pointer"
+            :class="[filterSelectClass, 'min-w-[9rem] cursor-pointer']"
             aria-label="Filtrar por mes"
           >
           <select
             v-model="categoryFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por categoría"
           >
-            <option :value="null">Categoría</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.categoryName }}
+            <option value="">Categoría</option>
+            <option v-for="option in categoryFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
             </option>
           </select>
           <select
             v-model="expenseTypeFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por tipo de gasto"
           >
-            <option :value="null">Tipo</option>
-            <option value="cogs">Costo de ventas</option>
-            <option value="admin_expense">Gasto administrativo</option>
-            <option value="sales_expense">Gasto de ventas</option>
-            <option value="financial_expense">Gasto financiero</option>
-            <option value="other_expense">Otro gasto</option>
+            <option value="">Tipo</option>
+            <option v-for="option in expenseTypeFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </template>
         <template #trailing>
@@ -215,6 +221,26 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         empty-sub-message="Los gastos del mes aparecerán aquí"
         variant="default"
       >
+        <template #header-category>
+          <UiTableHeaderFilter
+            v-model="categoryFilter"
+            title="Categoría"
+            filter-type="select"
+            :options="categoryFilterOptions"
+            all-label="Todas"
+          />
+        </template>
+
+        <template #header-expenseType>
+          <UiTableHeaderFilter
+            v-model="expenseTypeFilter"
+            title="Tipo"
+            filter-type="select"
+            :options="expenseTypeFilterOptions"
+            all-label="Todos"
+          />
+        </template>
+
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
