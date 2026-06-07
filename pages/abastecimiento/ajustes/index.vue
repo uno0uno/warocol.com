@@ -58,7 +58,6 @@
       </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de ajustes">
       <UiResponsiveDataView
         :columns="adjustmentsTableColumns"
         :data="sortedAdjustments"
@@ -140,7 +139,6 @@
           <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>
@@ -148,7 +146,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 

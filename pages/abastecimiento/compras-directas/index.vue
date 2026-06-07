@@ -51,26 +51,26 @@
             <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </template>
-      </UiAdvancedFiltersBar>
 
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Compras Directas">
-        <template #header-actions>
+        <template #trailing>
           <NuxtLink to="/abastecimiento/compras-directas/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
             <span class="hidden sm:inline">+ Nueva Compra Directa</span>
             <span class="sm:hidden">+ Nueva</span>
           </NuxtLink>
         </template>
-        <UiScanUsageBar
-          v-if="quota"
-          :quota="quota"
-          :compact="true"
-          :show-period="false"
-          :warning-level="warningLevel"
-          :scans-remaining="scansRemaining"
-          class="mb-4"
-        />
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View -->
+      <UiScanUsageBar
+        v-if="quota"
+        :quota="quota"
+        :compact="true"
+        :show-period="false"
+        :warning-level="warningLevel"
+        :scans-remaining="scansRemaining"
+        class="mb-4"
+      />
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="sortedPurchases"
@@ -154,7 +154,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="purchasesData.total > itemsPerPage" class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
@@ -223,7 +222,6 @@
 
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
