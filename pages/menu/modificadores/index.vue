@@ -12,7 +12,7 @@
         :search-fields="[]"
         search-placeholder="Buscar grupo o producto..."
         :show-date-range="false"
-        :show-clear="hasActiveFilters"
+        :show-clear="hasActiveModificadoresFilters"
         @search="performSearch"
         @clear="onClearModificadoresFilters"
       >
@@ -35,6 +35,17 @@
         variant="default"
         row-size="sm"
       >
+      <template #header-tipo>
+        <UiTableHeaderFilter
+          v-model="requiredFilter"
+          title="Tipo"
+          filter-type="select"
+          :options="requiredHeaderOptions"
+          all-label="Todos"
+          align="center"
+        />
+      </template>
+
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value }">
         <div class="flex items-center">
@@ -313,8 +324,15 @@ const {
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
+const requiredFilter = ref<'required' | 'optional' | ''>('')
+const requiredHeaderOptions = [
+  { label: 'Obligatorio', value: 'required' },
+  { label: 'Opcional', value: 'optional' },
+]
+const hasActiveModificadoresFilters = computed(() => hasActiveFilters.value || !!requiredFilter.value)
 
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch(requiredFilter, () => { currentPage.value = 1 })
 
 const performSearch = () => {
   appliedSearch.value = localSearchTerm.value.trim()
@@ -323,6 +341,7 @@ const performSearch = () => {
 
 const onClearModificadoresFilters = () => {
   clearModificadoresFilters()
+  requiredFilter.value = ''
   currentPage.value = 1
 }
 
@@ -353,7 +372,12 @@ const { data: statsData, refetch: refetchStats } = useQuery({
   staleTime: 30_000,
 })
 
-const modifierGroups = computed(() => groupsData.value?.data ?? [])
+const modifierGroups = computed(() => {
+  const list = groupsData.value?.data ?? []
+  if (requiredFilter.value === 'required') return list.filter((group: any) => group.is_required)
+  if (requiredFilter.value === 'optional') return list.filter((group: any) => !group.is_required)
+  return list
+})
 
 const totalPages = computed(() =>
   Math.ceil((groupsData.value?.total ?? 0) / itemsPerPage.value),

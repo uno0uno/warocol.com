@@ -16,7 +16,7 @@
           :search-fields="[]"
           search-placeholder="Buscar recetas..."
           :show-date-range="false"
-          :show-clear="hasActiveFilters"
+          :show-clear="hasActiveRecetasFilters"
           @search="performSearch"
           @clear="onClearRecetasFilters"
         >
@@ -40,6 +40,17 @@
           variant="default"
           row-size="sm"
         >
+          <template #header-is_active>
+            <UiTableHeaderFilter
+              v-model="statusFilter"
+              title="Estado"
+              filter-type="select"
+              :options="statusHeaderOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
           <!-- Desktop Table Cells -->
           <template #cell-producto_name="{ value }">
             <div class="flex items-center">
@@ -290,6 +301,12 @@ const {
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
+const statusFilter = ref<'active' | 'inactive' | ''>('')
+const statusHeaderOptions = [
+  { label: 'Activa', value: 'active' },
+  { label: 'Inactiva', value: 'inactive' },
+]
+const hasActiveRecetasFilters = computed(() => hasActiveFilters.value || !!statusFilter.value)
 
 // Fetch recipe bases from backend with ingredients
 const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, error: queryError, refetch } = useQuery({
@@ -319,6 +336,7 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && prod
 
 // Reset page on tenant change — key change triggers automatic refetch
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch(statusFilter, () => { currentPage.value = 1 })
 
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value.trim()
@@ -327,6 +345,7 @@ const performSearch = () => {
 
 const onClearRecetasFilters = () => {
   clearRecetasFilters()
+  statusFilter.value = ''
   currentPage.value = 1
 }
 
@@ -334,7 +353,7 @@ const onClearRecetasFilters = () => {
 const recetas = computed(() => {
   if (!productsData.value?.data) return []
 
-  return productsData.value.data.map((recipeBase: any) => ({
+  const list = productsData.value.data.map((recipeBase: any) => ({
     id: recipeBase.id,
     producto_id: recipeBase.id,
     producto_name: recipeBase.name,
@@ -359,6 +378,10 @@ const recetas = computed(() => {
     }, 0) || 0,
     rendimiento: 1
   }))
+
+  if (statusFilter.value === 'active') return list.filter((recipe: any) => recipe.is_active)
+  if (statusFilter.value === 'inactive') return list.filter((recipe: any) => !recipe.is_active)
+  return list
 })
 
 // Pagination
