@@ -133,17 +133,8 @@ async function rejectRequest() {
 
 const goBack = () => router.push('/despacho/en-mesa')
 
-const setPageTitle = inject<(title: string | undefined) => void>('setPageTitle')
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
-
-watch(request, (req) => {
-  if (req) {
-    setPageTitle?.(req.table_name)
-    setPageSubtitle?.(formatDateTime(req.created_at))
-  }
-}, { immediate: true })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
@@ -154,8 +145,6 @@ onMounted(() => {
 registerProgressiveLoading(isRefreshing)
 
 onUnmounted(() => {
-  setPageTitle?.(undefined)
-  setPageSubtitle?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
   clearRefreshHandler(refetch)

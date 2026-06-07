@@ -25,8 +25,6 @@ const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // ── Layout actions ────────────────────────────────────────────────────────
-const setPageTitle = inject<(title: string | undefined) => void>('setPageTitle')
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
 
@@ -360,11 +358,6 @@ const submitPayment = async () => {
   }
 }
 
-// ── Layout wiring ─────────────────────────────────────────────────────────
-watch(customer, (c) => {
-  if (c) setPageTitle?.(c.name)
-}, { immediate: true })
-
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
@@ -372,7 +365,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  setPageTitle?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
 })

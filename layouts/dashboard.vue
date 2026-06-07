@@ -107,8 +107,6 @@ const goBack = () => {
 }
 
 const {
-  pageTitle,
-  pageSubtitle,
   activePage,
   showBreadcrumb,
   breadcrumbPage,
@@ -140,22 +138,7 @@ const {
 } = useLayoutActions()
 const handleRefresh = triggerRefresh
 
-// Dynamic title - can be set by child pages
-const dynamicTitle = ref<string | undefined>(undefined)
 const isSidebarExpanded = ref(false)
-
-// Provide title setter for child pages
-provide('setPageTitle', (title: string | undefined) => {
-  dynamicTitle.value = title
-})
-
-// Dynamic subtitle - can be set by child pages
-const dynamicSubtitle = ref<string | undefined>(undefined)
-
-// Provide subtitle setter for child pages
-provide('setPageSubtitle', (subtitle: string | undefined) => {
-  dynamicSubtitle.value = subtitle
-})
 
 // Last update text - shared via composable
 const dynamicLastUpdateText = composableLastUpdateText
@@ -189,62 +172,8 @@ provide('setHeaderAction', (action: { label: string; icon?: boolean; handler: ()
   dynamicHeaderAction.value = action
 })
 
-// Combined values (dynamic takes precedence)
-const displayTitle = computed(() => dynamicTitle.value || pageTitle.value)
-const displaySubtitle = computed(() => dynamicSubtitle.value || pageSubtitle.value)
 const showBackBtn = computed(() => dynamicBackButton.value || !!backButton.value)
 const backBtnHandler = computed(() => dynamicBackHandler.value || (backButton.value ? goBack : undefined))
-
-const animatedDisplayTitle = ref(displayTitle.value)
-const isTypingTitle = ref(false)
-let titleTypingTimeout: ReturnType<typeof setTimeout> | null = null
-
-const clearTitleTypingTimeout = () => {
-  if (titleTypingTimeout) {
-    clearTimeout(titleTypingTimeout)
-    titleTypingTimeout = null
-  }
-}
-
-const typeTitle = (nextTitle: string) => {
-  clearTitleTypingTimeout()
-
-  if (!nextTitle) {
-    animatedDisplayTitle.value = ''
-    isTypingTitle.value = false
-    return
-  }
-
-  animatedDisplayTitle.value = ''
-  isTypingTitle.value = true
-  let index = 0
-
-  const step = () => {
-    index += 1
-    animatedDisplayTitle.value = nextTitle.slice(0, index)
-
-    if (index >= nextTitle.length) {
-      isTypingTitle.value = false
-      titleTypingTimeout = null
-      return
-    }
-
-    titleTypingTimeout = setTimeout(step, 22)
-  }
-
-  titleTypingTimeout = setTimeout(step, 22)
-}
-
-watch(displayTitle, (nextTitle, previousTitle) => {
-  if (!previousTitle || nextTitle === previousTitle) {
-    animatedDisplayTitle.value = nextTitle
-    isTypingTitle.value = false
-    clearTitleTypingTimeout()
-    return
-  }
-
-  typeTitle(nextTitle)
-}, { immediate: true })
 
 // Inject cart data from POS page
 const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart, sheetOpen: posMobileCartSheetOpen } = usePosMobileCart()
@@ -268,10 +197,6 @@ useHead({
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }, // Dashboard pages shouldn't be indexed
   ]
-})
-
-onUnmounted(() => {
-  clearTitleTypingTimeout()
 })
 </script>
 
