@@ -1,7 +1,7 @@
 <template>
   <header class="bg-shell-header-bg border-b border-shell-header-border px-4 py-3 md:px-8 md:py-4 flex-shrink-0">
-    <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+    <div class="flex min-w-0 items-center justify-between gap-3">
+      <div class="flex min-w-0 items-center gap-2 sm:gap-4">
         <NuxtLink
           v-if="!hideLogo"
           to="/financiero"
@@ -20,7 +20,7 @@
       <TransitionGroup
         name="header-actions"
         tag="div"
-        class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
+        class="dashboard-header-actions relative flex min-w-0 max-w-full flex-1 items-center justify-end gap-1.5 overflow-x-auto md:gap-2 lg:flex-none lg:overflow-visible"
       >
         <NotificationsNotificationBell key="notifications-bell" class="hidden lg:flex" />
 
@@ -124,6 +124,14 @@ defineEmits<{
 
 #dashboard-header-actions > * {
   animation: dashboard-header-portal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-header-actions {
+  scrollbar-width: none;
+}
+
+.dashboard-header-actions::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes dashboard-header-portal-in {
