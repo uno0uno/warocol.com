@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 
 useHead({ title: 'Órdenes - Ventas' })
 
@@ -12,11 +14,11 @@ const { singular: tableSingular } = useTableLabel()
 // Payment groups for filter and bulk-update dropdowns
 const { data: paymentGroupsData } = useQuery({
   key: () => ['payments', 'groups', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
+  query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+const paymentGroups = computed(() => mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []))
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // Export modal state
@@ -153,7 +155,14 @@ const searchFields = [
 // Bulk selection
 const selectedIds = ref<string[]>([])
 const bulkStatus = ref('')
-const bulkPaymentMethod = ref('')
+const bulkPaymentForm = ref({
+  payment_method: '',
+  payment_method_id: null as string | null,
+})
+const {
+  paymentSelectValue: bulkPaymentSelectValue,
+  hasPaymentSelected: hasBulkPaymentSelected,
+} = usePaymentSelectValue(bulkPaymentForm, paymentGroups)
 const isBulkUpdating = ref(false)
 
 // Customer identification for completed orders
@@ -185,7 +194,8 @@ const toggleSelectAll = () => {
 const clearSelection = () => {
   selectedIds.value = []
   bulkStatus.value = ''
-  bulkPaymentMethod.value = ''
+  bulkPaymentForm.value.payment_method = ''
+  bulkPaymentForm.value.payment_method_id = null
 }
 
 const orderRowClass = (row: { id: string }, index: number) => {
@@ -200,6 +210,7 @@ const getRowClass = (row: { id: string }) => {
 
 const bulkUpdateStatus = () => {
   if (!bulkStatus.value || selectedIds.value.length === 0) return
+  if (bulkStatus.value === 'completed' && !hasBulkPaymentSelected.value) return
   if (bulkStatus.value === 'completed') {
     // Ask for customer before applying
     pendingCustomerId.value = null
@@ -222,7 +233,8 @@ const executeBulkUpdate = async (customerId: string | null) => {
       body: {
         order_ids: Array.from(selectedIds.value),
         status: bulkStatus.value,
-        payment_method: bulkPaymentMethod.value || undefined,
+        payment_method: bulkPaymentForm.value.payment_method || undefined,
+        payment_method_id: bulkPaymentForm.value.payment_method_id || undefined,
         customer_id: customerId || undefined,
       },
     }) as any
@@ -557,22 +569,23 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <select
             v-if="bulkStatus === 'completed'"
-            v-model="bulkPaymentMethod"
+            v-model="bulkPaymentSelectValue"
             :class="filterSelectClass"
           >
             <option value="">Método de pago...</option>
-            <template v-for="group in paymentGroups">
-              <optgroup v-if="group.methods?.length" :key="`g-${group.slug}`" :label="group.name">
-                <option :value="group.slug">{{ group.name }} (todos)</option>
-                <option v-for="m in group.methods" :key="m.id" :value="group.slug">{{ m.name }}</option>
+            <template v-for="group in paymentGroups" :key="group.id">
+              <option :value="`${group.slug}:`">{{ group.name }}</option>
+              <optgroup v-if="group.methods?.length" :label="group.name">
+                <option v-for="m in group.methods" :key="m.id" :value="`${group.slug}:${m.id}`">
+                  {{ group.name }} · {{ m.name }}
+                </option>
               </optgroup>
-              <option v-else :key="group.slug" :value="group.slug">{{ group.name }}</option>
             </template>
           </select>
 
           <button
             @click="bulkUpdateStatus"
-            :disabled="!bulkStatus || isBulkUpdating || (bulkStatus === 'completed' && !bulkPaymentMethod)"
+            :disabled="!bulkStatus || isBulkUpdating || (bulkStatus === 'completed' && !hasBulkPaymentSelected)"
             class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <UiLoadingDots v-if="isBulkUpdating" size="12px" />

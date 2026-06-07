@@ -22,6 +22,12 @@ export interface PosPaymentGroup {
   methods: PosPaymentMethod[]
 }
 
+export type ApiPaymentGroup = Omit<PosPaymentGroup, 'triggersCartera' | 'triggersWallet' | 'methods'> & {
+  triggersCartera?: boolean
+  triggersWallet?: boolean
+  methods?: PosPaymentMethod[]
+}
+
 export const WALLET_PAYMENT_SLUG = 'customer_wallet'
 
 export const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
@@ -40,12 +46,14 @@ export const SYNTHETIC_POS_PAYMENT_SLUGS = [WALLET_PAYMENT_SLUG] as const
  * The wallet tender is handled in checkout logic but is not a DB-configured group.
  */
 export function mergePosPaymentGroupsFromApi(
-  apiGroups: PosPaymentGroup[],
+  apiGroups: ApiPaymentGroup[],
 ): PosPaymentGroup[] {
   if (!apiGroups.length) return [...PAYMENT_DEFAULTS]
-  const merged = apiGroups.map(g => ({
+  const merged: PosPaymentGroup[] = apiGroups.map(g => ({
     ...g,
+    triggersCartera: g.triggersCartera ?? g.slug === 'credit',
     triggersWallet: g.triggersWallet ?? g.slug === WALLET_PAYMENT_SLUG,
+    methods: g.methods ?? [],
   }))
   for (const fallback of PAYMENT_DEFAULTS) {
     if (
