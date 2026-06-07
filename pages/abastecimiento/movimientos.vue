@@ -34,7 +34,6 @@
         </template>
       </UiAdvancedFiltersBar>
 
-      <HealthSemaphore :is-unlocked="true" title="Movimientos de Inventario">
       <UiResponsiveDataView
         row-size="sm"
         :columns="movementsTableColumns"
@@ -124,7 +123,6 @@
           <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>
@@ -133,7 +131,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({ title: 'Movimientos' })

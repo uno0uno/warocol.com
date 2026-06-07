@@ -84,7 +84,6 @@
       </div>
 
       <!-- Orders Table -->
-      <HealthSemaphore :is-unlocked="true" title="Órdenes con Anomalías">
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="ordersWithAnomalies"
@@ -192,14 +191,12 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'

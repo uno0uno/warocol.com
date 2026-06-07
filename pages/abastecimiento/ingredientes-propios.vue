@@ -50,11 +50,8 @@
             Archivados
           </button>
         </template>
-      </UiAdvancedFiltersBar>
 
-      <!-- Data View -->
-      <HealthSemaphore :is-unlocked="true" :title="WAREHOUSE_COPY.warehouseCatalog">
-        <template #header-actions>
+        <template #trailing>
           <button
             @click="openPanel(null)"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
@@ -62,6 +59,9 @@
             {{ nuevoButtonLabel }}
           </button>
         </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Data View -->
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="sortedIngredients"
@@ -169,7 +169,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
 
     <!-- Create / Edit Panel -->
@@ -238,7 +237,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({ title: WAREHOUSE_COPY.warehouseCatalog })

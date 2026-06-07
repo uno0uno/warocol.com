@@ -74,18 +74,17 @@
       </template>
     </UiAdvancedFiltersBar>
 
-    <HealthSemaphore :is-unlocked="true" title="Stock de Inventario">
-      <UiResponsiveDataView
-        row-size="sm"
-        :columns="stockTableColumns"
-        :data="inventory"
-        :sort-field="sortField"
-        :sort-direction="sortDirection"
-        :empty-message="copy.emptyMessage"
-        empty-sub-message="Comienza recibiendo compras en Abastecimiento"
-        variant="default"
-        @sort="$emit('sort', $event)"
-      >
+    <UiResponsiveDataView
+      row-size="sm"
+      :columns="stockTableColumns"
+      :data="inventory"
+      :sort-field="sortField"
+      :sort-direction="sortDirection"
+      :empty-message="copy.emptyMessage"
+      empty-sub-message="Comienza recibiendo compras en Abastecimiento"
+      variant="default"
+      @sort="$emit('sort', $event)"
+    >
         <template #card="{ item, index }">
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
@@ -208,44 +207,40 @@
             </button>
           </div>
         </template>
-      </UiResponsiveDataView>
+    </UiResponsiveDataView>
 
-      <div
-        v-if="total > itemsPerPage"
-        class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
-      >
-        <p class="text-sm text-titan-700">
-          Mostrando <span class="font-medium">{{ startItem }}</span> a
-          <span class="font-medium">{{ endItem }}</span> de
-          <span class="font-medium">{{ total }}</span>
-        </p>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            :disabled="!canGoPrevious"
-            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
-            @click="$emit('previous-page')"
-          >
-            Anterior
-          </button>
-          <button
-            type="button"
-            :disabled="!canGoNext"
-            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
-            @click="$emit('next-page')"
-          >
-            Siguiente
-          </button>
-        </div>
+    <div
+      v-if="total > itemsPerPage"
+      class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
+    >
+      <p class="text-sm text-titan-700">
+        Mostrando <span class="font-medium">{{ startItem }}</span> a
+        <span class="font-medium">{{ endItem }}</span> de
+        <span class="font-medium">{{ total }}</span>
+      </p>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          :disabled="!canGoPrevious"
+          class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
+          @click="$emit('previous-page')"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          :disabled="!canGoNext"
+          class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
+          @click="$emit('next-page')"
+        >
+          Siguiente
+        </button>
       </div>
-    </HealthSemaphore>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
-
 interface StockStats {
   total_ingredients: number
   critical_count: number

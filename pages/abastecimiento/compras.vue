@@ -51,17 +51,17 @@
             <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </template>
-      </UiAdvancedFiltersBar>
 
-      <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
-      <HealthSemaphore :is-unlocked="true" title="Órdenes de Compra">
-        <template #header-actions>
+        <template #trailing>
           <NuxtLink to="/abastecimiento/compra/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
             <span class="hidden sm:inline">+ Nueva Orden</span>
             <span class="sm:hidden">+ Nuevo</span>
           </NuxtLink>
         </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
       <UiResponsiveDataView
         row-size="sm"
         :columns="ordenesTableColumns"
@@ -157,7 +157,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="purchasesData.total > itemsPerPage" class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
@@ -221,7 +220,6 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useFormatters } from '~/composables/useFormatters'
 import {

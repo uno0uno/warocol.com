@@ -42,17 +42,17 @@
             <option v-for="term in paymentTermsOptions" :key="term" :value="term">{{ term }}</option>
           </select>
         </template>
-      </UiAdvancedFiltersBar>
 
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Directorio de proveedores">
-        <template #header-actions>
+        <template #trailing>
           <NuxtLink to="/abastecimiento/proveedor/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
             <span class="hidden sm:inline">+ Nuevo Proveedor</span>
             <span class="sm:hidden">+ Nuevo</span>
           </NuxtLink>
         </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View -->
       <UiResponsiveDataView
         :columns="proveedoresTableColumns"
         :data="suppliers"
@@ -141,7 +141,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
       <!-- Pagination -->
       <div class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
@@ -216,7 +215,6 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { ref, computed, watch, inject, onMounted } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
 // Tenant reactivity
