@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -160,11 +158,8 @@ onUnmounted(() => {
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
-      />
-
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Gestión de Salarios">
-        <template #header-actions>
+      >
+        <template #trailing>
           <NuxtLink
             to="/equipo/miembros"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
@@ -173,6 +168,9 @@ onUnmounted(() => {
             <span class="sm:hidden">+ Nuevo</span>
           </NuxtLink>
         </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View -->
       <UiResponsiveDataView
         :columns="employeesTableColumns"
         :data="employees"
@@ -277,7 +275,6 @@ onUnmounted(() => {
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>
