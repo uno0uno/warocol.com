@@ -4,7 +4,12 @@ import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import type { WaroTransaction } from '~/composables/useWarosCliente';
-import { PAYMENT_DEFAULTS } from '~/utils/paymentDefaults';
+import {
+  PAYMENT_DEFAULTS,
+  WALLET_PAYMENT_SLUG,
+  mergePosPaymentGroupsFromApi,
+  type ApiPaymentGroup,
+} from '~/utils/paymentDefaults';
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -17,11 +22,13 @@ const customerId = computed(() => route.params.id as string)
 // Payment groups for the payment form select
 const { data: paymentGroupsData } = useQuery({
   key: () => ['payments', 'groups', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
+  query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+const paymentGroups = computed(() =>
+  mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []),
+)
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // ── Layout actions ────────────────────────────────────────────────────────
@@ -234,11 +241,11 @@ const walletMovements = computed(() => wallet.value?.movements ?? [])
 
 const walletPaymentGroups = computed(() => {
   const groups = paymentGroups.value.filter(
-    g => g.slug !== 'credit' && g.slug !== 'customer_wallet',
+    g => g.slug !== 'credit' && g.slug !== WALLET_PAYMENT_SLUG,
   )
   if (groups.length) return groups
   return PAYMENT_DEFAULTS.filter(
-    g => g.slug !== 'credit' && g.slug !== 'customer_wallet',
+    g => g.slug !== 'credit' && g.slug !== WALLET_PAYMENT_SLUG,
   )
 })
 
