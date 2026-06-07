@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -281,8 +282,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #additional-filters>
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
           >
             <option value="">Estado</option>
@@ -292,8 +292,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </select>
           <select
             v-model="sourceModuleFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por módulo"
           >
             <option value="">Módulo</option>

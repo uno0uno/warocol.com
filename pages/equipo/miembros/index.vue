@@ -22,8 +22,7 @@
         <template #additional-filters>
           <select
             v-model="roleFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por rol"
           >
             <option value="">Rol</option>
@@ -631,6 +630,7 @@
 
 <script setup lang="ts">
 import { useFormatters } from '~/composables/useFormatters'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 const { formatDate: _fmtDate } = useFormatters()
 useHead({ title: 'Miembros - Equipo' })
 

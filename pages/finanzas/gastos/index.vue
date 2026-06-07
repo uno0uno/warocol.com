@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({
@@ -176,14 +177,12 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           <input
             v-model="currentMonth"
             type="month"
-            :class="filterSelectClass"
-            class="min-w-[9rem] cursor-pointer"
+            :class="[filterSelectClass, 'min-w-[9rem] cursor-pointer']"
             aria-label="Filtrar por mes"
           >
           <select
             v-model="categoryFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por categoría"
           >
             <option value="">Categoría</option>
@@ -193,8 +192,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           </select>
           <select
             v-model="expenseTypeFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por tipo de gasto"
           >
             <option value="">Tipo</option>

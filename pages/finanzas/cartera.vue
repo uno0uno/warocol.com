@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
@@ -254,8 +255,7 @@ onUnmounted(() => {
         <template #additional-filters>
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
-            class="md:hidden"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
           >
             <option value="all">Estado</option>
