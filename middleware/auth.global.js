@@ -15,7 +15,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // If user already has a valid session and tries to access login, redirect to ventas
   if (authStore.isSessionValid && to.path === '/auth/login') {
-    return navigateTo('/ventas')
+    try {
+      const sessionResponse = await $fetch('/api/auth/session', {
+        credentials: 'include',
+      })
+      if (sessionResponse?.user) return navigateTo('/ventas')
+    } catch {
+      authStore.expireSession()
+      accessStore.clear()
+    }
   }
 
   // If the user is trying to access a public route, do nothing.
@@ -32,58 +40,32 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     return
   }
 
-  // ✅ Check if we already have a valid session in the store
-  if (authStore.isSessionValid) {
-    // Hydrate the access store on first navigation if it wasn't loaded yet
-    // (e.g. page refresh inside an authenticated session). Fire-and-forget —
-    // sidebar / gates fail-open while enforcementMode stays at 'disabled'.
-    if (!accessStore.isLoaded) {
-      accessStore.load()
-    }
-    return
-  }
-
   authStore.setLoading(true)
 
   try {
-    // Only fetch if session is invalid or missing
-    const { data: sessionResponse, error } = await useFetch('/api/auth/session', {
-      key: 'auth-session',
-      getCachedData: (key) => {
-        const nuxtApp = useNuxtApp()
-        const payloadData = nuxtApp.payload?.data?.[key]
-        const staticData = nuxtApp.static?.data?.[key]
-        return payloadData || staticData
+    const sessionResponse = await $fetch('/api/auth/session', {
+      credentials: 'include',
+    })
+
+    if (!sessionResponse?.user) {
+      authStore.expireSession()
+      accessStore.clear()
+      return navigateTo('/auth/login')
+    }
+
+    authStore.initializeFromMiddleware({
+      session: sessionResponse,
+      profileData: null,
+      user: {
+        name: sessionResponse.user.name || 'Anonymous User',
+        email: sessionResponse.user.email,
       }
     })
 
-    if (error.value || !sessionResponse.value?.user) {
-      // No valid session
-      authStore.clearAuth()
-      accessStore.clear()
-
-      // If not on a public route, redirect to login
-
-      return navigateTo('/auth/login')
-
-    } else if (sessionResponse.value.user) {
-      // Valid session, populate store
-      authStore.initializeFromMiddleware({
-        session: sessionResponse.value,
-        profileData: null, // This can be fetched separately if needed
-        user: {
-          name: sessionResponse.value.user.name || 'Anonymous User',
-          email: sessionResponse.value.user.email,
-          // ... other user properties
-        }
-      })
-
-      // Hydrate access store (role + modules + enforcement_mode for Epic 4)
-      await accessStore.load()
-    }
+    await accessStore.load()
   } catch (err) {
     console.error('Auth middleware error:', err)
-    authStore.clearAuth()
+    authStore.expireSession()
     accessStore.clear()
     return navigateTo('/auth/login')
   } finally {
