@@ -4401,7 +4401,7 @@ onUnmounted(() => {
       <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
-      <span>Impuesto licores</span>
+      <span>IVA licores 5%</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip and split settlement when applicable -->
@@ -4543,7 +4543,7 @@ onUnmounted(() => {
         <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
       </div>
       <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
-        <span>Impuesto licores</span>
+        <span>IVA licores 5%</span>
         <span>{{ formatCurrency(orderResult.liquor_tax) }}</span>
       </div>
     </template>
