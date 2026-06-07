@@ -36,7 +36,7 @@
       <template #additional-filters>
         <select
           :value="categoryFilter"
-          :class="filterSelectClass"
+          :class="[filterSelectClass, 'md:hidden']"
           aria-label="Filtrar por categoría"
           @change="$emit('update:categoryFilter', ($event.target as HTMLSelectElement).value)"
         >
@@ -48,7 +48,7 @@
 
         <select
           :value="statusFilter"
-          :class="filterSelectClass"
+          :class="[filterSelectClass, 'md:hidden']"
           aria-label="Filtrar por estado"
           @change="$emit('update:statusFilter', ($event.target as HTMLSelectElement).value)"
         >
@@ -60,7 +60,7 @@
 
         <select
           :value="unitFilter"
-          :class="filterSelectClass"
+          :class="[filterSelectClass, 'md:hidden']"
           aria-label="Filtrar por unidad"
           @change="$emit('update:unitFilter', ($event.target as HTMLSelectElement).value)"
         >
@@ -85,6 +85,45 @@
       variant="default"
       @sort="$emit('sort', $event)"
     >
+        <template #header-unit>
+          <UiTableHeaderFilter
+            title="Unidad"
+            filter-type="select"
+            :model-value="unitFilter"
+            :options="unitHeaderOptions"
+            all-label="Todas"
+            @update:model-value="$emit('update:unitFilter', typeof $event === 'string' ? $event : '')"
+          />
+        </template>
+
+        <template #header-category>
+          <UiTableHeaderFilter
+            title="Categoría"
+            filter-type="select"
+            :model-value="categoryFilter"
+            :options="categoryHeaderOptions"
+            all-label="Todas"
+            @update:model-value="$emit('update:categoryFilter', typeof $event === 'string' ? $event : '')"
+          />
+        </template>
+
+        <template #header-status>
+          <UiTableHeaderFilter
+            title="Estado"
+            column-key="status"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="headerStatusFilter"
+            :options="stockStatusHeaderOptions"
+            all-label="Todos"
+            align="center"
+            @sort="$emit('sort', $event)"
+            @update:model-value="updateHeaderStatusFilter"
+          />
+        </template>
+
         <template #card="{ item, index }">
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
@@ -131,6 +170,10 @@
 
         <template #cell-unit="{ value }">
           <span class="text-sm text-text-secondary">{{ value }}</span>
+        </template>
+
+        <template #cell-category="{ value }">
+          <span class="text-sm text-text-secondary">{{ value || '-' }}</span>
         </template>
 
         <template #cell-current_stock="{ value }">
@@ -304,7 +347,7 @@ const props = withDefaults(defineProps<{
   highlightNegativeStock: false,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   'update:search': [value: string]
   'update:categoryFilter': [value: string]
   'update:statusFilter': [value: string]
@@ -318,6 +361,33 @@ defineEmits<{
 
 const filterSelectClass = 'h-10 min-h-[44px] px-3 rounded-lg border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0'
 
+const categoryHeaderOptions = computed(() =>
+  props.categories.map(category => ({
+    label: category,
+    value: category,
+  })),
+)
+
+const unitHeaderOptions = computed(() =>
+  props.units.map(unit => ({
+    label: unit,
+    value: unit,
+  })),
+)
+
+const stockStatusHeaderOptions = computed(() =>
+  props.statusOptions.map(option => ({
+    label: option.label,
+    value: option.value,
+  })),
+)
+
+const headerStatusFilter = computed(() => props.statusFilter === 'all' ? '' : props.statusFilter)
+
+const updateHeaderStatusFilter = (value: string | boolean) => {
+  emit('update:statusFilter', typeof value === 'string' && value ? value : 'all')
+}
+
 const stockTableColumns = computed(() => [
   {
     key: 'ingredient_name',
@@ -329,6 +399,13 @@ const stockTableColumns = computed(() => [
   {
     key: 'unit',
     title: 'Unidad',
+    sortable: false,
+    format: 'text',
+    align: 'left',
+  },
+  {
+    key: 'category',
+    title: 'Categoría',
     sortable: false,
     format: 'text',
     align: 'left',

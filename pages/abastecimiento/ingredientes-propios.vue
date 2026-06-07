@@ -25,7 +25,7 @@
         <template #additional-filters>
           <select
             v-model="typeFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por tipo"
             @change="currentPage = 1"
           >
@@ -73,6 +73,17 @@
         variant="default"
         row-size="xs"
       >
+        <template #header-type>
+          <UiTableHeaderFilter
+            title="Tipo"
+            filter-type="select"
+            :model-value="typeFilter"
+            :options="typeHeaderOptions"
+            all-label="Todos"
+            @update:model-value="updateTypeFilter"
+          />
+        </template>
+
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
@@ -249,6 +260,12 @@ const TYPE_LABELS: Record<string, string> = {
   service: WAREHOUSE_COPY.typeService,
 }
 
+const typeHeaderOptions = [
+  { value: 'food', label: WAREHOUSE_COPY.typeFood },
+  { value: 'supply', label: WAREHOUSE_COPY.typeSupply },
+  { value: 'service', label: WAREHOUSE_COPY.typeService },
+]
+
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
 
@@ -287,6 +304,11 @@ const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 const toggleArchived = () => {
   showArchived.value = !showArchived.value
+  currentPage.value = 1
+}
+
+const updateTypeFilter = (value: string | boolean) => {
+  typeFilter.value = typeof value === 'string' ? value : ''
   currentPage.value = 1
 }
 

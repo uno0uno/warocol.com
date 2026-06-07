@@ -24,7 +24,7 @@
         <template #additional-filters>
           <select
             v-model="proveedorFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por proveedor"
             @change="currentPage = 1"
           >
@@ -34,7 +34,7 @@
 
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
             @change="currentPage = 1"
           >
@@ -73,6 +73,39 @@
         empty-sub-message="Crea una nueva orden para comenzar"
         variant="default"
       >
+        <template #header-proveedor>
+          <UiTableHeaderFilter
+            title="Proveedor"
+            column-key="proveedor"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="proveedorFilter"
+            :options="supplierHeaderOptions"
+            all-label="Todos"
+            @sort="handleSort"
+            @update:model-value="updateProveedorFilter"
+          />
+        </template>
+
+        <template #header-estado>
+          <UiTableHeaderFilter
+            title="Estado"
+            column-key="estado"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="statusFilter"
+            :options="purchaseStatusOptions"
+            all-label="Todos"
+            align="center"
+            @sort="handleSort"
+            @update:model-value="updateStatusFilter"
+          />
+        </template>
+
         <!-- Mobile Card Slot -->
         <template #card="{ item, index }">
           <div
@@ -271,7 +304,24 @@ const purchaseStatusOptions = [
   { label: 'Cancelada', value: 'cancelled' }
 ]
 
+const supplierHeaderOptions = computed(() =>
+  suppliers.value.map((supplier: any) => ({
+    label: supplier.name,
+    value: supplier.id,
+  })),
+)
+
 const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+const updateProveedorFilter = (value: string | boolean) => {
+  proveedorFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const updateStatusFilter = (value: string | boolean) => {
+  statusFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
 
 const hasActiveFilters = computed(
   () =>
@@ -284,7 +334,7 @@ const hasActiveFilters = computed(
 
 // Sorting state
 const sortField = ref('')
-const sortDirection = ref('asc')
+const sortDirection = ref<'asc' | 'desc'>('asc')
 
 const clearFilters = () => {
   clearSearch()

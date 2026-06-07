@@ -24,7 +24,7 @@
         <template #additional-filters>
           <select
             v-model="proveedorFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por proveedor"
             @change="currentPage = 1"
           >
@@ -34,7 +34,7 @@
 
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
             @change="currentPage = 1"
           >
@@ -83,6 +83,39 @@
         variant="default"
         row-size="sm"
       >
+        <template #header-supplier_name>
+          <UiTableHeaderFilter
+            title="Proveedor"
+            column-key="supplier_name"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="proveedorFilter"
+            :options="supplierHeaderOptions"
+            all-label="Todos"
+            @sort="handleSort"
+            @update:model-value="updateProveedorFilter"
+          />
+        </template>
+
+        <template #header-status>
+          <UiTableHeaderFilter
+            title="Estado"
+            column-key="status"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="statusFilter"
+            :options="statusOptions"
+            all-label="Todos"
+            align="center"
+            @sort="handleSort"
+            @update:model-value="updateStatusFilter"
+          />
+        </template>
+
         <!-- Mobile Card Slot -->
         <template #card="{ item, index }">
           <div
@@ -295,6 +328,13 @@ const { data: suppliersResponse } = useQuery({
 })
 const suppliers = computed(() => suppliersResponse.value?.data || [])
 
+const supplierHeaderOptions = computed(() =>
+  suppliers.value.map((supplier: any) => ({
+    label: supplier.name,
+    value: supplier.id,
+  })),
+)
+
 // Status options
 const statusOptions = [
   { value: 'received', label: 'Recibida' },
@@ -374,6 +414,16 @@ const handleSort = (field: string) => {
     sortField.value = field
     sortDirection.value = 'desc'
   }
+}
+
+const updateProveedorFilter = (value: string | boolean) => {
+  proveedorFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const updateStatusFilter = (value: string | boolean) => {
+  statusFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
 }
 
 const hasActiveFilters = computed(
