@@ -78,49 +78,6 @@
               </label>
             </div>
           </div>
-          <!-- KDS station URLs with token management (when KDS enabled) -->
-          <div v-if="businessProfile?.kds_enabled" class="mt-2 space-y-2">
-            <div
-              v-for="st in stations.filter((s: any) => s.is_active)"
-              :key="st.id"
-              class="rounded-lg bg-background border border-border px-3 py-2.5 space-y-1.5"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-text-primary">{{ st.name }}</span>
-                <div class="flex items-center gap-1.5">
-                  <button
-                    v-if="!kdsTokens[st.id]"
-                    @click="generateKdsToken(st.id)"
-                    :disabled="generatingToken === st.id"
-                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50"
-                  >
-                    {{ generatingToken === st.id ? 'Generando...' : 'Generar enlace' }}
-                  </button>
-                  <template v-else>
-                    <button
-                      @click="copyKdsUrl(st.id)"
-                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-1"
-                      aria-label="Copiar enlace KDS"
-                    >
-                      <ClipboardIcon class="w-3 h-3" />
-                      Copiar
-                    </button>
-                    <button
-                      @click="revokeKdsToken(st.id)"
-                      :disabled="revokingToken === st.id"
-                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
-                      aria-label="Revocar enlace KDS"
-                    >
-                      {{ revokingToken === st.id ? '...' : 'Revocar' }}
-                    </button>
-                  </template>
-                </div>
-              </div>
-              <div v-if="kdsTokens[st.id]" class="text-[10px] font-mono text-text-tertiary truncate">
-                {{ kdsBaseUrl }}/cocina/{{ st.id }}?token={{ kdsTokens[st.id] }}
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Issue #537 — Expediter mode (waiter advances comanda state from POS) -->
@@ -181,7 +138,51 @@
             :is-toggling="togglingStationId === st.id"
             @edit="openEditStation"
             @toggle="handleToggleStation"
-          />
+          >
+            <template #kds="{ station: cardStation }">
+              <div v-if="businessProfile?.kds_enabled && cardStation.is_active" class="flex items-center gap-1.5">
+                <button
+                  v-if="!kdsTokens[cardStation.id]"
+                  @click="generateKdsToken(cardStation.id)"
+                  :disabled="generatingToken === cardStation.id"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
+                  aria-label="Generar QR KDS"
+                  title="Generar QR"
+                >
+                  <UiLoadingDots v-if="generatingToken === cardStation.id" size="7px" color="currentColor" />
+                  <QrCodeIcon v-else class="w-4 h-4" />
+                </button>
+                <template v-else>
+                  <button
+                    @click="copyKdsUrl(cardStation.id)"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
+                    aria-label="Copiar enlace KDS"
+                    title="Copiar enlace"
+                  >
+                    <ClipboardIcon class="w-4 h-4" />
+                  </button>
+                  <button
+                    @click="revokeKdsToken(cardStation.id)"
+                    :disabled="revokingToken === cardStation.id"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
+                    aria-label="Revocar enlace KDS"
+                    title="Revocar enlace"
+                  >
+                    <UiLoadingDots v-if="revokingToken === cardStation.id" size="7px" color="currentColor" />
+                    <XMarkIcon v-else class="w-4 h-4" />
+                  </button>
+                  <button
+                    @click="downloadKdsQrPng(cardStation.id, cardStation.name)"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
+                    aria-label="Descargar QR KDS"
+                    title="Descargar QR"
+                  >
+                    <ArrowDownTrayIcon class="w-4 h-4" />
+                  </button>
+                </template>
+              </div>
+            </template>
+          </GestionCocinaStationCard>
         </template>
         <template #cell-name="{ item: st }">
           <div class="flex items-center gap-2">
@@ -203,6 +204,50 @@
         </template>
         <template #cell-thresholds="{ item: st }">
           <span class="text-xs text-text-secondary">{{ st.alert_threshold_1_min }}m / {{ st.alert_threshold_2_min }}m</span>
+        </template>
+        <template #cell-kds="{ item: st }">
+          <div v-if="businessProfile?.kds_enabled && st.is_active" class="flex items-center gap-1.5">
+            <button
+              v-if="!kdsTokens[st.id]"
+              @click="generateKdsToken(st.id)"
+              :disabled="generatingToken === st.id"
+              class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
+              aria-label="Generar QR KDS"
+              title="Generar QR"
+            >
+              <UiLoadingDots v-if="generatingToken === st.id" size="7px" color="currentColor" />
+              <QrCodeIcon v-else class="w-4 h-4" />
+            </button>
+            <template v-else>
+              <button
+                @click="copyKdsUrl(st.id)"
+                class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
+                aria-label="Copiar enlace KDS"
+                title="Copiar enlace"
+              >
+                <ClipboardIcon class="w-4 h-4" />
+              </button>
+              <button
+                @click="revokeKdsToken(st.id)"
+                :disabled="revokingToken === st.id"
+                class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
+                aria-label="Revocar enlace KDS"
+                title="Revocar enlace"
+              >
+                <UiLoadingDots v-if="revokingToken === st.id" size="7px" color="currentColor" />
+                <XMarkIcon v-else class="w-4 h-4" />
+              </button>
+              <button
+                @click="downloadKdsQrPng(st.id, st.name)"
+                class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
+                aria-label="Descargar QR KDS"
+                title="Descargar QR"
+              >
+                <ArrowDownTrayIcon class="w-4 h-4" />
+              </button>
+            </template>
+          </div>
+          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
         <template #cell-actions="{ item: st }">
           <div class="flex items-center gap-1">
@@ -442,11 +487,14 @@ import {
   QueueListIcon,
   PlusIcon,
   ClipboardIcon,
+  QrCodeIcon,
+  ArrowDownTrayIcon,
   ArrowsRightLeftIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
   PencilSquareIcon,
 } from '@heroicons/vue/24/outline'
+import QRCode from 'qrcode'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Comandas & Cocina | Operaciones' })
@@ -694,13 +742,36 @@ const revokeKdsToken = async (stationId: string) => {
   }
 }
 
-const copyKdsUrl = (stationId: string) => {
+const buildKdsUrl = (stationId: string) => {
   const token = kdsTokens.value[stationId]
-  const url = token
+  return token
     ? `${kdsBaseUrl}/cocina/${stationId}?token=${token}`
     : `${kdsBaseUrl}/cocina/${stationId}`
+}
+
+const copyKdsUrl = (stationId: string) => {
+  const url = buildKdsUrl(stationId)
   navigator.clipboard.writeText(url)
   toast.success('Enlace KDS copiado al portapapeles')
+}
+
+const downloadKdsQrPng = async (stationId: string, stationName: string) => {
+  if (!kdsTokens.value[stationId]) {
+    toast.error('Genera el enlace KDS primero', { title: 'Sin enlace' })
+    return
+  }
+
+  try {
+    const dataUrl = await QRCode.toDataURL(buildKdsUrl(stationId), { width: 512, margin: 2 })
+    const anchor = document.createElement('a')
+    const safeName = stationName.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || 'estacion'
+    anchor.href = dataUrl
+    anchor.download = `qr-kds-${safeName}.png`
+    anchor.click()
+    toast.success('QR KDS descargado', { title: 'Listo' })
+  } catch {
+    toast.error('No se pudo generar el código QR', { title: 'Error' })
+  }
 }
 
 // ─── Station CRUD ───
@@ -709,6 +780,7 @@ const stationColumns = [
   { key: 'monitor', title: 'Monitor', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'thresholds', title: 'Alertas', sortable: false },
+  { key: 'kds', title: 'Enlace KDS', sortable: false },
   { key: 'actions', title: '', sortable: false },
 ]
 
