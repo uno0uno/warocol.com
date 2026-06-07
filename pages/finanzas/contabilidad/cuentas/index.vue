@@ -6,8 +6,6 @@ import { TZDate } from '@date-fns/tz'
 
 const TZ = 'America/Bogota'
 const nowCO = () => new TZDate(new Date(), TZ)
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -338,17 +336,23 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <div
           v-for="group in groupedAccounts"
           :key="group.cls"
+          class="flex flex-col gap-2"
         >
-          <HealthSemaphore :is-unlocked="true" :title="`${group.label} · ${group.items.length} ${group.items.length === 1 ? 'cuenta' : 'cuentas'}`">
-            <div class="[&_td]:!py-1 [&_th]:!py-1.5">
-              <UiResponsiveDataView
-                row-size="sm"
-                :columns="tableColumns"
-                :data="group.items"
-                empty-message="Sin cuentas en esta clase"
-                variant="default"
-                @row-click="openAccount"
-              >
+          <div class="flex items-center justify-between gap-3 px-1">
+            <p class="text-sm font-semibold text-text-primary">{{ group.label }}</p>
+            <span class="text-xs font-medium text-text-secondary">
+              {{ group.items.length }} {{ group.items.length === 1 ? 'cuenta' : 'cuentas' }}
+            </span>
+          </div>
+          <div class="[&_td]:!py-1 [&_th]:!py-1.5">
+            <UiResponsiveDataView
+              row-size="sm"
+              :columns="tableColumns"
+              :data="group.items"
+              empty-message="Sin cuentas en esta clase"
+              variant="default"
+              @row-click="openAccount"
+            >
                 <!-- Mobile card -->
                 <template #card="{ item, index }">
                   <div
@@ -513,9 +517,8 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                   </div>
                 </template>
 
-              </UiResponsiveDataView>
-            </div>
-          </HealthSemaphore>
+            </UiResponsiveDataView>
+          </div>
         </div>
 
         <!-- Empty state -->

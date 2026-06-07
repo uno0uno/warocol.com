@@ -2,8 +2,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import MetricCard from '~/components/shared/MetricCard.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -197,11 +195,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
             <option value="other_expense">Otro gasto</option>
           </select>
         </template>
-      </UiAdvancedFiltersBar>
-
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Control de Gastos">
-        <template #header-actions>
+        <template #trailing>
           <NuxtLink
             to="/finanzas/gastos/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
@@ -210,6 +204,9 @@ onUnmounted(() => { clearRefreshHandler(refetch)
             <span class="sm:hidden">+ Nuevo</span>
           </NuxtLink>
         </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View -->
       <UiResponsiveDataView
         row-size="sm"
         :columns="expensesTableColumns"
@@ -305,7 +302,6 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>

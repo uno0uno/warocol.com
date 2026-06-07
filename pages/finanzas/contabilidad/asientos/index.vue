@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -310,8 +308,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Entries table -->
-      <HealthSemaphore v-else :is-unlocked="true" :title="`${totalEntries.toLocaleString('es-CO')} asientos`">
-        <div class="[&_td]:!py-1 [&_th]:!py-1.5">
+      <div v-else class="[&_td]:!py-1 [&_th]:!py-1.5">
         <UiResponsiveDataView
           row-size="sm"
           :columns="tableColumns"
@@ -398,8 +395,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         </UiResponsiveDataView>
-        </div>
-      </HealthSemaphore>
+      </div>
 
       <!-- Pagination -->
       <div v-if="totalEntries > 0" class="flex items-center justify-end px-1 py-2">

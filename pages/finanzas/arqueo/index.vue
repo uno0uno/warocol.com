@@ -146,7 +146,6 @@
       </div>
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
       <UiResponsiveDataView
         :data="filteredHistorial"
         :columns="historialColumns"
@@ -237,7 +236,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
     </div>
 
@@ -300,8 +298,6 @@ import {
   todayBogotaISO,
 } from '~/utils/bogotaDate'
 import MetricCard from '~/components/shared/MetricCard.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
