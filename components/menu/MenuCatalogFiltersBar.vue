@@ -14,6 +14,7 @@ const props = withDefaults(
     showNoRecipe?: boolean
     showCostDrift?: boolean
     showProductTypeFilter?: boolean
+    tableHeaderFilters?: boolean
   }>(),
   {
     searchPlaceholder: 'Buscar productos...',
@@ -23,6 +24,7 @@ const props = withDefaults(
     showNoRecipe: true,
     showCostDrift: false,
     showProductTypeFilter: false,
+    tableHeaderFilters: false,
   },
 )
 
@@ -80,6 +82,8 @@ const productTypeOptions: { label: string; value: ProductTypeFilter }[] = [
   { label: 'Menú', value: 'menu' },
   { label: 'Reventa', value: 'resale' },
 ]
+
+const columnFilterFallbackClass = computed(() => props.tableHeaderFilters ? 'md:hidden' : '')
 
 function productTypeChipClassFor(value: ProductTypeFilter): string {
   return productTypeChipClass(productTypeFilter.value === value)
@@ -146,7 +150,7 @@ watch(
         v-if="showProductTypeFilter"
         role="group"
         aria-label="Tipo de producto"
-        class="flex flex-wrap items-center gap-2"
+        :class="['flex flex-wrap items-center gap-2', columnFilterFallbackClass]"
       >
         <button
           v-for="opt in productTypeOptions"
@@ -165,6 +169,7 @@ watch(
         placeholder="Categoría"
         aria-label="Filtrar por categoría"
         :options="categories.map(c => ({ label: c.name, value: c.id }))"
+        :class="columnFilterFallbackClass"
       />
 
       <UiFilterSelect
@@ -172,6 +177,7 @@ watch(
         placeholder="Estado"
         aria-label="Filtrar por estado"
         :options="statusOptions"
+        :class="columnFilterFallbackClass"
       />
 
       <UiFilterSelect
@@ -189,14 +195,15 @@ watch(
         :options="sortOptions"
         always-active
         hide-placeholder
+        :class="columnFilterFallbackClass"
       />
 
-      <label v-if="showOnline" :class="filterChipClass(onlineOnly)">
+      <label v-if="showOnline" :class="[filterChipClass(onlineOnly), columnFilterFallbackClass]">
         <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en domicilios" />
         <span class="font-semibold">Domicilios</span>
       </label>
 
-      <label v-if="showQr" :class="filterChipClass(qrOnly)">
+      <label v-if="showQr" :class="[filterChipClass(qrOnly), columnFilterFallbackClass]">
         <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
         <span class="font-semibold">QR mesa</span>
       </label>
@@ -206,7 +213,7 @@ watch(
         <span class="font-semibold">Sin receta</span>
       </label>
 
-      <label :class="filterChipClass(marginNegativeOnly)">
+      <label :class="[filterChipClass(marginNegativeOnly), columnFilterFallbackClass]">
         <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
         <span class="font-semibold">Margen negativo</span>
       </label>
