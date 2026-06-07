@@ -4,8 +4,6 @@ import { useRoute } from 'vue-router'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard',
@@ -233,8 +231,9 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
           <CommonsTheCustomLoader size="medium" />
         </div>
 
-        <HealthSemaphore v-else :is-unlocked="true" :title="member.name">
-          <template #header-actions>
+        <div v-else class="flex flex-col gap-4">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <h2 class="text-base font-semibold text-text-primary">{{ member.name }}</h2>
             <div class="flex items-center gap-2 flex-shrink-0">
               <span
                 v-if="member.email"
@@ -247,88 +246,87 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
                 {{ roleLabel(member.role) }}
               </span>
             </div>
-          </template>
+          </div>
 
-          <div class="flex flex-col gap-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-              <MetricCard
-                title="Hoy"
-                :value="todayAgg.sum"
-                format="currency"
-                variant="primary"
-                :subtitle="`Promedio: ${formatPercent(todayAgg.avg)}`"
-              />
-              <MetricCard
-                title="Últimos 7 días"
-                :value="weekAgg.sum"
-                format="currency"
-                variant="primary"
-                :subtitle="`Promedio: ${formatPercent(weekAgg.avg)}`"
-              />
-              <MetricCard
-                title="Últimos 30 días"
-                :value="monthAgg.sum"
-                format="currency"
-                variant="primary"
-                :subtitle="`Promedio: ${formatPercent(monthAgg.avg)}`"
-              />
-            </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+            <MetricCard
+              title="Hoy"
+              :value="todayAgg.sum"
+              format="currency"
+              variant="primary"
+              :subtitle="`Promedio: ${formatPercent(todayAgg.avg)}`"
+            />
+            <MetricCard
+              title="Últimos 7 días"
+              :value="weekAgg.sum"
+              format="currency"
+              variant="primary"
+              :subtitle="`Promedio: ${formatPercent(weekAgg.avg)}`"
+            />
+            <MetricCard
+              title="Últimos 30 días"
+              :value="monthAgg.sum"
+              format="currency"
+              variant="primary"
+              :subtitle="`Promedio: ${formatPercent(monthAgg.avg)}`"
+            />
+          </div>
 
-            <div class="flex flex-col gap-3">
-              <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
-              <UiResponsiveDataView
-                :columns="columns"
-                :data="recentTips"
-                empty-message="Sin propinas registradas"
-                empty-sub-message="Las propinas atribuidas a este mesero aparecerán aquí."
-                item-key="id"
-                row-size="sm"
-              >
-                <template #card="{ item, index }">
-                  <div :class="['flex flex-col gap-1.5 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-baseline gap-2">
-                        <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDate(item.order_date) }}</span>
-                        <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
-                      </div>
-                      <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
+          <div class="flex flex-col gap-3">
+            <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
+            <UiResponsiveDataView
+              :columns="columns"
+              :data="recentTips"
+              empty-message="Sin propinas registradas"
+              empty-sub-message="Las propinas atribuidas a este mesero aparecerán aquí."
+              item-key="id"
+              row-size="sm"
+            >
+              <template #card="{ item, index }">
+                <div :class="['flex flex-col gap-1.5 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDate(item.order_date) }}</span>
+                      <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
                     </div>
-                    <div class="flex items-end justify-between">
-                      <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
-                      <div class="text-right">
-                        <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
-                        <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
-                      </div>
+                    <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
+                  </div>
+                  <div class="flex items-end justify-between">
+                    <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
+                    <div class="text-right">
+                      <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
+                      <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
                     </div>
                   </div>
-                </template>
+                </div>
+              </template>
 
-                <template #cell-order_date="{ value }">
-                  <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
-                </template>
-                <template #cell-order_number="{ value }">
-                  <span class="text-sm font-medium text-primary">#{{ value }}</span>
-                </template>
-                <template #cell-channel="{ row }">
-                  <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
-                </template>
-                <template #cell-total_amount="{ value }">
-                  <span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span>
-                </template>
-                <template #cell-tip_amount="{ value }">
-                  <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
-                </template>
-                <template #cell-tip_percent="{ value }">
-                  <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
-                </template>
-              </UiResponsiveDataView>
-            </div>
+              <template #cell-order_date="{ value }">
+                <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
+              </template>
+              <template #cell-order_number="{ value }">
+                <span class="text-sm font-medium text-primary">#{{ value }}</span>
+              </template>
+              <template #cell-channel="{ row }">
+                <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
+              </template>
+              <template #cell-total_amount="{ value }">
+                <span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span>
+              </template>
+              <template #cell-tip_amount="{ value }">
+                <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+              </template>
+              <template #cell-tip_percent="{ value }">
+                <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
+              </template>
+            </UiResponsiveDataView>
           </div>
-        </HealthSemaphore>
+        </div>
       </template>
 
-      <HealthSemaphore v-else :is-unlocked="true" :title="member.name">
-        <template #header-actions>
+      <div v-else class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <h2 class="text-base font-semibold text-text-primary">{{ member.name }}</h2>
           <div class="flex items-center gap-2 flex-shrink-0">
             <span
               v-if="member.email"
@@ -341,11 +339,11 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
               {{ roleLabel(member.role) }}
             </span>
           </div>
-        </template>
+        </div>
         <p class="text-sm text-text-secondary">
           Las propinas no están habilitadas en este restaurante.
         </p>
-      </HealthSemaphore>
+      </div>
     </div>
   </div>
 </template>

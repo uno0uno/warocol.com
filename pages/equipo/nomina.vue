@@ -4,8 +4,6 @@ import { useFormatters } from '~/composables/useFormatters'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Nómina — Equipo' })
 
@@ -680,15 +678,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       </Transition>
 
       <!-- Data table -->
-      <HealthSemaphore :is-unlocked="true" title="Estado de Prestaciones Sociales">
-        <UiResponsiveDataView
-          :columns="tableColumns"
-          :data="tableData"
-          empty-message="No hay empleados registrados"
-          empty-sub-message="Los empleados y jornaleros aparecerán aquí"
-          variant="default"
-          row-size="xs"
-        >
+      <UiResponsiveDataView
+        :columns="tableColumns"
+        :data="tableData"
+        empty-message="No hay empleados registrados"
+        empty-sub-message="Los empleados y jornaleros aparecerán aquí"
+        variant="default"
+        row-size="xs"
+      >
 
           <!-- ── Mobile card ──────────────────────────────────────────── -->
           <template #card="{ item, index }">
@@ -853,8 +850,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             </button>
           </template>
 
-        </UiResponsiveDataView>
-      </HealthSemaphore>
+      </UiResponsiveDataView>
 
       <!-- ── PILA Section ──────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm">

@@ -10,48 +10,48 @@
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-    <UiAdvancedFiltersBar
-      v-model:search="localSearchTerm"
-      :search-fields="[]"
-      search-placeholder="Buscar por nombre o correo..."
-      :show-date-range="false"
-      :show-clear="hasActiveFilters"
-      @search="performSearch"
-      @clear="clearFilters"
-    >
-      <template #additional-filters>
-        <select
-          v-model="roleFilter"
-          :class="filterSelectClass"
-          aria-label="Filtrar por rol"
-        >
-          <option value="">Rol</option>
-          <option value="superuser">Superusuario</option>
-          <option value="admin">Administrador</option>
-          <option value="employee">Empleado</option>
-          <option value="member">Miembro</option>
-        </select>
-      </template>
-    </UiAdvancedFiltersBar>
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
+        search-placeholder="Buscar por nombre o correo..."
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="roleFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por rol"
+          >
+            <option value="">Rol</option>
+            <option value="superuser">Superusuario</option>
+            <option value="admin">Administrador</option>
+            <option value="employee">Empleado</option>
+            <option value="member">Miembro</option>
+          </select>
+        </template>
 
-    <!-- Responsive Data View -->
-    <HealthSemaphore :is-unlocked="true" title="Miembros del equipo">
-      <template #header-actions>
-        <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Invitar miembro
-        </button>
-      </template>
-    <UiResponsiveDataView
-      :columns="teamMembersTableColumns"
-      :data="teamMembers"
-      empty-message="No hay miembros en este equipo"
-      empty-sub-message="Los miembros apareceran aqui cuando sean agregados"
-      variant="default"
-      row-size="sm"
-    >
+        <template #trailing>
+          <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Invitar miembro
+          </button>
+        </template>
+      </UiAdvancedFiltersBar>
+
+      <!-- Responsive Data View -->
+      <UiResponsiveDataView
+        :columns="teamMembersTableColumns"
+        :data="teamMembers"
+        empty-message="No hay miembros en este equipo"
+        empty-sub-message="Los miembros apareceran aqui cuando sean agregados"
+        variant="default"
+        row-size="sm"
+      >
 
       <!-- Mobile Card -->
       <template #card="{ item, index }">
@@ -197,8 +197,7 @@
           </button>
         </div>
       </template>
-    </UiResponsiveDataView>
-    </HealthSemaphore>
+      </UiResponsiveDataView>
 
     <!-- Pending Invitations Section -->
     <div v-if="pendingInvitations.length > 0" class="bg-surface rounded-xl border border-border">
@@ -622,8 +621,6 @@
 </template>
 
 <script setup lang="ts">
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useFormatters } from '~/composables/useFormatters'
 const { formatDate: _fmtDate } = useFormatters()
 useHead({ title: 'Miembros - Equipo' })

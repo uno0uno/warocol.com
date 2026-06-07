@@ -18,25 +18,25 @@
         <p class="text-xs text-status-info-text">Usa tu API Key con el header <code class="font-mono font-medium">Authorization: Bearer waro_sk_...</code></p>
       </div>
 
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="hidden sm:inline">Crear API Key</span>
+          <span class="sm:hidden">+ Nueva</span>
+        </button>
+      </div>
+
       <!-- API Keys Table -->
-      <HealthSemaphore :is-unlocked="true" title="API Keys">
-        <template #header-actions>
-          <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="hidden sm:inline">Crear API Key</span>
-            <span class="sm:hidden">+ Nueva</span>
-          </button>
-        </template>
-        <UiResponsiveDataView
-          :columns="tableColumns"
-          :data="activeTokens"
-          empty-message="No tienes API keys activas"
-          empty-sub-message="Crea una para comenzar a integrar"
-          variant="default"
-          row-size="sm"
-        >
+      <UiResponsiveDataView
+        :columns="tableColumns"
+        :data="activeTokens"
+        empty-message="No tienes API keys activas"
+        empty-sub-message="Crea una para comenzar a integrar"
+        variant="default"
+        row-size="sm"
+      >
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
@@ -120,8 +120,7 @@
             </button>
           </div>
         </template>
-        </UiResponsiveDataView>
-      </HealthSemaphore>
+      </UiResponsiveDataView>
     </div>
 
     <!-- Create Token Modal -->
@@ -287,8 +286,6 @@
 </template>
 
 <script setup lang="ts">
-// @ts-ignore — path alias resolved by Vite at runtime; TS language server false positive
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'integraciones' })

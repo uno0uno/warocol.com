@@ -5,7 +5,6 @@ import { useDebounceFn } from '@vueuse/core'
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -290,7 +289,7 @@ onUnmounted(() => {
         <CommonsTheCustomLoader size="medium" />
       </div>
 
-      <HealthSemaphore v-else :is-unlocked="true" title="Comportamiento y valor de clientes">
+      <template v-else>
         <UiResponsiveDataView
           row-size="sm"
           :columns="tableColumns"
@@ -426,7 +425,7 @@ onUnmounted(() => {
             </nav>
           </div>
         </div>
-      </HealthSemaphore>
+      </template>
 
     </div>
   </div>
