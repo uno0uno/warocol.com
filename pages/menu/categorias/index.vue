@@ -38,7 +38,7 @@
           <template #additional-filters>
             <select
               v-model="tipoFilter"
-              :class="filterSelectClass"
+              :class="[filterSelectClass, 'md:hidden']"
               aria-label="Filtrar por tipo"
             >
               <option value="">Tipo</option>
@@ -57,6 +57,17 @@
           variant="default"
           row-size="sm"
         >
+          <template #header-tipo>
+            <UiTableHeaderFilter
+              v-model="tipoFilter"
+              title="Tipo"
+              filter-type="select"
+              :options="tipoHeaderOptions"
+              all-label="Todos"
+              align="left"
+            />
+          </template>
+
       <!-- Mobile row (matches /menu/modificadores pattern) -->
       <template #card="{ item, index }">
         <div
@@ -198,6 +209,10 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const tipoFilter = ref<'global' | 'own' | ''>('')
 
 const performSearch = () => applySearch()
+const tipoHeaderOptions = [
+  { label: 'Global', value: 'global' },
+  { label: 'Propia', value: 'own' },
+]
 
 const hasActiveFilters = computed(
   () => !!localSearchTerm.value || !!appliedSearch.value || !!tipoFilter.value,
