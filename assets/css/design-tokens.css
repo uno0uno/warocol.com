@@ -14,6 +14,7 @@
   /* === TITAN WHITE (Grises Claros) - HSL Tokens === */
   --titan-50: 0 0% 100%; /* #FFFFFF */
   --titan-100: 220 14% 97%; /* #F8F9FA */
+  --titan-150: 220 14% 96%; /* #F4F6F8 */
   --titan-200: 240 100% 96%; /* #EBF0FF */
   --titan-300: 220 11% 90%; /* #E0E5EB */
   --titan-400: 220 8% 85%; /* #D5DBE1 */
@@ -23,17 +24,17 @@
   --titan-800: 220 7% 57%; /* #8A949F */
   --titan-900: 220 8% 50%; /* #75808C */
 
-  /* === CROCUS BRAND (Temporal grayscale audit) - HSL Tokens === */
-  --crocus-50: 0 0% 98%; /* #FAFAFA */
-  --crocus-100: 0 0% 94%; /* #F0F0F0 */
-  --crocus-200: 0 0% 86%; /* #DBDBDB */
-  --crocus-300: 0 0% 74%; /* #BDBDBD */
-  --crocus-400: 0 0% 52%; /* #858585 */
-  --crocus-500: 0 0% 32%; /* #525252 */
-  --crocus-600: 0 0% 0%; /* #000000 */
-  --crocus-700: 0 0% 10%; /* #1A1A1A */
-  --crocus-800: 0 0% 16%; /* #292929 */
-  --crocus-900: 0 0% 22%; /* #383838 */
+  /* === CROCUS PURPLE (Púrpura) - HSL Tokens === */
+  --crocus-50: 250 100% 98%; /* #F5F3FF */
+  --crocus-100: 251 91% 95%; /* #EDE9FE */
+  --crocus-200: 251 95% 92%; /* #DDD6FE */
+  --crocus-300: 252 87% 85%; /* #C4B5FD */
+  --crocus-400: 253 91% 78%; /* #A78BFA */
+  --crocus-500: 254 83% 75%; /* #9687F5 */
+  --crocus-600: 262 83% 58%; /* #7C3AED */
+  --crocus-700: 263 70% 50%; /* #6D28D9 */
+  --crocus-800: 262 72% 42%; /* #5B21B6 */
+  --crocus-900: 263 69% 34%; /* #4C1D95 */
 
   /* === NEUTRAL INK (Neutros sin tinte de marca) === */
   --neutral-50: 0 0% 98%; /* #FAFAFA */
@@ -61,23 +62,23 @@
   --ebony-900: 250 30% 16%; /* #1F1D35 */
 
   /* === TEMA CLARO (Titan White Base) === */
-  --background: var(--neutral-50); /* Fondo claro neutro */
-  --foreground: var(--neutral-950); /* Texto oscuro neutro */
+  --background: var(--titan-200); /* Fondo claro suave */
+  --foreground: var(--ebony-900); /* Texto oscuro */
   
   --card: 0 0% 100%; /* Tarjetas blancas */
-  --card-foreground: var(--neutral-950); /* Texto en tarjetas */
+  --card-foreground: var(--ebony-900); /* Texto en tarjetas */
   
   --popover: 0 0% 100%; /* Popovers blancos */
-  --popover-foreground: var(--neutral-950); /* Texto en popovers */
+  --popover-foreground: var(--ebony-900); /* Texto en popovers */
   
   --primary: var(--crocus-600); /* Púrpura principal — crocus-600 para contraste WCAG AA (5.7:1 vs blanco) */
   --primary-foreground: 0 0% 100%; /* Texto en botones primarios */
   
-  --secondary: var(--neutral-200); /* Gris claro secundario */
-  --secondary-foreground: var(--neutral-950); /* Texto secundario */
+  --secondary: var(--titan-400); /* Gris claro secundario */
+  --secondary-foreground: var(--ebony-900); /* Texto secundario */
   
-  --muted: var(--neutral-100); /* Elementos silenciados */
-  --muted-foreground: var(--neutral-600); /* Texto silenciado */
+  --muted: var(--titan-300); /* Elementos silenciados */
+  --muted-foreground: var(--ebony-600); /* Texto silenciado */
   
   --accent: var(--crocus-600); /* Acentos púrpura */
   --accent-foreground: 0 0% 100%; /* Texto en acentos */
@@ -85,20 +86,20 @@
   --destructive: 0 84% 60%; /* Rojo para destructivo */
   --destructive-foreground: 0 0% 100%; /* Texto destructivo */
   
-  --border: var(--neutral-200); /* Bordes grises claros */
+  --border: var(--titan-400); /* Bordes grises claros */
   --input: 0 0% 100%; /* Inputs blancos */
-  --ring: var(--neutral-950); /* Anillos de foco neutros */
+  --ring: var(--crocus-600); /* Anillos de foco púrpura */
   
   --radius: 0.5rem; /* Border radius */
 
   /* === TOKENS EXTENDIDOS WAROCOL === */
   --surface: 0 0% 100%; /* Superficie principal blanca */
-  --surface-secondary: var(--neutral-50); /* Superficie secundaria */
-  --surface-tertiary: var(--neutral-100); /* Superficie terciaria */
+  --surface-secondary: var(--titan-200); /* Superficie secundaria */
+  --surface-tertiary: var(--titan-300); /* Superficie terciaria */
   
-  --text-primary: var(--neutral-950); /* Texto principal */
-  --text-secondary: var(--neutral-600); /* Texto secundario */
-  --text-tertiary: var(--neutral-500); /* Texto terciario */
+  --text-primary: var(--ebony-900); /* Texto principal */
+  --text-secondary: var(--ebony-600); /* Texto secundario */
+  --text-tertiary: var(--ebony-500); /* Texto terciario */
   
   --success: 142 71% 45%; /* Verde éxito */
   --success-foreground: 0 0% 100%; /* Texto éxito */
@@ -271,36 +272,36 @@
 
   --shell-header-bg: var(--surface);
   --shell-header-border: var(--border);
-  --shell-title-text: var(--neutral-950);
-  --shell-subtitle-text: var(--neutral-850);
-  --shell-cta-bg: var(--neutral-950);
-  --shell-cta-text: var(--neutral-50);
-  --shell-cta-hover-bg: var(--neutral-850);
-  --shell-cta-focus-ring: var(--neutral-950);
+  --shell-title-text: var(--text-primary);
+  --shell-subtitle-text: var(--text-secondary);
+  --shell-cta-bg: var(--action-primary-bg);
+  --shell-cta-text: var(--action-primary-text);
+  --shell-cta-hover-bg: var(--action-primary-hover-bg);
+  --shell-cta-focus-ring: var(--action-primary-focus-ring);
   --shell-action-bg: var(--surface);
-  --shell-action-text: var(--neutral-950);
-  --shell-action-border: var(--neutral-200);
-  --shell-action-hover-bg: var(--neutral-100);
-  --shell-action-focus-ring: var(--neutral-950);
-  --shell-icon-bg: var(--neutral-50);
-  --shell-icon-text: var(--neutral-950);
-  --shell-icon-hover-bg: var(--neutral-100);
+  --shell-action-text: var(--text-primary);
+  --shell-action-border: var(--border);
+  --shell-action-hover-bg: var(--surface-secondary);
+  --shell-action-focus-ring: var(--focus-ring);
+  --shell-icon-bg: var(--surface-secondary);
+  --shell-icon-text: var(--text-primary);
+  --shell-icon-hover-bg: var(--surface-tertiary);
   --shell-mobile-bg: var(--surface);
   --shell-mobile-border: var(--border);
   --shell-account-bg: var(--surface);
-  --shell-account-text: var(--neutral-950);
-  --shell-account-hover-bg: var(--neutral-100);
-  --shell-account-border: var(--neutral-200);
-  --shell-account-indicator-bg: var(--neutral-950);
-  --shell-account-icon-text: var(--neutral-950);
-  --shell-account-chevron-text: var(--neutral-850);
-  --shell-account-avatar-bg: var(--neutral-50);
-  --shell-account-avatar-border: var(--neutral-200);
-  --shell-notification-text: var(--neutral-950);
-  --shell-notification-muted-text: var(--neutral-850);
-  --shell-notification-hover-bg: var(--neutral-100);
-  --shell-notification-accent: var(--neutral-950);
-  --shell-notification-accent-bg: var(--neutral-100);
+  --shell-account-text: var(--text-primary);
+  --shell-account-hover-bg: var(--surface-secondary);
+  --shell-account-border: var(--border);
+  --shell-account-indicator-bg: var(--primary);
+  --shell-account-icon-text: var(--text-primary);
+  --shell-account-chevron-text: var(--text-secondary);
+  --shell-account-avatar-bg: var(--surface-secondary);
+  --shell-account-avatar-border: var(--border);
+  --shell-notification-text: var(--text-primary);
+  --shell-notification-muted-text: var(--text-secondary);
+  --shell-notification-hover-bg: var(--surface-secondary);
+  --shell-notification-accent: var(--primary);
+  --shell-notification-accent-bg: var(--control-action-hover-bg);
 
   --badge-neutral-bg: var(--status-chip-bg);
   --badge-neutral-text: var(--status-chip-text);
@@ -353,11 +354,11 @@
 
   /* === COMPONENT TOKENS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--neutral-200);
-  --data-table-header-text: var(--text-primary);
+  --data-table-header-bg: var(--surface-secondary);
+  --data-table-header-text: var(--text-secondary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-100);
-  --data-table-row-hover-bg: 0 0% 90%;
+  --data-table-row-alt-bg: var(--titan-150);
+  --data-table-row-hover-bg: var(--surface-secondary);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);
@@ -412,51 +413,51 @@
 
 /* === TEMA OSCURO (Ebony Clay Base) === */
 .dark {
-  --background: var(--neutral-950); /* Fondo oscuro */
-  --foreground: var(--neutral-50); /* Texto claro */
+  --background: var(--ebony-900); /* Fondo oscuro */
+  --foreground: var(--titan-100); /* Texto claro */
   
-  --card: var(--neutral-800); /* Tarjetas oscuras */
-  --card-foreground: var(--neutral-50); /* Texto en tarjetas */
+  --card: var(--ebony-800); /* Tarjetas oscuras */
+  --card-foreground: var(--titan-100); /* Texto en tarjetas */
   
-  --popover: var(--neutral-800); /* Popovers oscuros */
-  --popover-foreground: var(--neutral-50); /* Texto en popovers */
+  --popover: var(--ebony-800); /* Popovers oscuros */
+  --popover-foreground: var(--titan-100); /* Texto en popovers */
   
   --primary: var(--crocus-400); /* Púrpura más claro para contraste */
-  --primary-foreground: var(--neutral-950); /* Texto oscuro en botones */
+  --primary-foreground: var(--ebony-900); /* Texto oscuro en botones */
   
-  --secondary: var(--neutral-700); /* Gris oscuro secundario */
-  --secondary-foreground: var(--neutral-100); /* Texto claro secundario */
+  --secondary: var(--ebony-600); /* Gris oscuro secundario */
+  --secondary-foreground: var(--titan-200); /* Texto claro secundario */
   
-  --muted: var(--neutral-700); /* Elementos silenciados */
-  --muted-foreground: var(--neutral-400); /* Texto silenciado */
+  --muted: var(--ebony-600); /* Elementos silenciados */
+  --muted-foreground: var(--titan-500); /* Texto silenciado */
   
   --accent: var(--crocus-400); /* Acentos púrpura claro */
-  --accent-foreground: var(--neutral-950); /* Texto en acentos */
+  --accent-foreground: var(--ebony-900); /* Texto en acentos */
   
   --destructive: 0 62% 51%; /* Rojo más suave para tema oscuro */
-  --destructive-foreground: var(--neutral-50); /* Texto destructivo */
+  --destructive-foreground: var(--titan-100); /* Texto destructivo */
   
-  --border: var(--neutral-700); /* Bordes grises oscuros */
-  --input: var(--neutral-800); /* Inputs oscuros */
+  --border: var(--ebony-600); /* Bordes grises oscuros */
+  --input: var(--ebony-800); /* Inputs oscuros */
   --ring: var(--crocus-400); /* Anillos de foco púrpura claro */
 
   /* === TOKENS EXTENDIDOS OSCUROS === */
-  --surface: var(--neutral-800); /* Superficie principal oscura */
-  --surface-secondary: var(--neutral-700); /* Superficie secundaria */
-  --surface-tertiary: var(--neutral-600); /* Superficie terciaria */
+  --surface: var(--ebony-800); /* Superficie principal oscura */
+  --surface-secondary: var(--ebony-700); /* Superficie secundaria */
+  --surface-tertiary: var(--ebony-600); /* Superficie terciaria */
   
-  --text-primary: var(--neutral-50); /* Texto principal claro */
-  --text-secondary: var(--neutral-300); /* Texto secundario */
-  --text-tertiary: var(--neutral-400); /* Texto terciario */
+  --text-primary: var(--titan-100); /* Texto principal claro */
+  --text-secondary: var(--titan-400); /* Texto secundario */
+  --text-tertiary: var(--titan-500); /* Texto terciario */
   
   --success: 142 71% 45%; /* Verde éxito */
-  --success-foreground: var(--neutral-50); /* Texto éxito */
+  --success-foreground: var(--titan-100); /* Texto éxito */
   
   --warning: 38 92% 50%; /* Naranja advertencia */
-  --warning-foreground: var(--neutral-950); /* Texto advertencia */
+  --warning-foreground: var(--ebony-900); /* Texto advertencia */
   
   --info: 218 68% 60%; /* Azul información — más claro para tema oscuro */
-  --info-foreground: var(--neutral-950); /* Texto información */
+  --info-foreground: var(--ebony-900); /* Texto información */
 
   /* === SEMANTIC STATE TOKENS OSCUROS === */
   --state-danger-bg: 0 62% 18%;
@@ -464,21 +465,21 @@
   --state-danger-text: 0 86% 78%;
   --state-danger-icon: 0 86% 68%;
   --state-danger-action-bg: 0 62% 51%;
-  --state-danger-action-text: var(--neutral-50);
+  --state-danger-action-text: var(--titan-100);
 
   --state-warning-bg: 35 76% 16%;
   --state-warning-border: 35 70% 31%;
   --state-warning-text: 43 96% 76%;
   --state-warning-icon: 43 96% 68%;
   --state-warning-action-bg: 38 92% 50%;
-  --state-warning-action-text: var(--neutral-950);
+  --state-warning-action-text: var(--ebony-900);
 
   --state-success-bg: 150 68% 14%;
   --state-success-border: 150 52% 29%;
   --state-success-text: 145 66% 72%;
   --state-success-icon: 145 66% 62%;
   --state-success-action-bg: 142 71% 45%;
-  --state-success-action-text: var(--neutral-50);
+  --state-success-action-text: var(--titan-100);
 
   --state-info-bg: 218 58% 18%;
   --state-info-border: 218 52% 34%;
@@ -492,9 +493,9 @@
   --focus-ring-subtle: var(--crocus-500);
   --control-toggle-track-off: var(--border);
   --control-toggle-track-on: var(--primary);
-  --control-toggle-thumb: var(--neutral-950);
+  --control-toggle-thumb: var(--ebony-900);
   --control-toggle-focus-ring: var(--focus-ring-subtle);
-  --control-action-hover-bg: var(--neutral-700);
+  --control-action-hover-bg: var(--ebony-700);
   --control-action-hover-text: var(--primary);
 
   /* === COMPONENT TOKENS OSCUROS: ACTIONS AND BADGES === */
@@ -544,13 +545,13 @@
 
   /* === COMPONENT TOKENS OSCUROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--neutral-600);
+  --data-table-header-bg: var(--surface-secondary);
   --data-table-header-text: var(--text-primary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-700);
-  --data-table-row-hover-bg: 0 0% 28%;
-  --data-table-row-selected-bg: var(--neutral-700);
-  --data-table-row-new-bg: var(--neutral-700);
+  --data-table-row-alt-bg: var(--surface-secondary);
+  --data-table-row-hover-bg: var(--surface-tertiary);
+  --data-table-row-selected-bg: var(--ebony-700);
+  --data-table-row-new-bg: var(--ebony-700);
   --data-table-border: var(--border);
   --data-table-cell-text: var(--text-primary);
   --data-table-cell-muted: var(--text-secondary);
@@ -570,51 +571,51 @@
 
 /* === TEMA CLARO EXPLÍCITO === */
 .light {
-  --background: var(--neutral-50); /* Fondo claro */
-  --foreground: var(--neutral-950); /* Texto oscuro */
+  --background: var(--titan-100); /* Fondo claro */
+  --foreground: var(--ebony-900); /* Texto oscuro */
   
-  --card: var(--neutral-50); /* Tarjetas blanco puro */
-  --card-foreground: var(--neutral-950); /* Texto en tarjetas */
+  --card: var(--titan-50); /* Tarjetas blanco puro */
+  --card-foreground: var(--ebony-900); /* Texto en tarjetas */
   
-  --popover: var(--neutral-50); /* Popovers blancos */
-  --popover-foreground: var(--neutral-950); /* Texto en popovers */
+  --popover: var(--titan-50); /* Popovers blancos */
+  --popover-foreground: var(--ebony-900); /* Texto en popovers */
   
   --primary: var(--crocus-600); /* Púrpura más intenso */
-  --primary-foreground: var(--neutral-50); /* Texto blanco en botones */
+  --primary-foreground: var(--titan-50); /* Texto blanco en botones */
   
-  --secondary: var(--neutral-100); /* Gris claro secundario */
-  --secondary-foreground: var(--neutral-950); /* Texto oscuro secundario */
+  --secondary: var(--titan-300); /* Gris claro secundario */
+  --secondary-foreground: var(--ebony-800); /* Texto oscuro secundario */
   
-  --muted: var(--neutral-100); /* Elementos silenciados */
-  --muted-foreground: var(--neutral-600); /* Texto silenciado */
+  --muted: var(--titan-300); /* Elementos silenciados */
+  --muted-foreground: var(--ebony-600); /* Texto silenciado */
   
   --accent: var(--crocus-600); /* Acentos púrpura intenso */
-  --accent-foreground: var(--neutral-50); /* Texto en acentos */
+  --accent-foreground: var(--titan-50); /* Texto en acentos */
   
   --destructive: 0 84% 60%; /* Rojo destructivo */
-  --destructive-foreground: var(--neutral-50); /* Texto destructivo */
+  --destructive-foreground: var(--titan-50); /* Texto destructivo */
   
-  --border: var(--neutral-200); /* Bordes grises claros */
-  --input: var(--neutral-50); /* Inputs blancos */
-  --ring: var(--neutral-950); /* Anillos de foco neutros */
+  --border: var(--titan-400); /* Bordes grises claros */
+  --input: var(--titan-50); /* Inputs blancos */
+  --ring: var(--crocus-600); /* Anillos de foco púrpura */
 
   /* === TOKENS EXTENDIDOS CLAROS === */
-  --surface: var(--neutral-50); /* Superficie principal blanca */
-  --surface-secondary: var(--neutral-50); /* Superficie secundaria */
-  --surface-tertiary: var(--neutral-100); /* Superficie terciaria */
+  --surface: var(--titan-50); /* Superficie principal blanca */
+  --surface-secondary: var(--titan-200); /* Superficie secundaria */
+  --surface-tertiary: var(--titan-300); /* Superficie terciaria */
   
-  --text-primary: var(--neutral-950); /* Texto principal */
-  --text-secondary: var(--neutral-600); /* Texto secundario */
-  --text-tertiary: var(--neutral-500); /* Texto terciario */
+  --text-primary: var(--ebony-900); /* Texto principal */
+  --text-secondary: var(--ebony-600); /* Texto secundario */
+  --text-tertiary: var(--ebony-500); /* Texto terciario */
   
   --success: 142 71% 45%; /* Verde éxito */
-  --success-foreground: var(--neutral-50); /* Texto éxito */
+  --success-foreground: var(--titan-50); /* Texto éxito */
   
   --warning: 38 92% 50%; /* Naranja advertencia */
-  --warning-foreground: var(--neutral-950); /* Texto advertencia */
+  --warning-foreground: var(--ebony-900); /* Texto advertencia */
   
   --info: 218 68% 47%; /* Azul información */
-  --info-foreground: var(--neutral-50); /* Texto información */
+  --info-foreground: var(--titan-50); /* Texto información */
 
   /* === SEMANTIC STATE TOKENS CLAROS === */
   --state-danger-bg: 0 86% 97%;
@@ -681,11 +682,11 @@
 
   /* === COMPONENT TOKENS CLAROS: DATA TABLE === */
   --data-table-container-bg: var(--surface);
-  --data-table-header-bg: var(--neutral-200);
-  --data-table-header-text: var(--text-primary);
+  --data-table-header-bg: var(--surface-secondary);
+  --data-table-header-text: var(--text-secondary);
   --data-table-row-bg: var(--surface);
-  --data-table-row-alt-bg: var(--neutral-100);
-  --data-table-row-hover-bg: 0 0% 90%;
+  --data-table-row-alt-bg: var(--titan-150);
+  --data-table-row-hover-bg: var(--surface-secondary);
   --data-table-row-selected-bg: var(--crocus-50);
   --data-table-row-new-bg: var(--crocus-50);
   --data-table-border: var(--border);

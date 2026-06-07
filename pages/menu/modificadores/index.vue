@@ -77,12 +77,17 @@
       </template>
 
       <template #cell-opciones="{ row }">
-        <div class="flex flex-col items-center gap-0.5 max-w-[220px] mx-auto">
-          <span class="text-sm font-semibold text-text-primary">
-            {{ getModificadoresByGrupo(row.id).length }}
+        <div class="flex flex-wrap justify-center gap-1.5 max-w-[260px] mx-auto">
+          <span
+            v-for="option in getGroupOptionLabels(row.id)"
+            :key="option"
+            class="inline-flex max-w-full items-center rounded-full border border-badge-primary-border bg-badge-primary-bg px-2 py-0.5 text-[11px] font-medium leading-4 text-badge-primary-text"
+            :title="option"
+          >
+            <span class="truncate">{{ option }}</span>
           </span>
-          <span class="text-xs text-text-secondary text-center line-clamp-2" :title="formatGroupOptionsSummary(row.id)">
-            {{ formatGroupOptionsSummary(row.id) }}
+          <span v-if="!getGroupOptionLabels(row.id).length" class="text-xs text-text-secondary">
+            Sin opciones
           </span>
         </div>
       </template>
@@ -520,17 +525,20 @@ const getModificadoresByGrupo = (grupoId: string) => {
 
 
 function formatGroupOptionsSummary(grupoId: string) {
+  const labels = getGroupOptionLabels(grupoId)
+  return labels.join(', ')
+}
+
+function getGroupOptionLabels(grupoId: string) {
   const mods = getModificadoresByGrupo(grupoId)
-  if (!mods.length) return ''
-  const labels = mods.slice(0, 3).map((m: any) => {
+  if (!mods.length) return []
+  return mods.map((m: any) => {
     const type = (m.option_type || 'INGREDIENT').toUpperCase()
     if (type === 'INGREDIENT') return m.ingredient?.name || m.name
     if (type === 'RECIPE') return m.recipe_base?.name || m.name
     if (type === 'PRODUCT') return m.linked_product?.name || m.name
     return m.name
-  })
-  const suffix = mods.length > 3 ? ` +${mods.length - 3}` : ''
-  return labels.filter(Boolean).join(', ') + suffix
+  }).filter(Boolean)
 }
 
 const goToCreateGroup = () => {
