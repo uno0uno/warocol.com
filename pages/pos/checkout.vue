@@ -56,9 +56,6 @@ const { activePromos, hasActivePromos, activePromoHint, promoPickOptions } = use
   onActivePromosChanged: invalidateCheckoutPromoPreview,
 })
 
-// Inject subtitle setter from layout
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
-
 // State
 const selectedPaymentMethod = ref<string>('cash')
 const selectedPaymentMethodId = ref<string | null>(null)
@@ -2406,11 +2403,9 @@ watch(() => selectedCustomer.value?.id, () => {
   resetSplitPayments()
 })
 
-// Set page subtitle and sync cart on mount. payment-methods, mesa /current
-// and pos cart queries are already in flight (declared above as useQuery —
-// they fire from setup, in parallel with the mount).
+// Sync cart on mount. payment-methods, mesa /current and pos cart queries are
+// already in flight (declared above as useQuery, in parallel with the mount).
 onMounted(async () => {
-  setPageSubtitle('Checkout')
   posDebugLog('checkout', 'mount', {
     route: useRoute().path,
     debugEnabled: true,
@@ -2511,9 +2506,8 @@ watch(
   { immediate: true },
 )
 
-// Clear subtitle and pending timers on unmount
+// Clear pending timers on unmount
 onUnmounted(() => {
-  setPageSubtitle(undefined)
   if (estimateTimer) clearTimeout(estimateTimer)
 })
 </script>

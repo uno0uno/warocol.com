@@ -34,9 +34,6 @@ const router = useRouter()
 const posStore = usePOSStore()
 const { activePromos } = useActivePromotions()
 
-// Inject subtitle setter from layout
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
-
 // Product ID from route
 const productId = computed(() => route.params.id as string)
 
@@ -672,13 +669,6 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-// Update page subtitle when product changes
-watch(product, (newProduct) => {
-  if (newProduct) {
-    setPageSubtitle(newProduct.name)
-  }
-}, { immediate: true })
-
 // Watch for product availability - redirect if not in cache
 watch(cachedProduct, (p) => {
   if (!p) {
@@ -714,10 +704,6 @@ watch(product, (newProduct) => {
   }
 }, { immediate: true })
 
-// Clear subtitle on unmount
-onUnmounted(() => {
-  setPageSubtitle(undefined)
-})
 </script>
 
 <template>

@@ -413,8 +413,6 @@ const saveChanges = async () => {
 }
 
 // Get layout setters
-const setPageTitle = inject<(title: string | undefined) => void>('setPageTitle')
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
 const setPageStatus = inject<(status: { label: string; color: string } | undefined) => void>('setPageStatus')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
@@ -423,8 +421,6 @@ const setHeaderAction = inject<(action: { label: string; icon?: boolean; handler
 // Watch order data and update layout header
 watch(order, (newOrder) => {
   if (newOrder) {
-    setPageTitle?.(`Orden #${newOrder.order_number}`)
-    setPageSubtitle?.(formatDate(newOrder.order_date))
     setPageStatus?.({
       label: getStatusLabel(newOrder.status),
       color: getStatusColor(newOrder.status)
@@ -447,8 +443,6 @@ onMounted(() => {
 // Clean up on unmount
 onUnmounted(() => {
   clearRefreshHandler(handleRefresh)
-  setPageTitle?.(undefined)
-  setPageSubtitle?.(undefined)
   setPageStatus?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)

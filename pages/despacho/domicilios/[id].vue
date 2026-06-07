@@ -128,18 +128,9 @@ const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
 const goBack = () => router.push('/despacho/domicilios')
 
-// Dashboard layout inject — dynamic title / subtitle / back button
-const setPageTitle      = inject<(title: string | undefined) => void>('setPageTitle')
-const setPageSubtitle   = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
+// Dashboard layout inject — dynamic back button
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
-
-watch(order, (newOrder) => {
-  if (newOrder) {
-    setPageTitle?.(`Pedido #${newOrder.order_number}`)
-    setPageSubtitle?.(formatDate(newOrder.order_date))
-  }
-}, { immediate: true })
 
 // Header refresh button + progressive loader (parity with /ventas/ordenes)
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -154,8 +145,6 @@ onMounted(() => {
 registerProgressiveLoading(isRefreshing)
 
 onUnmounted(() => {
-  setPageTitle?.(undefined)
-  setPageSubtitle?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
   clearRefreshHandler(refreshAll)
