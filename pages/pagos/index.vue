@@ -22,7 +22,7 @@
         <template #additional-filters>
           <select
             v-model="selectedSupplierFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por proveedor"
           >
             <option value="">Proveedor</option>
@@ -80,6 +80,22 @@
             :sort-field="sortField"
             :sort-direction="sortDirection"
             @sort="handleSort">
+            <template #header-proveedor>
+              <UiTableHeaderFilter
+                v-model="selectedSupplierFilter"
+                title="Proveedor"
+                column-key="proveedor"
+                sortable
+                :sort-field="sortField"
+                :sort-direction="sortDirection"
+                filter-type="select"
+                :options="supplierHeaderOptions"
+                all-label="Proveedor"
+                align="left"
+                @sort="handleSort"
+              />
+            </template>
+
             <template #cell-seleccion="{ row }">
               <input type="checkbox" :checked="isSelected(row.purchaseData.id)"
                 @change="toggleSelection(row.purchaseData)"
@@ -139,6 +155,22 @@
             :sort-field="sortField"
             :sort-direction="sortDirection"
             @sort="handleSort">
+            <template #header-proveedor>
+              <UiTableHeaderFilter
+                v-model="selectedSupplierFilter"
+                title="Proveedor"
+                column-key="proveedor"
+                sortable
+                :sort-field="sortField"
+                :sort-direction="sortDirection"
+                filter-type="select"
+                :options="supplierHeaderOptions"
+                all-label="Proveedor"
+                align="left"
+                @sort="handleSort"
+              />
+            </template>
+
             <template #cell-orden="{ row }">
               <span :class="['text-sm font-bold text-text-primary', { 'animate-pulse': row.isHighlighted }]">{{ row.orden }}</span>
             </template>
@@ -254,6 +286,9 @@ const { data: suppliersData } = useQuery({
 })
 
 const suppliers = computed(() => (suppliersData.value as any)?.data || [])
+const supplierHeaderOptions = computed(() =>
+  suppliers.value.map((supplier: any) => ({ label: supplier.name, value: supplier.id })),
+)
 
 // Fetch all purchases with reactive filters
 const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({

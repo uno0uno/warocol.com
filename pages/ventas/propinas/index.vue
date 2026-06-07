@@ -241,6 +241,41 @@ const channelVariant = (ch: string | null | undefined) => {
   return 'secondary'
 }
 
+const channelHeaderOptions = [
+  { label: 'POS', value: 'pos' },
+  { label: 'Mesa', value: 'mesa' },
+  { label: 'Online', value: 'online' },
+]
+
+const memberHeaderOptions = computed(() =>
+  memberOptions.value.map(member => ({ label: member.name, value: member.id })),
+)
+
+const paymentHeaderOptions = computed(() =>
+  paymentGroups.value.map(group => ({ label: group.name, value: group.slug })),
+)
+
+const memberHeaderFilter = computed({
+  get: () => memberFilter.value ?? '',
+  set: (value: string | boolean) => {
+    memberFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+
+const channelHeaderFilter = computed({
+  get: () => channelFilter.value ?? '',
+  set: (value: string | boolean) => {
+    channelFilter.value = typeof value === 'string' && value ? value as 'pos' | 'mesa' | 'online' : null
+  },
+})
+
+const paymentHeaderFilter = computed({
+  get: () => paymentFilter.value ?? '',
+  set: (value: string | boolean) => {
+    paymentFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+
 // ── Columns ─────────────────────────────────────────────────────────────────
 const columns: Column[] = [
   { key: 'order_date', title: 'Fecha', sortable: true, width: '180px' },
@@ -377,7 +412,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Mesero -->
         <select
           v-model="memberFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           aria-label="Filtrar por mesero"
         >
           <option :value="null">Mesero</option>
@@ -387,7 +422,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Channel -->
         <select
           v-model="channelFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           aria-label="Filtrar por canal"
         >
           <option :value="null">Canal</option>
@@ -399,7 +434,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Payment method -->
         <select
           v-model="paymentFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           aria-label="Filtrar por método de pago"
         >
           <option :value="null">Método pago</option>
@@ -454,6 +489,39 @@ onUnmounted(() => clearRefreshHandler(refetch))
         row-size="sm"
         @sort="handleSort"
       >
+        <template #header-channel>
+          <UiTableHeaderFilter
+            v-model="channelHeaderFilter"
+            title="Canal"
+            filter-type="select"
+            :options="channelHeaderOptions"
+            all-label="Canal"
+            align="center"
+          />
+        </template>
+
+        <template #header-member_name>
+          <UiTableHeaderFilter
+            v-model="memberHeaderFilter"
+            title="Mesero"
+            filter-type="select"
+            :options="memberHeaderOptions"
+            all-label="Mesero"
+            align="left"
+          />
+        </template>
+
+        <template #header-payment_method>
+          <UiTableHeaderFilter
+            v-model="paymentHeaderFilter"
+            title="Método de pago"
+            filter-type="select"
+            :options="paymentHeaderOptions"
+            all-label="Método pago"
+            align="left"
+          />
+        </template>
+
         <!-- Mobile card -->
         <template #card="{ item, index }">
           <div :class="['flex flex-col gap-2 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
