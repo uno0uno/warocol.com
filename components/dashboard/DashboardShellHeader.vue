@@ -15,13 +15,6 @@
           />
         </NuxtLink>
 
-        <div class="min-w-0">
-          <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-shell-title-text leading-tight truncate">
-            {{ title }}
-            <span v-if="isTypingTitle" class="title-caret" aria-hidden="true" />
-          </h1>
-          <p v-if="subtitle" class="text-xs text-shell-subtitle-text mt-0.5 truncate">{{ subtitle }}</p>
-        </div>
       </div>
 
       <TransitionGroup
@@ -107,9 +100,6 @@
 import logoSrc from '~/public/logo_waro_colombia.png'
 
 defineProps<{
-  title: string
-  subtitle?: string
-  isTypingTitle?: boolean
   status?: { label: string; color: string }
   headerAction?: { label: string; icon?: boolean; handler: () => void }
   isRefreshing?: boolean
@@ -124,26 +114,6 @@ defineEmits<{
 </script>
 
 <style scoped>
-.title-caret {
-  display: inline-block;
-  width: 0.08em;
-  height: 0.9em;
-  margin-left: 0.08em;
-  vertical-align: -0.08em;
-  background-color: currentColor;
-  animation: title-caret-blink 1s steps(1) infinite;
-}
-
-@keyframes title-caret-blink {
-  0%, 50% {
-    opacity: 1;
-  }
-
-  50.01%, 100% {
-    opacity: 0;
-  }
-}
-
 #dashboard-header-actions {
   position: relative;
 }

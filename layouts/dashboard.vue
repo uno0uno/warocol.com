@@ -11,9 +11,6 @@
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen lg:h-auto">
       <DashboardShellHeader
-        :title="animatedDisplayTitle"
-        :subtitle="dynamicLastUpdateText || displaySubtitle"
-        :is-typing-title="isTypingTitle"
         :status="dynamicStatus"
         :header-action="dynamicHeaderAction"
         :is-refreshing="isRefreshing"
