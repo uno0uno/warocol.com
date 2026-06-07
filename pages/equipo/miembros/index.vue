@@ -23,13 +23,13 @@
           <select
             v-model="roleFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por rol"
           >
             <option value="">Rol</option>
-            <option value="superuser">Superusuario</option>
-            <option value="admin">Administrador</option>
-            <option value="employee">Empleado</option>
-            <option value="member">Miembro</option>
+            <option v-for="option in roleFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </template>
 
@@ -52,6 +52,15 @@
         variant="default"
         row-size="sm"
       >
+      <template #header-role>
+        <UiTableHeaderFilter
+          v-model="roleFilter"
+          title="Rol"
+          filter-type="select"
+          :options="roleFilterOptions"
+          all-label="Todos"
+        />
+      </template>
 
       <!-- Mobile Card -->
       <template #card="{ item, index }">
@@ -632,6 +641,12 @@ const authStore = useAuthStore()
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const roleFilter = ref('')
+const roleFilterOptions = [
+  { label: 'Superusuario', value: 'superuser' },
+  { label: 'Administrador', value: 'admin' },
+  { label: 'Empleado', value: 'employee' },
+  { label: 'Miembro', value: 'member' },
+]
 
 const performSearch = () => applySearch()
 

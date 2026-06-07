@@ -143,6 +143,22 @@ const STATUS_LABELS: Record<string, string> = {
   voided: 'Anulado',
 }
 
+const statusFilterOptions = [
+  { label: 'Borrador', value: 'draft' },
+  { label: 'Publicado', value: 'posted' },
+  { label: 'Anulado', value: 'voided' },
+]
+
+const sourceModuleFilterOptions = [
+  { label: 'Manual', value: 'manual' },
+  { label: 'Gastos', value: 'gastos' },
+  { label: 'Ventas', value: 'ventas' },
+  { label: 'Nómina', value: 'nomina' },
+  { label: 'Inventario', value: 'inventario' },
+  { label: 'Arqueo', value: 'arqueo' },
+  { label: 'Sistema', value: 'system' },
+]
+
 // ── Table columns ────────────────────────────────────────────────────────────
 const tableColumns = [
   { key: 'entryDate',     title: 'Fecha',       sortable: false },
@@ -266,26 +282,24 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-model="statusFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por estado"
           >
             <option value="">Estado</option>
-            <option value="draft">Borrador</option>
-            <option value="posted">Publicado</option>
-            <option value="voided">Anulado</option>
+            <option v-for="option in statusFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
           <select
             v-model="sourceModuleFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por módulo"
           >
             <option value="">Módulo</option>
-            <option value="manual">Manual</option>
-            <option value="gastos">Gastos</option>
-            <option value="ventas">Ventas</option>
-            <option value="nomina">Nómina</option>
-            <option value="inventario">Inventario</option>
-            <option value="arqueo">Arqueo</option>
-            <option value="system">Sistema</option>
+            <option v-for="option in sourceModuleFilterOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </template>
         <template #trailing>
@@ -318,6 +332,26 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           variant="default"
           @row-click="openDetail"
         >
+        <template #header-sourceModule>
+          <UiTableHeaderFilter
+            v-model="sourceModuleFilter"
+            title="Módulo"
+            filter-type="select"
+            :options="sourceModuleFilterOptions"
+            all-label="Todos"
+          />
+        </template>
+
+        <template #header-status>
+          <UiTableHeaderFilter
+            v-model="statusFilter"
+            title="Estado"
+            filter-type="select"
+            :options="statusFilterOptions"
+            all-label="Todos"
+          />
+        </template>
+
         <!-- Mobile card -->
         <template #card="{ item, index }">
           <div

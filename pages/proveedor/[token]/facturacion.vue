@@ -23,15 +23,16 @@
       <div class="bg-filter-surface-bg rounded-lg shadow-sm border border-filter-surface-border p-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Document Type Filter -->
-          <div>
+          <div class="md:hidden">
             <label class="block text-sm font-medium text-text-primary mb-2">
               Tipo de Documento
             </label>
             <select v-model="filters.documentType" @change="applyFilters"
               class="w-full px-4 py-2 border border-form-control-border bg-form-control-bg text-form-control-text rounded-lg focus:ring-2 focus:ring-form-control-focus-ring focus:border-form-control-focus-border">
               <option value="">Todos</option>
-              <option value="factura">Factura</option>
-              <option value="remision">Remisión</option>
+              <option v-for="option in documentTypeFilterOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
             </select>
           </div>
 
@@ -111,6 +112,18 @@
         empty-sub-message="Las facturas aparecerán aquí cuando sean creadas"
         variant="default"
       >
+        <template #header-tipo>
+          <UiTableHeaderFilter
+            :model-value="filters.documentType"
+            title="Tipo"
+            filter-type="select"
+            :options="documentTypeFilterOptions"
+            all-label="Todos"
+            align="center"
+            @update:model-value="setDocumentTypeFilter"
+          />
+        </template>
+
         <!-- Mobile Card -->
         <template #card="{ item }">
           <PurchasesInvoiceCard
@@ -278,6 +291,11 @@ const filters = ref({
   startDate: '',
   endDate: ''
 })
+
+const documentTypeFilterOptions = [
+  { label: 'Factura', value: 'factura' },
+  { label: 'Remisión', value: 'remision' },
+]
 
 // Selection state
 const selectedInvoices = ref<any[]>([])
@@ -529,6 +547,11 @@ async function submitLegalInvoice() {
 }
 
 function applyFilters() {
+  refresh()
+}
+
+function setDocumentTypeFilter(value: string | boolean) {
+  filters.value.documentType = typeof value === 'string' ? value : ''
   refresh()
 }
 
