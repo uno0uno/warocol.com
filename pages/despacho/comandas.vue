@@ -3,8 +3,6 @@ import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -262,6 +260,11 @@ const getComandaStatusVariant = (status: string): string => {
             aria-label="Filtrar por fecha"
           >
         </template>
+        <template #trailing>
+          <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
+            {{ comandas.filter(c => c.status !== 'cancelled').length }} activa{{ comandas.filter(c => c.status !== 'cancelled').length !== 1 ? 's' : '' }}
+          </span>
+        </template>
       </UiAdvancedFiltersBar>
 
       <!-- Bulk action bar -->
@@ -306,13 +309,7 @@ const getComandaStatusVariant = (status: string): string => {
         </div>
       </Transition>
 
-      <HealthSemaphore :is-unlocked="true" title="# Comanda">
-        <template #header-actions>
-          <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
-            {{ comandas.filter(c => c.status !== 'cancelled').length }} activa{{ comandas.filter(c => c.status !== 'cancelled').length !== 1 ? 's' : '' }}
-          </span>
-        </template>
-        <div class="[&_td]:!py-1 [&_th]:!py-1.5">
+      <div class="[&_td]:!py-1 [&_th]:!py-1.5">
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
@@ -332,7 +329,7 @@ const getComandaStatusVariant = (status: string): string => {
               </svg>
             </span>
           </label>
-        </div>
+      </div>
       </template>
 
       <!-- Checkbox cell -->
@@ -442,7 +439,6 @@ const getComandaStatusVariant = (status: string): string => {
       </template>
         </UiResponsiveDataView>
         </div>
-      </HealthSemaphore>
     </div>
 
     <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" @status-updated="refetchComandas" />

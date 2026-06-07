@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 definePageMeta({
@@ -437,29 +436,26 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             aria-label="Estado"
           />
         </template>
-      </UiAdvancedFiltersBar>
-
-      <!-- ══════ ACTIVE TABLES ══════ -->
-      <HealthSemaphore :is-unlocked="true" :title="`${plural} configuradas`">
-        <template #header-actions>
+        <template #trailing>
           <button
             type="button"
-              class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
+            class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
             @click="openPanel(null)"
           >
             <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
             <span class="sm:hidden">+ Nueva</span>
           </button>
         </template>
+      </UiAdvancedFiltersBar>
 
-        <UiResponsiveDataView
-          :columns="tableColumns"
-          :data="activeTables"
-          :empty-message="`No hay ${pluralLower} configuradas`"
-          :empty-sub-message="`Crea tu primera ${singularLower} para empezar a gestionar el salón`"
-          variant="default"
-          row-size="sm"
-        >
+      <UiResponsiveDataView
+        :columns="tableColumns"
+        :data="activeTables"
+        :empty-message="`No hay ${pluralLower} configuradas`"
+        :empty-sub-message="`Crea tu primera ${singularLower} para empezar a gestionar el salón`"
+        variant="default"
+        row-size="sm"
+      >
           <!-- Mobile card -->
           <template #card="{ item }">
             <div class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
@@ -575,11 +571,10 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               </button>
             </div>
           </template>
-        </UiResponsiveDataView>
-      </HealthSemaphore>
+      </UiResponsiveDataView>
 
       <!-- ══════ INACTIVE TABLES ══════ -->
-      <HealthSemaphore v-if="inactiveTables.length > 0" :is-unlocked="true" :title="`${plural} desactivadas`">
+      <template v-if="inactiveTables.length > 0">
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="inactiveTables"
@@ -651,7 +646,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             </div>
           </template>
         </UiResponsiveDataView>
-      </HealthSemaphore>
+      </template>
     </div>
 
     <!-- Create / Edit Panel -->
