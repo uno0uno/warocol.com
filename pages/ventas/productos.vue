@@ -3,8 +3,6 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Productos - Ventas' })
 
@@ -221,50 +219,49 @@ onUnmounted(() => {
       </div>
 
       <!-- Table -->
-      <HealthSemaphore v-else :is-unlocked="true" title="Productos más vendidos">
-        <UiResponsiveDataView
-          row-size="sm"
-          :columns="tableColumns"
-          :data="products"
-          :empty-message="emptyMessage"
-          :empty-sub-message="emptySubMessage"
-          variant="default"
-        >
-          <!-- Mobile card -->
-          <template #card="{ item, index }">
-            <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
-              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-text-primary">{{ item.product_name }}</p>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name ?? 'Sin categoría' }}</p>
-              </div>
-              <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-                <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_revenue) }}</span>
-                <span class="text-xs text-text-secondary">{{ item.quantity_sold }} uds.</span>
-              </div>
+      <UiResponsiveDataView
+        v-else
+        row-size="sm"
+        :columns="tableColumns"
+        :data="products"
+        :empty-message="emptyMessage"
+        :empty-sub-message="emptySubMessage"
+        variant="default"
+      >
+        <!-- Mobile card -->
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-text-primary">{{ item.product_name }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name ?? 'Sin categoría' }}</p>
             </div>
-          </template>
+            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+              <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_revenue) }}</span>
+              <span class="text-xs text-text-secondary">{{ item.quantity_sold }} uds.</span>
+            </div>
+          </div>
+        </template>
 
-          <!-- Desktop cells -->
-          <template #cell-product_name="{ value }">
-            <span class="text-sm font-bold text-text-primary">{{ value }}</span>
-          </template>
+        <!-- Desktop cells -->
+        <template #cell-product_name="{ value }">
+          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
+        </template>
 
-          <template #cell-category_name="{ value }">
-            <span class="text-sm text-text-secondary">{{ value ?? 'Sin categoría' }}</span>
-          </template>
+        <template #cell-category_name="{ value }">
+          <span class="text-sm text-text-secondary">{{ value ?? 'Sin categoría' }}</span>
+        </template>
 
-          <template #cell-quantity_sold="{ value }">
-            <span class="text-sm font-medium text-text-primary tabular-nums">{{ value }}</span>
-          </template>
+        <template #cell-quantity_sold="{ value }">
+          <span class="text-sm font-medium text-text-primary tabular-nums">{{ value }}</span>
+        </template>
 
-          <template #cell-total_revenue="{ value }">
-            <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
-          </template>
-        </UiResponsiveDataView>
-      </HealthSemaphore>
+        <template #cell-total_revenue="{ value }">
+          <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+        </template>
+      </UiResponsiveDataView>
 
       <!-- Totals row -->
       <div

@@ -15,9 +15,8 @@
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="onClearModificadoresFilters"
-      />
-      <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
-        <template #header-actions>
+      >
+        <template #trailing>
           <button
             @click="goToCreateGroup"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
@@ -26,15 +25,16 @@
             <span class="sm:hidden">+ Nuevo</span>
           </button>
         </template>
+      </UiAdvancedFiltersBar>
       <!-- Tabla de Grupos de Modificadores -->
       <UiResponsiveDataView
-      :columns="gruposTableColumns"
-      :data="modifierGroups"
-      empty-message="No hay grupos de modificadores registrados"
-      empty-sub-message="Crea un nuevo grupo para comenzar"
-      variant="default"
-      row-size="sm"
-    >
+        :columns="gruposTableColumns"
+        :data="modifierGroups"
+        empty-message="No hay grupos de modificadores registrados"
+        empty-sub-message="Crea un nuevo grupo para comenzar"
+        variant="default"
+        row-size="sm"
+      >
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value }">
         <div class="flex items-center">
@@ -285,14 +285,12 @@
         </table>
       </div>
     </div>
-    </HealthSemaphore>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
