@@ -329,6 +329,11 @@ const requiredHeaderOptions = [
   { label: 'Obligatorio', value: 'required' },
   { label: 'Opcional', value: 'optional' },
 ]
+const isRequiredFilter = computed(() => {
+  if (requiredFilter.value === 'required') return true
+  if (requiredFilter.value === 'optional') return false
+  return null
+})
 const hasActiveModificadoresFilters = computed(() => hasActiveFilters.value || !!requiredFilter.value)
 
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
@@ -351,13 +356,15 @@ const { data: groupsData, asyncStatus: groupsAsyncStatus, refetch: refetchGroups
     page: currentPage.value,
     limit: itemsPerPage.value,
     search: appliedSearch.value || null,
+    is_required: isRequiredFilter.value,
   }],
   query: () => {
-    const params: Record<string, string | number> = {
+    const params: Record<string, string | number | boolean> = {
       page: currentPage.value,
       limit: itemsPerPage.value,
     }
     if (appliedSearch.value) params.search = appliedSearch.value
+    if (isRequiredFilter.value !== null) params.is_required = isRequiredFilter.value
     return $fetch('/api/menu/modifier-groups', { params })
   },
   enabled: () => !!currentTenant.value,
@@ -373,10 +380,7 @@ const { data: statsData, refetch: refetchStats } = useQuery({
 })
 
 const modifierGroups = computed(() => {
-  const list = groupsData.value?.data ?? []
-  if (requiredFilter.value === 'required') return list.filter((group: any) => group.is_required)
-  if (requiredFilter.value === 'optional') return list.filter((group: any) => !group.is_required)
-  return list
+  return groupsData.value?.data ?? []
 })
 
 const totalPages = computed(() =>
