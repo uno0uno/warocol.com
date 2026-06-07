@@ -1,81 +1,88 @@
 <template>
   <div class="advanced-filters-bar flex flex-wrap items-center gap-2 w-full">
-    <!-- Search -->
-    <div
-      v-if="showSearch"
-      class="relative w-full min-w-[12rem] max-w-full sm:w-auto sm:max-w-xs shrink-0"
-    >
-      <button
-        type="button"
-        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
-        aria-label="Buscar"
-        @click="emit('search')"
+    <div class="advanced-filters-bar__controls flex min-w-0 flex-1 flex-wrap items-center gap-2">
+      <!-- Search -->
+      <div
+        v-if="showSearch"
+        class="relative w-full min-w-[12rem] max-w-full sm:w-auto sm:max-w-xs shrink-0"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        <button
+          type="button"
+          class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+          aria-label="Buscar"
+          @click="emit('search')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </button>
+        <input
+          :value="search"
+          :placeholder="searchPlaceholder"
+          class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+          @input="emit('update:search', ($event.target as HTMLInputElement).value)"
+          @keydown.enter="emit('search')"
+        />
+      </div>
+
+      <!-- Search field -->
+      <UiFilterSelect
+        v-if="showSearch && searchFields.length > 0"
+        :model-value="searchField"
+        placeholder="Campo"
+        :options="searchFields"
+        always-active
+        hide-placeholder
+        aria-label="Campo de búsqueda"
+        @update:model-value="emit('update:searchField', $event)"
+      />
+
+      <!-- Date range — fixed width so flex-wrap does not stretch to full row -->
+      <div
+        v-if="showDateRange"
+        class="advanced-filters-bar__date shrink-0 w-[12.5rem] sm:w-[13.5rem]"
+      >
+        <VueDatePicker
+          class="advanced-filters-bar__date-picker"
+          :model-value="dateRange"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+          @update:model-value="emit('update:dateRange', $event)"
+        />
+      </div>
+
+      <slot name="additional-filters" />
+
+      <!-- Clear -->
+      <button
+        v-if="showClear"
+        type="button"
+        class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
+        aria-label="Limpiar filtros"
+        @click="emit('clear')"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <input
-        :value="search"
-        :placeholder="searchPlaceholder"
-        class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-        @input="emit('update:search', ($event.target as HTMLInputElement).value)"
-        @keydown.enter="emit('search')"
-      />
     </div>
 
-    <!-- Search field -->
-    <UiFilterSelect
-      v-if="showSearch && searchFields.length > 0"
-      :model-value="searchField"
-      placeholder="Campo"
-      :options="searchFields"
-      always-active
-      hide-placeholder
-      aria-label="Campo de búsqueda"
-      @update:model-value="emit('update:searchField', $event)"
-    />
-
-    <!-- Date range — fixed width so flex-wrap does not stretch to full row -->
     <div
-      v-if="showDateRange"
-      class="advanced-filters-bar__date shrink-0 w-[12.5rem] sm:w-[13.5rem]"
+      v-if="$slots.trailing"
+      class="advanced-filters-bar__trailing ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-none"
     >
-      <VueDatePicker
-        class="advanced-filters-bar__date-picker"
-        :model-value="dateRange"
-        range
-        :preset-dates="presetDates"
-        :enable-time-picker="false"
-        :locale="es"
-        placeholder="Rango de fechas"
-        auto-apply
-        :teleport="true"
-        :max-date="new Date()"
-        :format="formatDateRange"
-        input-class-name="dp-custom-input"
-        menu-class-name="dp-custom-menu"
-        calendar-cell-class-name="dp-custom-cell"
-        @update:model-value="emit('update:dateRange', $event)"
-      />
+      <slot name="trailing" />
     </div>
-
-    <slot name="additional-filters" />
-
-    <!-- Clear -->
-    <button
-      v-if="showClear"
-      type="button"
-      class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-      aria-label="Limpiar filtros"
-      @click="emit('clear')"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-
-    <slot name="trailing" />
   </div>
 </template>
 

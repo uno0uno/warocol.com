@@ -2,8 +2,6 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -166,7 +164,6 @@ const viewOrder = (order: any) => {
         </template>
       </UiAdvancedFiltersBar>
 
-      <HealthSemaphore :is-unlocked="true" title="Pedidos Online">
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
@@ -229,7 +226,6 @@ const viewOrder = (order: any) => {
             <span class="text-sm text-text-secondary">{{ value ?? '—' }}</span>
           </template>
         </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>

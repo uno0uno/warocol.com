@@ -2,8 +2,6 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 
 definePageMeta({ layout: 'dashboard' })
@@ -194,7 +192,6 @@ const viewRequest = (request: TableQrRequestRow) => {
         </template>
       </UiAdvancedFiltersBar>
 
-      <HealthSemaphore :is-unlocked="true" title="Pedidos en mesa (QR)">
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
@@ -245,7 +242,6 @@ const viewRequest = (request: TableQrRequestRow) => {
             <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
           </template>
         </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
   </div>
 </template>

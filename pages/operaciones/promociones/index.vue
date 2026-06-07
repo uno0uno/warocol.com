@@ -69,10 +69,7 @@
             <option value="bogo">2×1 / BOGO</option>
           </select>
         </template>
-      </UiAdvancedFiltersBar>
-
-      <HealthSemaphore :is-unlocked="true" title="Promociones">
-        <template #header-actions>
+        <template #trailing>
           <button
             type="button"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap min-h-[44px]"
@@ -81,16 +78,17 @@
             + Nueva promoción
           </button>
         </template>
+      </UiAdvancedFiltersBar>
 
-        <UiResponsiveDataView
-          :columns="columns"
-          :data="filteredPromotions"
-          :row-class="getRowClass"
-          empty-message="No hay promociones"
-          empty-sub-message="Crea la primera para aplicarla en el POS."
-          variant="default"
-          row-size="sm"
-        >
+      <UiResponsiveDataView
+        :columns="columns"
+        :data="filteredPromotions"
+        :row-class="getRowClass"
+        empty-message="No hay promociones"
+        empty-sub-message="Crea la primera para aplicarla en el POS."
+        variant="default"
+        row-size="sm"
+      >
           <template #card="{ item, index }">
             <div
               v-if="item"
@@ -218,8 +216,7 @@
               </button>
             </div>
           </template>
-        </UiResponsiveDataView>
-      </HealthSemaphore>
+      </UiResponsiveDataView>
     </div>
 
     <PromocionesPromocionPanel
@@ -242,8 +239,6 @@
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { PencilSquareIcon } from '@heroicons/vue/24/outline'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import {
   formatPromoTypeLabel,
   formatPromoValue,
