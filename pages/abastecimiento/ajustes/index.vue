@@ -11,7 +11,7 @@
       <UiStats>
         <UiStatsCard
           label="Total Ajustes"
-          :value="adjustments.length"
+          :value="adjustmentsTotal"
           icon="adjustments-horizontal"
         />
         <UiStatsCard
@@ -196,8 +196,9 @@ const dateParts = computed(() => {
 })
 
 const { data: adjustmentsData, asyncStatus: adjustmentsAsyncStatus, refetch } = useQuery({
-  key: () => ['inventory', 'adjustments', currentTenant.value?.id, {
+  key: () => ['inventory', 'adjustments', currentTenant.value?.id ?? null, {
     ingredient: ingredientFilter.value || null,
+    direction: adjustmentTypeFilter.value || null,
     from: dateRange.value.from,
     to: dateRange.value.to,
   }],
@@ -205,6 +206,7 @@ const { data: adjustmentsData, asyncStatus: adjustmentsAsyncStatus, refetch } = 
     params: {
       limit: 500,
       movement_type: 'adjustment',
+      quantity_direction: adjustmentTypeFilter.value || undefined,
       ingredient_id: ingredientFilter.value || undefined,
       ...dateParts.value,
     },
@@ -216,10 +218,11 @@ const { data: adjustmentsData, asyncStatus: adjustmentsAsyncStatus, refetch } = 
 const isLoading = computed(() => !adjustmentsData.value)
 const isRefreshing = computed(() => adjustmentsAsyncStatus.value === 'loading' && adjustmentsData.value != null)
 const adjustments = computed(() => adjustmentsData.value?.data || [])
+const adjustmentsTotal = computed(() => (adjustmentsData.value as any)?.total ?? adjustments.value.length)
 
 // Load stock data for suggestions
 const { data: stockData } = useQuery({
-  key: () => ['inventory', 'stock', currentTenant.value?.id],
+  key: () => ['inventory', 'stock', currentTenant.value?.id ?? null],
   query: () => $fetch('/api/inventory/stock', {
     params: {
       limit: 250,
@@ -253,13 +256,9 @@ const uniqueIngredientsAdjusted = computed(() => {
 const filteredAdjustments = computed(() => {
   const q = appliedSearch.value.trim().toLowerCase()
   return adjustments.value.filter((adjustment) => {
-    const matchesSearch = !q
+    return !q
       || adjustment.ingredient_name.toLowerCase().includes(q)
       || (adjustment.reason && adjustment.reason.toLowerCase().includes(q))
-    const matchesType = adjustmentTypeFilter.value === ''
-      || (adjustmentTypeFilter.value === 'positive' && adjustment.quantity_change >= 0)
-      || (adjustmentTypeFilter.value === 'negative' && adjustment.quantity_change < 0)
-    return matchesSearch && matchesType
   })
 })
 
