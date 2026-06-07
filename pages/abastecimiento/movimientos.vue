@@ -21,7 +21,7 @@
 
           <select
             v-model="movementTypeFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por tipo de movimiento"
           >
             <option value="">Tipo</option>
@@ -45,6 +45,23 @@
         empty-sub-message="Los movimientos aparecerán cuando se registren compras o ventas"
         variant="default"
       >
+        <template #header-movement_type>
+          <UiTableHeaderFilter
+            title="Tipo"
+            column-key="movement_type"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="movementTypeFilter"
+            :options="movementTypeOptions"
+            all-label="Todos"
+            align="center"
+            @sort="handleSort"
+            @update:model-value="movementTypeFilter = typeof $event === 'string' ? $event : ''"
+          />
+        </template>
+
         <template #card="{ item, index }">
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
@@ -143,6 +160,14 @@ const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange 
 const ingredientFilter = ref('')
 const movementTypeFilter = ref('')
 
+const movementTypeOptions = [
+  { value: 'purchase', label: 'Compras' },
+  { value: 'consumption', label: 'Consumo' },
+  { value: 'adjustment', label: 'Ajustes' },
+  { value: 'return', label: 'Devoluciones' },
+  { value: 'loss', label: 'Pérdidas' },
+]
+
 const hasActiveFilters = computed(
   () =>
     !!localSearchTerm.value
@@ -155,7 +180,7 @@ const hasActiveFilters = computed(
 const performSearch = () => applySearch()
 
 const sortField = ref('')
-const sortDirection = ref('desc')
+const sortDirection = ref<'asc' | 'desc'>('desc')
 
 const dateParts = computed(() => {
   if (!dateRange.value.from || !dateRange.value.to) return {}

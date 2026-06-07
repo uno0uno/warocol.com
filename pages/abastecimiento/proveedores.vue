@@ -23,7 +23,7 @@
         <template #additional-filters>
           <select
             v-model="statusFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por estado"
             @change="onStatusFilterChange"
           >
@@ -64,6 +64,23 @@
         variant="default"
         row-size="sm"
       >
+        <template #header-is_active>
+          <UiTableHeaderFilter
+            title="Estado"
+            column-key="is_active"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="statusFilter"
+            :options="supplierStatusOptions"
+            all-label="Todos"
+            align="center"
+            @sort="handleSort"
+            @update:model-value="updateStatusHeaderFilter"
+          />
+        </template>
+
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
@@ -228,7 +245,7 @@ const itemsPerPage = ref(20);
 
 // Sorting state
 const sortField = ref('')
-const sortDirection = ref('asc')
+const sortDirection = ref<'asc' | 'desc'>('asc')
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const apiSearchField = ref('name')
@@ -242,6 +259,11 @@ const searchFields = [
   { label: 'Teléfono', value: 'phone' },
 ]
 
+const supplierStatusOptions = [
+  { value: 'active', label: 'Activo' },
+  { value: 'inactive', label: 'Inactivo' },
+]
+
 const apiIsActive = ref<boolean | null>(null)
 const apiPaymentTerms = ref<string | null>(null)
 
@@ -250,6 +272,11 @@ const onStatusFilterChange = () => {
   else if (statusFilter.value === 'inactive') apiIsActive.value = false
   else apiIsActive.value = null
   currentPage.value = 1
+}
+
+const updateStatusHeaderFilter = (value: string | boolean) => {
+  statusFilter.value = typeof value === 'string' ? value : ''
+  onStatusFilterChange()
 }
 
 const onPaymentTermsChange = () => {

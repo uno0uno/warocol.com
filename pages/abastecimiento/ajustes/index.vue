@@ -47,7 +47,7 @@
 
           <select
             v-model="adjustmentTypeFilter"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
             aria-label="Filtrar por tipo de ajuste"
           >
             <option value="">Tipo ajuste</option>
@@ -69,6 +69,18 @@
         variant="default"
         row-size="sm"
       >
+        <template #header-adjustment_type>
+          <UiTableHeaderFilter
+            title="Tipo"
+            filter-type="select"
+            :model-value="adjustmentTypeFilter"
+            :options="adjustmentTypeOptions"
+            all-label="Todos"
+            align="center"
+            @update:model-value="adjustmentTypeFilter = typeof $event === 'string' ? $event : ''"
+          />
+        </template>
+
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
@@ -158,6 +170,11 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const ingredientFilter = ref('')
 const adjustmentTypeFilter = ref('')
+
+const adjustmentTypeOptions = [
+  { value: 'positive', label: 'Incrementos' },
+  { value: 'negative', label: 'Decrementos' },
+]
 
 const hasActiveFilters = computed(
   () =>

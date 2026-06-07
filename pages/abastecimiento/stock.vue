@@ -8,8 +8,8 @@
     <InventarioStockInventoryView
       v-else
       v-model:search="localSearchTerm"
-      v-model:category-filter="categoryFilter"
-      v-model:unit-filter="unitFilter"
+      :category-filter="categoryFilter"
+      :unit-filter="unitFilter"
       :status-filter="statusFilter"
       :stats="stats"
       :inventory="displayInventory"
@@ -29,7 +29,9 @@
       :copy="stockCopy"
       :status-options="stockStatusOptions"
       highlight-negative-stock
+      @update:category-filter="updateCategoryFilter"
       @update:status-filter="updateStatusFilter"
+      @update:unit-filter="updateUnitFilter"
       @search="performSearch"
       @clear="clearFilters"
       @sort="handleSort"
@@ -206,6 +208,16 @@ const nextPage = () => {
 
 const updateStatusFilter = (value: string) => {
   statusFilter.value = value
+  currentPage.value = 1
+}
+
+const updateCategoryFilter = (value: string) => {
+  categoryFilter.value = value
+  currentPage.value = 1
+}
+
+const updateUnitFilter = (value: string) => {
+  unitFilter.value = value
   currentPage.value = 1
 }
 
