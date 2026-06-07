@@ -41,6 +41,7 @@
 
         <MenuCatalogFiltersBar
           show-product-type-filter
+          table-header-filters
           :show-qr="showTableQrColumn"
           :show-online="showOnlineControls"
           @search="onCatalogSearch"
@@ -114,12 +115,109 @@
           :empty-sub-message="emptySubMessage"
           variant="default"
           row-size="sm"
+          :sort-field="tableSortField"
+          :sort-direction="tableSortDirection"
+          @sort="handleProductsTableSort"
         >
           <!-- Checkbox header: select all (same pattern as ventas/ordenes) -->
           <template #header-select>
             <div class="flex items-center justify-center">
               <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
             </div>
+          </template>
+
+          <template #header-name>
+            <UiTableHeaderFilter
+              title="Producto"
+              column-key="name"
+              sortable
+              :sort-field="tableSortField"
+              :sort-direction="tableSortDirection"
+              filter-type="none"
+              class="min-w-[11rem]"
+              @sort="handleProductsTableSort"
+            />
+          </template>
+
+          <template #header-tipo>
+            <UiTableHeaderFilter
+              v-model="productTypeFilter"
+              title="Tipo"
+              filter-type="select"
+              :options="productTypeHeaderOptions"
+              all-label="Todos"
+              align="left"
+            />
+          </template>
+
+          <template #header-category_name>
+            <UiTableHeaderFilter
+              v-model="categoryFilter"
+              title="Categoría"
+              filter-type="select"
+              :options="categoryHeaderOptions"
+              all-label="Todas"
+              align="left"
+            />
+          </template>
+
+          <template #header-price>
+            <UiTableHeaderFilter
+              title="Precio"
+              column-key="price"
+              sortable
+              :sort-field="tableSortField"
+              :sort-direction="tableSortDirection"
+              filter-type="none"
+              align="right"
+              @sort="handleProductsTableSort"
+            />
+          </template>
+
+          <template #header-margen_operativo>
+            <UiTableHeaderFilter
+              v-model="marginNegativeOnly"
+              title="Margen op."
+              column-key="margen_operativo"
+              sortable
+              :sort-field="tableSortField"
+              :sort-direction="tableSortDirection"
+              filter-type="toggle"
+              toggle-label="Negativo"
+              align="center"
+              @sort="handleProductsTableSort"
+            />
+          </template>
+
+          <template #header-is_available>
+            <UiTableHeaderFilter
+              v-model="statusFilter"
+              title="Estado"
+              filter-type="select"
+              :options="statusHeaderOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
+          <template v-if="showOnlineControls" #header-is_available_online>
+            <UiTableHeaderFilter
+              v-model="onlineOnly"
+              title="Domicilios"
+              filter-type="toggle"
+              toggle-label="Activos"
+              align="center"
+            />
+          </template>
+
+          <template v-if="showTableQrColumn" #header-is_available_table_qr>
+            <UiTableHeaderFilter
+              v-model="qrOnly"
+              title="QR mesa"
+              filter-type="toggle"
+              toggle-label="Activos"
+              align="center"
+            />
           </template>
 
           <template #cell-select="{ row }">
@@ -809,6 +907,31 @@ const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
   all: 'all',
 }
 
+const productTypeHeaderOptions: { label: string; value: ProductTypeFilter }[] = [
+  { label: 'Menú', value: 'menu' },
+  { label: 'Reventa', value: 'resale' },
+]
+
+const statusHeaderOptions = [
+  { label: 'Disponible', value: 'true' },
+  { label: 'No disponible', value: 'false' },
+]
+
+const TABLE_SORT_TO_API: Record<string, { asc: string; desc: string }> = {
+  name: { asc: 'name_asc', desc: 'name_desc' },
+  price: { asc: 'price_asc', desc: 'price_desc' },
+  margen_operativo: { asc: 'margin_asc', desc: 'margin_desc' },
+}
+
+const API_SORT_TO_TABLE: Record<string, { field: string; direction: 'asc' | 'desc' }> = {
+  name_asc: { field: 'name', direction: 'asc' },
+  name_desc: { field: 'name', direction: 'desc' },
+  price_asc: { field: 'price', direction: 'asc' },
+  price_desc: { field: 'price', direction: 'desc' },
+  margin_asc: { field: 'margen_operativo', direction: 'asc' },
+  margin_desc: { field: 'margen_operativo', direction: 'desc' },
+}
+
 function productTypeFromRouteQuery(tipo: unknown): ProductTypeFilter {
   if (typeof tipo !== 'string') return 'all'
   return QUERY_TO_PRODUCT_TYPE[tipo] ?? 'all'
@@ -1031,6 +1154,9 @@ const { data: categoriesData } = useQuery({
 })
 
 const categories = computed(() => (categoriesData.value as any)?.data || [])
+const categoryHeaderOptions = computed(() =>
+  categories.value.map((c: { id: string; name: string }) => ({ label: c.name, value: c.id })),
+)
 
 // Fetch products
 const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
@@ -1194,6 +1320,33 @@ function clearSelection() {
 }
 
 const onToggleEditMode = () => editToggleEditMode(clearSelection)
+
+const tableSortField = computed(() => API_SORT_TO_TABLE[sortFilter.value]?.field ?? '')
+const tableSortDirection = computed(() => API_SORT_TO_TABLE[sortFilter.value]?.direction ?? 'asc')
+
+function handleProductsTableSort(field: string) {
+  const sortConfig = TABLE_SORT_TO_API[field]
+  if (!sortConfig) return
+  const nextDirection = tableSortField.value === field && tableSortDirection.value === 'asc' ? 'desc' : 'asc'
+  sortFilter.value = sortConfig[nextDirection]
+  currentPage.value = 1
+}
+
+watch(
+  [
+    statusFilter,
+    categoryFilter,
+    stationFilter,
+    sortFilter,
+    onlineOnly,
+    qrOnly,
+    noRecipeOnly,
+    marginNegativeOnly,
+    productTypeFilter,
+    appliedSearch,
+  ],
+  () => { currentPage.value = 1 },
+)
 
 watch(
   [
@@ -1403,7 +1556,7 @@ const productosTableColumns = computed(() => {
     {
       key: 'name',
       title: 'Producto',
-      sortable: false,
+      sortable: true,
       format: 'text',
       align: 'left'
     },
@@ -1428,7 +1581,7 @@ const productosTableColumns = computed(() => {
     {
       key: 'price',
       title: 'Precio',
-      sortable: false,
+      sortable: true,
       format: 'currency',
       align: 'right'
     },
@@ -1442,7 +1595,7 @@ const productosTableColumns = computed(() => {
     {
       key: 'margen_operativo',
       title: 'Margen op.',
-      sortable: false,
+      sortable: true,
       format: 'text',
       align: 'center'
     },
