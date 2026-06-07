@@ -104,6 +104,15 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = false
   }
 
+  function expireSession() {
+    clearAuth()
+
+    if (import.meta.client) {
+      const cache = useQueryCache()
+      cache.invalidateQueries()
+    }
+  }
+
   // Initialize from middleware data
   function initializeFromMiddleware(middlewareData) {
     if (middlewareData.session) {
@@ -140,6 +149,7 @@ export const useAuthStore = defineStore('auth', () => {
     setProfileData,
     setLoading,
     clearAuth,
+    expireSession,
     initializeFromMiddleware
   }
 })
