@@ -216,5 +216,9 @@ watch(
         <span class="font-semibold">Desfase costo</span>
       </label>
     </template>
+
+    <template v-if="$slots.trailing" #trailing>
+      <slot name="trailing" />
+    </template>
   </UiAdvancedFiltersBar>
 </template>

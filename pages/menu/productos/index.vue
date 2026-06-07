@@ -46,7 +46,30 @@
           @search="onCatalogSearch"
           @clear="onCatalogClear"
           @filter-change="currentPage = 1"
-        />
+        >
+          <template #trailing>
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
+                :class="editMode
+                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
+                  : 'btn-primary text-primary-foreground'"
+                @click="onToggleEditMode"
+              >
+                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
+                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
+              </button>
+              <NuxtLink
+                to="/menu/productos/crear"
+                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
+              >
+                <span class="hidden sm:inline">+ Nuevo producto</span>
+                <span class="sm:hidden">+ Nuevo</span>
+              </NuxtLink>
+            </div>
+          </template>
+        </MenuCatalogFiltersBar>
 
         <MenuCatalogBulkBar
           v-if="selectedIds.length > 0"
@@ -82,29 +105,6 @@
           @cancel="() => cancelEditOperation(clearSelection)"
         />
 
-        <HealthSemaphore :is-unlocked="true" :title="catalogTitle">
-          <template #header-actions>
-            <div class="flex flex-wrap items-center gap-2 justify-end">
-              <button
-                type="button"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
-                :class="editMode
-                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
-                  : 'btn-primary text-primary-foreground'"
-                @click="onToggleEditMode"
-              >
-                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
-                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
-              </button>
-              <NuxtLink
-                to="/menu/productos/crear"
-                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
-              >
-                <span class="hidden sm:inline">+ Nuevo producto</span>
-                <span class="sm:hidden">+ Nuevo</span>
-              </NuxtLink>
-            </div>
-          </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
@@ -746,7 +746,6 @@
             </div>
           </div>
         </div>
-        </HealthSemaphore>
       </div>
     </div>
 
@@ -788,7 +787,6 @@
 import { onUnmounted, watch } from 'vue'
 import type { ProductTypeFilter } from '@/stores/menuFilters'
 import { useQueryCache } from '@pinia/colada'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { runSequentialProductPatches, runSequentialRequests, toastCatalogBulkResult, toastCatalogDeleteResult } from '@/composables/useMenuCatalogBulkSave'
 import { syncResaleIngredientName } from '@/composables/useResaleIngredientSync'
@@ -843,13 +841,6 @@ const {
 } = useMenuCatalogFilters()
 
 useHead({ title: 'Productos' })
-
-const catalogTitle = computed(() => {
-  const base = 'Catálogo y rentabilidad de productos'
-  if (productTypeFilter.value === 'resale') return `${base} — reventa`
-  if (productTypeFilter.value === 'menu') return `${base} — menú`
-  return base
-})
 
 let syncingProductTypeRoute = false
 

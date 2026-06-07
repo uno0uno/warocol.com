@@ -19,16 +19,18 @@
           :show-clear="hasActiveFilters"
           @search="performSearch"
           @clear="onClearRecetasFilters"
-        />
-
-        <HealthSemaphore :is-unlocked="true" title="Estructura y costo de recetas base">
-          <template #header-actions>
-            <NuxtLink to="/menu/recetas/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+        >
+          <template #trailing>
+            <NuxtLink
+              to="/menu/recetas/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            >
               <span class="hidden sm:inline">+ Nueva Receta Base</span>
               <span class="sm:hidden">+ Nueva</span>
             </NuxtLink>
           </template>
+        </UiAdvancedFiltersBar>
+
         <!-- Tabla de Recetas -->
         <UiResponsiveDataView
           :columns="recetasTableColumns"
@@ -259,7 +261,6 @@
             </table>
           </div>
         </div>
-        </HealthSemaphore>
       </div>
     </div>
   </div>
@@ -268,7 +269,6 @@
 <script setup lang="ts">
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 

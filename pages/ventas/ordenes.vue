@@ -2,8 +2,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-// @ts-ignore
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Órdenes - Ventas' })
 
@@ -546,8 +544,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Responsive Data View -->
-      <HealthSemaphore v-else :is-unlocked="true" title="Historial de Ventas">
       <UiResponsiveDataView
+        v-else
         :columns="ordersTableColumns"
         :data="orders"
         :sort-field="sortField"
@@ -709,7 +707,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           />
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="ordersTotal > 0" class="flex items-center justify-end px-1 py-2">
