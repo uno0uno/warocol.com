@@ -13,14 +13,18 @@
     </div>
   </Teleport>
 
-  <UiBaseSidebar v-bind="$attrs">
+  <UiBaseSidebar
+    :overlay="props.overlay"
+    :toggle="props.toggle"
+    v-bind="$attrs"
+    @expanded-change="$emit('expanded-change', $event)"
+  >
     <!-- Navigation Links -->
-    <template #navigation="{ collapsed }">
+    <template #navigation="{ collapsed, close }">
 
       <!-- ── OPERACIÓN (frecuente) ── -->
       <template v-if="visiblePrimaryItems.length">
         <div class="space-y-0.5">
-          <p v-if="!collapsed" class="nav-section-label">Operación</p>
           <NuxtLink
             v-for="item in visiblePrimaryItems"
             :key="item.to"
@@ -31,6 +35,7 @@
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
             ]"
+            @click="close"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
@@ -40,9 +45,8 @@
 
       <!-- ── HERRAMIENTAS (with leading divider) ── -->
       <template v-if="visibleSecondaryItems.length">
-        <div class="my-1.5 mx-1 border-t nav-divider" />
+        <div v-if="!collapsed" class="my-1.5 mx-1 border-t nav-divider" />
         <div class="space-y-0.5">
-          <p v-if="!collapsed" class="nav-section-label">Herramientas</p>
           <NuxtLink
             v-for="item in visibleSecondaryItems"
             :key="item.to"
@@ -53,6 +57,7 @@
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
             ]"
+            @click="close"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
@@ -68,7 +73,7 @@
 
       <!-- ── APPS (with leading divider) — Eventos is owner-only — -->
       <template v-if="showEventos">
-        <div class="my-1.5 mx-1 border-t nav-divider" />
+        <div v-if="!collapsed" class="my-1.5 mx-1 border-t nav-divider" />
         <div class="space-y-0.5">
           <p v-if="!collapsed" class="nav-section-label">Apps</p>
           <a
@@ -76,6 +81,7 @@
             target="_blank"
             title="Eventos"
             :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '']"
+            @click="close"
           >
             <Squares2X2Icon class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
@@ -89,7 +95,6 @@
       <!-- ── CUENTA (fondo) ── -->
       <template v-if="visibleCuentaItems.length">
         <div class="space-y-0.5">
-          <p v-if="!collapsed" class="nav-section-label">Cuenta</p>
           <NuxtLink
             v-for="item in visibleCuentaItems"
             :key="item.to"
@@ -100,6 +105,7 @@
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
             ]"
+            @click="close"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
@@ -110,9 +116,9 @@
     </template>
 
     <!-- Logout (siempre visible, fijo abajo) -->
-    <template #bottom="{ collapsed }">
+    <template #bottom="{ collapsed, close }">
       <button
-        @click="handleLogout"
+        @click="() => { close(); handleLogout() }"
         :disabled="isLoggingOut"
         :class="[
           'nav-item nav-item--idle nav-item--logout group w-full',
@@ -146,8 +152,18 @@ import {
 
 interface Props {
   activePage?: ActivePage
+  overlay?: boolean
+  toggle?: boolean
 }
-const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
+const props = withDefaults(defineProps<Props>(), {
+  activePage: 'financiero',
+  overlay: false,
+  toggle: false,
+})
+
+defineEmits<{
+  (e: 'expanded-change', value: boolean): void
+}>()
 
 const isLoggingOut = ref(false)
 const router = useRouter()
@@ -229,11 +245,14 @@ const handleLogout = async () => {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.5rem;
+  gap: 0.5625rem;
+  min-height: 2.375rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.4375rem;
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
   font-size: 0.9375rem;
+  line-height: 1.25rem;
+  font-weight: 500;
   width: 100%;
   text-decoration: none;
 }
@@ -242,13 +261,14 @@ const handleLogout = async () => {
   gap: 0;
   padding-left: 0;
   padding-right: 0;
+  min-height: 2.375rem;
 }
 .nav-item--active {
-  background-color: hsl(var(--nav-item-active-bg) / 0.15);
-  font-weight: 500;
+  background-color: hsl(var(--nav-item-active-bg) / 0.10);
+  font-weight: 650;
 }
 .nav-item--idle:hover {
-  background-color: hsl(var(--nav-item-hover-bg) / 0.08);
+  background-color: hsl(var(--nav-item-hover-bg) / 0.06);
 }
 .nav-item--logout {
   color: hsl(var(--nav-logout-text));
@@ -264,14 +284,14 @@ const handleLogout = async () => {
 
 /* ── Nav icon ── */
 .nav-icon {
-  width: 16px;
-  height: 16px;
+  width: 23px;
+  height: 23px;
   flex-shrink: 0;
   transition: color 0.15s;
 }
 .nav-item--active .nav-icon   { color: hsl(var(--nav-icon-active)); }
-.nav-item--idle .nav-icon     { color: hsl(var(--nav-icon-idle) / 0.65); } /* 3.5:1 — pasa WCAG AA UI */
-.nav-item--idle:hover .nav-icon { color: hsl(var(--nav-icon-hover) / 0.85); }
+.nav-item--idle .nav-icon     { color: hsl(var(--nav-icon-idle) / 0.62); } /* 3.5:1 — pasa WCAG AA UI */
+.nav-item--idle:hover .nav-icon { color: hsl(var(--nav-icon-hover) / 0.88); }
 .nav-item--logout .nav-icon { color: hsl(var(--nav-logout-icon)); }
 .nav-item--logout:hover .nav-icon { color: hsl(var(--nav-logout-hover-text)); }
 
@@ -282,22 +302,23 @@ const handleLogout = async () => {
   transition: max-width 0.15s, opacity 0.15s;
   max-width: 200px;
   opacity: 1;
+  letter-spacing: 0;
 }
 .nav-label-text--hidden { max-width: 0; opacity: 0; }
 
 .nav-item--active .nav-label-text { color: hsl(var(--nav-label-active)); }
-.nav-item--idle .nav-label-text   { color: hsl(var(--nav-label-idle) / 0.60); }
-.nav-item--idle:hover .nav-label-text { color: hsl(var(--nav-label-hover) / 0.90); }
+.nav-item--idle .nav-label-text   { color: hsl(var(--nav-label-idle) / 0.72); }
+.nav-item--idle:hover .nav-label-text { color: hsl(var(--nav-label-hover) / 0.92); }
 
 /* ── Section label ── */
 .nav-section-label {
-  padding: 0.125rem 0.75rem 0.0625rem;
+  padding: 0.5rem 0.625rem 0.1875rem;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-weight: 700;
   white-space: nowrap;
-  color: hsl(var(--nav-section-label) / 0.30);
+  color: hsl(var(--nav-section-label) / 0.48);
 }
 
 /* ── Dividers ── */
@@ -315,6 +336,54 @@ const handleLogout = async () => {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
+}
+
+@media (max-height: 820px) {
+  .nav-item {
+    min-height: 2.125rem;
+    padding-block: 0.25rem;
+    font-size: 0.90625rem;
+    line-height: 1.125rem;
+  }
+
+  .nav-item.justify-center {
+    min-height: 2.125rem;
+  }
+
+  .nav-icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .nav-section-label {
+    padding-top: 0.3125rem;
+    padding-bottom: 0.125rem;
+    font-size: 10.5px;
+  }
+}
+
+@media (max-height: 700px) {
+  .nav-item {
+    min-height: 1.75rem;
+    padding-block: 0.125rem;
+    font-size: 0.875rem;
+    line-height: 1.0625rem;
+  }
+
+  .nav-item.justify-center {
+    min-height: 1.75rem;
+  }
+
+  .nav-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .nav-section-label {
+    padding-top: 0.25rem;
+    padding-bottom: 0.0625rem;
+    font-size: 10px;
+  }
 }
 
 /* ── Modal fade ── */

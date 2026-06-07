@@ -1,7 +1,12 @@
 <template>
   <div class="h-screen flex flex-col lg:flex-row overflow-hidden">
     <!-- Dashboard Sidebar - Desktop Only -->
-    <DashboardSidebar :active-page="activePage" class="hidden lg:flex" />
+    <DashboardSidebar
+      :active-page="activePage"
+      toggle
+      class="hidden lg:flex"
+      @expanded-change="isSidebarExpanded = $event"
+    />
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen lg:h-auto">
@@ -13,6 +18,7 @@
         :header-action="dynamicHeaderAction"
         :is-refreshing="isRefreshing"
         :is-progressive-loading="isProgressiveLoading"
+        :hide-logo="isSidebarExpanded"
         @refresh="handleRefresh"
         @navigate-pos="navigateToPOS"
       />
@@ -139,6 +145,7 @@ const handleRefresh = triggerRefresh
 
 // Dynamic title - can be set by child pages
 const dynamicTitle = ref<string | undefined>(undefined)
+const isSidebarExpanded = ref(false)
 
 // Provide title setter for child pages
 provide('setPageTitle', (title: string | undefined) => {

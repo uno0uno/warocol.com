@@ -2,6 +2,19 @@
   <header class="bg-shell-header-bg border-b border-shell-header-border px-4 py-3 md:px-8 md:py-4 flex-shrink-0">
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+        <NuxtLink
+          v-if="!hideLogo"
+          to="/financiero"
+          class="dashboard-header-logo hidden lg:flex h-11 w-40 flex-shrink-0 items-center justify-center overflow-hidden px-1"
+          aria-label="Ir al inicio del dashboard"
+        >
+          <img
+            :src="logoSrc"
+            alt="Waro Colombia"
+            class="h-9 w-full object-contain"
+          />
+        </NuxtLink>
+
         <div class="min-w-0">
           <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-shell-title-text leading-tight truncate">
             {{ title }}
@@ -91,6 +104,8 @@
 </template>
 
 <script setup lang="ts">
+import logoSrc from '~/public/logo_waro_colombia.png'
+
 defineProps<{
   title: string
   subtitle?: string
@@ -99,6 +114,7 @@ defineProps<{
   headerAction?: { label: string; icon?: boolean; handler: () => void }
   isRefreshing?: boolean
   isProgressiveLoading?: boolean
+  hideLogo?: boolean
 }>()
 
 defineEmits<{
