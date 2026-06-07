@@ -12,7 +12,7 @@
       :unit-filter="unitFilter"
       :status-filter="statusFilter"
       :stats="stats"
-      :inventory="displayInventory"
+      :inventory="inventory"
       :total="inventoryData?.total ?? 0"
       :items-per-page="itemsPerPage"
       :start-item="startItem"
@@ -124,6 +124,8 @@ const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery
   key: () => ['inventory', 'stock', currentTenant.value?.id, {
     search: appliedSearch.value || null,
     status: statusFilter.value,
+    category: categoryFilter.value || null,
+    unit: unitFilter.value || null,
     sort_field: sortField.value,
     sort_direction: sortDirection.value,
     page: currentPage.value,
@@ -138,6 +140,8 @@ const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery
       status_filter: statusFilter.value,
     }
     if (appliedSearch.value) params.search = appliedSearch.value
+    if (categoryFilter.value) params.category = categoryFilter.value
+    if (unitFilter.value) params.unit = unitFilter.value
     return $fetch('/api/inventory/stock', { params })
   },
   enabled: () => !!currentTenant.value,
@@ -156,36 +160,8 @@ const stats = computed(() => inventoryData.value?.stats || {
   total_inventory_value: 0
 })
 
-// Get unique categories from inventory
-const categories = computed(() => {
-  const cats = new Set<string>()
-  inventory.value.forEach(item => {
-    if (item.category) {
-      cats.add(item.category)
-    }
-  })
-  return Array.from(cats).sort()
-})
-
-// Get unique units from inventory
-const units = computed(() => {
-  const unitsSet = new Set<string>()
-  inventory.value.forEach(item => {
-    if (item.unit) {
-      unitsSet.add(item.unit)
-    }
-  })
-  return Array.from(unitsSet).sort()
-})
-
-/** Category/unit: no API params — filters current page only. */
-const displayInventory = computed(() =>
-  inventory.value.filter((item) => {
-    const matchesCategory = !categoryFilter.value || item.category === categoryFilter.value
-    const matchesUnit = !unitFilter.value || item.unit === unitFilter.value
-    return matchesCategory && matchesUnit
-  }),
-)
+const categories = computed(() => inventoryData.value?.filter_options?.categories || [])
+const units = computed(() => inventoryData.value?.filter_options?.units || [])
 
 const totalPages = computed(() =>
   Math.ceil((inventoryData.value?.total ?? 0) / itemsPerPage.value),
