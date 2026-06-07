@@ -14,6 +14,20 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const statusFilter = ref<string | null>(null)
 const orderTypeFilter = ref<string | null>(null)
+const statusHeaderFilter = computed({
+  get: () => statusFilter.value ?? '',
+  set: (value: string | boolean) => {
+    statusFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+const statusHeaderOptions = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'confirmed', label: 'Confirmado' },
+  { value: 'preparing', label: 'En preparación' },
+  { value: 'delivered', label: 'Entregado' },
+  { value: 'completed', label: 'Completado' },
+  { value: 'cancelled', label: 'Cancelado' },
+]
 
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
@@ -106,7 +120,11 @@ const ORDER_TYPE_LABELS: Record<string, string> = {
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
-const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
+const handleSort = (event: string | { field: string; direction?: 'asc' | 'desc' }) => {
+  const field = typeof event === 'string' ? event : event.field
+  const direction = typeof event === 'string'
+    ? (sortField.value === event && sortDirection.value === 'asc' ? 'desc' : 'asc')
+    : event.direction ?? 'asc'
   sortField.value = field
   sortDirection.value = direction
 }
@@ -141,6 +159,7 @@ const viewOrder = (order: any) => {
           <select
             v-model="statusFilter"
             :class="filterSelectClass"
+            class="md:hidden"
             aria-label="Filtrar por estado"
           >
             <option :value="null">Estado</option>
@@ -176,6 +195,17 @@ const viewOrder = (order: any) => {
           @sort="handleSort"
           @row-click="viewOrder"
         >
+          <template #header-status>
+            <UiTableHeaderFilter
+              v-model="statusHeaderFilter"
+              title="Estado"
+              filter-type="select"
+              :options="statusHeaderOptions"
+              all-label="Todos"
+              align="center"
+            />
+          </template>
+
           <template #card="{ item, index }">
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
