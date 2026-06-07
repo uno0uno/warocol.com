@@ -33,10 +33,19 @@ interface LineItem {
   selected_modifiers: ModifierOption[]
 }
 
+interface SelectedCustomer {
+  id: string
+  name: string | null
+  phone_number: string | null
+  email: string | null
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
 
 const loading = ref(false)
 const activeItemIndex = ref<number | null>(null)
+const showCustomerModal = ref(false)
+const selectedCustomer = ref<SelectedCustomer | null>(null)
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -195,10 +204,26 @@ const totalItemCount = computed(() =>
   form.value.items.reduce((sum, i) => sum + i.quantity, 0)
 )
 
+const selectedCustomerInitial = computed(() => {
+  const customer = selectedCustomer.value
+  return customer?.name?.charAt(0)?.toUpperCase() || customer?.phone_number?.charAt(0) || '?'
+})
+
 // ─── Currency ────────────────────────────────────────────────────────────────
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+
+// ─── Customer identification ────────────────────────────────────────────────
+
+function onCustomerIdentified(customer: SelectedCustomer) {
+  selectedCustomer.value = customer
+  showCustomerModal.value = false
+}
+
+function clearCustomer() {
+  selectedCustomer.value = null
+}
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
@@ -207,19 +232,20 @@ async function submit() {
   loading.value = true
   try {
     // Convert the local-time input value (e.g. "2026-05-07T14:30") to a UTC
-     // ISO string with explicit "+00:00" offset so the backend stores the
-     // right moment. new Date(localStr) interprets the string as local time;
-     // toISOString emits UTC with a "Z" suffix that Python 3.9 fromisoformat
-     // does NOT accept — strip the "Z" + ms and append "+00:00".
-     const orderDateUtc =
-       new Date(form.value.order_date).toISOString().slice(0, 19) + '+00:00'
+    // ISO string with explicit "+00:00" offset so the backend stores the
+    // right moment. new Date(localStr) interprets the string as local time;
+    // toISOString emits UTC with a "Z" suffix that Python 3.9 fromisoformat
+    // does NOT accept — strip the "Z" + ms and append "+00:00".
+    const orderDateUtc =
+      new Date(form.value.order_date).toISOString().slice(0, 19) + '+00:00'
 
-     const res = await $fetch<any>('/api/orders/manual', {
+    const res = await $fetch<any>('/api/orders/manual', {
       method: 'POST',
       body: {
         order_date: orderDateUtc,
         payment_method: form.value.payment_method,
         payment_method_id: form.value.payment_method_id,
+        customer_id: selectedCustomer.value?.id || undefined,
         items: form.value.items.map(i => ({
           product_id: i.product_id,
           quantity: i.quantity,
@@ -272,8 +298,8 @@ async function submit() {
           </NuxtLink>
           <h1 class="text-base font-bold text-text-primary">Nueva venta manual</h1>
         </div>
-        <!-- Row 2: date + payment -->
-        <div class="grid grid-cols-2 gap-2">
+        <!-- Row 2: date + payment + customer -->
+        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(16rem,1.3fr)] gap-2">
           <input
             id="order_date"
             v-model="form.order_date"
@@ -301,6 +327,50 @@ async function submit() {
               </optgroup>
             </template>
           </select>
+          <div
+            v-if="selectedCustomer"
+            class="min-h-9 w-full px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 flex items-center gap-2"
+          >
+            <div class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+              {{ selectedCustomerInitial }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-text-primary truncate">
+                {{ selectedCustomer.name || 'Cliente sin datos' }}
+              </p>
+              <p class="text-xs text-text-secondary truncate">
+                {{ selectedCustomer.phone_number || 'Sin teléfono' }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="h-7 px-2 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors shrink-0"
+              @click="showCustomerModal = true"
+            >
+              Cambiar
+            </button>
+            <button
+              type="button"
+              class="h-7 w-7 rounded-md text-text-secondary hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+              aria-label="Quitar cliente"
+              @click="clearCustomer"
+            >
+              <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <button
+            v-else
+            type="button"
+            class="min-h-9 w-full px-3 py-2 rounded-lg border border-dashed border-border bg-background text-sm font-medium text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+            @click="showCustomerModal = true"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <span>Identificar cliente</span>
+          </button>
         </div>
       </div>
 
@@ -626,5 +696,13 @@ async function submit() {
       </div>
 
     </form>
+
+    <Teleport to="body">
+      <PosCustomerIdentificationModal
+        v-model="showCustomerModal"
+        @customer-identified="onCustomerIdentified"
+        @fiscal-updated="onCustomerIdentified"
+      />
+    </Teleport>
   </div>
 </template>
