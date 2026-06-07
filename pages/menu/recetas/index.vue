@@ -306,6 +306,11 @@ const statusHeaderOptions = [
   { label: 'Activa', value: 'active' },
   { label: 'Inactiva', value: 'inactive' },
 ]
+const isActiveFilter = computed(() => {
+  if (statusFilter.value === 'active') return true
+  if (statusFilter.value === 'inactive') return false
+  return null
+})
 const hasActiveRecetasFilters = computed(() => hasActiveFilters.value || !!statusFilter.value)
 
 // Fetch recipe bases from backend with ingredients
@@ -314,15 +319,19 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
     page: currentPage.value,
     limit: itemsPerPage.value,
     search: apiSearchTerm.value || null,
+    is_active: isActiveFilter.value,
   }],
   query: () => {
-    const params: any = {
+    const params: Record<string, string | number | boolean> = {
       page: currentPage.value,
       limit: itemsPerPage.value,
       include_ingredients: true
     }
     if (apiSearchTerm.value) {
       params.search = apiSearchTerm.value
+    }
+    if (isActiveFilter.value !== null) {
+      params.is_active = isActiveFilter.value
     }
     return $fetch('/api/menu/recipe-bases', { params })
   },
@@ -353,7 +362,7 @@ const onClearRecetasFilters = () => {
 const recetas = computed(() => {
   if (!productsData.value?.data) return []
 
-  const list = productsData.value.data.map((recipeBase: any) => ({
+  return productsData.value.data.map((recipeBase: any) => ({
     id: recipeBase.id,
     producto_id: recipeBase.id,
     producto_name: recipeBase.name,
@@ -378,10 +387,6 @@ const recetas = computed(() => {
     }, 0) || 0,
     rendimiento: 1
   }))
-
-  if (statusFilter.value === 'active') return list.filter((recipe: any) => recipe.is_active)
-  if (statusFilter.value === 'inactive') return list.filter((recipe: any) => !recipe.is_active)
-  return list
 })
 
 // Pagination
