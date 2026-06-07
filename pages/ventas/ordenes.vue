@@ -114,6 +114,10 @@ watch(dateRangeDates, (val) => {
   }
 })
 
+watch([paymentFilter, statusFilter, deliveryOnly], () => {
+  currentPage.value = 1
+})
+
 // Pagination computed (after ordersData is declared)
 const ordersTotalPages = computed(() => {
   const total = ordersData.value?.pagination?.total ?? 0
@@ -310,7 +314,16 @@ const exportOrders = async () => {
   }
 }
 
-const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
+const handleSort = (event: string | { field: string; direction?: 'asc' | 'desc' }) => {
+  const field = typeof event === 'string' ? event : event.field
+  if (!field) return
+  const direction =
+    typeof event === 'object' && event.direction
+      ? event.direction
+      : sortField.value === field && sortDirection.value === 'asc'
+        ? 'desc'
+        : 'asc'
+
   sortField.value = field
   sortDirection.value = direction
   currentPage.value = 1
@@ -351,6 +364,39 @@ const statusPills = [
   { label: 'Canceladas', value: 'cancelled' },
   { label: 'Pendientes', value: 'pending' },
 ]
+
+const statusHeaderOptions = [
+  { label: 'Completadas', value: 'completed' },
+  { label: 'Canceladas', value: 'cancelled' },
+  { label: 'Pendientes', value: 'pending' },
+]
+
+const paymentHeaderOptions = computed(() => {
+  const options: { label: string; value: string }[] = []
+  for (const group of paymentGroups.value) {
+    options.push({ label: group.name, value: `g:${group.slug}` })
+    for (const method of group.methods ?? []) {
+      options.push({ label: method.name, value: `m:${method.id}` })
+    }
+  }
+  return options
+})
+
+const statusHeaderFilter = computed({
+  get: () => statusFilter.value ?? '',
+  set: (value: string | boolean) => {
+    statusFilter.value = typeof value === 'string' && value ? value : null
+    currentPage.value = 1
+  },
+})
+
+const paymentHeaderFilter = computed({
+  get: () => paymentFilter.value ?? '',
+  set: (value: string | boolean) => {
+    paymentFilter.value = typeof value === 'string' && value ? value : null
+    currentPage.value = 1
+  },
+})
 
 const { formatDateTime: formatDateCompact } = useFormatters()
 
@@ -413,7 +459,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="paymentFilter"
           @change="() => { currentPage.value = 1 }"
-          :class="filterSelectClass"
+          :class="[filterSelectClass, 'md:hidden']"
         >
           <option :value="null">Método pago</option>
           <template v-for="group in paymentGroups">
@@ -429,7 +475,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="statusFilter"
           @change="() => { currentPage.value = 1 }"
-          :class="filterSelectClass"
+          :class="[filterSelectClass, 'md:hidden']"
         >
           <option :value="null">Estado</option>
           <option value="completed">Completadas</option>
@@ -439,7 +485,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <!-- Delivery-only filter chip -->
         <label
-          class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+          class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0 md:hidden"
           :class="deliveryOnly
             ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
             : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
@@ -607,6 +653,43 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <div class="flex items-center justify-center">
             <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
           </div>
+        </template>
+
+        <template #header-source>
+          <UiTableHeaderFilter
+            v-model="deliveryOnly"
+            title="Origen"
+            filter-type="toggle"
+            toggle-label="Solo domicilios"
+            align="center"
+          />
+        </template>
+
+        <template #header-payment_method>
+          <UiTableHeaderFilter
+            v-model="paymentHeaderFilter"
+            title="Método Pago"
+            column-key="payment_method"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :options="paymentHeaderOptions"
+            all-label="Método pago"
+            align="left"
+            @sort="handleSort"
+          />
+        </template>
+
+        <template #header-status>
+          <UiTableHeaderFilter
+            v-model="statusHeaderFilter"
+            title="Estado"
+            filter-type="select"
+            :options="statusHeaderOptions"
+            all-label="Estado"
+            align="center"
+          />
         </template>
 
         <template #cell-select="{ row }">

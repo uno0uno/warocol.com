@@ -105,12 +105,44 @@ watch(productsData, (data) => {
   }
 })
 
+const categoryHeaderOptions = computed(() =>
+  cachedCategories.value.map(category => ({ label: category.name, value: category.id })),
+)
+
+const categoryHeaderFilter = computed({
+  get: () => categoryFilter.value ?? '',
+  set: (value: string | boolean) => {
+    categoryFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
+
+const TABLE_SORT_TO_API: Record<string, 'qty_desc' | 'revenue_desc' | 'name_asc'> = {
+  product_name: 'name_asc',
+  quantity_sold: 'qty_desc',
+  total_revenue: 'revenue_desc',
+}
+
+const API_SORT_TO_TABLE: Record<'qty_desc' | 'revenue_desc' | 'name_asc', { field: string; direction: 'asc' | 'desc' }> = {
+  qty_desc: { field: 'quantity_sold', direction: 'desc' },
+  revenue_desc: { field: 'total_revenue', direction: 'desc' },
+  name_asc: { field: 'product_name', direction: 'asc' },
+}
+
+const tableSortField = computed(() => API_SORT_TO_TABLE[sortFilter.value].field)
+const tableSortDirection = computed(() => API_SORT_TO_TABLE[sortFilter.value].direction)
+
+function handleTableSort(field: string) {
+  const nextSort = TABLE_SORT_TO_API[field]
+  if (!nextSort) return
+  sortFilter.value = nextSort
+}
+
 // ── Table columns ────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'product_name', title: 'Producto', sortable: false },
+  { key: 'product_name', title: 'Producto', sortable: true },
   { key: 'category_name', title: 'Categoría', sortable: false },
-  { key: 'quantity_sold', title: 'Vendidos', sortable: false },
-  { key: 'total_revenue', title: 'Ingresos', sortable: false },
+  { key: 'quantity_sold', title: 'Vendidos', sortable: true },
+  { key: 'total_revenue', title: 'Ingresos', sortable: true },
 ]
 
 const formatCurrency = (value: number) =>
@@ -184,7 +216,7 @@ onUnmounted(() => {
             v-if="cachedCategories.length > 0"
             v-model="categoryFilter"
             aria-label="Filtrar por categoría"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
           >
             <option :value="null">Categoría</option>
             <option v-for="cat in cachedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -193,7 +225,7 @@ onUnmounted(() => {
           <select
             v-model="sortFilter"
             aria-label="Ordenar por"
-            :class="filterSelectClass"
+            :class="[filterSelectClass, 'md:hidden']"
           >
             <option value="qty_desc">Más vendidos</option>
             <option value="revenue_desc">Más ingresos</option>
@@ -226,8 +258,61 @@ onUnmounted(() => {
         :data="products"
         :empty-message="emptyMessage"
         :empty-sub-message="emptySubMessage"
+        :sort-field="tableSortField"
+        :sort-direction="tableSortDirection"
         variant="default"
+        @sort="handleTableSort"
       >
+        <template #header-product_name>
+          <UiTableHeaderFilter
+            title="Producto"
+            column-key="product_name"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="none"
+            align="left"
+            @sort="handleTableSort"
+          />
+        </template>
+
+        <template #header-category_name>
+          <UiTableHeaderFilter
+            v-model="categoryHeaderFilter"
+            title="Categoría"
+            filter-type="select"
+            :options="categoryHeaderOptions"
+            all-label="Categoría"
+            align="left"
+          />
+        </template>
+
+        <template #header-quantity_sold>
+          <UiTableHeaderFilter
+            title="Vendidos"
+            column-key="quantity_sold"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="none"
+            align="right"
+            @sort="handleTableSort"
+          />
+        </template>
+
+        <template #header-total_revenue>
+          <UiTableHeaderFilter
+            title="Ingresos"
+            column-key="total_revenue"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="none"
+            align="right"
+            @sort="handleTableSort"
+          />
+        </template>
+
         <!-- Mobile card -->
         <template #card="{ item, index }">
           <div
