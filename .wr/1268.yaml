@@ -1,0 +1,38 @@
+issue: 1268
+title: "Mostrar saldo wallet en cliente seleccionado de venta manual"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1268-manual-sale-wallet-balance
+
+paths:
+  - pages/ventas/crear.vue
+
+ac:
+  - En /ventas/crear, al seleccionar cliente identificado, se ve el saldo wallet en la tarjeta del cliente.
+  - El formato visual/currency coincide con POS.
+  - Si el saldo está cargando o no hay wallet, la UI no se rompe ni muestra datos engañosos.
+  - No cambia la lógica de pago ni descuento wallet.
+
+out_of_scope:
+  - Cambiar reglas de visibilidad del método Saldo wallet.
+  - Cambiar backend, contabilidad o saldo wallet.
+  - Rediseñar POS.
+
+hints:
+  entry: "pages/ventas/crear.vue customer selected card"
+  pattern: "pages/pos/checkout.vue:2683 wallet badge/pending skeleton"
+  tests: "targeted Vue SFC parse/compile for pages/ventas/crear.vue"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits:
+    - repo-wide search
+    - full Nuxt build/typecheck
+
+next:
+  after_pr: "none"

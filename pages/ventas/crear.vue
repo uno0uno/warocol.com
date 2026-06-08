@@ -89,8 +89,10 @@ const { data: paymentGroupsData } = useFetch<{ success: boolean; data: ApiPaymen
 )
 const paymentGroups = computed(() => mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []))
 const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
-const { wallet: customerWallet } = useCustomerWallet(customerIdRef)
+const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefreshingWallet } =
+  useCustomerWallet(customerIdRef)
 const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
+const isWalletPending = computed(() => isLoadingWallet.value || isRefreshingWallet.value)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
 
 function isPaymentGroupVisible(group: PosPaymentGroup) {
@@ -368,6 +370,23 @@ async function submit() {
               <p class="text-xs text-text-secondary truncate">
                 {{ selectedCustomer.phone_number || 'Sin teléfono' }}
               </p>
+              <div
+                v-if="!isAnonymousCustomer"
+                class="flex flex-wrap gap-2 mt-1"
+                aria-live="polite"
+              >
+                <div
+                  v-if="isWalletPending"
+                  class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
+                  aria-label="Cargando saldo wallet"
+                />
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
+                >
+                  Wallet: {{ formatCurrency(walletBalanceCop) }}
+                </span>
+              </div>
             </div>
             <button
               type="button"
