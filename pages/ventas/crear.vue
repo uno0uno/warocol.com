@@ -606,7 +606,7 @@ async function submit() {
           </div>
 
           <!-- Product Grid -->
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">
+          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4 p-1 pb-4 min-w-0">
             <div
               v-for="product in filteredProducts"
               :key="product.id"
