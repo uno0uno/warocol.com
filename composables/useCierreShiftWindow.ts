@@ -19,6 +19,26 @@ export function buildCierreWindowParams(opts: {
   return base
 }
 
+export function buildCierreWindowBody(opts: {
+  periodStart: string
+  periodEnd: string
+  shiftTemplateId?: string | null
+  periodStartTime?: string | null
+  periodEndTime?: string | null
+}): Record<string, string> {
+  const base: Record<string, string> = {
+    periodStart: opts.periodStart,
+    periodEnd: opts.periodEnd,
+  }
+  if (opts.shiftTemplateId) {
+    base.shiftTemplateId = opts.shiftTemplateId
+    return base
+  }
+  if (opts.periodStartTime) base.periodStartTime = opts.periodStartTime
+  if (opts.periodEndTime) base.periodEndTime = opts.periodEndTime
+  return base
+}
+
 export function isShiftOpen(data: Record<string, any> | null | undefined): boolean {
   return data?.status === 'open' || !!data?.openingCash
 }

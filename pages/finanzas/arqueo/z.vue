@@ -830,8 +830,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
           <!-- Período -->
           <div class="bg-background rounded-lg border border-border px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Período</p>
-            <p class="text-sm font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
+            <p class="text-xs text-text-secondary mb-0.5">{{ cierreWindowSummary.title }}</p>
+            <p class="text-sm font-semibold text-text-primary">{{ cierreWindowSummary.period }}</p>
+            <p v-if="cierreWindowSummary.detail" class="text-xs text-text-secondary mt-0.5">{{ cierreWindowSummary.detail }}</p>
           </div>
           <!-- Total ventas -->
           <div class="bg-background rounded-lg border border-border px-3 py-2.5">
@@ -938,7 +939,7 @@ import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
-import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import {
   addDaysBogotaISO,
   bogotaDateAtNoon,
@@ -1194,21 +1195,6 @@ const periodEndTime = computed((): string | null => {
   return combineBogotaDateAndTimeISO(periodEnd.value, endTimeInput.value)
 })
 
-const buildPreviewParams = (completedOnly: boolean) => {
-  const base: Record<string, string | boolean> = {
-    period_start: periodStart.value,
-    period_end: periodEnd.value,
-  }
-  if (completedOnly) base.completed_only = true
-  if (previewShiftTemplateId.value) {
-    base.shift_template_id = previewShiftTemplateId.value
-    return base
-  }
-  if (periodStartTime.value) base.period_start_time = periodStartTime.value
-  if (periodEndTime.value) base.period_end_time = periodEndTime.value
-  return base
-}
-
 const shiftWindowParams = computed(() =>
   buildCierreWindowParams({
     periodStart: periodStart.value,
@@ -1218,6 +1204,22 @@ const shiftWindowParams = computed(() =>
     periodEndTime: periodEndTime.value,
   }),
 )
+
+const cierreWindowBody = computed(() =>
+  buildCierreWindowBody({
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value,
+    shiftTemplateId: previewShiftTemplateId.value,
+    periodStartTime: periodStartTime.value,
+    periodEndTime: periodEndTime.value,
+  }),
+)
+
+const buildPreviewParams = (completedOnly: boolean) => {
+  const base: Record<string, string | boolean> = { ...shiftWindowParams.value }
+  if (completedOnly) base.completed_only = true
+  return base
+}
 
 const requiresShiftOpen = computed(() => arqueoWindowMode.value === 'template' || arqueoWindowMode.value === 'custom')
 
@@ -1296,8 +1298,6 @@ const goToStep1 = () => {
   }
   currentStep.value = 1
 }
-
-const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
@@ -1451,17 +1451,10 @@ const submitCierre = async () => {
   submitError.value  = null
   try {
     const body: Record<string, unknown> = {
-      periodStart: periodStart.value,
-      periodEnd: periodEnd.value,
+      ...cierreWindowBody.value,
       cashCounted: totalCounted.value,
       cashLeftInDrawer: parseInt(cashLeftInDrawer.value) || totalCounted.value,
       notes: notes.value || null,
-    }
-    if (arqueoWindowMode.value === 'template' && selectedTemplateId.value) {
-      body.shiftTemplateId = selectedTemplateId.value
-    } else {
-      if (periodStartTime.value) body.periodStartTime = periodStartTime.value
-      if (periodEndTime.value) body.periodEndTime = periodEndTime.value
     }
     const result = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre', {
       method: 'POST',
@@ -1550,7 +1543,7 @@ watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage,
 
 // Auto-advance past step 1 when there are no open tables
 watch(previewData, (data) => {
-  if (currentStep.value === 1 && data && (data.openTablesCount === 0 || isPastPeriod.value)) {
+  if (currentStep.value === 1 && data && data.openTablesCount === 0) {
     currentStep.value = 2
   }
 }, { immediate: true })
@@ -1579,6 +1572,29 @@ const formatPeriod = (start: string, end: string) => {
   const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
+
+const cierreWindowSummary = computed(() => {
+  if (arqueoWindowMode.value === 'template') {
+    const templateName = shiftTemplates.value.find(t => t.id === selectedTemplateId.value)?.name ?? 'Turno'
+    return {
+      title: 'Turno',
+      period: `${templateName} · ${formatPeriod(periodStart.value, periodEnd.value)}`,
+      detail: templateHoursLabel.value,
+    }
+  }
+  if (periodStartTime.value && periodEndTime.value) {
+    return {
+      title: 'Ventana',
+      period: formatPeriod(periodStart.value, periodEnd.value),
+      detail: `${bogotaTimeHHMMFromISO(periodStartTime.value)} – ${bogotaTimeHHMMFromISO(periodEndTime.value)}`,
+    }
+  }
+  return {
+    title: 'Día completo',
+    period: formatPeriod(periodStart.value, periodEnd.value),
+    detail: null,
+  }
+})
 </script>
 
 <style>

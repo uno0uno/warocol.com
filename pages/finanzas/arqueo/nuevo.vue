@@ -662,7 +662,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
           <!-- Período -->
           <div class="bg-background rounded-lg border border-border px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Período</p>
+            <p class="text-xs text-text-secondary mb-0.5">Día completo</p>
             <p class="text-sm font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
           </div>
           <!-- Total ventas -->
@@ -754,7 +754,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
-import { buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import {
   addDaysBogotaISO,
   bogotaDateAtNoon,
@@ -843,6 +843,13 @@ const periodEnd   = computed(() => periodStart.value)
 const shiftWindowParams = computed(() =>
   buildCierreWindowParams({ periodStart: periodStart.value, periodEnd: periodEnd.value }),
 )
+const cierreWindowBody = computed(() =>
+  buildCierreWindowBody({ periodStart: periodStart.value, periodEnd: periodEnd.value }),
+)
+const buildPreviewParams = (completedOnly: boolean) => ({
+  ...shiftWindowParams.value,
+  ...(completedOnly ? { completed_only: true } : {}),
+})
 
 const { data: rawShiftStatus } = useQuery({
   key: () => ['cierre', 'shift-status', currentTenant.value?.id, periodStart.value],
@@ -869,7 +876,7 @@ const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch
     cierrePreviewShiftCacheKey(rawShiftStatus.value?.data),
   ],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
+    params: buildPreviewParams(true),
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 0,
@@ -897,9 +904,6 @@ watch(
     void refetchXPreview()
   },
 )
-
-// Navigate to step 1
-const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
@@ -947,7 +951,7 @@ const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus
     cierrePreviewShiftCacheKey(rawShiftStatus.value?.data),
   ],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
+    params: buildPreviewParams(true),
   }),
   enabled: () => !!currentTenant.value && currentStep.value > 1,
   staleTime: 0,
@@ -1059,8 +1063,7 @@ const submitCierre = async () => {
     const result = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre', {
       method: 'POST',
       body: {
-        periodStart:  periodStart.value,
-        periodEnd:    periodEnd.value,
+        ...cierreWindowBody.value,
         cashCounted:  totalCounted.value,
         notes:        notes.value || null,
       },
