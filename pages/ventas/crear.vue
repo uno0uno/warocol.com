@@ -57,6 +57,8 @@ const showCustomerModal = ref(false)
 const selectedCustomer = ref<SelectedCustomer | null>(null)
 const pendingProduct = ref<any | null>(null)
 const pendingItem = ref<LineItem | null>(null)
+const searchQuery = ref('')
+const selectedCategory = ref('all')
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -86,7 +88,44 @@ const { data: productsData, pending: loadingProducts } = useFetch('/api/menu/pro
   query: { is_available: true, limit: 250, include_modifiers: true }
 })
 
-const products = computed(() => productsData.value?.data ?? [])
+const products = computed(() => {
+  const rows = productsData.value?.data ?? []
+  return rows
+    .filter((p: any) => !p.open_priced)
+    .map((p: any) => ({
+      ...p,
+      id: p.id,
+      name: p.name,
+      price: Number(p.price) || 0,
+      category: p.category_name || p.category?.name || p.category || 'Sin categoría',
+      category_id: p.category_id ?? null,
+      image: p.image || '🍽️',
+      image_url: p.image_url || null,
+      available: p.is_available !== false,
+      is_resale: p.is_resale || false,
+      modifier_groups: p.modifier_groups || [],
+    }))
+})
+
+const categories = computed(() => {
+  const cats = new Set(products.value.map((p: any) => p.category || 'Sin categoría'))
+  return ['all', ...Array.from(cats).sort((a, b) => a.localeCompare(b))]
+})
+
+const filteredProducts = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return products.value.filter((product: any) => {
+    const matchesSearch = !q || product.name.toLowerCase().includes(q)
+    const matchesCategory = selectedCategory.value === 'all' || product.category === selectedCategory.value
+    return matchesSearch && matchesCategory
+  })
+})
+
+watch(categories, (cats) => {
+  if (!cats.includes(selectedCategory.value)) {
+    selectedCategory.value = 'all'
+  }
+})
 
 // ─── Payment methods (dynamic, same source as POS) ──────────────────────────
 const { data: paymentGroupsData } = useFetch<{ success: boolean; data: ApiPaymentGroup[] }>(
@@ -533,10 +572,43 @@ async function submit() {
         <!-- ── LEFT: Product Grid + Modifier Panel ───────────────────────── -->
         <div class="flex flex-col gap-4">
 
+          <!-- Search and Filters -->
+          <div class="flex flex-col gap-3">
+            <UiSearchBar
+              v-model="searchQuery"
+              placeholder="Buscar productos..."
+            />
+            <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              <button
+                v-for="cat in categories"
+                :key="cat"
+                type="button"
+                class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
+                :class="selectedCategory === cat
+                  ? 'bg-action-primary-bg text-action-primary-text shadow-md'
+                  : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
+                @click="selectedCategory = cat"
+              >
+                {{ cat === 'all' ? 'Todos' : cat }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="!loadingProducts && filteredProducts.length === 0"
+            class="flex flex-col items-center justify-center min-h-48 rounded-lg border border-dashed border-border bg-surface text-text-secondary px-4 py-8 text-center"
+          >
+            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p class="text-sm font-medium text-text-primary">No hay productos disponibles</p>
+            <p class="text-xs mt-1">Ajusta la búsqueda o cambia de categoría</p>
+          </div>
+
           <!-- Product Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div
-              v-for="product in products"
+              v-for="product in filteredProducts"
               :key="product.id"
               class="relative"
             >
