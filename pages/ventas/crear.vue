@@ -5,7 +5,7 @@ definePageMeta({
 
 useHead({ title: 'Nueva Venta' })
 
-import { modifiersCartTotal, formatSaleModifierPriceLabel, normalizeModifierOptionType } from '~/utils/saleModifierOption'
+import { modifiersCartTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import {
   WALLET_PAYMENT_SLUG,
@@ -20,7 +20,10 @@ interface ModifierOption {
   id: string
   name: string
   price: number
+  quantity?: number
+  max_limit?: number
   option_type?: string
+  type_label?: string
 }
 
 interface ModifierGroup {
@@ -144,13 +147,32 @@ const customizationProduct = computed(() =>
 
 // ─── Manual cart helpers ──────────────────────────────────────────────────────
 
+function normalizeModifierGroups(groups: any[] = []): ModifierGroup[] {
+  return groups.map(group => ({
+    id: String(group.id),
+    name: String(group.name || ''),
+    is_required: Boolean(group.is_required),
+    max_qty: Math.max(1, Number(group.max_qty) || 1),
+    modifiers: (group.modifiers || [])
+      .filter((mod: any) => mod && mod.is_available !== false)
+      .map((mod: any) => mapApiModifierToSaleOption(mod as Record<string, unknown>)),
+  }))
+}
+
+function normalizeSelectedModifier(modifier: ModifierOption): ModifierOption {
+  return {
+    ...modifier,
+    quantity: Math.max(1, Number(modifier.quantity) || 1),
+  }
+}
+
 function buildLineItem(product: any, selectedModifiers: ModifierOption[] = []): LineItem {
   return {
     product_id: product.id,
     quantity: 1,
     unit_price: Number(product.price) || 0,
-    modifier_groups: product.modifier_groups || [],
-    selected_modifiers: selectedModifiers.map(m => ({ ...m }))
+    modifier_groups: normalizeModifierGroups(product.modifier_groups || []),
+    selected_modifiers: selectedModifiers.map(normalizeSelectedModifier)
   }
 }
 
@@ -224,32 +246,78 @@ function productFor(item: LineItem) {
 
 // ─── Modifier helpers ─────────────────────────────────────────────────────────
 
-function toggleModifier(item: LineItem, option: ModifierOption, group: ModifierGroup) {
+function getModifierQty(item: LineItem, modifierId: string): number {
+  return item.selected_modifiers.find(m => m.id === modifierId)?.quantity ?? 0
+}
+
+function isSingleSelectGroup(group: ModifierGroup): boolean {
+  return Math.max(1, Number(group.max_qty) || 1) === 1
+}
+
+function selectRadioModifier(item: LineItem, option: ModifierOption, group: ModifierGroup) {
+  item.selected_modifiers = item.selected_modifiers.filter(m =>
+    !group.modifiers.some(o => o.id === m.id)
+  )
+  item.selected_modifiers.push({ ...option, quantity: 1 })
+}
+
+function canIncrementModifier(item: LineItem, option: ModifierOption, group: ModifierGroup): boolean {
   const idx = item.selected_modifiers.findIndex(m => m.id === option.id)
-  if (idx !== -1) {
+  const currentQty = idx === -1 ? 0 : (item.selected_modifiers[idx].quantity ?? 1)
+  const optionLimit = Math.max(1, Number(option.max_limit) || 1)
+  if (currentQty >= optionLimit) return false
+
+  if (idx === -1) {
+    const distinctInGroup = item.selected_modifiers.filter(m =>
+      group.modifiers.some(o => o.id === m.id) && (m.quantity ?? 0) > 0
+    ).length
+    const groupLimit = Math.max(1, Number(group.max_qty) || 1)
+    if (distinctInGroup >= groupLimit) return false
+  }
+
+  return true
+}
+
+function incrementModifier(item: LineItem, option: ModifierOption, group: ModifierGroup) {
+  if (!canIncrementModifier(item, option, group)) return
+
+  const idx = item.selected_modifiers.findIndex(m => m.id === option.id)
+  if (idx === -1) {
+    item.selected_modifiers.push({ ...option, quantity: 1 })
+    return
+  }
+
+  const currentQty = item.selected_modifiers[idx].quantity ?? 1
+  item.selected_modifiers[idx] = {
+    ...item.selected_modifiers[idx],
+    quantity: currentQty + 1,
+  }
+}
+
+function decrementModifier(item: LineItem, option: ModifierOption) {
+  const idx = item.selected_modifiers.findIndex(m => m.id === option.id)
+  if (idx === -1) return
+
+  const currentQty = item.selected_modifiers[idx].quantity ?? 1
+  if (currentQty <= 1) {
     item.selected_modifiers.splice(idx, 1)
     return
   }
-  const countInGroup = item.selected_modifiers.filter(m =>
-    group.modifiers.some(o => o.id === m.id)
-  ).length
-  if (countInGroup >= group.max_qty) {
-    const oldestIdx = item.selected_modifiers.findIndex(m =>
-      group.modifiers.some(o => o.id === m.id)
-    )
-    if (oldestIdx !== -1) item.selected_modifiers.splice(oldestIdx, 1)
+
+  item.selected_modifiers[idx] = {
+    ...item.selected_modifiers[idx],
+    quantity: currentQty - 1,
   }
-  item.selected_modifiers.push(option)
 }
 
 function isModifierSelected(item: LineItem, modifierId: string) {
-  return item.selected_modifiers.some(m => m.id === modifierId)
+  return getModifierQty(item, modifierId) > 0
 }
 
 // ─── Totals ───────────────────────────────────────────────────────────────────
 
 function modifierTypeLabel(option: ModifierOption): string {
-  return formatModifierOptionTypeLabel(normalizeModifierOptionType(option.option_type))
+  return option.type_label || formatModifierOptionTypeLabel(normalizeModifierOptionType(option.option_type))
 }
 
 function itemTotal(item: LineItem) {
@@ -320,7 +388,8 @@ async function submit() {
           modifiers: i.selected_modifiers.map(m => ({
             id: m.id,
             name: m.name,
-            price: m.price
+            price: m.price,
+            quantity: m.quantity ?? 1
           }))
         }))
       }
@@ -524,7 +593,7 @@ async function submit() {
                   <span v-if="group.is_required" class="text-destructive" aria-hidden="true">*</span>
                   <span class="normal-case font-normal ml-1 text-xs">(máx. {{ group.max_qty }})</span>
                 </p>
-                <div class="flex flex-wrap gap-2">
+                <div v-if="isSingleSelectGroup(group)" class="flex flex-wrap gap-2">
                   <button
                     v-for="option in group.modifiers"
                     :key="option.id"
@@ -533,7 +602,7 @@ async function submit() {
                     :class="isModifierSelected(customizationItem, option.id)
                       ? 'border-primary bg-primary/10 text-primary font-medium'
                       : 'border-border bg-background text-text-primary hover:border-primary/50'"
-                    @click="toggleModifier(customizationItem, option, group)"
+                    @click="selectRadioModifier(customizationItem, option, group)"
                   >
                     <svg
                       class="w-3.5 h-3.5 shrink-0"
@@ -563,6 +632,66 @@ async function submit() {
                       {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
                     </span>
                   </button>
+                </div>
+                <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    v-for="option in group.modifiers"
+                    :key="option.id"
+                    class="rounded-lg border bg-background p-3 transition-all"
+                    :class="isModifierSelected(customizationItem, option.id)
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border'"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-text-primary truncate">{{ option.name }}</p>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <span
+                            v-if="modifierTypeLabel(option) !== 'Ingrediente'"
+                            class="text-[10px] uppercase tracking-wide text-text-tertiary"
+                          >
+                            {{ modifierTypeLabel(option) }}
+                          </span>
+                          <span
+                            class="text-xs"
+                            :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
+                          >
+                            {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex items-center rounded-lg border border-border bg-surface-secondary/40 p-0.5 shrink-0">
+                        <button
+                          type="button"
+                          class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                          :disabled="getModifierQty(customizationItem, option.id) <= 0"
+                          :aria-label="`Reducir ${option.name}`"
+                          @click="decrementModifier(customizationItem, option)"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                          </svg>
+                        </button>
+                        <span
+                          class="w-7 text-center text-sm font-semibold tabular-nums"
+                          :class="getModifierQty(customizationItem, option.id) > 0 ? 'text-primary' : 'text-text-secondary'"
+                        >
+                          {{ getModifierQty(customizationItem, option.id) }}
+                        </span>
+                        <button
+                          type="button"
+                          class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                          :disabled="!canIncrementModifier(customizationItem, option, group)"
+                          :aria-label="`Aumentar ${option.name}`"
+                          @click="incrementModifier(customizationItem, option, group)"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -638,7 +767,7 @@ async function submit() {
                       :key="mod.id"
                       class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
                     >
-                      {{ mod.name }}
+                      {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
                     </span>
                   </div>
                 </div>
@@ -725,7 +854,7 @@ async function submit() {
                     :key="mod.id"
                     class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
-                    {{ mod.name }}
+                    {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
                   </span>
                 </div>
               </div>
