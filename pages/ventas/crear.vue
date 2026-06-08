@@ -629,10 +629,38 @@ async function submit() {
           </div>
 
           <!-- Product Detail Panel -->
-          <div
-            v-if="customizationItem"
-            class="order-2 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4"
-          >
+          <Teleport to="body">
+            <Transition
+              enter-active-class="transition-opacity duration-200"
+              enter-from-class="opacity-0"
+              enter-to-class="opacity-100"
+              leave-active-class="transition-opacity duration-200"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <div
+                v-if="customizationItem"
+                class="fixed inset-0 z-40 bg-black/40"
+                aria-hidden="true"
+                @click="closeCustomizationPanel"
+              />
+            </Transition>
+
+            <Transition name="manual-product-panel">
+              <div
+                v-if="customizationItem"
+                role="dialog"
+                aria-modal="true"
+                :aria-label="`Personalizar ${customizationProduct?.name ?? 'producto'}`"
+                class="fixed z-50 flex flex-col bg-surface shadow-2xl
+                       inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                       md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+              >
+            <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4">
             <div class="flex items-center justify-between gap-2">
               <div class="min-w-0">
                 <h2 class="text-sm font-semibold text-text-primary truncate">
@@ -813,6 +841,10 @@ async function submit() {
               </button>
             </div>
           </div>
+            </div>
+              </div>
+            </Transition>
+          </Teleport>
 
           <!-- ── Mobile: Inline Cart ───────────────────────────────────── -->
           <div v-if="form.items.length > 0" class="lg:hidden rounded-xl border border-border bg-surface flex flex-col">
@@ -1034,3 +1066,23 @@ async function submit() {
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+.manual-product-panel-enter-active,
+.manual-product-panel-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.manual-product-panel-enter-from,
+.manual-product-panel-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+@media (min-width: 768px) {
+  .manual-product-panel-enter-from,
+  .manual-product-panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+</style>
