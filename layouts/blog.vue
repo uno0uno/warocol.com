@@ -1,5 +1,5 @@
 <template>
-  <PublicShell>
+  <LayoutPublicShell>
     <slot />
-  </PublicShell>
+  </LayoutPublicShell>
 </template>
