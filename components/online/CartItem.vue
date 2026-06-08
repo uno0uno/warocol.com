@@ -13,9 +13,14 @@
             :key="modifier.id"
             class="flex justify-between text-xs text-muted-foreground"
           >
-            <span>+ {{ modifier.name }}</span>
-            <span class="ml-4" :class="modifier.price === 0 ? 'text-success' : ''">
-              {{ modifier.price === 0 ? 'Gratis' : formatPrice(modifier.price) }}
+            <span>
+              + {{ modifier.name }}
+              <span v-if="modifier.quantity && modifier.quantity > 1" class="font-medium">
+                x{{ modifier.quantity }}
+              </span>
+            </span>
+            <span class="ml-4" :class="modifierLineAmount(modifier) === 0 ? 'text-success' : ''">
+              {{ modifierLineAmount(modifier) === 0 ? 'Gratis' : formatPrice(modifierLineAmount(modifier)) }}
             </span>
           </div>
         </div>
@@ -119,6 +124,7 @@
 
 <script setup lang="ts">
 import type { OnlineCartItem } from '~/stores/online_cart'
+import { modifierLineTotal } from '~/utils/saleModifierOption'
 
 const props = defineProps<{
   item: OnlineCartItem
@@ -139,6 +145,9 @@ const formatPrice = (price: number) => {
     minimumFractionDigits: 0,
   }).format(price)
 }
+
+const modifierLineAmount = (modifier: OnlineCartItem['modifiers'][number]) =>
+  modifierLineTotal(modifier)
 
 const increaseQuantity = () => {
   if (props.item.has_modifiers) {
