@@ -1,0 +1,43 @@
+issue: 1285
+title: "Mostrar modificadores de venta manual en slideover"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1285-manual-modifiers-slideover
+
+paths:
+  - pages/ventas/crear.vue
+
+ac:
+  - Al hacer click en producto normal en /ventas/crear se abre un panel tipo slideover/bottom sheet.
+  - El panel contiene nombre, precio, modificadores, cantidades y acciones actuales.
+  - El boton Agregar al carrito conserva el comportamiento actual.
+  - Cerrar/cancelar descarta la seleccion pendiente sin modificar carrito.
+  - Productos is_resale siguen agregandose directo.
+  - No hay cambios de backend/API ni payload.
+  - Validacion manual listada en PR.
+
+out_of_scope:
+  - Backend/API.
+  - POS.
+  - Reglas nuevas de modificadores.
+  - Rediseno de cards.
+  - Cambios de payload.
+
+hints:
+  entry: "pages/ventas/crear.vue customizationItem/Product Detail Panel"
+  pattern: "components/ingredientes/IngredientePropioPanel.vue Teleport + panel transition"
+  tests: "npx nuxi prepare; curl /ventas/crear"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits:
+    - full build
+    - backend tests
+
+next:
+  after_pr: "none"
