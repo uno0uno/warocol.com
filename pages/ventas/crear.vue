@@ -596,7 +596,7 @@ async function submit() {
 
           <div
             v-if="!loadingProducts && filteredProducts.length === 0"
-            class="flex flex-col items-center justify-center min-h-48 rounded-lg border border-dashed border-border bg-surface text-text-secondary px-4 py-8 text-center"
+            class="order-3 flex flex-col items-center justify-center min-h-48 rounded-lg border border-dashed border-border bg-surface text-text-secondary px-4 py-8 text-center"
           >
             <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -606,7 +606,7 @@ async function submit() {
           </div>
 
           <!-- Product Grid -->
-          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4 p-1 pb-4 min-w-0">
+          <div v-else class="order-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4 p-1 pb-4 min-w-0">
             <div
               v-for="product in filteredProducts"
               :key="product.id"
@@ -631,7 +631,7 @@ async function submit() {
           <!-- Product Detail Panel -->
           <div
             v-if="customizationItem"
-            class="rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4"
+            class="order-2 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4"
           >
             <div class="flex items-center justify-between gap-2">
               <div class="min-w-0">
