@@ -1,8 +1,8 @@
 <template>
   <div class="index-page animate-fade-in">
-    <HomeFoodBackground />
-    <HomeHero @lead="leadModal.open" />
-    <HomeTrustLogos />
+    <PublicHomeFoodBackground />
+    <PublicHomeHero @lead="leadModal.open" />
+    <PublicHomeTrustLogos />
   </div>
 </template>
 

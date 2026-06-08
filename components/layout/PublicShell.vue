@@ -1,12 +1,12 @@
 <template>
   <div :class="rootClass">
     <NuxtLoadingIndicator />
-    <Header />
+    <LayoutHeader />
     <div :class="contentClass">
       <slot />
     </div>
-    <Footer v-if="showFooter" :class="footerClass" />
-    <BottomNav v-if="showBottomNav" />
+    <LayoutFooter v-if="showFooter" :class="footerClass" />
+    <LayoutBottomNav v-if="showBottomNav" />
   </div>
 </template>
 
