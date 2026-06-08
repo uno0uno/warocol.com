@@ -87,7 +87,8 @@
                 :key="mod.id"
                 class="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full"
               >
-                + {{ mod.name }}
+                + {{ mod.name }}<template v-if="mod.quantity && mod.quantity > 1"> x{{ mod.quantity }}</template>
+                <template v-if="modifierLineAmount(mod) !== 0"> · {{ formatPrice(modifierLineAmount(mod)) }}</template>
               </span>
             </div>
             <p v-if="item.notes" class="text-xs text-muted-foreground mt-1 italic">{{ item.notes }}</p>
@@ -258,6 +259,7 @@ import { useOrderNotification } from '~/composables/useOrderNotification'
 import CartSummary from '~/components/online/CartSummary.vue'
 import { Button } from '~/components/ui'
 import type { PosPaymentGroup } from '~/utils/paymentDefaults'
+import { modifierLineTotal } from '~/utils/saleModifierOption'
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -332,6 +334,9 @@ const formatPrice = (price: number) =>
     currency: 'COP',
     minimumFractionDigits: 0,
   }).format(price)
+
+const modifierLineAmount = (modifier: { price: number; quantity?: number }) =>
+  modifierLineTotal(modifier)
 
 const formatScheduledTime = (isoString: string) =>
   new Date(isoString).toLocaleString('es-CO', {
