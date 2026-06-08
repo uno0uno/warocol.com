@@ -1,5 +1,5 @@
 <template>
-  <PublicShell
+  <LayoutPublicShell
     root-class="w-screen h-screen flex flex-col"
     content-class="flex-1 pb-8"
     footer-class=""
@@ -7,7 +7,7 @@
     :show-bottom-nav="false"
   >
     <slot />
-  </PublicShell>
+  </LayoutPublicShell>
 </template>
 
 <script setup lang="ts">

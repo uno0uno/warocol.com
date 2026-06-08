@@ -52,6 +52,8 @@ const loading = ref(false)
 const activeItemIndex = ref<number | null>(null)
 const showCustomerModal = ref(false)
 const selectedCustomer = ref<SelectedCustomer | null>(null)
+const pendingProduct = ref<any | null>(null)
+const pendingItem = ref<LineItem | null>(null)
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -135,22 +137,58 @@ const activeItem = computed(() =>
   activeItemIndex.value !== null ? form.value.items[activeItemIndex.value] : null
 )
 
-// ─── POS cart helpers ─────────────────────────────────────────────────────────
+const customizationItem = computed(() => pendingItem.value ?? activeItem.value)
+const customizationProduct = computed(() =>
+  pendingProduct.value ?? (customizationItem.value ? productFor(customizationItem.value) : null)
+)
 
-function addProductToCart(product: any) {
-  if (!product) return
-  // Always create a new line item (same product can appear multiple times with different modifiers)
-  form.value.items.push({
+// ─── Manual cart helpers ──────────────────────────────────────────────────────
+
+function buildLineItem(product: any, selectedModifiers: ModifierOption[] = []): LineItem {
+  return {
     product_id: product.id,
     quantity: 1,
     unit_price: Number(product.price) || 0,
     modifier_groups: product.modifier_groups || [],
-    selected_modifiers: []
-  })
-  const newIdx = form.value.items.length - 1
-  if (form.value.items[newIdx].modifier_groups.length > 0) {
-    activeItemIndex.value = newIdx
+    selected_modifiers: selectedModifiers.map(m => ({ ...m }))
   }
+}
+
+function addProductToCart(product: any, selectedModifiers: ModifierOption[] = []) {
+  if (!product) return
+  // Always create a new line item (same product can appear multiple times with different modifiers)
+  form.value.items.push(buildLineItem(product, selectedModifiers))
+}
+
+function selectProduct(product: any) {
+  if (!product) return
+  if (product.is_resale === true) {
+    closeProductDetail()
+    addProductToCart(product)
+    return
+  }
+  pendingProduct.value = product
+  pendingItem.value = buildLineItem(product)
+  activeItemIndex.value = null
+}
+
+function closeProductDetail() {
+  pendingProduct.value = null
+  pendingItem.value = null
+}
+
+function closeCustomizationPanel() {
+  if (pendingItem.value) {
+    closeProductDetail()
+    return
+  }
+  activeItemIndex.value = null
+}
+
+function confirmProductDetail() {
+  if (!pendingProduct.value || !pendingItem.value) return
+  addProductToCart(pendingProduct.value, pendingItem.value.selected_modifiers)
+  closeProductDetail()
 }
 
 function incrementItem(index: number) {
@@ -441,94 +479,137 @@ async function submit() {
               >
                 {{ cartQtyFor(product.id) }}
               </div>
-              <button
-                type="button"
-                class="w-full flex flex-col items-center p-3 sm:p-4 border-2 rounded-xl bg-surface transition-all hover:shadow-sm active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                :class="cartQtyFor(product.id) > 0
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/40'"
-                :aria-label="`Agregar ${product.name} — ${formatCurrency(product.price)}`"
-                @click="addProductToCart(product)"
-              >
-                <span class="text-3xl sm:text-4xl mb-1.5" aria-hidden="true">{{ product.image }}</span>
-                <span class="text-xs sm:text-sm font-medium text-text-primary text-center leading-tight line-clamp-2">
-                  {{ product.name }}
-                </span>
-                <span class="text-sm sm:text-base font-bold text-primary mt-1">
-                  {{ formatCurrency(product.price) }}
-                </span>
-              </button>
+              <PosProductCard
+                class="w-full"
+                :product="product"
+                @select="selectProduct"
+              />
             </div>
           </div>
 
-          <!-- Modifier Expansion Panel -->
+          <!-- Product Detail Panel -->
           <div
-            v-if="activeItem && activeItem.modifier_groups.length > 0"
+            v-if="customizationItem"
             class="rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4"
           >
             <div class="flex items-center justify-between gap-2">
-              <h2 class="text-sm font-semibold text-text-primary">
-                Adiciones — {{ productFor(activeItem)?.name }}
-              </h2>
+              <div class="min-w-0">
+                <h2 class="text-sm font-semibold text-text-primary truncate">
+                  {{ customizationProduct?.name }}
+                </h2>
+                <p class="text-xs text-text-secondary">
+                  {{ formatCurrency(customizationItem.unit_price) }} c/u
+                </p>
+              </div>
               <button
                 type="button"
                 class="text-xs text-text-secondary hover:text-text-primary transition-colors px-2 py-1 rounded min-h-[32px]"
-                @click="activeItemIndex = null"
+                @click="closeCustomizationPanel"
               >
                 Cerrar
               </button>
             </div>
 
             <div
-              v-for="group in activeItem.modifier_groups"
-              :key="group.id"
-              class="flex flex-col gap-2"
+              v-if="customizationItem.modifier_groups.length > 0"
+              class="flex flex-col gap-3"
             >
-              <p class="text-sm font-medium text-text-secondary">
-                {{ group.name }}
-                <span v-if="group.is_required" class="text-destructive" aria-hidden="true">*</span>
-                <span class="normal-case font-normal ml-1 text-xs">(máx. {{ group.max_qty }})</span>
-              </p>
-              <div class="flex flex-wrap gap-2">
+              <div
+                v-for="group in customizationItem.modifier_groups"
+                :key="group.id"
+                class="flex flex-col gap-2"
+              >
+                <p class="text-sm font-medium text-text-secondary">
+                  {{ group.name }}
+                  <span v-if="group.is_required" class="text-destructive" aria-hidden="true">*</span>
+                  <span class="normal-case font-normal ml-1 text-xs">(máx. {{ group.max_qty }})</span>
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="option in group.modifiers"
+                    :key="option.id"
+                    type="button"
+                    class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    :class="isModifierSelected(customizationItem, option.id)
+                      ? 'border-primary bg-primary/10 text-primary font-medium'
+                      : 'border-border bg-background text-text-primary hover:border-primary/50'"
+                    @click="toggleModifier(customizationItem, option, group)"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5 shrink-0"
+                      :class="isModifierSelected(customizationItem, option.id) ? 'text-primary' : 'text-text-secondary'"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+                    >
+                      <path
+                        v-if="isModifierSelected(customizationItem, option.id)"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
+                      />
+                      <path
+                        v-else
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    {{ option.name }}
+                    <span
+                      v-if="modifierTypeLabel(option) !== 'Ingrediente'"
+                      class="text-[10px] uppercase tracking-wide text-text-tertiary"
+                    >
+                      {{ modifierTypeLabel(option) }}
+                    </span>
+                    <span
+                      class="text-xs"
+                      :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
+                    >
+                      {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p
+              v-else
+              class="text-sm text-text-secondary"
+            >
+              Este producto no tiene adiciones configuradas.
+            </p>
+
+            <div
+              v-if="pendingItem"
+              class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-primary/20 pt-4"
+            >
+              <span class="text-sm font-semibold text-primary">
+                {{ formatCurrency(itemTotal(pendingItem)) }}
+              </span>
+              <div class="flex items-center gap-2">
                 <button
-                  v-for="option in group.modifiers"
-                  :key="option.id"
                   type="button"
-                  class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  :class="isModifierSelected(activeItem, option.id)
-                    ? 'border-primary bg-primary/10 text-primary font-medium'
-                    : 'border-border bg-background text-text-primary hover:border-primary/50'"
-                  @click="toggleModifier(activeItem, option, group)"
+                  class="h-10 px-4 rounded-lg border border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                  @click="closeProductDetail"
                 >
-                  <svg
-                    class="w-3.5 h-3.5 shrink-0"
-                    :class="isModifierSelected(activeItem, option.id) ? 'text-primary' : 'text-text-secondary'"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
-                  >
-                    <path
-                      v-if="isModifierSelected(activeItem, option.id)"
-                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                    />
-                    <path
-                      v-else
-                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  {{ option.name }}
-                  <span
-                    v-if="modifierTypeLabel(option) !== 'Ingrediente'"
-                    class="text-[10px] uppercase tracking-wide text-text-tertiary"
-                  >
-                    {{ modifierTypeLabel(option) }}
-                  </span>
-                  <span
-                    class="text-xs"
-                    :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
-                  >
-                    {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
-                  </span>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  @click="confirmProductDetail"
+                >
+                  Agregar al carrito
                 </button>
               </div>
+            </div>
+
+            <div
+              v-else-if="activeItem"
+              class="flex justify-end border-t border-primary/20 pt-4"
+            >
+              <button
+                type="button"
+                class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                @click="closeCustomizationPanel"
+              >
+                Listo
+              </button>
             </div>
           </div>
 
