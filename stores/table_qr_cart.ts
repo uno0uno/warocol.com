@@ -7,7 +7,11 @@ import type { OnlineCartItem, CartModifier } from '~/stores/online_cart'
 import { modifiersCartTotal } from '~/utils/saleModifierOption'
 
 function modifiersKey(mods: CartModifier[]): string {
-  return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)))
+  return JSON.stringify(
+    [...mods]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map(m => ({ id: m.id, q: m.quantity ?? 1 })),
+  )
 }
 
 function newItemId(): string {
@@ -101,7 +105,10 @@ export const useTableQrCartStore = defineStore('tableQrCart', () => {
     return items.value.map(item => ({
       product_id: item.product_id,
       quantity: item.quantity,
-      modifiers: item.modifiers.map(mod => ({ id: mod.id })),
+      modifiers: item.modifiers.map(mod => ({
+        id: mod.id,
+        quantity: mod.quantity ?? 1,
+      })),
       notes: item.notes || undefined,
     }))
   }
