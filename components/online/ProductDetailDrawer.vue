@@ -147,22 +147,14 @@
                   </label>
                 </template>
 
-                <!-- Checkbox (multi-choice) -->
+                <!-- Stepper (multi-choice with per-modifier quantity) -->
                 <template v-else>
-                  <label
+                  <div
                     v-for="mod in availableModifiers(group)"
                     :key="mod.id"
                     class="option-label"
-                    :class="{ 'option-disabled': !isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty }"
+                    :class="{ 'option-disabled': getModifierQty(mod.id) <= 0 && !canIncrementModifier(mod, group.id) }"
                   >
-                    <input
-                      type="checkbox"
-                      :value="mod.id"
-                      :checked="isSelected(mod.id)"
-                      :disabled="!isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty"
-                      @change="toggleCheckbox(mod)"
-                      class="option-input"
-                    />
                     <span class="option-name">{{ mod.name }}</span>
                     <span class="option-meta">
                       <span
@@ -179,7 +171,29 @@
                         {{ formatModifierPriceLabel(mod) }}
                       </span>
                     </span>
-                  </label>
+                    <span class="modifier-stepper" @click.stop>
+                      <button
+                        type="button"
+                        class="modifier-stepper-btn"
+                        :disabled="getModifierQty(mod.id) <= 0"
+                        :aria-label="`Reducir ${mod.name}`"
+                        @click="decrementModifier(mod)"
+                      >−</button>
+                      <span
+                        class="modifier-stepper-value"
+                        :class="{ active: getModifierQty(mod.id) > 0 }"
+                      >
+                        {{ getModifierQty(mod.id) }}
+                      </span>
+                      <button
+                        type="button"
+                        class="modifier-stepper-btn"
+                        :disabled="!canIncrementModifier(mod, group.id)"
+                        :aria-label="`Aumentar ${mod.name}`"
+                        @click="incrementModifier(mod, group.id)"
+                      >+</button>
+                    </span>
+                  </div>
                 </template>
               </div>
             </div>
@@ -283,14 +297,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOnlineCartStore, type CartModifier } from '~/stores/online_cart'
+import { useTableQrCartStore } from '~/stores/table_qr_cart'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import {
   formatSaleModifierPriceLabel,
   modifiersCartTotal,
   normalizeModifierOptionType,
 } from '~/utils/saleModifierOption'
+import {
+  canIncrementModifierSelection,
+  modifierGroupSelectionCount,
+  modifierSelectionQty,
+} from '~/utils/modifierSelection'
 
 interface Modifier {
   id: string
@@ -387,7 +407,7 @@ function getDefaultModifiers(): CartModifier[] {
   for (const group of productDetail.value.modifier_groups) {
     for (const mod of group.modifiers) {
       if (mod.is_default && mod.is_available) {
-        defaults.push({ id: mod.id, name: mod.name, price: mod.price })
+        defaults.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
       }
     }
   }
@@ -461,7 +481,7 @@ watch(() => props.modelValue, async (val) => {
       for (const group of res.data.modifier_groups) {
         for (const mod of group.modifiers) {
           if (mod.is_default && mod.is_available) {
-            selectedModifiers.value.push({ id: mod.id, name: mod.name, price: mod.price })
+            selectedModifiers.value.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
           }
         }
       }
@@ -532,32 +552,80 @@ function availableModifiers(group: ModifierGroup): Modifier[] {
 }
 
 function isSelected(modId: string): boolean {
-  return activeStepModifiers.value.some(m => m.id === modId)
+  return getModifierQty(modId) > 0
 }
 
 function groupSelectionCount(groupId: string): number {
   if (!productDetail.value) return 0
   const group = productDetail.value.modifier_groups.find(g => g.id === groupId)
   if (!group) return 0
-  return activeStepModifiers.value.filter(sel =>
-    group.modifiers.some(m => m.id === sel.id)
-  ).length
+  return modifierGroupSelectionCount(
+    activeStepModifiers.value,
+    group.modifiers.map(m => m.id),
+  )
 }
 
 function selectRadio(group: ModifierGroup, mod: Modifier) {
   const current = [...activeStepModifiers.value]
   const filtered = current.filter(sel => !group.modifiers.some(m => m.id === sel.id))
-  filtered.push({ id: mod.id, name: mod.name, price: mod.price })
+  filtered.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
   activeStepModifiers.value = filtered
 }
 
-function toggleCheckbox(mod: Modifier) {
-  const current = [...activeStepModifiers.value]
-  if (current.some(m => m.id === mod.id)) {
-    activeStepModifiers.value = current.filter(m => m.id !== mod.id)
-  } else {
-    activeStepModifiers.value = [...current, { id: mod.id, name: mod.name, price: mod.price }]
+function getModifierQty(modId: string): number {
+  return modifierSelectionQty(activeStepModifiers.value, modId)
+}
+
+function canIncrementModifier(mod: Modifier, groupId: string): boolean {
+  if (!productDetail.value) return false
+  const group = productDetail.value.modifier_groups.find(g => g.id === groupId)
+  if (!group) return false
+
+  return canIncrementModifierSelection({
+    selections: activeStepModifiers.value,
+    modifierId: mod.id,
+    modifierMaxLimit: mod.max_limit,
+    groupOptionIds: group.modifiers.map(m => m.id),
+    groupMaxSelections: group.max_qty,
+  })
+}
+
+function incrementModifier(mod: Modifier, groupId: string) {
+  if (!canIncrementModifier(mod, groupId)) return
+
+  const index = activeStepModifiers.value.findIndex(m => m.id === mod.id)
+  if (index === -1) {
+    activeStepModifiers.value = [
+      ...activeStepModifiers.value,
+      { id: mod.id, name: mod.name, price: mod.price, quantity: 1 },
+    ]
+    return
   }
+
+  const next = [...activeStepModifiers.value]
+  next[index] = {
+    ...next[index],
+    quantity: (next[index].quantity ?? 1) + 1,
+  }
+  activeStepModifiers.value = next
+}
+
+function decrementModifier(mod: Modifier) {
+  const index = activeStepModifiers.value.findIndex(m => m.id === mod.id)
+  if (index === -1) return
+
+  const currentQty = activeStepModifiers.value[index].quantity ?? 1
+  if (currentQty <= 1) {
+    activeStepModifiers.value = activeStepModifiers.value.filter(m => m.id !== mod.id)
+    return
+  }
+
+  const next = [...activeStepModifiers.value]
+  next[index] = {
+    ...next[index],
+    quantity: currentQty - 1,
+  }
+  activeStepModifiers.value = next
 }
 
 // --- Validation — always validates the ACTIVE step's modifiers ---
@@ -932,6 +1000,54 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: hsl(var(--muted-foreground));
+}
+
+.modifier-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--muted) / 0.35);
+}
+
+.modifier-stepper-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modifier-stepper-btn:hover:not(:disabled) {
+  color: hsl(var(--primary));
+}
+
+.modifier-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.modifier-stepper-value {
+  min-width: 22px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--muted-foreground));
+}
+
+.modifier-stepper-value.active {
+  color: hsl(var(--primary));
 }
 
 /* Quantity */

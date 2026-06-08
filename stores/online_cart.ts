@@ -59,6 +59,7 @@ interface BackendCartItemModifier {
   modifier_id: string  // the actual modifier UUID used in requests
   modifier_name: string
   price: number | string
+  quantity?: number | string
 }
 
 interface BackendCartItem {
@@ -124,19 +125,44 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       items: items.value.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
-        modifiers: item.modifiers.map(mod => ({ id: mod.id })),
+        modifiers: item.modifiers.map(mod => ({
+          id: mod.id,
+          quantity: mod.quantity ?? 1,
+        })),
         notes: item.notes,
       })),
     }
   }
 
+  function modifiersIdKey(mods: CartModifier[]): string {
+    return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)).map(m => m.id))
+  }
+
+  function backendModifiersKey(mods: BackendCartItemModifier[]): string {
+    return JSON.stringify(
+      [...mods]
+        .sort((a, b) => a.modifier_id.localeCompare(b.modifier_id))
+        .map(m => ({ id: m.modifier_id, q: Number(m.quantity) || 1 }))
+    )
+  }
+
+  function backendModifiersIdKey(mods: BackendCartItemModifier[]): string {
+    return JSON.stringify([...mods].sort((a, b) => a.modifier_id.localeCompare(b.modifier_id)).map(m => m.modifier_id))
+  }
+
   /** Map backend item UUIDs back onto local OnlineCartItems after a batch sync */
   function syncItemIds(backendItems: BackendCartItem[]) {
     for (const backendItem of backendItems) {
+      const backendHasQuantities = backendItem.modifiers.some(mod => mod.quantity != null)
       const localItem = items.value.find(
         item =>
+          !item.backendId &&
           item.product_id === backendItem.product_id &&
-          modifiersKey(item.modifiers) === modifiersKey(backendItem.modifiers)
+          (
+            backendHasQuantities
+              ? modifiersKey(item.modifiers) === backendModifiersKey(backendItem.modifiers)
+              : modifiersIdKey(item.modifiers) === backendModifiersIdKey(backendItem.modifiers)
+          )
       )
       if (localItem) localItem.backendId = backendItem.id
     }
@@ -403,6 +429,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
         id: mod.modifier_id,
         name: mod.modifier_name,
         price: Number(mod.price),
+        quantity: Number(mod.quantity) || 1,
       })),
       notes: item.notes,
       total: Number(item.subtotal),
