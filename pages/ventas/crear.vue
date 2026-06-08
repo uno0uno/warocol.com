@@ -7,6 +7,12 @@ useHead({ title: 'Nueva Venta' })
 
 import { modifiersCartTotal, formatSaleModifierPriceLabel, normalizeModifierOptionType } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
+import {
+  WALLET_PAYMENT_SLUG,
+  mergePosPaymentGroupsFromApi,
+  type ApiPaymentGroup,
+  type PosPaymentGroup,
+} from '~/utils/paymentDefaults'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,13 +84,26 @@ const { data: productsData, pending: loadingProducts } = useFetch('/api/menu/pro
 const products = computed(() => productsData.value?.data ?? [])
 
 // ─── Payment methods (dynamic, same source as POS) ──────────────────────────
-interface PaymentMethodLite { id: string; name: string }
-interface PaymentGroupLite { id: string; slug: string; name: string; methods?: PaymentMethodLite[] }
-
-const { data: paymentGroupsData } = useFetch<{ success: boolean; data: PaymentGroupLite[] }>(
+const { data: paymentGroupsData } = useFetch<{ success: boolean; data: ApiPaymentGroup[] }>(
   '/api/pos/payment-methods',
 )
-const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+const paymentGroups = computed(() => mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []))
+const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
+const { wallet: customerWallet } = useCustomerWallet(customerIdRef)
+const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
+const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
+
+function isPaymentGroupVisible(group: PosPaymentGroup) {
+  if (group.triggersCartera) {
+    return !!(selectedCustomer.value && !isAnonymousCustomer.value)
+  }
+  if (group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet) {
+    return !!(selectedCustomer.value && !isAnonymousCustomer.value && walletBalanceCop.value > 0)
+  }
+  return true
+}
+
+const visiblePaymentGroups = computed(() => paymentGroups.value.filter(isPaymentGroupVisible))
 
 // Single composed value for the v-model: "groupSlug:methodId" or "groupSlug:".
 // "cash:" means group "cash" without a specific method (group default).
@@ -96,9 +115,17 @@ const paymentSelectValue = computed({
     const slug = idx === -1 ? v : v.slice(0, idx)
     const methodId = idx === -1 ? '' : v.slice(idx + 1)
     form.value.payment_method = slug
-    form.value.payment_method_id = methodId || null
+    form.value.payment_method_id = slug === WALLET_PAYMENT_SLUG ? null : (methodId || null)
   },
 })
+
+watch(visiblePaymentGroups, (groups) => {
+  if (groups.some(g => g.slug === form.value.payment_method)) return
+  const fallback = groups[0]
+  if (!fallback) return
+  form.value.payment_method = fallback.slug
+  form.value.payment_method_id = null
+}, { immediate: true })
 
 // ─── Computed helpers ─────────────────────────────────────────────────────────
 
@@ -316,7 +343,7 @@ async function submit() {
             aria-label="Método de pago"
             class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
           >
-            <template v-for="g in paymentGroups" :key="g.id">
+            <template v-for="g in visiblePaymentGroups" :key="g.id">
               <!-- Group default option (when no specific method picked) -->
               <option :value="`${g.slug}:`">{{ g.name }}</option>
               <!-- Specific methods nested under the group -->
