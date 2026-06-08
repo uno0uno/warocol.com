@@ -1,10 +1,10 @@
 # Operaciones
 
-El módulo de Operaciones agrupa la configuración del día a día del restaurante: cómo se ven las comandas en cocina, cómo se gestionan las mesas, qué se muestra en la plataforma y cómo se cobran las propinas.
+El módulo de Operaciones agrupa la configuración del día a día del restaurante: cómo se ven las comandas en cocina, cómo se gestionan las mesas, qué se muestra en la plataforma, qué promociones aplican en caja y cómo se cobran las propinas.
 
 ## Cómo acceder
 
-Menú lateral → **Operaciones**. La pantalla tiene seis pestañas:
+Menú lateral → **Operaciones**. La pantalla tiene siete pestañas:
 
 | Pestaña | Para qué |
 |---------|----------|
@@ -13,6 +13,7 @@ Menú lateral → **Operaciones**. La pantalla tiene seis pestañas:
 | **Bitácora** | Auditoría de acciones en POS (eliminaciones, anulaciones de pago, etc.) |
 | **Turnos** | Plantillas de horario reutilizables para arqueos por plantilla (Mañana, Tarde, Noche…) |
 | **Personalizar** | Renombrar módulos, mostrar/ocultar secciones según el tipo de negocio |
+| **Promociones** | Descuentos automáticos por horario, alcance y prioridad |
 | **Propinas** | Activar propinas, definir porcentajes sugeridos |
 
 ---
@@ -59,6 +60,46 @@ Adapta la nomenclatura y los módulos visibles al lenguaje de tu negocio. Ejempl
 - Ocultar módulos que no usas (ej: Domicilios si no haces delivery)
 
 Los cambios se aplican en todos los menús y reportes.
+
+---
+
+## Promociones
+
+Pantalla para crear descuentos automáticos que se aplican en el POS cuando una línea cumple las condiciones configuradas.
+
+### Lista de promociones
+
+La tabla muestra nombre, tipo, valor, horario, alcance, prioridad y estado. Puedes buscar promociones y filtrar por **Tipo** o **Estado**.
+
+Los tipos disponibles son:
+
+| Tipo | Cuándo usarlo |
+|------|---------------|
+| **% descuento** | Descuento porcentual sobre el producto |
+| **Descuento fijo** | Monto en pesos descontado |
+| **2x1 / BOGO** | Compra cierta cantidad y lleva otra gratis |
+
+### Crear o editar una promoción
+
+Haz clic en **+ Nueva promoción** o en el ícono de lápiz de una promoción existente.
+
+Configura:
+
+- **Nombre** — ejemplo: Happy hour 20%
+- **Tipo y valor** — porcentaje, monto fijo o regla 2x1 / BOGO
+- **Alcance** — todos los productos, categorías específicas o productos específicos
+- **Horarios** — días de la semana y hora de inicio/fin; puedes marcar si cruza medianoche
+- **Vigencia** — fecha inicial y final opcionales
+- **Prioridad** — si varias promociones aplican a la misma línea, gana la de mayor prioridad
+- **Promoción activa** — si está apagada, no se aplica en el menú
+
+Si eliges alcance por categorías o productos, debes seleccionar al menos una categoría o producto antes de guardar.
+
+### Exclusión por ítem en checkout
+
+En la parte superior de Promociones hay un toggle para permitir que el cajero desactive la promoción en una línea específica del checkout sin quitar el producto del carrito.
+
+Úsalo cuando el descuento automático aplica en general, pero necesitas excluir un ítem puntual por una condición comercial del momento.
 
 ---
 

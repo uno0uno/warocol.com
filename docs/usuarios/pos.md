@@ -56,6 +56,8 @@ Haz clic en **Ir a checkout**. En la pantalla de checkout puedes ajustar:
 | Domicilio | Si la orden es para enviar, agrega dirección y valor de domicilio |
 | Cobro parcial | Permite dividir el pago en varios métodos. Ver [Cobro parcial](#cobro-parcial-split) |
 
+Si el método es **Efectivo**, ingresa cuánto entregó el cliente o usa **Sin vuelto** para pagar exacto. WARO muestra el vuelto o cuánto falta por cobrar, y no deja confirmar si el efectivo recibido es menor al total a cobrar.
+
 Confirma el pago. WARO registra la orden, actualiza el inventario y muestra el resumen de la venta.
 
 ---
