@@ -441,23 +441,11 @@ async function submit() {
               >
                 {{ cartQtyFor(product.id) }}
               </div>
-              <button
-                type="button"
-                class="w-full flex flex-col items-center p-3 sm:p-4 border-2 rounded-xl bg-surface transition-all hover:shadow-sm active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                :class="cartQtyFor(product.id) > 0
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/40'"
-                :aria-label="`Agregar ${product.name} — ${formatCurrency(product.price)}`"
-                @click="addProductToCart(product)"
-              >
-                <span class="text-3xl sm:text-4xl mb-1.5" aria-hidden="true">{{ product.image }}</span>
-                <span class="text-xs sm:text-sm font-medium text-text-primary text-center leading-tight line-clamp-2">
-                  {{ product.name }}
-                </span>
-                <span class="text-sm sm:text-base font-bold text-primary mt-1">
-                  {{ formatCurrency(product.price) }}
-                </span>
-              </button>
+              <PosProductCard
+                class="w-full"
+                :product="product"
+                @select="addProductToCart"
+              />
             </div>
           </div>
 

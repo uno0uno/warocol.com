@@ -1,5 +1,6 @@
 <template>
   <button
+    type="button"
     :style="cardStyle"
     class="group relative flex flex-col items-center p-2 md:p-4 border-2 rounded-2xl theme-transition cursor-pointer active:scale-[0.97]"
     @mouseenter="isHovered = true"
