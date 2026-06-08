@@ -77,9 +77,23 @@ Haz clic en cualquier cliente de la lista para abrir su perfil. Verás:
 - Total comprado (monto acumulado)
 - Fecha de primera y última compra
 - Saldo de puntos Waros
+- Saldo en Billetera COP
 - Historial completo de órdenes con fecha, productos, total y método de pago
+- Últimos movimientos de billetera, si existen
 
 Puedes filtrar el historial de órdenes por rango de fechas.
+
+### Billetera COP del cliente
+
+En el perfil del cliente verás su saldo de **Billetera COP** y los últimos movimientos. Usa **+ Recargar** para registrar una recarga manual.
+
+Al recargar, debes indicar:
+
+- Monto en COP
+- Forma de pago
+- Nota opcional
+
+La recarga aumenta el saldo disponible del cliente. Ese saldo puede usarse luego como método de pago cuando el cliente está identificado en POS o en una venta manual.
 
 ### Editar datos del cliente
 
@@ -131,7 +145,7 @@ El sistema funciona con **reglas**. Cada regla define un evento que genera o con
 No. Son un sistema de fidelización paralelo. Las ventas se registran normalmente.
 
 **¿El cliente ve sus puntos?**
-Sí, a través del canal de pedidos online (portal de domicilios / checkout). En el POS no se muestra el saldo de puntos actualmente.
+Sí, a través del canal de pedidos online (portal de domicilios / checkout). En el POS, el cajero puede ver y aplicar recompensas disponibles cuando identifica al cliente.
 
 **¿Qué pasa si desactivo el sistema globalmente?**
 Las reglas se conservan configuradas, pero no se acumulan ni se redimen puntos hasta que vuelvas a activarlo.

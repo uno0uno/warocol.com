@@ -12,10 +12,14 @@ Usa esta opción cuando una venta ocurrió fuera del POS: pago anticipado, pedid
 
 ## Pasos
 
-### 1. Fecha y método de pago
+### 1. Fecha, método de pago y cliente
 
 - Selecciona la **fecha** en que ocurrió la venta (no puede ser una fecha futura)
-- Elige el **método de pago**: Efectivo, Tarjeta o Digital
+- Elige el **método de pago**. La lista usa los métodos configurados para el POS
+- Si el método tiene submétodos (por ejemplo Nequi o Daviplata), selecciónalo dentro del grupo correspondiente
+- Opcionalmente toca **Identificar cliente** para asociar la venta a un cliente registrado
+
+Si identificas un cliente con saldo en **Billetera COP**, la billetera aparece como método de pago disponible. Si la venta queda anónima o el cliente no tiene saldo, ese método no se muestra.
 
 ### 2. Agregar productos
 
@@ -29,7 +33,7 @@ El catálogo muestra todos tus productos disponibles.
 
 El panel derecho (escritorio) o el resumen inferior (móvil) muestra el total en tiempo real.
 
-Presiona **Registrar venta** para guardar. La venta quedará registrada con la fecha que elegiste y el inventario se desconta automáticamente si los productos tienen recetas configuradas.
+Presiona **Registrar venta** para guardar. La venta quedará registrada con la fecha que elegiste y el inventario se descuenta automáticamente si los productos tienen recetas configuradas.
 
 ---
 
