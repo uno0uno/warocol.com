@@ -733,7 +733,7 @@ async function submit() {
                           </span>
                         </button>
                       </div>
-                      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div v-else class="grid grid-cols-1 gap-2">
                         <div
                           v-for="option in group.modifiers"
                           :key="option.id"
