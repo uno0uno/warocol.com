@@ -567,18 +567,18 @@ async function submit() {
       </div>
 
       <!-- ── POS Layout: grid left / cart right ─────────────────────────── -->
-      <div class="lg:grid lg:grid-cols-[1fr_22rem] lg:gap-6 lg:items-start flex flex-col gap-4">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6 lg:items-start flex flex-col gap-4 min-w-0">
 
         <!-- ── LEFT: Product Grid + Modifier Panel ───────────────────────── -->
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 min-w-0">
 
           <!-- Search and Filters -->
-          <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-3 min-w-0">
             <UiSearchBar
               v-model="searchQuery"
               placeholder="Buscar productos..."
             />
-            <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0 max-w-full">
               <button
                 v-for="cat in categories"
                 :key="cat"
@@ -606,11 +606,11 @@ async function submit() {
           </div>
 
           <!-- Product Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">
             <div
               v-for="product in filteredProducts"
               :key="product.id"
-              class="relative"
+              class="relative min-w-0"
             >
               <!-- Quantity badge -->
               <div
@@ -888,7 +888,7 @@ async function submit() {
         </div><!-- end left -->
 
         <!-- ── RIGHT: Desktop Cart Panel ─────────────────────────────────── -->
-        <div class="hidden lg:flex flex-col rounded-xl border border-border bg-surface overflow-hidden sticky top-4">
+        <div class="hidden lg:flex min-w-0 flex-col rounded-xl border border-border bg-surface overflow-hidden sticky top-4">
 
           <!-- Cart header -->
           <div class="px-4 py-3 border-b border-border bg-primary flex items-center justify-between">
