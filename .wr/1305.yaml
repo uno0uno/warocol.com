@@ -1,0 +1,52 @@
+issue: 1305
+title: "Preserve POS BOGO quantities and block edits after kitchen fire"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1305-preserve-pos-bogo-edit
+
+paths:
+  - pages/pos/producto/[id].vue
+  - pages/pos/index.vue
+  - components/pos/CartPanel.vue
+  - components/pos/CartItem.vue
+  - stores/usePOSStore.ts
+
+ac:
+  - Non-fired POS cart/mesa line with BOGO quantity 2 opens edit mode showing/preserving 2 units.
+  - Saving edits for a non-fired BOGO line preserves quantity unless changed intentionally.
+  - POS/cart totals keep full quantity and promo discount after edit/save.
+  - Modifier selections and quantities are preserved for non-fired edits.
+  - Optional single-select/radio modifier groups can be cleared before fired.
+  - Multi-select modifier steppers can decrement to 0 before fired.
+  - Fired tab lines do not show edit actions.
+  - Direct tab edit navigation for fired items is blocked/redirected through edit-eligibility.
+  - Existing destructive/anular-with-reason flow remains unchanged.
+
+out_of_scope:
+  - backend promotion rules
+  - promotion persistence at mesa close
+  - promotion CRUD
+  - POS redesign
+  - kitchen/comanda status model changes
+
+hints:
+  entry: "pages/pos/producto/[id].vue edit/addToCart flow"
+  pattern: "cart edit currently saves quantity: 1; edit load maps modifiers/notes only; CartPanel emits edit-tab-item for fired tab lines"
+  tests: "bun run typecheck is broad; prefer targeted static review unless an existing focused command is available"
+
+risk:
+  sensitive: false
+  areas:
+    - POS cart line totals
+    - mesa tab edit eligibility
+    - modifier selection state
+
+skip:
+  audits:
+    - repo-wide search after contract
+    - full build/lint unless requested
+
+next:
+  after_pr: "none"

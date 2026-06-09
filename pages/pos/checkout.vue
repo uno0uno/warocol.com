@@ -14,7 +14,7 @@ import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPick
 import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
-import { linePromoSavingsForProduct } from '~/utils/promoProductMatch'
+import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/utils/promoProductMatch'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 interface TopProduct {
@@ -479,7 +479,14 @@ const promoLineById = computed(() => {
   return map
 })
 
-function checkoutLineGross(item: { product: { price: number }; modifiers?: Array<{ price: number; quantity?: number }>; quantity: number; orderItemId?: string }): number {
+type CheckoutPromoLineItem = {
+  product: { id: string; price: number }
+  modifiers?: Array<{ id: string; price: number; quantity?: number }>
+  quantity: number
+  orderItemId?: string
+}
+
+function checkoutLineGross(item: CheckoutPromoLineItem): number {
   if (isKitchenServiceMode.value) {
     const tab = storeTabItems.value.find(t => t.orderItemId === item.orderItemId)
     if (tab) return tab.subtotal
@@ -490,6 +497,15 @@ function checkoutLineGross(item: { product: { price: number }; modifiers?: Array
     0,
   )
   return (base + mods) * (Number(item.quantity) || 1)
+}
+
+function checkoutLineEligibleSubtotal(item: CheckoutPromoLineItem): number {
+  return computePromoEligibleSubtotal(
+    Number(item.product.price) || 0,
+    item.modifiers ?? [],
+    posStore.getProduct(item.product.id)?.modifier_groups ?? [],
+    Number(item.quantity) || 1,
+  )
 }
 
 function checkoutLineCategoryId(item: { product: { id: string }; orderItemId?: string }): string | null {
@@ -523,7 +539,11 @@ const clientPromoSavings = computed(() => {
     total += linePromoSavingsForProduct(
       activePromos.value,
       productId,
-      { subtotal: checkoutLineGross(item), quantity: item.quantity },
+      {
+        subtotal: checkoutLineGross(item),
+        eligibleSubtotal: checkoutLineEligibleSubtotal(item),
+        quantity: item.quantity,
+      },
       checkoutLineCategoryId(item),
       promoPickOptions.value,
     )
@@ -1153,6 +1173,7 @@ function buildRedemptionPromoLines(): PromoLineForRedemption[] {
       category_id: checkoutLineCategoryId(item),
       quantity: Number(item.quantity) || 1,
       subtotal: checkoutLineGross(item),
+      promo_eligible_subtotal: checkoutLineEligibleSubtotal(item),
       promo_opt_out: Boolean(item.promo_opt_out ?? item.promoOptOut),
     }))
     .filter(line => line.id && line.product_id)
@@ -1413,7 +1434,11 @@ const getLinePromoSavings = (item: any): number => {
   return linePromoSavingsForProduct(
     activePromos.value,
     productId,
-    { subtotal: checkoutLineGross(item), quantity: item.quantity },
+    {
+      subtotal: checkoutLineGross(item),
+      eligibleSubtotal: checkoutLineEligibleSubtotal(item),
+      quantity: item.quantity,
+    },
     checkoutLineCategoryId(item),
     promoPickOptions.value,
   )
