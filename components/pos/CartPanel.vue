@@ -113,6 +113,7 @@
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
           :hide-duplicate="true"
+          :hide-edit="isTabLineFired(item)"
           :lock-increment="isTabLineFired(item)"
           :hide-line-controls="isTabLineTerminal(item)"
           @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"

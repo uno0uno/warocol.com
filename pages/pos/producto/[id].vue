@@ -503,6 +503,12 @@ const isSingleSelectGroup = (group: ModifierGroup) => group.maxSelections === 1
 const selectRadioModifier = (modifier: ModifierOption, groupId: string) => {
   const group = modifierGroups.value.find(g => g.id === groupId)
   if (!group) return
+  const isSelected = isModifierSelected(modifier.id)
+
+  if (!group.required && isSelected) {
+    activeStepModifiers.value = activeStepModifiers.value.filter(m => m.id !== modifier.id)
+    return
+  }
 
   activeStepModifiers.value = activeStepModifiers.value.filter(m =>
     !group.options.some(opt => opt.id === m.id)
@@ -632,11 +638,12 @@ const addToCart = async () => {
         )
       }
     } else if (isEditMode.value && editCartIndex.value !== null) {
+      const existingItem = posStore.getCartItem(editCartIndex.value)
       await posStore.updateCartItem(editCartIndex.value, {
         product: productPayload,
         modifiers: [...selectedModifiers.value],
         notes: notes.value || undefined,
-        quantity: 1,
+        quantity: quantity.value || existingItem?.quantity || 1,
       })
     } else if (wizardMode.value) {
       await posStore.addCartItemsBatch(
@@ -682,6 +689,7 @@ watch(product, (newProduct) => {
   if (isEditMode.value && editCartIndex.value !== null) {
     const cartItem = posStore.getCartItem(editCartIndex.value)
     if (cartItem) {
+      quantity.value = cartItem.quantity || 1
       selectedModifiers.value = cartItem.modifiers.map(m => ({
         ...m,
         quantity: m.quantity ?? 1,
@@ -693,6 +701,11 @@ watch(product, (newProduct) => {
   if (isTabItemEditMode.value && editTabItemId.value) {
     const tabItem = posStore.tabItems.find(i => i.orderItemId === editTabItemId.value)
     if (tabItem) {
+      if ((tabItem.fulfillmentStatus ?? 'new') !== 'new') {
+        router.push('/pos')
+        return
+      }
+      quantity.value = tabItem.quantity || 1
       selectedModifiers.value = (tabItem.modifiers ?? []).map(m => ({
         id: m.id,
         name: m.name,
@@ -775,7 +788,7 @@ watch(product, (newProduct) => {
         </div>
 
         <!-- Quantity + per-unit wizard (online cart parity #1023) -->
-        <section v-if="!isLineEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
+        <section v-if="!isTabItemEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
           <div v-if="wizardMode" class="flex items-center justify-between">
             <h3 class="text-base md:text-lg font-bold text-text-primary">
               Ítem {{ wizardStep + 1 }} de {{ quantity }}
@@ -843,7 +856,7 @@ watch(product, (newProduct) => {
                 :name="'group-' + group.id"
                 class="sr-only"
                 :checked="isModifierSelected(option.id)"
-                @change="selectRadioModifier(option, group.id)"
+                @click.prevent="selectRadioModifier(option, group.id)"
               />
               <div
                 class="border-2 rounded-xl p-3 md:p-4 transition-all duration-200 bg-surface h-full flex flex-col justify-between"
