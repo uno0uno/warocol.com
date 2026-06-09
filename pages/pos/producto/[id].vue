@@ -17,7 +17,11 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
-import { linePromoSavingsForProduct, promoBadgeForProduct } from '~/utils/promoProductMatch'
+import {
+  computePromoEligibleSubtotal,
+  linePromoSavingsForProduct,
+  promoBadgeForProduct,
+} from '~/utils/promoProductMatch'
 
 definePageMeta({
   layout: 'dashboard',
@@ -472,20 +476,40 @@ const promoSavings = computed(() => {
     const basePrice = Number(product.value.price) || 0
     return wizardUnits.value.reduce((sum, unit) => {
       const modifiersPrice = unit.modifiers.reduce((modSum, mod) => modSum + modifierLineTotal(mod), 0)
+      const subtotal = basePrice + modifiersPrice
       return sum + linePromoSavingsForProduct(
         activePromos.value,
         product.value!.id,
-        { subtotal: basePrice + modifiersPrice, quantity: 1 },
+        {
+          subtotal,
+          eligibleSubtotal: computePromoEligibleSubtotal(
+            basePrice,
+            unit.modifiers,
+            product.value!.modifier_groups,
+            1,
+          ),
+          quantity: 1,
+        },
         product.value!.category_id,
       )
     }, 0)
   }
   const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + modifierLineTotal(mod), 0)
   const unitSubtotal = basePriceFromProduct() + modifiersPrice
+  const subtotal = unitSubtotal * quantity.value
   return linePromoSavingsForProduct(
     activePromos.value,
     product.value.id,
-    { subtotal: unitSubtotal * quantity.value, quantity: quantity.value },
+    {
+      subtotal,
+      eligibleSubtotal: computePromoEligibleSubtotal(
+        basePriceFromProduct(),
+        selectedModifiers.value,
+        product.value.modifier_groups,
+        quantity.value,
+      ),
+      quantity: quantity.value,
+    },
     product.value.category_id,
   )
 })

@@ -4,6 +4,7 @@ import type { ActivePromotionRow } from './promoProductMatch.ts'
 import {
   bogoMinQuantity,
   computeLinePromoSavings,
+  computePromoEligibleSubtotal,
   linePromoSavingsForProduct,
   pickBestPromotionForProduct,
   promoBadgeForProduct,
@@ -126,6 +127,129 @@ describe('linePromoSavingsForProduct', () => {
       10000,
     )
     assert.equal(pickBestPromotionForProduct([bogo, percent], productId)?.name, 'BOGO')
+  })
+})
+
+describe('computeLinePromoSavings', () => {
+  it('uses eligible subtotal for percent savings while preserving gross subtotal cap', () => {
+    const percent = promo({
+      promo_type: 'percent_off',
+      value_json: { percent: 10 },
+    })
+
+    assert.equal(
+      computeLinePromoSavings(
+        { subtotal: 12000, eligibleSubtotal: 10000, quantity: 1 },
+        percent,
+      ),
+      1000,
+    )
+  })
+
+  it('caps fixed savings against eligible subtotal', () => {
+    const fixed = promo({
+      promo_type: 'fixed_off',
+      value_json: { amount_cop: 15000 },
+    })
+
+    assert.equal(
+      computeLinePromoSavings(
+        { subtotal: 12000, eligibleSubtotal: 10000, quantity: 1 },
+        fixed,
+      ),
+      10000,
+    )
+  })
+
+  it('uses eligible unit price for same-line BOGO savings', () => {
+    const bogo = promo({
+      promo_type: 'bogo',
+      value_json: { buy_qty: 1, get_qty: 1 },
+    })
+
+    assert.equal(
+      computeLinePromoSavings(
+        { subtotal: 24000, eligibleSubtotal: 20000, quantity: 2 },
+        bogo,
+      ),
+      10000,
+    )
+  })
+})
+
+describe('computePromoEligibleSubtotal', () => {
+  const groups = [
+    {
+      id: 'required-group',
+      is_required: true,
+      modifiers: [
+        { id: 'required-cheese', is_default: false },
+      ],
+    },
+    {
+      id: 'min-group',
+      minQty: 1,
+      modifiers: [
+        { id: 'min-sauce', isDefault: false },
+      ],
+    },
+    {
+      id: 'optional-group',
+      isRequired: false,
+      min_qty: 0,
+      modifiers: [
+        { id: 'default-bread', is_default: true },
+        { id: 'optional-bacon', is_default: false },
+        { id: 'optional-discount', is_default: false },
+      ],
+    },
+  ]
+
+  it('includes required, min-qty, and default modifiers', () => {
+    assert.equal(
+      computePromoEligibleSubtotal(
+        10000,
+        [
+          { id: 'required-cheese', price: 1000, quantity: 2 },
+          { id: 'min-sauce', price: 500, quantity: 1 },
+          { id: 'default-bread', price: 700, quantity: 1 },
+          { id: 'optional-bacon', price: 2000, quantity: 1 },
+        ],
+        groups,
+        1,
+      ),
+      13200,
+    )
+  })
+
+  it('excludes optional positive and negative modifiers from eligibility', () => {
+    assert.equal(
+      computePromoEligibleSubtotal(
+        10000,
+        [
+          { id: 'optional-bacon', price: 2000, quantity: 1 },
+          { id: 'optional-discount', price: -500, quantity: 1 },
+        ],
+        groups,
+        1,
+      ),
+      10000,
+    )
+  })
+
+  it('multiplies the eligible unit subtotal by quantity', () => {
+    assert.equal(
+      computePromoEligibleSubtotal(
+        10000,
+        [
+          { id: 'required-cheese', price: 1000, quantity: 1 },
+          { id: 'optional-bacon', price: 2000, quantity: 1 },
+        ],
+        groups,
+        3,
+      ),
+      33000,
+    )
   })
 })
 

@@ -9,6 +9,7 @@ export interface PromoLineForRedemption {
   category_id?: string | null
   quantity: number
   subtotal: number
+  promo_eligible_subtotal?: number
   promo_opt_out?: boolean
 }
 

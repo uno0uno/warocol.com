@@ -204,6 +204,84 @@ export function promoBadgeForProduct(
 export type LinePromoInput = {
   subtotal: number
   quantity?: number
+  eligibleSubtotal?: number
+  promoEligibleSubtotal?: number
+}
+
+export type PromoModifierInput = {
+  id: string
+  price: number
+  quantity?: number
+}
+
+export type PromoModifierOptionInput = {
+  id?: unknown
+  is_default?: unknown
+  isDefault?: unknown
+}
+
+export type PromoModifierGroupInput = {
+  is_required?: unknown
+  isRequired?: unknown
+  min_qty?: unknown
+  minQty?: unknown
+  modifiers?: PromoModifierOptionInput[]
+}
+
+function truthyFlag(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1'
+}
+
+function numericField(...values: unknown[]): number {
+  for (const value of values) {
+    if (value == null || value === '') continue
+    const numberValue = Number(value)
+    if (Number.isFinite(numberValue)) return numberValue
+  }
+  return 0
+}
+
+function promoBasisForLine(line: LinePromoInput): number {
+  const subtotal = Number(line.subtotal) || 0
+  const eligibleSubtotal = Number(
+    line.promoEligibleSubtotal ?? line.eligibleSubtotal ?? subtotal,
+  ) || 0
+  if (subtotal <= 0 || eligibleSubtotal <= 0) return 0
+  return Math.min(subtotal, eligibleSubtotal)
+}
+
+export function computePromoEligibleSubtotal(
+  basePrice: number,
+  modifiers: PromoModifierInput[],
+  modifierGroups: PromoModifierGroupInput[] | null | undefined,
+  quantity = 1,
+): number {
+  const qty = Math.max(1, Number(quantity) || 1)
+  const base = Number(basePrice) || 0
+  const groups = Array.isArray(modifierGroups) ? modifierGroups : []
+  if (groups.length === 0) return base * qty
+
+  const eligibleModifierIds = new Set<string>()
+  for (const group of groups) {
+    const groupIsEligible =
+      truthyFlag(group.is_required ?? group.isRequired)
+      || numericField(group.min_qty, group.minQty) > 0
+
+    for (const option of group.modifiers ?? []) {
+      const id = option.id == null ? '' : String(option.id)
+      if (!id) continue
+      if (groupIsEligible || truthyFlag(option.is_default ?? option.isDefault)) {
+        eligibleModifierIds.add(id)
+      }
+    }
+  }
+
+  const eligibleModifiers = modifiers.reduce((sum, modifier) => {
+    if (!eligibleModifierIds.has(String(modifier.id))) return sum
+    return sum + (Number(modifier.price) || 0) * (modifier.quantity ?? 1)
+  }, 0)
+
+  return (base + eligibleModifiers) * qty
 }
 
 /** Client mirror of api promotions_service._compute_line_promo_savings. */
@@ -212,21 +290,22 @@ export function computeLinePromoSavings(
   promo: Pick<ActivePromotionRow, 'promo_type' | 'value_json'>,
 ): number {
   const subtotal = Number(line.subtotal) || 0
+  const promoBasis = promoBasisForLine(line)
   const quantity = Math.max(1, Number(line.quantity) || 1)
-  if (subtotal <= 0) return 0
+  if (subtotal <= 0 || promoBasis <= 0) return 0
 
   const valueJson = (promo.value_json ?? {}) as Record<string, unknown>
 
   if (promo.promo_type === 'percent_off') {
     const pct = Number(valueJson.percent) || 0
     if (pct <= 0) return 0
-    return Math.min(Math.round(subtotal * pct / 100), Math.round(subtotal))
+    return Math.min(Math.round(promoBasis * pct / 100), Math.round(promoBasis))
   }
 
   if (promo.promo_type === 'fixed_off') {
     const amount = Number(valueJson.amount_cop) || 0
     if (amount <= 0) return 0
-    return Math.min(Math.round(amount), Math.round(subtotal))
+    return Math.min(Math.round(amount), Math.round(promoBasis))
   }
 
   if (promo.promo_type === 'bogo') {
@@ -236,9 +315,9 @@ export function computeLinePromoSavings(
     const bundle = buyQty + getQty
     const sets = Math.floor(quantity / bundle)
     if (sets <= 0) return 0
-    const unitPrice = subtotal / quantity
+    const unitPrice = promoBasis / quantity
     const freeUnits = sets * getQty
-    return Math.min(Math.round(freeUnits * unitPrice), Math.round(subtotal))
+    return Math.min(Math.round(freeUnits * unitPrice), Math.round(promoBasis))
   }
 
   return 0

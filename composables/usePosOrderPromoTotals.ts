@@ -1,4 +1,5 @@
 import {
+  computePromoEligibleSubtotal,
   linePromoSavingsForProduct,
   promoBadgeForProduct,
   type PromoBadgeDisplay,
@@ -9,7 +10,7 @@ export type PosPromoCartItem = {
     id: string
     price: number
   }
-  modifiers: Array<{ price: number; quantity?: number }>
+  modifiers: Array<{ id: string; price: number; quantity?: number }>
   quantity: number
   promo_opt_out?: boolean
 }
@@ -37,6 +38,10 @@ export function usePosOrderPromoTotals(
     return posStore.getProduct(productId)?.category_id ?? null
   }
 
+  function modifierGroupsForProduct(productId: string) {
+    return posStore.getProduct(productId)?.modifier_groups ?? []
+  }
+
   function cartLineGross(item: PosPromoCartItem): number {
     const basePrice = Number(item.product.price) || 0
     const modifiersPrice = (item.modifiers ?? []).reduce(
@@ -51,7 +56,16 @@ export function usePosOrderPromoTotals(
     return linePromoSavingsForProduct(
       activePromos.value,
       item.product.id,
-      { subtotal: cartLineGross(item), quantity: item.quantity },
+      {
+        subtotal: cartLineGross(item),
+        eligibleSubtotal: computePromoEligibleSubtotal(
+          item.product.price,
+          item.modifiers ?? [],
+          modifierGroupsForProduct(item.product.id),
+          item.quantity,
+        ),
+        quantity: item.quantity,
+      },
       categoryForProduct(item.product.id),
       promoPickOptions.value,
     )
