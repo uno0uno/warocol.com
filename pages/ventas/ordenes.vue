@@ -13,7 +13,7 @@ const { singular: tableSingular } = useTableLabel()
 
 // Payment groups for filter and bulk-update dropdowns
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'pos-methods', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,

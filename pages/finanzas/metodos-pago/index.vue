@@ -147,7 +147,7 @@ const {
   error: fetchError,
   refetch,
 } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'admin-groups', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: PaymentGroup[] }>('/api/finanzas/metodos-pago/grupos'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,

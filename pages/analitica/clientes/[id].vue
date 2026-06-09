@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import type { WaroTransaction } from '~/composables/useWarosCliente';
+import { resolvePaymentSelection } from '~/composables/usePaymentSelectValue';
 import {
   PAYMENT_DEFAULTS,
   WALLET_PAYMENT_SLUG,
@@ -21,7 +22,7 @@ const customerId = computed(() => route.params.id as string)
 
 // Payment groups for the payment form select
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'pos-methods', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
@@ -30,6 +31,11 @@ const paymentGroups = computed(() =>
   mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []),
 )
 const { resolveLabel } = usePaymentLabel(paymentGroups)
+const carteraPaymentGroups = computed(() =>
+  paymentGroups.value.filter(
+    group => group.slug !== 'credit' && group.slug !== WALLET_PAYMENT_SLUG,
+  ),
+)
 
 // ── Layout actions ────────────────────────────────────────────────────────
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
@@ -302,15 +308,29 @@ const fetchCartera = async () => {
 const showPaymentPanel = ref(false)
 const selectedOrder = ref<any>(null)
 const isGlobalPayment = ref(false)
-const paymentForm = reactive({ amount: 0, payment_method: 'cash', notes: '' })
+const paymentForm = reactive({
+  amount: 0,
+  payment_method: 'cash',
+  payment_method_id: null as string | null,
+  notes: '',
+})
 const isSubmittingPayment = ref(false)
 const paymentError = ref<string | null>(null)
+const paymentSelectValue = computed({
+  get: () => `${paymentForm.payment_method}:${paymentForm.payment_method_id ?? ''}`,
+  set: (value: string) => {
+    const resolved = resolvePaymentSelection(value, carteraPaymentGroups.value)
+    paymentForm.payment_method = resolved.payment_method
+    paymentForm.payment_method_id = resolved.payment_method_id
+  },
+})
 
 const openPaymentPanel = (order: any) => {
   isGlobalPayment.value = false
   selectedOrder.value = order
   paymentForm.amount = order.remaining ?? order.total_amount
   paymentForm.payment_method = 'cash'
+  paymentForm.payment_method_id = null
   paymentForm.notes = ''
   paymentError.value = null
   showPaymentPanel.value = true
@@ -321,6 +341,7 @@ const openGlobalPaymentPanel = () => {
   selectedOrder.value = null
   paymentForm.amount = carteraData.value?.summary?.total_outstanding ?? 0
   paymentForm.payment_method = 'cash'
+  paymentForm.payment_method_id = null
   paymentForm.notes = ''
   paymentError.value = null
   showPaymentPanel.value = true
@@ -341,7 +362,12 @@ const submitPayment = async () => {
         const toPay = Math.min(remaining, order.remaining)
         await $fetch(`/api/credit/orders/${order.id}/payments`, {
           method: 'POST',
-          body: { amount: toPay, payment_method: paymentForm.payment_method, notes: paymentForm.notes || undefined }
+          body: {
+            amount: toPay,
+            payment_method: paymentForm.payment_method,
+            payment_method_id: paymentForm.payment_method_id || undefined,
+            notes: paymentForm.notes || undefined,
+          }
         })
         remaining -= toPay
       }
@@ -352,6 +378,7 @@ const submitPayment = async () => {
         body: {
           amount: paymentForm.amount,
           payment_method: paymentForm.payment_method,
+          payment_method_id: paymentForm.payment_method_id || undefined,
           notes: paymentForm.notes || undefined,
         }
       })
@@ -1100,10 +1127,22 @@ onUnmounted(() => {
               <label for="payment-method" class="text-sm font-medium text-text-primary">Forma de pago</label>
               <select
                 id="payment-method"
-                v-model="paymentForm.payment_method"
+                v-model="paymentSelectValue"
                 class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                :disabled="isSubmittingPayment"
               >
-                <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+                <template v-for="group in carteraPaymentGroups" :key="group.id">
+                  <option v-if="!(group.methods?.length)" :value="`${group.slug}:`">{{ group.name }}</option>
+                  <optgroup v-else :label="group.name">
+                    <option
+                      v-for="method in group.methods"
+                      :key="method.id"
+                      :value="`${group.slug}:${method.id}`"
+                    >
+                      {{ method.name }}
+                    </option>
+                  </optgroup>
+                </template>
               </select>
             </div>
 

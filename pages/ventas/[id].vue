@@ -15,7 +15,7 @@ const { singular: tableSingular } = useTableLabel()
 
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id ?? null],
+  key: () => ['payments', 'pos-methods', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
