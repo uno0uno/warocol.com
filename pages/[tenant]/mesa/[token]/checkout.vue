@@ -145,7 +145,9 @@ const handleSubmit = async () => {
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium">{{ item.product_name }}</p>
                 <p v-if="item.modifiers.length" class="text-xs text-muted-foreground mt-1">
-                  <span v-for="mod in item.modifiers" :key="mod.id">+ {{ mod.name }} </span>
+                  <span v-for="mod in item.modifiers" :key="mod.id">
+                    + {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> x{{ mod.quantity }}</template>
+                  </span>
                 </p>
                 <p v-if="item.notes" class="text-xs italic text-muted-foreground mt-1">{{ item.notes }}</p>
               </div>
