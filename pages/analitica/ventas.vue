@@ -44,7 +44,7 @@ const hasDateFilter = computed(() =>
 
 // Payment groups for filter dropdown
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'admin-groups', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; sortOrder: number; isActive: boolean }[] }>('/api/finanzas/metodos-pago/grupos'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,

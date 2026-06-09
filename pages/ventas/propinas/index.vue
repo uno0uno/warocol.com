@@ -16,7 +16,7 @@ const toast = useToast()
 
 // Payment groups (same query as /ventas/ordenes — shared cache)
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'pos-methods', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,

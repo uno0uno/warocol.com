@@ -255,7 +255,7 @@ const {
   data: paymentMethodsData,
   asyncStatus: paymentMethodsAsyncStatus,
 } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id ?? null],
+  key: () => ['payments', 'pos-methods', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
