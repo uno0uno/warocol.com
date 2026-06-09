@@ -128,6 +128,17 @@ const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
 const goBack = () => router.push('/despacho/domicilios')
 
+const modifierQuantity = (modifier: any) => {
+  const quantity = Number(modifier?.quantity)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
+
+const formatQuantity = (quantity: number) =>
+  quantity % 1 === 0 ? quantity.toFixed(0) : String(quantity)
+
+const modifierSubtotal = (modifier: any) =>
+  Number(modifier?.price || 0) * modifierQuantity(modifier)
+
 // Dashboard layout inject — dynamic back button
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
@@ -301,13 +312,13 @@ onUnmounted(() => {
                     </div>
                   </td>
                   <td class="px-6 py-2 text-center">
-                    <span class="text-xs text-text-tertiary">x{{ item.quantity }}</span>
+                    <span class="text-xs text-text-tertiary">x{{ formatQuantity(modifierQuantity(mod)) }}</span>
                   </td>
                   <td class="px-6 py-2 text-right">
                     <span class="text-xs text-text-secondary">{{ formatCurrency(mod.price) }}</span>
                   </td>
                   <td class="px-6 py-2 text-right">
-                    <span class="text-xs text-primary/70">{{ formatCurrency(mod.price * item.quantity) }}</span>
+                    <span class="text-xs text-primary/70">{{ formatCurrency(modifierSubtotal(mod)) }}</span>
                   </td>
                 </tr>
               </template>
