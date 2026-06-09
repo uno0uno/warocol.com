@@ -29,6 +29,10 @@ export interface PosCartItem {
     is_open_sale?: boolean
     /** warocol.com#1003 — cashier opted out of automatic promotion for this line */
     promo_opt_out?: boolean
+    /** API-locked promotion snapshot for lines created before schedule expiry (#1313). */
+    promotionName?: string | null
+    promoType?: string | null
+    promoSavings?: number
 }
 
 export interface Customer {
@@ -119,6 +123,18 @@ export const usePOSStore = defineStore('pos', () => {
     // Cache de productos (con modificadores) - persiste entre ventas
     const cachedProducts = ref<CachedProduct[]>([])
 
+    const promoFieldsFromApiLine = (item: any) => ({
+        promotionName: item.promotionName ?? item.promotion_name ?? item.locked_promotion_name ?? null,
+        promoType: item.promoType ?? item.promo_type ?? item.locked_promo_type ?? null,
+        promoSavings: Number(item.promoSavings ?? item.promo_savings ?? item.locked_promo_savings) || 0,
+    })
+
+    const clearPromoFields = (item: PosCartItem) => {
+        item.promotionName = null
+        item.promoType = null
+        item.promoSavings = 0
+    }
+
     // Getters
     const cartItemsCount = computed(() => {
         return cart.value.reduce((sum, item) => sum + item.quantity, 0)
@@ -186,6 +202,7 @@ export const usePOSStore = defineStore('pos', () => {
         })
         if (existingIndex !== -1) {
             cart.value[existingIndex].quantity += quantity
+            clearPromoFields(cart.value[existingIndex])
         } else {
             cart.value.push({ ...item, quantity })
         }
@@ -235,6 +252,7 @@ export const usePOSStore = defineStore('pos', () => {
                 await removeFromCart(index)
             } else {
                 item.quantity = newQuantity
+                clearPromoFields(item)
                 invalidateSyncedCart()
             }
         }
@@ -256,6 +274,7 @@ export const usePOSStore = defineStore('pos', () => {
     const updateCartItem = async (index: number, updatedItem: Omit<PosCartItem, 'quantity'> & { quantity?: number }) => {
         if (index >= 0 && index < cart.value.length) {
             cart.value[index] = { ...updatedItem, quantity: updatedItem.quantity || 1 }
+            clearPromoFields(cart.value[index])
             invalidateSyncedCart()
         }
     }
@@ -389,6 +408,7 @@ export const usePOSStore = defineStore('pos', () => {
                     notes: item.notes,
                     is_resale: item.is_resale || false,
                     promo_opt_out: Boolean(item.promo_opt_out),
+                    ...promoFieldsFromApiLine(item),
                 }))
                 posDebugLog('pos-store', 'loadCartFromBackend:ok', {
                     customerId,
@@ -504,6 +524,7 @@ export const usePOSStore = defineStore('pos', () => {
                 data: {
                     cart_id: string
                     item_ids: string[]
+                    items?: any[]
                     total_amount: number
                     items_count: number
                 }
@@ -517,6 +538,13 @@ export const usePOSStore = defineStore('pos', () => {
                     cart.value[index].id = itemId
                 }
             })
+            if (Array.isArray(response.data.items)) {
+                response.data.items.forEach((item: any, index: number) => {
+                    if (cart.value[index]) {
+                        Object.assign(cart.value[index], promoFieldsFromApiLine(item))
+                    }
+                })
+            }
 
             return true
         } catch {

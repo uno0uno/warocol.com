@@ -13,6 +13,9 @@ export type PosPromoCartItem = {
   modifiers: Array<{ id: string; price: number; quantity?: number }>
   quantity: number
   promo_opt_out?: boolean
+  promotionName?: string | null
+  promoType?: string | null
+  promoSavings?: number
 }
 
 export type PosPromoTabItem = {
@@ -53,6 +56,8 @@ export function usePosOrderPromoTotals(
 
   function cartLinePromoSavings(item: PosPromoCartItem): number {
     if (item.promo_opt_out) return 0
+    const fromApi = Number(item.promoSavings) || 0
+    if (fromApi > 0) return fromApi
     return linePromoSavingsForProduct(
       activePromos.value,
       item.product.id,
