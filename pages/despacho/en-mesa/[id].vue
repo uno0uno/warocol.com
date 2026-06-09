@@ -60,6 +60,7 @@ const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestRe
 
 const isWorking = ref(false)
 const actionError = ref<string | null>(null)
+const pendingListRoute = { path: '/despacho/en-mesa' }
 
 function invalidateAfterAction() {
   cache.invalidateQueries({ key: ['table-qr-requests'] })
@@ -70,6 +71,7 @@ function invalidateAfterAction() {
 
 async function acceptRequest() {
   if (!request.value || isWorking.value) return
+  const acceptedTableName = request.value.table_name
   isWorking.value = true
   actionError.value = null
   try {
@@ -94,14 +96,12 @@ async function acceptRequest() {
       await notifyTableSessionUpdated(tableId)
     }
 
-    toast.success(
-      res.data?.order_number
-        ? `Pedido aceptado — comanda #${res.data.order_number}`
-        : 'Pedido aceptado',
-      { title: 'Listo' },
-    )
+    toast.success(`Se agregó a ${acceptedTableName}`, { title: 'Pedido aceptado' })
+    if (res.data?.order_number) {
+      toast.success(`Comanda #${res.data.order_number} enviada a cocina`, { title: 'Comanda enviada' })
+    }
     invalidateAfterAction()
-    await router.push('/despacho/en-mesa')
+    await router.replace(pendingListRoute)
   } catch (err: any) {
     const detail = err?.data?.detail
     actionError.value = typeof detail === 'string'
@@ -120,7 +120,7 @@ async function rejectRequest() {
     await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, { method: 'PATCH' })
     toast.success('Pedido rechazado', { title: 'Listo' })
     invalidateAfterAction()
-    await router.push('/despacho/en-mesa')
+    await router.replace(pendingListRoute)
   } catch (err: any) {
     const detail = err?.data?.detail
     actionError.value = typeof detail === 'string'
@@ -131,7 +131,7 @@ async function rejectRequest() {
   }
 }
 
-const goBack = () => router.push('/despacho/en-mesa')
+const goBack = () => router.push(pendingListRoute)
 
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
