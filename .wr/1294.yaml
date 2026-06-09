@@ -1,0 +1,39 @@
+issue: 1294
+title: "Mostrar cantidades reales de modificadores en detalle de domicilio"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1294-delivery-modifier-quantities
+
+paths:
+  - pages/despacho/domicilios/[id].vue
+
+ac:
+  - "La vista /despacho/domicilios/:orderId muestra la cantidad real de cada modificador."
+  - "Para la orden #14832, TOMATE DE PRUEBA se ve como x2."
+  - "El subtotal visual del modificador usa cantidad real: 2 x $9.000 = $18.000."
+  - "Modificadores con cantidad 1 siguen mostrandose correctamente."
+
+out_of_scope:
+  - "Checkout online."
+  - "Persistencia de modificadores."
+  - "Calculo contable."
+  - "Cambios en POS/manual sales."
+
+hints:
+  entry: "pages/despacho/domicilios/[id].vue modifier rows"
+  pattern: "API already returns modifiers[].quantity from online_orders_service.py"
+  tests: "npm run postinstall; git diff --check -- pages/despacho/domicilios/[id].vue"
+
+risk:
+  sensitive: false
+  areas:
+    - "delivery order detail rendering"
+
+skip:
+  audits:
+    - "No repo-wide audit after this contract."
+
+next:
+  after_pr: "none"
