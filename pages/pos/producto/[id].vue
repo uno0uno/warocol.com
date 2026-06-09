@@ -22,6 +22,7 @@ import {
   linePromoSavingsForProduct,
   promoBadgeForProduct,
 } from '~/utils/promoProductMatch'
+import { firstMissingRequiredModifierGroup } from '~/utils/modifierSelection'
 
 definePageMeta({
   layout: 'dashboard',
@@ -167,6 +168,11 @@ const enableWizard = () => {
 }
 
 const goToNextStep = () => {
+  const missingGroup = missingRequiredModifierGroupFor(activeStepModifiers.value)
+  if (missingGroup) {
+    notifyMissingRequiredGroup(missingGroup, wizardStep.value + 1)
+    return
+  }
   wizardStep.value++
 }
 
@@ -194,6 +200,7 @@ interface ModifierGroup {
   id: string
   name: string
   required: boolean
+  minQty: number
   maxSelections: number
   options: ModifierOption[]
 }
@@ -438,6 +445,7 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
         id: group.id,
         name: group.name,
         required: group.is_required || false,
+        minQty: Math.max(0, Number(group.min_qty) || 0),
         maxSelections: group.max_qty || 1,
         options: (group.modifiers || [])
           .filter((mod: any) => mod && mod.is_available !== false)
@@ -524,12 +532,31 @@ const getModifierQty = (modifierId: string) =>
 
 const isSingleSelectGroup = (group: ModifierGroup) => group.maxSelections === 1
 
+const missingRequiredModifierGroupFor = (modifiers: CartModifier[]) =>
+  firstMissingRequiredModifierGroup(
+    modifiers,
+    modifierGroups.value.map(group => ({
+      id: group.id,
+      name: group.name,
+      required: group.required,
+      minQty: group.minQty,
+      optionIds: group.options.map(option => option.id),
+    })),
+  )
+
+const notifyMissingRequiredGroup = (group: { name: string }, unitNumber?: number) => {
+  const prefix = unitNumber ? `Ítem ${unitNumber}: ` : ''
+  useToast().warning(`${prefix}selecciona ${group.name} antes de continuar`, {
+    title: 'Modificador obligatorio',
+  })
+}
+
 const selectRadioModifier = (modifier: ModifierOption, groupId: string) => {
   const group = modifierGroups.value.find(g => g.id === groupId)
   if (!group) return
   const isSelected = isModifierSelected(modifier.id)
 
-  if (!group.required && isSelected) {
+  if (!group.required && group.minQty <= 0 && isSelected) {
     activeStepModifiers.value = activeStepModifiers.value.filter(m => m.id !== modifier.id)
     return
   }
@@ -608,6 +635,24 @@ const isModifierSelected = (modifierId: string) => getModifierQty(modifierId) > 
 
 const addToCart = async () => {
   if (!product.value || isAdding.value) return
+
+  if (wizardMode.value) {
+    const invalidUnitIndex = wizardUnits.value.findIndex(unit =>
+      missingRequiredModifierGroupFor(unit.modifiers)
+    )
+    if (invalidUnitIndex !== -1) {
+      wizardStep.value = invalidUnitIndex
+      const missingGroup = missingRequiredModifierGroupFor(wizardUnits.value[invalidUnitIndex].modifiers)
+      if (missingGroup) notifyMissingRequiredGroup(missingGroup, invalidUnitIndex + 1)
+      return
+    }
+  } else {
+    const missingGroup = missingRequiredModifierGroupFor(selectedModifiers.value)
+    if (missingGroup) {
+      notifyMissingRequiredGroup(missingGroup)
+      return
+    }
+  }
 
   isAdding.value = true
 
@@ -864,7 +909,9 @@ watch(product, (newProduct) => {
           <div class="flex items-center justify-between mb-3 md:mb-4">
             <h3 class="text-base md:text-lg font-bold text-text-primary">{{ group.name }}</h3>
             <span class="text-xs font-medium bg-surface-secondary text-text-secondary px-2 py-1 rounded">
-              {{ group.required ? 'Obligatorio' : 'Opcional' }} • Máx {{ group.maxSelections }}
+              {{ group.required || group.minQty > 0 ? 'Obligatorio' : 'Opcional' }}
+              <template v-if="group.minQty > 1"> • Mín {{ group.minQty }}</template>
+              • Máx {{ group.maxSelections }}
             </span>
           </div>
 

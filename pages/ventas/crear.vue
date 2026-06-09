@@ -7,6 +7,7 @@ useHead({ title: 'Nueva Venta' })
 
 import { modifiersCartTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
+import { firstMissingRequiredModifierGroup } from '~/utils/modifierSelection'
 import {
   WALLET_PAYMENT_SLUG,
   mergePosPaymentGroupsFromApi,
@@ -30,6 +31,7 @@ interface ModifierGroup {
   id: string
   name: string
   is_required: boolean
+  min_qty: number
   max_qty: number
   modifiers: ModifierOption[]
 }
@@ -192,6 +194,7 @@ function normalizeModifierGroups(groups: any[] = []): ModifierGroup[] {
     id: String(group.id),
     name: String(group.name || ''),
     is_required: Boolean(group.is_required),
+    min_qty: Math.max(0, Number(group.min_qty) || 0),
     max_qty: Math.max(1, Number(group.max_qty) || 1),
     modifiers: (group.modifiers || [])
       .filter((mod: any) => mod && mod.is_available !== false)
@@ -249,6 +252,11 @@ function closeCustomizationPanel() {
 
 function confirmProductDetail() {
   if (!pendingProduct.value || !pendingItem.value) return
+  const missingGroup = missingRequiredModifierGroupForItem(pendingItem.value)
+  if (missingGroup) {
+    notifyMissingRequiredGroup(missingGroup)
+    return
+  }
   addProductToCart(pendingProduct.value, pendingItem.value.selected_modifiers)
   closeProductDetail()
 }
@@ -295,6 +303,12 @@ function isSingleSelectGroup(group: ModifierGroup): boolean {
 }
 
 function selectRadioModifier(item: LineItem, option: ModifierOption, group: ModifierGroup) {
+  const isSelected = isModifierSelected(item, option.id)
+  if (!group.is_required && group.min_qty <= 0 && isSelected) {
+    item.selected_modifiers = item.selected_modifiers.filter(m => m.id !== option.id)
+    return
+  }
+
   item.selected_modifiers = item.selected_modifiers.filter(m =>
     !group.modifiers.some(o => o.id === m.id)
   )
@@ -352,6 +366,25 @@ function decrementModifier(item: LineItem, option: ModifierOption) {
 
 function isModifierSelected(item: LineItem, modifierId: string) {
   return getModifierQty(item, modifierId) > 0
+}
+
+function missingRequiredModifierGroupForItem(item: LineItem) {
+  return firstMissingRequiredModifierGroup(
+    item.selected_modifiers,
+    item.modifier_groups.map(group => ({
+      id: group.id,
+      name: group.name,
+      isRequired: group.is_required,
+      min_qty: group.min_qty,
+      optionIds: group.modifiers.map(option => option.id),
+    })),
+  )
+}
+
+function notifyMissingRequiredGroup(group: { name: string }) {
+  useToast().warning(`Selecciona ${group.name} antes de continuar`, {
+    title: 'Modificador obligatorio',
+  })
 }
 
 // ─── Totals ───────────────────────────────────────────────────────────────────
@@ -425,6 +458,13 @@ function clearCustomer() {
 
 async function submit() {
   if (!canSubmit.value) return
+  const invalidItem = form.value.items.find(item => missingRequiredModifierGroupForItem(item))
+  if (invalidItem) {
+    const missingGroup = missingRequiredModifierGroupForItem(invalidItem)
+    if (missingGroup) notifyMissingRequiredGroup(missingGroup)
+    activeItemIndex.value = form.value.items.indexOf(invalidItem)
+    return
+  }
   loading.value = true
   try {
     // Convert the local-time input value (e.g. "2026-05-07T14:30") to a UTC
@@ -712,8 +752,10 @@ async function submit() {
                     >
                       <p class="text-sm font-medium text-text-secondary">
                         {{ group.name }}
-                        <span v-if="group.is_required" class="text-destructive" aria-hidden="true">*</span>
-                        <span class="normal-case font-normal ml-1 text-xs">(máx. {{ group.max_qty }})</span>
+                        <span v-if="group.is_required || group.min_qty > 0" class="text-destructive" aria-hidden="true">*</span>
+                        <span class="normal-case font-normal ml-1 text-xs">
+                          (<template v-if="group.min_qty > 1">mín. {{ group.min_qty }} · </template>máx. {{ group.max_qty }})
+                        </span>
                       </p>
                       <div v-if="isSingleSelectGroup(group)" class="flex flex-wrap gap-2">
                         <button
