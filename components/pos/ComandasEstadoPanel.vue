@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
 const { singular: tableSingular } = useTableLabel()
 import {
@@ -17,6 +18,7 @@ interface ComandaItem {
   kitchen_name: string
   quantity: number
   notes?: string | null
+  modifiers_snapshot?: Array<{ name: string; price?: number; quantity?: number }> | null
 }
 
 interface Comanda {
@@ -369,10 +371,21 @@ const submit = async () => {
                   </div>
 
                   <!-- Row 3 — Items -->
-                  <ul v-if="c.items?.length" class="text-xs text-text-secondary leading-snug space-y-0.5">
-                    <li v-for="i in c.items" :key="i.id" class="flex gap-1.5">
-                      <span class="font-semibold text-text-primary tabular-nums flex-shrink-0">{{ i.quantity }}×</span>
-                      <span class="truncate">{{ i.kitchen_name }}</span>
+                  <ul v-if="c.items?.length" class="text-xs text-text-secondary leading-snug space-y-1">
+                    <li v-for="i in c.items" :key="i.id" class="min-w-0">
+                      <div class="flex gap-1.5">
+                        <span class="font-semibold text-text-primary tabular-nums flex-shrink-0">{{ i.quantity }}×</span>
+                        <span class="truncate">{{ i.kitchen_name }}</span>
+                      </div>
+                      <div v-if="i.modifiers_snapshot?.length" class="mt-0.5 ml-5 flex flex-wrap gap-1">
+                        <span
+                          v-for="(mod, idx) in i.modifiers_snapshot"
+                          :key="idx"
+                          class="min-w-0 max-w-full truncate rounded bg-surface-secondary px-1.5 py-0.5 text-[10px] font-semibold text-text-tertiary"
+                        >
+                          + {{ formatComandaModifierLabel(mod) }}
+                        </span>
+                      </div>
                     </li>
                   </ul>
                 </div>
