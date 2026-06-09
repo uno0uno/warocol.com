@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { ClipboardList, X, MessageSquare } from 'lucide-vue-next'
+import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
 const props = defineProps<{
   modelValue: boolean
@@ -253,7 +254,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
                   class="flex items-center gap-2 rounded-xl border-2 border-primary/20 bg-primary/5 px-3 py-2"
                 >
                   <span class="text-primary font-black text-sm leading-none flex-shrink-0">+</span>
-                  <span class="text-xs font-semibold text-primary leading-tight">{{ mod.name }}</span>
+                  <span class="text-xs font-semibold text-primary leading-tight">{{ formatComandaModifierLabel(mod) }}</span>
                 </div>
               </div>
 

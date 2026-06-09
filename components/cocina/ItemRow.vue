@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
 const props = defineProps<{
   item: any
@@ -61,7 +62,7 @@ const toggleStatus = async () => {
           :key="idx"
           class="text-[10px] font-bold bg-surface-secondary text-text-secondary px-1.5 py-0.5 rounded uppercase"
         >
-          + {{ mod.name }}
+          + {{ formatComandaModifierLabel(mod) }}
         </span>
       </div>
 
