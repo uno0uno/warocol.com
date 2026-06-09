@@ -262,10 +262,10 @@
 
       <!-- ══════ STATS STRIP ══════
            Hidden while editing (warocol.com#626): the "Pedidos en línea"
-           section below owns the editable inputs for these three fields,
+           section below owns the editable inputs for these fields,
            so showing the read-only summary at the same time duplicates
            labels and confuses the operator about where to edit. -->
-      <div v-if="businessProfile && !isEditMode" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
+      <div v-if="businessProfile && !isEditMode" class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Tiempo prep.
@@ -280,6 +280,14 @@
           </p>
           <p class="text-base sm:text-lg font-bold text-text-primary">
             {{ formatCurrencyCompact(businessProfile.min_order_amount) }}
+          </p>
+        </div>
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
+          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
+            Límite online
+          </p>
+          <p class="text-base sm:text-lg font-bold text-text-primary">
+            {{ formatOnlineOrderMaxAmountCompact(businessProfile.online_order_max_amount) }}
           </p>
         </div>
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between items-start sm:items-center text-left sm:text-center">
@@ -505,6 +513,10 @@
               <span class="text-sm text-text-secondary">Pedido mínimo</span>
               <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(businessProfile?.min_order_amount ?? 0) }}</span>
             </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Límite máximo online</span>
+              <span class="text-sm font-semibold text-text-primary">{{ formatOnlineOrderMaxAmount(businessProfile?.online_order_max_amount) }}</span>
+            </div>
           </div>
         </template>
 
@@ -546,6 +558,17 @@
                   inputmode="numeric"
                   pattern="[0-9]*"
                   class="input-base w-full px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-text-secondary mb-1">Límite máximo online (COP)</label>
+                <input
+                  v-model.number="editForm.online_order_max_amount"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  class="input-base w-full px-3 py-2 text-sm"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -671,6 +694,7 @@ const editForm = reactive({
   neighborhood: '',
   accepts_online_orders: false,
   min_order_amount: 0,
+  online_order_max_amount: '' as number | string,
   estimated_preparation_time: 30,
   business_hours: {} as Record<string, { open: string; close: string; closed: boolean }>,
   social_media: { instagram: '', whatsapp: '', facebook: '', twitter: '', tiktok: '' },
@@ -754,6 +778,29 @@ const formatCurrencyCompact = (value: number | string | null | undefined) => {
   return `$${n}`
 }
 
+const formatOnlineOrderMaxAmount = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined || value === '') return 'Según cliente'
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 'Según cliente'
+  if (n <= 0) return 'Sin límite'
+  return formatCurrency(n)
+}
+
+const formatOnlineOrderMaxAmountCompact = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined || value === '') return 'Cliente'
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 'Cliente'
+  if (n <= 0) return 'Sin límite'
+  return formatCurrencyCompact(n)
+}
+
+const normalizeOnlineOrderMaxAmount = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined || value === '') return null
+  const n = Number(value)
+  if (!Number.isFinite(n)) return null
+  return Math.max(0, Math.round(n))
+}
+
 // ─── Edit actions ───
 const enterEditMode = () => {
   const bp = businessProfile.value  // may be null for first-time setup
@@ -771,6 +818,9 @@ const enterEditMode = () => {
   editForm.neighborhood = bp?.neighborhood || ''
   editForm.accepts_online_orders = bp?.accepts_online_orders ?? false
   editForm.min_order_amount = Number(bp?.min_order_amount) || 0
+  editForm.online_order_max_amount = bp?.online_order_max_amount === null || bp?.online_order_max_amount === undefined
+    ? ''
+    : Number(bp.online_order_max_amount)
   editForm.estimated_preparation_time = bp?.estimated_preparation_time ?? 30
 
   editForm.business_hours = {}
@@ -913,6 +963,7 @@ const saveChanges = async () => {
       neighborhood: editForm.neighborhood || null,
       accepts_online_orders: editForm.accepts_online_orders,
       min_order_amount: editForm.min_order_amount,
+      online_order_max_amount: normalizeOnlineOrderMaxAmount(editForm.online_order_max_amount),
       estimated_preparation_time: editForm.estimated_preparation_time,
       business_hours: cleanedHours,
       social_media: (() => {

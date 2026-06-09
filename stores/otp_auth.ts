@@ -67,10 +67,10 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
   })
 
   const validateMutation = useMutation({
-    mutation: (vars: { phoneNumber: string; cartTotal: number }) =>
+    mutation: (vars: { phoneNumber: string; cartTotal: number; cartId?: string | null }) =>
       $fetch<CustomerValidation>('/api/online/customer/validate', {
         method: 'POST',
-        body: { phone_number: vars.phoneNumber, cart_total: vars.cartTotal },
+        body: { phone_number: vars.phoneNumber, cart_total: vars.cartTotal, cart_id: vars.cartId ?? null },
       }),
     onSuccess(_, vars) {
       phoneNumber.value = vars.phoneNumber
@@ -132,8 +132,8 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
   /**
    * Validate customer eligibility (blacklist, tier, spending limits)
    */
-  const validateCustomer = (phone: string, cartTotal: number): Promise<CustomerValidation> =>
-    validateMutation.mutateAsync({ phoneNumber: phone, cartTotal })
+  const validateCustomer = (phone: string, cartTotal: number, cartId?: string | null): Promise<CustomerValidation> =>
+    validateMutation.mutateAsync({ phoneNumber: phone, cartTotal, cartId })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Error al validar cliente') })
 
   /**
