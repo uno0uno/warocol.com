@@ -1,0 +1,49 @@
+issue: 1292
+title: "Configurar limite maximo de compra online desde Negocio"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1292-online-order-limit
+
+paths:
+  - pages/negocio.vue
+  - stores/otp_auth.ts
+  - components/online/checkout/StepIdentity.vue
+  - ../api_warocol.com/app/models/tenant_public_profile.py
+  - ../api_warocol.com/app/services/tenant_config_service.py
+  - ../api_warocol.com/app/services/otp_service.py
+  - ../api_warocol.com/app/routers/online_verification.py
+  - ../api_warocol.com/app/routers/v1_ordering.py
+  - ../api_warocol.com/sql/20260609_tenant_online_order_limit.sql
+
+ac:
+  - "/negocio permite configurar el limite maximo de compra online/domicilios por tenant."
+  - "El API persiste y expone el limite con default compatible."
+  - "otp_service.py deja de usar 50000 hardcodeado y usa configuracion del tenant."
+  - "El checkout/OTP permite pedidos mayores a 50000 si el negocio sube o desactiva el limite."
+  - "El mensaje de bloqueo muestra el limite configurado."
+
+out_of_scope:
+  - "Redisenar reglas de riesgo/antifraude."
+  - "Cambiar tarifas de domicilio."
+  - "Modificar maximos por producto o inventario."
+
+hints:
+  entry: "pages/negocio.vue seccion Pedidos en linea; otp_service.validate_customer"
+  pattern: "tenant_public_profiles ya guarda accepts_online_orders, min_order_amount y estimated_preparation_time"
+  tests: "python -m compileall app/models/tenant_public_profile.py app/services/tenant_config_service.py app/services/otp_service.py app/routers/online_verification.py app/routers/v1_ordering.py; npm/bun targeted type check not required"
+
+risk:
+  sensitive: true
+  areas:
+    - "checkout publico"
+    - "validacion OTP"
+    - "tenant settings"
+
+skip:
+  audits:
+    - "No repo-wide audit after this contract."
+
+next:
+  after_pr: "/wr-review #PR porque toca validacion de checkout publico"
