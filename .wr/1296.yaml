@@ -1,0 +1,43 @@
+issue: 1296
+title: "Improve table QR request detail items layout"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1296-table-qr-request-items-table
+
+paths:
+  - pages/despacho/en-mesa/[id].vue
+  - pages/despacho/domicilios/[id].vue
+
+ac:
+  - Table QR request detail items use a responsive table similar to domicilio detail.
+  - Product rows show name, quantity, unit price, and subtotal.
+  - Modifier rows are subordinate and show name, quantity when present, unit price, and subtotal when applicable.
+  - Order total remains visible in the table footer.
+  - Existing mesa, date, payment, actions, and customer notes remain unchanged.
+  - Accept/reject logic and API endpoints do not change.
+
+out_of_scope:
+  - API changes
+  - Payment or accounting logic
+  - Accept/reject behavior
+  - Broad despacho redesign
+
+hints:
+  entry: "pages/despacho/en-mesa/[id].vue items section"
+  pattern: "pages/despacho/domicilios/[id].vue items table"
+  tests: "no full build; targeted visual/code review only unless requested"
+
+risk:
+  sensitive: false
+  areas: ["despacho en mesa detail UI"]
+
+skip:
+  audits:
+    - repo-wide search
+    - API audit
+    - accounting/payment validation
+
+next:
+  after_pr: "none"

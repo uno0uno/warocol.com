@@ -21,7 +21,7 @@ interface TableQrItem {
   unit_price?: number
   line_total?: number
   notes?: string | null
-  modifiers?: Array<{ id: string; name: string; price?: number }>
+  modifiers?: Array<{ id: string; name: string; price?: number; quantity?: number }>
 }
 
 interface TableQrRequestDetail {
@@ -153,6 +153,28 @@ onUnmounted(() => {
 function itemDisplayName(item: TableQrItem): string {
   return item.product_name ?? 'Producto'
 }
+
+const itemQuantity = (item: TableQrItem) => {
+  const quantity = Number(item.quantity)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
+
+const itemUnitPrice = (item: TableQrItem) => Number(item.unit_price ?? 0)
+const itemSubtotal = (item: TableQrItem) => Number(item.line_total ?? 0)
+
+const modifierQuantity = (modifier: NonNullable<TableQrItem['modifiers']>[number]) => {
+  const quantity = Number(modifier.quantity)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
+
+const modifierUnitPrice = (modifier: NonNullable<TableQrItem['modifiers']>[number]) =>
+  Number(modifier.price ?? 0)
+
+const modifierSubtotal = (modifier: NonNullable<TableQrItem['modifiers']>[number]) =>
+  modifierUnitPrice(modifier) * modifierQuantity(modifier)
+
+const formatQuantity = (quantity: number) =>
+  quantity % 1 === 0 ? quantity.toFixed(0) : String(quantity)
 </script>
 
 <template>
@@ -214,40 +236,81 @@ function itemDisplayName(item: TableQrItem): string {
           </h2>
         </div>
 
-        <ul class="divide-y divide-border">
-          <li
-            v-for="(item, idx) in request.items"
-            :key="`${item.product_id}-${idx}`"
-            class="px-4 sm:px-6 py-4"
-          >
-            <div class="flex justify-between gap-3">
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-text-primary">
-                  <span class="text-primary">{{ item.quantity }}×</span>
-                  {{ itemDisplayName(item) }}
-                </p>
-                <ul v-if="item.modifiers?.length" class="mt-1 space-y-0.5">
-                  <li
-                    v-for="mod in item.modifiers"
-                    :key="mod.id"
-                    class="text-xs text-text-secondary pl-3"
-                  >
-                    + {{ mod.name }}
-                    <span v-if="mod.price != null"> · {{ formatCurrency(mod.price) }}</span>
-                  </li>
-                </ul>
-                <p v-if="item.notes" class="text-xs italic text-text-secondary mt-1">{{ item.notes }}</p>
-              </div>
-              <span class="text-sm font-bold text-primary flex-shrink-0">
-                {{ formatCurrency(item.line_total ?? 0) }}
-              </span>
-            </div>
-          </li>
-        </ul>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <caption class="sr-only">Items del pedido en mesa</caption>
+            <thead class="bg-surface-secondary">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <template
+                v-for="(item, idx) in request.items"
+                :key="`${item.product_id}-${idx}`"
+              >
+                <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0" aria-hidden="true">
+                        🍽️
+                      </div>
+                      <div class="min-w-0">
+                        <span class="text-sm font-semibold text-text-primary">{{ itemDisplayName(item) }}</span>
+                        <p v-if="item.notes" class="text-xs italic text-text-secondary mt-1">{{ item.notes }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                      {{ formatQuantity(itemQuantity(item)) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-medium text-text-primary">{{ formatCurrency(itemUnitPrice(item)) }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-bold text-primary">{{ formatCurrency(itemSubtotal(item)) }}</span>
+                  </td>
+                </tr>
 
-        <div class="px-4 sm:px-6 py-4 bg-surface-secondary border-t-2 border-border flex justify-between items-center">
-          <span class="text-sm font-semibold text-text-primary">Total del pedido</span>
-          <span class="text-xl font-bold text-primary">{{ formatCurrency(request.total_amount) }}</span>
+                <tr
+                  v-for="mod in item.modifiers"
+                  :key="`mod-${item.product_id}-${mod.id}`"
+                  class="bg-surface-secondary/30"
+                >
+                  <td class="px-6 py-2 pl-14">
+                    <div class="flex items-center gap-2">
+                      <span class="text-primary text-xs">+</span>
+                      <span class="text-xs text-text-secondary">{{ mod.name }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-2 text-center">
+                    <span class="text-xs text-text-tertiary">x{{ formatQuantity(modifierQuantity(mod)) }}</span>
+                  </td>
+                  <td class="px-6 py-2 text-right">
+                    <span class="text-xs text-text-secondary">{{ formatCurrency(modifierUnitPrice(mod)) }}</span>
+                  </td>
+                  <td class="px-6 py-2 text-right">
+                    <span class="text-xs text-primary/70">{{ formatCurrency(modifierSubtotal(mod)) }}</span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+            <tfoot class="bg-surface-secondary border-t-2 border-border">
+              <tr>
+                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                  Total del pedido:
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <span class="text-xl font-bold text-primary">{{ formatCurrency(request.total_amount) }}</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
