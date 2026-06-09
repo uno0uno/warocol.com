@@ -59,6 +59,7 @@ const pendingProduct = ref<any | null>(null)
 const pendingItem = ref<LineItem | null>(null)
 const searchQuery = ref('')
 const selectedCategory = ref('all')
+const showMobileCartSheet = ref(false)
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -378,15 +379,36 @@ const totalItemCount = computed(() =>
   form.value.items.reduce((sum, i) => sum + i.quantity, 0)
 )
 
-const selectedCustomerInitial = computed(() => {
-  const customer = selectedCustomer.value
-  return customer?.name?.charAt(0)?.toUpperCase() || customer?.phone_number?.charAt(0) || '?'
-})
-
 // ─── Currency ────────────────────────────────────────────────────────────────
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+
+const mobileCartFormattedTotal = computed(() => formatCurrency(total.value))
+
+const { setMobileCart, setOpenCartHandler, setMobileCartSheetOpen, clearMobileCart } = usePosMobileCart()
+
+watchEffect(() => {
+  setMobileCart(totalItemCount.value, mobileCartFormattedTotal.value)
+})
+
+watch(showMobileCartSheet, (open) => {
+  setMobileCartSheetOpen(open)
+}, { immediate: true })
+
+setOpenCartHandler(() => {
+  if (totalItemCount.value === 0) return
+  showMobileCartSheet.value = true
+})
+
+onUnmounted(() => {
+  clearMobileCart()
+})
+
+const selectedCustomerInitial = computed(() => {
+  const customer = selectedCustomer.value
+  return customer?.name?.charAt(0)?.toUpperCase() || customer?.phone_number?.charAt(0) || '?'
+})
 
 // ─── Customer identification ────────────────────────────────────────────────
 
@@ -845,77 +867,6 @@ async function submit() {
             </Transition>
           </Teleport>
 
-          <!-- ── Mobile: Inline Cart ───────────────────────────────────── -->
-          <div v-if="form.items.length > 0" class="lg:hidden rounded-xl border border-border bg-surface flex flex-col">
-            <!-- Cart header -->
-            <div class="px-4 py-3 border-b border-border bg-primary flex items-center justify-between rounded-t-xl">
-              <h2 class="text-sm font-semibold text-primary-foreground">Orden</h2>
-              <span class="text-xs bg-primary-foreground/10 text-primary-foreground rounded-full px-2 py-0.5 font-medium">
-                {{ totalItemCount }} {{ totalItemCount === 1 ? 'unidad' : 'unidades' }}
-              </span>
-            </div>
-            <!-- Items -->
-            <div class="p-4 flex flex-col gap-3">
-              <div
-                v-for="(item, index) in form.items"
-                :key="item.product_id + index"
-                class="flex items-start gap-3"
-              >
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
-                  <p class="text-xs text-text-secondary">{{ formatCurrency(item.unit_price) }} c/u</p>
-                  <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
-                    <span
-                      v-for="mod in item.selected_modifiers"
-                      :key="mod.id"
-                      class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
-                    >
-                      {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
-                    </span>
-                  </div>
-                </div>
-                <!-- Qty controls -->
-                <div class="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                    :aria-label="`Reducir cantidad`"
-                    @click="decrementItem(index)"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                    </svg>
-                  </button>
-                  <span class="w-7 text-center text-sm font-semibold text-text-primary">{{ item.quantity }}</span>
-                  <button
-                    type="button"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                    :aria-label="`Aumentar cantidad`"
-                    @click="incrementItem(index)"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-                <!-- Item total + remove -->
-                <div class="flex flex-col items-end gap-1 shrink-0">
-                  <span class="text-sm font-semibold text-primary">{{ formatCurrency(itemTotal(item)) }}</span>
-                  <button
-                    type="button"
-                    class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                    :aria-label="`Eliminar ${productFor(item)?.name ?? 'producto'}`"
-                    @click="removeItem(index)"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div><!-- end left -->
 
         <!-- ── RIGHT: Desktop Cart Panel ─────────────────────────────────── -->
@@ -1034,25 +985,112 @@ async function submit() {
 
       </div><!-- end POS grid -->
 
-      <!-- ── Mobile: Sticky Bottom Submit ───────────────────────────────── -->
-      <div class="lg:hidden fixed bottom-0 inset-x-0 z-30 p-4 bg-surface border-t border-border">
-        <button
-          type="submit"
-          :disabled="!canSubmit"
-          class="h-12 w-full rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all
-                 hover:bg-primary/90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-        >
-          <span v-if="loading" class="flex items-center justify-center gap-2">
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <!-- ── Mobile: Cart Bottom Sheet ───────────────────────────────────── -->
+      <UiBottomSheetModal
+        v-model="showMobileCartSheet"
+        title="Orden actual"
+        max-height="xl"
+      >
+        <div class="p-4 flex flex-col gap-3">
+          <div
+            v-if="form.items.length === 0"
+            class="py-10 flex flex-col items-center text-center text-text-secondary"
+          >
+            <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            Registrando...
-          </span>
-          <span v-else-if="totalItemCount === 0">Selecciona un producto</span>
-          <span v-else>Registrar · {{ formatCurrency(total) }}</span>
-        </button>
-      </div>
+            <p class="text-sm">Selecciona un producto</p>
+          </div>
+
+          <template v-else>
+            <div
+              v-for="(item, index) in form.items"
+              :key="item.product_id + index"
+              class="flex items-start gap-3 py-2 border-b border-border last:border-0"
+            >
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
+                <p class="text-xs text-text-secondary">{{ formatCurrency(item.unit_price) }} c/u</p>
+                <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
+                  <span
+                    v-for="mod in item.selected_modifiers"
+                    :key="mod.id"
+                    class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
+                  >
+                    {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+                  :aria-label="`Reducir cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  @click="decrementItem(index)"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                  </svg>
+                </button>
+                <span class="w-7 text-center text-sm font-semibold text-text-primary select-none">{{ item.quantity }}</span>
+                <button
+                  type="button"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+                  :aria-label="`Aumentar cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  @click="incrementItem(index)"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="flex flex-col items-end gap-1 shrink-0">
+                <span class="text-sm font-semibold text-primary">{{ formatCurrency(itemTotal(item)) }}</span>
+                <button
+                  type="button"
+                  class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
+                  :aria-label="`Eliminar ${productFor(item)?.name ?? 'producto'}`"
+                  @click="removeItem(index)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <template #footer>
+          <div class="p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Total</span>
+              <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
+            </div>
+            <button
+              type="button"
+              :disabled="!canSubmit"
+              class="h-12 w-full rounded-xl bg-primary text-primary-foreground text-sm font-semibold transition-all
+                     hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+                     active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+              @click="submit"
+            >
+              <span v-if="loading" class="flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Registrando...
+              </span>
+              <span v-else>
+                Registrar · {{ formatCurrency(total) }}
+              </span>
+            </button>
+          </div>
+        </template>
+      </UiBottomSheetModal>
 
     </form>
 
