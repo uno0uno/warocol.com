@@ -11,6 +11,16 @@ interface CanIncrementModifierSelectionInput {
   groupMaxSelections?: number | null
 }
 
+export interface RequiredModifierGroupInput {
+  id: string
+  name: string
+  isRequired?: boolean | null
+  required?: boolean | null
+  minQty?: number | string | null
+  min_qty?: number | string | null
+  optionIds: string[]
+}
+
 export function modifierSelectionQty(
   selections: ModifierSelection[],
   modifierId: string,
@@ -49,4 +59,21 @@ export function canIncrementModifierSelection({
   }
 
   return true
+}
+
+export function requiredModifierGroupMinQty(group: RequiredModifierGroupInput): number {
+  const minQty = Number(group.min_qty ?? group.minQty) || 0
+  if (minQty > 0) return minQty
+  return group.isRequired || group.required ? 1 : 0
+}
+
+export function firstMissingRequiredModifierGroup(
+  selections: ModifierSelection[],
+  groups: RequiredModifierGroupInput[],
+): RequiredModifierGroupInput | null {
+  return groups.find((group) => {
+    const minQty = requiredModifierGroupMinQty(group)
+    if (minQty <= 0) return false
+    return modifierGroupSelectionCount(selections, group.optionIds) < minQty
+  }) ?? null
 }
