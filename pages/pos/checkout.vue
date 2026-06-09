@@ -601,6 +601,22 @@ function promoFieldsForReceipt(subtotal: number) {
     subtotal,
   }
 }
+
+function promoFieldsFromCloseResponse(
+  data: { promo_savings?: number; promo_breakdown?: PromoBreakdownLine[]; subtotal?: number | null } | null | undefined,
+  fallbackSubtotal: number,
+) {
+  const savings = Number(data?.promo_savings) || 0
+  if (savings <= 0) return {}
+  const breakdown = data?.promo_breakdown?.length
+    ? data.promo_breakdown
+    : [{ promotion_name: 'Promoción', promo_type: '', savings }]
+  return {
+    promo_savings: savings,
+    promo_breakdown: breakdown,
+    subtotal: Number(data?.subtotal) || fallbackSubtotal,
+  }
+}
 const discountAmount = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return 0
   const val = Number(discountInput.value)
@@ -1608,15 +1624,7 @@ const processOrder = async () => {
         standard_tax: Number(closeResponse?.data?.standard_tax) || 0,
         liquor_tax: Number(closeResponse?.data?.liquor_tax) || 0,
         standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
-        ...(() => {
-          const fromApi = Number(closeResponse.data?.promo_savings) || 0
-          const savings = fromApi > 0 ? fromApi : promoSavings.value
-          if (savings <= 0) return {}
-          const breakdown = closeResponse.data?.promo_breakdown?.length
-            ? closeResponse.data.promo_breakdown
-            : displayPromoBreakdown.value.map(p => ({ ...p }))
-          return { promo_savings: savings, promo_breakdown: breakdown, subtotal: _subtotal }
-        })(),
+        ...promoFieldsFromCloseResponse(closeResponse.data, _subtotal),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {}),
@@ -1747,19 +1755,7 @@ const processOrder = async () => {
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
         standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
-        ...(() => {
-          const fromApi = Number(response.data.promo_savings) || 0
-          const savings = fromApi > 0 ? fromApi : promoSavings.value
-          if (savings <= 0) return {}
-          const breakdown = response.data.promo_breakdown?.length
-            ? response.data.promo_breakdown
-            : displayPromoBreakdown.value.map(p => ({ ...p }))
-          return {
-            promo_savings: savings,
-            promo_breakdown: breakdown,
-            subtotal: Number(response.data.subtotal) || _subtotalPos,
-          }
-        })(),
+        ...promoFieldsFromCloseResponse(response.data, _subtotalPos),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
           : {}),
