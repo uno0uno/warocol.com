@@ -108,8 +108,8 @@
           }"
           :order-number="idx + 1"
           :show-fulfillment-status="comandasEnabled"
-          :promo-label="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.label ?? null"
-          :promo-title="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null"
+          :promo-label="tabLinePromoLabel(item)"
+          :promo-title="tabLinePromoTitle(item)"
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
           :hide-duplicate="true"
@@ -149,8 +149,8 @@
         :key="index"
         :item="item"
         :order-number="tabItems.length + index + 1"
-        :promo-label="linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), cartLinePromoSavings(item))?.label ?? null"
-        :promo-title="linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), cartLinePromoSavings(item))?.title ?? null"
+        :promo-label="cartLinePromoLabel(item)"
+        :promo-title="cartLinePromoTitle(item)"
         :promo-savings="cartLinePromoSavings(item)"
         @edit="$emit('edit-item', index, item.product.id)"
         @remove="$emit('remove-item', index)"
@@ -388,6 +388,9 @@ interface CartItem {
   notes?: string
   is_resale?: boolean
   promo_opt_out?: boolean
+  promotionName?: string | null
+  promoType?: string | null
+  promoSavings?: number
 }
 
 interface TabItem {
@@ -398,6 +401,8 @@ interface TabItem {
   quantity: number
   unitPrice: number
   subtotal: number
+  promotionName?: string | null
+  promoType?: string | null
   promoSavings?: number
   promoOptOut?: boolean
   modifiers?: Array<{ id: string; name: string; price: number; quantity?: number }>
@@ -518,6 +523,38 @@ const {
   () => props.tabItems ?? [],
   () => (props.mesaMode ? props.tabTotal + props.total : props.total),
 )
+
+function formatPromoTypeTitle(promoType?: string | null): string | null {
+  if (!promoType) return null
+  const spaced = promoType.replace(/_/g, ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
+function tabLinePromoLabel(item: TabItem): string | null {
+  if (tabLinePromoSavings(item) <= 0) return null
+  if (item.promotionName) return item.promotionName
+  return linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.label ?? null
+}
+
+function tabLinePromoTitle(item: TabItem): string | null {
+  if (tabLinePromoSavings(item) <= 0) return null
+  if (item.promotionName) return formatPromoTypeTitle(item.promoType) ?? item.promotionName
+  return linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null
+}
+
+function cartLinePromoLabel(item: CartItem): string | null {
+  const savings = cartLinePromoSavings(item)
+  if (savings <= 0) return null
+  if (item.promotionName) return item.promotionName
+  return linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), savings)?.label ?? null
+}
+
+function cartLinePromoTitle(item: CartItem): string | null {
+  const savings = cartLinePromoSavings(item)
+  if (savings <= 0) return null
+  if (item.promotionName) return formatPromoTypeTitle(item.promoType) ?? item.promotionName
+  return linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), savings)?.title ?? null
+}
 
 // Issue warocol.com#708 — mesa tab lines live outside posStore.cart; count both buckets.
 const displayItemCount = computed(() =>

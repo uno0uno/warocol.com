@@ -222,8 +222,14 @@ type TaxPreview = {
 type PromoPreviewLine = {
   id: string
   promo_savings?: number
+  promoSavings?: number
+  locked_promo_savings?: number
   promotion_name?: string | null
+  promotionName?: string | null
+  locked_promotion_name?: string | null
   promo_type?: string | null
+  promoType?: string | null
+  locked_promo_type?: string | null
   subtotal_after_promo?: number
 }
 
@@ -374,23 +380,26 @@ const showAddressForm = ref(false)
 const addressFormError = ref<string | null>(null)
 const addressFormLoading = ref(false)
 
-const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) => ({
-  orderItemId: item.orderItemId,
-  promotionName: item.promotionName ?? null,
-  promoType: item.promoType ?? null,
-  promoSavings: item.promoSavings ?? 0,
-  promoOptOut: item.promoOptOut ?? false,
-  product: {
-    id: item.productId,
-    name: item.productName,
-    price: item.unitPrice,
-    image: '🍽️',
-    category: '',
-  },
-  modifiers: item.modifiers ?? [],
-  quantity: item.quantity,
-  notes: item.notes ?? undefined,
-})
+const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) => {
+  const raw = item as any
+  return {
+    orderItemId: item.orderItemId,
+    promotionName: item.promotionName ?? raw.promotion_name ?? raw.locked_promotion_name ?? null,
+    promoType: item.promoType ?? raw.promo_type ?? raw.locked_promo_type ?? null,
+    promoSavings: Number(item.promoSavings ?? raw.promo_savings ?? raw.locked_promo_savings) || 0,
+    promoOptOut: Boolean(item.promoOptOut ?? raw.promo_opt_out),
+    product: {
+      id: item.productId,
+      name: item.productName,
+      price: item.unitPrice,
+      image: '🍽️',
+      category: '',
+    },
+    modifiers: item.modifiers ?? [],
+    quantity: item.quantity,
+    notes: item.notes ?? undefined,
+  }
+}
 
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
@@ -521,7 +530,12 @@ const clientPromoSavings = computed(() => {
     if (Boolean(item.promo_opt_out ?? item.promoOptOut)) continue
 
     const lineId = String(item.orderItemId ?? item.id ?? '')
-    const previewSavings = lineId ? Number(promoLineById.value.get(lineId)?.promo_savings) || 0 : 0
+    const previewLine = lineId ? promoLineById.value.get(lineId) : undefined
+    const previewSavings = Number(
+      previewLine?.promo_savings
+      ?? previewLine?.promoSavings
+      ?? previewLine?.locked_promo_savings
+    ) || 0
 
     if (isKitchenServiceMode.value) {
       const fromTab = Number(item.promoSavings) || 0
@@ -532,6 +546,12 @@ const clientPromoSavings = computed(() => {
     } else if (previewSavings > 0) {
       total += previewSavings
       continue
+    } else {
+      const fromLine = Number(item.promoSavings) || 0
+      if (fromLine > 0) {
+        total += fromLine
+        continue
+      }
     }
 
     const productId = item.product?.id
@@ -689,10 +709,10 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
-    promotionName: i.promotionName ?? null,
-    promoType: i.promoType ?? null,
-    promoSavings: Number(i.promoSavings) || 0,
-    promoOptOut: Boolean(i.promoOptOut),
+    promotionName: i.promotionName ?? i.promotion_name ?? i.locked_promotion_name ?? null,
+    promoType: i.promoType ?? i.promo_type ?? i.locked_promo_type ?? null,
+    promoSavings: Number(i.promoSavings ?? i.promo_savings ?? i.locked_promo_savings) || 0,
+    promoOptOut: Boolean(i.promoOptOut ?? i.promo_opt_out),
     modifiers: (i.modifiers ?? []).map((m: any) => ({
       id: m.id ?? '',
       name: m.name,
@@ -1403,11 +1423,13 @@ const getLinePromoLabel = (item: any) => {
   if (item.promotionName) return item.promotionName
   if (item.orderItemId) {
     const preview = promoLineById.value.get(String(item.orderItemId))
-    if (preview?.promotion_name) return preview.promotion_name
+    const previewName = preview?.promotion_name ?? preview?.promotionName ?? preview?.locked_promotion_name
+    if (previewName) return previewName
   }
   if (item.id) {
     const preview = promoLineById.value.get(String(item.id))
-    if (preview?.promotion_name) return preview.promotion_name
+    const previewName = preview?.promotion_name ?? preview?.promotionName ?? preview?.locked_promotion_name
+    if (previewName) return previewName
   }
   return null
 }
@@ -1415,6 +1437,8 @@ const getLinePromoLabel = (item: any) => {
 const getLinePromoTypeLabel = (item: any) => {
   const promoType = item.promoType
     ?? promoLineById.value.get(String(item.orderItemId ?? item.id ?? ''))?.promo_type
+    ?? promoLineById.value.get(String(item.orderItemId ?? item.id ?? ''))?.promoType
+    ?? promoLineById.value.get(String(item.orderItemId ?? item.id ?? ''))?.locked_promo_type
   return promoType ? formatPromoTypeLabel(promoType) : null
 }
 
@@ -1425,10 +1449,13 @@ const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
 
 const getLinePromoSavings = (item: any): number => {
   if (isLinePromoOptedOut(item)) return 0
+  const preview = getLinePromoPreview(item)
   const fromApi = isKitchenServiceMode.value
     ? Number(item.promoSavings) || 0
-    : Number(getLinePromoPreview(item)?.promo_savings) || 0
+    : Number(preview?.promo_savings ?? preview?.promoSavings ?? preview?.locked_promo_savings) || 0
   if (fromApi > 0) return fromApi
+  const fromLine = Number(item.promoSavings) || 0
+  if (fromLine > 0) return fromLine
   const productId = item.product?.id
   if (!productId || activePromos.value.length === 0) return 0
   return linePromoSavingsForProduct(
