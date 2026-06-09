@@ -1,0 +1,45 @@
+issue: 1289
+title: "Abrir carrito de venta manual desde boton movil"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1289-manual-mobile-cart-sheet
+
+paths:
+  - pages/ventas/crear.vue
+  - layouts/dashboard.vue
+
+ac:
+  - En mobile/tablet el boton inferior muestra cantidad y total.
+  - Al tocar el boton inferior abre el carrito en bottom sheet.
+  - Bottom sheet muestra productos, cantidades, totales, eliminar y total general.
+  - Registrar venta se hace desde bottom sheet preservando canSubmit/loading/payload.
+  - Desktop conserva el panel lateral actual.
+  - Sin productos, el boton indica seleccionar producto y no abre sheet vacio.
+  - No hay cambios de backend/API/payload.
+  - Validacion manual listada en PR.
+
+out_of_scope:
+  - Backend/API.
+  - POS.
+  - Modificadores.
+  - Cards de producto.
+  - Cambios de payload.
+
+hints:
+  entry: "pages/ventas/crear.vue carrito mobile y boton inferior"
+  pattern: "usePosMobileCart en pages/pos/index.vue; DashboardMobileChrome en layouts/dashboard.vue"
+  tests: "node @vue/compiler-sfc parse; npx nuxi prepare; curl /ventas/crear"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits:
+    - full build
+    - backend tests
+
+next:
+  after_pr: "none"

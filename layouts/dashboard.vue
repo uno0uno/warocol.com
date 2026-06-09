@@ -179,7 +179,7 @@ const backBtnHandler = computed(() => dynamicBackHandler.value || (backButton.va
 const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart, sheetOpen: posMobileCartSheetOpen } = usePosMobileCart()
 
 const showPosMobileCartBar = computed(() =>
-  route.path === '/pos' && posMobileCartItemCount.value > 0,
+  (route.path === '/pos' || route.path === '/ventas/crear') && posMobileCartItemCount.value > 0,
 )
 
 const mobileContentBottomPadding = computed(() => {
