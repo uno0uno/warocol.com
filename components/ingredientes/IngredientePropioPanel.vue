@@ -274,16 +274,14 @@
             </button>
           </div>
 
-          <!-- Equivalencia por unidad (gr, ml o und) -->
-          <div v-if="form.unit === 'und' || form.unit === 'gr' || form.unit === 'ml'" class="flex flex-col gap-1.5">
+          <!-- Equivalencia gr/ml por unidad (solo und — peso/volumen usan unidades de compra) -->
+          <div v-if="form.unit === 'und'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
-              {{ form.unit === 'und' ? `${unitWeightUnit} por unidad` : `${form.unit} por unidad` }}
+              {{ unitWeightUnit }} por unidad
               <span class="text-xs text-text-tertiary font-normal">— conversión en recetas</span>
             </label>
 
-            <!-- Para und: selector gr | ml + input -->
-            <div v-if="form.unit === 'und'" class="flex gap-2">
-              <!-- Toggle gr / ml -->
+            <div class="flex gap-2">
               <div class="flex rounded-lg border border-border overflow-hidden flex-shrink-0">
                 <button
                   type="button"
@@ -312,20 +310,8 @@
               />
             </div>
 
-            <!-- Para gr / ml: solo input -->
-            <UiDecimalInput
-              v-else
-              id="ing-weight"
-              v-model="form.unitWeightGr"
-              :min="0"
-              :precision="1"
-              :placeholder="`Ej: 750 (1 und vendida = 750 ${form.unit})`"
-              :class="inputClass"
-            />
-
             <p class="text-xs text-text-tertiary">
-              <template v-if="form.unit === 'und'">Si una receta usa este ingrediente en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.</template>
-              <template v-else>Si una receta usa este ingrediente en und, el sistema multiplica por este valor para descontar stock en {{ form.unit }}.</template>
+              Si una receta usa este ingrediente en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.
             </p>
           </div>
 
@@ -652,6 +638,7 @@ const setUnitType = (key: UnitTypeKey) => {
   const t = UNIT_TYPES.find(u => u.key === key)
   if (t) {
     form.value.unit = t.unit
+    form.value.unitWeightGr = null
     createPurchaseUnits.value = suggestionsToDraftUnits(t.suggestions)
   }
   clearError('unit')
@@ -756,10 +743,10 @@ async function submit() {
     if (form.value.parentId !== null) body.parent_id = form.value.parentId
 
     let result: any
-    // unit_weight (both create and edit)
-    if (form.value.unitWeightGr !== null) {
+    // unit_weight: solo aplica a ingredientes en und (dual-unit en recetas)
+    if (form.value.unit === 'und' && form.value.unitWeightGr !== null) {
       body.unit_weight_gr = form.value.unitWeightGr
-      body.unit_weight_unit = form.value.unit === 'und' ? unitWeightUnit.value : form.value.unit
+      body.unit_weight_unit = unitWeightUnit.value
     }
 
     if (isEdit.value) {
