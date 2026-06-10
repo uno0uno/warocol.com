@@ -395,6 +395,68 @@
             </div>
           </div>
 
+          <!-- Convertir a reventa (solo sin receta ni modificadores) -->
+          <div
+            v-if="canConvertToResale && !showConvertResalePanel"
+            class="mt-4 p-4 rounded-xl border border-primary/25 bg-primary/5"
+          >
+            <p class="text-sm font-medium text-text-primary">¿Se vende tal cual (gaseosa, snack)?</p>
+            <p class="text-xs text-text-secondary mt-1 leading-relaxed">
+              Actívalo como venta directa: el sistema creará el artículo de bodega vinculado y descontará 1 und por venta.
+            </p>
+            <UiButton
+              type="button"
+              variant="outline"
+              size="default"
+              class="mt-3"
+              @click="openConvertResalePanel"
+            >
+              Activar como venta directa (reventa)
+            </UiButton>
+          </div>
+
+          <div
+            v-else-if="showConvertResalePanel && canConvertToResale"
+            class="mt-4 p-4 rounded-xl border border-border bg-surface-secondary/40 space-y-4"
+          >
+            <div>
+              <h4 class="text-sm font-semibold text-text-primary">Convertir a venta directa</h4>
+              <p class="text-xs text-text-secondary mt-1">
+                Esta acción no se puede deshacer desde aquí. El producto pasará a reventa y dejará de admitir modificadores.
+              </p>
+            </div>
+            <MenuProductResaleCreateForm
+              v-model:unit-weight-gr="convertResaleUnitWeightGr"
+              v-model:unit-weight-unit="convertResaleUnitWeightUnit"
+              v-model:draft-units="convertResalePurchaseUnits"
+              :show-error="convertResaleWeightError"
+              embedded
+              @clear-error="convertResaleWeightError = false"
+            />
+            <p v-if="convertResaleError" class="text-sm text-destructive">{{ convertResaleError }}</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <UiButton
+                type="button"
+                variant="default"
+                class="flex-1"
+                :disabled="isConvertingToResale"
+                @click="confirmConvertToResale"
+              >
+                <Icon v-if="isConvertingToResale" name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+                {{ isConvertingToResale ? 'Convirtiendo...' : 'Confirmar conversión' }}
+              </UiButton>
+              <UiButton
+                type="button"
+                variant="outline"
+                class="flex-1"
+                :disabled="isConvertingToResale"
+                @click="cancelConvertResalePanel"
+              >
+                Cancelar
+              </UiButton>
+            </div>
+          </div>
+
           <!-- Recetas Base (Opcional) -->
           <template v-if="tracksInventory">
           <div class="mt-8">
@@ -792,11 +854,16 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
-import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
+import { fetchResaleLinkedIngredient, resolveResaleIngredientId } from '@/composables/useResaleLinkedIngredient'
 import {
   normalizeResaleProductName,
   patchResaleLinkedIngredient,
 } from '@/composables/useResaleIngredientSync'
+import {
+  defaultUndPurchaseUnitsDraft,
+  syncResalePurchaseUnitsDraft,
+  type DraftPurchaseUnit,
+} from '@/composables/useIngredientPurchaseUnitsDraft'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -848,6 +915,27 @@ const { data: productData, pending: isLoading, error: fetchError, refresh } = us
 
 const isOpenSaleShell = computed(() => !!productData.value?.data?.open_priced)
 const isResaleProduct = computed(() => !!productData.value?.data?.is_resale)
+
+const showConvertResalePanel = ref(false)
+const isConvertingToResale = ref(false)
+const convertResaleError = ref('')
+const convertResaleWeightError = ref(false)
+const convertResaleUnitWeightGr = ref<number | null>(null)
+const convertResaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
+const convertResalePurchaseUnits = ref<DraftPurchaseUnit[]>(defaultUndPurchaseUnitsDraft())
+
+const canConvertToResale = computed(() => {
+  if (isResaleProduct.value || isOpenSaleShell.value) return false
+  if (form.value.is_combo) return false
+  if (tracksInventory.value) return false
+  if (productData.value?.data?.product_base_type_id) return false
+  const hasRecipeBases = form.value.recipe_bases.some(l => !!l.recipe_base_id)
+  const hasIngredients = form.value.ingredients.some(i => !!i.ingredient_id)
+  if (hasRecipeBases || hasIngredients) return false
+  const modGroups = productData.value?.data?.modifier_groups ?? []
+  if (modGroups.length > 0) return false
+  return true
+})
 
 const linkedResaleIngredient = ref<Record<string, unknown> | null>(null)
 const linkedResaleIngredientId = computed(() => {
@@ -1260,6 +1348,68 @@ const marginOperativoValue = computed<number | null>(() => {
 })
 
 // Methods
+function openConvertResalePanel() {
+  convertResaleError.value = ''
+  convertResaleWeightError.value = false
+  showConvertResalePanel.value = true
+}
+
+function cancelConvertResalePanel() {
+  showConvertResalePanel.value = false
+  convertResaleError.value = ''
+  convertResaleWeightError.value = false
+  convertResaleUnitWeightGr.value = null
+  convertResaleUnitWeightUnit.value = 'gr'
+  convertResalePurchaseUnits.value = defaultUndPurchaseUnitsDraft()
+}
+
+async function confirmConvertToResale() {
+  convertResaleError.value = ''
+  convertResaleWeightError.value = false
+
+  const weight = Number(convertResaleUnitWeightGr.value)
+  if (!Number.isFinite(weight) || weight <= 0) {
+    convertResaleWeightError.value = true
+    return
+  }
+
+  isConvertingToResale.value = true
+  try {
+    const created = await $fetch<{ data?: Record<string, unknown> }>(
+      `/api/menu/products/${productId}/convert-to-resale`,
+      {
+        method: 'POST',
+        body: {
+          resale_unit_weight_gr: weight,
+          resale_unit_weight_unit: convertResaleUnitWeightUnit.value,
+        },
+      },
+    )
+
+    const payload = (created?.data ?? created) as Record<string, unknown>
+    const ingredientId = await resolveResaleIngredientId(payload)
+    if (ingredientId) {
+      await syncResalePurchaseUnitsDraft(ingredientId, convertResalePurchaseUnits.value)
+    }
+
+    cancelConvertResalePanel()
+    cache.invalidateQueries()
+    await refresh()
+    toast.success('Producto convertido a venta directa', { title: 'Reventa activada' })
+  } catch (err: unknown) {
+    const e = err as { data?: { detail?: string }; message?: string }
+    convertResaleError.value = e?.data?.detail ?? e?.message ?? 'No se pudo convertir el producto'
+  } finally {
+    isConvertingToResale.value = false
+  }
+}
+
+watch(tracksInventory, (on) => {
+  if (on) {
+    cancelConvertResalePanel()
+  }
+})
+
 function addRecipeBase() {
   // Adding a recipe base implies the product tracks inventory.
   tracksInventory.value = true
