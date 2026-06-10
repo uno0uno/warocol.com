@@ -457,7 +457,7 @@ const promoOptOutSignature = computed(() => {
 const cartTotal = computed(() => {
   if (isKitchenServiceMode.value) {
     if (storeTabItems.value.length > 0) {
-      return posStore.activeTableSession?.runningTotal ?? 0
+      return storeTabItems.value.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0)
     }
     if (posStore.activeTableSession?.isBar && posStore.cart.length > 0) {
       return posStore.cartTotal
@@ -471,7 +471,7 @@ const checkoutPromoPreview = computed<CheckoutPromoPreview | null>(() => {
     const session = mesaCurrentData.value?.data?.session
     if (!session) return null
     return {
-      subtotal: Number(session.running_total) || 0,
+      subtotal: cartTotal.value,
       promo_savings: Number(session.promo_savings) || 0,
       subtotal_after_promos: Number(session.subtotal_after_promos ?? session.running_total) || 0,
       promo_breakdown: session.promo_breakdown ?? [],
