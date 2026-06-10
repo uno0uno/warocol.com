@@ -1,0 +1,48 @@
+issue: 1318
+title: "Implementar modo tablet icon-only reutilizando el sidenav desktop"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1318-tablet-icon-sidenav
+
+paths:
+  - layouts/dashboard.vue
+  - components/dashboard/DashboardMobileChrome.vue
+  - components/DashboardSidebar.vue
+  - components/ui/BaseSidebar.vue
+
+ac:
+  - Mobile mantiene el boton/nav inferior actual.
+  - Tablet muestra un sidenav lateral compacto/icon-only reutilizando el sidenav desktop existente.
+  - Desktop conserva el sidenav completo actual sin regresiones.
+  - No se duplica la definicion de items, rutas ni permisos de navegacion.
+  - Estado activo, permisos, orden de items y acciones siguen saliendo del modelo actual del sidenav.
+  - Icon-only tiene labels accesibles o tooltips.
+  - No hay solapes con POS, checkout ni pantallas con bottom sheets o elementos fijos inferiores.
+  - Se valida visualmente en mobile, tablet y desktop.
+
+out_of_scope:
+  - Redisenar la navegacion completa.
+  - Cambiar permisos o modulos.
+  - Crear una segunda lista de rutas para tablet.
+  - Modificar backend o API.
+
+hints:
+  entry: "layouts/dashboard.vue mounts DashboardSidebar and DashboardMobileChrome."
+  pattern: "DashboardSidebar already uses dashboardPrimaryItems/dashboardSecondaryItems/dashboardCuentaItems; tablet should reuse that component instead of dashboardMobileGridItems."
+  tests: "Targeted Nuxt/Vue checks only; avoid full build unless requested."
+
+risk:
+  sensitive: false
+  areas:
+    - responsive dashboard layout
+    - fixed bottom POS/cart chrome
+
+skip:
+  audits:
+    - repo-wide search
+    - unrelated POS promotion changes
+
+next:
+  after_pr: "none"

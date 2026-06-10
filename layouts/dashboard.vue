@@ -1,15 +1,15 @@
 <template>
-  <div class="h-screen flex flex-col lg:flex-row overflow-hidden">
-    <!-- Dashboard Sidebar - Desktop Only -->
+  <div class="h-screen flex flex-col md:flex-row overflow-hidden">
+    <!-- Dashboard Sidebar - Tablet/Desktop -->
     <DashboardSidebar
       :active-page="activePage"
       toggle
-      class="hidden lg:flex"
+      class="hidden md:flex"
       @expanded-change="isSidebarExpanded = $event"
     />
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen lg:h-auto">
+    <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen md:h-auto">
       <DashboardShellHeader
         :status="dynamicStatus"
         :header-action="dynamicHeaderAction"
@@ -29,7 +29,7 @@
       />
 
       <!-- Content Area with Overflow -->
-      <div :class="['flex-1 min-h-0 overflow-y-auto lg:pb-0', mobileContentBottomPadding]">
+      <div :class="['flex-1 min-h-0 overflow-y-auto', mobileContentBottomPadding]">
         <div class="p-4 sm:p-6 md:p-8">
           <!-- Breadcrumb (if provided) -->
           <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
@@ -58,6 +58,7 @@
     <DashboardMobileChrome
       :active-page="activePage"
       :notifications-count="notificationsUnreadCount"
+      :is-sidebar-expanded="isSidebarExpanded"
       :show-pos-cart-bar="showPosMobileCartBar"
       :pos-cart-item-count="posMobileCartItemCount"
       :pos-cart-formatted-total="posMobileCartFormattedTotal"
@@ -184,9 +185,9 @@ const showPosMobileCartBar = computed(() =>
 
 const mobileContentBottomPadding = computed(() => {
   if (showPosMobileCartBar.value) {
-    return 'pb-36'
+    return 'pb-36 lg:pb-0'
   }
-  return 'pb-20'
+  return 'pb-20 lg:pb-0'
 })
 
 const navigateToPOS = () => navigateTo('/pos')
