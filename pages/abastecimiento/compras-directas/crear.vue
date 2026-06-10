@@ -337,7 +337,7 @@
                           step="0.01"
                           required
                           class="input-base w-full px-2 py-1.5 text-sm"
-                          @input="() => updateItemTotal(index)"
+                          @input="() => onQuantityChange(index)"
                           placeholder="0"
                         />
                       </div>
@@ -347,7 +347,7 @@
                           <span
                             v-if="item.suggested_price"
                             class="text-[10px] text-success cursor-pointer ml-0.5"
-                            @click="item.unit_cost = item.suggested_price; updateItemTotal(index)"
+                            @click="item.unit_cost = item.suggested_price; onUnitCostChange(index)"
                             title="Usar precio sugerido"
                           >
                             (Sug: {{ formatPrice(item.suggested_price) }})
@@ -362,15 +362,25 @@
                             step="0.01"
                             required
                             class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                            @input="() => updateItemTotal(index)"
+                            @input="() => onUnitCostChange(index)"
                             placeholder="0"
                           />
                         </div>
                       </div>
                       <div>
-                        <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
-                        <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
-                          ${{ formatPrice(item.total_cost) }}
+                        <label class="block text-xs font-medium text-text-primary mb-1">Total *</label>
+                        <div class="relative">
+                          <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <input
+                            v-model.number="item.total_cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            required
+                            class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                            @input="() => onTotalCostChange(index)"
+                            placeholder="0"
+                          />
                         </div>
                       </div>
                     </div>
@@ -857,11 +867,14 @@ function validateForm(): boolean {
     return false
   }
 
+  form.value.items.forEach(normalizeItemCosts)
+
   const invalidItem = form.value.items.find(item =>
     !item.ingredient_id ||
     item.purchase_quantity <= 0 ||
     !item.purchase_unit ||
-    item.unit_cost < 0
+    item.unit_cost < 0 ||
+    (item.unit_cost === 0 && (item.total_cost || 0) <= 0)
   )
   if (invalidItem) {
     submitError.value = WAREHOUSE_COPY.purchaseCompleteItemsError
@@ -1086,9 +1099,56 @@ const updateSuggestedPrice = (index: number) => {
   }
 }
 
-const updateItemTotal = (index: number) => {
+const onUnitCostChange = (index: number) => {
   const item = form.value.items[index]
-  item.total_cost = (item.purchase_quantity || 0) * (item.unit_cost || 0)
+  const qty = Number(item.purchase_quantity) || 0
+  const unit = Number(item.unit_cost) || 0
+  if (qty > 0) {
+    item.total_cost = qty * unit
+  }
+}
+
+const onTotalCostChange = (index: number) => {
+  const item = form.value.items[index]
+  const qty = Number(item.purchase_quantity) || 0
+  const total = Number(item.total_cost) || 0
+  if (qty > 0) {
+    item.unit_cost = total / qty
+  }
+}
+
+const onQuantityChange = (index: number) => {
+  const item = form.value.items[index]
+  const qty = Number(item.purchase_quantity) || 0
+  if (qty <= 0) return
+  const unit = Number(item.unit_cost) || 0
+  const total = Number(item.total_cost) || 0
+  if (unit > 0) {
+    item.total_cost = qty * unit
+  } else if (total > 0) {
+    item.unit_cost = total / qty
+  }
+}
+
+/** @deprecated use onUnitCostChange — kept for callers that only recalc total from unit */
+const updateItemTotal = onUnitCostChange
+
+function normalizeItemCosts(item: PurchaseItem) {
+  const qty = Number(item.purchase_quantity) || 0
+  if (qty <= 0) return
+  const unit = Number(item.unit_cost) || 0
+  const total = Number(item.total_cost) || 0
+  if (unit > 0 && total <= 0) {
+    item.total_cost = qty * unit
+  } else if (total > 0 && unit <= 0) {
+    item.unit_cost = total / qty
+  } else if (unit > 0 && total > 0) {
+    // OCR may send both; prefer line total when they disagree slightly
+    const expected = qty * unit
+    if (Math.abs(expected - total) > 0.02) {
+      item.unit_cost = total / qty
+    }
+  }
 }
 
 const addItem = () => {
@@ -1327,6 +1387,7 @@ const handleScanFileSelect = async (event: Event) => {
             item_type: inferItemTypeFromOcrLine(ocrItem, matched),
             ocr_description: ocrItem.descripcion || ''
           }
+          normalizeItemCosts(item)
           return item
         })
 
