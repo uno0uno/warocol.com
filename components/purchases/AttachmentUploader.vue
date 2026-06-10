@@ -94,10 +94,10 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files) {
-    const files = Array.from(target.files)
+    const picked = Array.from(target.files)
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024
-    const validFiles = files.filter(file => {
+    const validFiles = picked.filter(file => {
       if (file.size > maxSize) {
         useToast().error(`${file.name} excede el tamaño máximo de 10MB`, { title: 'Archivo muy grande' })
         return false
