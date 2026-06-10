@@ -54,7 +54,7 @@
         <button
           @click="showMenuModal = true"
           aria-label="Abrir navegación"
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
+          class="w-10 h-10 flex md:hidden items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
           <Bars3Icon class="w-5 h-5 text-icon-button-neutral-text" />
         </button>

@@ -1,7 +1,10 @@
 <template>
   <div
-    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg transition-opacity"
-    :class="posCartSheetOpen ? 'pointer-events-none opacity-0' : ''"
+    class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg transition-all"
+    :class="[
+      posCartSheetOpen ? 'pointer-events-none opacity-0' : '',
+      isSidebarExpanded ? 'md:left-56' : 'md:left-[4.25rem]',
+    ]"
     style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     :aria-hidden="posCartSheetOpen"
   >
@@ -25,6 +28,7 @@ import type { ActivePage } from '~/constants/dashboardNavigation'
 defineProps<{
   activePage: ActivePage
   notificationsCount: number
+  isSidebarExpanded: boolean
   showPosCartBar: boolean
   posCartItemCount: number
   posCartFormattedTotal: string
