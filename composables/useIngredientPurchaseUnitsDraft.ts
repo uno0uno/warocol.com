@@ -15,8 +15,16 @@ export const UND_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
   { purchase_unit: 'und', label: 'Unidad', conversion_factor: 1 },
 ]
 
+export const HR_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
+  { purchase_unit: 'hr', label: 'Hora', conversion_factor: 1 },
+]
+
 export function defaultUndPurchaseUnitsDraft(): DraftPurchaseUnit[] {
   return suggestionsToDraftUnits(UND_PURCHASE_UNIT_SUGGESTIONS)
+}
+
+export function defaultHrPurchaseUnitsDraft(): DraftPurchaseUnit[] {
+  return suggestionsToDraftUnits(HR_PURCHASE_UNIT_SUGGESTIONS)
 }
 
 export function suggestionsToDraftUnits(suggestions: PurchaseUnitSuggestion[]): DraftPurchaseUnit[] {

@@ -50,7 +50,7 @@
             <input
               v-model="newUnit.purchase_unit_label"
               type="text"
-              placeholder="Ej. paquete × 6"
+              :placeholder="namePlaceholder"
               :class="inputClass"
               @keyup.enter="addDraftUnit"
             />
@@ -61,7 +61,7 @@
               v-model="newUnit.conversion_factor"
               :min="0.001"
               :precision="3"
-              placeholder="Ej: 6"
+              :placeholder="factorPlaceholder"
               :class="inputClass"
               @keyup.enter="addDraftUnit"
             />
@@ -73,7 +73,7 @@
               1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ baseUnit }}
             </template>
             <template v-else>
-              Und por empaque
+              {{ emptyAddHint }}
             </template>
           </p>
           <button
@@ -199,6 +199,19 @@ const props = withDefaults(defineProps<{
 })
 
 const draftUnits = defineModel<DraftPurchaseUnit[]>('draftUnits', { default: () => [] })
+
+const namePlaceholder = computed(() => {
+  if (props.baseUnit === 'hr') return 'Ej. Paquete mensual'
+  if (props.baseUnit === 'und') return 'Ej. paquete × 6'
+  return 'Ej. Caja, Docena...'
+})
+
+const factorPlaceholder = computed(() => (props.baseUnit === 'hr' ? 'Ej: 8' : 'Ej: 6'))
+
+const emptyAddHint = computed(() => {
+  if (props.baseUnit === 'hr') return 'Horas incluidas en el paquete'
+  return 'Und por empaque'
+})
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 

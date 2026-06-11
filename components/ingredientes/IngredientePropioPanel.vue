@@ -136,7 +136,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span class="text-xs font-bold leading-tight">Servicio</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Siempre en horas. Ej: mano de obra</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Por hora o por unidad. Ej: mano de obra, transporte</span>
               </button>
             </div>
           </div>
@@ -180,10 +180,38 @@
             </div>
           </div>
           <div v-if="!isEdit && form.type === 'service'" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Unidad base</label>
-            <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
-              hr — horas (fijo para servicios)
+            <label class="text-sm font-medium text-text-primary">
+              ¿Cómo se cobra? <span class="text-destructive">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Unidad del servicio">
+              <button
+                type="button"
+                @click="setServiceUnitMode('hr')"
+                :class="[
+                  'flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all focus:outline-none',
+                  serviceUnitMode === 'hr'
+                    ? 'border-primary bg-primary/8 text-primary shadow-sm shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <span class="text-xs font-bold">Por hora</span>
+                <span :class="['text-[10px] font-mono', serviceUnitMode === 'hr' ? 'text-primary' : 'text-text-tertiary']">hr</span>
+              </button>
+              <button
+                type="button"
+                @click="setServiceUnitMode('und')"
+                :class="[
+                  'flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all focus:outline-none',
+                  serviceUnitMode === 'und'
+                    ? 'border-primary bg-primary/8 text-primary shadow-sm shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <span class="text-xs font-bold">Por unidad</span>
+                <span :class="['text-[10px] leading-snug text-center', serviceUnitMode === 'und' ? 'text-primary/80' : 'text-text-tertiary']">viaje, servicio fijo</span>
+              </button>
             </div>
+            <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
           </div>
 
           <!-- CREACIÓN: selector de tipo de medida (solo alimento) -->
@@ -241,6 +269,22 @@
             base-unit="und"
           />
 
+          <!-- CREACIÓN: unidades de compra (servicio por unidad — viaje, flete…) -->
+          <IngredientesIngredientPurchaseUnitsField
+            v-if="!isEdit && form.type === 'service' && serviceUnitMode === 'und'"
+            v-model:draft-units="createPurchaseUnits"
+            mode="create"
+            base-unit="und"
+          />
+
+          <!-- CREACIÓN: unidades de compra (servicio por hora — paquete mensual, bolsa de horas…) -->
+          <IngredientesIngredientPurchaseUnitsField
+            v-if="!isEdit && form.type === 'service' && serviceUnitMode === 'hr'"
+            v-model:draft-units="createPurchaseUnits"
+            mode="create"
+            base-unit="hr"
+          />
+
           <!-- EDICIÓN: unidad de solo lectura -->
           <div v-if="isEdit" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">Unidad</label>
@@ -274,8 +318,8 @@
             </button>
           </div>
 
-          <!-- Equivalencia gr/ml por unidad (solo und — peso/volumen usan unidades de compra) -->
-          <div v-if="form.unit === 'und'" class="flex flex-col gap-1.5">
+          <!-- Equivalencia gr/ml por unidad (solo alimento und — insumo/servicio usan und o hr directo) -->
+          <div v-if="form.type === 'food' && form.unit === 'und'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
               {{ unitWeightUnit }} por unidad
               <span class="text-xs text-text-tertiary font-normal">— conversión en recetas</span>
@@ -457,9 +501,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import {
+  defaultHrPurchaseUnitsDraft,
   defaultUndPurchaseUnitsDraft,
   persistDraftPurchaseUnits,
   suggestionsToDraftUnits,
+  HR_PURCHASE_UNIT_SUGGESTIONS,
   UND_PURCHASE_UNIT_SUGGESTIONS,
   usesCustomPurchaseUnitsDraft,
   type DraftPurchaseUnit,
@@ -581,9 +627,17 @@ const UNIT_TYPES = [
 ]
 
 type UnitTypeKey = 'peso' | 'volumen' | 'pieza' | ''
+type ServiceUnitMode = 'hr' | 'und'
+
+const FLAT_SERVICE_NAME = /transporte|flete|mensajer[ií]a|domicilio|entrega|viaje|servicio de lavander[ií]a/i
+
+function defaultServiceUnitFromName(name: string): ServiceUnitMode {
+  return FLAT_SERVICE_NAME.test(name.trim()) ? 'und' : 'hr'
+}
 
 // --- State ---
 const unitType = ref<UnitTypeKey>('')
+const serviceUnitMode = ref<ServiceUnitMode | ''>('')
 const unitWeightUnit = ref<'gr' | 'ml'>('gr')
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false, type: 'food', unitWeightGr: null as number | null })
 const errors = ref<Record<string, string>>({})
@@ -608,15 +662,33 @@ const typeCardClass = (type: IngredientDbType) => [
     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
 ]
 
+const setServiceUnitMode = (mode: ServiceUnitMode) => {
+  serviceUnitMode.value = mode
+  form.value.unit = mode
+  form.value.unitWeightGr = null
+  createPurchaseUnits.value = mode === 'und'
+    ? defaultUndPurchaseUnitsDraft()
+    : defaultHrPurchaseUnitsDraft()
+  clearError('unit')
+}
+
 const applyTypeUnitDefaults = (type: IngredientDbType) => {
   if (type === 'supply') {
+    serviceUnitMode.value = ''
     form.value.unit = 'und'
     if (createPurchaseUnits.value.length === 0) {
       createPurchaseUnits.value = defaultUndPurchaseUnitsDraft()
     }
-  } else if (type === 'service') {
-    form.value.unit = 'hr'
+    return
+  }
+  if (type === 'service') {
+    serviceUnitMode.value = ''
+    form.value.unit = ''
     createPurchaseUnits.value = []
+    const hint = (form.value.name || props.initialName || '').trim()
+    if (hint) {
+      setServiceUnitMode(defaultServiceUnitFromName(hint))
+    }
   }
 }
 
@@ -624,6 +696,7 @@ const setIngredientType = (type: IngredientDbType) => {
   if (form.value.type === type) return
   form.value.type = type
   unitType.value = ''
+  serviceUnitMode.value = ''
   form.value.unit = ''
   form.value.unitWeightGr = null
   createPurchaseUnits.value = []
@@ -658,6 +731,7 @@ const resetCreate = () => {
     unitWeightGr: null,
   }
   unitType.value = ''
+  serviceUnitMode.value = ''
   unitWeightUnit.value = 'gr'
   createPurchaseUnits.value = []
   errors.value = {}
@@ -679,6 +753,9 @@ watch(() => props.ingredient, (ing) => {
     }
     unitWeightUnit.value = (ing.unit_weight_unit as 'gr' | 'ml') ?? 'gr'
     unitType.value = ''
+    serviceUnitMode.value = ing.type === 'service' && (ing.unit === 'hr' || ing.unit === 'und')
+      ? ing.unit
+      : ''
   } else {
     resetCreate()
   }
@@ -716,8 +793,8 @@ function validate() {
   if (form.value.type === 'supply' && form.value.unit !== 'und') {
     e.unit = 'Los insumos deben usar unidad und'
   }
-  if (form.value.type === 'service' && form.value.unit !== 'hr') {
-    e.unit = 'Los servicios deben usar unidad hr'
+  if (form.value.type === 'service' && form.value.unit !== 'hr' && form.value.unit !== 'und') {
+    e.unit = 'Selecciona si el servicio se cobra por hora o por unidad'
   }
   if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
   if (form.value.isResale && form.value.unit !== 'und') {
@@ -743,8 +820,8 @@ async function submit() {
     if (form.value.parentId !== null) body.parent_id = form.value.parentId
 
     let result: any
-    // unit_weight: solo aplica a ingredientes en und (dual-unit en recetas)
-    if (form.value.unit === 'und' && form.value.unitWeightGr !== null) {
+    // unit_weight: solo alimento und (receta en gr/ml, stock en piezas)
+    if (form.value.type === 'food' && form.value.unit === 'und' && form.value.unitWeightGr !== null) {
       body.unit_weight_gr = form.value.unitWeightGr
       body.unit_weight_unit = unitWeightUnit.value
     }
@@ -774,10 +851,18 @@ async function submit() {
             is_default: i === 0,
           }))
         }
-      } else if (form.value.type === 'supply') {
+      } else if (form.value.type === 'supply' || (form.value.type === 'service' && form.value.unit === 'und')) {
         useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, UND_PURCHASE_UNIT_SUGGESTIONS)
         if (!useCustomUnits) {
           body.purchase_units = UND_PURCHASE_UNIT_SUGGESTIONS.map((s, i) => ({
+            purchase_unit: s.purchase_unit,
+            is_default: i === 0,
+          }))
+        }
+      } else if (form.value.type === 'service' && form.value.unit === 'hr') {
+        useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, HR_PURCHASE_UNIT_SUGGESTIONS)
+        if (!useCustomUnits) {
+          body.purchase_units = HR_PURCHASE_UNIT_SUGGESTIONS.map((s, i) => ({
             purchase_unit: s.purchase_unit,
             is_default: i === 0,
           }))

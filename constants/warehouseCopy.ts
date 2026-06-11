@@ -16,6 +16,7 @@ export const WAREHOUSE_COPY = {
   typeFood: 'Alimento',
   typeSupply: 'Insumo',
   typeService: 'Servicio',
+  typeServiceDescription: 'Por hora o por unidad · hr, viaje',
   catalogSearchPlaceholder: 'Buscar en catálogo de bodega...',
   catalogStatsTotal: 'Total en catálogo',
   catalogEmptyTitle: 'Aún no tienes artículos en tu catálogo de bodega',

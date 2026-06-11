@@ -102,7 +102,7 @@
             </UiSelectionOptionCard>
             <UiSelectionOptionCard
               :title="WAREHOUSE_COPY.typeService"
-              description="Horas · hr"
+              :description="WAREHOUSE_COPY.typeServiceDescription"
               :selected="selectedType === 'service'"
               @click="selectAndConfirm('service')"
             >
