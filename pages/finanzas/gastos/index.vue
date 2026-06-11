@@ -98,7 +98,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const { formatDateTime: formatDate } = useFormatters()
+const { formatCalendarDate } = useFormatters()
 
 // Table columns
 const expensesTableColumns = [
@@ -252,7 +252,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-bold text-text-primary">{{ item.expenseNumber || '—' }}</span>
-                <span class="text-xs text-text-secondary">{{ formatDate(item.transactionDate) }}</span>
+                <span class="text-xs text-text-secondary">{{ formatCalendarDate(item.transactionDate) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.category?.categoryName || 'Sin categoría' }}{{ item.description ? ` · ${item.description}` : '' }}
@@ -271,7 +271,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         </template>
 
         <template #cell-transactionDate="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatCalendarDate(value) }}</span>
         </template>
 
         <template #cell-category="{ value }">

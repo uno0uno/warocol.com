@@ -1,3 +1,5 @@
+import { bogotaDateAtNoon } from '~/utils/bogotaDate'
+
 const _dateFormatter = new Intl.DateTimeFormat('es-CO', {
   day: '2-digit', month: '2-digit', year: '2-digit',
   timeZone: 'America/Bogota',
@@ -13,6 +15,16 @@ export const useFormatters = () => {
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'No especificada'
     return _dateFormatter.format(new Date(dateString))
+  }
+
+  /** YYYY-MM-DD (or API date field) → calendar day in Bogotá — matches arqueo transaction_date. */
+  const formatCalendarDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'No especificada'
+    const day = dateString.split('T')[0]
+    if (/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+      return _dateFormatter.format(bogotaDateAtNoon(day))
+    }
+    return formatDate(dateString)
   }
 
   const formatDateShort = (dateString: string | null | undefined): string => {
@@ -48,6 +60,7 @@ export const useFormatters = () => {
 
   return {
     formatDate,
+    formatCalendarDate,
     formatDateShort,
     formatCurrency,
     formatDateTime,

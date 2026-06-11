@@ -72,7 +72,7 @@
             </div>
             <div class="space-y-1">
               <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fecha Programada</p>
-              <p class="text-lg font-semibold text-text-primary">{{ formatDate(instance.scheduledDate) }}</p>
+              <p class="text-lg font-semibold text-text-primary">{{ formatCalendarDate(instance.scheduledDate) }}</p>
             </div>
           </div>
 
@@ -298,7 +298,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const { formatDate } = useFormatters()
+const { formatDate, formatCalendarDate } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return '0 Bytes'

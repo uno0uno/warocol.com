@@ -92,7 +92,7 @@
                   Fecha
                 </p>
                 <p class="text-lg font-semibold text-text-primary">
-                  {{ formatDate(expense.transactionDate) }}
+                  {{ formatCalendarDate(expense.transactionDate) }}
                 </p>
               </div>
             </div>
@@ -611,7 +611,7 @@
                 class="border-b border-border hover:bg-background transition-colors"
               >
                 <td class="py-3 px-4 text-sm text-text-primary">{{ instance.periodMonth }}</td>
-                <td class="py-3 px-4 text-sm text-text-secondary">{{ formatDate(instance.scheduledDate) }}</td>
+                <td class="py-3 px-4 text-sm text-text-secondary">{{ formatCalendarDate(instance.scheduledDate) }}</td>
                 <td class="py-3 px-4 text-sm text-primary text-right font-medium">{{ formatCurrency(instance.amount) }}</td>
                 <td class="py-3 px-4">
                   <span
@@ -900,7 +900,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const { formatDate } = useFormatters()
+const { formatDate, formatCalendarDate } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return '0 Bytes'

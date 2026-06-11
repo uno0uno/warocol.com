@@ -48,7 +48,7 @@
                 Fecha
               </p>
               <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                {{ formatDate(new Date().toISOString()) }}
+                {{ formatCalendarDate(todayBogotaISO()) }}
               </p>
             </div>
           </div>
@@ -378,7 +378,7 @@
               <div class="text-left sm:text-right w-full sm:w-auto">
                 <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
                   <p class="text-xs font-medium text-text-secondary">FECHA</p>
-                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ formatDate(form.transactionDate) }}</p>
+                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ formatCalendarDate(form.transactionDate) }}</p>
                 </div>
               </div>
             </div>
@@ -498,6 +498,7 @@
 <script setup lang="ts">
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
+import { todayBogotaISO } from '~/utils/bogotaDate'
 import { computed } from 'vue'
 
 definePageMeta({
@@ -545,7 +546,7 @@ onMounted(() => {
 
 // Form state
 const form = reactive({
-  transactionDate: new Date().toISOString().split('T')[0],
+  transactionDate: todayBogotaISO(),
   expenseCategoryId: '',
   description: '',
   amount: null as number | null,
@@ -614,7 +615,7 @@ const getCategoryName = (categoryId: string) => {
   return category?.categoryName || category?.name || 'Sin categoría'
 }
 
-const { formatDate } = useFormatters()
+const { formatDate, formatCalendarDate } = useFormatters()
 
 const formatCurrency = (value: number | null) => {
   if (!value) return '$0'
