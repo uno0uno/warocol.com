@@ -237,7 +237,7 @@
               </div>
 
               <!-- Preview of new stock -->
-              <div v-if="form.quantity && form.quantity > 0" class="mt-2 p-3 bg-state-info-bg border border-state-info-border rounded-lg">
+              <div v-if="hasValidQuantity" class="mt-2 p-3 bg-state-info-bg border border-state-info-border rounded-lg">
                 <p class="text-sm text-state-info-text">
                   <span class="font-semibold">Resultado:</span>
                   Stock {{ form.adjustmentType === 'increment' ? 'aumentará' : form.adjustmentType === 'decrement' ? 'disminuirá' : 'se establecerá' }} a
@@ -334,7 +334,7 @@
                   {{ form.adjustmentType === 'increment' ? 'Incremento' : form.adjustmentType === 'decrement' ? 'Decremento' : 'Ajustar a' }}
                 </span>
               </div>
-              <div v-if="form.quantity && form.quantity > 0">
+              <div v-if="hasValidQuantity">
                 <p class="text-sm text-text-secondary mb-1">Nuevo Stock</p>
                 <p class="text-lg font-bold text-text-primary">
                   {{ formatNumber(newStockInBase) }} {{ selectedIngredient?.unit || '' }}
@@ -405,6 +405,7 @@ const {
   isSubmitting,
   errorMessage,
   isFormValid,
+  hasValidQuantity,
   calculateNewStockInBase,
   largeAdjustmentWarning,
   loadCurrentStock,

@@ -72,13 +72,21 @@ export function useInventoryAdjustment() {
   const isSubmitting = ref(false)
   const errorMessage = ref('')
 
+  const hasValidQuantity = computed(() => {
+    const qty = form.quantity
+    if (qty === null || qty === undefined || Number.isNaN(qty)) return false
+    // "Ajustar a" allows 0 (physical count with no stock). Increment/decrement stay > 0.
+    if (form.adjustmentType === 'set') return qty >= 0
+    return qty > 0
+  })
+
   const isFormValid = computed(() => {
     // Block submit until the current stock has been confirmed by the
     // backend — otherwise an operator could increment against a stale 0
     // and silently distort inventory (caught in #608 follow-up).
     if (!stockLoaded.value || isLoadingStock.value) return false
     if (!form.ingredientId || !form.adjustmentType || !form.unit) return false
-    if (!form.quantity || form.quantity <= 0) return false
+    if (!hasValidQuantity.value) return false
     if (!form.reason) return false
     if (form.reason === 'other' && !form.notes.trim()) return false
     return true
@@ -92,12 +100,13 @@ export function useInventoryAdjustment() {
    */
   const calculateNewStockInBase = (convertToBase: (qty: number, unit: string) => number): number => {
     const qty = form.quantity ?? 0
-    if (qty <= 0) return currentStock.value
+    if (form.adjustmentType !== 'set' && qty <= 0) return currentStock.value
+    if (form.adjustmentType === 'set' && qty < 0) return currentStock.value
     const qtyInBase = convertToBase(qty, form.unit)
     switch (form.adjustmentType) {
       case 'increment': return currentStock.value + qtyInBase
       case 'decrement': return Math.max(0, currentStock.value - qtyInBase)
-      case 'set':       return qtyInBase
+      case 'set':       return Math.max(0, qtyInBase)
       default:          return currentStock.value
     }
   }
@@ -248,6 +257,7 @@ export function useInventoryAdjustment() {
     isSubmitting,
     errorMessage,
     isFormValid,
+    hasValidQuantity,
     calculateNewStockInBase,
     largeAdjustmentWarning,
     loadCurrentStock,

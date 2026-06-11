@@ -225,7 +225,7 @@
                 </span>
               </div>
               <p
-                v-if="form.quantity && form.quantity > 0 && form.unit !== selectedIngredient.unit"
+                v-if="hasValidQuantity && form.unit !== selectedIngredient.unit"
                 class="text-[11px] text-text-secondary leading-snug"
               >
                 = {{ formatNumber(convertedQuantity) }} {{ selectedIngredient.unit }}
@@ -269,7 +269,7 @@
 
           <!-- 6. Result preview -->
           <div
-            v-if="selectedIngredient && form.adjustmentType && form.quantity && form.quantity > 0"
+            v-if="selectedIngredient && form.adjustmentType && hasValidQuantity"
             class="rounded-xl border border-primary/20 bg-primary/5 p-3"
           >
             <p class="text-xs text-text-secondary leading-snug">Resultado</p>
@@ -431,6 +431,7 @@ const {
   isSubmitting,
   errorMessage,
   isFormValid,
+  hasValidQuantity,
   calculateNewStockInBase,
   largeAdjustmentWarning,
   loadCurrentStock,
@@ -455,8 +456,8 @@ const purchaseUnitOptions = computed(() =>
 )
 
 const convertedQuantity = computed(() => {
-  if (!form.quantity || form.quantity <= 0 || !form.unit) return 0
-  return purchaseUnitsApi.convertToBase(form.ingredientId, form.quantity, form.unit)
+  if (!hasValidQuantity.value || !form.unit) return 0
+  return purchaseUnitsApi.convertToBase(form.ingredientId, form.quantity as number, form.unit)
 })
 
 // Stock Actual rendered in the operator-selected unit, when it differs from
