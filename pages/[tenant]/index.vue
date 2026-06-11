@@ -264,7 +264,10 @@ const handleCheckout = async () => {
 // Handle cart open - refresh profile + purge products no longer available online
 const handleCartOpen = async () => {
   isCartOpen.value = true
-  refetchProfile()
+  // Wait for menu before purging — otherwise products=[] on slow devices
+  // treats every cart line as "offline" and wipes the cart after the drawer opens.
+  await Promise.all([refetchProfile(), refetchMenu()])
+  if (menuError.value || !menuData.value) return
 
   // Products list only contains is_available_online=true items (filtered by backend)
   // Any cart item missing from the current list has been taken offline since it was added
