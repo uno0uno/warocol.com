@@ -150,22 +150,43 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     return JSON.stringify([...mods].sort((a, b) => a.modifier_id.localeCompare(b.modifier_id)).map(m => m.modifier_id))
   }
 
-  /** Map backend item UUIDs back onto local OnlineCartItems after a batch sync */
+  /** Map backend item UUIDs onto local lines after batch (always overwrite — batch creates a new cart). */
   function syncItemIds(backendItems: BackendCartItem[]) {
+    const matchedLocalIds = new Set<string>()
     for (const backendItem of backendItems) {
       const backendHasQuantities = backendItem.modifiers.some(mod => mod.quantity != null)
       const localItem = items.value.find(
         item =>
-          !item.backendId &&
-          item.product_id === backendItem.product_id &&
+          !matchedLocalIds.has(item.id) &&
+          String(item.product_id) === String(backendItem.product_id) &&
           (
             backendHasQuantities
               ? modifiersKey(item.modifiers) === backendModifiersKey(backendItem.modifiers)
               : modifiersIdKey(item.modifiers) === backendModifiersIdKey(backendItem.modifiers)
           )
       )
-      if (localItem) localItem.backendId = backendItem.id
+      if (localItem) {
+        localItem.backendId = backendItem.id
+        matchedLocalIds.add(localItem.id)
+      }
     }
+  }
+
+  function applyBatchResponse(data: { data: BackendCart }) {
+    cartId.value = data.data.id
+    if (data.data.session_id) {
+      sessionId.value = data.data.session_id
+      if (process.client) {
+        localStorage.setItem('waro_session_id', data.data.session_id)
+      }
+    }
+    syncItemIds(data.data.items)
+  }
+
+  function isNotFoundError(error: unknown): boolean {
+    const e = error as { statusCode?: number; status?: number; response?: { status?: number } }
+    const status = e?.statusCode ?? e?.status ?? e?.response?.status
+    return status === 404
   }
 
   // ── Mutations ──────────────────────────────────────────────────────────────
@@ -213,8 +234,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       items.value = context.snapshot
     },
     onSuccess(data) {
-      cartId.value = data.data.id
-      syncItemIds(data.data.items)
+      applyBatchResponse(data)
     },
   })
 
@@ -264,8 +284,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       items.value = context.snapshot
     },
     onSuccess(data) {
-      cartId.value = data.data.id
-      syncItemIds(data.data.items)
+      applyBatchResponse(data)
     },
   })
 
@@ -295,8 +314,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       }
     },
     onSuccess(data) {
-      cartId.value = data.data.id
-      syncItemIds(data.data.items)
+      applyBatchResponse(data)
     },
   })
 
@@ -316,13 +334,33 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     mutation: async (_itemId: string, context) => {
       // Only call DELETE if the item was synced to backend
       if (context.backendId && context.snapshotCartId) {
-        await $fetch(`/api/online/cart/${context.snapshotCartId}/items/${context.backendId}`, {
-          method: 'DELETE',
-        })
+        try {
+          await $fetch(`/api/online/cart/${context.snapshotCartId}/items/${context.backendId}`, {
+            method: 'DELETE',
+          })
+        } catch (error) {
+          if (!isNotFoundError(error)) throw error
+          // Stale cart/item ids after a prior batch recreate — resync remaining lines
+          if (items.value.length > 0) {
+            const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+              method: 'POST',
+              body: buildCartBody(),
+            })
+            applyBatchResponse(data)
+          } else {
+            try {
+              await $fetch(`/api/online/cart/${context.snapshotCartId}`, { method: 'DELETE' })
+            } catch {
+              // Cart may already be gone
+            }
+            cartId.value = null
+          }
+        }
       }
       // No backendId = item was never synced; local removal is sufficient
     },
-    onError(_error, _vars, context) {
+    onError(error, _vars, context) {
+      if (isNotFoundError(error)) return
       // Restore the removed item at its original position
       if (context.snapshot && context.index >= 0) {
         items.value.splice(context.index, 0, context.snapshot)

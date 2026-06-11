@@ -1,8 +1,13 @@
 <template>
   <div class="w-full">
-    <!-- Categories Filter -->
-    <div v-if="categories.length > 0" class="sticky top-0 z-20 bg-background border-b border-border">
-      <div class="max-w-7xl mx-auto px-4 py-4">
+    <!-- Search + categories -->
+    <div v-if="categories.length > 0 || products.length > 0" class="sticky top-0 z-20 bg-background border-b border-border">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-3">
+        <UiSearchBar
+          v-model="searchQuery"
+          placeholder="Buscar en el menú..."
+          class="w-full"
+        />
         <div class="flex gap-2 overflow-x-auto scrollbar-hide">
           <button
             v-for="category in allCategories"
@@ -68,17 +73,34 @@
     <!-- Empty State -->
     <div v-if="!isLoading && filteredProducts.length === 0" class="max-w-7xl mx-auto px-4 py-12">
       <div class="text-center">
-        <div class="text-6xl mb-4">🍽️</div>
-        <h3 class="text-xl font-semibold text-foreground mb-2">No hay productos disponibles</h3>
-        <p class="text-muted-foreground">Por favor, vuelve más tarde o contacta al restaurante.</p>
+        <div class="text-6xl mb-4">{{ hasSearch ? '🔍' : '🍽️' }}</div>
+        <h3 class="text-xl font-semibold text-foreground mb-2">
+          {{ hasSearch ? 'Sin resultados' : 'No hay productos disponibles' }}
+        </h3>
+        <p class="text-muted-foreground">
+          <template v-if="hasSearch">
+            No encontramos productos para «{{ searchQuery.trim() }}». Prueba otro nombre o
+            <button
+              type="button"
+              class="text-primary font-medium underline underline-offset-2"
+              @click="searchQuery = ''"
+            >
+              borra la búsqueda
+            </button>.
+          </template>
+          <template v-else>
+            Por favor, vuelve más tarde o contacta al restaurante.
+          </template>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import PublicProductCard from './PublicProductCard.vue'
+import { useLocalProductSearch } from '~/composables/useLocalProductSearch'
 
 const props = defineProps({
   categories: {
@@ -112,6 +134,10 @@ const emit = defineEmits(['product-click'])
 
 const selectedCategory = ref('all')
 
+const { searchQuery, hasSearch, searchFilteredProducts } = useLocalProductSearch(
+  toRef(() => props.products as Array<{ name?: string; description?: string; category_id?: string }>),
+)
+
 // Combined gate for add-to-cart. Table QR passes orderingEnabled explicitly.
 const ordersAvailable = computed(() => {
   if (props.orderingEnabled !== undefined) {
@@ -128,43 +154,45 @@ const allCategories = computed(() => {
   ]
 })
 
-// Filter products by selected category
+// Filter by search (local) then category
 const filteredProducts = computed(() => {
+  const base = searchFilteredProducts.value
   if (selectedCategory.value === 'all') {
-    return props.products
+    return base
   }
 
-  return props.products.filter(p => p.category_id === selectedCategory.value)
+  return base.filter(p => p.category_id === selectedCategory.value)
 })
 
 // Group products by category for display
 const categoriesWithProducts = computed(() => {
+  const base = searchFilteredProducts.value
+
   if (selectedCategory.value !== 'all') {
-    // Single category view
     const category = props.categories.find(c => c.id === selectedCategory.value)
     if (!category) return []
 
     return [{
       ...category,
-      products: filteredProducts.value
+      products: filteredProducts.value,
     }]
   }
 
-  // All categories view
   return props.categories
     .map(category => ({
       ...category,
-      products: props.products.filter(p => p.category_id === category.id)
+      products: base.filter(p => p.category_id === category.id),
     }))
     .filter(category => category.products.length > 0)
 })
 
-function getProductCountByCategory(categoryId) {
+function getProductCountByCategory(categoryId: string) {
+  const base = searchFilteredProducts.value
   if (categoryId === 'all') {
-    return props.products.length
+    return base.length
   }
 
-  return props.products.filter(p => p.category_id === categoryId).length
+  return base.filter(p => p.category_id === categoryId).length
 }
 
 function handleProductClick(product) {
