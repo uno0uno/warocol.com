@@ -20,14 +20,26 @@
           :key="toast.id"
           class="relative rounded-xl bg-surface border border-border shadow-xl overflow-hidden"
         >
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" aria-hidden="true" />
+          <div
+            class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+            :class="notificationIsComandaReady(toast.notification) ? 'bg-success' : 'bg-primary'"
+            aria-hidden="true"
+          />
           <NuxtLink
             :to="notificationDespachoPath(toast.notification)"
             @click="dismiss(toast.id)"
             class="flex items-center gap-2 pl-4 pr-10 py-2.5"
           >
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
-              <ShoppingBagIcon class="w-4 h-4 text-primary" aria-hidden="true" />
+            <div
+              class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+              :class="notificationIsComandaReady(toast.notification) ? 'bg-success/15' : 'bg-primary/15'"
+            >
+              <BellAlertIcon
+                v-if="notificationIsComandaReady(toast.notification)"
+                class="w-4 h-4 text-success"
+                aria-hidden="true"
+              />
+              <ShoppingBagIcon v-else class="w-4 h-4 text-primary" aria-hidden="true" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-text-primary leading-snug">
@@ -76,10 +88,19 @@
           :key="toast.id"
           :to="notificationDespachoPath(toast.notification)"
           @click="dismiss(toast.id)"
-          class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur border border-primary/30 shadow-lg overflow-hidden"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur shadow-lg overflow-hidden"
+          :class="notificationIsComandaReady(toast.notification) ? 'border border-success/40' : 'border border-primary/30'"
         >
-          <div class="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-            <ShoppingBagIcon class="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            :class="notificationIsComandaReady(toast.notification) ? 'bg-success/15' : 'bg-primary/15'"
+          >
+            <BellAlertIcon
+              v-if="notificationIsComandaReady(toast.notification)"
+              class="w-3.5 h-3.5 text-success"
+              aria-hidden="true"
+            />
+            <ShoppingBagIcon v-else class="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           </div>
           <span class="text-xs font-semibold text-text-primary truncate flex-1">
             {{ notificationDespachoTitle(toast.notification) }}
@@ -102,10 +123,15 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { ShoppingBagIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { BellAlertIcon, ShoppingBagIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications, type Notification } from '~/composables/useNotifications'
-import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import {
+  notificationDespachoPath,
+  notificationDespachoTitle,
+  notificationIsComandaReady,
+} from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
+import { useComandaReadyAudio } from '~/composables/useComandaReadyAudio'
 
 interface MobileToast {
   id: number
@@ -117,7 +143,8 @@ const MAX_TOASTS = 3
 const DISMISS_AFTER_MS = 8000
 
 const { notifications, isTenantResetting } = useNotifications()
-const { playChime, prefetchBuffer } = useDespachoNotificationAudio()
+const { playChime: playDespachoChime, prefetchBuffer: prefetchDespachoBuffer } = useDespachoNotificationAudio()
+const { playChime: playComandaReadyChime, prefetchBuffer: prefetchComandaReadyBuffer } = useComandaReadyAudio()
 const toasts = ref<MobileToast[]>([])
 let toastIdCounter = 0
 let baselineCount = 0
@@ -144,7 +171,8 @@ const addToast = (notification: Notification) => {
 }
 
 onMounted(() => {
-  prefetchBuffer()
+  prefetchDespachoBuffer()
+  prefetchComandaReadyBuffer()
   // Set baseline so we don't toast notifications that already existed on load
   baselineCount = notifications.value.length
 
@@ -153,9 +181,11 @@ onMounted(() => {
     (newLen, oldLen) => {
       if (isTenantResetting.value) return // skip post-reset repopulation — not genuine new arrivals
       if (newLen > oldLen) {
-        // One chime per arrival burst (not per toast in the loop)
-        playChime()
         const newNotifications = notifications.value.slice(0, newLen - oldLen)
+        const hasComandaReady = newNotifications.some(notificationIsComandaReady)
+        const hasDespacho = newNotifications.some(n => !notificationIsComandaReady(n))
+        if (hasComandaReady) playComandaReadyChime()
+        else if (hasDespacho) playDespachoChime()
         for (const n of newNotifications) {
           addToast(n)
         }

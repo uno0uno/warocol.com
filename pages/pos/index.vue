@@ -31,6 +31,7 @@ const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const queryCache = useQueryCache()
 const posStore = usePOSStore()
@@ -573,6 +574,46 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
       sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos/checkout')
     }
+  }
+}
+
+/** Deep link from comanda-ready notification — no cache invalidation until user taps. */
+const consumePosDeepLink = async () => {
+  const openTable = route.query.open_table
+  const openExpediter = route.query.expediter
+  if (!openTable && openExpediter !== '1') return
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open_table
+  delete nextQuery.expediter
+  await router.replace({ path: '/pos', query: nextQuery })
+
+  if (openExpediter === '1' && expediterEnabled.value) {
+    showExpediterPanel.value = true
+  }
+
+  if (typeof openTable !== 'string' || !openTable) return
+
+  try {
+    const res = await $fetch<{ success: boolean; data: any }>(`/api/tables/${openTable}/current`)
+    const session = res?.data?.session
+    const table = res?.data?.table
+    if (!session?.id) {
+      toast.error(
+        `No hay sesión abierta en esa ${tableSingularLower.value}`,
+        { title: 'Comanda lista' },
+      )
+      return
+    }
+    await handleEnterTable({
+      tableId: openTable,
+      sessionId: session.id,
+      tableName: table?.name ?? session.table_name ?? tableSingular.value,
+      isBar: table?.is_bar ?? session.is_bar ?? false,
+    })
+    if (expediterEnabled.value) showExpediterPanel.value = true
+  } catch {
+    toast.error(`No se pudo abrir la ${tableSingularLower.value}`, { title: 'Comanda lista' })
   }
 }
 
@@ -1400,6 +1441,8 @@ onMounted(async () => {
   setOpenCartHandler(() => {
     showMobileCartSheet.value = true
   })
+
+  void consumePosDeepLink()
 
   // Start polling if already in a comandas-enabled session on mount
   if (shouldPollTableSession.value) {

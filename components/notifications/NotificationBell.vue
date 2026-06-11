@@ -87,8 +87,16 @@
               class="flex gap-3 px-4 py-3 hover:bg-shell-notification-hover-bg transition-colors"
             >
               <!-- Icon -->
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-shell-notification-accent-bg flex items-center justify-center mt-0.5">
-                <ShoppingBagIcon class="w-4 h-4 text-shell-notification-accent" aria-hidden="true" />
+              <div
+                class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
+                :class="notificationIsComandaReady(notification) ? 'bg-success/15' : 'bg-shell-notification-accent-bg'"
+              >
+                <BellAlertIcon
+                  v-if="notificationIsComandaReady(notification)"
+                  class="w-4 h-4 text-success"
+                  aria-hidden="true"
+                />
+                <ShoppingBagIcon v-else class="w-4 h-4 text-shell-notification-accent" aria-hidden="true" />
               </div>
 
               <!-- Content -->
@@ -119,7 +127,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { BellIcon, BellAlertIcon, ShoppingBagIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications } from '~/composables/useNotifications'
-import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import {
+  notificationDespachoPath,
+  notificationDespachoTitle,
+  notificationIsComandaReady,
+} from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 
 const { notifications, unreadCount, init, markAsRead, markAllRead } = useNotifications()

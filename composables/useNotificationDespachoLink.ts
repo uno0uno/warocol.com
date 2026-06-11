@@ -1,6 +1,20 @@
 import type { Notification } from '~/composables/useNotifications'
 
+function formatComandaLabel(notification: Notification): string {
+  const num = notification.payload?.comanda_number ?? '—'
+  const idx = notification.payload?.comanda_index
+  const suffix = typeof idx === 'number' ? `-${String(idx).padStart(2, '0')}` : ''
+  return `#${num}${suffix}`
+}
+
 export function notificationDespachoPath(notification: Notification): string {
+  if (notification.type === 'comanda_ready') {
+    const tableId = notification.payload?.table_id
+    if (typeof tableId === 'string' && tableId) {
+      return `/pos?open_table=${tableId}&expediter=1`
+    }
+    return '/pos?expediter=1'
+  }
   if (notification.type === 'table_qr_request') {
     const requestId = notification.payload?.request_id
     if (requestId) return `/despacho/en-mesa/${requestId}`
@@ -14,9 +28,18 @@ export function notificationDespachoPath(notification: Notification): string {
 }
 
 export function notificationDespachoTitle(notification: Notification): string {
+  if (notification.type === 'comanda_ready') {
+    const label = formatComandaLabel(notification)
+    const dest = notification.payload?.table_display_name
+    return dest ? `Comanda ${label} lista — ${dest}` : `Comanda ${label} lista`
+  }
   if (notification.type === 'table_qr_request') {
     const tableName = notification.payload?.table_name
     return tableName ? `Pedido QR — ${tableName}` : 'Pedido QR en mesa'
   }
   return `Nuevo pedido #${notification.payload?.order_number ?? '—'}`
+}
+
+export function notificationIsComandaReady(notification: Notification): boolean {
+  return notification.type === 'comanda_ready'
 }
