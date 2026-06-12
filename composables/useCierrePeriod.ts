@@ -1,6 +1,7 @@
 import { useFormatters } from '~/composables/useFormatters'
 
 export interface CierrePeriodLike {
+  status?: string
   periodStart?: string
   periodEnd?: string
   periodStartTime?: string | null
@@ -43,13 +44,18 @@ export function useCierrePeriod() {
     return null
   }
 
+  const isOpenCierre = (cierre: CierrePeriodLike | null | undefined): boolean =>
+    cierre?.status === 'open'
+
   const periodTypeLabel = (cierre: CierrePeriodLike | null | undefined): string => {
+    if (isOpenCierre(cierre)) return 'Abierto'
     if (isTemplateCierre(cierre)) return cierre!.shiftTemplateName!
     if (hasTimeWindow(cierre)) return 'Personalizado'
     return 'Día completo'
   }
 
   const periodBadgeClass = (cierre: CierrePeriodLike | null | undefined): string => {
+    if (isOpenCierre(cierre)) return 'bg-state-success-bg text-state-success-text border border-state-success-border'
     if (isTemplateCierre(cierre)) return 'bg-primary/10 text-primary'
     if (hasTimeWindow(cierre)) return 'bg-state-info-bg text-state-info-text border border-state-info-border'
     return 'bg-surface-secondary text-text-secondary'
@@ -58,6 +64,7 @@ export function useCierrePeriod() {
   return {
     hasTimeWindow,
     isTemplateCierre,
+    isOpenCierre,
     formatPeriodDates,
     formatPeriodTimes,
     periodTypeLabel,

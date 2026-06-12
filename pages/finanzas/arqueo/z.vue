@@ -936,6 +936,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
@@ -954,6 +955,7 @@ useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const route = useRoute()
 
@@ -1462,6 +1464,7 @@ const submitCierre = async () => {
     })
     successData.value = result.data
     cierreSuccess.value = true
+    cache.invalidateQueries({ key: ['cierre', 'list'] })
     clearStorage()
   } catch (err: any) {
     const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el arqueo.'

@@ -50,7 +50,7 @@
             v-model="selectedTemplateId"
             class="mt-1.5 w-full h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
-            <option value="">Selecciona un turno…</option>
+            <option :value="DAY_SHIFT_KEY">Día completo</option>
             <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
               {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
             </option>
@@ -97,7 +97,10 @@
             />
           </div>
 
-          <p v-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
+          <p v-if="isDayShiftSelected" class="text-sm font-mono text-text-secondary">
+            Ventana: {{ formatTemplateDateOnly() }} · día calendario completo (00:00 – 23:59)
+          </p>
+          <p v-else-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
             Ventana: {{ formatTemplateDateOnly() }} · {{ templateHoursLabel }}
           </p>
         </template>
@@ -133,6 +136,13 @@
       <div v-else class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
         <h2 class="text-sm font-semibold text-text-primary mb-1">Fondo de caja</h2>
         <p class="text-xs text-text-secondary mb-3">Cuenta billetes y monedas que hay en el cajón al iniciar:</p>
+
+        <div
+          v-if="isPastAnchorDate"
+          class="rounded-lg border border-state-info-border bg-state-info-bg px-3 py-2.5 text-sm text-state-info-text mb-3"
+        >
+          Período pasado: puedes registrar fondo en $0 si no hay dato del día. El esperado en caja no incluirá fondo inicial.
+        </div>
 
         <div
           v-if="suggestedOpeningCash > 0"
@@ -200,7 +210,7 @@
               <button
                 type="button"
                 class="min-h-[44px] flex-1 px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
-                :disabled="isSubmitting || totalCounted <= 0"
+                :disabled="isSubmitting || !canSubmitOpening"
                 @click="submitOpening"
               >
                 Abrir turno
@@ -227,6 +237,8 @@ definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Abrir turno — Arqueo - Warocol' })
 
 type AperturaMode = 'template' | 'day' | 'custom'
+
+const DAY_SHIFT_KEY = '__day__'
 
 interface ShiftTemplateOption {
   id: string
@@ -255,7 +267,14 @@ const aperturaMode = computed<AperturaMode>(() => {
 })
 
 const currentStep = ref(1)
-const selectedTemplateId = ref(initTemplate)
+const selectedTemplateId = ref(initTemplate || DAY_SHIFT_KEY)
+
+const isDayShiftSelected = computed(() =>
+  aperturaMode.value === 'template' && selectedTemplateId.value === DAY_SHIFT_KEY,
+)
+const effectiveTemplateId = computed(() =>
+  isDayShiftSelected.value ? null : (selectedTemplateId.value || null),
+)
 const anchorDate = ref<Date>(bogotaDateAtNoon(initStart))
 const stepError = ref<string | null>(null)
 const submitError = ref<string | null>(null)
@@ -296,13 +315,19 @@ const { data: rawShiftTemplates } = useQuery({
 })
 const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
 
+const isPastAnchorDate = computed(() => periodStart.value < today)
+
+const canSubmitOpening = computed(() =>
+  isPastAnchorDate.value ? totalCounted.value >= 0 : totalCounted.value > 0,
+)
+
 const { data: rawTemplateWindow } = useQuery({
-  key: () => ['cierre', 'shift-window', currentTenant.value?.id, selectedTemplateId.value, periodStart.value],
+  key: () => ['cierre', 'shift-window', currentTenant.value?.id, effectiveTemplateId.value, periodStart.value],
   query: () => $fetch<{ success: boolean; data: { periodStartTime: string; periodEndTime: string } }>(
     '/api/cierre/shift-window',
-    { params: { shift_template_id: selectedTemplateId.value, date: periodStart.value } },
+    { params: { shift_template_id: effectiveTemplateId.value!, date: periodStart.value } },
   ),
-  enabled: () => !!currentTenant.value && aperturaMode.value === 'template' && !!selectedTemplateId.value,
+  enabled: () => !!currentTenant.value && aperturaMode.value === 'template' && !!effectiveTemplateId.value,
   staleTime: 30_000,
 })
 
@@ -310,7 +335,7 @@ const windowParams = computed(() =>
   buildCierreWindowParams({
     periodStart: periodStart.value,
     periodEnd: periodEnd.value,
-    shiftTemplateId: aperturaMode.value === 'template' ? (selectedTemplateId.value || null) : null,
+    shiftTemplateId: aperturaMode.value === 'template' ? effectiveTemplateId.value : null,
     periodStartTime: periodStartTime.value,
     periodEndTime: periodEndTime.value,
   }),
@@ -359,7 +384,7 @@ const customWindowLabel = computed(() => {
 })
 
 const closeLink = computed(() => {
-  if (aperturaMode.value === 'day') {
+  if (aperturaMode.value === 'day' || isDayShiftSelected.value) {
     return `/finanzas/arqueo/nuevo?start=${periodStart.value}&end=${periodEnd.value}`
   }
   if (aperturaMode.value === 'custom') {
@@ -368,17 +393,19 @@ const closeLink = computed(() => {
     if (initEndTime) q.set('endTime', initEndTime)
     return `/finanzas/arqueo/z?${q.toString()}`
   }
-  if (!selectedTemplateId.value) return null
-  return `/finanzas/arqueo/z?mode=template&start=${periodStart.value}&end=${periodEnd.value}&template=${selectedTemplateId.value}`
+  if (!effectiveTemplateId.value) return null
+  return `/finanzas/arqueo/z?mode=template&start=${periodStart.value}&end=${periodEnd.value}&template=${effectiveTemplateId.value}`
 })
 
 const closeLinkLabel = computed(() =>
-  aperturaMode.value === 'day' ? 'Ir al cierre del día' : 'Ir al cierre Z',
+  (aperturaMode.value === 'day' || isDayShiftSelected.value) ? 'Ir al cierre del día' : 'Ir al cierre Z',
 )
 
 const canProceedToCount = computed(() => {
   if (isShiftOpen(existingShift.value)) return false
-  if (aperturaMode.value === 'template') return !!selectedTemplateId.value
+  if (aperturaMode.value === 'template') {
+    return selectedTemplateId.value === DAY_SHIFT_KEY || !!effectiveTemplateId.value
+  }
   return true
 })
 
@@ -386,7 +413,7 @@ watch(selectedTemplateId, () => { stepError.value = null })
 
 const goToCount = () => {
   stepError.value = null
-  if (aperturaMode.value === 'template' && !selectedTemplateId.value) {
+  if (aperturaMode.value === 'template' && !canProceedToCount.value) {
     stepError.value = 'Selecciona un turno'
     return
   }
@@ -402,8 +429,12 @@ const goToCount = () => {
 
 const submitOpening = async () => {
   submitError.value = null
-  if (totalCounted.value <= 0) {
+  if (!isPastAnchorDate.value && totalCounted.value <= 0) {
     submitError.value = 'El fondo debe ser mayor a cero'
+    return
+  }
+  if (isPastAnchorDate.value && totalCounted.value < 0) {
+    submitError.value = 'El fondo no puede ser negativo'
     return
   }
   isSubmitting.value = true
@@ -415,8 +446,8 @@ const submitOpening = async () => {
       openingCash: totalCounted.value,
       openingBreakdown: Object.keys(breakdown).length ? breakdown : undefined,
     }
-    if (aperturaMode.value === 'template' && selectedTemplateId.value) {
-      body.shiftTemplateId = selectedTemplateId.value
+    if (aperturaMode.value === 'template' && effectiveTemplateId.value) {
+      body.shiftTemplateId = effectiveTemplateId.value
     }
     if (aperturaMode.value === 'custom') {
       if (periodStartTime.value) body.periodStartTime = periodStartTime.value
@@ -428,6 +459,7 @@ const submitOpening = async () => {
     await refetchShiftStatus()
     cache.invalidateQueries({ key: ['cierre', 'preview-x0'] })
     cache.invalidateQueries({ key: ['cierre', 'preview'] })
+    cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
     submitError.value = err?.data?.detail ?? err?.data?.message ?? 'No se pudo abrir el turno'
   } finally {

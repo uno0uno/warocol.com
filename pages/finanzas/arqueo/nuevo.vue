@@ -182,15 +182,28 @@
             :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
             @click="applyPreset(p)"
           >{{ p.label }}</button>
+          <span
+            v-if="activePreset === null"
+            class="h-10 px-3 rounded-lg border-2 border-primary/30 bg-primary/5 text-sm font-medium text-primary flex items-center flex-shrink-0 tabular-nums"
+          >
+            Período: {{ formatSingleDate(selectedDate) }}
+          </span>
           <ClientOnly>
-            <VueDatePicker
-              v-model="selectedDate"
-              :time-config="{ enableTimePicker: false }" :locale="es"
-              auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
-              placeholder="Seleccionar fecha..."
-              input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
-              @update:model-value="activePreset = null"
-            />
+            <div
+              class="flex-shrink-0 rounded-lg border-2 transition-colors"
+              :class="activePreset === null
+                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                : 'border-transparent'"
+            >
+              <VueDatePicker
+                v-model="selectedDate"
+                :time-config="{ enableTimePicker: false }" :locale="es"
+                auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
+                placeholder="Seleccionar fecha..."
+                input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+                @update:model-value="onDatePicked"
+              />
+            </div>
           </ClientOnly>
         </div>
 
@@ -769,8 +782,10 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const cache = useQueryCache()
+const route = useRoute()
 
 const today = todayBogotaISO()
+const initStart = (route.query.start as string) || today
 
 // ── Último cierre ──────────────────────────────────────────────────────────
 
@@ -809,8 +824,8 @@ const suggestedRange = computed(() => {
 
 const applySuggested = () => {
   if (!suggestedRange.value) return
-  activePreset.value = null
   selectedDate.value = suggestedRange.value.startDate
+  syncPresetFromDate(suggestedRange.value.start)
 }
 
 // ── Date picker state (paso 0) — solo un día ──────────────────────────────
@@ -825,12 +840,27 @@ const buildPresets = (): Preset[] => {
   ]
 }
 const presets      = buildPresets()
-const activePreset = ref<string | null>('today')
-const selectedDate = ref<Date>(bogotaDateAtNoon(today))
+const selectedDate = ref<Date>(bogotaDateAtNoon(initStart))
+const activePreset = ref<string | null>(
+  initStart === today ? 'today'
+    : initStart === addDaysBogotaISO(today, -1) ? 'yesterday'
+      : null,
+)
+
+const syncPresetFromDate = (iso: string) => {
+  if (iso === today) activePreset.value = 'today'
+  else if (iso === addDaysBogotaISO(today, -1)) activePreset.value = 'yesterday'
+  else activePreset.value = null
+}
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
   selectedDate.value = new Date(p.date)
+}
+
+const onDatePicked = (date: Date | null) => {
+  if (!date) return
+  syncPresetFromDate(bogotaISOFromDate(date))
 }
 
 const formatSingleDate = (date: Date) =>
@@ -1111,13 +1141,16 @@ const saveToStorage = () => {
   }))
 }
 
-const loadFromStorage = () => {
+const loadFromStorage = (restorePeriod = true) => {
   if (typeof window === 'undefined') return
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return
   try {
     const s = JSON.parse(raw)
-    if (s.periodStart) selectedDate.value = bogotaDateAtNoon(s.periodStart)
+    if (restorePeriod && s.periodStart) {
+      selectedDate.value = bogotaDateAtNoon(s.periodStart)
+      syncPresetFromDate(s.periodStart)
+    }
     // Never restore step from storage — always start at step 0 (X preview)
     if (s.counts)         counts.value         = s.counts
     if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount
@@ -1138,7 +1171,14 @@ watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage,
 
 onMounted(() => {
   if (typeof window === 'undefined') return
-  loadFromStorage()
+  const queryStart = route.query.start as string | undefined
+  if (queryStart) {
+    selectedDate.value = bogotaDateAtNoon(queryStart)
+    syncPresetFromDate(queryStart)
+    loadFromStorage(false)
+  } else {
+    loadFromStorage(true)
+  }
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────

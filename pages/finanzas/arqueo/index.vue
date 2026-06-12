@@ -10,7 +10,7 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ── Summary cards ────────────────────────────────────────────────── -->
       <div
-        v-if="filteredHistorial.length > 0"
+        v-if="closedRows.length > 0"
         class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-5"
       >
         <MetricCard title="Total ventas" :value="summaryStats.totalSales" format="currency" variant="primary" />
@@ -98,8 +98,63 @@
 
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
       <div>
-        <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <h2 v-if="!hasOpenShift" class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
+        <details v-else class="group rounded-lg border border-border bg-surface">
+          <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-text-primary flex items-center justify-between">
+            Arqueo de otro período
+            <svg class="w-4 h-4 text-text-secondary transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="px-4 pb-4 pt-1">
+            <p class="text-xs text-text-secondary mb-3">Para días pasados u otro turno distinto al abierto.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <NuxtLink
+                :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
+                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
+              >
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-text-primary">Día completo</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Un cierre por día calendario.</p>
+                </div>
+              </NuxtLink>
+              <NuxtLink
+                :to="`/finanzas/arqueo/z?mode=template&start=${today}&end=${today}`"
+                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
+              >
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Turno fijo configurado.</p>
+                </div>
+              </NuxtLink>
+              <NuxtLink
+                :to="`/finanzas/arqueo/z?mode=custom&start=${today}&end=${today}`"
+                class="flex items-start gap-3 p-4 rounded-lg border-2 border-state-info-border bg-state-info-bg hover:border-state-info-border/80 hover:bg-state-info-bg/80 transition-colors min-h-[44px]"
+              >
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-state-info-bg flex items-center justify-center text-state-info-icon" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-text-primary">Horario personalizado</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Ventana a mano por horas.</p>
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </details>
+        <div v-if="!hasOpenShift" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <NuxtLink
             :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
             class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
@@ -155,8 +210,11 @@
         <template #card="{ item, index }">
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
-            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-            @click="openPanel(item.id)"
+            :class="[
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              isCierreOpen(item) && 'border-l-4 border-l-state-success-border',
+            ]"
+            @click="onRowClick(item)"
           >
             <div class="flex-1 min-w-0">
               <div class="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 items-center">
@@ -167,13 +225,21 @@
                 <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
                 <span class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(item) ?? '—' }}</span>
               </div>
-              <p class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
+              <p v-if="isCierreOpen(item)" class="text-xs text-text-secondary mt-0.5">
+                Abierto {{ formatDate(item.openedAt) }} · Fondo {{ formatCurrency(item.openingCash) }}
+              </p>
+              <p v-else class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
-              <span class="text-xs font-semibold" :class="item.cashDifference >= 0 ? 'text-success' : 'text-destructive'">
-                {{ item.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(item.cashDifference) }}
-              </span>
+              <template v-if="isCierreOpen(item)">
+                <span class="text-xs font-semibold text-state-success-text">Cerrar turno →</span>
+              </template>
+              <template v-else>
+                <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
+                <span class="text-xs font-semibold" :class="item.cashDifference >= 0 ? 'text-success' : 'text-destructive'">
+                  {{ item.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(item.cashDifference) }}
+                </span>
+              </template>
             </div>
           </div>
         </template>
@@ -195,44 +261,57 @@
           <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
           <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
-        <template #cell-totalSales="{ value }">
-          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+        <template #cell-totalSales="{ row, value }">
+          <span v-if="isCierreOpen(row)" class="text-sm text-text-secondary">—</span>
+          <span v-else class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
         </template>
-        <template #cell-gastosEfectivo="{ value }">
-          <span class="text-sm text-destructive">{{ formatCurrency(value) }}</span>
+        <template #cell-gastosEfectivo="{ row, value }">
+          <span v-if="isCierreOpen(row)" class="text-sm text-text-secondary">—</span>
+          <span v-else class="text-sm text-destructive">{{ formatCurrency(value) }}</span>
         </template>
-        <template #cell-cashDifference="{ value }">
-          <span class="text-sm font-semibold" :class="value >= 0 ? 'text-success' : 'text-destructive'">
+        <template #cell-cashDifference="{ row, value }">
+          <span v-if="isCierreOpen(row)" class="text-sm font-medium text-state-success-text">Fondo {{ formatCurrency(row.openingCash) }}</span>
+          <span v-else class="text-sm font-semibold" :class="value >= 0 ? 'text-success' : 'text-destructive'">
             {{ value >= 0 ? '+' : '' }}{{ formatCurrency(value) }}
           </span>
         </template>
-        <template #cell-closedAt="{ value }">
-          <span class="text-xs text-text-secondary">{{ formatDate(value) }}</span>
+        <template #cell-closedAt="{ row, value }">
+          <span v-if="isCierreOpen(row)" class="text-xs text-text-secondary">{{ formatDate(row.openedAt) }}</span>
+          <span v-else class="text-xs text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1">
             <button
-              @click="openPanel(row.id)"
-              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-              title="Ver detalle"
-              aria-label="Ver detalle"
+              v-if="isCierreOpen(row)"
+              @click.stop="onRowClick(row)"
+              class="flex items-center justify-center min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              Cerrar
             </button>
-            <button
-              @click="openDeleteModal(row)"
-              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title="Eliminar"
-              aria-label="Eliminar arqueo"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            <template v-else>
+              <button
+                @click.stop="openPanel(row.id)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
+                title="Ver detalle"
+                aria-label="Ver detalle"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+              <button
+                @click.stop="openDeleteModal(row)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Eliminar"
+                aria-label="Eliminar arqueo"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </template>
           </div>
         </template>
       </UiResponsiveDataView>
@@ -298,6 +377,7 @@ import {
   todayBogotaISO,
 } from '~/utils/bogotaDate'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { buildCierreCloseRoute, isCierreOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
@@ -363,8 +443,12 @@ const isRefreshing = computed(() => asyncStatus.value === 'loading' && rawHistor
 
 const filteredHistorial = computed(() => rawHistorial.value?.data ?? [])
 
+const openRows = computed(() => filteredHistorial.value.filter((r: any) => isCierreOpen(r)))
+const closedRows = computed(() => filteredHistorial.value.filter((r: any) => !isCierreOpen(r)))
+const hasOpenShift = computed(() => openRows.value.length > 0)
+
 const summaryStats = computed(() => {
-  const list = filteredHistorial.value
+  const list = closedRows.value
   return {
     count:          list.length,
     totalSales:     list.reduce((s: number, r: any) => s + (r.totalSales ?? 0), 0),
@@ -418,6 +502,14 @@ const formatDate = (iso: string) => {
 const cache = useQueryCache()
 const showPanel        = ref(false)
 const selectedCierreId = ref<string | null>(null)
+
+const onRowClick = (item: any) => {
+  if (isCierreOpen(item)) {
+    navigateTo(buildCierreCloseRoute(item))
+    return
+  }
+  openPanel(item.id)
+}
 
 const openPanel = (id: string) => {
   selectedCierreId.value = id

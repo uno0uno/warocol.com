@@ -1,3 +1,48 @@
+import { bogotaTimeHHMMFromISO } from '~/utils/bogotaDate'
+
+export interface CierreListRowLike {
+  status?: string
+  periodStart?: string
+  periodEnd?: string
+  periodStartTime?: string | null
+  periodEndTime?: string | null
+  shiftTemplateId?: string | null
+}
+
+/** Row in arqueo list with status open (pending close). */
+export function isCierreOpen(row: CierreListRowLike | null | undefined): boolean {
+  return row?.status === 'open'
+}
+
+/** Deep link to the correct close wizard for an open shift list row. */
+export function buildCierreCloseRoute(row: CierreListRowLike): string {
+  const start = row.periodStart ?? ''
+  const end = row.periodEnd ?? start
+
+  if (row.shiftTemplateId) {
+    const q = new URLSearchParams({
+      mode: 'template',
+      template: row.shiftTemplateId,
+      start,
+      end,
+    })
+    return `/finanzas/arqueo/z?${q.toString()}`
+  }
+
+  if (row.periodStartTime && row.periodEndTime) {
+    const q = new URLSearchParams({
+      mode: 'custom',
+      start,
+      end,
+      startTime: bogotaTimeHHMMFromISO(row.periodStartTime),
+      endTime: bogotaTimeHHMMFromISO(row.periodEndTime),
+    })
+    return `/finanzas/arqueo/z?${q.toString()}`
+  }
+
+  return `/finanzas/arqueo/nuevo?start=${start}`
+}
+
 /** Shared period params for cierre preview, shift-status, and open-shift (#920/#921). */
 export function buildCierreWindowParams(opts: {
   periodStart: string
