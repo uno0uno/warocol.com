@@ -232,7 +232,19 @@
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <template v-if="isCierreOpen(item)">
-                <span class="text-xs font-semibold text-state-success-text">Cerrar turno →</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-xs font-semibold text-state-success-text">Cerrar turno →</span>
+                  <button
+                    @click.stop="openDeleteModal(item)"
+                    class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    title="Cancelar apertura"
+                    aria-label="Cancelar apertura"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </template>
               <template v-else>
                 <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
@@ -282,13 +294,24 @@
 
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1">
-            <button
-              v-if="isCierreOpen(row)"
-              @click.stop="onRowClick(row)"
-              class="flex items-center justify-center min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-            >
-              Cerrar
-            </button>
+            <template v-if="isCierreOpen(row)">
+              <button
+                @click.stop="onRowClick(row)"
+                class="flex items-center justify-center min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                Cerrar
+              </button>
+              <button
+                @click.stop="openDeleteModal(row)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Cancelar apertura"
+                aria-label="Cancelar apertura"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </template>
             <template v-else>
               <button
                 @click.stop="openPanel(row.id)"
@@ -335,8 +358,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar arqueo</h3>
-          <p class="text-sm text-text-secondary mb-6">
+          <h3 class="text-lg font-bold text-text-primary mb-1">
+            {{ isCierreOpen(cierreToDelete) ? 'Cancelar apertura' : 'Eliminar arqueo' }}
+          </h3>
+          <p v-if="isCierreOpen(cierreToDelete)" class="text-sm text-text-secondary mb-6">
+            Se eliminará el fondo declarado (<strong>{{ formatCurrency(cierreToDelete?.openingCash) }}</strong>)
+            del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>.
+            No hay cierre registrado. Esta acción no se puede deshacer.
+          </p>
+          <p v-else class="text-sm text-text-secondary mb-6">
             ¿Eliminar el arqueo del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>? Esta acción no se puede deshacer.
           </p>
           <div class="flex gap-3">
@@ -345,14 +375,14 @@
               :disabled="deleting"
               class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
             >
-              Cancelar
+              Volver
             </button>
             <button
               @click="handleDelete"
               :disabled="deleting"
               class="flex-1 min-h-[44px] px-4 py-2 bg-action-destructive-bg text-action-destructive-text rounded-lg text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50"
             >
-              {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+              {{ deleting ? (isCierreOpen(cierreToDelete) ? 'Cancelando...' : 'Eliminando...') : (isCierreOpen(cierreToDelete) ? 'Cancelar apertura' : 'Eliminar') }}
             </button>
           </div>
         </div>
@@ -541,8 +571,16 @@ const handleDelete = async () => {
   deleting.value = true
   let succeeded = false
   try {
-    await $fetch(`/api/cierre/${cierreToDelete.value.id}`, { method: 'DELETE' })
+    const row = cierreToDelete.value
+    if (isCierreOpen(row)) {
+      await $fetch(`/api/cierre/open-shift/${row.id}`, { method: 'DELETE' })
+    } else {
+      await $fetch(`/api/cierre/${row.id}`, { method: 'DELETE' })
+    }
     cache.invalidateQueries({ key: ['cierre', 'list'] })
+    cache.invalidateQueries({ key: ['cierre', 'preview'] })
+    cache.invalidateQueries({ key: ['cierre', 'preview-x0'] })
+    cache.invalidateQueries({ key: ['cierre', 'open-tables'] })
     succeeded = true
   } catch {
     // keep modal open on error
