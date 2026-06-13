@@ -104,8 +104,9 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
    * Send OTP code to email (checkout flow — requires cart)
    */
   const sendOTP = (emailVal: string, cartId: string) => {
-    email.value = emailVal
-    return sendMutation.mutateAsync({ email: emailVal, cartId })
+    const normalized = emailVal.trim().toLowerCase()
+    email.value = normalized
+    return sendMutation.mutateAsync({ email: normalized, cartId })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Error al enviar el código') })
   }
 
@@ -113,7 +114,7 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
    * Verify OTP code (checkout flow)
    */
   const verifyOTP = (emailVal: string, cartId: string, code: string) =>
-    verifyMutation.mutateAsync({ email: emailVal, cartId, code })
+    verifyMutation.mutateAsync({ email: emailVal.trim().toLowerCase(), cartId, code })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Código incorrecto') })
 
   /**
@@ -125,7 +126,7 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
         new Error(`Por favor espera ${otpCooldownRemaining.value} segundos antes de reenviar`)
       )
     }
-    return resendMutation.mutateAsync({ email: emailVal, cartId })
+    return resendMutation.mutateAsync({ email: emailVal.trim().toLowerCase(), cartId })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Error al reenviar el código') })
   }
 
@@ -140,8 +141,9 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
    * Send OTP for customer portal re-auth (no cart required)
    */
   const sendOTPPortal = (emailVal: string) => {
-    email.value = emailVal
-    return sendMutation.mutateAsync({ email: emailVal, cartId: null })
+    const normalized = emailVal.trim().toLowerCase()
+    email.value = normalized
+    return sendMutation.mutateAsync({ email: normalized, cartId: null })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Error al enviar el código') })
   }
 
@@ -149,7 +151,7 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
    * Verify OTP for customer portal re-auth (no cart required)
    */
   const verifyOTPPortal = (emailVal: string, code: string) =>
-    verifyMutation.mutateAsync({ email: emailVal, cartId: null, code })
+    verifyMutation.mutateAsync({ email: emailVal.trim().toLowerCase(), cartId: null, code })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Código incorrecto') })
 
   /**

@@ -160,7 +160,7 @@ async function handleSubmit() {
     const res = await $fetch<{ success: boolean; already_registered: boolean }>('/api/leads/capture', {
       method: 'POST',
       body: {
-        email: form.value.email,
+        email: form.value.email.trim().toLowerCase(),
         phone: form.value.phone.replace(/\D/g, ''),
         button_source: props.buttonSource,
       },

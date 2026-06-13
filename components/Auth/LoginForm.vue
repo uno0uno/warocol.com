@@ -291,7 +291,7 @@ async function handleSubmit() {
         'Origin': baseUrl || 'http://localhost:8080'
       },
       body: {
-        email: email.value,
+        email: email.value.trim().toLowerCase(),
         redirect: route.query.redirect
       }
     })
@@ -326,7 +326,7 @@ async function verifyCode() {
     const response = await $fetch('/api/auth/verify-code', {
       method: 'POST',
       body: {
-        email: email.value,
+        email: email.value.trim().toLowerCase(),
         code: verificationCode.value
       },
       credentials: 'include'

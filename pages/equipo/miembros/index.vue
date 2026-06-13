@@ -877,7 +877,7 @@ const sendInvitation = async () => {
       method: 'POST',
       body: {
         name: inviteForm.name,
-        email: inviteForm.email,
+        email: inviteForm.email.trim().toLowerCase(),
         phone: inviteForm.phone,
         role: inviteForm.role
       }
