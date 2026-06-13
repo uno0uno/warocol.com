@@ -25,6 +25,9 @@ definePageMeta({
   // City directory uses the default layout (no restaurant header / cart bar);
   // tenant profile keeps the public-restaurant layout. Resolved per-request.
   layout: false,
+  // auth.global.js only skips routes with layout public-restaurant; this page
+  // picks layout in-template — mark public so comensales are not sent to login.
+  publicAccess: true,
 })
 
 // Initialize cart store (only matters for the tenant path)

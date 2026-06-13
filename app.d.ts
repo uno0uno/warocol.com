@@ -20,6 +20,11 @@ declare module '#app' {
      * authenticated user.
      */
     module?: Module
+    /**
+     * Public customer-facing page (menu, checkout). Skips operator auth
+     * middleware even when layout is false (e.g. city/tenant dispatch).
+     */
+    publicAccess?: boolean
   }
 }
 

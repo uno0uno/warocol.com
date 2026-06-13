@@ -28,6 +28,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     skipExact.includes(to.path) ||
     skipPrefixes.some(p => to.path.startsWith(p)) ||
     to.meta?.layout === 'public-restaurant' ||
+    to.meta?.publicAccess === true ||
     to.meta?.layout === 'customer-portal' ||
     to.meta?.layout === 'kds'
   ) return

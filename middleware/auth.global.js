@@ -7,6 +7,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // Check if route uses a layout that doesn't require operator auth
   const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
+  const isPublicAccess = to.meta?.publicAccess === true
   const isCustomerPortal = to.meta?.layout === 'customer-portal'
   const isKds = to.meta?.layout === 'kds'
 
@@ -35,6 +36,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       to.path.startsWith('/blog') ||
       to.path.startsWith('/docs') ||
       isPublicRestaurant ||
+      isPublicAccess ||
       isCustomerPortal ||
       isKds) {
     return

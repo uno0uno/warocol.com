@@ -39,7 +39,8 @@ export default defineNuxtRouteMiddleware((to) => {
   if (
     skipExact.includes(to.path) ||
     skipPrefixes.some((p) => to.path.startsWith(p)) ||
-    skipLayouts.includes(to.meta?.layout as string)
+    skipLayouts.includes(to.meta?.layout as string) ||
+    to.meta?.publicAccess === true
   ) return
 
   // Page didn't opt in to module gating → pass through.
