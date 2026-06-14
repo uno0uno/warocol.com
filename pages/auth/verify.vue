@@ -59,13 +59,13 @@
 
           <div class="space-y-3">
             <NuxtLink
-              to="/auth/login"
+              :to="errorActionTo"
               class="w-full py-3 px-6 rounded-md text-base font-medium transition-all inline-block text-center"
               style="background-color: hsl(250, 30%, 16%); color: white;"
               @mouseenter="$event.target.style.backgroundColor = 'hsl(243, 26%, 23%)'"
               @mouseleave="$event.target.style.backgroundColor = 'hsl(250, 30%, 16%)'"
             >
-              Intentar nuevamente
+              {{ errorActionLabel }}
             </NuxtLink>
 
             <p class="text-xs" style="color: hsl(220, 13%, 28%);">
@@ -79,6 +79,14 @@
 </template>
 
 <script setup lang="ts">
+import {
+  CUSTOMER_PORTAL_LOGIN,
+  canUseInternalSession,
+  getInternalAccessDeniedMessage,
+  getSafeInternalRedirect,
+  isInternalAccessDeniedError,
+} from '~/utils/internalAccess'
+
 definePageMeta({
   layout: false,
   robots: 'noindex, nofollow'
@@ -95,12 +103,14 @@ const verifying = ref(true)
 const success = ref(false)
 const error = ref(false)
 const errorMessage = ref('')
+const errorActionTo = ref('/auth/login')
+const errorActionLabel = ref('Intentar nuevamente')
 const redirectProgress = ref(0)
 
 // Obtener parámetros de la URL
 const token = route.query.token
 const email = route.query.email
-const redirectUrl = route.query.redirect || '/ventas'
+const redirectUrl = getSafeInternalRedirect(route.query.redirect)
 
 // ========================================
 // LÓGICA PARA EMOJIS DE COMIDA
@@ -178,6 +188,10 @@ const verifyToken = async () => {
       credentials: 'include'
     })
 
+    if (response?.success === false || (response?.user && !canUseInternalSession(response))) {
+      throw response
+    }
+
     // Marcar como exitoso
     verifying.value = false
     success.value = true
@@ -200,9 +214,15 @@ const verifyToken = async () => {
 
     verifying.value = false
     error.value = true
+    errorActionTo.value = '/auth/login'
+    errorActionLabel.value = 'Intentar nuevamente'
 
     // Determinar mensaje de error específico
-    if (err.message?.includes('Token inválido') || err.message?.includes('expirado')) {
+    if (isInternalAccessDeniedError(err)) {
+      errorMessage.value = getInternalAccessDeniedMessage()
+      errorActionTo.value = CUSTOMER_PORTAL_LOGIN
+      errorActionLabel.value = 'Ir al portal de clientes'
+    } else if (err.message?.includes('Token inválido') || err.message?.includes('expirado')) {
       errorMessage.value = 'El magic link ha expirado o es inválido. Solicita uno nuevo.'
     } else if (err.message?.includes('faltante')) {
       errorMessage.value = 'El enlace de verificación está incompleto.'

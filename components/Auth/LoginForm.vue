@@ -139,6 +139,14 @@
               <div class="ml-3">
                 <p class="text-sm font-medium" style="color: hsl(var(--destructive));">Error de autenticación</p>
                 <p class="text-sm mt-1" style="color: hsl(var(--destructive));">{{ error }}</p>
+                <NuxtLink
+                  v-if="showCustomerPortalLink"
+                  :to="CUSTOMER_PORTAL_LOGIN"
+                  class="inline-flex mt-3 text-sm font-semibold underline"
+                  style="color: hsl(var(--destructive));"
+                >
+                  Ir al portal de clientes
+                </NuxtLink>
               </div>
             </div>
           </div>
@@ -149,6 +157,14 @@
 </template>
 
 <script setup lang="ts">
+import {
+  CUSTOMER_PORTAL_LOGIN,
+  canUseInternalSession,
+  getInternalAccessDeniedMessage,
+  getSafeInternalRedirect,
+  isInternalAccessDeniedError,
+} from '~/utils/internalAccess'
+
 const email = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -156,6 +172,7 @@ const checkingSession = ref(true)
 const emailSent = ref(false)
 const verificationCode = ref('')
 const verifyingCode = ref(false)
+const showCustomerPortalLink = ref(false)
 const toast = useToast()
 
 
@@ -253,7 +270,7 @@ onMounted(async () => {
     const session = await $fetch('/api/auth/session', {
       credentials: 'include'
     })
-    if (session?.success && session?.user) {
+    if (session?.success && canUseInternalSession(session)) {
 
       // Verificar que la sesión sea válida para warocol.com
       const { public: config } = useRuntimeConfig()
@@ -262,13 +279,20 @@ onMounted(async () => {
 
         // Redirigir al perfil de warocol
         const route = useRoute()
-        const redirectUrl = route.query.redirect || '/ventas'
+        const redirectUrl = getSafeInternalRedirect(route.query.redirect)
         await navigateTo(redirectUrl)
         return
       } else {
       }
+    } else if (session?.user) {
+      await navigateTo(CUSTOMER_PORTAL_LOGIN)
+      return
     }
   } catch (error) {
+    if (isInternalAccessDeniedError(error)) {
+      await navigateTo(CUSTOMER_PORTAL_LOGIN)
+      return
+    }
     // No hay sesión válida o es para otro tenant, mostrar formulario
   } finally {
     checkingSession.value = false
@@ -305,6 +329,9 @@ async function handleSubmit() {
       err?.data?.message?.toLowerCase().includes('user not found')
     if (isUserNotFound) {
       useAccessRequestModal().open(email.value)
+    } else if (isInternalAccessDeniedError(err)) {
+      showCustomerPortalLink.value = true
+      error.value = getInternalAccessDeniedMessage()
     } else {
       error.value = err?.data?.message || err?.message || 'Error al enviar el magic link. Intenta nuevamente.'
     }
@@ -336,7 +363,7 @@ async function verifyCode() {
 
     // Redirigir con recarga completa para asegurar que la cookie se incluya
     const route = useRoute()
-    const redirectUrl = route.query.redirect || '/ventas'
+    const redirectUrl = getSafeInternalRedirect(route.query.redirect)
 
     // Agregar delay antes de redirección
     setTimeout(() => {
@@ -346,6 +373,11 @@ async function verifyCode() {
 
   } catch (err) {
     console.error('❌ Error al verificar código:', err)
+    if (isInternalAccessDeniedError(err)) {
+      showCustomerPortalLink.value = true
+      error.value = getInternalAccessDeniedMessage()
+      return
+    }
     error.value = err.message || 'Código inválido o expirado'
   } finally {
     verifyingCode.value = false
@@ -357,6 +389,7 @@ watch([email, verificationCode], () => {
   if (error.value) {
     error.value = ''
   }
+  showCustomerPortalLink.value = false
 })
 
 // Cleanup observer cuando el componente se desmonte

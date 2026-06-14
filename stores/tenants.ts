@@ -71,13 +71,17 @@ export const useTenantsStore = defineStore('tenants', () => {
   // Auto-select tenant from session (or first) when query loads
   watch(tenantData, (result) => {
     if (!result) return
-    if (selectedTenant.value) return  // already selected — don't override on background refetch
     const { tenants, session } = result
+    if (tenants.length === 0) {
+      selectedTenant.value = null
+      return
+    }
+    if (selectedTenant.value && tenants.some(t => t.id === selectedTenant.value!.id)) return
     if (session?.success && session.currentTenant) {
       const fromSession = tenants.find(t => t.id === session.currentTenant!.id)
       if (fromSession) { selectedTenant.value = fromSession; return }
     }
-    if (tenants.length > 0) selectedTenant.value = tenants[0]
+    selectedTenant.value = tenants[0]
   })
 
   const tenants = computed<Tenant[]>(() => tenantData.value?.tenants ?? [])

@@ -1,3 +1,11 @@
+import {
+  CUSTOMER_PORTAL_LOGIN,
+  INTERNAL_APP_HOME,
+  canUseInternalSession,
+  getSafeInternalRedirect,
+  isInternalAccessDeniedError,
+} from '~/utils/internalAccess'
+
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
   if (process.server) return
@@ -13,17 +21,33 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   const authStore = useAuthStore()
   const accessStore = useAccessStore()
+  const tenantsStore = useTenantsStore()
 
-  // If user already has a valid session and tries to access login, redirect to ventas
+  const clearInternalState = () => {
+    authStore.expireSession()
+    accessStore.clear()
+    tenantsStore.clearTenants()
+  }
+
+  // If user already has a valid internal session and tries login, redirect home.
   if (authStore.isSessionValid && to.path === '/auth/login') {
     try {
       const sessionResponse = await $fetch('/api/auth/session', {
         credentials: 'include',
       })
-      if (sessionResponse?.user) return navigateTo('/ventas')
-    } catch {
-      authStore.expireSession()
-      accessStore.clear()
+      if (canUseInternalSession(sessionResponse)) {
+        return navigateTo(getSafeInternalRedirect(to.query.redirect) || INTERNAL_APP_HOME)
+      }
+      if (sessionResponse?.user) {
+        clearInternalState()
+        return navigateTo(CUSTOMER_PORTAL_LOGIN)
+      }
+    } catch (err) {
+      if (isInternalAccessDeniedError(err)) {
+        clearInternalState()
+        return navigateTo(CUSTOMER_PORTAL_LOGIN)
+      }
+      clearInternalState()
     }
   }
 
@@ -49,9 +73,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       credentials: 'include',
     })
 
-    if (!sessionResponse?.user) {
-      authStore.expireSession()
-      accessStore.clear()
+    if (!canUseInternalSession(sessionResponse)) {
+      clearInternalState()
+      if (sessionResponse?.user || isInternalAccessDeniedError(sessionResponse)) {
+        return navigateTo(CUSTOMER_PORTAL_LOGIN)
+      }
       return navigateTo('/auth/login')
     }
 
@@ -64,11 +90,21 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       }
     })
 
-    await accessStore.load()
+    try {
+      await accessStore.load()
+    } catch (err) {
+      if (isInternalAccessDeniedError(err)) {
+        clearInternalState()
+        return navigateTo(CUSTOMER_PORTAL_LOGIN)
+      }
+      throw err
+    }
   } catch (err) {
     console.error('Auth middleware error:', err)
-    authStore.expireSession()
-    accessStore.clear()
+    clearInternalState()
+    if (isInternalAccessDeniedError(err)) {
+      return navigateTo(CUSTOMER_PORTAL_LOGIN)
+    }
     return navigateTo('/auth/login')
   } finally {
     authStore.setLoading(false)
