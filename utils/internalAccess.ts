@@ -1,3 +1,4 @@
+// Legacy fallback for API responses that predate has_internal_access.
 const TEAM_ROLES = new Set([
   'owner',
   'superuser',
@@ -64,6 +65,14 @@ export const hasExplicitInternalAccessDenial = (session: any) =>
   || session?.customer_only === true
   || session?.is_customer_only === true
 
+export const hasExplicitInternalAccessAllow = (session: any) =>
+  session?.internal_access === true
+  || session?.can_access_internal === true
+  || session?.has_internal_access === true
+  || session?.user?.internal_access === true
+  || session?.user?.can_access_internal === true
+  || session?.user?.has_internal_access === true
+
 export const isCustomerOnlySession = (session: any) => {
   if (!session?.user) return false
   if (hasExplicitInternalAccessDenial(session)) return true
@@ -73,6 +82,7 @@ export const isCustomerOnlySession = (session: any) => {
 export const canUseInternalSession = (session: any) => {
   if (!session?.user) return false
   if (isCustomerOnlySession(session)) return false
+  if (hasExplicitInternalAccessAllow(session)) return true
 
   const role = getInternalSessionRole(session)
   if (role) return TEAM_ROLES.has(role)
