@@ -89,6 +89,8 @@ const getRoleLabel = (role: string) => {
       return 'Administrador'
     case 'employee':
       return 'Empleado'
+    case 'promotor':
+      return 'Promotor'
     default:
       return 'Miembro'
   }
@@ -102,6 +104,8 @@ const getRoleVariant = (role: string) => {
       return 'info'
     case 'employee':
       return 'default'
+    case 'promotor':
+      return 'neutral'
     default:
       return 'success'
   }

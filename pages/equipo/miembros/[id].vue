@@ -43,6 +43,7 @@ const roleLabel = (role: string | null) =>
   : role === 'admin' ? 'Administrador'
   : role === 'employee' ? 'Empleado'
   : role === 'member' ? 'Miembro'
+  : role === 'promotor' ? 'Promotor'
   : (role ?? '—')
 
 const memberRoleClass = (role: string | null) => ({
@@ -50,6 +51,7 @@ const memberRoleClass = (role: string | null) => ({
   'bg-blue-100 text-blue-800': role === 'admin',
   'bg-slate-100 text-slate-700': role === 'employee',
   'bg-green-100 text-green-800': role === 'member',
+  'bg-purple-100 text-purple-800': role === 'promotor',
 })
 
 // Tenant context for tip_enabled gate (cache-shared)

@@ -6,6 +6,7 @@ const TEAM_ROLES = new Set([
   'cashier',
   'employee',
   'member',
+  'promotor',
   'kitchen',
 ])
 

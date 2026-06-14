@@ -89,10 +89,11 @@
               'bg-amber-100 text-amber-800': item.role === 'superuser',
               'bg-blue-100 text-blue-800': item.role === 'admin',
               'bg-slate-100 text-slate-700': item.role === 'employee',
-              'bg-green-100 text-green-800': !['superuser','admin','employee'].includes(item.role)
+              'bg-purple-100 text-purple-800': item.role === 'promotor',
+              'bg-green-100 text-green-800': !['superuser','admin','employee','promotor'].includes(item.role)
             }"
           >
-            {{ item.role === 'superuser' ? 'Super' : item.role === 'admin' ? 'Admin' : item.role === 'employee' ? 'Empleado' : 'Miembro' }}
+            {{ item.role === 'superuser' ? 'Super' : item.role === 'admin' ? 'Admin' : item.role === 'employee' ? 'Empleado' : item.role === 'promotor' ? 'Promotor' : 'Miembro' }}
           </span>
 
           <!-- Actions -->
@@ -149,12 +150,14 @@
             'bg-amber-100 text-amber-800': value === 'superuser',
             'bg-blue-100 text-blue-800': value === 'admin',
             'bg-gray-100 text-gray-800': value === 'employee',
-            'bg-green-100 text-green-800': !['superuser', 'admin', 'employee'].includes(value)
+            'bg-purple-100 text-purple-800': value === 'promotor',
+            'bg-green-100 text-green-800': !['superuser', 'admin', 'employee', 'promotor'].includes(value)
           }"
         >
           {{ value === 'superuser' ? 'Super Usuario' :
              value === 'admin' ? 'Administrador' :
-             value === 'employee' ? 'Empleado' : 'Miembro' }}
+             value === 'employee' ? 'Empleado' :
+             value === 'promotor' ? 'Promotor' : 'Miembro' }}
         </span>
       </template>
 
@@ -596,6 +599,7 @@
                 <option value="admin">Administrador</option>
                 <option value="employee">Empleado</option>
                 <option value="member">Miembro</option>
+                <option value="promotor">Promotor</option>
               </select>
             </div>
 
@@ -646,6 +650,7 @@ const roleFilterOptions = [
   { label: 'Administrador', value: 'admin' },
   { label: 'Empleado', value: 'employee' },
   { label: 'Miembro', value: 'member' },
+  { label: 'Promotor', value: 'promotor' },
 ]
 
 const performSearch = () => applySearch()
@@ -695,7 +700,8 @@ const normalizeMembersResponse = (response: any) => {
         email: member.profile.email,
         position: member.role === 'superuser' ? 'Super Usuario' :
                  member.role === 'admin' ? 'Administrador' :
-                 member.role === 'employee' ? 'Empleado' : 'Miembro',
+                 member.role === 'employee' ? 'Empleado' :
+                 member.role === 'promotor' ? 'Promotor' : 'Miembro',
         role: member.role,
         active: true,
         initials: getInitials(member.profile.name, member.profile.user_name),
@@ -802,7 +808,8 @@ const getRoleLabel = (role) => {
     'superuser': 'Super Usuario',
     'admin': 'Administrador',
     'employee': 'Empleado',
-    'member': 'Miembro'
+    'member': 'Miembro',
+    'promotor': 'Promotor'
   }
   return labels[role] || role
 }
