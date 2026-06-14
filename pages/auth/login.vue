@@ -9,6 +9,13 @@
 </template>
 
 <script setup lang="ts">
+import {
+  CUSTOMER_PORTAL_LOGIN,
+  canUseInternalSession,
+  getSafeInternalRedirect,
+  isInternalAccessDeniedError,
+} from '~/utils/internalAccess'
+
 definePageMeta({
   layout: false,
   robots: 'noindex, nofollow'
@@ -21,7 +28,7 @@ const checking = ref(true)
 onMounted(async () => {
   try {
     const sessionData = await $fetch('/api/auth/session')
-    if (sessionData?.user) {
+    if (canUseInternalSession(sessionData)) {
       const authStore = useAuthStore()
       authStore.initializeFromMiddleware({
         session: sessionData,
@@ -31,9 +38,15 @@ onMounted(async () => {
           email: sessionData.user.email,
         }
       })
-      return navigateTo('/ventas')
+      return navigateTo(getSafeInternalRedirect(useRoute().query.redirect))
     }
-  } catch (e) {
+    if (sessionData?.user) {
+      return navigateTo(CUSTOMER_PORTAL_LOGIN)
+    }
+  } catch (e: any) {
+    if (isInternalAccessDeniedError(e)) {
+      return navigateTo(CUSTOMER_PORTAL_LOGIN)
+    }
     // No valid session
   }
   checking.value = false

@@ -64,13 +64,13 @@
 
           <div class="space-y-3">
             <NuxtLink
-              to="/auth/login"
+              :to="errorActionTo"
               class="w-full py-3 px-6 rounded-md text-base font-medium transition-all inline-block text-center"
               style="background-color: hsl(250, 30%, 16%); color: white;"
               @mouseenter="$event.target.style.backgroundColor = 'hsl(243, 26%, 23%)'"
               @mouseleave="$event.target.style.backgroundColor = 'hsl(250, 30%, 16%)'"
             >
-              Ir al inicio de sesión
+              {{ errorActionLabel }}
             </NuxtLink>
 
             <p class="text-xs" style="color: hsl(220, 13%, 28%);">
@@ -84,6 +84,12 @@
 </template>
 
 <script setup lang="ts">
+import {
+  CUSTOMER_PORTAL_LOGIN,
+  getInternalAccessDeniedMessage,
+  isInternalAccessDeniedError,
+} from '~/utils/internalAccess'
+
 definePageMeta({
   layout: false,
   robots: 'noindex, nofollow'
@@ -98,6 +104,8 @@ const verifying = ref(true)
 const success = ref(false)
 const error = ref(false)
 const errorMessage = ref('')
+const errorActionTo = ref('/auth/login')
+const errorActionLabel = ref('Ir al inicio de sesión')
 const redirectProgress = ref(0)
 const userName = ref('')
 
@@ -208,9 +216,15 @@ const acceptInvitation = async () => {
 
     verifying.value = false
     error.value = true
+    errorActionTo.value = '/auth/login'
+    errorActionLabel.value = 'Ir al inicio de sesión'
 
     // Determinar mensaje de error específico
-    if (err.message?.includes('expirada') || err.message?.includes('expired')) {
+    if (isInternalAccessDeniedError(err)) {
+      errorMessage.value = getInternalAccessDeniedMessage()
+      errorActionTo.value = CUSTOMER_PORTAL_LOGIN
+      errorActionLabel.value = 'Ir al portal de clientes'
+    } else if (err.message?.includes('expirada') || err.message?.includes('expired')) {
       errorMessage.value = 'La invitación ha expirado. Solicita una nueva invitación al administrador.'
     } else if (err.message?.includes('inválida') || err.message?.includes('invalid')) {
       errorMessage.value = 'La invitación es inválida o ya fue utilizada.'

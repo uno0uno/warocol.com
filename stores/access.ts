@@ -13,6 +13,7 @@
  * there, mirror it here.
  */
 import { defineStore } from 'pinia'
+import { isInternalAccessDeniedError } from '~/utils/internalAccess'
 
 export type Module =
   | 'pos'
@@ -66,6 +67,10 @@ export const useAccessStore = defineStore('access', () => {
       isLoaded.value = true
       armPolling()
     } catch (err) {
+      if (isInternalAccessDeniedError(err)) {
+        clear()
+        throw err
+      }
       // Fail-open: keep current state. enforcementMode stays at its current
       // value (initially 'disabled' which makes can() always return true).
       // Matches the safety guarantee in Epic 4's body. Polling stays unarmed
