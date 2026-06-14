@@ -1,3 +1,5 @@
+import { CUSTOMER_PORTAL_LOGIN } from '~/utils/internalAccess'
+
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
   if (process.server) return
@@ -20,16 +22,28 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   ) return
 
   const authStore = useAuthStore()
+  const accessStore = useAccessStore()
   const tenantsStore = useTenantsStore()
+
+  const clearInternalState = () => {
+    authStore.expireSession()
+    accessStore.clear()
+    tenantsStore.clearTenants()
+  }
 
   // Only fetch tenants if user is authenticated and tenants are not loaded
   if (authStore.session?.success && !tenantsStore.hasTenants && !tenantsStore.isLoading) {
     try {
       await tenantsStore.fetchUserTenants()
+
+      if (tenantsStore.noInternalAccess || (!tenantsStore.hasTenants && !tenantsStore.isLoading)) {
+        clearInternalState()
+        return navigateTo(CUSTOMER_PORTAL_LOGIN)
+      }
       
       // Set selected tenant from URL parameter if available
       const tenantParam = to.query.tenant
-      if (tenantParam && !tenantsStore.selectTenantBySlug(tenantParam)) {
+      if (tenantParam && !(await tenantsStore.selectTenantBySlug(tenantParam))) {
         // If tenant param in URL is invalid, redirect to first available tenant
         if (tenantsStore.hasTenants) {
           await navigateTo({
