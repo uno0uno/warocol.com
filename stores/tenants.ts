@@ -6,6 +6,7 @@
  */
 import { defineStore } from 'pinia'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { canUseInternalSession, isInternalAccessDeniedError } from '~/utils/internalAccess'
 
 export interface BusinessHours {
   open?: string    // "HH:MM" — may be absent when closed: true
@@ -53,18 +54,30 @@ export const useTenantsStore = defineStore('tenants', () => {
   // ── UI state ──────────────────────────────────────────────────────────────────
   const selectedTenant = ref<Tenant | null>(null)
   const error = ref<string | null>(null)
+  const noInternalAccess = ref(false)
 
   // ── User tenants query ────────────────────────────────────────────────────────
   // Client-only: SSR has no session cookie → /api/tenants/user-tenants 401 (#977).
-  const { data: tenantData, status } = useQuery({
+  const { data: tenantData, status, asyncStatus, refetch } = useQuery({
     key: ['tenants', 'user'],
     enabled: () => import.meta.client,
     query: async () => {
-      const [tenantsRes, sessionRes] = await Promise.all([
-        $fetch<{ success: boolean; data: Tenant[] }>('/api/tenants/user-tenants'),
-        $fetch<{ success: boolean; currentTenant?: { id: string } }>('/api/auth/session'),
-      ])
-      return { tenants: tenantsRes.data ?? [], session: sessionRes }
+      try {
+        const [tenantsRes, sessionRes] = await Promise.all([
+          $fetch<{ success: boolean; data: Tenant[] }>('/api/tenants/user-tenants'),
+          $fetch<{ success: boolean; currentTenant?: { id: string } }>('/api/auth/session'),
+        ])
+        const tenants = tenantsRes.data ?? []
+        noInternalAccess.value = !!sessionRes?.success && (!canUseInternalSession(sessionRes) || tenants.length === 0)
+        return { tenants, session: sessionRes }
+      } catch (err) {
+        if (isInternalAccessDeniedError(err)) {
+          noInternalAccess.value = true
+          return { tenants: [], session: null }
+        }
+        noInternalAccess.value = false
+        throw err
+      }
     },
   })
 
@@ -87,8 +100,8 @@ export const useTenantsStore = defineStore('tenants', () => {
   const tenants = computed<Tenant[]>(() => tenantData.value?.tenants ?? [])
 
   // ── Business profile query (reactive on selectedTenant) ───────────────────────
-  const { data: businessProfile, status: profileStatus } = useQuery({
-    key: () => ['tenant', 'business-profile', selectedTenant.value?.slug],
+  const { data: businessProfile, status: profileStatus, asyncStatus: profileAsyncStatus } = useQuery({
+    key: () => ['tenant', 'business-profile', selectedTenant.value?.slug ?? null],
     query: () => $fetch<{ success: boolean; data: TenantBusinessProfile }>(
       '/api/api/tenant/public-profile'
     ).then(r => r?.data ?? null),
@@ -135,18 +148,24 @@ export const useTenantsStore = defineStore('tenants', () => {
   // ── Derived state ─────────────────────────────────────────────────────────────
   const hasTenants = computed(() => tenants.value.length > 0)
   const selectedTenantSlug = computed(() => selectedTenant.value?.slug ?? null)
-  const isLoading = computed(() => status.value === 'loading' || switchMutation.isLoading.value)
-  const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
+  const isLoading = computed(() =>
+    status.value === 'pending'
+    || asyncStatus.value === 'loading'
+    || switchMutation.isLoading.value
+  )
+  const isBusinessProfileLoading = computed(() =>
+    profileStatus.value === 'pending'
+    || profileAsyncStatus.value === 'loading'
+  )
 
   // ── Public action wrappers ────────────────────────────────────────────────────
 
   /** Trigger a fresh fetch of user tenants (awaitable — resolves when data is loaded) */
-  const fetchUserTenants = () =>
-    cache.invalidateQueries({ key: ['tenants', 'user'] })
+  const fetchUserTenants = () => refetch()
 
   /** Force-refresh the business profile (e.g. after PATCH to public-profile) */
   const fetchBusinessProfile = () =>
-    cache.invalidateQueries({ key: ['tenant', 'business-profile', selectedTenant.value?.slug] })
+    cache.invalidateQueries({ key: ['tenant', 'business-profile', selectedTenant.value?.slug ?? null] })
 
   const selectTenant = async (tenant: Tenant): Promise<boolean> => {
     if (selectedTenant.value?.slug === tenant.slug) return true
@@ -168,6 +187,7 @@ export const useTenantsStore = defineStore('tenants', () => {
   const clearTenants = () => {
     selectedTenant.value = null
     error.value = null
+    noInternalAccess.value = false
     cache.invalidateQueries({ key: ['tenants'] })
     cache.invalidateQueries({ key: ['tenant'] })
   }
@@ -178,6 +198,7 @@ export const useTenantsStore = defineStore('tenants', () => {
     selectedTenant,
     isLoading,
     error,
+    noInternalAccess,
     businessProfile,
     isBusinessProfileLoading,
 
