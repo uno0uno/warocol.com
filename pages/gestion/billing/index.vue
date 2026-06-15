@@ -669,7 +669,7 @@ watch(() => currentTenant.value?.id, async () => {
       <div class="absolute inset-0 bg-overlay-backdrop/50 backdrop-blur-sm" @click="showModal = false" />
 
       <!-- Modal -->
-      <div :class="['relative bg-surface rounded-2xl shadow-xl border border-border w-full max-h-[90vh] overflow-y-auto transition-all', wizardStep === 1 && activePlans.length > 1 ? 'max-w-2xl' : 'max-w-md']">
+      <div :class="['relative bg-surface rounded-2xl shadow-xl border border-border w-full max-h-[90vh] overflow-y-auto transition-all', wizardStep === 1 && activePlans.length > 1 ? 'max-w-4xl' : 'max-w-md']">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-surface z-10">
@@ -725,11 +725,17 @@ watch(() => currentTenant.value?.id, async () => {
             </div>
 
             <!-- Plans grid -->
-            <div v-else-if="activePlans.length > 0" class="flex flex-wrap justify-center gap-4">
+            <div
+              v-else-if="activePlans.length > 0"
+              :class="[
+                'grid gap-4',
+                activePlans.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1 justify-items-center',
+              ]"
+            >
               <div
                 v-for="plan in activePlans"
                 :key="plan.id"
-                class="bg-surface-secondary border border-border rounded-xl p-5 flex flex-col gap-4 w-full max-w-sm"
+                class="bg-surface-secondary border border-border rounded-xl p-5 flex flex-col gap-4 w-full"
               >
                 <div>
                   <h3 class="text-base font-bold text-text-primary">{{ plan.name }}</h3>
