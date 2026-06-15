@@ -49,6 +49,7 @@ export default defineNuxtConfig({
     '/auth/**': { ssr: false },
     '/analitica/**': { ssr: false },
     '/gestion/**': { ssr: false },
+    '/terminos-y-condiciones': { ssr: false },
     '/domicilios/**': { ssr: false },
     '/finanzas/**': { ssr: false },
     '/facturacion': { ssr: false },
@@ -92,6 +93,7 @@ export default defineNuxtConfig({
       '/': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
       '/blog': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
       '/blog/**': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
+      '/terminos-y-condiciones': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
       // Client-only pages (no SSR)
       '/api/auth/**': {
         proxy: {
