@@ -152,13 +152,14 @@ const mapAcceptResponseToStatus = (response: ApiEnvelope<{ current?: ApiLegalTer
 
 export const useLegalTerms = () => {
   const cache = useQueryCache()
+  const authStore = useAuthStore()
 
-  const { data: sessionData, status: sessionStatus } = useQuery({
+  const { data: sessionData } = useQuery({
     key: ['legal-terms', 'session'],
-    enabled: () => import.meta.client,
+    enabled: () => import.meta.client && !(authStore as any).session?.currentTenant?.id,
     query: async () => {
       try {
-        return await $fetch<AuthSessionResponse>('/api/auth/session', { credentials: 'include', timeout: 3000 })
+        return await $fetch<AuthSessionResponse>('/api/auth/session', { credentials: 'include', timeout: 10000 })
       } catch (err: any) {
         if (isAuthError(err)) return { success: false, currentTenant: null }
         return { success: false, currentTenant: null }
@@ -166,15 +167,16 @@ export const useLegalTerms = () => {
     },
   })
 
-  const tenantId = computed(() => sessionData.value?.currentTenant?.id ?? 'public')
-  const hasTenantSession = computed(() => !!sessionData.value?.success && !!sessionData.value?.currentTenant?.id)
+  const activeSession = computed<AuthSessionResponse | null>(() => (authStore as any).session ?? sessionData.value ?? null)
+  const tenantId = computed(() => activeSession.value?.currentTenant?.id ?? 'public')
+  const hasTenantSession = computed(() => !!activeSession.value?.success && !!activeSession.value?.currentTenant?.id)
 
   const { data: currentDocument, status: documentStatus, asyncStatus: documentAsyncStatus } = useQuery({
-    key: ['legal-terms', 'current'],
+    key: ['legal-terms', 'current', 'pdf-v11'],
     enabled: () => import.meta.client,
     query: async () => {
       try {
-        const response = await $fetch<ApiEnvelope<ApiLegalTermsDocument | null> | ApiLegalTermsDocument | null>('/api/legal/terms/current', { credentials: 'include', timeout: 4000 })
+        const response = await $fetch<ApiEnvelope<ApiLegalTermsDocument | null> | ApiLegalTermsDocument | null>(`/api/legal/terms/current?_=${Date.now()}`, { credentials: 'include', timeout: 10000 })
         return mapApiDocument(unwrapApiData(response))
       } catch (err: any) {
         if (isAuthError(err) || err?.status === 404 || err?.statusCode === 404) return null
@@ -183,7 +185,7 @@ export const useLegalTerms = () => {
     },
   })
 
-  const { data: statusData, status: termsStatus, asyncStatus: termsAsyncStatus } = useQuery({
+  const { data: statusData, asyncStatus: termsAsyncStatus } = useQuery({
     key: () => ['legal-terms', 'status', tenantId.value],
     enabled: () => import.meta.client && hasTenantSession.value,
     query: async () => {
@@ -217,11 +219,7 @@ export const useLegalTerms = () => {
     },
   })
 
-  const isInitialLoading = computed(() =>
-    documentStatus.value === 'pending' ||
-    sessionStatus.value === 'pending' ||
-    (hasTenantSession.value && termsStatus.value === 'pending')
-  )
+  const isInitialLoading = computed(() => documentStatus.value === 'pending')
 
   const isRefreshing = computed(() =>
     documentAsyncStatus.value === 'loading' ||
