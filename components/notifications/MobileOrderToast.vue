@@ -129,6 +129,7 @@ import {
   notificationDespachoPath,
   notificationDespachoTitle,
   notificationIsComandaReady,
+  notificationIsTermsAcceptanceRequired,
 } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 import { useComandaReadyAudio } from '~/composables/useComandaReadyAudio'
@@ -181,7 +182,10 @@ onMounted(() => {
     (newLen, oldLen) => {
       if (isTenantResetting.value) return // skip post-reset repopulation — not genuine new arrivals
       if (newLen > oldLen) {
-        const newNotifications = notifications.value.slice(0, newLen - oldLen)
+        const newNotifications = notifications.value
+          .slice(0, newLen - oldLen)
+          .filter(n => !notificationIsTermsAcceptanceRequired(n))
+        if (newNotifications.length === 0) return
         const hasComandaReady = newNotifications.some(notificationIsComandaReady)
         const hasDespacho = newNotifications.some(n => !notificationIsComandaReady(n))
         if (hasComandaReady) playComandaReadyChime()
