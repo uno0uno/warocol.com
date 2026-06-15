@@ -705,12 +705,6 @@ watch(() => currentTenant.value?.id, async () => {
           </button>
         </div>
 
-        <!-- Step indicator -->
-        <div class="flex px-6 pt-5 gap-2">
-          <div :class="['h-1 flex-1 rounded-full transition-colors', wizardStep >= 1 ? 'bg-primary' : 'bg-border']" />
-          <div :class="['h-1 flex-1 rounded-full transition-colors', wizardStep >= 2 ? 'bg-primary' : 'bg-border']" />
-        </div>
-
         <div class="px-6 py-6 space-y-6">
 
           <!-- ── STEP 1: Plan selection ── -->
