@@ -2,15 +2,6 @@
   <div class="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section class="min-w-0 space-y-6">
         <div class="space-y-4">
-          <NuxtLink
-            v-if="returnTarget"
-            :to="returnTarget"
-            class="inline-flex min-h-10 items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary"
-          >
-            <ArrowLeftIcon class="h-4 w-4" />
-            Volver
-          </NuxtLink>
-
           <div class="flex flex-wrap items-center gap-2">
             <UiStatusBadge :value="documentVersionLabel" variant="primary" size="sm" />
             <UiStatusBadge :value="documentStatusLabel" :variant="documentStatusVariant" size="sm" />
