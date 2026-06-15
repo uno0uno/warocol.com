@@ -347,7 +347,17 @@ const cycleLabel = computed(() => {
   return '—'
 })
 
-const statusStyle = (status: string) => {
+const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
+
+const statusStyle = (status: string, accessLevel?: string | null) => {
+  if (status === 'past_due' && accessLevel === 'blocked') {
+    return {
+      badge: 'bg-status-critical-bg text-status-critical-text',
+      dot: 'bg-status-critical-text',
+      label: 'Bloqueado',
+    }
+  }
+
   const map: Record<string, { badge: string; dot: string; label: string }> = {
     active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: 'Activo' },
     pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: 'Pendiente' },
@@ -357,6 +367,44 @@ const statusStyle = (status: string) => {
   }
   return map[status] ?? { badge: 'bg-surface-secondary text-text-secondary', dot: 'bg-text-secondary', label: status }
 }
+
+const subscriptionStatusStyle = computed(() =>
+  subscription.value
+    ? statusStyle(subscription.value.status, accessStatus.value?.level)
+    : null
+)
+
+const pastDueAlert = computed(() => {
+  if (subscription.value?.status !== 'past_due') return null
+
+  if (isBillingBlocked.value) {
+    return {
+      bg: 'bg-status-critical-bg/40',
+      icon: 'text-status-critical-text',
+      title: 'Tu suscripción está vencida',
+      titleClass: 'text-status-critical-text',
+      message: accessStatus.value?.message || 'Renueva para recuperar el acceso.',
+    }
+  }
+
+  if (accessStatus.value?.level === 'read_only') {
+    return {
+      bg: 'bg-status-warning-bg/40',
+      icon: 'text-status-warning-text',
+      title: 'Funciones IA suspendidas',
+      titleClass: 'text-status-warning-text',
+      message: accessStatus.value?.message || 'Renueva para recuperar el acceso completo.',
+    }
+  }
+
+  return {
+    bg: 'bg-status-warning-bg/40',
+    icon: 'text-status-warning-text',
+    title: 'Tienes un pago pendiente',
+    titleClass: 'text-status-warning-text',
+    message: accessStatus.value?.message || 'Tu acceso está en período de gracia.',
+  }
+})
 
 const eventStyle = (type: string) => {
   const map: Record<string, { badge: string; label: string }> = {
@@ -424,11 +472,11 @@ watch(() => currentTenant.value?.id, async () => {
           <div class="shrink-0 flex items-center gap-2">
             <!-- Status badge -->
             <span
-              v-if="subscription"
-              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', statusStyle(subscription.status).badge]"
+              v-if="subscription && subscriptionStatusStyle"
+              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', subscriptionStatusStyle.badge]"
             >
-              <span :class="['w-1.5 h-1.5 rounded-full', statusStyle(subscription.status).dot]" aria-hidden="true" />
-              {{ statusStyle(subscription.status).label }}
+              <span :class="['w-1.5 h-1.5 rounded-full', subscriptionStatusStyle.dot]" aria-hidden="true" />
+              {{ subscriptionStatusStyle.label }}
             </span>
 
             <!-- Subscribe / Reactivate button -->
@@ -505,22 +553,22 @@ watch(() => currentTenant.value?.id, async () => {
         </div>
 
         <!-- Alert: past_due -->
-        <div v-if="subscription?.status === 'past_due'" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
+        <div v-if="pastDueAlert" :class="['px-6 py-4 border-t border-border', pastDueAlert.bg]">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-start gap-2">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg :class="['w-4 h-4 mt-0.5 shrink-0', pastDueAlert.icon]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               <div>
-                <p class="text-sm font-semibold text-status-warning-text">Tienes un pago pendiente</p>
-                <p class="text-xs text-text-secondary mt-0.5">Tu acceso está en período de gracia</p>
+                <p :class="['text-sm font-semibold', pastDueAlert.titleClass]">{{ pastDueAlert.title }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ pastDueAlert.message }}</p>
               </div>
             </div>
             <button
-              v-if="subscription.checkout_url"
+              v-if="subscription?.checkout_url"
               type="button"
               :disabled="checkoutRedirecting"
-              @click="handleExistingCheckout(subscription.checkout_url)"
+              @click="handleExistingCheckout(subscription?.checkout_url)"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
               {{ checkoutRedirecting ? 'Validando...' : 'Pagar ahora' }}
