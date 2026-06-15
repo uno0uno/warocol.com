@@ -144,12 +144,17 @@
         <li v-for="notification in notifications" :key="notification.id">
           <NuxtLink
             :to="notificationDespachoPath(notification)"
-            @click="handleMarkAsRead(notification.id); showNotificationsModal = false"
+            @click="handleNotificationClick(notification)"
             class="flex items-start gap-3 px-4 py-3 hover:bg-icon-button-neutral-hover-bg transition-colors"
             :class="!notification.read_at ? 'bg-icon-button-primary-bg/40' : ''"
           >
             <div class="flex-shrink-0 w-8 h-8 rounded-full bg-icon-button-primary-bg flex items-center justify-center mt-0.5">
-              <ShoppingBagIcon class="w-4 h-4 text-icon-button-primary-text" aria-hidden="true" />
+              <DocumentTextIcon
+                v-if="notificationIsTermsAcceptanceRequired(notification)"
+                class="w-4 h-4 text-icon-button-primary-text"
+                aria-hidden="true"
+              />
+              <ShoppingBagIcon v-else class="w-4 h-4 text-icon-button-primary-text" aria-hidden="true" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-text-primary leading-snug">
@@ -228,15 +233,17 @@ import {
   SpeakerXMarkIcon,
   CheckCircleIcon,
   Cog6ToothIcon,
+  DocumentTextIcon,
   HomeIcon,
   ShoppingBagIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
-import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import { notificationDespachoPath, notificationDespachoTitle, notificationIsTermsAcceptanceRequired } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 import { dashboardMobileGridItems, type ActivePage } from '~/constants/dashboardNavigation'
 import type { Tenant } from '~/stores/tenants'
+import type { Notification } from '~/composables/useNotifications'
 
 interface Props {
   activePage?: ActivePage
@@ -274,6 +281,13 @@ const {
 
 const handleMarkAsRead = async (id: string) => {
   await markAsRead(id)
+}
+
+const handleNotificationClick = async (notification: Notification) => {
+  if (!notificationIsTermsAcceptanceRequired(notification)) {
+    await handleMarkAsRead(notification.id)
+  }
+  showNotificationsModal.value = false
 }
 
 const openNotificationsModal = () => {

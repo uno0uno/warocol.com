@@ -83,17 +83,22 @@
           >
             <NuxtLink
               :to="notificationDespachoPath(notification)"
-              @click="handleMarkAsRead(notification.id); close()"
+              @click="handleNotificationClick(notification)"
               class="flex gap-3 px-4 py-3 hover:bg-shell-notification-hover-bg transition-colors"
             >
               <!-- Icon -->
               <div
                 class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
-                :class="notificationIsComandaReady(notification) ? 'bg-success/15' : 'bg-shell-notification-accent-bg'"
+                :class="notificationIconClass(notification)"
               >
                 <BellAlertIcon
                   v-if="notificationIsComandaReady(notification)"
                   class="w-4 h-4 text-success"
+                  aria-hidden="true"
+                />
+                <DocumentTextIcon
+                  v-else-if="notificationIsTermsAcceptanceRequired(notification)"
+                  class="w-4 h-4 text-shell-notification-accent"
                   aria-hidden="true"
                 />
                 <ShoppingBagIcon v-else class="w-4 h-4 text-shell-notification-accent" aria-hidden="true" />
@@ -125,12 +130,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { BellIcon, BellAlertIcon, ShoppingBagIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/vue/24/outline'
-import { useNotifications } from '~/composables/useNotifications'
+import { BellIcon, BellAlertIcon, DocumentTextIcon, ShoppingBagIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/vue/24/outline'
+import { useNotifications, type Notification } from '~/composables/useNotifications'
 import {
   notificationDespachoPath,
   notificationDespachoTitle,
   notificationIsComandaReady,
+  notificationIsTermsAcceptanceRequired,
 } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 
@@ -172,8 +178,20 @@ const handleMarkAsRead = async (id: string) => {
   await markAsRead(id)
 }
 
+const handleNotificationClick = async (notification: Notification) => {
+  if (!notificationIsTermsAcceptanceRequired(notification)) {
+    await handleMarkAsRead(notification.id)
+  }
+  close()
+}
+
 const handleMarkAllRead = async () => {
   await markAllRead()
+}
+
+const notificationIconClass = (notification: Notification) => {
+  if (notificationIsComandaReady(notification)) return 'bg-success/15'
+  return 'bg-shell-notification-accent-bg'
 }
 
 // Inline relative time utility (no date-fns dependency needed)

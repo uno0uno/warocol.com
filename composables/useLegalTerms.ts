@@ -109,6 +109,7 @@ export const useLegalTerms = () => {
     onSettled: () => {
       cache.invalidateQueries({ key: ['legal-terms'] })
       cache.invalidateQueries({ key: ['billing', 'access-status'] })
+      cache.invalidateQueries({ key: ['notifications'] })
     },
   })
 
