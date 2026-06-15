@@ -34,8 +34,11 @@
               'nav-item group',
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+              isNavItemBlocked(item) ? 'nav-item--disabled' : '',
             ]"
-            @click="close"
+            :aria-disabled="isNavItemBlocked(item)"
+            :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
@@ -56,8 +59,11 @@
               'nav-item',
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+              isNavItemBlocked(item) ? 'nav-item--disabled' : '',
             ]"
-            @click="close"
+            :aria-disabled="isNavItemBlocked(item)"
+            :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
@@ -80,8 +86,10 @@
             href="https://warotickets.com/gestion/eventos"
             target="_blank"
             title="Eventos"
-            :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '']"
-            @click="close"
+            :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '', props.billingBlocked ? 'nav-item--disabled' : '']"
+            :aria-disabled="props.billingBlocked"
+            :tabindex="props.billingBlocked ? -1 : undefined"
+            @click="(event) => handleExternalNavClick(event, close)"
           >
             <Squares2X2Icon class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
@@ -104,8 +112,11 @@
               'nav-item',
               collapsed ? 'justify-center' : '',
               activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+              isNavItemBlocked(item) ? 'nav-item--disabled' : '',
             ]"
-            @click="close"
+            :aria-disabled="isNavItemBlocked(item)"
+            :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
@@ -148,17 +159,20 @@ import {
   dashboardPrimaryItems,
   dashboardSecondaryItems,
   type ActivePage,
+  type DashboardNavItem,
 } from '~/constants/dashboardNavigation'
 
 interface Props {
   activePage?: ActivePage
   overlay?: boolean
   toggle?: boolean
+  billingBlocked?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
   activePage: 'financiero',
   overlay: false,
   toggle: false,
+  billingBlocked: false,
 })
 
 defineEmits<{
@@ -193,6 +207,25 @@ const visibleCuentaItems = computed(() =>
 // in api-warolabs#212 (Eventos lives in warotickets.com — external product).
 // Gate by role directly. Owner-only.
 const showEventos = computed(() => accessStore.role === 'owner')
+
+const isNavItemBlocked = (item: DashboardNavItem) =>
+  props.billingBlocked && item.to !== '/gestion/billing'
+
+const handleNavItemClick = (event: MouseEvent, item: DashboardNavItem, close: () => void) => {
+  if (isNavItemBlocked(item)) {
+    event.preventDefault()
+    return
+  }
+  close()
+}
+
+const handleExternalNavClick = (event: MouseEvent, close: () => void) => {
+  if (props.billingBlocked) {
+    event.preventDefault()
+    return
+  }
+  close()
+}
 
 const handleLogout = async () => {
   try {
@@ -269,6 +302,13 @@ const handleLogout = async () => {
 }
 .nav-item--idle:hover {
   background-color: hsl(var(--nav-item-hover-bg) / 0.06);
+}
+.nav-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.nav-item--disabled:hover {
+  background-color: transparent;
 }
 .nav-item--logout {
   color: hsl(var(--nav-logout-text));

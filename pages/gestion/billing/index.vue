@@ -258,13 +258,34 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
 }
 
 // ── Should show subscribe/reactivate button ──────────────────────
+const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
+const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
 const canSubscribe = computed(() => {
   const s = subscription.value?.status
   return !subscription.value ||
     s === 'cancelled' ||
     s === 'expired' ||
-    (s === 'pending' && !subscription.value.checkout_url)
+    (s === 'pending' && !subscription.value.checkout_url) ||
+    (isAccessBlocked.value && !subscription.value.checkout_url)
 })
+const primaryBillingActionLabel = computed(() => {
+  if (!subscription.value) return 'Suscribirse'
+  if (isAccessBlocked.value) return 'Reactivar'
+  return 'Reactivar'
+})
+const displayedSubscriptionStatus = computed(() =>
+  subscription.value
+    ? (isAccessBlocked.value ? 'blocked' : subscription.value.status)
+    : null
+)
+const pastDueTitle = computed(() =>
+  isAccessBlocked.value ? 'Tu período de gracia terminó' : 'Tienes un pago pendiente'
+)
+const pastDueDescription = computed(() =>
+  isAccessBlocked.value
+    ? 'Renueva tu plan para recuperar el acceso a las funciones protegidas.'
+    : 'Tu acceso está en período de gracia'
+)
 
 // ── Table columns ────────────────────────────────────────────────
 
@@ -352,6 +373,7 @@ const statusStyle = (status: string) => {
     active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: 'Activo' },
     pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: 'Pendiente' },
     past_due:  { badge: 'bg-status-warning-bg text-status-warning-text',   dot: 'bg-status-warning-text',   label: 'Gracia' },
+    blocked:   { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Bloqueado' },
     cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Cancelado' },
     expired:   { badge: 'bg-surface-secondary text-text-secondary',        dot: 'bg-text-secondary',         label: 'Expirado' },
   }
@@ -425,10 +447,10 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Status badge -->
             <span
               v-if="subscription"
-              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', statusStyle(subscription.status).badge]"
+              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', statusStyle(displayedSubscriptionStatus || subscription.status).badge]"
             >
-              <span :class="['w-1.5 h-1.5 rounded-full', statusStyle(subscription.status).dot]" aria-hidden="true" />
-              {{ statusStyle(subscription.status).label }}
+              <span :class="['w-1.5 h-1.5 rounded-full', statusStyle(displayedSubscriptionStatus || subscription.status).dot]" aria-hidden="true" />
+              {{ statusStyle(displayedSubscriptionStatus || subscription.status).label }}
             </span>
 
             <!-- Subscribe / Reactivate button -->
@@ -437,7 +459,7 @@ watch(() => currentTenant.value?.id, async () => {
               @click="openModal"
               class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all"
             >
-              {{ subscription ? 'Reactivar' : 'Suscribirse' }}
+              {{ primaryBillingActionLabel }}
             </button>
 
             <!-- Pending: complete payment -->
@@ -505,25 +527,33 @@ watch(() => currentTenant.value?.id, async () => {
         </div>
 
         <!-- Alert: past_due -->
-        <div v-if="subscription?.status === 'past_due'" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
+        <div v-if="subscription?.status === 'past_due' || isAccessBlocked" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-start gap-2">
               <svg class="w-4 h-4 mt-0.5 shrink-0 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               <div>
-                <p class="text-sm font-semibold text-status-warning-text">Tienes un pago pendiente</p>
-                <p class="text-xs text-text-secondary mt-0.5">Tu acceso está en período de gracia</p>
+                <p class="text-sm font-semibold text-status-warning-text">{{ pastDueTitle }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ pastDueDescription }}</p>
               </div>
             </div>
             <button
-              v-if="subscription.checkout_url"
+              v-if="hasExistingCheckout"
               type="button"
               :disabled="checkoutRedirecting"
               @click="handleExistingCheckout(subscription.checkout_url)"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
               {{ checkoutRedirecting ? 'Validando...' : 'Pagar ahora' }}
+            </button>
+            <button
+              v-else-if="canSubscribe"
+              type="button"
+              @click="openModal"
+              class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
+            >
+              Reactivar
             </button>
           </div>
         </div>

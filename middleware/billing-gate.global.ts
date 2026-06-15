@@ -41,12 +41,29 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const { currentTenant } = useTenantReactive()
   const tenantId = currentTenant.value?.id ?? 'none'
   const cacheKey = ['billing', 'subscription', tenantId]
+  const accessStatusCacheKey = ['billing', 'access-status', tenantId]
 
   const cache = useQueryCache()
 
   // Invalidate subscription cache when returning from a payment flow (/billing/...)
   if (from?.path?.startsWith('/billing')) {
     await cache.invalidateQueries({ key: cacheKey })
+    await cache.invalidateQueries({ key: accessStatusCacheKey })
+  }
+
+  let accessStatus = cache.getQueryData<{ level: string } | null>(accessStatusCacheKey)
+
+  if (accessStatus === undefined) {
+    try {
+      accessStatus = await $fetch<{ level: string } | null>('/api/billing/access-status')
+      cache.setQueryData(accessStatusCacheKey, accessStatus)
+    } catch {
+      accessStatus = null
+    }
+  }
+
+  if (accessStatus?.level === 'blocked') {
+    return navigateTo('/gestion/billing')
   }
 
   // Try to get cached subscription without creating a new useQuery instance
