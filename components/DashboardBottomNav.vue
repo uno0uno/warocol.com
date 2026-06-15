@@ -80,12 +80,18 @@
             :key="item.to"
             :to="item.to"
             class="flex flex-col items-center gap-1"
-            @click="showMenuModal = false"
+            :class="isNavItemBlocked(item) ? 'cursor-not-allowed opacity-40' : ''"
+            :aria-disabled="isNavItemBlocked(item)"
+            :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @click="(event) => handleGridItemClick(event, item)"
           >
             <div class="relative">
               <div
                 class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activePage === item.page ? 'bg-icon-button-primary-bg' : 'bg-badge-neutral-bg hover:bg-badge-neutral-hover-bg'"
+                :class="[
+                  activePage === item.page ? 'bg-icon-button-primary-bg' : 'bg-badge-neutral-bg hover:bg-badge-neutral-hover-bg',
+                  isNavItemBlocked(item) ? 'hover:bg-badge-neutral-bg' : '',
+                ]"
               >
                 <component
                   :is="item.icon"
@@ -106,14 +112,14 @@
         <!-- Empty-state fallback — guarantees at least one navigation target. -->
         <div v-else class="grid grid-cols-4 gap-4">
           <NuxtLink
-            to="/"
+            to="/gestion/billing"
             class="flex flex-col items-center gap-1"
             @click="showMenuModal = false"
           >
             <div class="w-12 h-12 rounded-full flex items-center justify-center bg-icon-button-primary-bg">
-              <HomeIcon class="w-6 h-6 text-icon-button-primary-text" />
+              <CreditCardIcon class="w-6 h-6 text-icon-button-primary-text" />
             </div>
-            <span class="text-[10px] text-badge-neutral-text">Inicio</span>
+            <span class="text-[10px] text-badge-neutral-text">Mi Plan</span>
           </NuxtLink>
         </div>
       </div>
@@ -233,30 +239,42 @@ import {
   SpeakerXMarkIcon,
   CheckCircleIcon,
   Cog6ToothIcon,
+  CreditCardIcon,
   DocumentTextIcon,
-  HomeIcon,
   ShoppingBagIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 import { notificationDespachoPath, notificationDespachoTitle, notificationIsTermsAcceptanceRequired } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
-import { dashboardMobileGridItems, type ActivePage } from '~/constants/dashboardNavigation'
+import { dashboardMobileGridItems, type ActivePage, type DashboardNavItem } from '~/constants/dashboardNavigation'
 import type { Tenant } from '~/stores/tenants'
 import type { Notification } from '~/composables/useNotifications'
 
 interface Props {
   activePage?: ActivePage
+  billingBlocked?: boolean
   notificationsCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activePage: 'financiero',
+  billingBlocked: false,
   notificationsCount: 0,
 })
 
 const { can } = useModuleAccess()
 const visibleGridItems = computed(() => dashboardMobileGridItems.filter((item) => can(item.module).value))
+const isNavItemBlocked = (item: DashboardNavItem) =>
+  props.billingBlocked && item.to !== '/gestion/billing'
+
+const handleGridItemClick = (event: MouseEvent, item: DashboardNavItem) => {
+  if (isNavItemBlocked(item)) {
+    event.preventDefault()
+    return
+  }
+  showMenuModal.value = false
+}
 
 // Data quality dot indicator
 const { hasCriticalAlerts } = useDataQualityStatus()

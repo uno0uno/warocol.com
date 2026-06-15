@@ -258,13 +258,58 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
 }
 
 // ── Should show subscribe/reactivate button ──────────────────────
+const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
+const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
+const showBillingRecoveryAlert = computed(() =>
+  subscription.value?.status === 'past_due' || isAccessBlocked.value
+)
+const requiresTermsAcceptance = computed(() =>
+  termsStatus.value?.pending === true || termsStatus.value?.accepted === false
+)
 const canSubscribe = computed(() => {
   const s = subscription.value?.status
   return !subscription.value ||
     s === 'cancelled' ||
     s === 'expired' ||
-    (s === 'pending' && !subscription.value.checkout_url)
+    (s === 'pending' && !subscription.value.checkout_url) ||
+    (isAccessBlocked.value && !subscription.value.checkout_url)
 })
+const primaryBillingActionLabel = computed(() => {
+  if (!subscription.value) return 'Suscribirse'
+  if (isAccessBlocked.value) return 'Reactivar'
+  return 'Reactivar'
+})
+const recoveryActionLabel = computed(() => {
+  if (requiresTermsAcceptance.value) return 'Aceptar términos y condiciones'
+  if (hasExistingCheckout.value) return 'Pagar ahora'
+  return subscription.value ? 'Reactivar' : 'Suscribirse'
+})
+const displayedSubscriptionStatus = computed(() =>
+  subscription.value
+    ? (isAccessBlocked.value ? 'blocked' : subscription.value.status)
+    : null
+)
+const pastDueTitle = computed(() =>
+  isAccessBlocked.value ? 'Tu período de gracia terminó' : 'Tienes un pago pendiente'
+)
+const pastDueDescription = computed(() =>
+  isAccessBlocked.value
+    ? 'Renueva tu plan para recuperar el acceso a las funciones protegidas.'
+    : 'Tu acceso está en período de gracia'
+)
+
+const handleRecoveryAction = async () => {
+  billingActionError.value = null
+  if (requiresTermsAcceptance.value) {
+    await redirectToTermsAcceptance()
+    return
+  }
+  if (subscription.value?.checkout_url) {
+    await handleExistingCheckout(subscription.value.checkout_url)
+    return
+  }
+  await openModal()
+}
 
 // ── Table columns ────────────────────────────────────────────────
 
@@ -352,6 +397,7 @@ const statusStyle = (status: string) => {
     active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: 'Activo' },
     pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: 'Pendiente' },
     past_due:  { badge: 'bg-status-warning-bg text-status-warning-text',   dot: 'bg-status-warning-text',   label: 'Gracia' },
+    blocked:   { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Bloqueado' },
     cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Cancelado' },
     expired:   { badge: 'bg-surface-secondary text-text-secondary',        dot: 'bg-text-secondary',         label: 'Expirado' },
   }
@@ -425,24 +471,24 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Status badge -->
             <span
               v-if="subscription"
-              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', statusStyle(subscription.status).badge]"
+              :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', statusStyle(displayedSubscriptionStatus || subscription.status).badge]"
             >
-              <span :class="['w-1.5 h-1.5 rounded-full', statusStyle(subscription.status).dot]" aria-hidden="true" />
-              {{ statusStyle(subscription.status).label }}
+              <span :class="['w-1.5 h-1.5 rounded-full', statusStyle(displayedSubscriptionStatus || subscription.status).dot]" aria-hidden="true" />
+              {{ statusStyle(displayedSubscriptionStatus || subscription.status).label }}
             </span>
 
             <!-- Subscribe / Reactivate button -->
             <button
-              v-if="canSubscribe"
+              v-if="canSubscribe && !showBillingRecoveryAlert"
               @click="openModal"
               class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all"
             >
-              {{ subscription ? 'Reactivar' : 'Suscribirse' }}
+              {{ primaryBillingActionLabel }}
             </button>
 
             <!-- Pending: complete payment -->
             <button
-              v-else-if="subscription?.status === 'pending' && subscription.checkout_url"
+              v-else-if="!showBillingRecoveryAlert && subscription?.status === 'pending' && subscription.checkout_url"
               type="button"
               :disabled="checkoutRedirecting"
               @click="handleExistingCheckout(subscription.checkout_url)"
@@ -505,25 +551,25 @@ watch(() => currentTenant.value?.id, async () => {
         </div>
 
         <!-- Alert: past_due -->
-        <div v-if="subscription?.status === 'past_due'" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
+        <div v-if="showBillingRecoveryAlert" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-start gap-2">
               <svg class="w-4 h-4 mt-0.5 shrink-0 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               <div>
-                <p class="text-sm font-semibold text-status-warning-text">Tienes un pago pendiente</p>
-                <p class="text-xs text-text-secondary mt-0.5">Tu acceso está en período de gracia</p>
+                <p class="text-sm font-semibold text-status-warning-text">{{ pastDueTitle }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ pastDueDescription }}</p>
               </div>
             </div>
             <button
-              v-if="subscription.checkout_url"
+              v-if="hasExistingCheckout || canSubscribe || requiresTermsAcceptance"
               type="button"
               :disabled="checkoutRedirecting"
-              @click="handleExistingCheckout(subscription.checkout_url)"
+              @click="handleRecoveryAction"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              {{ checkoutRedirecting ? 'Validando...' : 'Pagar ahora' }}
+              {{ checkoutRedirecting ? 'Validando...' : recoveryActionLabel }}
             </button>
           </div>
         </div>
@@ -623,7 +669,7 @@ watch(() => currentTenant.value?.id, async () => {
       <div class="absolute inset-0 bg-overlay-backdrop/50 backdrop-blur-sm" @click="showModal = false" />
 
       <!-- Modal -->
-      <div :class="['relative bg-surface rounded-2xl shadow-xl border border-border w-full max-h-[90vh] overflow-y-auto transition-all', wizardStep === 1 && activePlans.length > 1 ? 'max-w-2xl' : 'max-w-md']">
+      <div :class="['relative bg-surface rounded-2xl shadow-xl border border-border w-full max-h-[90vh] overflow-y-auto transition-all', wizardStep === 1 && activePlans.length > 1 ? 'max-w-4xl' : 'max-w-md']">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-surface z-10">
@@ -659,12 +705,6 @@ watch(() => currentTenant.value?.id, async () => {
           </button>
         </div>
 
-        <!-- Step indicator -->
-        <div class="flex px-6 pt-5 gap-2">
-          <div :class="['h-1 flex-1 rounded-full transition-colors', wizardStep >= 1 ? 'bg-primary' : 'bg-border']" />
-          <div :class="['h-1 flex-1 rounded-full transition-colors', wizardStep >= 2 ? 'bg-primary' : 'bg-border']" />
-        </div>
-
         <div class="px-6 py-6 space-y-6">
 
           <!-- ── STEP 1: Plan selection ── -->
@@ -679,11 +719,17 @@ watch(() => currentTenant.value?.id, async () => {
             </div>
 
             <!-- Plans grid -->
-            <div v-else-if="activePlans.length > 0" class="flex flex-wrap justify-center gap-4">
+            <div
+              v-else-if="activePlans.length > 0"
+              :class="[
+                'grid gap-4',
+                activePlans.length > 1 ? 'lg:grid-cols-2' : 'grid-cols-1 justify-items-center',
+              ]"
+            >
               <div
                 v-for="plan in activePlans"
                 :key="plan.id"
-                class="bg-surface-secondary border border-border rounded-xl p-5 flex flex-col gap-4 w-full max-w-sm"
+                class="bg-surface-secondary border border-border rounded-xl p-5 flex flex-col gap-4 w-full"
               >
                 <div>
                   <h3 class="text-base font-bold text-text-primary">{{ plan.name }}</h3>

@@ -3,6 +3,7 @@
     <!-- Dashboard Sidebar - Tablet/Desktop -->
     <DashboardSidebar
       :active-page="activePage"
+      :billing-blocked="isBillingBlocked"
       toggle
       class="hidden md:flex"
       @expanded-change="isSidebarExpanded = $event"
@@ -57,6 +58,7 @@
 
     <DashboardMobileChrome
       :active-page="activePage"
+      :billing-blocked="isBillingBlocked"
       :notifications-count="notificationsUnreadCount"
       :is-sidebar-expanded="isSidebarExpanded"
       :show-pos-cart-bar="showPosMobileCartBar"
@@ -90,6 +92,7 @@ const { unreadCount: notificationsUnreadCount, init: initNotifications, disconne
 
 // Billing access status — drives banner and blocked redirect
 const { accessStatus, fetchAccessStatus } = useBilling()
+const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
 
 // Get route-based configuration
 const route = useRoute()
@@ -190,7 +193,10 @@ const mobileContentBottomPadding = computed(() => {
   return 'pb-20 lg:pb-0'
 })
 
-const navigateToPOS = () => navigateTo('/pos')
+const navigateToPOS = () => {
+  if (isBillingBlocked.value) return
+  return navigateTo('/pos')
+}
 
 // Meta tags for dashboard
 useHead({
