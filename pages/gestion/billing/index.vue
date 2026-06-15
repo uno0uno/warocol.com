@@ -729,7 +729,7 @@ watch(() => currentTenant.value?.id, async () => {
               v-else-if="activePlans.length > 0"
               :class="[
                 'grid gap-4',
-                activePlans.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1 justify-items-center',
+                activePlans.length > 1 ? 'lg:grid-cols-2' : 'grid-cols-1 justify-items-center',
               ]"
             >
               <div
