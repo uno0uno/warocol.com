@@ -127,6 +127,12 @@ export const useLegalTerms = () => {
     return await acceptMutation.mutateAsync(payload)
   }
 
+  const refreshTermsStatus = async (): Promise<LegalTermsStatus | null> => {
+    const result = await $fetch<LegalTermsStatus>('/api/legal/terms/status', { credentials: 'include', timeout: 4000 })
+    cache.setQueryData(['legal-terms', 'status', tenantId.value], result)
+    return result
+  }
+
   return {
     currentDocument,
     statusData,
@@ -136,5 +142,6 @@ export const useLegalTerms = () => {
     isAccepting: acceptMutation.isLoading,
     acceptError: acceptMutation.error,
     acceptTerms,
+    refreshTermsStatus,
   }
 }

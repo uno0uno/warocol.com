@@ -8,10 +8,14 @@ useHead({ title: 'Historial de pagos — WaRo Admin' })
 
 const {
   plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
-  fetchPlans, fetchMyEvents, fetchBillingOverview, subscribe,
+  fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
 } = useBilling()
 
 const { currentTenant } = useTenantReactive()
+const {
+  statusData: termsStatus,
+  refreshTermsStatus,
+} = useLegalTerms()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 const isInitialLoading = computed(() =>
@@ -54,19 +58,143 @@ const barLabelClass = computed(() => {
 const showModal       = ref(false)
 const wizardStep      = ref<1 | 2>(1)
 const subscribing     = ref(false)
+const checkoutRedirecting = ref(false)
 const subscribeError  = ref<string | null>(null)
+const billingActionError = ref<string | null>(null)
 const plansLoading    = ref(false)
 const payerEmail      = ref('')
 const selectedPlan    = ref<BillingPlan | null>(null)
 
+interface BillingTermsIntent {
+  tenant_id: string
+  plan_id: string
+  payer_email: string
+  created_at: number
+}
+
+const BILLING_RETURN_PATH = '/gestion/billing'
+const BILLING_TERMS_PATH = '/terminos-y-condiciones'
+const BILLING_INTENT_TTL_MS = 30 * 60 * 1000
+
 const activePlans = computed(() => plans.value.filter(p => p.is_active))
+const currentTenantId = computed(() => currentTenant.value?.id ?? '')
+const billingIntentKey = computed(() =>
+  currentTenantId.value ? `waro:billing-terms-intent:${currentTenantId.value}` : ''
+)
+
+const getApiDetail = (err: unknown) => (err as any)?.data?.detail
+
+const apiErrorMessage = (err: unknown, fallback: string) => {
+  const detail = getApiDetail(err)
+  if (typeof detail === 'string') return detail
+  if (detail?.message) return String(detail.message)
+  return (err as any)?.message || fallback
+}
+
+const isTermsAcceptanceRequiredError = (err: unknown) =>
+  getApiDetail(err)?.code === 'terms_acceptance_required'
+
+const setBillingFlowError = (message: string) => {
+  if (showModal.value) subscribeError.value = message
+  else billingActionError.value = message
+}
+
+const persistBillingIntent = () => {
+  if (!import.meta.client || !billingIntentKey.value || !selectedPlan.value) return
+  const intent: BillingTermsIntent = {
+    tenant_id: currentTenantId.value,
+    plan_id: selectedPlan.value.id,
+    payer_email: payerEmail.value,
+    created_at: Date.now(),
+  }
+  sessionStorage.setItem(billingIntentKey.value, JSON.stringify(intent))
+}
+
+const clearBillingIntent = () => {
+  if (!import.meta.client || !billingIntentKey.value) return
+  sessionStorage.removeItem(billingIntentKey.value)
+}
+
+const readBillingIntent = (): BillingTermsIntent | null => {
+  if (!import.meta.client || !billingIntentKey.value) return null
+  try {
+    const raw = sessionStorage.getItem(billingIntentKey.value)
+    if (!raw) return null
+    const intent = JSON.parse(raw) as BillingTermsIntent
+    const expired = Date.now() - intent.created_at > BILLING_INTENT_TTL_MS
+    if (expired || intent.tenant_id !== currentTenantId.value) {
+      clearBillingIntent()
+      return null
+    }
+    return intent
+  } catch {
+    clearBillingIntent()
+    return null
+  }
+}
+
+const redirectToTermsAcceptance = async () => {
+  persistBillingIntent()
+  showModal.value = false
+  await navigateTo({
+    path: BILLING_TERMS_PATH,
+    query: { return: BILLING_RETURN_PATH },
+  })
+}
+
+const ensureTermsAcceptedForCheckout = async () => {
+  if (!currentTenantId.value) {
+    setBillingFlowError('Selecciona un establecimiento antes de comprar un plan.')
+    return false
+  }
+
+  try {
+    const status = termsStatus.value?.accepted === true
+      ? termsStatus.value
+      : await refreshTermsStatus()
+
+    if (status?.accepted === true) return true
+    await redirectToTermsAcceptance()
+    return false
+  } catch (err) {
+    setBillingFlowError(apiErrorMessage(
+      err,
+      'No pudimos validar la aceptación de Términos y Condiciones. Intenta de nuevo.'
+    ))
+    return false
+  }
+}
+
+const restoreBillingIntent = async () => {
+  const intent = readBillingIntent()
+  if (!intent) return
+  if (plans.value.length === 0) await fetchPlans()
+
+  const plan = plans.value.find(p => p.id === intent.plan_id)
+  clearBillingIntent()
+
+  if (!plan) {
+    subscribeError.value = 'El plan seleccionado ya no está disponible. Elige un plan nuevamente.'
+    showModal.value = true
+    wizardStep.value = 1
+    return
+  }
+
+  selectedPlan.value = plan
+  payerEmail.value = intent.payer_email
+  subscribeError.value = null
+  wizardStep.value = 2
+  showModal.value = true
+}
 
 const openModal = async () => {
   subscribeError.value = null
+  billingActionError.value = null
   payerEmail.value = ''
   selectedPlan.value = null
   wizardStep.value = 1
   showModal.value = true
+  clearBillingIntent()
   if (plans.value.length === 0) {
     plansLoading.value = true
     await fetchPlans()
@@ -88,19 +216,54 @@ const handleSubscribe = async () => {
   if (!selectedPlan.value) return
   subscribing.value = true
   subscribeError.value = null
-  const result = await subscribe(selectedPlan.value.id, 'annual', payerEmail.value)
-  subscribing.value = false
-  if (!result?.checkout_url) {
-    subscribeError.value = 'No se pudo iniciar el pago. Intenta de nuevo.'
+
+  const termsAccepted = await ensureTermsAcceptedForCheckout()
+  if (!termsAccepted) {
+    subscribing.value = false
     return
   }
-  await navigateTo(result.checkout_url, { external: true })
+
+  try {
+    const result = await subscribeOrThrow(selectedPlan.value.id, 'annual', payerEmail.value)
+    if (!result?.checkout_url) {
+      subscribeError.value = 'No se pudo iniciar el pago. Intenta de nuevo.'
+      return
+    }
+    clearBillingIntent()
+    await navigateTo(result.checkout_url, { external: true })
+  } catch (err) {
+    if (isTermsAcceptanceRequiredError(err)) {
+      await redirectToTermsAcceptance()
+      return
+    }
+    subscribeError.value = apiErrorMessage(err, 'No se pudo iniciar el pago. Intenta de nuevo.')
+  } finally {
+    subscribing.value = false
+  }
+}
+
+const handleExistingCheckout = async (checkoutUrl?: string | null) => {
+  if (!checkoutUrl) return
+  checkoutRedirecting.value = true
+  billingActionError.value = null
+
+  const termsAccepted = await ensureTermsAcceptedForCheckout()
+  if (!termsAccepted) {
+    checkoutRedirecting.value = false
+    return
+  }
+
+  await navigateTo(checkoutUrl, { external: true })
+  checkoutRedirecting.value = false
 }
 
 // ── Should show subscribe/reactivate button ──────────────────────
 const canSubscribe = computed(() => {
   const s = subscription.value?.status
-  return !subscription.value || s === 'cancelled' || s === 'expired' || s === 'pending'
+  return !subscription.value ||
+    s === 'cancelled' ||
+    s === 'expired' ||
+    (s === 'pending' && !subscription.value.checkout_url)
 })
 
 // ── Table columns ────────────────────────────────────────────────
@@ -214,12 +377,16 @@ const eventStyle = (type: string) => {
 
 const savings = (plan: BillingPlan) => plan.price_monthly * 12 - plan.price_annual
 
-onMounted(() => {
+onMounted(async () => {
   setRefreshHandler(loadAll)
+  await restoreBillingIntent()
 })
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(loadAll))
-watch(() => currentTenant.value?.id, loadAll)
+watch(() => currentTenant.value?.id, async () => {
+  clearBillingIntent()
+  await loadAll()
+})
 </script>
 
 <template>
@@ -274,16 +441,20 @@ watch(() => currentTenant.value?.id, loadAll)
             </button>
 
             <!-- Pending: complete payment -->
-            <a
+            <button
               v-else-if="subscription?.status === 'pending' && subscription.checkout_url"
-              :href="subscription.checkout_url"
-              target="_blank"
-              rel="noopener"
+              type="button"
+              :disabled="checkoutRedirecting"
+              @click="handleExistingCheckout(subscription.checkout_url)"
               class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              Completar pago
-            </a>
+              {{ checkoutRedirecting ? 'Validando...' : 'Completar pago' }}
+            </button>
           </div>
+        </div>
+
+        <div v-if="billingActionError" class="px-6 py-3 border-b border-border bg-destructive/10">
+          <p class="text-sm text-destructive">{{ billingActionError }}</p>
         </div>
 
         <!-- Metrics grid (only when subscription exists) -->
@@ -345,15 +516,15 @@ watch(() => currentTenant.value?.id, loadAll)
                 <p class="text-xs text-text-secondary mt-0.5">Tu acceso está en período de gracia</p>
               </div>
             </div>
-            <a
+            <button
               v-if="subscription.checkout_url"
-              :href="subscription.checkout_url"
-              target="_blank"
-              rel="noopener"
+              type="button"
+              :disabled="checkoutRedirecting"
+              @click="handleExistingCheckout(subscription.checkout_url)"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              Pagar ahora
-            </a>
+              {{ checkoutRedirecting ? 'Validando...' : 'Pagar ahora' }}
+            </button>
           </div>
         </div>
 

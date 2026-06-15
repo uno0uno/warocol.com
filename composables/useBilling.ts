@@ -204,6 +204,13 @@ export const useBilling = () => {
     }
   }
 
+  const subscribeOrThrow = (
+    plan_id: string,
+    billing_cycle: 'annual',
+    payer_email?: string
+  ): Promise<SubscribeResult> =>
+    subscribeMutation.mutateAsync({ plan_id, billing_cycle, payer_email })
+
   const cancelSubscription = async (): Promise<boolean> => {
     try {
       await cancelMutation.mutateAsync()
@@ -230,6 +237,7 @@ export const useBilling = () => {
     fetchUsageHistory,
     fetchBillingOverview,
     subscribe,
+    subscribeOrThrow,
     cancelSubscription,
   }
 }
