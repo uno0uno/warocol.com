@@ -260,6 +260,12 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
 // ── Should show subscribe/reactivate button ──────────────────────
 const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
 const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
+const showBillingRecoveryAlert = computed(() =>
+  subscription.value?.status === 'past_due' || isAccessBlocked.value
+)
+const requiresTermsAcceptance = computed(() =>
+  termsStatus.value?.pending === true || termsStatus.value?.accepted === false
+)
 const canSubscribe = computed(() => {
   const s = subscription.value?.status
   return !subscription.value ||
@@ -272,6 +278,11 @@ const primaryBillingActionLabel = computed(() => {
   if (!subscription.value) return 'Suscribirse'
   if (isAccessBlocked.value) return 'Reactivar'
   return 'Reactivar'
+})
+const recoveryActionLabel = computed(() => {
+  if (requiresTermsAcceptance.value) return 'Aceptar términos y condiciones'
+  if (hasExistingCheckout.value) return 'Pagar ahora'
+  return subscription.value ? 'Reactivar' : 'Suscribirse'
 })
 const displayedSubscriptionStatus = computed(() =>
   subscription.value
@@ -286,6 +297,19 @@ const pastDueDescription = computed(() =>
     ? 'Renueva tu plan para recuperar el acceso a las funciones protegidas.'
     : 'Tu acceso está en período de gracia'
 )
+
+const handleRecoveryAction = async () => {
+  billingActionError.value = null
+  if (requiresTermsAcceptance.value) {
+    await redirectToTermsAcceptance()
+    return
+  }
+  if (subscription.value?.checkout_url) {
+    await handleExistingCheckout(subscription.value.checkout_url)
+    return
+  }
+  await openModal()
+}
 
 // ── Table columns ────────────────────────────────────────────────
 
@@ -455,7 +479,7 @@ watch(() => currentTenant.value?.id, async () => {
 
             <!-- Subscribe / Reactivate button -->
             <button
-              v-if="canSubscribe"
+              v-if="canSubscribe && !showBillingRecoveryAlert"
               @click="openModal"
               class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all"
             >
@@ -464,7 +488,7 @@ watch(() => currentTenant.value?.id, async () => {
 
             <!-- Pending: complete payment -->
             <button
-              v-else-if="subscription?.status === 'pending' && subscription.checkout_url"
+              v-else-if="!showBillingRecoveryAlert && subscription?.status === 'pending' && subscription.checkout_url"
               type="button"
               :disabled="checkoutRedirecting"
               @click="handleExistingCheckout(subscription.checkout_url)"
@@ -527,7 +551,7 @@ watch(() => currentTenant.value?.id, async () => {
         </div>
 
         <!-- Alert: past_due -->
-        <div v-if="subscription?.status === 'past_due' || isAccessBlocked" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
+        <div v-if="showBillingRecoveryAlert" class="px-6 py-4 border-t border-border bg-status-warning-bg/40">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-start gap-2">
               <svg class="w-4 h-4 mt-0.5 shrink-0 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -539,21 +563,13 @@ watch(() => currentTenant.value?.id, async () => {
               </div>
             </div>
             <button
-              v-if="hasExistingCheckout"
+              v-if="hasExistingCheckout || canSubscribe || requiresTermsAcceptance"
               type="button"
               :disabled="checkoutRedirecting"
-              @click="handleExistingCheckout(subscription.checkout_url)"
+              @click="handleRecoveryAction"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              {{ checkoutRedirecting ? 'Validando...' : 'Pagar ahora' }}
-            </button>
-            <button
-              v-else-if="canSubscribe"
-              type="button"
-              @click="openModal"
-              class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
-            >
-              Reactivar
+              {{ checkoutRedirecting ? 'Validando...' : recoveryActionLabel }}
             </button>
           </div>
         </div>
