@@ -22,7 +22,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     // base URL variants (e.g. /waro-colombia/billing/...)
     '/waro-colombia/billing',
   ]
-  const skipExact = ['/', '/bogota']
+  const skipExact = ['/', '/bogota', '/terminos-y-condiciones']
 
   if (
     skipExact.includes(to.path) ||
@@ -36,7 +36,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const authStore = useAuthStore()
 
   // Same check used by tenants.global.js
-  if (!authStore.session?.success) return
+  if (!(authStore as any).session?.success) return
 
   const { currentTenant } = useTenantReactive()
   const tenantId = currentTenant.value?.id ?? 'none'
