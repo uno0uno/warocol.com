@@ -21,6 +21,7 @@ export interface LegalTermsDocument {
   published_at?: string | null
   privacy_policy_url?: string | null
   source_url?: string | null
+  display_mode?: string | null
   body_html?: string | null
   sections?: LegalTermsSection[]
   annexes?: LegalTermsAnnex[]
@@ -108,6 +109,7 @@ const mapApiDocument = (apiDocument: ApiLegalTermsDocument | LegalTermsDocument 
     published_at: documentPayload.published_at ?? null,
     privacy_policy_url: (metadata.privacy_policy_url as string | undefined) ?? null,
     source_url: documentPayload.content_url ?? documentPayload.source_url ?? null,
+    display_mode: (metadata.display_mode as string | undefined) ?? null,
     body_html: (metadata.body_html as string | undefined) ?? null,
     sections: Array.isArray(metadata.sections) ? metadata.sections as LegalTermsSection[] : [],
     annexes: (documentPayload.annexes ?? []).map((annex: ApiLegalTermsAnnex & LegalTermsAnnex) => ({

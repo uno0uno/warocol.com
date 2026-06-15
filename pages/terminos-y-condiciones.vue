@@ -69,7 +69,7 @@
             <div class="space-y-1">
               <h2 class="text-xl font-semibold text-text-primary">Documento legal</h2>
               <p class="text-sm leading-6 text-text-secondary">
-                El contenido se carga desde el registro legal versionado cuando está disponible.
+                El documento vigente se carga desde el registro legal versionado.
               </p>
             </div>
             <a
@@ -97,7 +97,15 @@
               La versión editable del backend legal todavía no está disponible. Esta página muestra una base renderizable del borrador local `TyC_WARO_v1.0_BORRADOR.pdf`; la aceptación se registrará contra la versión indicada por el endpoint cuando esté activo.
             </div>
 
-            <div v-if="document.body_html" class="legal-html" v-html="document.body_html" />
+            <div v-if="isPdfDocument" class="overflow-hidden rounded-lg border border-border bg-surface-secondary">
+              <iframe
+                :src="document.source_url || ''"
+                title="Términos y Condiciones WARO Colombia"
+                class="h-[72vh] min-h-[640px] w-full bg-white"
+              />
+            </div>
+
+            <div v-else-if="document.body_html" class="legal-html" v-html="document.body_html" />
 
             <div v-else class="space-y-5">
               <article
@@ -316,6 +324,11 @@ const acceptErrorMessage = ref('')
 const document = computed<LegalTermsDocument>(() => currentDocument.value ?? fallbackDocument)
 const usesFallbackDocument = computed(() => !currentDocument.value)
 const applicableAnnexes = computed(() => (document.value.annexes ?? []).filter(annex => annex.applies !== false))
+const isPdfDocument = computed(() => {
+  if (document.value.display_mode === 'pdf') return true
+  const sourceUrl = document.value.source_url || ''
+  return /\.pdf($|[?#])/i.test(sourceUrl)
+})
 const isAccepted = computed(() => statusData.value?.accepted === true)
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
@@ -324,7 +337,13 @@ const returnTarget = computed(() => {
 })
 
 const loginRedirect = computed(() => {
-  const path = route.fullPath || '/terminos-y-condiciones'
+  const query = new URLSearchParams()
+  Object.entries(route.query).forEach(([key, value]) => {
+    const firstValue = Array.isArray(value) ? value[0] : value
+    if (typeof firstValue === 'string') query.set(key, firstValue)
+  })
+  const queryString = query.toString()
+  const path = `${route.path}${queryString ? `?${queryString}` : ''}` || '/terminos-y-condiciones'
   return `/auth/login?redirect=${encodeURIComponent(path)}`
 })
 
