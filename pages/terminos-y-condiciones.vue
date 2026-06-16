@@ -1,67 +1,69 @@
 <template>
   <div class="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <section class="min-w-0 space-y-6">
-        <div class="space-y-4">
-          <div class="flex flex-wrap items-center gap-2">
-            <UiStatusBadge :value="documentVersionLabel" variant="primary" size="sm" />
-            <UiStatusBadge :value="documentStatusLabel" :variant="documentStatusVariant" size="sm" />
-          </div>
-          <div class="space-y-3">
-            <h1 class="max-w-3xl text-3xl font-bold leading-tight text-text-primary sm:text-4xl">
-              {{ document.title }}
-            </h1>
-            <p class="max-w-3xl text-base leading-7 text-text-secondary">
-              Documento contractual para el uso de la plataforma WARO. Revisa la versión vigente, los anexos aplicables y la referencia de tratamiento de datos antes de aceptar.
-            </p>
-          </div>
-        </div>
-
-        <section class="grid gap-3 sm:grid-cols-3" aria-label="Resumen del documento">
-          <div class="rounded-lg border border-border bg-surface p-4">
-            <p class="text-xs font-medium uppercase text-text-tertiary">Versión vigente</p>
-            <p class="mt-2 text-lg font-semibold text-text-primary">{{ document.version }}</p>
-          </div>
-          <div class="rounded-lg border border-border bg-surface p-4">
-            <p class="text-xs font-medium uppercase text-text-tertiary">Fecha de vigencia</p>
-            <p class="mt-2 text-lg font-semibold text-text-primary">{{ effectiveDateLabel }}</p>
-          </div>
-          <div class="rounded-lg border border-border bg-surface p-4">
-            <p class="text-xs font-medium uppercase text-text-tertiary">Formato</p>
-            <p class="mt-2 text-lg font-semibold text-text-primary">PDF</p>
-          </div>
-        </section>
-
-        <section id="documento" class="rounded-lg border border-border bg-surface p-4 sm:p-6">
-          <div class="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
-            <div class="space-y-1">
-              <h2 class="text-xl font-semibold text-text-primary">Documento legal</h2>
-              <p class="text-sm leading-6 text-text-secondary">
-                El documento vigente se carga desde el registro legal versionado.
+      <section class="min-w-0">
+        <div class="space-y-6 rounded-xl border border-border bg-surface-secondary/70 p-4 sm:p-6">
+          <div class="space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <UiStatusBadge :value="documentVersionLabel" variant="primary" size="sm" />
+              <UiStatusBadge :value="documentStatusLabel" :variant="documentStatusVariant" size="sm" />
+            </div>
+            <div class="space-y-3">
+              <h1 class="max-w-3xl text-3xl font-bold leading-tight text-text-primary sm:text-4xl">
+                {{ document.title }}
+              </h1>
+              <p class="max-w-3xl text-base leading-7 text-text-secondary">
+                Documento contractual para el uso de la plataforma WARO. Revisa la versión vigente, los anexos aplicables y la referencia de tratamiento de datos antes de aceptar.
               </p>
             </div>
           </div>
 
-          <div v-if="isDocumentLoading" class="flex min-h-64 items-center justify-center">
-            <div class="flex items-center gap-3 text-sm text-text-secondary">
-              <UiLoadingMatrix size="5.5px" color="currentColor" />
-              Cargando términos
+          <section class="grid gap-3 sm:grid-cols-3" aria-label="Resumen del documento">
+            <div class="rounded-lg border border-border bg-surface p-4">
+              <p class="text-xs font-medium uppercase text-text-tertiary">Versión vigente</p>
+              <p class="mt-2 text-lg font-semibold text-text-primary">{{ document.version }}</p>
             </div>
-          </div>
+            <div class="rounded-lg border border-border bg-surface p-4">
+              <p class="text-xs font-medium uppercase text-text-tertiary">Fecha de vigencia</p>
+              <p class="mt-2 text-lg font-semibold text-text-primary">{{ effectiveDateLabel }}</p>
+            </div>
+            <div class="rounded-lg border border-border bg-surface p-4">
+              <p class="text-xs font-medium uppercase text-text-tertiary">Formato</p>
+              <p class="mt-2 text-lg font-semibold text-text-primary">PDF</p>
+            </div>
+          </section>
 
-          <div v-else class="mt-6">
-            <div v-if="isPdfDocument" class="overflow-hidden rounded-lg border border-border bg-surface-secondary">
-              <iframe
-                :src="pdfViewerUrl"
-                title="Términos y Condiciones WARO Colombia"
-                class="h-[72vh] min-h-[640px] w-full bg-white"
-              />
+          <section id="documento" class="rounded-lg border border-border bg-surface p-4 sm:p-6">
+            <div class="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div class="space-y-1">
+                <h2 class="text-xl font-semibold text-text-primary">Documento legal</h2>
+                <p class="text-sm leading-6 text-text-secondary">
+                  El documento vigente se carga desde el registro legal versionado.
+                </p>
+              </div>
             </div>
 
-            <div v-else class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text">
-              No se pudo cargar el PDF vigente de términos y condiciones.
+            <div v-if="isDocumentLoading" class="flex min-h-64 items-center justify-center">
+              <div class="flex items-center gap-3 text-sm text-text-secondary">
+                <span>Cargando términos</span>
+                <CommonsInlineDots aria-label="Cargando términos" :size="5" />
+              </div>
             </div>
-          </div>
-        </section>
+
+            <div v-else class="mt-6">
+              <div v-if="isPdfDocument" class="overflow-hidden rounded-lg border border-border bg-surface-secondary">
+                <iframe
+                  :src="pdfViewerUrl"
+                  title="Términos y Condiciones WARO Colombia"
+                  class="h-[72vh] min-h-[640px] w-full bg-white"
+                />
+              </div>
+
+              <div v-else class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text">
+                No se pudo cargar el PDF vigente de términos y condiciones.
+              </div>
+            </div>
+          </section>
+        </div>
       </section>
 
       <aside class="lg:sticky lg:top-6 lg:self-start">

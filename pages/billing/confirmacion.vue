@@ -4,12 +4,7 @@
       <p v-if="debugError" class="text-xs text-form-control-error absolute top-4 left-4 right-4 break-all">{{ debugError }}</p>
       <!-- Loading -->
       <div v-if="isLoading" class="text-center space-y-4">
-        <div class="flex justify-center">
-          <svg class="w-10 h-10 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-        </div>
+        <CommonsTheCustomLoader size="large" />
         <p class="text-sm text-text-secondary">Verificando tu pago...</p>
       </div>
 
