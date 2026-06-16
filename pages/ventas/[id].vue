@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
+import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 
 definePageMeta({
   layout: 'dashboard'
@@ -16,11 +17,11 @@ const { singular: tableSingular } = useTableLabel()
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
   key: () => ['payments', 'pos-methods', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
+  query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+const paymentGroups = computed(() => mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []))
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 const route = useRoute()
@@ -45,19 +46,23 @@ const selectedPaymentMethodId = ref<string | null>(null)
 const showFinalizeSalePanel = ref(false)
 const isFinalizingSale = ref(false)
 const finalizeSaleError = ref('')
-const finalizeMethodSearch = ref('')
 const finalizeSelectedGroup = computed(() =>
   paymentGroups.value.find(group => group.slug === selectedPaymentMethod.value) ?? null
 )
-const finalizeFilteredMethods = computed(() => {
-  const methods = finalizeSelectedGroup.value?.methods ?? []
-  const q = finalizeMethodSearch.value.trim().toLowerCase()
-  if (!q) return methods
-  return methods.filter(method => method.name.toLowerCase().includes(q))
-})
 const finalizeRequiresMethodSelection = computed(() =>
   (finalizeSelectedGroup.value?.methods?.length ?? 0) > 0 && !selectedPaymentMethodId.value
 )
+const finalizePaymentSelection = computed({
+  get: () => ({
+    slug: selectedPaymentMethod.value,
+    id: selectedPaymentMethodId.value,
+  }),
+  set: (selection: { slug: string; id: string | null }) => {
+    selectedPaymentMethod.value = selection.slug
+    selectedPaymentMethodId.value = selection.id
+    finalizeSaleError.value = ''
+  },
+})
 
 // Load order details
 const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
@@ -392,7 +397,6 @@ const openFinalizeSalePanel = () => {
   selectedNewStatus.value = ''
   selectedPaymentMethod.value = ''
   selectedPaymentMethodId.value = null
-  finalizeMethodSearch.value = ''
   finalizeSaleError.value = ''
   showFinalizeSalePanel.value = true
 }
@@ -402,11 +406,6 @@ const closeFinalizeSalePanel = () => {
   showFinalizeSalePanel.value = false
   finalizeSaleError.value = ''
 }
-
-watch(selectedPaymentMethod, () => {
-  selectedPaymentMethodId.value = null
-  finalizeMethodSearch.value = ''
-})
 
 const finalizePendingSale = async () => {
   if (!selectedPaymentMethod.value) {
@@ -1377,46 +1376,11 @@ onUnmounted(() => {
           <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
             <div>
               <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Método de pago</p>
-              <div class="grid grid-cols-2 gap-2">
-                <button
-                  v-for="group in paymentGroups"
-                  :key="group.slug"
-                  type="button"
-                  @click="selectedPaymentMethod = selectedPaymentMethod === group.slug ? '' : group.slug"
-                  class="min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
-                  :class="selectedPaymentMethod === group.slug
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                    : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
-                >
-                  {{ group.name }}
-                </button>
-              </div>
-            </div>
-
-            <div v-if="finalizeSelectedGroup?.methods?.length" class="space-y-2">
-              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método específico</p>
-              <div v-if="finalizeSelectedGroup.methods.length > 10" class="relative">
-                <input
-                  v-model="finalizeMethodSearch"
-                  type="text"
-                  placeholder="Buscar método..."
-                  class="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div class="grid grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
-                <button
-                  v-for="method in finalizeFilteredMethods"
-                  :key="method.id"
-                  type="button"
-                  @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
-                  class="min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all text-center active:scale-95"
-                  :class="selectedPaymentMethodId === method.id
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                    : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
-                >
-                  {{ method.name }}
-                </button>
-              </div>
+              <PaymentsPaymentMethodSelector
+                v-model="finalizePaymentSelection"
+                :groups="paymentGroups"
+                :disabled="isFinalizingSale"
+              />
             </div>
 
             <p v-if="finalizeSaleError" class="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
