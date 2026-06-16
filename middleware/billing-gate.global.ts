@@ -22,7 +22,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     // base URL variants (e.g. /waro-colombia/billing/...)
     '/waro-colombia/billing',
   ]
-  const skipExact = ['/', '/bogota']
+  const skipExact = ['/', '/bogota', '/terminos-y-condiciones']
 
   if (
     skipExact.includes(to.path) ||
@@ -36,16 +36,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const authStore = useAuthStore()
 
   // Same check used by tenants.global.js
-  if (!(authStore.session as any)?.success) return
+  if (!(authStore as any).session?.success) return
 
   const { currentTenant } = useTenantReactive()
   const tenantId = currentTenant.value?.id ?? 'none'
+  const cacheKey = ['billing', 'subscription', tenantId]
   const accessStatusCacheKey = ['billing', 'access-status', tenantId]
 
   const cache = useQueryCache()
 
   // Invalidate billing access cache when returning from a payment flow (/billing/...)
   if (from?.path?.startsWith('/billing')) {
+    await cache.invalidateQueries({ key: cacheKey })
     await cache.invalidateQueries({ key: accessStatusCacheKey })
   }
 

@@ -17,6 +17,7 @@
     />
     <DashboardBottomNav
       :active-page="activePage"
+      :billing-blocked="billingBlocked"
       :notifications-count="notificationsCount"
     />
   </div>
@@ -27,6 +28,7 @@ import type { ActivePage } from '~/constants/dashboardNavigation'
 
 defineProps<{
   activePage: ActivePage
+  billingBlocked: boolean
   notificationsCount: number
   isSidebarExpanded: boolean
   showPosCartBar: boolean

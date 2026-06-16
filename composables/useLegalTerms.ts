@@ -21,6 +21,7 @@ export interface LegalTermsDocument {
   published_at?: string | null
   privacy_policy_url?: string | null
   source_url?: string | null
+  display_mode?: string | null
   body_html?: string | null
   sections?: LegalTermsSection[]
   annexes?: LegalTermsAnnex[]
@@ -81,11 +82,18 @@ interface AuthSessionResponse {
   currentTenant?: { id?: string | null; slug?: string | null } | null
 }
 
+const TERMS_STATUS_TIMEOUT_MS = 12000
+
 const isAuthError = (err: any) =>
   err?.status === 401 ||
   err?.statusCode === 401 ||
   err?.status === 403 ||
   err?.statusCode === 403
+
+const isTimeoutError = (err: any) =>
+  err?.name === 'TimeoutError' ||
+  err?.name === 'AbortError' ||
+  /timeout|aborted/i.test(String(err?.message ?? ''))
 
 const unwrapApiData = <T>(response: ApiEnvelope<T> | T | null | undefined): T | null => {
   if (!response) return null
@@ -108,6 +116,7 @@ const mapApiDocument = (apiDocument: ApiLegalTermsDocument | LegalTermsDocument 
     published_at: documentPayload.published_at ?? null,
     privacy_policy_url: (metadata.privacy_policy_url as string | undefined) ?? null,
     source_url: documentPayload.content_url ?? documentPayload.source_url ?? null,
+    display_mode: (metadata.display_mode as string | undefined) ?? null,
     body_html: (metadata.body_html as string | undefined) ?? null,
     sections: Array.isArray(metadata.sections) ? metadata.sections as LegalTermsSection[] : [],
     annexes: (documentPayload.annexes ?? []).map((annex: ApiLegalTermsAnnex & LegalTermsAnnex) => ({
@@ -148,15 +157,36 @@ const mapAcceptResponseToStatus = (response: ApiEnvelope<{ current?: ApiLegalTer
   })
 }
 
+const fetchTermsStatus = async (retryOnTimeout = false): Promise<LegalTermsStatus | null> => {
+  try {
+    const response = await $fetch<ApiEnvelope<ApiLegalTermsStatus> | ApiLegalTermsStatus | null>('/api/legal/terms/status', {
+      credentials: 'include',
+      timeout: TERMS_STATUS_TIMEOUT_MS,
+    })
+    return mapApiStatus(unwrapApiData(response))
+  } catch (err) {
+    if (retryOnTimeout && isTimeoutError(err)) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      const response = await $fetch<ApiEnvelope<ApiLegalTermsStatus> | ApiLegalTermsStatus | null>('/api/legal/terms/status', {
+        credentials: 'include',
+        timeout: TERMS_STATUS_TIMEOUT_MS,
+      })
+      return mapApiStatus(unwrapApiData(response))
+    }
+    throw err
+  }
+}
+
 export const useLegalTerms = () => {
   const cache = useQueryCache()
+  const authStore = useAuthStore()
 
-  const { data: sessionData, status: sessionStatus } = useQuery({
+  const { data: sessionData } = useQuery({
     key: ['legal-terms', 'session'],
-    enabled: () => import.meta.client,
+    enabled: () => import.meta.client && !(authStore as any).session?.currentTenant?.id,
     query: async () => {
       try {
-        return await $fetch<AuthSessionResponse>('/api/auth/session', { credentials: 'include', timeout: 3000 })
+        return await $fetch<AuthSessionResponse>('/api/auth/session', { credentials: 'include', timeout: 10000 })
       } catch (err: any) {
         if (isAuthError(err)) return { success: false, currentTenant: null }
         return { success: false, currentTenant: null }
@@ -164,15 +194,16 @@ export const useLegalTerms = () => {
     },
   })
 
-  const tenantId = computed(() => sessionData.value?.currentTenant?.id ?? 'public')
-  const hasTenantSession = computed(() => !!sessionData.value?.success && !!sessionData.value?.currentTenant?.id)
+  const activeSession = computed<AuthSessionResponse | null>(() => (authStore as any).session ?? sessionData.value ?? null)
+  const tenantId = computed(() => activeSession.value?.currentTenant?.id ?? 'public')
+  const hasTenantSession = computed(() => !!activeSession.value?.success && !!activeSession.value?.currentTenant?.id)
 
   const { data: currentDocument, status: documentStatus, asyncStatus: documentAsyncStatus } = useQuery({
-    key: ['legal-terms', 'current'],
+    key: ['legal-terms', 'current', 'pdf-v11'],
     enabled: () => import.meta.client,
     query: async () => {
       try {
-        const response = await $fetch<ApiEnvelope<ApiLegalTermsDocument | null> | ApiLegalTermsDocument | null>('/api/legal/terms/current', { credentials: 'include', timeout: 4000 })
+        const response = await $fetch<ApiEnvelope<ApiLegalTermsDocument | null> | ApiLegalTermsDocument | null>(`/api/legal/terms/current?_=${Date.now()}`, { credentials: 'include', timeout: 10000 })
         return mapApiDocument(unwrapApiData(response))
       } catch (err: any) {
         if (isAuthError(err) || err?.status === 404 || err?.statusCode === 404) return null
@@ -181,13 +212,12 @@ export const useLegalTerms = () => {
     },
   })
 
-  const { data: statusData, status: termsStatus, asyncStatus: termsAsyncStatus } = useQuery({
+  const { data: statusData, asyncStatus: termsAsyncStatus } = useQuery({
     key: () => ['legal-terms', 'status', tenantId.value],
     enabled: () => import.meta.client && hasTenantSession.value,
     query: async () => {
       try {
-        const response = await $fetch<ApiEnvelope<ApiLegalTermsStatus> | ApiLegalTermsStatus | null>('/api/legal/terms/status', { credentials: 'include', timeout: 4000 })
-        return mapApiStatus(unwrapApiData(response))
+        return await fetchTermsStatus(true)
       } catch (err: any) {
         if (isAuthError(err) || err?.status === 404 || err?.statusCode === 404) return null
         return null
@@ -217,8 +247,7 @@ export const useLegalTerms = () => {
 
   const isInitialLoading = computed(() =>
     documentStatus.value === 'pending' ||
-    sessionStatus.value === 'pending' ||
-    (hasTenantSession.value && termsStatus.value === 'pending')
+    documentAsyncStatus.value === 'loading'
   )
 
   const isRefreshing = computed(() =>
@@ -231,8 +260,7 @@ export const useLegalTerms = () => {
   }
 
   const refreshTermsStatus = async (): Promise<LegalTermsStatus | null> => {
-    const response = await $fetch<ApiEnvelope<ApiLegalTermsStatus> | ApiLegalTermsStatus | null>('/api/legal/terms/status', { credentials: 'include', timeout: 4000 })
-    const result = mapApiStatus(unwrapApiData(response))
+    const result = await fetchTermsStatus(true)
     cache.setQueryData(['legal-terms', 'status', tenantId.value], result)
     return result
   }
