@@ -1835,11 +1835,15 @@ const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
 const canDeferDeliveryPayment = computed(() =>
-  deliveryEnabled.value && !isKitchenServiceMode.value
+  !!selectedCustomer.value && !isKitchenServiceMode.value
 )
 const isDeferredDeliveryPayment = computed(() =>
-  canDeferDeliveryPayment.value && !selectedPaymentMethod.value
+  deliveryEnabled.value && !isKitchenServiceMode.value && !selectedPaymentMethod.value
 )
+const deferDeliveryPayment = () => {
+  deliveryEnabled.value = true
+  selectedPaymentMethod.value = ''
+}
 
 // Reset sub-method and search when group changes
 watch(selectedPaymentMethod, () => {
@@ -2812,7 +2816,7 @@ onUnmounted(() => {
           <button
             v-if="!isLoadingPaymentMethods && canDeferDeliveryPayment"
             type="button"
-            @click="selectedPaymentMethod = ''"
+            @click="deferDeliveryPayment"
             class="w-full mb-3 min-h-[56px] px-4 py-3 rounded-xl border-2 text-left transition-all active:scale-[0.99] flex items-center justify-between gap-3"
             :class="isDeferredDeliveryPayment
               ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
@@ -2820,7 +2824,7 @@ onUnmounted(() => {
           >
             <span class="min-w-0">
               <span class="block text-sm font-bold leading-tight">Definir método al entregar</span>
-              <span class="block text-xs leading-snug mt-0.5">La venta quedará pendiente hasta finalizarla en ventas.</span>
+              <span class="block text-xs leading-snug mt-0.5">Activa domicilio y deja la venta pendiente hasta finalizarla en ventas.</span>
             </span>
             <svg
               class="w-5 h-5 flex-shrink-0"
