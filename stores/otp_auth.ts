@@ -26,6 +26,13 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
   const otpSentAt = ref<Date | null>(null)
   const otpExpiresAt = ref<Date | null>(null)
   const pickupPin = ref<string | null>(null)
+  const cooldownTick = ref(Date.now())
+
+  if (import.meta.client) {
+    setInterval(() => {
+      cooldownTick.value = Date.now()
+    }, 1000)
+  }
 
   // ── Mutations ──────────────────────────────────────────────────────────
 
@@ -91,7 +98,7 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
 
   const otpCooldownRemaining = computed(() => {
     if (!otpSentAt.value) return 0
-    const elapsed = Date.now() - otpSentAt.value.getTime()
+    const elapsed = cooldownTick.value - otpSentAt.value.getTime()
     const cooldown = 60000 // 60 seconds
     return Math.ceil(Math.max(0, cooldown - elapsed) / 1000)
   })
