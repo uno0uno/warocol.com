@@ -499,10 +499,7 @@ watch(() => currentTenant.value?.id, async () => {
   <div>
     <!-- Loading -->
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
-      <div class="flex items-center gap-3 text-sm text-text-secondary">
-        <UiLoadingMatrix size="5.5px" color="currentColor" />
-        Cargando billing
-      </div>
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error -->
@@ -817,10 +814,7 @@ watch(() => currentTenant.value?.id, async () => {
 
             <!-- Plans loading -->
             <div v-if="plansLoading" class="flex justify-center py-8">
-              <div class="flex items-center gap-3 text-sm text-text-secondary">
-                <UiLoadingMatrix size="5.5px" color="currentColor" />
-                Cargando planes
-              </div>
+              <CommonsTheCustomLoader size="medium" />
             </div>
 
             <!-- Plans grid -->
