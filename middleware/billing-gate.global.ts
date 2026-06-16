@@ -1,7 +1,7 @@
 /**
  * billing-gate.global.ts
  *
- * Redirects any authenticated user without an active subscription to /gestion/billing.
+ * Redirects authenticated users without billable access to /gestion/billing.
  * Runs after auth.global.js (alphabetical order).
  *
  * IMPORTANT: Do NOT call useBilling() here — it creates 7 Pinia Colada instances
@@ -45,47 +45,28 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   const cache = useQueryCache()
 
-  // Invalidate subscription cache when returning from a payment flow (/billing/...)
+  // Invalidate billing access cache when returning from a payment flow (/billing/...)
   if (from?.path?.startsWith('/billing')) {
     await cache.invalidateQueries({ key: cacheKey })
     await cache.invalidateQueries({ key: accessStatusCacheKey })
   }
 
+  // Try to get cached access status without creating a new useQuery instance
   let accessStatus = cache.getQueryData<{ level: string } | null>(accessStatusCacheKey)
 
   if (accessStatus === undefined) {
-    try {
-      accessStatus = await $fetch<{ level: string } | null>('/api/billing/access-status')
-      cache.setQueryData(accessStatusCacheKey, accessStatus)
-    } catch {
-      accessStatus = null
-    }
-  }
-
-  if (accessStatus?.level === 'blocked') {
-    return navigateTo('/gestion/billing')
-  }
-
-  // Try to get cached subscription without creating a new useQuery instance
-  let subscription = cache.getQueryData<{ status: string } | null>(cacheKey)
-
-  if (subscription === undefined) {
     // Not in cache — fetch directly and populate cache
     try {
-      subscription = await $fetch<{ status: string } | null>('/api/billing/subscription')
-        .catch((err: any) => {
-          if (err?.status === 404 || err?.statusCode === 404) return null
-          throw err
-        })
-      cache.setQueryData(cacheKey, subscription)
+      accessStatus = await $fetch<{ level: string }>('/api/billing/access-status')
+      cache.setQueryData(accessStatusCacheKey, accessStatus)
     } catch {
       // If fetch fails, don't block navigation
       return
     }
   }
 
-  const status = subscription?.status
-  const hasAccess = status === 'active' || status === 'past_due'
+  const level = accessStatus?.level
+  const hasAccess = level === 'full' || level === 'full_with_warning' || level === 'read_only'
 
   if (!hasAccess) {
     return navigateTo('/gestion/billing')
