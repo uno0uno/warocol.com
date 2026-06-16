@@ -1574,6 +1574,75 @@ const processOrder = async () => {
     return
   }
 
+  if (isDeferredDeliveryPayment.value && posStore.activeTableSession?.isBar) {
+    if (!addressStore.selectedAddressId) {
+      processingError.value = 'Selecciona o crea una dirección de entrega'
+      return
+    }
+    if (storeTabItems.value.length === 0) {
+      processingError.value = 'Agrega los ítems a la cuenta y envíalos a cocina antes de dejarla pendiente'
+      return
+    }
+
+    const session = posStore.activeTableSession
+    try {
+      isProcessing.value = true
+      processingError.value = ''
+      const response = await $fetch(`/api/tables/${session.tableId}/tab/defer-delivery-payment`, {
+        method: 'POST',
+        body: {
+          customer_id: selectedCustomer.value.id,
+          delivery_address_id: addressStore.selectedAddressId,
+          ...(deliveryInstructions.value.trim()
+            ? { delivery_instructions: deliveryInstructions.value.trim() }
+            : {}),
+        },
+      }) as {
+        success: boolean
+        message: string
+        data: {
+          order_id: string
+          order_number: number
+          total_amount: number
+          status: string
+          payment_status?: string | null
+          payment_method?: string | null
+        }
+      }
+
+      if (response.success) {
+        orderResult.value = {
+          order_id: response.data.order_id,
+          order_number: response.data.order_number,
+          total_amount: response.data.total_amount,
+          payment_method: response.data.payment_method ?? null,
+          status: response.data.status,
+          payment_status: response.data.payment_status ?? null,
+          customer_id: selectedCustomer.value.id,
+          standard_tax: taxPreview.value?.standard_tax ?? 0,
+          liquor_tax: taxPreview.value?.liquor_tax ?? 0,
+          standard_tax_label: taxPreview.value?.standard_tax_label ?? 'Impuesto',
+        }
+        wasMesaMode.value = false
+        cartItemsSnapshot.value = [...cartItems.value]
+        captureReceiptPrintContext()
+        receiptEmail.value = ''
+        emailSent.value = false
+        emailFromProfile.value = false
+        posStore.exitSession()
+        cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+        showSuccessModal.value = true
+        document.body.classList.remove('printing-prefactura')
+        prefacturaPrintSnapshot.value = null
+      }
+    } catch (error: any) {
+      processingError.value = error.data?.message || error.message || 'Error al dejar la venta pendiente'
+    } finally {
+      isProcessing.value = false
+    }
+    return
+  }
+
   if (isKitchenServiceMode.value) {
     const session = posStore.activeTableSession!
     if (session.isBar && storeTabItems.value.length === 0) {
@@ -1835,12 +1904,16 @@ const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
 const canDeferDeliveryPayment = computed(() =>
-  !!selectedCustomer.value && !isKitchenServiceMode.value
+  isDeliveryEligible.value
 )
 const isDeferredDeliveryPayment = computed(() =>
-  deliveryEnabled.value && !isKitchenServiceMode.value && !selectedPaymentMethod.value
+  deliveryEnabled.value && !isMesaMode.value && !selectedPaymentMethod.value
 )
 const deferDeliveryPayment = () => {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) {
+    processingError.value = 'Identifica un cliente real para registrar domicilio'
+    return
+  }
   deliveryEnabled.value = true
   selectedPaymentMethod.value = ''
 }
@@ -2813,33 +2886,46 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <button
-            v-if="!isLoadingPaymentMethods && canDeferDeliveryPayment"
-            type="button"
-            @click="deferDeliveryPayment"
-            class="w-full mb-3 min-h-[56px] px-4 py-3 rounded-xl border-2 text-left transition-all active:scale-[0.99] flex items-center justify-between gap-3"
-            :class="isDeferredDeliveryPayment
-              ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
-              : 'border-border bg-surface text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
-          >
-            <span class="min-w-0">
-              <span class="block text-sm font-bold leading-tight">Definir método al entregar</span>
-              <span class="block text-xs leading-snug mt-0.5">Activa domicilio y deja la venta pendiente hasta finalizarla en ventas.</span>
-            </span>
-            <svg
-              class="w-5 h-5 flex-shrink-0"
-              :class="isDeferredDeliveryPayment ? 'opacity-100' : 'opacity-40'"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-          </button>
-
           <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
           <div v-if="!isLoadingPaymentMethods" class="grid gap-2 md:gap-4" :class="paymentGridClass">
+            <button
+              v-if="canDeferDeliveryPayment"
+              type="button"
+              @click="deferDeliveryPayment"
+              class="cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]"
+              :class="isDeferredDeliveryPayment
+                ? 'border-status-warning-text/50 bg-status-warning-bg shadow-sm text-status-warning-text'
+                : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
+            >
+              <div class="flex items-center justify-between w-full">
+                <div class="bg-status-warning-bg text-status-warning-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 2.25m6-2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <svg
+                  class="h-4 w-4 transition-all hidden md:block text-status-warning-text"
+                  :class="isDeferredDeliveryPayment ? 'opacity-100' : 'opacity-0'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <div class="text-center md:text-left w-full">
+                <div class="font-semibold text-xs md:text-sm leading-tight">
+                  Al entregar
+                </div>
+              </div>
+              <div
+                v-if="isDeferredDeliveryPayment"
+                class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden bg-status-warning-text"
+              ></div>
+            </button>
             <label
               v-for="group in posPaymentGroups"
               :key="group.slug"
@@ -3669,7 +3755,9 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
             <span v-if="!isProcessing">
-              {{ selectedPaymentMethod === 'credit'
+              {{ isDeferredDeliveryPayment
+                ? 'Dejar venta pendiente'
+                : selectedPaymentMethod === 'credit'
                 ? 'Registrar como crédito'
                 : tipAmount > 0
                   ? `Confirmar — ${formatCurrency(finalChargedAmount)}`
@@ -3985,7 +4073,7 @@ onUnmounted(() => {
         <button
           @click="processOrder"
           v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
