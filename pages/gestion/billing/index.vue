@@ -177,9 +177,7 @@ const ensureTermsAcceptedForCheckout = async () => {
   }
 
   try {
-    const status = termsStatus.value?.accepted === true
-      ? termsStatus.value
-      : await refreshTermsStatus()
+    const status = await refreshTermsStatus()
 
     if (status?.accepted === true) return true
     await redirectToTermsAcceptance()

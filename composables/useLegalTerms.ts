@@ -219,7 +219,10 @@ export const useLegalTerms = () => {
     },
   })
 
-  const isInitialLoading = computed(() => documentStatus.value === 'pending')
+  const isInitialLoading = computed(() =>
+    documentStatus.value === 'pending' ||
+    documentAsyncStatus.value === 'loading'
+  )
 
   const isRefreshing = computed(() =>
     documentAsyncStatus.value === 'loading' ||
