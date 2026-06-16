@@ -12,6 +12,6 @@ const route = useRoute()
 
 const navigationItems = [
   { to: '/gestion/billing', label: 'Historial', exact: true },
-  { to: '/gestion/billing/uso', label: 'Uso de IA' },
+  { to: '/gestion/billing/uso', label: 'Uso restante' },
 ]
 </script>
