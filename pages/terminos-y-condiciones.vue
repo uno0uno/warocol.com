@@ -41,9 +41,9 @@
             </div>
           </div>
 
-          <div v-if="!currentDocument && isInitialLoading" class="flex min-h-64 items-center justify-center">
+          <div v-if="isDocumentLoading" class="flex min-h-64 items-center justify-center">
             <div class="flex items-center gap-3 text-sm text-text-secondary">
-              <UiLoadingDots size="8px" color="currentColor" />
+              <UiLoadingMatrix size="5.5px" color="currentColor" />
               Cargando términos
             </div>
           </div>
@@ -77,6 +77,10 @@
 
           <div v-if="isAccepted" class="mt-4 rounded-lg bg-status-success-bg p-3 text-sm leading-6 text-status-success-text">
             <p>Aceptado{{ acceptedVersionLabel }}{{ acceptedAtLabel }}.</p>
+            <p v-if="isRedirectingAfterAccept" class="mt-2 inline-flex items-center gap-2">
+              <UiLoadingDots size="7px" color="currentColor" />
+              Redirigiendo al pago
+            </p>
           </div>
 
           <div v-else-if="hasTenantSession" class="mt-5 space-y-4">
@@ -94,12 +98,12 @@
             <button
               type="button"
               class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-              :disabled="!canAcceptTerms || !hasConfirmedRead || isAccepting"
+              :disabled="!canAcceptTerms || !hasConfirmedRead || isAcceptingOrRedirecting"
               @click="handleAccept"
             >
-              <UiLoadingDots v-if="isAccepting" size="7px" color="currentColor" />
+              <UiLoadingDots v-if="isAcceptingOrRedirecting" size="7px" color="currentColor" />
               <CheckCircleIcon v-else class="h-4 w-4" />
-              {{ isAccepting ? 'Registrando aceptación' : 'Aceptar términos' }}
+              {{ isAcceptingOrRedirecting ? 'Registrando aceptación' : 'Aceptar términos' }}
             </button>
 
             <p v-if="acceptErrorMessage" class="rounded-lg bg-status-critical-bg p-3 text-sm leading-6 text-status-critical-text">
@@ -108,7 +112,7 @@
           </div>
 
           <NuxtLink
-            v-if="isAccepted && returnTarget"
+            v-if="isAccepted && returnTarget && !isRedirectingAfterAccept"
             :to="returnTarget"
             class="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary"
           >
@@ -155,20 +159,24 @@ const placeholderDocument: LegalTermsDocument = {
 
 const hasConfirmedRead = ref(false)
 const acceptErrorMessage = ref('')
+const hasAcceptedLocally = ref(false)
+const isRedirectingAfterAccept = ref(false)
 
 const document = computed<LegalTermsDocument>(() => currentDocument.value ?? placeholderDocument)
+const sourceUrl = computed(() => currentDocument.value?.source_url || '')
 const isPdfDocument = computed(() => {
+  if (!currentDocument.value || !sourceUrl.value) return false
   if (document.value.display_mode === 'pdf') return true
-  const sourceUrl = document.value.source_url || ''
-  return /\.pdf($|[?#])/i.test(sourceUrl)
+  return /\.pdf($|[?#])/i.test(sourceUrl.value)
 })
 const pdfViewerUrl = computed(() => {
-  const sourceUrl = document.value.source_url || ''
-  if (!sourceUrl) return ''
-  const separator = sourceUrl.includes('#') ? '&' : '#'
-  return `${sourceUrl}${separator}navpanes=0&toolbar=1&view=FitH`
+  if (!sourceUrl.value) return ''
+  const separator = sourceUrl.value.includes('#') ? '&' : '#'
+  return `${sourceUrl.value}${separator}navpanes=0&toolbar=1&view=FitH`
 })
-const isAccepted = computed(() => statusData.value?.accepted === true)
+const isDocumentLoading = computed(() => !currentDocument.value && isInitialLoading.value)
+const isAccepted = computed(() => hasAcceptedLocally.value || statusData.value?.accepted === true)
+const isAcceptingOrRedirecting = computed(() => isAccepting.value || isRedirectingAfterAccept.value)
 const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocument.value && isPdfDocument.value)
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
@@ -204,11 +212,18 @@ watch(acceptError, (err) => {
 
 const handleAccept = async () => {
   acceptErrorMessage.value = ''
+  isRedirectingAfterAccept.value = false
   try {
     await acceptTerms({ document_id: document.value.id, version: document.value.version })
+    hasAcceptedLocally.value = true
     toast.success('Aceptación registrada', { title: 'Términos y Condiciones' })
-    if (returnTarget.value) await navigateTo(returnTarget.value)
+    if (returnTarget.value) {
+      isRedirectingAfterAccept.value = true
+      await navigateTo(returnTarget.value)
+    }
   } catch (err) {
+    hasAcceptedLocally.value = false
+    isRedirectingAfterAccept.value = false
     acceptErrorMessage.value = extractApiError(err, 'No se pudo registrar la aceptación.')
   }
 }
