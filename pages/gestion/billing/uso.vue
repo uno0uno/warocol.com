@@ -91,7 +91,10 @@ const periodLabel = computed(() => {
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
-      <CommonsTheCustomLoader size="large" />
+      <div class="flex items-center gap-3 text-sm text-text-secondary">
+        <UiLoadingMatrix size="5.5px" color="currentColor" />
+        Cargando uso
+      </div>
     </div>
 
     <template v-else>
