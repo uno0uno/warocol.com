@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-import { useBilling, type BillingPlan } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingUsageMetric } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
 
 const {
-  plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
+  plans, subscription, accessStatus, remainingUsage, events, eventsTotal, loading, isRefreshing, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
 } = useBilling()
 
@@ -20,7 +20,12 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 
 const isInitialLoading = computed(() =>
   !!currentTenant.value &&
-  (plans.value === undefined || subscription.value === undefined || accessStatus.value === undefined)
+  (
+    plans.value === undefined ||
+    subscription.value === undefined ||
+    accessStatus.value === undefined ||
+    (subscription.value !== null && remainingUsage.value === undefined)
+  )
 )
 
 // ── Pagination ───────────────────────────────────────────────────
@@ -34,25 +39,48 @@ const goToPage = async (page: number) => {
   await fetchMyEvents(PAGE_SIZE, (p - 1) * PAGE_SIZE)
 }
 
-// ── Usage bar ────────────────────────────────────────────────────
-const scansUsed = computed(() => subscription.value?.scans_used ?? 0)
-const scansPercentage = computed(() =>
-  subscription.value?.scan_limit ? (scansUsed.value / subscription.value.scan_limit) * 100 : 0
+// ── Usage bars ───────────────────────────────────────────────────
+const fallbackUsageMetric = (used = 0, limit = 0): BillingUsageMetric => ({
+  used,
+  limit,
+  remaining: Math.max(limit - used, 0),
+  period_start: subscription.value?.current_period_start ?? '',
+  period_end: subscription.value?.current_period_end ?? '',
+})
+
+const scanUsage = computed<BillingUsageMetric>(() =>
+  remainingUsage.value?.scan_usage ??
+  fallbackUsageMetric(subscription.value?.scans_used ?? 0, subscription.value?.scan_limit ?? 0)
 )
-const barColorClass = computed(() => {
-  const p = scansPercentage.value
+const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
+  remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
+)
+
+const usagePercentage = (metric: BillingUsageMetric) =>
+  metric.limit > 0 ? (metric.used / metric.limit) * 100 : 0
+
+const scanPercentage = computed(() => usagePercentage(scanUsage.value))
+const electronicInvoicePercentage = computed(() => usagePercentage(electronicInvoiceUsage.value))
+
+const usageBarColorClass = (percentage: number) => {
+  const p = percentage
   if (p >= 100) return 'bg-status-critical-text'
   if (p >= 80)  return 'bg-status-warning-text'
   if (p >= 50)  return 'bg-status-info-text'
   return 'bg-status-success-text'
-})
-const barLabelClass = computed(() => {
-  const p = scansPercentage.value
+}
+const usageLabelClass = (percentage: number) => {
+  const p = percentage
   if (p >= 100) return 'text-status-critical-text'
   if (p >= 80)  return 'text-status-warning-text'
   if (p >= 50)  return 'text-status-info-text'
   return 'text-text-secondary'
-})
+}
+
+const scanBarColorClass = computed(() => usageBarColorClass(scanPercentage.value))
+const scanLabelClass = computed(() => usageLabelClass(scanPercentage.value))
+const electronicInvoiceBarColorClass = computed(() => usageBarColorClass(electronicInvoicePercentage.value))
+const electronicInvoiceLabelClass = computed(() => usageLabelClass(electronicInvoicePercentage.value))
 
 // ── Subscribe modal (2-step wizard) ─────────────────────────────
 const showModal       = ref(false)
@@ -517,31 +545,70 @@ watch(() => currentTenant.value?.id, async () => {
           </div>
         </div>
 
-        <!-- Usage bar (only when subscription exists) -->
-        <div v-if="subscription" class="px-6 py-5">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Escaneos — período actual</p>
-            <p :class="['text-xs font-semibold', barLabelClass]">{{ scansPercentage.toFixed(0) }}%</p>
-          </div>
-          <div
-            class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
-            role="progressbar"
-            :aria-valuenow="scansUsed"
-            aria-valuemin="0"
-            :aria-valuemax="subscription.scan_limit ?? 0"
-            :aria-label="`${scansUsed} de ${subscription.scan_limit} escaneos usados`"
-          >
+        <!-- Usage bars (only when subscription exists) -->
+        <div v-if="subscription" class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border">
+          <div class="px-6 py-5">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Escaneos — período actual</p>
+              <p :class="['text-xs font-semibold', scanLabelClass]">{{ scanPercentage.toFixed(0) }}%</p>
+            </div>
             <div
-              :class="['h-full rounded-full transition-all duration-500', barColorClass]"
-              :style="{ width: `${Math.min(scansPercentage, 100)}%` }"
-            />
+              class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
+              role="progressbar"
+              :aria-valuenow="scanUsage.used"
+              aria-valuemin="0"
+              :aria-valuemax="scanUsage.limit"
+              :aria-label="`${scanUsage.used} de ${scanUsage.limit} escaneos usados`"
+            >
+              <div
+                :class="['h-full rounded-full transition-all duration-500', scanBarColorClass]"
+                :style="{ width: `${Math.min(scanPercentage, 100)}%` }"
+              />
+            </div>
+            <p class="mt-2 text-sm text-text-secondary">
+              <span class="font-semibold text-text-primary">{{ scanUsage.used.toLocaleString('es-CO') }}</span>
+              de
+              <span class="font-semibold text-text-primary">{{ scanUsage.limit.toLocaleString('es-CO') }}</span>
+              escaneos usados
+            </p>
+            <p class="mt-1 text-xs text-text-secondary">
+              {{ scanUsage.remaining.toLocaleString('es-CO') }} restantes
+            </p>
           </div>
-          <p class="mt-2 text-sm text-text-secondary">
-            <span class="font-semibold text-text-primary">{{ scansUsed.toLocaleString('es-CO') }}</span>
-            de
-            <span class="font-semibold text-text-primary">{{ (subscription.scan_limit ?? 0).toLocaleString('es-CO') }}</span>
-            escaneos usados
-          </p>
+
+          <div class="px-6 py-5">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Facturación electrónica</p>
+              <p :class="['text-xs font-semibold', electronicInvoiceLabelClass]">{{ electronicInvoicePercentage.toFixed(0) }}%</p>
+            </div>
+            <div
+              class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
+              role="progressbar"
+              :aria-valuenow="electronicInvoiceUsage.used"
+              aria-valuemin="0"
+              :aria-valuemax="electronicInvoiceUsage.limit"
+              :aria-label="`${electronicInvoiceUsage.used} de ${electronicInvoiceUsage.limit} facturas electronicas usadas`"
+            >
+              <div
+                :class="['h-full rounded-full transition-all duration-500', electronicInvoiceBarColorClass]"
+                :style="{ width: `${Math.min(electronicInvoicePercentage, 100)}%` }"
+              />
+            </div>
+            <p class="mt-2 text-sm text-text-secondary">
+              <span class="font-semibold text-text-primary">{{ electronicInvoiceUsage.used.toLocaleString('es-CO') }}</span>
+              de
+              <span class="font-semibold text-text-primary">{{ electronicInvoiceUsage.limit.toLocaleString('es-CO') }}</span>
+              facturas usadas
+            </p>
+            <p class="mt-1 text-xs text-text-secondary">
+              <template v-if="electronicInvoiceUsage.limit > 0">
+                {{ electronicInvoiceUsage.remaining.toLocaleString('es-CO') }} restantes
+              </template>
+              <template v-else>
+                Sin cupo pagado - 0 restantes
+              </template>
+            </p>
+          </div>
         </div>
 
         <!-- No subscription placeholder -->

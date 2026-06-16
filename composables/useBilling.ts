@@ -76,6 +76,21 @@ export interface ScanMonthlyEntry {
   scans_count: number
 }
 
+export interface BillingUsageMetric {
+  used: number
+  limit: number
+  remaining: number
+  period_start: string
+  period_end: string
+}
+
+export interface BillingRemainingUsage {
+  period_start: string
+  period_end: string
+  scan_usage: BillingUsageMetric
+  electronic_invoice_usage: BillingUsageMetric
+}
+
 export const useBilling = () => {
   const cache = useQueryCache()
   const { currentTenant } = useTenantReactive()
@@ -119,6 +134,19 @@ export const useBilling = () => {
     enabled: () => import.meta.client && !!currentTenant.value,
   })
 
+  const { data: remainingUsage, status: remainingUsageStatus, asyncStatus: remainingUsageAsyncStatus } = useQuery({
+    key: () => ['billing', 'remaining-usage', tenantId.value],
+    query: async () => {
+      try {
+        return await $fetch<BillingRemainingUsage>('/api/billing/remaining-usage')
+      } catch (err: any) {
+        if (err?.status === 404 || err?.statusCode === 404) return null
+        throw err
+      }
+    },
+    enabled: () => import.meta.client && !!currentTenant.value,
+  })
+
   const { data: eventsData, status: eventsStatus, asyncStatus: eventsAsyncStatus } = useQuery({
     key: () => ['billing', 'events', tenantId.value, eventsPage.value, eventsLimit.value],
     query: () => $fetch<BillingEventsResponse>(
@@ -156,12 +184,14 @@ export const useBilling = () => {
     (subscriptionAsyncStatus.value === 'loading' && subscription.value != null) ||
     (accessStatusAsyncStatus.value === 'loading' && accessStatus.value != null) ||
     (usageAsyncStatus.value === 'loading' && usageHistoryData.value != null) ||
+    (remainingUsageAsyncStatus.value === 'loading' && remainingUsage.value != null) ||
     (eventsAsyncStatus.value === 'loading' && eventsData.value != null)
   )
 
   const error = computed(() =>
     (plansStatus.value === 'error' ? 'Error al cargar planes' : null) ||
     (subscriptionStatus.value === 'error' ? 'Error al cargar suscripción' : null) ||
+    (remainingUsageStatus.value === 'error' ? 'Error al cargar uso de facturación' : null) ||
     null
   )
 
@@ -224,6 +254,7 @@ export const useBilling = () => {
     plans,
     subscription,
     accessStatus,
+    remainingUsage,
     usageHistory,
     events,
     eventsTotal,
