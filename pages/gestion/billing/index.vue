@@ -499,7 +499,10 @@ watch(() => currentTenant.value?.id, async () => {
   <div>
     <!-- Loading -->
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
-      <CommonsTheCustomLoader size="large" />
+      <div class="flex items-center gap-3 text-sm text-text-secondary">
+        <UiLoadingMatrix size="5.5px" color="currentColor" />
+        Cargando billing
+      </div>
     </div>
 
     <!-- Error -->
@@ -814,7 +817,10 @@ watch(() => currentTenant.value?.id, async () => {
 
             <!-- Plans loading -->
             <div v-if="plansLoading" class="flex justify-center py-8">
-              <CommonsTheCustomLoader size="medium" />
+              <div class="flex items-center gap-3 text-sm text-text-secondary">
+                <UiLoadingMatrix size="5.5px" color="currentColor" />
+                Cargando planes
+              </div>
             </div>
 
             <!-- Plans grid -->
@@ -933,10 +939,7 @@ watch(() => currentTenant.value?.id, async () => {
               :disabled="subscribing"
               class="w-full py-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <svg v-if="subscribing" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
+              <UiLoadingDots v-if="subscribing" size="9px" color="currentColor" />
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>

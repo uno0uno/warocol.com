@@ -4,9 +4,7 @@
   <Teleport to="body">
     <div v-if="isLoggingOut" class="logout-overlay fixed inset-0 flex items-center justify-center z-[9999]">
       <div class="logout-card rounded-2xl shadow-xl p-8 flex flex-col items-center">
-        <div class="w-16 h-16 mb-4">
-          <div class="logout-spinner w-16 h-16 border-4 rounded-full animate-spin"></div>
-        </div>
+        <UiLoadingMatrix class="mb-4" size="9px" color="currentColor" />
         <p class="logout-title text-lg font-medium">Cerrando sesión...</p>
         <p class="logout-message text-sm mt-2">Por favor espera</p>
       </div>
@@ -254,11 +252,6 @@ const handleLogout = async () => {
 
 .logout-card {
   background-color: hsl(var(--nav-overlay-card-bg));
-}
-
-.logout-spinner {
-  border-color: hsl(var(--nav-loading-spinner));
-  border-top-color: transparent;
 }
 
 .logout-title {
