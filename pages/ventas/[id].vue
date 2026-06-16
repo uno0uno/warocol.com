@@ -41,6 +41,23 @@ const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
 const isUpdatingStatus = ref(false)
 const selectedNewStatus = ref('')
 const selectedPaymentMethod = ref('')
+const selectedPaymentMethodId = ref<string | null>(null)
+const showFinalizeSalePanel = ref(false)
+const isFinalizingSale = ref(false)
+const finalizeSaleError = ref('')
+const finalizeMethodSearch = ref('')
+const finalizeSelectedGroup = computed(() =>
+  paymentGroups.value.find(group => group.slug === selectedPaymentMethod.value) ?? null
+)
+const finalizeFilteredMethods = computed(() => {
+  const methods = finalizeSelectedGroup.value?.methods ?? []
+  const q = finalizeMethodSearch.value.trim().toLowerCase()
+  if (!q) return methods
+  return methods.filter(method => method.name.toLowerCase().includes(q))
+})
+const finalizeRequiresMethodSelection = computed(() =>
+  (finalizeSelectedGroup.value?.methods?.length ?? 0) > 0 && !selectedPaymentMethodId.value
+)
 
 // Load order details
 const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
@@ -371,6 +388,60 @@ const updateStatus = async () => {
   }
 }
 
+const openFinalizeSalePanel = () => {
+  selectedNewStatus.value = ''
+  selectedPaymentMethod.value = ''
+  selectedPaymentMethodId.value = null
+  finalizeMethodSearch.value = ''
+  finalizeSaleError.value = ''
+  showFinalizeSalePanel.value = true
+}
+
+const closeFinalizeSalePanel = () => {
+  if (isFinalizingSale.value) return
+  showFinalizeSalePanel.value = false
+  finalizeSaleError.value = ''
+}
+
+watch(selectedPaymentMethod, () => {
+  selectedPaymentMethodId.value = null
+  finalizeMethodSearch.value = ''
+})
+
+const finalizePendingSale = async () => {
+  if (!selectedPaymentMethod.value) {
+    finalizeSaleError.value = 'Selecciona un método de pago'
+    return
+  }
+  if (finalizeRequiresMethodSelection.value) {
+    finalizeSaleError.value = 'Selecciona el método específico'
+    return
+  }
+  isFinalizingSale.value = true
+  finalizeSaleError.value = ''
+  try {
+    await $fetch(`/api/orders/${orderId.value}/status`, {
+      method: 'PATCH',
+      body: {
+        status: 'completed',
+        payment_method: selectedPaymentMethod.value,
+        payment_method_id: selectedPaymentMethodId.value || undefined,
+        customer_id: order.value?.customer?.id || undefined,
+      },
+    })
+    await refetchOrder()
+    await refetchInvoice()
+    showFinalizeSalePanel.value = false
+    selectedPaymentMethod.value = ''
+    selectedPaymentMethodId.value = null
+    useToast().success('Venta finalizada correctamente', { title: 'Listo' })
+  } catch (error: any) {
+    finalizeSaleError.value = error.data?.message || error.data?.detail || 'Error al finalizar la venta'
+  } finally {
+    isFinalizingSale.value = false
+  }
+}
+
 // Save changes - backend handles inventory restock automatically
 const saveChanges = async () => {
   if (!hasChanges.value) return
@@ -524,7 +595,7 @@ onUnmounted(() => {
                 Cobro dividido · {{ order.split_payments.length }} pagos
               </template>
               <template v-else>
-                {{ resolveLabel(order.payment_method, order.payment_method_id) }}
+                {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : 'Sin registrar' }}
               </template>
             </p>
             <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0"
@@ -533,6 +604,21 @@ onUnmounted(() => {
             </svg>
           </div>
         </component>
+
+        <button
+          v-if="order.status === 'pending'"
+          type="button"
+          @click="openFinalizeSalePanel"
+          class="bg-status-success-bg border-2 border-status-success-text/30 rounded-xl p-4 text-left w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
+        >
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2">Acción pendiente</p>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-lg font-bold leading-tight">Finalizar venta</span>
+            <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </button>
 
         <!-- Source / Origin -->
         <div class="bg-surface border border-border rounded-xl p-4">
@@ -1252,6 +1338,106 @@ onUnmounted(() => {
       </div>
 
     </div>
+
+    <!-- Finalize Pending Sale Slide-over -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
+        enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100"
+        leave-to-class="opacity-0">
+        <div v-if="showFinalizeSalePanel" class="fixed inset-0 z-40 bg-black/40"
+          @click="closeFinalizeSalePanel" aria-hidden="true" />
+      </Transition>
+
+      <Transition name="panel">
+        <div v-if="showFinalizeSalePanel" role="dialog" aria-modal="true" aria-label="Finalizar venta pendiente"
+          class="fixed z-50 flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          </div>
+
+          <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight">Finalizar venta</h2>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                  Orden #{{ order.order_number }} · {{ formatCurrency(order.total_amount) }}
+                </p>
+              </div>
+              <button @click="closeFinalizeSalePanel" type="button" aria-label="Cerrar panel"
+                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+            <div>
+              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Método de pago</p>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  v-for="group in paymentGroups"
+                  :key="group.slug"
+                  type="button"
+                  @click="selectedPaymentMethod = selectedPaymentMethod === group.slug ? '' : group.slug"
+                  class="min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
+                  :class="selectedPaymentMethod === group.slug
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
+                >
+                  {{ group.name }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="finalizeSelectedGroup?.methods?.length" class="space-y-2">
+              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método específico</p>
+              <div v-if="finalizeSelectedGroup.methods.length > 10" class="relative">
+                <input
+                  v-model="finalizeMethodSearch"
+                  type="text"
+                  placeholder="Buscar método..."
+                  class="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
+                <button
+                  v-for="method in finalizeFilteredMethods"
+                  :key="method.id"
+                  type="button"
+                  @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
+                  class="min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all text-center active:scale-95"
+                  :class="selectedPaymentMethodId === method.id
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
+                >
+                  {{ method.name }}
+                </button>
+              </div>
+            </div>
+
+            <p v-if="finalizeSaleError" class="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+              {{ finalizeSaleError }}
+            </p>
+          </div>
+
+          <div class="flex-shrink-0 border-t border-border p-6">
+            <button
+              type="button"
+              @click="finalizePendingSale"
+              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection"
+              class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            >
+              <UiLoadingDots v-if="isFinalizingSale" size="9px" />
+              <span v-else>Finalizar venta</span>
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Split Payments Slide-over -->
     <Teleport to="body">

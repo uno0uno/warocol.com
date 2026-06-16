@@ -98,8 +98,10 @@ const showSuccessModal = ref(false)
 const orderResult = ref<{
   order_number: number
   total_amount: number
-  payment_method: string
+  payment_method?: string | null
   payment_method_name?: string
+  status?: string
+  payment_status?: string | null
   customer_id?: string
   discount_amount?: number
   subtotal?: number
@@ -1689,10 +1691,14 @@ const processOrder = async () => {
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
-        payment_method: selectedPaymentMethod.value,
+        ...(isDeferredDeliveryPayment.value
+          ? {}
+          : {
+              payment_method: selectedPaymentMethod.value,
+              payment_method_id: selectedPaymentMethodId.value ?? null,
+            }),
         customer_id: selectedCustomer.value.id,
-        payment_method_id: selectedPaymentMethodId.value ?? null,
-        ...(selectedGroup.value?.triggersCartera && creditDueDate.value
+        ...(selectedGroup.value?.triggersCartera && creditDueDate.value && !isDeferredDeliveryPayment.value
           ? { credit_due_date: creditDueDate.value }
           : {}),
         ...(discountEnabled.value && _discountAmtPos > 0
@@ -1702,7 +1708,7 @@ const processOrder = async () => {
           ? { table_session_id: posStore.activeTableSession.sessionId }
           : {}),
         // Issue #524 — single-payment cash sale: capture cash_received on the order
-        ...(isCashMethod.value
+        ...(isCashMethod.value && !isDeferredDeliveryPayment.value
           ? { cash_received: Number(cashReceivedInput.value) }
           : {}),
         ...(deliveryEnabled.value && addressStore.selectedAddressId
@@ -1728,7 +1734,9 @@ const processOrder = async () => {
         tip_amount?: number
         tip_source?: string
         charged_amount?: number
-        payment_method: string
+        payment_method?: string | null
+        payment_status?: string | null
+        status?: string
         items_count: number
         standard_tax?: number
         liquor_tax?: number
@@ -1751,6 +1759,8 @@ const processOrder = async () => {
         total_amount: response.data.total_amount,
         payment_method: response.data.payment_method,
         payment_method_name: subMethodName,
+        status: response.data.status,
+        payment_status: response.data.payment_status,
         customer_id: selectedCustomer.value?.id,
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
@@ -1824,11 +1834,22 @@ const onCustomerIdentified = async (customer: { id: string; name: string | null;
 const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
+const canDeferDeliveryPayment = computed(() =>
+  deliveryEnabled.value && !isKitchenServiceMode.value
+)
+const isDeferredDeliveryPayment = computed(() =>
+  canDeferDeliveryPayment.value && !selectedPaymentMethod.value
+)
 
 // Reset sub-method and search when group changes
 watch(selectedPaymentMethod, () => {
   selectedPaymentMethodId.value = null
   methodSearch.value = ''
+})
+watch(deliveryEnabled, (enabled) => {
+  if (!enabled && !selectedPaymentMethod.value) {
+    selectedPaymentMethod.value = 'cash'
+  }
 })
 
 // ── Issue #524 — Cash tender + change calculation ────────────────────────────
@@ -2788,8 +2809,33 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <button
+            v-if="!isLoadingPaymentMethods && canDeferDeliveryPayment"
+            type="button"
+            @click="selectedPaymentMethod = ''"
+            class="w-full mb-3 min-h-[56px] px-4 py-3 rounded-xl border-2 text-left transition-all active:scale-[0.99] flex items-center justify-between gap-3"
+            :class="isDeferredDeliveryPayment
+              ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
+              : 'border-border bg-surface text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
+          >
+            <span class="min-w-0">
+              <span class="block text-sm font-bold leading-tight">Definir método al entregar</span>
+              <span class="block text-xs leading-snug mt-0.5">La venta quedará pendiente hasta finalizarla en ventas.</span>
+            </span>
+            <svg
+              class="w-5 h-5 flex-shrink-0"
+              :class="isDeferredDeliveryPayment ? 'opacity-100' : 'opacity-40'"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </button>
+
           <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
-          <div v-else class="grid gap-2 md:gap-4" :class="paymentGridClass">
+          <div v-if="!isLoadingPaymentMethods" class="grid gap-2 md:gap-4" :class="paymentGridClass">
             <label
               v-for="group in posPaymentGroups"
               :key="group.slug"
@@ -3942,7 +3988,9 @@ onUnmounted(() => {
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
-          <span v-if="!isProcessing">{{ selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}</span>
+          <span v-if="!isProcessing">
+            {{ isDeferredDeliveryPayment ? 'Dejar venta pendiente' : selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}
+          </span>
         </button>
         <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
 
@@ -4081,10 +4129,22 @@ onUnmounted(() => {
 
           <!-- Title -->
           <h3 class="text-xl font-bold text-text-primary text-center mb-2">
-            {{ orderResult?.payment_method === 'credit' ? 'Orden registrada como crédito' : 'Venta Completada' }}
+            {{
+              orderResult?.status === 'pending'
+                ? 'Venta pendiente'
+                : orderResult?.payment_method === 'credit'
+                  ? 'Orden registrada como crédito'
+                  : 'Venta Completada'
+            }}
           </h3>
           <p class="text-text-secondary text-center mb-4">
-            {{ orderResult?.payment_method === 'credit' ? 'El pago queda pendiente para el cliente' : 'La orden ha sido procesada exitosamente' }}
+            {{
+              orderResult?.status === 'pending'
+                ? 'Podrás finalizarla desde ventas cuando conozcas el método de pago.'
+                : orderResult?.payment_method === 'credit'
+                  ? 'El pago queda pendiente para el cliente'
+                  : 'La orden ha sido procesada exitosamente'
+            }}
           </p>
 
           <!-- Credit notice banner -->
@@ -4150,15 +4210,19 @@ onUnmounted(() => {
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Método de Pago</span>
               <span class="text-sm font-medium text-text-primary">
-                {{ orderResult.payment_method_name
-                    ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
-                    : getPaymentMethodLabel(orderResult.payment_method) }}
+                {{
+                  orderResult.payment_method
+                    ? (orderResult.payment_method_name
+                        ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
+                        : getPaymentMethodLabel(orderResult.payment_method))
+                    : 'Pendiente por definir'
+                }}
               </span>
             </div>
           </div>
 
           <!-- Electronic invoice (DIAN) — cashier triggers emission, but never sees CUFE/PDF -->
-          <div v-if="orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0" class="mb-4">
+          <div v-if="orderResult?.status !== 'pending' && (orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0)" class="mb-4">
             <!-- Not requested yet — gated on tenant readiness (#450) -->
             <template v-if="isInvoicingReady && !isReadinessLoading && !invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
               <button
@@ -4631,9 +4695,11 @@ onUnmounted(() => {
     <template v-else>
       <div class="receipt-item receipt-small">
         <span>{{
-          orderResult?.payment_method_name
-            ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
-            : getPaymentMethodLabel(orderResult?.payment_method ?? '')
+          orderResult?.payment_method
+            ? (orderResult?.payment_method_name
+                ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
+                : getPaymentMethodLabel(orderResult.payment_method))
+            : 'Pendiente por definir'
         }}</span>
         <span>{{ formatCurrency(orderResult?.charged_amount ?? orderResult?.total_amount ?? 0) }}</span>
       </div>
