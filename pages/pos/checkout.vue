@@ -117,6 +117,7 @@ const orderResult = ref<{
   order_ids?: string[]
   tip_amount?: number
   charged_amount?: number
+  advance_applied?: number
   cash_received?: number
   change?: number
 } | null>(null)
@@ -151,6 +152,7 @@ interface ReceiptPrintContext {
   customerFiscalBusinessName: string | null
   singlePaymentCashReceived: number | null
   singlePaymentChange: number | null
+  advanceApplied: number
 }
 
 const receiptPrintContext = ref<ReceiptPrintContext | null>(null)
@@ -1691,6 +1693,8 @@ const processOrder = async () => {
       cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
 
       // Mesa close usually returns multiple orders; use the first order number (if provided)
+      const mesaAdvanceApplied = Number(closeResponse?.data?.advance_applied ?? checkoutSummaryAdvanceApplied.value) || 0
+      const mesaChargedAmount = Number(closeResponse?.data?.charged_amount ?? finalAmountToCollect.value) || 0
       const mesaOrderNumber =
         Number(closeResponse?.data?.order_number) ||
         Number(closeResponse?.data?.order_numbers?.[0]) ||
@@ -1710,7 +1714,10 @@ const processOrder = async () => {
         // warocol.com#639 — surface tip in the success modal when the mesa close
         // returned a tip_amount (server-side validated against tenant.tip_enabled).
         ...(closeResponse.data?.tip_amount && closeResponse.data.tip_amount > 0
-          ? { tip_amount: closeResponse.data.tip_amount, charged_amount: closeResponse.data.charged_amount }
+          ? { tip_amount: closeResponse.data.tip_amount }
+          : {}),
+        ...(mesaAdvanceApplied > 0 || closeResponse.data?.tip_amount > 0
+          ? { advance_applied: mesaAdvanceApplied, charged_amount: mesaChargedAmount }
           : {}),
         ...waroOrderResultFields(closeResponse.data?.waro_redemption_summary, _subtotal),
       }
@@ -2210,13 +2217,19 @@ const prefacturaAmountDue = computed(() =>
 
 /** Resumen de la Orden — order total incl. taxes; amount due adds tip settlement (#737). */
 const checkoutSummaryOrderTotal = computed(() => prefacturaOrderTotal.value)
-const checkoutSummaryAmountDue = computed(() => prefacturaAmountDue.value)
+const checkoutSummaryAdvanceApplied = computed(() =>
+  Math.min(prefacturaAmountDue.value, mesaAdvanceAppliedEstimate.value)
+)
+const checkoutSummaryAmountDue = computed(() =>
+  Math.max(0, prefacturaAmountDue.value - checkoutSummaryAdvanceApplied.value)
+)
 
 type PrefacturaPrintSnapshot = {
   orderTotal: number
   tipAmount: number
   tipTaxAmount: number
   tipTaxLabel: string
+  advanceApplied: number
   amountDue: number
   splitPayments: ReceiptPaymentLine[]
   splitRemaining: number
@@ -2239,7 +2252,8 @@ const prefacturaPrintData = computed(() => {
     tipAmount: tipAmount.value,
     tipTaxAmount: tipTaxAmount.value,
     tipTaxLabel: tipTaxLabel.value,
-    amountDue: prefacturaAmountDue.value,
+    advanceApplied: checkoutSummaryAdvanceApplied.value,
+    amountDue: checkoutSummaryAmountDue.value,
     splitPayments: splitPayments.value,
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
@@ -2276,7 +2290,8 @@ function capturePrefacturaPrintSnapshot() {
     tipAmount: tipAmount.value,
     tipTaxAmount: tipTaxAmount.value,
     tipTaxLabel: tipTaxLabel.value,
-    amountDue: prefacturaAmountDue.value,
+    advanceApplied: checkoutSummaryAdvanceApplied.value,
+    amountDue: checkoutSummaryAmountDue.value,
     splitPayments: splitPayments.value.map(p => ({ ...p })),
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
@@ -2343,6 +2358,7 @@ function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null;
     customerFiscalBusinessName: customer?.fiscal_business_name ?? null,
     singlePaymentCashReceived: opts?.singleCashReceived ?? null,
     singlePaymentChange: opts?.singleCashChange ?? null,
+    advanceApplied: checkoutSummaryAdvanceApplied.value,
   }
   splitPaymentsSnapshot.value = splitPayments.value.map(p => ({ ...p }))
 }
@@ -3491,11 +3507,18 @@ onUnmounted(() => {
 
             <div class="border-t border-dashed border-border pt-4">
               <div
-                v-if="tipAmount > 0"
+                v-if="tipAmount > 0 || checkoutSummaryAdvanceApplied > 0"
                 class="flex justify-between text-sm text-text-secondary mb-2"
               >
                 <span>Total orden</span>
                 <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
+              </div>
+              <div
+                v-if="checkoutSummaryAdvanceApplied > 0"
+                class="flex justify-between text-sm text-state-success-text mb-2"
+              >
+                <span>Anticipo mesa</span>
+                <span class="font-medium tabular-nums">- {{ formatCurrency(checkoutSummaryAdvanceApplied) }}</span>
               </div>
               <div class="flex justify-between items-end mb-1">
                 <span class="text-text-secondary font-medium">Total a Pagar</span>
@@ -3992,11 +4015,18 @@ onUnmounted(() => {
           </div>
           <div class="border-t border-dashed border-border pt-4">
             <div
-              v-if="tipAmount > 0"
+              v-if="tipAmount > 0 || checkoutSummaryAdvanceApplied > 0"
               class="flex justify-between text-sm text-text-secondary mb-2"
             >
               <span>Total orden</span>
               <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
+            </div>
+            <div
+              v-if="checkoutSummaryAdvanceApplied > 0"
+              class="flex justify-between text-sm text-state-success-text mb-2"
+            >
+              <span>Anticipo mesa</span>
+              <span class="font-medium tabular-nums">- {{ formatCurrency(checkoutSummaryAdvanceApplied) }}</span>
             </div>
             <div class="flex justify-between items-end mb-1">
               <span class="text-text-secondary font-medium">Total a Pagar</span>
@@ -4337,9 +4367,18 @@ onUnmounted(() => {
               <span class="text-sm text-text-secondary">Propina</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.tip_amount) }}</span>
             </div>
-            <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0 && orderResult.charged_amount" class="flex items-center justify-between border-t border-border pt-3">
+            <div v-if="orderResult.advance_applied && orderResult.advance_applied > 0" class="flex items-center justify-between">
+              <span class="text-sm text-state-success-text">Anticipo mesa</span>
+              <span class="text-sm font-medium text-state-success-text">-{{ formatCurrency(orderResult.advance_applied) }}</span>
+            </div>
+            <div
+              v-if="(orderResult.tip_amount && orderResult.tip_amount > 0) || (orderResult.advance_applied && orderResult.advance_applied > 0)"
+              class="flex items-center justify-between border-t border-border pt-3"
+            >
               <span class="text-sm text-text-secondary">Total cobrado</span>
-              <span class="text-lg font-bold text-primary">{{ formatCurrency(orderResult.charged_amount) }}</span>
+              <span class="text-lg font-bold text-primary">
+                {{ formatCurrency(orderResult.charged_amount ?? Math.max(0, (orderResult.total_amount ?? 0) + (orderResult.tip_amount ?? 0) - (orderResult.advance_applied ?? 0))) }}
+              </span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Método de Pago</span>
@@ -4661,8 +4700,8 @@ onUnmounted(() => {
       <span>IVA licores 5%</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
-    <!-- warocol.com#739 + #939 — pre-bill totals include tip and split settlement when applicable -->
-    <template v-if="prefacturaPrintData.tipAmount > 0">
+    <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
+    <template v-if="prefacturaPrintData.tipAmount > 0 || prefacturaPrintData.advanceApplied > 0">
       <div class="receipt-item">
         <span>Total orden</span>
         <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
@@ -4674,6 +4713,10 @@ onUnmounted(() => {
       <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-item">
         <span>{{ prefacturaPrintData.tipTaxLabel }}</span>
         <span>{{ formatCurrency(prefacturaPrintData.tipTaxAmount) }}</span>
+      </div>
+      <div v-if="prefacturaPrintData.advanceApplied > 0" class="receipt-item">
+        <span>Anticipo mesa</span>
+        <span>-{{ formatCurrency(prefacturaPrintData.advanceApplied) }}</span>
       </div>
       <div class="receipt-total">
         <span>TOTAL A COBRAR</span>
@@ -4805,18 +4848,22 @@ onUnmounted(() => {
       </div>
     </template>
     <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->
-    <template v-if="orderResult?.tip_amount && orderResult.tip_amount > 0">
+    <template v-if="(orderResult?.tip_amount && orderResult.tip_amount > 0) || (orderResult?.advance_applied && orderResult.advance_applied > 0)">
       <div class="receipt-item">
         <span>Total orden</span>
         <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
       </div>
-      <div class="receipt-item">
+      <div v-if="orderResult?.tip_amount && orderResult.tip_amount > 0" class="receipt-item">
         <span>{{ receiptTipLabel }}</span>
         <span>{{ formatCurrency(orderResult.tip_amount) }}</span>
       </div>
+      <div v-if="orderResult?.advance_applied && orderResult.advance_applied > 0" class="receipt-item">
+        <span>Anticipo mesa</span>
+        <span>-{{ formatCurrency(orderResult.advance_applied) }}</span>
+      </div>
       <div class="receipt-total">
         <span>TOTAL COBRADO</span>
-        <span>{{ formatCurrency(orderResult.charged_amount ?? (orderResult.total_amount + orderResult.tip_amount)) }}</span>
+        <span>{{ formatCurrency(orderResult.charged_amount ?? Math.max(0, (orderResult.total_amount ?? 0) + (orderResult.tip_amount ?? 0) - (orderResult.advance_applied ?? 0))) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
