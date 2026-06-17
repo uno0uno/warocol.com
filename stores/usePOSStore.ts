@@ -50,6 +50,7 @@ export interface MinimumConsumptionState {
     paid: number
     advance: number
     advanceTotal: number
+    advance_total?: number
     coveredAmount: number
     remaining: number
     missing: number

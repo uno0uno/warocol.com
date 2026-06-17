@@ -484,6 +484,7 @@ const mapMinimumConsumptionFromApi = (raw: any) => {
     paid: Number(raw.paid) || 0,
     advance: Number(raw.advance ?? raw.advance_total) || 0,
     advanceTotal: Number(raw.advance_total ?? raw.advance) || 0,
+    advance_total: Number(raw.advance_total ?? raw.advance) || 0,
     coveredAmount: Number(raw.covered_amount) || 0,
     remaining: Number(raw.remaining) || 0,
     missing: Number(raw.missing ?? raw.remaining) || 0,
@@ -677,6 +678,10 @@ const formatCurrencyPOS = (amount: number): string =>
 const activeMinimumConsumption = computed(() => posStore.activeTableSession?.minimumConsumption ?? null)
 const showActiveMinimumConsumption = computed(() =>
   !!activeMinimumConsumption.value?.enabled && activeMinimumConsumption.value.amount > 0,
+)
+const showTableAdvancePanel = ref(false)
+const canPayTableAdvance = computed(() =>
+  !!posStore.activeTableSession && !posStore.activeTableSession.isBar && showActiveMinimumConsumption.value,
 )
 const activeMinimumRemainingLabel = computed(() => {
   const state = activeMinimumConsumption.value
@@ -1652,16 +1657,6 @@ onUnmounted(() => {
                 Consumido {{ formatCurrencyPOS(activeMinimumConsumption.consumed) }} ·
                 {{ activeMinimumRemainingLabel }}
               </p>
-              <p
-                v-if="comandasEnabled && unfiredCount > 0"
-                class="flex items-center gap-1 text-xs font-semibold text-state-danger-text mt-1.5"
-              >
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
-                </span>
-                {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
-              </p>
             </div>
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
@@ -1713,6 +1708,20 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
             </div>
+            <!-- warocol.com#1376 — session-scoped minimum-consumption advance -->
+            <button
+              v-if="canPayTableAdvance"
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :aria-label="`Pagar anticipo de la ${tableSingularLower}`"
+              @click="showTableAdvancePanel = true"
+            >
+              <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              Pagar anticipo
+            </button>
             <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
             <button
               type="button"
@@ -2003,6 +2012,14 @@ onUnmounted(() => {
     :table-session-id="posStore.activeTableSession?.tableId ?? null"
     :table-display-name="posStore.activeTableSession?.tableName ?? null"
     @success="refreshReadyComandasCount"
+  />
+
+  <PosTableSessionAdvancePanel
+    v-model="showTableAdvancePanel"
+    :table-id="posStore.activeTableSession?.tableId ?? null"
+    :table-name="posStore.activeTableSession?.tableName ?? null"
+    :minimum-consumption="activeMinimumConsumption"
+    @success="refreshTableSession"
   />
 
   <PosComandaPrintTickets
