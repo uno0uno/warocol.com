@@ -150,7 +150,7 @@
         <li v-for="notification in notifications" :key="notification.id">
           <NuxtLink
             :to="notificationDespachoPath(notification)"
-            @click="handleNotificationClick(notification)"
+            @click="(event) => handleNotificationClick(notification, event)"
             class="flex items-start gap-3 px-4 py-3 hover:bg-icon-button-neutral-hover-bg transition-colors"
             :class="!notification.read_at ? 'bg-icon-button-primary-bg/40' : ''"
           >
@@ -247,6 +247,7 @@ import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 import { notificationDespachoPath, notificationDespachoTitle, notificationIsTermsAcceptanceRequired } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
+import { useTableQrNotificationNavigation } from '~/composables/useTableQrNotificationNavigation'
 import { dashboardMobileGridItems, type ActivePage, type DashboardNavItem } from '~/constants/dashboardNavigation'
 import type { Tenant } from '~/stores/tenants'
 import type { Notification } from '~/composables/useNotifications'
@@ -291,6 +292,7 @@ const showNotificationsModal = ref(false)
 
 // Notifications
 const { notifications, markAsRead } = useNotifications()
+const { handleDespachoNotificationClick } = useTableQrNotificationNavigation()
 const {
   enabled: despachoSoundEnabled,
   toggleEnabled: toggleDespachoSound,
@@ -301,11 +303,12 @@ const handleMarkAsRead = async (id: string) => {
   await markAsRead(id)
 }
 
-const handleNotificationClick = async (notification: Notification) => {
-  if (!notificationIsTermsAcceptanceRequired(notification)) {
-    await handleMarkAsRead(notification.id)
-  }
-  showNotificationsModal.value = false
+const handleNotificationClick = async (notification: Notification, event?: MouseEvent) => {
+  await handleDespachoNotificationClick(
+    notification,
+    event,
+    () => { showNotificationsModal.value = false },
+  )
 }
 
 const openNotificationsModal = () => {

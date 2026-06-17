@@ -83,7 +83,7 @@
           >
             <NuxtLink
               :to="notificationDespachoPath(notification)"
-              @click="handleNotificationClick(notification)"
+              @click="(event) => handleNotificationClick(notification, event)"
               class="flex gap-3 px-4 py-3 hover:bg-shell-notification-hover-bg transition-colors"
             >
               <!-- Icon -->
@@ -139,9 +139,11 @@ import {
   notificationIsTermsAcceptanceRequired,
 } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
+import { useTableQrNotificationNavigation } from '~/composables/useTableQrNotificationNavigation'
 
 const { notifications, unreadCount, init, markAsRead, markAllRead } = useNotifications()
 const { enabled: soundEnabled, toggleEnabled, unlockFromGesture, prefetchBuffer } = useDespachoNotificationAudio()
+const { handleDespachoNotificationClick } = useTableQrNotificationNavigation()
 
 const isOpen = ref(false)
 const isLoading = ref(false)
@@ -178,11 +180,8 @@ const handleMarkAsRead = async (id: string) => {
   await markAsRead(id)
 }
 
-const handleNotificationClick = async (notification: Notification) => {
-  if (!notificationIsTermsAcceptanceRequired(notification)) {
-    await handleMarkAsRead(notification.id)
-  }
-  close()
+const handleNotificationClick = async (notification: Notification, event?: MouseEvent) => {
+  await handleDespachoNotificationClick(notification, event, close)
 }
 
 const handleMarkAllRead = async () => {

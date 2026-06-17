@@ -53,6 +53,7 @@ export const useNotifications = () => {
       // Invalidate cache — Pinia Colada refetches automatically
       // Toast + chime are handled by MobileOrderToast.vue via its length watcher
       await _queryCache?.invalidateQueries({ key: ['notifications'] })
+      await _queryCache?.invalidateQueries({ key: ['table-qr-requests'] })
     }
 
     eventSource.onerror = () => {

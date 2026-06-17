@@ -2,6 +2,7 @@
 import { inject, watch, onMounted, onUnmounted } from 'vue'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
+import { useNotifications } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -11,6 +12,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const cache = useQueryCache()
+const { markAsRead, notifications } = useNotifications()
 const requestId = computed(() => route.params.id as string)
 const { formatDateTime, formatCurrency } = useFormatters()
 
@@ -55,6 +57,7 @@ const {
 })
 
 const request = computed(() => requestResponse.value?.data ?? null)
+const isPending = computed(() => request.value?.status === 'pending')
 const isLoading = computed(() => !requestResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestResponse.value != null)
 
@@ -64,13 +67,27 @@ const pendingListRoute = { path: '/despacho/en-mesa' }
 
 function invalidateAfterAction() {
   cache.invalidateQueries({ key: ['table-qr-requests'] })
+  cache.invalidateQueries({ key: ['notifications'] })
   cache.invalidateQueries({ key: ['tables'] })
   cache.invalidateQueries({ key: ['pos'] })
   cache.invalidateQueries({ key: ['comandas-monitor'] })
 }
 
+async function dismissTableQrNotification(reqId: string) {
+  const notif = notifications.value.find(
+    n => n.type === 'table_qr_request' && n.payload?.request_id === reqId,
+  )
+  if (notif) {
+    try {
+      await markAsRead(notif.id)
+    } catch {
+      // Server may have already marked it read on accept/reject.
+    }
+  }
+}
+
 async function acceptRequest() {
-  if (!request.value || isWorking.value) return
+  if (!request.value || isWorking.value || !isPending.value) return
   const acceptedTableName = request.value.table_name
   isWorking.value = true
   actionError.value = null
@@ -100,6 +117,7 @@ async function acceptRequest() {
     if (res.data?.order_number) {
       toast.success(`Comanda #${res.data.order_number} enviada a cocina`, { title: 'Comanda enviada' })
     }
+    await dismissTableQrNotification(requestId.value)
     invalidateAfterAction()
     await router.replace(pendingListRoute)
   } catch (err: any) {
@@ -113,12 +131,13 @@ async function acceptRequest() {
 }
 
 async function rejectRequest() {
-  if (!request.value || isWorking.value) return
+  if (!request.value || isWorking.value || !isPending.value) return
   isWorking.value = true
   actionError.value = null
   try {
     await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, { method: 'PATCH' })
     toast.success('Pedido rechazado', { title: 'Listo' })
+    await dismissTableQrNotification(requestId.value)
     invalidateAfterAction()
     await router.replace(pendingListRoute)
   } catch (err: any) {
@@ -141,6 +160,7 @@ onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
   setRefreshHandler(refetch)
+  refetch()
 })
 registerProgressiveLoading(isRefreshing)
 
@@ -216,7 +236,19 @@ const formatQuantity = (quantity: number) =>
         </div>
       </div>
 
-      <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
+      <div
+        v-if="request && !isPending"
+        class="bg-state-warning/10 border border-state-warning-border/40 rounded-xl p-4 sm:p-6"
+      >
+        <p class="text-sm font-medium text-text-primary">
+          Este pedido ya fue procesado. Vuelve al listado para ver los pendientes.
+        </p>
+        <UiButton class="mt-4" variant="secondary" @click="goBack">
+          Volver al listado
+        </UiButton>
+      </div>
+
+      <div v-else-if="isPending" class="bg-surface border border-border rounded-xl p-4 sm:p-6">
         <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Acciones</p>
         <div class="flex flex-col sm:flex-row gap-3">
           <UiButton size="lg" :disabled="isWorking" @click="acceptRequest">

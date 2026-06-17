@@ -27,7 +27,7 @@
           />
           <NuxtLink
             :to="notificationDespachoPath(toast.notification)"
-            @click="dismiss(toast.id)"
+            @click="(event) => handleToastClick(toast, event)"
             class="flex items-center gap-2 pl-4 pr-10 py-2.5"
           >
             <div
@@ -87,7 +87,7 @@
           v-for="toast in toasts"
           :key="toast.id"
           :to="notificationDespachoPath(toast.notification)"
-          @click="dismiss(toast.id)"
+          @click="(event) => handleToastClick(toast, event)"
           class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur shadow-lg overflow-hidden"
           :class="notificationIsComandaReady(toast.notification) ? 'border border-success/40' : 'border border-primary/30'"
         >
@@ -133,6 +133,7 @@ import {
 } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 import { useComandaReadyAudio } from '~/composables/useComandaReadyAudio'
+import { useTableQrNotificationNavigation } from '~/composables/useTableQrNotificationNavigation'
 
 interface MobileToast {
   id: number
@@ -146,6 +147,7 @@ const DISMISS_AFTER_MS = 8000
 const { notifications, isTenantResetting } = useNotifications()
 const { playChime: playDespachoChime, prefetchBuffer: prefetchDespachoBuffer } = useDespachoNotificationAudio()
 const { playChime: playComandaReadyChime, prefetchBuffer: prefetchComandaReadyBuffer } = useComandaReadyAudio()
+const { handleDespachoNotificationClick } = useTableQrNotificationNavigation()
 const toasts = ref<MobileToast[]>([])
 let toastIdCounter = 0
 let baselineCount = 0
@@ -156,6 +158,14 @@ const dismiss = (id: number) => {
     clearTimeout(toasts.value[index].timer)
     toasts.value.splice(index, 1)
   }
+}
+
+const handleToastClick = async (toast: MobileToast, event?: MouseEvent) => {
+  await handleDespachoNotificationClick(
+    toast.notification,
+    event,
+    () => dismiss(toast.id),
+  )
 }
 
 const addToast = (notification: Notification) => {
