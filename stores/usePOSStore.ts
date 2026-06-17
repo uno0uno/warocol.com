@@ -48,7 +48,12 @@ export interface MinimumConsumptionState {
     restrictive: boolean
     consumed: number
     paid: number
+    advance: number
+    advanceTotal: number
+    coveredAmount: number
     remaining: number
+    missing: number
+    overageDue: number
     covered: boolean
 }
 

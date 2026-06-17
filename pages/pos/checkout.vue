@@ -1733,7 +1733,11 @@ const processOrder = async () => {
       document.body.classList.remove('printing-prefactura')
       prefacturaPrintSnapshot.value = null
     } catch (error: any) {
-      processingError.value = error.data?.message || error.message || `Error al cerrar la ${tableSingularLower.value}`
+      const detail = error.data?.detail
+      processingError.value = error.data?.message
+        || (typeof detail === 'string' ? detail : null)
+        || error.message
+        || `Error al cerrar la ${tableSingularLower.value}`
     } finally {
       isProcessing.value = false
     }
@@ -1945,10 +1949,25 @@ watch(deliveryEnabled, (enabled) => {
 // order_payments (split lines) or orders (single payment).
 const isCashMethod = computed(() => selectedGroup.value?.slug === 'cash')
 const cashReceivedInput = ref<number>(0)
+const mesaMinimumConsumption = computed(() =>
+  mesaCurrentData.value?.data?.session?.minimum_consumption
+  ?? posStore.activeTableSession?.minimumConsumption
+  ?? null
+)
+const mesaAdvanceAvailable = computed(() =>
+  Number(mesaMinimumConsumption.value?.advance_total ?? mesaMinimumConsumption.value?.advance ?? 0) || 0
+)
+const mesaAdvanceAppliedEstimate = computed(() => {
+  if (!isKitchenServiceMode.value || splitMode.value) return 0
+  return Math.min(discountedTotal.value, mesaAdvanceAvailable.value)
+})
+const finalAmountToCollect = computed(() =>
+  Math.max(0, finalChargedAmount.value - mesaAdvanceAppliedEstimate.value)
+)
 
 // warocol.com#639 — single-payment cash flow must cover total + tip (#737: split too).
 const cashAmountToCharge = computed(() =>
-  splitMode.value ? splitAmountToCharge.value : finalChargedAmount.value
+  splitMode.value ? splitAmountToCharge.value : finalAmountToCollect.value
 )
 
 const cashChange = computed(() =>
@@ -3782,8 +3801,8 @@ onUnmounted(() => {
                 ? 'Dejar venta pendiente'
                 : selectedPaymentMethod === 'credit'
                 ? 'Registrar como crédito'
-                : tipAmount > 0
-                  ? `Confirmar — ${formatCurrency(finalChargedAmount)}`
+                : tipAmount > 0 || mesaAdvanceAppliedEstimate > 0
+                  ? `Confirmar — ${formatCurrency(finalAmountToCollect)}`
                   : 'Confirmar Orden' }}
             </span>
             <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
