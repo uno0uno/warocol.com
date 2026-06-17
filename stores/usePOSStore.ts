@@ -42,6 +42,16 @@ export interface Customer {
     email: string | null
 }
 
+export interface MinimumConsumptionState {
+    enabled: boolean
+    amount: number
+    restrictive: boolean
+    consumed: number
+    paid: number
+    remaining: number
+    covered: boolean
+}
+
 export interface ActiveTableSession {
     tableId: string
     sessionId: string
@@ -55,6 +65,7 @@ export interface ActiveTableSession {
     attendedByMemberName?: string | null
     effectiveWaiterMemberId?: string | null
     effectiveWaiterMemberName?: string | null
+    minimumConsumption?: MinimumConsumptionState | null
 }
 
 export interface TabItemModifier {
