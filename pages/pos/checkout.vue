@@ -1997,7 +1997,7 @@ const cashShortfall = computed(() =>
   Math.max(0, cashAmountToCharge.value - (cashReceivedInput.value || 0))
 )
 const cashIsValid = computed(() =>
-  !isCashMethod.value || (cashReceivedInput.value > 0 && cashShortfall.value <= 0.01)
+  !isCashMethod.value || cashAmountToCharge.value <= 0.01 || (cashReceivedInput.value > 0 && cashShortfall.value <= 0.01)
 )
 
 // Issue #524 — input starts at 0 and stays at 0 until the cashier either
