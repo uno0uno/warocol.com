@@ -474,6 +474,19 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
     sentAt: i.sentAt ?? i.sent_at ?? null,
   }))
 
+const mapMinimumConsumptionFromApi = (raw: any) => {
+  if (!raw) return null
+  return {
+    enabled: raw.enabled === true,
+    amount: Number(raw.amount) || 0,
+    restrictive: raw.restrictive === true,
+    consumed: Number(raw.consumed) || 0,
+    paid: Number(raw.paid) || 0,
+    remaining: Number(raw.remaining) || 0,
+    covered: raw.covered === true,
+  }
+}
+
 const applyTableSessionFromApi = (
   data: { session?: any; tab_items?: any[] } | undefined,
   fetchGen: number,
@@ -494,6 +507,7 @@ const applyTableSessionFromApi = (
     attendedByMemberName: s.attended_by_member_name ?? null,
     effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
     effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
+    minimumConsumption: mapMinimumConsumptionFromApi(s.minimum_consumption),
   })
   posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
 }
@@ -654,6 +668,17 @@ registerTableSessionRefresh(
 
 const formatCurrencyPOS = (amount: number): string =>
   `$${Math.round(amount).toLocaleString('es-CO')}`
+
+const activeMinimumConsumption = computed(() => posStore.activeTableSession?.minimumConsumption ?? null)
+const showActiveMinimumConsumption = computed(() =>
+  !!activeMinimumConsumption.value?.enabled && activeMinimumConsumption.value.amount > 0,
+)
+const activeMinimumRemainingLabel = computed(() => {
+  const state = activeMinimumConsumption.value
+  if (!state) return ''
+  if (state.covered || state.remaining <= 0) return 'Mínimo cubierto'
+  return `${formatCurrencyPOS(state.remaining)} por consumir`
+})
 
 // Issue #956 — unified destructive-action confirmation with required motivo
 type DestructiveFlow =
@@ -1613,6 +1638,14 @@ onUnmounted(() => {
               </div>
               <p class="text-xs text-text-secondary tabular-nums mt-1">
                 {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}
+              </p>
+              <p
+                v-if="showActiveMinimumConsumption && activeMinimumConsumption"
+                class="text-xs text-text-secondary tabular-nums mt-1"
+              >
+                Mínimo {{ formatCurrencyPOS(activeMinimumConsumption.amount) }} ·
+                Consumido {{ formatCurrencyPOS(activeMinimumConsumption.consumed) }} ·
+                {{ activeMinimumRemainingLabel }}
               </p>
               <p
                 v-if="comandasEnabled && unfiredCount > 0"

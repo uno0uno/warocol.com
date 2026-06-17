@@ -160,6 +160,17 @@ const formatDuration = (openedAt: string): string => {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+const formatCurrency = (amount: number): string =>
+  `$${Math.round(amount).toLocaleString('es-CO')}`
+
+const minimumConsumptionLabel = (table: any): string | null => {
+  const state = table.session?.minimum_consumption
+  if (!state?.enabled || !(Number(state.amount) > 0)) return null
+  const remaining = Number(state.remaining) || 0
+  if (state.covered || remaining <= 0) return 'Mínimo cubierto'
+  return `${formatCurrency(remaining)} faltante`
+}
+
 const badgeLabel = (status: string) => {
   if (status === 'open') return 'En servicio'
   if (status === 'bill_requested') return 'Cuenta'
@@ -353,6 +364,13 @@ onUnmounted(() => {
               </div>
               <span class="text-xs sm:text-sm font-medium text-center leading-snug line-clamp-2 w-full min-h-[2.5rem]" :class="tableNameClass(table.status)">
                 {{ table.name }}
+              </span>
+              <span
+                v-if="minimumConsumptionLabel(table)"
+                class="text-[11px] font-semibold text-center tabular-nums -mt-2"
+                :class="tableNameClass(table.status)"
+              >
+                {{ minimumConsumptionLabel(table) }}
               </span>
             </div>
 
