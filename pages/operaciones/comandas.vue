@@ -105,6 +105,82 @@
           </div>
         </div>
 
+        <div v-if="businessProfile" class="space-y-4 pt-4 border-t border-border">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-text-primary">Consumo mínimo por mesa</p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                Configuración base para cover o consumo mínimo. En este momento solo se guarda la configuración del negocio.
+              </p>
+            </div>
+            <label
+              class="relative inline-flex items-center cursor-pointer flex-shrink-0 self-start"
+              :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
+              :aria-label="draftMinimumConsumptionEnabled ? 'Desactivar consumo mínimo' : 'Activar consumo mínimo'"
+            >
+              <input
+                v-model="draftMinimumConsumptionEnabled"
+                type="checkbox"
+                class="sr-only peer"
+                :disabled="isSavingMinimumConsumption"
+              />
+              <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(180px,260px)_1fr] md:items-end">
+            <div class="space-y-1">
+              <label for="minimum-consumption-amount" class="text-xs font-medium text-text-secondary">
+                Monto COP
+              </label>
+              <input
+                id="minimum-consumption-amount"
+                v-model="draftMinimumConsumptionAmount"
+                type="number"
+                min="0"
+                step="1000"
+                inputmode="numeric"
+                class="input-base w-full px-4 py-2 min-h-[44px]"
+                :class="minimumConsumptionAmountInvalid ? 'border-state-danger-border' : ''"
+                :disabled="isSavingMinimumConsumption"
+                placeholder="0"
+              />
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label
+                class="flex items-center justify-between gap-4 rounded-lg border border-border px-3 py-2 min-h-[44px] sm:min-w-[260px]"
+                :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
+              >
+                <span class="min-w-0">
+                  <span class="block text-sm font-medium text-text-primary">Modo restrictivo</span>
+                  <span class="block text-xs text-text-secondary">Se usará para bloquear cierres en una fase posterior.</span>
+                </span>
+                <input
+                  v-model="draftMinimumConsumptionRestrictive"
+                  type="checkbox"
+                  class="h-4 w-4 accent-primary flex-shrink-0"
+                  :disabled="isSavingMinimumConsumption"
+                />
+              </label>
+
+              <button
+                type="button"
+                class="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg bg-action-primary-bg px-4 py-2 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isSavingMinimumConsumption || !minimumConsumptionHasChanges || minimumConsumptionAmountInvalid"
+                @click="saveMinimumConsumptionConfig"
+              >
+                <UiLoadingDots v-if="isSavingMinimumConsumption" size="8px" color="currentColor" />
+                <span v-else>Guardar</span>
+              </button>
+            </div>
+          </div>
+
+          <p v-if="minimumConsumptionAmountInvalid" class="text-xs text-state-danger-text">
+            El monto debe ser un número mayor o igual a 0.
+          </p>
+        </div>
+
       </div>
     </div>
 
@@ -519,6 +595,64 @@ const invalidateContextCaches = async () => {
   await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
 }
 const businessProfile = computed(() => profileData.value?.data ?? null)
+
+// ─── Minimum consumption config (#1368) ───
+const isSavingMinimumConsumption = ref(false)
+const draftMinimumConsumptionEnabled = ref(false)
+const draftMinimumConsumptionAmount = ref('0')
+const draftMinimumConsumptionRestrictive = ref(false)
+
+const normalizeAmountInput = (value: unknown) => {
+  const amount = Number(value ?? 0)
+  return Number.isFinite(amount) && amount >= 0 ? Math.round(amount) : 0
+}
+
+watch(
+  businessProfile,
+  (profile) => {
+    if (!profile) return
+    draftMinimumConsumptionEnabled.value = profile.minimum_consumption_enabled === true
+    draftMinimumConsumptionAmount.value = String(normalizeAmountInput(profile.minimum_consumption_amount))
+    draftMinimumConsumptionRestrictive.value = profile.minimum_consumption_restrictive === true
+  },
+  { immediate: true },
+)
+
+const minimumConsumptionAmountNumber = computed(() => Number(draftMinimumConsumptionAmount.value || 0))
+const minimumConsumptionAmountInvalid = computed(() => (
+  !Number.isFinite(minimumConsumptionAmountNumber.value) ||
+  minimumConsumptionAmountNumber.value < 0
+))
+const minimumConsumptionHasChanges = computed(() => {
+  const profile = businessProfile.value
+  if (!profile) return false
+  return (
+    draftMinimumConsumptionEnabled.value !== (profile.minimum_consumption_enabled === true) ||
+    normalizeAmountInput(draftMinimumConsumptionAmount.value) !== normalizeAmountInput(profile.minimum_consumption_amount) ||
+    draftMinimumConsumptionRestrictive.value !== (profile.minimum_consumption_restrictive === true)
+  )
+})
+
+const saveMinimumConsumptionConfig = async () => {
+  if (isSavingMinimumConsumption.value || minimumConsumptionAmountInvalid.value) return
+  isSavingMinimumConsumption.value = true
+  try {
+    await $fetch('/api/operaciones/minimum-consumption/config', {
+      method: 'PATCH',
+      body: {
+        enabled: draftMinimumConsumptionEnabled.value,
+        amount: normalizeAmountInput(draftMinimumConsumptionAmount.value),
+        restrictive: draftMinimumConsumptionRestrictive.value,
+      },
+    })
+    await invalidateContextCaches()
+    toast.success('Configuración de consumo mínimo guardada', { title: 'Guardado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al guardar consumo mínimo', { title: 'Error' })
+  } finally {
+    isSavingMinimumConsumption.value = false
+  }
+}
 
 // ─── Stations & categories ───
 const { data: stationsData, asyncStatus: stationsAsyncStatus, refetch: refetchStations } = useQuery({
