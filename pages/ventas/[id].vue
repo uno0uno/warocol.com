@@ -135,13 +135,28 @@ const isUnrecoverableRejection = computed(() => {
   return msg.includes('ya se encuentra validado')
 })
 
+const canRetryInvoice = computed(() =>
+  invoiceData.value?.status === 'rejected' && !isUnrecoverableRejection.value,
+)
+
+const isMatiasAuthInvoiceError = computed(() => {
+  const msg = (invoiceData.value?.error_message || emitInvoiceError.value || '').toLowerCase()
+  return msg.includes('401') || msg.includes('unauthenticated')
+})
+
 const emitInvoice = async () => {
   if (isEmittingInvoice.value) return
   isEmittingInvoice.value = true
   emitInvoiceError.value = ''
   try {
-    await $fetch(`/api/orders/${orderId.value}/invoice`, { method: 'POST' })
+    const result = await $fetch(`/api/orders/${orderId.value}/invoice`, { method: 'POST' }) as {
+      status?: string
+      error_message?: string
+    }
     await refetchInvoice()
+    if (result?.status !== 'accepted') {
+      emitInvoiceError.value = result.error_message || 'Factura rechazada por DIAN'
+    }
   } catch (e: any) {
     emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al emitir factura'
   } finally {
@@ -890,15 +905,47 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Error message for rejected (other reasons — retry is allowed elsewhere) -->
+          <!-- Error message for rejected (other reasons — retry allowed) -->
           <div v-else-if="invoiceData.status === 'rejected' && invoiceData.error_message"
-            class="mx-5 mb-5 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
-            <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
-            <span>{{ invoiceData.error_message }}</span>
+            class="mx-5 mb-5 space-y-3">
+            <div class="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5 dark:bg-red-950/20 dark:text-red-400">
+              <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+              <div class="min-w-0 space-y-1">
+                <span>{{ invoiceData.error_message }}</span>
+                <p v-if="isMatiasAuthInvoiceError" class="text-xs opacity-90">
+                  Error de autenticación con Matias. Corrige el token y pulsa Reintentar emisión.
+                </p>
+              </div>
+            </div>
+            <button
+              v-if="canRetryInvoice"
+              type="button"
+              @click="emitInvoice"
+              :disabled="isEmittingInvoice"
+              class="w-full min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2"
+            >
+              <template v-if="isEmittingInvoice">
+                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Reintentando…
+              </template>
+              <template v-else>
+                Reintentar emisión
+              </template>
+            </button>
+            <p v-if="emitInvoiceError" class="text-sm text-destructive flex items-center gap-1.5">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+              {{ emitInvoiceError }}
+            </p>
           </div>
         </template>
 

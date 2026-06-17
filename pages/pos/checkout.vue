@@ -171,6 +171,14 @@ const invoiceQrDataUrl = ref('')
 const invoiceProgress = ref('')
 const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: number; cufe: string; status: string; error?: string }[]>([])
 
+const extractInvoiceFetchError = (e: any) =>
+  e?.data?.detail || e?.data?.message || e?.message || 'Error al generar factura'
+
+const isMatiasAuthInvoiceError = computed(() => {
+  const msg = invoiceError.value.toLowerCase()
+  return msg.includes('401') || msg.includes('unauthenticated')
+})
+
 // Customer identification via modal
 const showCustomerModal = ref(false)
 interface PosCustomer {
@@ -2083,14 +2091,18 @@ const generateInvoice = async () => {
           invoiceError.value = result.error_message || `Factura rechazada: ${result.prefix}-${result.invoice_number}`
         }
       } catch (e: any) {
+        const errMsg = extractInvoiceFetchError(e)
         invoiceResults.value.push({
           order_id: ids[i],
           prefix: '',
           invoice_number: 0,
           cufe: '',
           status: 'error',
-          error: e.data?.detail || e.data?.message || 'Error',
+          error: errMsg,
         })
+        if (ids.length === 1) {
+          invoiceError.value = errMsg
+        }
       }
     }
     // For multi-order, set invoiceResult from first successful for QR
@@ -2103,10 +2115,14 @@ const generateInvoice = async () => {
           invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
         }
       }
+      const failed = invoiceResults.value.filter(r => r.status === 'error').length
+      if (failed > 0) {
+        invoiceError.value = `${failed} de ${ids.length} facturas falló. Reintenta para las pendientes.`
+      }
     }
     invoiceProgress.value = ''
   } catch (e: any) {
-    invoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al generar facturas'
+    invoiceError.value = extractInvoiceFetchError(e)
   } finally {
     invoiceLoading.value = false
     invoiceProgress.value = ''
@@ -2338,6 +2354,13 @@ const printPrefactura = async () => {
 
   await nextTick()
   window.print()
+}
+
+// Re-emit after a recoverable failure (e.g. Matias 401) — skips fiscal wizard.
+const retryInvoice = async () => {
+  if (invoiceLoading.value) return
+  invoiceError.value = ''
+  await generateInvoice()
 }
 
 // Entry point for "Generar factura electrónica DIAN" — shows the inline
@@ -4424,15 +4447,26 @@ onUnmounted(() => {
 
             <!-- Error -->
             <div v-else-if="invoiceError" class="rounded-lg border border-state-danger-border bg-state-danger-bg p-3 space-y-2">
-              <div class="flex items-center gap-2 text-state-danger-text">
-                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-                <span class="text-sm font-medium">{{ invoiceError }}</span>
+              <div class="flex items-start gap-2 text-state-danger-text">
+                <svg class="h-4 w-4 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                <div class="min-w-0 space-y-1">
+                  <span class="text-sm font-medium block">{{ invoiceError }}</span>
+                  <p v-if="isMatiasAuthInvoiceError" class="text-xs opacity-90">
+                    Error de autenticación con Matias. Corrige el token y pulsa Reintentar.
+                  </p>
+                </div>
               </div>
               <button
-                @click="requestInvoice"
-                class="text-xs font-medium text-state-danger-text hover:underline"
+                type="button"
+                :disabled="invoiceLoading"
+                @click="retryInvoice"
+                class="w-full min-h-[44px] py-2 px-4 bg-surface border border-state-danger-border text-state-danger-text text-sm font-semibold rounded-lg hover:bg-state-danger-bg focus:outline-none focus:ring-2 focus:ring-state-danger-border active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Reintentar
+                <svg v-if="invoiceLoading" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                {{ invoiceLoading ? 'Reintentando…' : 'Reintentar' }}
               </button>
             </div>
           </div>
