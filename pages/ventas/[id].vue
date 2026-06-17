@@ -196,13 +196,6 @@ const order = computed(() => {
   }
 })
 
-// warocol.com#662 — tip display on order detail (API returns tip_amount / tip_source)
-const tipSourceLabel = (source: string | undefined) => {
-  if (source === 'preset') return 'Porcentaje sugerido'
-  if (source === 'custom') return 'Personalizada'
-  return '—'
-}
-
 const orderTipPercent = computed(() => {
   const o = order.value
   if (!o?.tip_amount || o.tip_amount <= 0) return null
@@ -211,11 +204,19 @@ const orderTipPercent = computed(() => {
   return Math.round((Number(o.tip_amount) / total) * 10000) / 100
 })
 
+const orderAdvanceApplied = computed(() => Number(order.value?.advance_applied) || 0)
+
 const orderChargedTotal = computed(() => {
   const o = order.value
-  if (!o?.tip_amount || o.tip_amount <= 0) return null
+  if (!o) return null
+  const backendAmount = Number(o.charged_amount)
+  if (o.charged_amount != null && Number.isFinite(backendAmount)) return backendAmount
+  if ((!o.tip_amount || o.tip_amount <= 0) && orderAdvanceApplied.value <= 0) return null
   const tipTax = Number(o.tip_tax_amount) || 0
-  return Number(o.total_amount) + Number(o.tip_amount) + tipTax
+  return Math.max(
+    0,
+    Number(o.total_amount) + Number(o.tip_amount || 0) + tipTax - orderAdvanceApplied.value,
+  )
 })
 
 const orderWaroRedemptionSummary = computed(() => order.value?.waro_redemption_summary ?? null)
@@ -262,6 +263,7 @@ const hasOrderTotalsBreakdown = computed(() => {
     || (o.standard_tax ?? 0) > 0
     || (o.liquor_tax ?? 0) > 0
     || (o.tip_amount ?? 0) > 0
+    || orderAdvanceApplied.value > 0
   )
 })
 
@@ -583,19 +585,6 @@ onUnmounted(() => {
           </NuxtLink>
         </div>
 
-        <!-- Tip (warocol.com#662) -->
-        <div
-          v-if="order.tip_amount && order.tip_amount > 0"
-          class="bg-surface border border-border rounded-xl p-4"
-        >
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Propina</p>
-          <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(order.tip_amount) }}</p>
-          <p class="text-xs text-text-secondary mt-1">
-            {{ tipSourceLabel(order.tip_source) }}
-            <template v-if="orderTipPercent != null"> · {{ orderTipPercent }}% sobre venta</template>
-          </p>
-        </div>
-
         <!-- Payment Method -->
         <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
           class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
@@ -663,39 +652,6 @@ onUnmounted(() => {
           </span>
         </div>
 
-        <!-- Total Amount -->
-        <div class="bg-surface border-2 border-primary rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
-          <!-- Discount indicator: crossed-out gross + badge -->
-          <div v-if="(order.promo_savings > 0 || order.discount_amount > 0) && !isEditMode" class="flex items-center gap-2 mb-1">
-            <span class="text-sm text-text-tertiary line-through tabular-nums">{{ formatCurrency(grossSubtotal)
-            }}</span>
-            <span
-              v-if="order.promo_savings > 0"
-              class="text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0.5 leading-tight"
-            >
-              Promoción
-            </span>
-            <span
-              v-if="order.discount_amount > 0"
-              class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 leading-tight"
-            >
-              {{ order.discount_type === 'percent' ? `-${order.discount_value}%` : 'Descuento manual' }}
-            </span>
-          </div>
-          <p class="text-2xl font-bold text-primary tabular-nums">
-            {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
-          </p>
-          <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
-            {{ formatCurrency(order.total_amount) }}
-          </p>
-          <p
-            v-if="!isEditMode && orderChargedTotal != null"
-            class="text-sm font-semibold text-text-primary tabular-nums mt-2 pt-2 border-t border-border"
-          >
-            Total cobrado: {{ formatCurrency(orderChargedTotal) }}
-          </p>
-        </div>
       </div>
 
       <!-- Delivery Info Section (only for delivery orders) -->
@@ -1363,6 +1319,15 @@ onUnmounted(() => {
                 </span>
                 <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount)
                 }}</span>
+              </div>
+              <div
+                v-if="orderAdvanceApplied > 0"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-state-success-text">Anticipo mesa</span>
+                <span class="text-sm font-semibold text-state-success-text tabular-nums">
+                  -{{ formatCurrency(orderAdvanceApplied) }}
+                </span>
               </div>
               <div
                 v-if="orderChargedTotal != null"
