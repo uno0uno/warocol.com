@@ -1693,33 +1693,46 @@ const processOrder = async () => {
       cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
 
       // Mesa close usually returns multiple orders; use the first order number (if provided)
-      const mesaAdvanceApplied = Number(closeResponse?.data?.advance_applied ?? checkoutSummaryAdvanceApplied.value) || 0
-      const mesaChargedAmount = Number(closeResponse?.data?.charged_amount ?? finalAmountToCollect.value) || 0
+      const closeData = closeResponse?.data ?? {}
+      const closeMinimumConsumption = closeData.minimum_consumption ?? {}
+      const closeAdvanceApplied = Number(closeData.advance_applied)
+      const nestedAdvanceApplied = Number(closeMinimumConsumption.advance_applied ?? 0)
+      const nestedAdvanceCover = Number(closeMinimumConsumption.cover_recognized ?? 0)
+      const mesaAdvanceApplied = Number.isFinite(closeAdvanceApplied)
+        ? closeAdvanceApplied
+        : Math.min(
+            prefacturaAmountDue.value,
+            (nestedAdvanceApplied + nestedAdvanceCover) || checkoutSummaryAdvanceApplied.value,
+          )
+      const closeChargedAmount = Number(closeData.charged_amount)
+      const mesaChargedAmount = closeData.charged_amount != null && Number.isFinite(closeChargedAmount)
+        ? closeChargedAmount
+        : Math.max(0, prefacturaAmountDue.value - mesaAdvanceApplied)
       const mesaOrderNumber =
-        Number(closeResponse?.data?.order_number) ||
-        Number(closeResponse?.data?.order_numbers?.[0]) ||
+        Number(closeData.order_number) ||
+        Number(closeData.order_numbers?.[0]) ||
         0
       orderResult.value = {
         order_number: mesaOrderNumber,
         total_amount: _discountedTotal,
-        payment_method: selectedPaymentMethod.value,
-        order_ids: closeResponse.data?.order_ids || [],
-        standard_tax: Number(closeResponse?.data?.standard_tax) || 0,
-        liquor_tax: Number(closeResponse?.data?.liquor_tax) || 0,
-        standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
-        ...promoFieldsFromCloseResponse(closeResponse.data, _subtotal),
+        payment_method: closeData.payment_method ?? selectedPaymentMethod.value,
+        order_ids: closeData.order_ids || [],
+        standard_tax: Number(closeData.standard_tax) || 0,
+        liquor_tax: Number(closeData.liquor_tax) || 0,
+        standard_tax_label: closeData.standard_tax_label || 'Impuesto',
+        ...promoFieldsFromCloseResponse(closeData, _subtotal),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {}),
         // warocol.com#639 — surface tip in the success modal when the mesa close
         // returned a tip_amount (server-side validated against tenant.tip_enabled).
-        ...(closeResponse.data?.tip_amount && closeResponse.data.tip_amount > 0
-          ? { tip_amount: closeResponse.data.tip_amount }
+        ...(closeData.tip_amount && closeData.tip_amount > 0
+          ? { tip_amount: closeData.tip_amount }
           : {}),
-        ...(mesaAdvanceApplied > 0 || closeResponse.data?.tip_amount > 0
+        ...(mesaAdvanceApplied > 0 || closeData.tip_amount > 0
           ? { advance_applied: mesaAdvanceApplied, charged_amount: mesaChargedAmount }
           : {}),
-        ...waroOrderResultFields(closeResponse.data?.waro_redemption_summary, _subtotal),
+        ...waroOrderResultFields(closeData.waro_redemption_summary, _subtotal),
       }
       wasMesaMode.value = true
       cartItemsSnapshot.value = [...cartItems.value]
@@ -1966,7 +1979,7 @@ const mesaAdvanceAvailable = computed(() =>
 )
 const mesaAdvanceAppliedEstimate = computed(() => {
   if (!isKitchenServiceMode.value || splitMode.value) return 0
-  return Math.min(discountedTotal.value, mesaAdvanceAvailable.value)
+  return Math.min(finalChargedAmount.value, mesaAdvanceAvailable.value)
 })
 const finalAmountToCollect = computed(() =>
   Math.max(0, finalChargedAmount.value - mesaAdvanceAppliedEstimate.value)
@@ -2008,6 +2021,7 @@ const filteredMethods = computed(() => {
 })
 
 const getPaymentMethodLabel = (method: string) => {
+  if (method === 'table_session_advance') return 'Anticipo mesa'
   return posPaymentGroups.value.find(g => g.slug === method)?.name ?? method
 }
 
@@ -2274,6 +2288,18 @@ const orderResultWaroDiscountCop = computed(() => Number(orderResult.value?.waro
 const orderResultWaroLineLabel = computed(() => {
   const name = orderResult.value?.waro_reward_name
   return name ? `WaRo: ${name}` : 'Canje WaRo'
+})
+const orderResultChargedAmount = computed(() => {
+  const result = orderResult.value
+  if (!result) return 0
+  const backendAmount = Number(result.charged_amount)
+  if (result.charged_amount != null && Number.isFinite(backendAmount)) return backendAmount
+  return Math.max(
+    0,
+    (Number(result.total_amount) || 0)
+      + (Number(result.tip_amount) || 0)
+      - (Number(result.advance_applied) || 0),
+  )
 })
 
 const receiptPromoBreakdown = computed(() => {
@@ -2945,12 +2971,12 @@ onUnmounted(() => {
           </div>
 
           <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
-          <div v-if="!isLoadingPaymentMethods" class="grid gap-2 md:gap-4" :class="paymentGridClass">
+          <div v-if="!isLoadingPaymentMethods" class="grid gap-2 md:gap-4 overflow-x-auto pb-1" :class="paymentGridClass">
             <button
               v-if="canDeferDeliveryPayment"
               type="button"
               @click="deferDeliveryPayment"
-              class="cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]"
+              class="cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition h-full min-w-[112px] flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]"
               :class="isDeferredDeliveryPayment
                 ? 'border-status-warning-text/50 bg-status-warning-bg shadow-sm text-status-warning-text'
                 : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
@@ -2988,7 +3014,7 @@ onUnmounted(() => {
               v-for="group in posPaymentGroups"
               :key="group.slug"
               v-show="isPaymentGroupVisible(group)"
-              class="cursor-pointer relative"
+              class="cursor-pointer relative min-w-[112px]"
             >
               <input type="radio" name="payment" :value="group.slug" v-model="selectedPaymentMethod" class="sr-only">
               <div
@@ -3112,7 +3138,7 @@ onUnmounted(() => {
             <!-- Grid mode — up to 6 methods -->
             <div
               v-if="selectedGroup.methods.length <= 6"
-              class="grid gap-2"
+              class="grid gap-2 overflow-x-auto pb-1"
               :class="selectedGroup.methods.length <= 2
                 ? 'grid-cols-2'
                 : selectedGroup.methods.length === 3
@@ -3124,7 +3150,7 @@ onUnmounted(() => {
                 :key="method.id"
                 type="button"
                 @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
-                class="relative min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
+                class="relative min-h-[48px] min-w-[112px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
                 :class="selectedPaymentMethodId === method.id
                   ? (selectedGroup.triggersCartera
                       ? 'border-state-warning-border bg-state-warning-bg text-state-warning-text shadow-sm'
@@ -3143,9 +3169,9 @@ onUnmounted(() => {
             <!-- List mode — more than 6 methods (scrollable) -->
             <div
               v-else
-              class="rounded-xl border border-border bg-background overflow-hidden"
+              class="rounded-xl border border-border bg-background overflow-x-auto"
             >
-              <div class="max-h-[220px] overflow-y-auto divide-y divide-border">
+              <div class="max-h-[220px] min-w-full overflow-y-auto divide-y divide-border">
                 <button
                   v-for="method in filteredMethods"
                   :key="method.id"
@@ -3158,7 +3184,7 @@ onUnmounted(() => {
                         : 'bg-primary/8 text-primary font-semibold')
                     : 'text-text-primary hover:bg-surface-secondary/50'"
                 >
-                  <span>{{ method.name }}</span>
+                  <span class="min-w-0 truncate pr-3">{{ method.name }}</span>
                   <svg
                     v-if="selectedPaymentMethodId === method.id"
                     class="w-4 h-4 flex-shrink-0"
@@ -4270,13 +4296,13 @@ onUnmounted(() => {
     <Teleport to="body">
       <div
         v-if="showSuccessModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       >
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-overlay-backdrop/50"></div>
 
         <!-- Modal -->
-        <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
+        <div class="relative my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface p-6 shadow-xl">
           <!-- Icon -->
           <div class="flex justify-center mb-4">
             <div class="w-16 h-16 rounded-full flex items-center justify-center bg-state-success-bg ">
@@ -4377,12 +4403,12 @@ onUnmounted(() => {
             >
               <span class="text-sm text-text-secondary">Total cobrado</span>
               <span class="text-lg font-bold text-primary">
-                {{ formatCurrency(orderResult.charged_amount ?? Math.max(0, (orderResult.total_amount ?? 0) + (orderResult.tip_amount ?? 0) - (orderResult.advance_applied ?? 0))) }}
+                {{ formatCurrency(orderResultChargedAmount) }}
               </span>
             </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Método de Pago</span>
-              <span class="text-sm font-medium text-text-primary">
+            <div class="flex items-center justify-between gap-3 min-w-0">
+              <span class="text-sm text-text-secondary shrink-0">Método de Pago</span>
+              <span class="text-sm font-medium text-text-primary min-w-0 overflow-x-auto whitespace-nowrap text-right">
                 {{
                   orderResult.payment_method
                     ? (orderResult.payment_method_name
@@ -4863,7 +4889,7 @@ onUnmounted(() => {
       </div>
       <div class="receipt-total">
         <span>TOTAL COBRADO</span>
-        <span>{{ formatCurrency(orderResult.charged_amount ?? Math.max(0, (orderResult.total_amount ?? 0) + (orderResult.tip_amount ?? 0) - (orderResult.advance_applied ?? 0))) }}</span>
+        <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
@@ -4893,7 +4919,7 @@ onUnmounted(() => {
                 : getPaymentMethodLabel(orderResult.payment_method))
             : 'Pendiente por definir'
         }}</span>
-        <span>{{ formatCurrency(orderResult?.charged_amount ?? orderResult?.total_amount ?? 0) }}</span>
+        <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
       </div>
       <div
         v-if="receiptPrintContext?.singlePaymentChange && receiptPrintContext.singlePaymentChange > 0"
