@@ -482,7 +482,12 @@ const mapMinimumConsumptionFromApi = (raw: any) => {
     restrictive: raw.restrictive === true,
     consumed: Number(raw.consumed) || 0,
     paid: Number(raw.paid) || 0,
+    advance: Number(raw.advance ?? raw.advance_total) || 0,
+    advanceTotal: Number(raw.advance_total ?? raw.advance) || 0,
+    coveredAmount: Number(raw.covered_amount) || 0,
     remaining: Number(raw.remaining) || 0,
+    missing: Number(raw.missing ?? raw.remaining) || 0,
+    overageDue: Number(raw.overage_due) || 0,
     covered: raw.covered === true,
   }
 }
@@ -677,7 +682,7 @@ const activeMinimumRemainingLabel = computed(() => {
   const state = activeMinimumConsumption.value
   if (!state) return ''
   if (state.covered || state.remaining <= 0) return 'Mínimo cubierto'
-  return `${formatCurrencyPOS(state.remaining)} por consumir`
+  return `${formatCurrencyPOS(state.remaining)} faltante`
 })
 
 // Issue #956 — unified destructive-action confirmation with required motivo
