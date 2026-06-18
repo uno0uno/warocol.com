@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
+import QRCode from 'qrcode'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
@@ -124,6 +125,7 @@ const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 const isEmittingInvoice = ref(false)
 const emitInvoiceError = ref('')
 const copiedCufe = ref(false)
+const invoiceQrDataUrl = ref('')
 
 // warocol.com#598 — invoice email modal trigger
 const showEmailModal = ref(false)
@@ -437,8 +439,14 @@ const saleReceiptInvoice = computed(() => {
     invoice_number: invoiceData.value.invoice_number,
     cufe: invoiceData.value.cufe,
     status: invoiceData.value.status,
+    qrDataUrl: invoiceQrDataUrl.value,
   }
 })
+
+async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
+  const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`
+  return QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+}
 
 
 // ── Credit panel state ──────────────────────────────────────────────────────
@@ -477,6 +485,9 @@ const printReceipt = async () => {
   if (saleReceiptItems.value.length === 0) {
     useToast().error('La venta no tiene productos para imprimir.', { title: 'Sin productos' })
     return
+  }
+  if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
+    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
   }
 
   document.body.classList.add('printing-receipt-ticket')
@@ -646,7 +657,7 @@ const saveChanges = async () => {
 const setPageStatus = inject<(status: { label: string; color: string } | undefined) => void>('setPageStatus')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
-const setHeaderAction = inject<(action: { label: string; icon?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
+const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 
 // Watch order data and update layout header
 watch(order, (newOrder) => {
@@ -665,7 +676,9 @@ onMounted(() => {
   setBackHandler?.(goBack)
   setHeaderAction?.({
     label: 'Imprimir',
+    ariaLabel: 'Imprimir venta',
     icon: true,
+    iconOnly: true,
     handler: printReceipt
   })
 })
