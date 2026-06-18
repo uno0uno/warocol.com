@@ -973,7 +973,7 @@ const saveChanges = async () => {
     }
 
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
-    await Promise.all([refreshProfile(), tenantsStore.fetchBusinessProfile()])
+    await refreshBusinessProfileCaches()
     isEditMode.value = false
     toast.success('Perfil actualizado exitosamente', { title: 'Guardado' })
   } catch (error: any) {
@@ -986,6 +986,16 @@ const saveChanges = async () => {
 // ─── Image upload modal ───
 const imageModalOpen = ref(false)
 const imageModalType = ref<'logo' | 'banner'>('logo')
+type ImageField = 'logo_url' | 'banner_url'
+type ProfilePatchResponse = { data?: Record<string, any> } & Record<string, any>
+
+const unwrapProfileResponse = (response: ProfilePatchResponse | null | undefined) => {
+  return response?.data && typeof response.data === 'object' ? response.data : response
+}
+
+const refreshBusinessProfileCaches = async () => {
+  await Promise.all([refreshProfile(), tenantsStore.fetchBusinessProfile()])
+}
 
 const openImageModal = (type: 'logo' | 'banner') => {
   imageModalType.value = type
@@ -993,18 +1003,22 @@ const openImageModal = (type: 'logo' | 'banner') => {
 }
 
 const handleImageUploaded = async (url: string) => {
-  const field = imageModalType.value === 'logo' ? 'logo_url' : 'banner_url'
+  const field: ImageField = imageModalType.value === 'logo' ? 'logo_url' : 'banner_url'
   imageModalOpen.value = false
 
   // If profile exists, auto-save the image URL immediately via PATCH
   if (businessProfile.value) {
     try {
-      const res = await $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile', {
+      const res = await $fetch<ProfilePatchResponse>('/api/api/tenant/public-profile', {
         method: 'PATCH',
         body: { [field]: url },
       })
-      // Update store directly from PATCH response — avoids a second GET that can fail
-      if (res?.data) await refreshProfile()
+      const patchedProfile = unwrapProfileResponse(res)
+      if (patchedProfile?.[field] !== url) {
+        throw new Error('Image URL was not persisted')
+      }
+      editForm[field] = url
+      await refreshBusinessProfileCaches()
       toast.success('Imagen guardada correctamente.', { title: 'Imagen subida' })
     } catch {
       toast.error('La imagen se subió pero no se pudo guardar. Inténtalo de nuevo.', { title: 'Error' })
