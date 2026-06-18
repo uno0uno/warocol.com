@@ -72,6 +72,7 @@ const props = defineProps<{
     invoice_number?: string | number | null
     cufe?: string | null
     status?: string | null
+    qrDataUrl?: string | null
   } | null
 }>()
 
@@ -262,6 +263,13 @@ const finalTotal = computed(() =>
       <div v-if="invoice.cufe" class="receipt-row receipt-small receipt-cufe">
         CUFE: {{ invoice.cufe }}
       </div>
+      <img
+        v-if="invoice.qrDataUrl"
+        :src="invoice.qrDataUrl"
+        alt="QR verificacion DIAN"
+        class="receipt-qr"
+      >
+      <div v-if="invoice.cufe" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
     </template>
   </div>
@@ -273,8 +281,9 @@ const finalTotal = computed(() =>
 }
 
 .receipt-print-ticket .receipt-logo {
+  width: 18mm;
   max-width: 22mm;
-  max-height: 11mm;
+  max-height: 18mm;
   display: block;
   margin: 0 auto 4px;
   object-fit: contain;
@@ -328,6 +337,13 @@ const finalTotal = computed(() =>
 .receipt-print-ticket .receipt-cufe {
   word-break: break-all;
   text-align: center;
+}
+
+.receipt-print-ticket .receipt-qr {
+  width: 30mm;
+  height: 30mm;
+  margin: 4px auto;
+  display: block;
 }
 
 .receipt-print-ticket .receipt-footer {
