@@ -4998,7 +4998,7 @@ onUnmounted(() => {
   align-items: start;
   margin: 2px 0;
 }
-.receipt-col-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.receipt-col-desc { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .receipt-col-qty,
 .receipt-col-price,
 .receipt-col-total { text-align: right; white-space: nowrap; }

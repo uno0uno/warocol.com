@@ -354,9 +354,9 @@ const finalTotal = computed(() =>
 }
 
 .receipt-print-ticket .receipt-col-desc {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .receipt-print-ticket .receipt-col-qty,
