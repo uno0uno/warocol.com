@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { buildReceiptLogoStyle } from '~/utils/receiptPrintConfig'
+
 const props = defineProps<{
   fiscalData?: {
     business_name?: string | null
@@ -30,6 +32,8 @@ const displayCity = computed(() =>
 const displayPhone = computed(() =>
   props.fiscalData?.phone || props.phone || null,
 )
+
+const logoStyle = computed(() => buildReceiptLogoStyle())
 </script>
 
 <template>
@@ -39,6 +43,7 @@ const displayPhone = computed(() =>
       :src="logoUrl"
       alt=""
       class="receipt-logo"
+      :style="logoStyle"
     >
     <div class="receipt-header">{{ headerName }}</div>
     <div v-if="fiscalData?.nit" class="receipt-row receipt-small">
@@ -58,10 +63,10 @@ const displayPhone = computed(() =>
 
 <style>
 .receipt-print-header .receipt-logo {
-  max-width: 66mm;
-  max-height: 24mm;
+  max-width: var(--receipt-logo-max-width, 66mm);
+  max-height: var(--receipt-logo-max-height, 24mm);
   display: block;
-  margin: -4mm auto 1mm;
+  margin: var(--receipt-logo-margin, -4mm auto 1mm);
   object-fit: contain;
   object-position: center top;
   filter: grayscale(100%);
