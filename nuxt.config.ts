@@ -269,6 +269,10 @@ export default defineNuxtConfig({
     enabled: false
   },
   vite: {
+    optimizeDeps: {
+      // Pre-bundle on dev startup — avoids 500 on first /pos/checkout visit after QR import.
+      include: ['qrcode'],
+    },
     server: {
       // Node walks up to ~/node_modules (home package.json); vite-node 403s without this in dev
       fs: {
