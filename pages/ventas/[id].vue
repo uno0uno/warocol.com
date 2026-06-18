@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
@@ -11,8 +11,13 @@ definePageMeta({
 useHead({ title: 'Detalle de Venta' })
 
 // Tenant reactivity
-const { currentTenant } = useTenantReactive()
+const { currentTenant, businessProfile } = useTenantReactive()
 const { singular: tableSingular } = useTableLabel()
+const {
+  receiptPrintSettings,
+  receiptLogoUrl,
+  settingsData,
+} = useReceiptPrintSettings()
 
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
@@ -113,6 +118,7 @@ const { data: posContextRes, asyncStatus: posContextAsyncStatus } = useQuery({
 })
 const isInvoicingReady = computed(() => posContextRes.value?.data?.invoicing_ready === true)
 const isReadinessLoading = computed(() => posContextAsyncStatus.value === 'loading' && !posContextRes.value)
+const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
 // Invoice emit state
 const isEmittingInvoice = ref(false)
@@ -315,6 +321,125 @@ const formatCurrency = (value: number) => {
 
 const { formatDateTime: formatDate } = useFormatters()
 
+type SaleReceiptModifier = {
+  id?: string | number | null
+  name: string
+  quantity?: number | string | null
+  price?: number | string | null
+  total?: number | string | null
+}
+
+const receiptDocumentLabel = computed(() => {
+  const label = (receiptPrintSettings.value.document_label || '').trim()
+  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return 'Factura'
+  if (/factura/i.test(label)) return label
+  return label
+})
+
+const receiptTipLabel = computed(() => {
+  const label = (receiptPrintSettings.value.tip_label || 'Propina').trim()
+  return label || 'Propina'
+})
+
+const itemModifierTotal = (modifier: SaleReceiptModifier) =>
+  (Number(modifier.price) || 0) * (Number(modifier.quantity) || 1)
+
+const itemReceiptTotal = (item: any) => {
+  const explicitSubtotal = Number(item.subtotal ?? item.net_total)
+  if (Number.isFinite(explicitSubtotal) && explicitSubtotal > 0) return explicitSubtotal
+  const modifiersTotal = (item.modifiers ?? []).reduce(
+    (sum: number, modifier: SaleReceiptModifier) => sum + itemModifierTotal(modifier),
+    0,
+  )
+  return (Number(item.price_at_purchase) + modifiersTotal) * (Number(item.quantity) || 1)
+}
+
+const saleReceiptItems = computed(() =>
+  items.value.map((item: any) => {
+    const quantity = Number(item.quantity) || 1
+    const total = itemReceiptTotal(item)
+    return {
+      id: item.id,
+      name: item.product?.name || item.name || 'Producto',
+      quantity,
+      unitPrice: total / quantity,
+      total,
+      modifiers: (item.modifiers ?? []).map((modifier: any) => ({
+        id: modifier.id,
+        name: modifier.name || 'Adicion',
+        quantity: modifier.quantity ?? 1,
+        price: Number(modifier.price) || 0,
+        total: itemModifierTotal(modifier),
+      })),
+    }
+  }),
+)
+
+const saleReceiptPromoBreakdown = computed(() => {
+  const breakdown = order.value?.promo_breakdown ?? []
+  if (breakdown.length > 0) return breakdown
+  const savings = Number(order.value?.promo_savings) || 0
+  if (savings <= 0) return []
+  return [{ promotion_name: 'Promocion', savings }]
+})
+
+const saleReceiptWaroDiscountLabel = computed(() => {
+  const firstLine = effectiveWaroBreakdown.value.find((line: any) => Number(line.cop_discount) > 0)
+  return firstLine ? orderWaroLineLabel(firstLine) : 'Canje WaRo'
+})
+
+const saleReceiptLocationLabel = computed(() => {
+  const o = order.value
+  if (!o) return null
+  if (o.is_delivery) return 'Domicilio'
+  if (o.source === 'barra') return 'Barra'
+  if (o.source === 'mesa') {
+    const tableName = o.table_display_name || o.table_name || o.table?.name || null
+    const tableCode = o.table_code || o.table?.code || null
+    return [tableSingular.value, tableCode, tableName].filter(Boolean).join(' ')
+  }
+  return 'Mostrador'
+})
+
+const saleReceiptSoldAt = computed(() => {
+  const o = order.value
+  if (!o) return null
+  const date = o.completed_at || o.closed_at || o.created_at || o.updated_at
+  return date ? formatDate(date) : null
+})
+
+const saleReceiptCustomerFiscalLabel = computed(() => {
+  const customer = order.value?.customer
+  const type = customer?.fiscal_id_type || customer?.document_type || customer?.identification_type
+  const number = customer?.fiscal_id || customer?.document_number || customer?.identification_number
+  return type && number ? `${type}: ${number}` : null
+})
+
+const saleReceiptPayments = computed(() =>
+  (order.value?.split_payments ?? []).map((payment: any) => ({
+    id: payment.id,
+    label: resolveLabel(payment.payment_method, payment.payment_method_id),
+    amount: Number(payment.amount) || 0,
+    change: Number(payment.change) || null,
+  })),
+)
+
+const saleReceiptSinglePaymentLabel = computed(() => {
+  const o = order.value
+  if (!o?.payment_method) return null
+  return resolveLabel(o.payment_method, o.payment_method_id)
+})
+
+const saleReceiptInvoice = computed(() => {
+  if (!invoiceData.value) return null
+  return {
+    prefix: invoiceData.value.prefix,
+    invoice_number: invoiceData.value.invoice_number,
+    cufe: invoiceData.value.cufe,
+    status: invoiceData.value.status,
+  }
+})
+
 
 // ── Credit panel state ──────────────────────────────────────────────────────
 
@@ -340,8 +465,26 @@ const goBack = () => {
   router.push('/ventas')
 }
 
-const printReceipt = () => {
+const printReceipt = async () => {
+  if (!order.value) {
+    useToast().error('No se pudo cargar la venta para imprimir.', { title: 'Sin datos' })
+    return
+  }
+  if (itemsLoading.value) {
+    useToast().error('Espera a que carguen los productos antes de imprimir.', { title: 'Cargando venta' })
+    return
+  }
+  if (saleReceiptItems.value.length === 0) {
+    useToast().error('La venta no tiene productos para imprimir.', { title: 'Sin productos' })
+    return
+  }
+
+  document.body.classList.add('printing-receipt-ticket')
+  await nextTick()
   window.print()
+  window.setTimeout(() => {
+    document.body.classList.remove('printing-receipt-ticket')
+  }, 250)
 }
 
 // Edit mode functions
@@ -1497,6 +1640,41 @@ onUnmounted(() => {
       :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
       :customer="orderData?.customer ?? null"
       @sent="onInvoiceEmailSent"
+    />
+
+    <PosReceiptPrintTicket
+      v-if="order"
+      :fiscal-data="fiscalData"
+      :display-name="businessProfile?.display_name"
+      :address="businessProfile?.address"
+      :city="businessProfile?.city"
+      :phone="businessProfile?.phone_number"
+      :logo-url="receiptLogoUrl"
+      :document-label="receiptDocumentLabel"
+      :order-number="order.order_number"
+      :sold-at="saleReceiptSoldAt"
+      :location-label="saleReceiptLocationLabel"
+      :waiter-name="order.served_by_member_name"
+      :customer-name="order.customer_name"
+      :customer-fiscal-label="saleReceiptCustomerFiscalLabel"
+      :items="saleReceiptItems"
+      :subtotal="grossSubtotal"
+      :promo-breakdown="saleReceiptPromoBreakdown"
+      :discount-amount="Number(order.discount_amount) || 0"
+      :waro-discount-label="saleReceiptWaroDiscountLabel"
+      :waro-discount-amount="effectiveWaroDiscountCop"
+      :standard-tax-label="order.standard_tax_label"
+      :standard-tax="Number(order.standard_tax) || 0"
+      :liquor-tax="Number(order.liquor_tax) || 0"
+      :order-total="Number(order.total_amount) || 0"
+      :tip-label="receiptTipLabel"
+      :tip-amount="Number(order.tip_amount) || 0"
+      :tip-tax-amount="Number(order.tip_tax_amount) || 0"
+      :advance-applied="orderAdvanceApplied"
+      :charged-total="orderChargedTotal"
+      :payments="saleReceiptPayments"
+      :single-payment-label="saleReceiptSinglePaymentLabel"
+      :invoice="saleReceiptInvoice"
     />
   </div>
 </template>
