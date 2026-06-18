@@ -280,16 +280,6 @@ const finalTotal = computed(() =>
   display: none;
 }
 
-.receipt-print-ticket .receipt-logo {
-  max-width: 22mm;
-  max-height: 18mm;
-  display: block;
-  margin: 0 auto 4px;
-  object-fit: contain;
-  filter: grayscale(100%);
-  -webkit-filter: grayscale(100%);
-}
-
 .receipt-print-ticket .receipt-header {
   font-size: 1.1em;
   font-weight: bold;
