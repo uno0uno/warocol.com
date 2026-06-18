@@ -183,6 +183,13 @@
         <span class="font-medium text-text-tertiary">Descuentos promoción</span>
         <span class="font-semibold text-state-success-text  tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
       </div>
+      <div
+        v-if="tableAdvanceAvailable > 0"
+        class="flex items-center justify-between text-xs"
+      >
+        <span class="font-medium text-text-tertiary">Anticipo mesa</span>
+        <span class="font-semibold text-state-success-text tabular-nums">{{ formatCurrency(tableAdvanceAvailable) }}</span>
+      </div>
       <div class="flex items-center justify-between">
         <span class="text-xs font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
         <div class="flex flex-col items-end">
@@ -523,6 +530,12 @@ const {
   () => props.tabItems ?? [],
   () => (props.mesaMode ? props.tabTotal + props.total : props.total),
 )
+
+const tableAdvanceAvailable = computed(() => {
+  if (!props.mesaMode) return 0
+  const minimumConsumption = posStore.activeTableSession?.minimumConsumption
+  return Number(minimumConsumption?.advanceTotal ?? minimumConsumption?.advance_total ?? minimumConsumption?.advance ?? 0) || 0
+})
 
 function formatPromoTypeTitle(promoType?: string | null): string | null {
   if (!promoType) return null
