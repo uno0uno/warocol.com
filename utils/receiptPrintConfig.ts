@@ -1,15 +1,15 @@
 export const thermalReceiptPrintConfig = {
-  paperWidthMm: 80,
-  printableWidthMm: 72,
+  paperWidthMm: 58,
+  printableWidthMm: 48,
   pageMarginMm: 0,
   contentPaddingTopMm: 0,
-  contentPaddingXMm: 2,
-  contentPaddingBottomMm: 2,
+  contentPaddingXMm: 1.5,
+  contentPaddingBottomMm: 8,
   fontSizePt: 9,
   lineHeight: 1.2,
-  logoMaxWidthMm: 66,
-  logoMaxHeightMm: 24,
-  logoTopOffsetMm: -4,
+  logoMaxWidthMm: 42,
+  logoMaxHeightMm: 20,
+  logoTopOffsetMm: -2,
   logoBottomMarginMm: 1,
 }
 

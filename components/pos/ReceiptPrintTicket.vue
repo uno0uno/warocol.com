@@ -347,8 +347,8 @@ const finalTotal = computed(() =>
 .receipt-print-ticket .receipt-grid-header,
 .receipt-print-ticket .receipt-grid-row {
   display: grid;
-  grid-template-columns: 1fr 7mm 14mm 16mm;
-  gap: 1mm;
+  grid-template-columns: 1fr 6mm 12mm 13mm;
+  gap: 0.6mm;
   align-items: start;
   margin: 2px 0;
 }
@@ -399,10 +399,11 @@ const finalTotal = computed(() =>
     font-size: 9pt;
     line-height: 1.2;
     letter-spacing: 0;
-    width: 72mm;
+    width: 48mm;
     color: #000;
     background: #fff;
-    padding: 0 2mm 2mm;
+    box-sizing: border-box;
+    padding: 0 1.5mm 8mm;
     position: absolute;
     top: 0;
     left: 0;
@@ -418,7 +419,7 @@ const finalTotal = computed(() =>
   }
 
   @page {
-    size: 80mm auto;
+    size: 58mm auto;
     margin: 0;
   }
 }
