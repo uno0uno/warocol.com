@@ -58,7 +58,7 @@
           :title="headerAction.ariaLabel || headerAction.label"
           @click="headerAction.handler"
         >
-          <svg v-if="headerAction.icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg v-if="headerAction.icon === 'printer' || headerAction.icon === true" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 0 2 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2zm8-12V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10z" />
           </svg>
           <span v-if="!headerAction.iconOnly" class="truncate">{{ headerAction.label }}</span>
@@ -106,7 +106,7 @@ import logoSrc from '~/public/logo_waro_colombia.png'
 
 defineProps<{
   status?: { label: string; color: string }
-  headerAction?: { label: string; ariaLabel?: string; icon?: boolean; iconOnly?: boolean; handler: () => void }
+  headerAction?: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void }
   isRefreshing?: boolean
   isProgressiveLoading?: boolean
   hideLogo?: boolean
