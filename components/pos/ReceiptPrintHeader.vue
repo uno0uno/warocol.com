@@ -59,10 +59,11 @@ const displayPhone = computed(() =>
 <style>
 .receipt-print-header .receipt-logo {
   max-width: 66mm;
-  max-height: 54mm;
+  max-height: 24mm;
   display: block;
-  margin: 0 auto 4px;
+  margin: -4mm auto 1mm;
   object-fit: contain;
+  object-position: center top;
   filter: grayscale(100%);
   -webkit-filter: grayscale(100%);
 }
