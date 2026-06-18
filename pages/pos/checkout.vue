@@ -5036,7 +5036,7 @@ onUnmounted(() => {
     width: 72mm;
     color: #000;
     background: #fff;
-    padding: 2mm;
+    padding: 0 2mm 2mm;
     position: absolute;
     top: 0;
     left: 0;
@@ -5060,7 +5060,7 @@ onUnmounted(() => {
 
   @page {
     size: 80mm auto;
-    margin: 2mm;
+    margin: 0;
   }
 }
 </style>
