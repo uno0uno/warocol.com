@@ -50,13 +50,18 @@
         <button
           v-if="headerAction"
           key="dynamic-header-action"
-          class="h-11 max-w-48 flex-shrink-0 px-3 lg:px-4 bg-shell-cta-bg text-shell-cta-text rounded-lg font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-colors flex items-center gap-2"
+          :class="[
+            'h-11 flex-shrink-0 bg-shell-cta-bg text-shell-cta-text rounded-lg font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-colors flex items-center justify-center gap-2',
+            headerAction.iconOnly ? 'w-11 px-0' : 'max-w-48 px-3 lg:px-4',
+          ]"
+          :aria-label="headerAction.ariaLabel || headerAction.label"
+          :title="headerAction.ariaLabel || headerAction.label"
           @click="headerAction.handler"
         >
           <svg v-if="headerAction.icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 0 2 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2zm8-12V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10z" />
           </svg>
-          <span class="truncate">{{ headerAction.label }}</span>
+          <span v-if="!headerAction.iconOnly" class="truncate">{{ headerAction.label }}</span>
         </button>
 
         <span
@@ -101,7 +106,7 @@ import logoSrc from '~/public/logo_waro_colombia.png'
 
 defineProps<{
   status?: { label: string; color: string }
-  headerAction?: { label: string; icon?: boolean; handler: () => void }
+  headerAction?: { label: string; ariaLabel?: string; icon?: boolean; iconOnly?: boolean; handler: () => void }
   isRefreshing?: boolean
   isProgressiveLoading?: boolean
   hideLogo?: boolean

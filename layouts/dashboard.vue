@@ -169,10 +169,11 @@ provide('setBackHandler', (handler: (() => void) | undefined) => {
 })
 
 // Dynamic header action (like print button) - can be set by child pages
-const dynamicHeaderAction = ref<{ label: string; icon?: boolean; handler: () => void } | undefined>(undefined)
+type HeaderAction = { label: string; ariaLabel?: string; icon?: boolean; iconOnly?: boolean; handler: () => void }
+const dynamicHeaderAction = ref<HeaderAction | undefined>(undefined)
 
 // Provide header action setter for child pages
-provide('setHeaderAction', (action: { label: string; icon?: boolean; handler: () => void } | undefined) => {
+provide('setHeaderAction', (action: HeaderAction | undefined) => {
   dynamicHeaderAction.value = action
 })
 
