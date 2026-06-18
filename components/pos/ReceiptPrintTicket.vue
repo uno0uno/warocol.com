@@ -281,9 +281,8 @@ const finalTotal = computed(() =>
 }
 
 .receipt-print-ticket .receipt-logo {
-  width: 18mm;
   max-width: 22mm;
-  max-height: 18mm;
+  max-height: 11mm;
   display: block;
   margin: 0 auto 4px;
   object-fit: contain;
