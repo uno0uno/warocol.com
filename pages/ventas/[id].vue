@@ -657,7 +657,7 @@ const saveChanges = async () => {
 const setPageStatus = inject<(status: { label: string; color: string } | undefined) => void>('setPageStatus')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
-const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
+const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 
 // Watch order data and update layout header
 watch(order, (newOrder) => {
@@ -677,7 +677,7 @@ onMounted(() => {
   setHeaderAction?.({
     label: 'Imprimir',
     ariaLabel: 'Imprimir venta',
-    icon: true,
+    icon: 'printer',
     iconOnly: true,
     handler: printReceipt
   })
