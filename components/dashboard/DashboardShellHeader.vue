@@ -51,7 +51,10 @@
           v-if="headerAction"
           key="dynamic-header-action"
           :class="[
-            'h-11 flex-shrink-0 bg-shell-cta-bg text-shell-cta-text rounded-lg font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-colors flex items-center justify-center gap-2',
+            'h-11 flex-shrink-0 rounded-lg font-medium focus:outline-none focus:ring-2 transition-colors flex items-center justify-center gap-2',
+            headerAction.iconOnly
+              ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:ring-shell-action-focus-ring'
+              : 'bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:ring-shell-cta-focus-ring',
             headerAction.iconOnly ? 'w-11 px-0' : 'max-w-48 px-3 lg:px-4',
           ]"
           :aria-label="headerAction.ariaLabel || headerAction.label"
@@ -59,7 +62,9 @@
           @click="headerAction.handler"
         >
           <svg v-if="headerAction.icon === 'printer' || headerAction.icon === true" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 0 2 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2zm8-12V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V3h12v6" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 14h12v7H6z" />
           </svg>
           <span v-if="!headerAction.iconOnly" class="truncate">{{ headerAction.label }}</span>
         </button>
