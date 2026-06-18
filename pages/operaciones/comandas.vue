@@ -14,31 +14,26 @@
         <h3 class="text-base sm:text-lg font-semibold text-text-primary">Comandas y Cocina</h3>
       </div>
 
-      <div class="space-y-5">
+      <div
+        v-if="businessProfile"
+        class="rounded-xl border-2 border-border bg-surface transition-colors divide-y divide-border"
+      >
         <!-- Activar comandas -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <p class="text-sm font-medium text-text-primary">Activar comandas</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Al vender un producto se genera una comanda para cada estación de preparación configurada.
-              </p>
-            </div>
-            <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
-              <UiLoadingDots v-if="isTogglingComandas" color="var(--color-primary)" size="11px" />
-              <label v-else class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.comandas_enabled"
-                  @change="handleToggleComandas"
-                />
-                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
+        <div class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">Activar comandas</p>
           </div>
+          <UiToggleSwitch
+            :checked="businessProfile?.comandas_enabled"
+            :loading="isTogglingComandas"
+            aria-label="Activar comandas"
+            @change="handleToggleComandas"
+          />
+        </div>
+
+        <div v-if="showDisableComandasWarning" class="p-3">
           <!-- Inline disable-warning banner -->
-          <div v-if="showDisableComandasWarning" class="rounded-xl border border-state-warning-border bg-state-warning-bg p-3 flex items-start justify-between gap-3">
+          <div class="rounded-xl border border-state-warning-border bg-state-warning-bg p-3 flex items-start justify-between gap-3">
             <p class="text-xs text-state-warning-text leading-relaxed">
               Las comandas activas no serán afectadas. Los nuevos pedidos no generarán comandas mientras esté desactivado.
             </p>
@@ -54,81 +49,45 @@
           </div>
         </div>
 
-        <div class="border-t border-border/40" />
-
         <!-- Activar KDS (only when comandas ON) -->
-        <div v-if="businessProfile?.comandas_enabled" class="space-y-2">
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <p class="text-sm font-medium text-text-primary">Activar pantallas KDS</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Habilita rutas <span class="font-mono text-[11px]">/cocina/[estacion]</span> para pantallas de cocina independientes.
-              </p>
-            </div>
-            <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
-              <UiLoadingDots v-if="isTogglingKds" color="var(--color-primary)" size="11px" />
-              <label v-else class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.kds_enabled"
-                  @change="handleToggleKds"
-                />
-                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
+        <div v-if="businessProfile?.comandas_enabled" class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">Activar pantallas KDS</p>
           </div>
+          <UiToggleSwitch
+            :checked="businessProfile?.kds_enabled"
+            :loading="isTogglingKds"
+            aria-label="Activar pantallas KDS"
+            @change="handleToggleKds"
+          />
         </div>
 
         <!-- Issue #537 — Expediter mode (waiter advances comanda state from POS) -->
-        <div v-if="businessProfile?.comandas_enabled" class="space-y-2 pt-3 border-t border-border">
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <p class="text-sm font-medium text-text-primary">Mesero avanza estado desde POS</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Habilita un panel en <span class="font-mono text-[11px]">/pos</span> donde el mesero
-                puede marcar comandas como "lista" o "entregada" sin tocar la pantalla de cocina.
-              </p>
-            </div>
-            <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
-              <UiLoadingDots v-if="isTogglingExpediter" color="var(--color-primary)" size="11px" />
-              <label v-else class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.expediter_enabled"
-                  @change="handleToggleExpediter"
-                />
-                <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
+        <div v-if="businessProfile?.comandas_enabled" class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">Mesero avanza estado desde POS</p>
           </div>
+          <UiToggleSwitch
+            :checked="businessProfile?.expediter_enabled"
+            :loading="isTogglingExpediter"
+            aria-label="Mesero avanza estado desde POS"
+            @change="handleToggleExpediter"
+          />
         </div>
 
-        <div v-if="businessProfile" class="space-y-4 pt-4 border-t border-border">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="space-y-4 px-4 py-3">
+          <div class="flex min-h-[40px] items-center justify-between gap-4">
             <div class="min-w-0">
-              <p class="text-sm font-medium text-text-primary">Consumo mínimo por mesa</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Configuración base para cover o consumo mínimo. En este momento solo se guarda la configuración del negocio.
-              </p>
+              <p class="text-sm font-semibold leading-snug text-text-primary">Consumo mínimo por mesa</p>
             </div>
-            <label
-              class="relative inline-flex items-center cursor-pointer flex-shrink-0 self-start"
-              :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
+            <UiToggleSwitch
+              v-model:checked="draftMinimumConsumptionEnabled"
+              :disabled="isSavingMinimumConsumption"
               :aria-label="draftMinimumConsumptionEnabled ? 'Desactivar consumo mínimo' : 'Activar consumo mínimo'"
-            >
-              <input
-                v-model="draftMinimumConsumptionEnabled"
-                type="checkbox"
-                class="sr-only peer"
-                :disabled="isSavingMinimumConsumption"
-              />
-              <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-            </label>
+            />
           </div>
 
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(180px,260px)_1fr] md:items-end">
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(180px,240px)_minmax(190px,230px)_auto] lg:items-end">
             <div class="space-y-1">
               <label for="minimum-consumption-amount" class="text-xs font-medium text-text-secondary">
                 Monto COP
@@ -140,40 +99,34 @@
                 min="0"
                 step="1000"
                 inputmode="numeric"
-                class="input-base w-full px-4 py-2 min-h-[44px]"
+                class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
                 :class="minimumConsumptionAmountInvalid ? 'border-state-danger-border' : ''"
-                :disabled="isSavingMinimumConsumption"
+                :disabled="isSavingMinimumConsumption || !draftMinimumConsumptionEnabled"
                 placeholder="0"
               />
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label
-                class="flex items-center justify-between gap-4 rounded-lg border border-border px-3 py-2 min-h-[44px] sm:min-w-[260px]"
-                :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
-              >
-                <span class="min-w-0">
-                  <span class="block text-sm font-medium text-text-primary">Modo restrictivo</span>
-                  <span class="block text-xs text-text-secondary">Se usará para bloquear cierres en una fase posterior.</span>
-                </span>
-                <input
-                  v-model="draftMinimumConsumptionRestrictive"
-                  type="checkbox"
-                  class="h-4 w-4 accent-primary flex-shrink-0"
-                  :disabled="isSavingMinimumConsumption"
-                />
-              </label>
+            <label
+              class="flex min-h-[44px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:border-primary/40"
+              :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
+            >
+              <span class="text-sm font-medium text-text-primary">Modo restrictivo</span>
+              <UiToggleSwitch
+                v-model:checked="draftMinimumConsumptionRestrictive"
+                :disabled="isSavingMinimumConsumption || !draftMinimumConsumptionEnabled"
+                aria-label="Modo restrictivo"
+              />
+            </label>
 
-              <button
-                type="button"
-                class="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg bg-action-primary-bg px-4 py-2 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="isSavingMinimumConsumption || !minimumConsumptionHasChanges || minimumConsumptionAmountInvalid"
-                @click="saveMinimumConsumptionConfig"
-              >
-                <UiLoadingDots v-if="isSavingMinimumConsumption" size="8px" color="currentColor" />
-                <span v-else>Guardar</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-action-primary-bg px-4 py-2 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              :disabled="isSavingMinimumConsumption || !minimumConsumptionHasChanges || minimumConsumptionAmountInvalid"
+              @click="saveMinimumConsumptionConfig"
+            >
+              <UiLoadingDots v-if="isSavingMinimumConsumption" size="8px" color="currentColor" />
+              <span v-else>Guardar</span>
+            </button>
           </div>
 
           <p v-if="minimumConsumptionAmountInvalid" class="text-xs text-state-danger-text">

@@ -2077,6 +2077,11 @@ const closeSuccessModal = () => {
   }
 }
 
+async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
+  const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`
+  return QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+}
+
 const generateInvoice = async () => {
   if (invoiceLoading.value) return
 
@@ -2124,8 +2129,7 @@ const generateInvoice = async () => {
             status: result.status,
           }
           if (result.cufe) {
-            const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${result.cufe}`
-            invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+            invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
           }
         } else if (ids.length === 1 && result.status !== 'accepted') {
           invoiceError.value = result.error_message || `Factura rechazada: ${result.prefix}-${result.invoice_number}`
@@ -2151,8 +2155,7 @@ const generateInvoice = async () => {
       if (first) {
         invoiceResult.value = { cufe: first.cufe, invoice_number: first.invoice_number, prefix: first.prefix, pdf_presigned_url: null, status: first.status }
         if (first.cufe) {
-          const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${first.cufe}`
-          invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+          invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(first.cufe)
         }
       }
       const failed = invoiceResults.value.filter(r => r.status === 'error').length
@@ -2172,6 +2175,9 @@ const generateInvoice = async () => {
 const printReceipt = async () => {
   // Ensure post-payment receipt wins over a prior prefactura print (#939).
   document.body.classList.remove('printing-prefactura')
+  if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
+    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+  }
   await nextTick()
   window.print()
 }
@@ -4936,6 +4942,16 @@ onUnmounted(() => {
       <div class="receipt-divider">================================</div>
       <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRÓNICA</div>
       <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
+      <div v-if="invoiceResult.cufe" class="receipt-row receipt-small receipt-cufe">
+        CUFE: {{ invoiceResult.cufe }}
+      </div>
+      <img
+        v-if="invoiceQrDataUrl"
+        :src="invoiceQrDataUrl"
+        alt="QR verificación DIAN"
+        class="receipt-qr"
+      >
+      <div v-if="invoiceResult.cufe" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
     </template>
   </div>
@@ -4972,6 +4988,7 @@ onUnmounted(() => {
 .receipt-item span:last-child { white-space: nowrap; flex-shrink: 0; }
 .receipt-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin: 4px 0; }
 .receipt-qr { width: 30mm; height: 30mm; margin: 4px auto; display: block; }
+.receipt-cufe { word-break: break-all; text-align: center; }
 .receipt-footer { text-align: center; margin-top: 8px; }
 .receipt-small { font-size: 0.85em; }
 .receipt-grid-header,
