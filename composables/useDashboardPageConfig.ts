@@ -16,6 +16,16 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
+    } else if (path === '/asistente/kali') {
+      return {
+        pageTitle: 'Kali',
+        pageSubtitle: undefined,
+        searchPlaceholder: undefined,
+        activePage: 'asistente' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined
+      }
     } else if (path === '/financiero/tir') {
       return {
         pageTitle: 'Análisis TIR',

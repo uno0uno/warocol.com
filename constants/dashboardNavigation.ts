@@ -12,10 +12,11 @@ import {
   MapPinIcon,
   ReceiptPercentIcon,
   ShoppingCartIcon,
+  SparklesIcon,
   TruckIcon,
   UserGroupIcon,
 } from '@heroicons/vue/24/outline'
-import type { Module } from '~/stores/access'
+import type { AccessFeature, Module } from '~/stores/access'
 
 export type ActivePage =
   | 'dashboard'
@@ -23,6 +24,7 @@ export type ActivePage =
   | 'financiero' | 'finanzas' | 'facturacion'
   | 'abastecimiento' | 'inventario' | 'menu' | 'operaciones'
   | 'analytics' | 'analitica' | 'reportes' | 'pagos'
+  | 'asistente'
   | 'equipo' | 'integraciones'
   | 'negocio' | 'admin' | 'configuracion'
 
@@ -32,6 +34,7 @@ export interface DashboardNavItem {
   label: string
   icon: FunctionalComponent
   module: Module
+  feature?: AccessFeature
   showCriticalDot?: boolean
 }
 
@@ -43,6 +46,7 @@ export const dashboardPrimaryItems: DashboardNavItem[] = [
 
 export const dashboardSecondaryItems: DashboardNavItem[] = [
   { to: '/analitica', page: 'analytics', label: 'Analítica Ventas', icon: ChartBarIcon, module: 'analitica' },
+  { to: '/asistente/kali', page: 'asistente', label: 'Kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/arqueo', page: 'finanzas', label: 'Finanzas', icon: BanknotesIcon, module: 'finanzas' },
   { to: '/facturacion', page: 'facturacion', label: 'Facturación', icon: DocumentTextIcon, module: 'facturacion' },
   { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon, module: 'menu' },
@@ -64,6 +68,7 @@ export const dashboardMobileGridItems: DashboardNavItem[] = [
   { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon, module: 'menu' },
   { to: '/operaciones/comandas', page: 'operaciones', label: 'Operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
   { to: '/analitica', page: 'analytics', label: 'Analítica', icon: ChartBarIcon, module: 'analitica' },
+  { to: '/asistente/kali', page: 'asistente', label: 'Kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/cartera', page: 'finanzas', label: 'Finanzas', icon: BanknotesIcon, module: 'finanzas' },
   { to: '/facturacion', page: 'facturacion', label: 'Facturación', icon: ReceiptPercentIcon, module: 'facturacion' },
   { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon, module: 'equipo' },

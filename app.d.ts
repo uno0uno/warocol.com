@@ -1,4 +1,4 @@
-import type { Module } from '~/stores/access'
+import type { AccessFeature, Module } from '~/stores/access'
 
 /**
  * TypeScript module augmentation for Nuxt 3 PageMeta.
@@ -20,6 +20,12 @@ declare module '#app' {
      * authenticated user.
      */
     module?: Module
+    /**
+     * Tenant feature capability required to access this page. Unlike module
+     * gates, missing/false capabilities deny access even when RBAC enforcement
+     * is disabled or shadowed.
+     */
+    feature?: AccessFeature
     /**
      * Public customer-facing page (menu, checkout). Skips operator auth
      * middleware even when layout is false (e.g. city/tenant dispatch).

@@ -189,16 +189,20 @@ const authStore = useAuthStore()
 // so today's sidebar (every module visible) is preserved until Epic 6
 // flips a tenant.
 const { can } = useModuleAccess()
+const { hasFeature } = useFeatureAccess()
 const accessStore = useAccessStore()
 
+const canSeeNavItem = (item: DashboardNavItem) =>
+  can(item.module).value && (!item.feature || hasFeature(item.feature).value)
+
 const visiblePrimaryItems = computed(() =>
-  dashboardPrimaryItems.filter((item) => can(item.module).value)
+  dashboardPrimaryItems.filter(canSeeNavItem)
 )
 const visibleSecondaryItems = computed(() =>
-  dashboardSecondaryItems.filter((item) => can(item.module).value)
+  dashboardSecondaryItems.filter(canSeeNavItem)
 )
 const visibleCuentaItems = computed(() =>
-  dashboardCuentaItems.filter((item) => can(item.module).value)
+  dashboardCuentaItems.filter(canSeeNavItem)
 )
 
 // Eventos is special: Module.EVENTOS was removed from the backend enum
