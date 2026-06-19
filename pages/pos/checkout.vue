@@ -635,6 +635,8 @@ const discountAmount = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return 0
   const val = Number(discountInput.value)
   if (isNaN(val) || val <= 0) return 0
+  // POS contract: automatic line promos reduce subtotalAfterPromos first;
+  // manual fixed/percent discounts are order-level discounts on that subtotal.
   if (discountType.value === 'percent') {
     return Math.min(Math.round(subtotalAfterPromos.value * val / 100), Math.round(subtotalAfterPromos.value))
   }
@@ -954,6 +956,8 @@ const addSplitPayment = async () => {
             ...(discountEnabled.value && _discountAmtPos > 0
               ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
               : {}),
+            // POS split contract: first tender creates a partial order; later
+            // tenders go to /payments and are the source of truth in order_payments.
             split_mode: true,
             split_first_amount: amountToCharge,
             // Issue #524 — cash tender on the first split when method is cash
@@ -976,6 +980,8 @@ const addSplitPayment = async () => {
           method: 'POST',
           body: {
             amount: amountToCharge,
+            // Wallet participates here as payment_method='customer_wallet',
+            // never as a discount and never with cash_received.
             payment_method: selectedPaymentMethod.value,
             payment_method_id: selectedPaymentMethodId.value ?? undefined,
             ...(isCashMethod.value
