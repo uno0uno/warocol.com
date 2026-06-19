@@ -1,6 +1,6 @@
 <template>
   <section class="mx-auto flex w-full max-w-7xl flex-col">
-    <div class="grid min-h-[calc(100vh-7rem)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div class="min-h-[calc(100vh-7rem)]">
       <section class="min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
         <div class="flex h-[calc(100vh-7rem)] min-h-[620px] flex-col">
           <div v-if="isStreaming" class="flex justify-end border-b border-card-border px-4 py-3 md:px-5">
@@ -81,61 +81,60 @@
 
             <form class="flex flex-col gap-2" @submit.prevent="sendMessage">
               <label class="sr-only" for="kali-message">Mensaje para Kali</label>
-              <div class="relative">
+              <div class="rounded-xl border border-card-border bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <textarea
                   id="kali-message"
                   v-model="draft"
                   rows="2"
                   maxlength="2000"
-                  class="min-h-12 w-full resize-none rounded-lg border border-card-border bg-white py-3 pl-4 pr-14 text-sm leading-6 text-text-primary placeholder:text-text-tertiary transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="min-h-20 w-full resize-none rounded-t-xl border-0 bg-transparent px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="Pregunta sobre ventas o food cost"
                   :disabled="isStreaming"
                   @keydown.enter.exact.prevent="sendMessage"
                 />
-                <button
-                  type="submit"
-                  class="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.96]"
-                  :disabled="!canSend"
-                  aria-label="Enviar mensaje"
-                >
-                  <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
-                </button>
+                <div class="flex items-center justify-between gap-3 px-3 pb-3">
+                  <div class="flex min-w-0 items-center gap-1" aria-label="Workflows">
+                    <button
+                      v-for="workflow in workflows"
+                      :key="workflow.id"
+                      type="button"
+                      class="h-8 rounded-md px-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
+                      :class="workflow.id === selectedWorkflowId
+                        ? 'bg-primary text-white shadow-sm shadow-primary/20'
+                        : 'text-text-secondary hover:bg-primary/8 hover:text-primary'"
+                      :disabled="isStreaming && workflow.id !== selectedWorkflowId"
+                      :title="workflow.description"
+                      @click="selectWorkflow(workflow.id)"
+                    >
+                      {{ workflow.label }}
+                    </button>
+                  </div>
+                  <div class="flex shrink-0 items-center gap-2">
+                    <button
+                      v-if="lastFailedPrompt"
+                      type="button"
+                      class="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      :disabled="isStreaming"
+                      @click="retryLastPrompt"
+                    >
+                      <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
+                      Reintentar
+                    </button>
+                    <button
+                      type="submit"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.96]"
+                      :disabled="!canSend"
+                      aria-label="Enviar mensaje"
+                    >
+                      <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button
-                v-if="lastFailedPrompt"
-                type="button"
-                class="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                :disabled="isStreaming"
-                @click="retryLastPrompt"
-              >
-                <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
-                Reintentar
-              </button>
             </form>
           </div>
         </div>
       </section>
-
-      <aside class="flex min-h-0 flex-col gap-3">
-        <section class="rounded-lg border border-card-border bg-white/80 p-2 shadow-sm">
-          <div class="grid grid-cols-2 gap-1" aria-label="Workflows">
-            <button
-              v-for="workflow in workflows"
-              :key="workflow.id"
-              type="button"
-              class="h-10 rounded-md px-3 text-center text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
-              :class="workflow.id === selectedWorkflowId
-                ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                : 'text-text-secondary hover:bg-primary/8 hover:text-primary'"
-              :disabled="isStreaming && workflow.id !== selectedWorkflowId"
-              :title="workflow.description"
-              @click="selectWorkflow(workflow.id)"
-            >
-              {{ workflow.label }}
-            </button>
-          </div>
-        </section>
-      </aside>
     </div>
   </section>
 </template>
