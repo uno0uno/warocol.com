@@ -11,7 +11,7 @@ export const thermalReceiptPrintConfig = {
   logoMaxHeightMm: 22,
   logoTopOffsetMm: -2,
   logoBottomMarginMm: 1,
-  driverTopFeedCompensationMm: -18,
+  driverTopFeedCompensationMm: -42,
 }
 
 export function buildReceiptLogoStyle() {
