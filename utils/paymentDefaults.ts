@@ -28,6 +28,7 @@ export type ApiPaymentGroup = Omit<PosPaymentGroup, 'triggersCartera' | 'trigger
   methods?: PosPaymentMethod[]
 }
 
+// POS contract: wallet is a payment tender slug, not a discount or WaRo redemption.
 export const WALLET_PAYMENT_SLUG = 'customer_wallet'
 
 export const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
