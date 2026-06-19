@@ -41,11 +41,29 @@
                 >
                   <div
                     v-if="message.role === 'assistant' && !message.content && isStreaming"
-                    class="inline-flex items-center gap-2 text-text-secondary"
+                    class="min-w-[260px] max-w-sm text-text-secondary"
                     aria-live="polite"
                   >
-                    <span>{{ kaliLoadingPhrase }}</span>
-                    <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
+                    <div class="inline-flex items-center gap-2">
+                      <span>Procesando desde hace {{ processingElapsedLabel }}</span>
+                      <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
+                    </div>
+                    <p class="mt-2 text-xs leading-5 text-text-tertiary">{{ kaliLoadingPhrase }}</p>
+                    <ol v-if="visibleProgressEvents.length" class="mt-3 space-y-2 border-t border-stone-100 pt-3">
+                      <li
+                        v-for="event in visibleProgressEvents"
+                        :key="event.id"
+                        class="activity-row flex min-w-0 items-center gap-2"
+                      >
+                        <component
+                          :is="progressIcon(event.title)"
+                          class="h-4 w-4 shrink-0"
+                          :class="progressIconClass(event.title)"
+                          aria-hidden="true"
+                        />
+                        <span class="truncate text-xs font-medium text-text-secondary">{{ event.title }}</span>
+                      </li>
+                    </ol>
                   </div>
                   <p v-else class="whitespace-pre-wrap break-words">{{ message.content }}</p>
                 </div>
@@ -115,49 +133,6 @@
             >
               {{ workflow.label }}
             </button>
-          </div>
-        </section>
-
-        <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-card-border bg-white/80 shadow-sm">
-          <div class="border-b border-card-border px-4 py-3">
-            <div class="flex items-center justify-between gap-3">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Actividad</p>
-              <span
-                class="inline-flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-medium leading-none"
-                :class="statusTone.class"
-              >
-                <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="statusTone.dot" aria-hidden="true" />
-                <span class="truncate">{{ statusTone.label }}</span>
-              </span>
-            </div>
-            <p class="mt-2 truncate text-sm text-text-secondary">
-              {{ currentProgressEvent?.title ?? 'Esperando una pregunta' }}
-            </p>
-          </div>
-          <div class="kali-scroll min-h-[220px] flex-1 overflow-y-auto px-4 py-3">
-            <div
-              v-if="progressEvents.length === 0"
-              class="rounded-lg border border-dashed border-card-border bg-[#fbfaf8] px-3 py-3 text-sm leading-6 text-text-tertiary"
-            >
-              Sin actividad
-            </div>
-            <ol v-else class="divide-y divide-stone-100">
-              <li
-                v-for="event in visibleProgressEvents"
-                :key="event.id"
-                class="activity-row flex min-w-0 items-center gap-2 py-2.5"
-              >
-                <component
-                  :is="progressIcon(event.title)"
-                  class="h-4 w-4 shrink-0"
-                  :class="progressIconClass(event.title)"
-                  aria-hidden="true"
-                />
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium leading-5 text-text-primary">{{ event.title }}</p>
-                </div>
-              </li>
-            </ol>
           </div>
         </section>
       </aside>
@@ -244,17 +219,20 @@ const lastFailedPrompt = ref('')
 const lastFailedAssistantId = ref('')
 const conversationIds = ref<Partial<Record<WorkflowId, string>>>({})
 const messagesContainer = ref<HTMLElement | null>(null)
+const processingStartedAt = ref<number | null>(null)
+const processingNow = ref(Date.now())
 let activeController: AbortController | null = null
+let processingTimer: ReturnType<typeof setInterval> | null = null
 
 const activeWorkflow = computed(() =>
   workflows.find((workflow) => workflow.id === selectedWorkflowId.value) ?? workflows[0]
 )
 const isStreaming = computed(() => streamStatus.value === 'streaming')
 const canSend = computed(() => draft.value.trim().length >= 3 && !isStreaming.value)
-const visibleProgressEvents = computed(() => progressEvents.value.slice(-8))
-const currentProgressEvent = computed(() => {
-  if (progressEvents.value.length === 0) return null
-  return progressEvents.value[progressEvents.value.length - 1]
+const visibleProgressEvents = computed(() => progressEvents.value.slice(-5))
+const processingElapsedLabel = computed(() => {
+  if (!processingStartedAt.value) return '0s'
+  return formatElapsed(processingNow.value - processingStartedAt.value)
 })
 const {
   currentPhrase: kaliLoadingPhrase,
@@ -269,44 +247,10 @@ const {
 watch(isStreaming, (loading) => {
   if (loading) {
     startKaliLoadingPhrases()
+    startProcessingTimer()
   } else {
     stopKaliLoadingPhrases()
-  }
-})
-
-const statusTone = computed(() => {
-  if (streamStatus.value === 'streaming') {
-    return {
-      label: 'Trabajando',
-      class: 'border-amber-200 bg-amber-50 text-amber-800',
-      dot: 'bg-amber-500',
-    }
-  }
-  if (streamStatus.value === 'error') {
-    return {
-      label: 'Revisar error',
-      class: 'border-status-error-border bg-status-error-bg text-status-error-text',
-      dot: 'bg-status-error-text',
-    }
-  }
-  if (streamStatus.value === 'completed') {
-    return {
-      label: 'Completado',
-      class: 'border-green-200 bg-status-success-bg text-status-success-text',
-      dot: 'bg-status-success-text',
-    }
-  }
-  if (streamStatus.value === 'cancelled') {
-    return {
-      label: 'Cancelado',
-      class: 'border-card-border bg-shell-bg text-text-secondary',
-      dot: 'bg-text-tertiary',
-    }
-  }
-  return {
-    label: 'Disponible para este tenant',
-    class: 'border-card-border bg-shell-bg text-text-secondary',
-    dot: 'bg-amber-500',
+    stopProcessingTimer()
   }
 })
 
@@ -545,6 +489,7 @@ function addProgress(title: string, detail?: string) {
     ...progressEvents.value,
     { id: createId(), title, detail },
   ].slice(-24)
+  void scrollToBottom()
 }
 
 function progressIcon(title: string) {
@@ -587,6 +532,30 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
+function startProcessingTimer() {
+  processingStartedAt.value = Date.now()
+  processingNow.value = processingStartedAt.value
+  if (processingTimer) clearInterval(processingTimer)
+  processingTimer = setInterval(() => {
+    processingNow.value = Date.now()
+  }, 1000)
+}
+
+function stopProcessingTimer() {
+  if (processingTimer) {
+    clearInterval(processingTimer)
+    processingTimer = null
+  }
+}
+
+function formatElapsed(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes <= 0) return `${seconds}s`
+  return `${minutes}m ${seconds}s`
+}
+
 async function scrollToBottom() {
   await nextTick()
   const container = messagesContainer.value
@@ -597,6 +566,7 @@ async function scrollToBottom() {
 onBeforeUnmount(() => {
   activeController?.abort()
   activeController = null
+  stopProcessingTimer()
 })
 </script>
 
