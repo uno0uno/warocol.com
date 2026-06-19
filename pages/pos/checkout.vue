@@ -629,6 +629,8 @@ function promoFieldsFromCloseResponse(
     subtotal: Number(data?.subtotal) || fallbackSubtotal,
   }
 }
+// Manual checkout contract (#1397): automatic promos are evaluated first;
+// manual discounts use subtotalAfterPromos, then WaRo redemption is applied.
 const discountAmount = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return 0
   const val = Number(discountInput.value)
@@ -1283,6 +1285,8 @@ function isPaymentGroupVisible(group: PosPaymentGroup) {
   if (group.triggersCartera) {
     return !!(selectedCustomer.value && !isAnonymousCustomer.value)
   }
+  // Wallet is a tender, not a discount. Only show it when the backend can debit
+  // a real customer wallet and the cashier has a positive balance to apply.
   if (group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet) {
     return !!(selectedCustomer.value && !isAnonymousCustomer.value && walletBalanceCop.value > 0)
   }
