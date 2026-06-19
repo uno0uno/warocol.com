@@ -913,18 +913,6 @@ const toggleSplitMode = () => {
   }
 }
 
-const splitDuplicatePaymentMessage = computed(() => {
-  if (!splitMode.value || !selectedPaymentMethod.value || splitPayments.value.length === 0) return ''
-  const selectedMethodId = selectedPaymentMethodId.value ?? null
-  const duplicate = splitPayments.value.some(row =>
-    row.payment_method === selectedPaymentMethod.value
-    && (row.payment_method_id ?? null) === selectedMethodId
-  )
-  return duplicate
-    ? 'Este método ya fue registrado en este cobro dividido. Elige otro método para continuar.'
-    : ''
-})
-
 const splitAmountValidationMessage = computed(() => {
   if (!splitMode.value || splitIsComplete.value) return ''
   const amount = splitPartialAmount.value
@@ -935,10 +923,6 @@ const splitAmountValidationMessage = computed(() => {
   }
   return ''
 })
-
-const splitPaymentValidationMessage = computed(
-  () => splitAmountValidationMessage.value || splitDuplicatePaymentMessage.value,
-)
 
 const splitAmountToCharge = computed(() =>
   splitPartialAmount.value !== null
@@ -957,8 +941,8 @@ const addSplitPayment = async () => {
     processingError.value = discountValidationError.value
     return
   }
-  if (splitPaymentValidationMessage.value) {
-    processingError.value = splitPaymentValidationMessage.value
+  if (splitAmountValidationMessage.value) {
+    processingError.value = splitAmountValidationMessage.value
     return
   }
   const amountToCharge = splitAmountToCharge.value
@@ -3989,10 +3973,10 @@ onUnmounted(() => {
                 />
               </div>
               <p
-                v-if="splitPaymentValidationMessage"
+                v-if="splitAmountValidationMessage"
                 class="text-xs font-medium text-state-danger-text"
               >
-                {{ splitPaymentValidationMessage }}
+                {{ splitAmountValidationMessage }}
               </p>
             </div>
 
@@ -4009,7 +3993,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || !!splitPaymentValidationMessage"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || !!splitAmountValidationMessage"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
