@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
 import QRCode from 'qrcode'
-import type { EscposReceiptInput } from '~/utils/receiptEscpos'
 import { usePOSStore, type TabItem } from '~/stores/usePOSStore'
 import { clearTableQrPaymentIntent, readTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useAddressStore, type AddressCreate } from '~/stores/address'
@@ -42,7 +41,6 @@ const router = useRouter()
 const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
-const { printReceiptViaQz } = useQzTrayPrint()
 const { currentTenant, businessProfile } = useTenantReactive()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -2180,10 +2178,6 @@ const printReceipt = async () => {
   if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
     invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
   }
-  const qzReceipt = buildCheckoutEscposReceipt()
-  if (qzReceipt && await printReceiptViaQz(qzReceipt)) {
-    return
-  }
   await nextTick()
   window.print()
 }
@@ -2208,72 +2202,6 @@ const receiptLogoUrl = computed(() => {
   const url = settingsData.value?.data?.logo_url ?? businessProfile.value?.logo_url ?? null
   return url && String(url).startsWith('http') ? url : null
 })
-
-function buildCheckoutEscposReceipt(): EscposReceiptInput | null {
-  const result = orderResult.value
-  if (!result || cartItemsSnapshot.value.length === 0) return null
-  const context = receiptPrintContext.value
-  return {
-    businessName: fiscalData.value?.business_name || businessProfile.value?.display_name || null,
-    nit: fiscalData.value?.nit ?? null,
-    address: fiscalData.value?.fiscal_address || businessProfile.value?.address || null,
-    city: fiscalData.value?.city || businessProfile.value?.city || null,
-    phone: fiscalData.value?.phone || businessProfile.value?.phone_number || null,
-    email: fiscalData.value?.email ?? null,
-    documentLabel: receiptDocumentLabel.value,
-    orderNumber: result.order_number,
-    soldAt: context?.soldAt ?? null,
-    locationLabel: context?.wasMesa && context.tableName
-      ? [tableSingular.value, context.tableCode, context.tableName].filter(Boolean).join(' ')
-      : context?.isBar ? 'Barra' : 'Mostrador',
-    waiterName: context?.waiterName ?? null,
-    customerName: context?.customerName ?? null,
-    customerFiscalLabel: context?.customerFiscalId
-      ? `${context.customerFiscalIdType}: ${context.customerFiscalId}`
-      : null,
-    items: cartItemsSnapshot.value.map((item: any) => ({
-      name: item.product?.name || item.name || 'Producto',
-      quantity: Number(item.quantity) || 1,
-      unitPrice: getItemUnitPrice(item),
-      total: getItemTotal(item),
-      modifiers: (item.modifiers ?? []).map((mod: any) => ({
-        name: formatModifierPrintDesc(mod),
-        quantity: Number(mod.quantity) || 1,
-        price: Number(mod.price) || 0,
-        total: getModifierLineTotal(mod),
-      })),
-    })),
-    subtotal: result.subtotal ?? 0,
-    discountAmount: result.discount_amount ?? 0,
-    waroDiscountLabel: orderResultWaroLineLabel.value,
-    waroDiscountAmount: orderResultWaroDiscountCop.value,
-    standardTaxLabel: result.standard_tax_label,
-    standardTax: result.standard_tax ?? 0,
-    liquorTax: result.liquor_tax ?? 0,
-    orderTotal: result.total_amount ?? 0,
-    tipLabel: receiptTipLabel.value,
-    tipAmount: result.tip_amount ?? 0,
-    advanceApplied: result.advance_applied ?? 0,
-    chargedTotal: orderResultChargedAmount.value,
-    payments: splitPaymentsSnapshot.value.map((payment) => ({
-      label: payment.payment_method_name,
-      amount: payment.amount,
-      change: payment.change ?? null,
-    })),
-    singlePaymentLabel: result.payment_method
-      ? (result.payment_method_name
-          ? `${getPaymentMethodLabel(result.payment_method)} · ${result.payment_method_name}`
-          : getPaymentMethodLabel(result.payment_method))
-      : null,
-    invoice: invoiceResult.value
-      ? {
-          prefix: invoiceResult.value.prefix,
-          invoice_number: invoiceResult.value.invoice_number,
-          cufe: invoiceResult.value.cufe,
-        }
-      : null,
-  }
-}
 
 // warocol.com#939 — pre-bill always reads as prefactura; post-payment uses receiptDocumentLabel.
 const prefacturaDocumentLabel = computed(() => {
