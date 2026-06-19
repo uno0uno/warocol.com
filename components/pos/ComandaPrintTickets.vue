@@ -33,7 +33,8 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
       </div>
       <div class="receipt-divider">--------------------------------</div>
       <div v-for="(item, i) in c.items" :key="i" class="receipt-item receipt-small">
-        <span>{{ item.quantity }}× {{ item.kitchen_name }}</span>
+        <span class="comanda-item-qty">{{ item.quantity }}×</span>
+        <span class="comanda-item-name">{{ item.kitchen_name }}</span>
       </div>
       <template v-for="(item, i) in c.items" :key="`mod-${i}`">
         <div
@@ -48,8 +49,6 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
           Notas Especiales: {{ item.notes }}
         </div>
       </template>
-      <div class="receipt-divider">--------------------------------</div>
-      <div class="receipt-footer receipt-small">NO ES FACTURA — COCINA</div>
     </div>
   </div>
 </template>
@@ -66,9 +65,28 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
 .comanda-ticket .receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
 .comanda-ticket .receipt-row { text-align: center; margin: 2px 0; }
 .comanda-ticket .receipt-divider { letter-spacing: 0; margin: 4px 0; text-align: center; }
-.comanda-ticket .receipt-item { margin: 2px 0; }
+.comanda-ticket .receipt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 1.12em;
+  font-weight: 700;
+}
 .comanda-ticket .receipt-footer { text-align: center; margin-top: 6px; }
 .comanda-ticket .receipt-small { font-size: 0.9em; }
+.comanda-ticket .comanda-item-qty {
+  flex-shrink: 0;
+  min-width: 9mm;
+  font-size: 1.65em;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+.comanda-ticket .comanda-item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 @media print {
   body.printing-comanda * { visibility: hidden; }

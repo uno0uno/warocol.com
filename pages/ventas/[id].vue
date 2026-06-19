@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import QRCode from 'qrcode'
+import type { EscposReceiptInput } from '~/utils/receiptEscpos'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
@@ -130,6 +131,7 @@ const invoiceQrDataUrl = ref('')
 // warocol.com#598 — invoice email modal trigger
 const showEmailModal = ref(false)
 const toast = useToast()
+const { printReceiptViaQz } = useQzTrayPrint()
 const onInvoiceEmailSent = (email: string) => {
   toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
 }
@@ -443,6 +445,43 @@ const saleReceiptInvoice = computed(() => {
   }
 })
 
+const saleReceiptEscpos = computed<EscposReceiptInput | null>(() => {
+  const o = order.value
+  if (!o) return null
+  return {
+    businessName: fiscalData.value?.business_name || businessProfile.value?.display_name || null,
+    nit: fiscalData.value?.nit ?? null,
+    address: fiscalData.value?.fiscal_address || businessProfile.value?.address || null,
+    city: fiscalData.value?.city || businessProfile.value?.city || null,
+    phone: fiscalData.value?.phone || businessProfile.value?.phone_number || null,
+    email: fiscalData.value?.email ?? null,
+    documentLabel: receiptDocumentLabel.value,
+    orderNumber: o.order_number,
+    soldAt: saleReceiptSoldAt.value,
+    locationLabel: saleReceiptLocationLabel.value,
+    waiterName: o.served_by_member_name,
+    customerName: o.customer_name,
+    customerFiscalLabel: saleReceiptCustomerFiscalLabel.value,
+    items: saleReceiptItems.value,
+    subtotal: grossSubtotal.value,
+    discountAmount: Number(o.discount_amount) || 0,
+    waroDiscountLabel: saleReceiptWaroDiscountLabel.value,
+    waroDiscountAmount: effectiveWaroDiscountCop.value,
+    standardTaxLabel: o.standard_tax_label,
+    standardTax: Number(o.standard_tax) || 0,
+    liquorTax: Number(o.liquor_tax) || 0,
+    orderTotal: Number(o.total_amount) || 0,
+    tipLabel: receiptTipLabel.value,
+    tipAmount: Number(o.tip_amount) || 0,
+    tipTaxAmount: Number(o.tip_tax_amount) || 0,
+    advanceApplied: orderAdvanceApplied.value,
+    chargedTotal: orderChargedTotal.value,
+    payments: saleReceiptPayments.value,
+    singlePaymentLabel: saleReceiptSinglePaymentLabel.value,
+    invoice: saleReceiptInvoice.value,
+  }
+})
+
 async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
   const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`
   return QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
@@ -488,6 +527,10 @@ const printReceipt = async () => {
   }
   if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
     invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
+  }
+
+  if (saleReceiptEscpos.value && await printReceiptViaQz(saleReceiptEscpos.value)) {
+    return
   }
 
   document.body.classList.add('printing-receipt-ticket')
