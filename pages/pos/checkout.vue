@@ -4993,7 +4993,7 @@ onUnmounted(() => {
 .receipt-grid-header,
 .receipt-grid-row {
   display: grid;
-  grid-template-columns: 1fr 8mm 17mm 18mm;
+  grid-template-columns: 1fr 7mm 15mm 16mm;
   gap: 0.6mm;
   align-items: start;
   margin: 2px 0;
@@ -5030,14 +5030,14 @@ onUnmounted(() => {
   #pos-prefactura {
     display: block !important;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 10pt;
+    font-size: 9.5pt;
     line-height: 1.2;
     letter-spacing: 0;
-    width: 72mm;
+    width: 64mm;
     color: #000;
     background: #fff;
     box-sizing: border-box;
-    padding: 0 2mm 8mm;
+    padding: 0 1.5mm 14mm;
     position: absolute;
     top: 0;
     left: 0;
