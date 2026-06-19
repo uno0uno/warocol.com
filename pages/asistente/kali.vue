@@ -64,7 +64,15 @@
                     ? 'rounded-br-md bg-stone-900 text-white'
                     : 'rounded-bl-md border border-stone-200 bg-white text-text-primary'"
                 >
-                  <p class="whitespace-pre-wrap break-words">{{ message.content || typingPlaceholder }}</p>
+                  <div
+                    v-if="message.role === 'assistant' && !message.content && isStreaming"
+                    class="inline-flex items-center gap-2 text-text-secondary"
+                    aria-live="polite"
+                  >
+                    <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
+                    <span>{{ kaliLoadingPhrase }}</span>
+                  </div>
+                  <p v-else class="whitespace-pre-wrap break-words">{{ message.content }}</p>
                 </div>
               </article>
             </div>
@@ -116,55 +124,65 @@
       </section>
 
       <aside class="flex min-h-0 flex-col gap-3">
-        <section class="rounded-lg border border-card-border bg-card-bg p-3 shadow-sm">
-          <p class="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Workflows</p>
-          <div class="mt-3 grid gap-2">
+        <section class="rounded-lg border border-card-border bg-white/80 p-2 shadow-sm">
+          <div class="grid grid-cols-2 gap-1" aria-label="Workflows">
             <button
               v-for="workflow in workflows"
               :key="workflow.id"
               type="button"
-              class="rounded-lg border px-3 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
+              class="h-10 rounded-md px-3 text-center text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
               :class="workflow.id === selectedWorkflowId
-                ? 'border-amber-200 bg-amber-50 text-amber-900'
-                : 'border-card-border bg-white text-text-primary hover:border-amber-200'"
+                ? 'bg-stone-900 text-white shadow-sm'
+                : 'text-text-secondary hover:bg-stone-100 hover:text-text-primary'"
               :disabled="isStreaming && workflow.id !== selectedWorkflowId"
+              :title="workflow.description"
               @click="selectWorkflow(workflow.id)"
             >
-              <span class="block text-sm font-semibold">{{ workflow.label }}</span>
-              <span class="mt-1 block text-xs leading-5 text-text-secondary">{{ workflow.description }}</span>
+              {{ workflow.label }}
             </button>
           </div>
         </section>
 
-        <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
-          <div class="flex items-center justify-between gap-2 border-b border-card-border px-4 py-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Actividad</p>
-            <span class="text-xs text-text-tertiary">{{ progressEvents.length }}</span>
+        <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-card-border bg-white/80 shadow-sm">
+          <div class="border-b border-card-border px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Actividad</p>
+              <span
+                class="inline-flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-medium leading-none"
+                :class="statusTone.class"
+              >
+                <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="statusTone.dot" aria-hidden="true" />
+                <span class="truncate">{{ statusTone.label }}</span>
+              </span>
+            </div>
+            <p class="mt-2 truncate text-sm text-text-secondary">
+              {{ currentProgressEvent?.title ?? 'Esperando una pregunta' }}
+            </p>
           </div>
-          <div class="kali-scroll min-h-[220px] flex-1 overflow-y-auto p-3">
+          <div class="kali-scroll min-h-[220px] flex-1 overflow-y-auto px-4 py-3">
             <div
               v-if="progressEvents.length === 0"
               class="rounded-lg border border-dashed border-card-border bg-[#fbfaf8] px-3 py-3 text-sm leading-6 text-text-tertiary"
             >
               Sin actividad
             </div>
-            <div v-else class="flex flex-col gap-2">
-              <div
-                v-for="event in progressEvents"
+            <ol v-else class="divide-y divide-stone-100">
+              <li
+                v-for="event in visibleProgressEvents"
                 :key="event.id"
-                class="rounded-lg border border-stone-200 bg-white px-3 py-2"
+                class="flex min-w-0 gap-2 py-2.5"
               >
-                <p class="text-sm font-medium leading-5 text-text-primary">{{ event.title }}</p>
-                <p v-if="event.detail" class="mt-1 break-words text-xs leading-5 text-text-secondary">{{ event.detail }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="border-t border-card-border px-4 py-3">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Estado</p>
-            <div class="flex items-center gap-2 text-sm text-text-secondary">
-              <span class="h-2 w-2 rounded-full" :class="statusTone.dot" aria-hidden="true" />
-              {{ statusTone.label }}
-            </div>
+                <span
+                  class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="progressDotClass(event.title)"
+                  aria-hidden="true"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium leading-5 text-text-primary">{{ event.title }}</p>
+                  <p v-if="event.detail" class="truncate text-xs leading-5 text-text-tertiary">{{ event.detail }}</p>
+                </div>
+              </li>
+            </ol>
           </div>
         </section>
       </aside>
@@ -173,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
@@ -253,7 +271,28 @@ const activeWorkflow = computed(() =>
 )
 const isStreaming = computed(() => streamStatus.value === 'streaming')
 const canSend = computed(() => draft.value.trim().length >= 3 && !isStreaming.value)
-const typingPlaceholder = computed(() => isStreaming.value ? 'Kali esta pensando...' : '')
+const visibleProgressEvents = computed(() => progressEvents.value.slice(-8))
+const currentProgressEvent = computed(() => {
+  if (progressEvents.value.length === 0) return null
+  return progressEvents.value[progressEvents.value.length - 1]
+})
+const {
+  currentPhrase: kaliLoadingPhrase,
+  start: startKaliLoadingPhrases,
+  stop: stopKaliLoadingPhrases,
+} = useLoadingPhrases([
+  'Consultando datos...',
+  'Validando metricas...',
+  'Preparando respuesta...',
+])
+
+watch(isStreaming, (loading) => {
+  if (loading) {
+    startKaliLoadingPhrases()
+  } else {
+    stopKaliLoadingPhrases()
+  }
+})
 
 const statusTone = computed(() => {
   if (streamStatus.value === 'streaming') {
@@ -496,23 +535,27 @@ function removeMessage(messageId: string) {
 
 function progressTitle(eventName: string) {
   const titles: Record<string, string> = {
-    run_started: 'Inicio de ejecucion',
-    step_started: 'Paso en curso',
-    tool_started: 'Consultando datos',
-    tool_finished: 'Consulta terminada',
-    llm_started: 'Preparando respuesta',
+    run_started: 'Inicio',
+    step_started: 'Router',
+    tool_started: 'Consultando',
+    tool_finished: 'Datos listos',
+    llm_started: 'Redactando',
   }
   return titles[eventName] ?? eventName
 }
 
 function progressDetail(data: Record<string, unknown>) {
+  const resultSummary = typeof data.result_summary === 'string' ? data.result_summary : ''
+  if (resultSummary.startsWith('Returned data object')) return 'Datos recibidos'
+  if (resultSummary.startsWith('Returned')) return 'Consulta completada'
+
   const fields = [
-    data.result_summary,
     data.tool_name,
     data.name,
-    data.step_type,
     data.workflow,
     data.status,
+    data.step_type,
+    resultSummary,
   ]
   return fields.find((field): field is string => typeof field === 'string' && field.length > 0)
 }
@@ -522,6 +565,13 @@ function addProgress(title: string, detail?: string) {
     ...progressEvents.value,
     { id: createId(), title, detail },
   ].slice(-24)
+}
+
+function progressDotClass(title: string) {
+  if (title.toLowerCase().includes('error')) return 'bg-status-error-text'
+  if (['Respuesta lista', 'Datos listos', 'Completado'].includes(title)) return 'bg-status-success-text'
+  if (['Consultando', 'Redactando', 'Router'].includes(title)) return 'bg-amber-500'
+  return 'bg-stone-300'
 }
 
 function setupErrorMessage(status: number) {
