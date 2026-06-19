@@ -1,39 +1,12 @@
 <template>
-  <section class="mx-auto flex w-full max-w-7xl flex-col gap-4">
-    <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div class="min-w-0">
-        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-text-tertiary">
-          <SparklesIcon class="h-4 w-4 text-amber-600" aria-hidden="true" />
-          Asistente
-        </div>
-        <h1 class="mt-1 text-2xl font-semibold tracking-normal text-text-primary">Kali</h1>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 text-xs">
-        <span class="inline-flex w-fit items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
-          Beta interna
-        </span>
-        <span
-          class="inline-flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 font-medium"
-          :class="statusTone.class"
-        >
-          <span class="h-1.5 w-1.5 rounded-full" :class="statusTone.dot" aria-hidden="true" />
-          {{ statusTone.label }}
-        </span>
-      </div>
-    </header>
-
-    <div class="grid min-h-[calc(100vh-11rem)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+  <section class="mx-auto flex w-full max-w-7xl flex-col">
+    <div class="grid min-h-[calc(100vh-7rem)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
       <section class="min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
-        <div class="flex h-[calc(100vh-11rem)] min-h-[620px] flex-col">
-          <div class="flex items-center justify-between gap-3 border-b border-card-border px-4 py-3 md:px-5">
-            <div>
-              <p class="text-sm font-semibold text-text-primary">Conversacion</p>
-              <p class="mt-0.5 text-xs text-text-tertiary">{{ activeWorkflow.label }}</p>
-            </div>
+        <div class="flex h-[calc(100vh-7rem)] min-h-[620px] flex-col">
+          <div v-if="isStreaming" class="flex justify-end border-b border-card-border px-4 py-3 md:px-5">
             <button
-              v-if="isStreaming"
               type="button"
-              class="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-card-bg px-3 text-sm font-medium text-text-secondary transition hover:border-status-error-border hover:text-status-error-text focus:outline-none focus:ring-2 focus:ring-amber-100"
+              class="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-card-bg px-3 text-sm font-medium text-text-secondary transition hover:border-status-error-border hover:text-status-error-text focus:outline-none focus:ring-2 focus:ring-primary/20"
               @click="cancelStream"
             >
               <StopIcon class="h-4 w-4" aria-hidden="true" />
@@ -43,10 +16,12 @@
 
           <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-[#fbfaf8] px-4 py-5 md:px-6">
             <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-10">
-              <div class="flex max-w-sm flex-col items-center gap-3 text-center">
+              <div class="flex max-w-md flex-col items-center gap-3 text-center">
                 <div>
-                  <p class="text-base font-semibold text-text-primary">Sin conversaciones</p>
-                  <p class="mt-1 text-sm leading-6 text-text-secondary">Elige un workflow y escribe tu mensaje.</p>
+                  <p class="text-lg font-semibold text-text-primary">Listo para conversar</p>
+                  <p class="mt-2 text-sm leading-6 text-text-secondary">
+                    Preguntale por ventas, food cost o cualquier senal del negocio que quieras entender.
+                  </p>
                 </div>
               </div>
             </div>
@@ -86,38 +61,38 @@
               </div>
             </div>
 
-            <form class="flex flex-col gap-3 md:flex-row md:items-end" @submit.prevent="sendMessage">
+            <form class="flex flex-col gap-2" @submit.prevent="sendMessage">
               <label class="sr-only" for="kali-message">Mensaje para Kali</label>
-              <textarea
-                id="kali-message"
-                v-model="draft"
-                rows="2"
-                maxlength="2000"
-                class="min-h-12 flex-1 resize-none rounded-lg border border-card-border bg-white px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                placeholder="Pregunta sobre ventas o food cost"
-                :disabled="isStreaming"
-                @keydown.enter.exact.prevent="sendMessage"
-              />
-              <div class="flex gap-2">
-                <button
-                  v-if="lastFailedPrompt"
-                  type="button"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              <div class="relative">
+                <textarea
+                  id="kali-message"
+                  v-model="draft"
+                  rows="2"
+                  maxlength="2000"
+                  class="min-h-12 w-full resize-none rounded-lg border border-card-border bg-white py-3 pl-4 pr-14 text-sm leading-6 text-text-primary placeholder:text-text-tertiary transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="Pregunta sobre ventas o food cost"
                   :disabled="isStreaming"
-                  @click="retryLastPrompt"
-                >
-                  <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
-                  Reintentar
-                </button>
+                  @keydown.enter.exact.prevent="sendMessage"
+                />
                 <button
                   type="submit"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98]"
+                  class="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.96]"
                   :disabled="!canSend"
+                  aria-label="Enviar mensaje"
                 >
                   <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
-                  Enviar
                 </button>
               </div>
+              <button
+                v-if="lastFailedPrompt"
+                type="button"
+                class="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                :disabled="isStreaming"
+                @click="retryLastPrompt"
+              >
+                <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
+                Reintentar
+              </button>
             </form>
           </div>
         </div>
