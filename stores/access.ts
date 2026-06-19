@@ -32,11 +32,15 @@ export type Module =
   // EVENTOS removed in api-warolabs#212 (PR #212 merged) — Eventos lives in warotickets.com
 
 export type EnforcementMode = 'disabled' | 'shadow' | 'enforce'
+export type AccessFeature = 'kali_enabled'
+
+type AccessFeatures = Partial<Record<AccessFeature, boolean>>
 
 interface AccessResponse {
   role: string | null
   modules: string[]
   enforcement_mode: EnforcementMode
+  features?: AccessFeatures
 }
 
 // Polling handle — module scope so it survives store re-evaluation but stays
@@ -51,6 +55,7 @@ export const useAccessStore = defineStore('access', () => {
   const role = ref<string | null>(null)
   const modules = ref<string[]>([])
   const enforcementMode = ref<EnforcementMode>('disabled')
+  const features = ref<AccessFeatures>({})
   const isLoaded = ref(false)
 
   // O(1) membership lookup derived from the array.
@@ -64,6 +69,7 @@ export const useAccessStore = defineStore('access', () => {
       role.value = data.role
       modules.value = data.modules ?? []
       enforcementMode.value = data.enforcement_mode ?? 'disabled'
+      features.value = data.features ?? {}
       isLoaded.value = true
       armPolling()
     } catch (err) {
@@ -84,6 +90,7 @@ export const useAccessStore = defineStore('access', () => {
     role.value = null
     modules.value = []
     enforcementMode.value = 'disabled'
+    features.value = {}
     isLoaded.value = false
   }
 
@@ -118,13 +125,24 @@ export const useAccessStore = defineStore('access', () => {
     return modulesSet.value.has(module)
   }
 
+  /**
+   * Tenant feature capabilities are stricter than module access: missing
+   * backend values must stay false so hidden beta/internal products do not
+   * appear just because module RBAC is in shadow/disabled mode.
+   */
+  function hasFeature(feature: AccessFeature): boolean {
+    return features.value[feature] === true
+  }
+
   return {
     role: readonly(role),
     modules: readonly(modules),
     enforcementMode: readonly(enforcementMode),
+    features: readonly(features),
     isLoaded: readonly(isLoaded),
     load,
     clear,
     can,
+    hasFeature,
   }
 })

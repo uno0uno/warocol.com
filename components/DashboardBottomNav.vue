@@ -265,7 +265,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { can } = useModuleAccess()
-const visibleGridItems = computed(() => dashboardMobileGridItems.filter((item) => can(item.module).value))
+const { hasFeature } = useFeatureAccess()
+const canSeeNavItem = (item: DashboardNavItem) =>
+  can(item.module).value && (!item.feature || hasFeature(item.feature).value)
+const visibleGridItems = computed(() => dashboardMobileGridItems.filter(canSeeNavItem))
 const isNavItemBlocked = (item: DashboardNavItem) =>
   props.billingBlocked && item.to !== '/gestion/billing'
 
