@@ -134,6 +134,7 @@ interface ReceiptPaymentLine {
   id: string
   amount: number
   payment_method: string
+  payment_method_id?: string | null
   payment_method_name: string
   cash_received?: number | null
   change?: number | null
@@ -912,9 +913,38 @@ const toggleSplitMode = () => {
   }
 }
 
+const splitDuplicatePaymentMessage = computed(() => {
+  if (!splitMode.value || !selectedPaymentMethod.value || splitPayments.value.length === 0) return ''
+  const selectedMethodId = selectedPaymentMethodId.value ?? null
+  const duplicate = splitPayments.value.some(row =>
+    row.payment_method === selectedPaymentMethod.value
+    && (row.payment_method_id ?? null) === selectedMethodId
+  )
+  return duplicate
+    ? 'Este método ya fue registrado en este cobro dividido. Elige otro método para continuar.'
+    : ''
+})
+
+const splitAmountValidationMessage = computed(() => {
+  if (!splitMode.value || splitIsComplete.value) return ''
+  const amount = splitPartialAmount.value
+  if (amount === null) return ''
+  if (amount <= 0) return 'Ingresa un monto mayor a $0.'
+  if (amount - splitRemaining.value > 0.01) {
+    return `El monto supera el saldo pendiente (${formatCurrency(splitRemaining.value)}).`
+  }
+  return ''
+})
+
+const splitPaymentValidationMessage = computed(
+  () => splitAmountValidationMessage.value || splitDuplicatePaymentMessage.value,
+)
+
 const splitAmountToCharge = computed(() =>
-  splitPartialAmount.value !== null && splitPartialAmount.value > 0
-    ? Math.min(splitPartialAmount.value, splitRemaining.value)
+  splitPartialAmount.value !== null
+  && splitPartialAmount.value > 0
+  && !splitAmountValidationMessage.value
+    ? splitPartialAmount.value
     : 0
 )
 
@@ -927,8 +957,15 @@ const addSplitPayment = async () => {
     processingError.value = discountValidationError.value
     return
   }
+  if (splitPaymentValidationMessage.value) {
+    processingError.value = splitPaymentValidationMessage.value
+    return
+  }
   const amountToCharge = splitAmountToCharge.value
-  if (amountToCharge <= 0) return
+  if (amountToCharge <= 0) {
+    processingError.value = 'Ingresa un monto a cobrar antes de registrar el pago'
+    return
+  }
   isAddingPayment.value = true
   processingError.value = ''
   if (!(await ensureWalletTenderCanPay(amountToCharge))) {
@@ -941,6 +978,7 @@ const addSplitPayment = async () => {
     let remaining = 0
     let isComplete = false
     let paymentId = ''
+    let completionData: any = null
 
     if (isKitchenServiceMode.value) {
       const session = posStore.activeTableSession!
@@ -970,6 +1008,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
+        if (isComplete) completionData = response.data
         // Issue warocol.com#649 — real UUID from backend so the trash button can DELETE it.
         paymentId = response.data.payment_id
       } else {
@@ -988,6 +1027,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total
         remaining = response.data.remaining
         isComplete = response.data.is_complete
+        if (isComplete) completionData = response.data
         // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
         paymentId = response.data.payment_id
       }
@@ -1020,6 +1060,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
+        if (isComplete) completionData = response.data
         // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
         paymentId = response.data.payment_id
       } else {
@@ -1040,6 +1081,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total
         remaining = response.data.remaining
         isComplete = response.data.is_complete
+        if (isComplete) completionData = response.data
         paymentId = response.data.payment_id
       }
     }
@@ -1057,6 +1099,7 @@ const addSplitPayment = async () => {
       id: paymentId,
       amount: amountToCharge,
       payment_method: selectedPaymentMethod.value,
+      payment_method_id: selectedPaymentMethodId.value ?? null,
       payment_method_name: subMethodName ?? getPaymentMethodLabel(selectedPaymentMethod.value),
       ...(cashReceived !== null ? { cash_received: cashReceived, change: paymentChange } : {}),
     })
@@ -1071,25 +1114,29 @@ const addSplitPayment = async () => {
     }
 
     if (isComplete) {
+      const completeData = completionData ?? {}
       captureReceiptPrintContext()
       orderResult.value = {
-        order_number: 0,
-        total_amount: discountedTotal.value,
-        payment_method: selectedPaymentMethod.value,
+        order_id: completeData.order_id,
+        order_number: Number(completeData.order_number) || 0,
+        total_amount: Number(completeData.total_amount ?? discountedTotal.value),
+        payment_method: completeData.payment_method ?? selectedPaymentMethod.value,
+        status: completeData.status,
+        payment_status: completeData.payment_status,
         ...promoFieldsForReceipt(cartTotal.value),
         ...(discountEnabled.value && discountAmount.value > 0
           ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
           : {}),
-        standard_tax: taxPreview.value?.standard_tax ?? 0,
-        liquor_tax: taxPreview.value?.liquor_tax ?? 0,
-        standard_tax_label: taxPreview.value?.standard_tax_label ?? 'Impuesto',
+        standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
+        liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
+        standard_tax_label: completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label ?? 'Impuesto',
         ...(tipAmount.value > 0
           ? {
-              tip_amount: tipAmount.value,
-              charged_amount: splitAmountDue.value,
+              tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
+              charged_amount: Number(completeData.charged_amount ?? splitAmountDue.value),
             }
           : {}),
-        ...waroOrderResultFields(undefined, cartTotal.value),
+        ...waroOrderResultFields(completeData.waro_redemption_summary, cartTotal.value),
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = ''
@@ -2741,6 +2788,7 @@ const hydratePartialsFrom = (partials: any[] | undefined) => {
     id: p.id,
     amount: Number(p.amount),
     payment_method: p.payment_method,
+    payment_method_id: p.payment_method_id ?? null,
     payment_method_name: p.payment_method_name ?? getPaymentMethodLabel(p.payment_method),
   }))
   splitPaidTotal.value = splitPayments.value.reduce((acc, p) => acc + p.amount, 0)
@@ -3936,9 +3984,16 @@ onUnmounted(() => {
                   :value="splitPartialAmount ? splitPartialAmount.toLocaleString('es-CO') : ''"
                   @input="onSplitAmountInput"
                   class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
+                  :class="splitAmountValidationMessage ? 'border-state-danger-border focus:border-state-danger-border focus:ring-state-danger-border/30' : ''"
                   placeholder="0"
                 />
               </div>
+              <p
+                v-if="splitPaymentValidationMessage"
+                class="text-xs font-medium text-state-danger-text"
+              >
+                {{ splitPaymentValidationMessage }}
+              </p>
             </div>
 
             <!-- Issue #524 — Cash tender + change calculation (split mode) -->
@@ -3954,7 +4009,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || !!splitPaymentValidationMessage"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
