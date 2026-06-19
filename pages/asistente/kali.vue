@@ -69,8 +69,8 @@
                     class="inline-flex items-center gap-2 text-text-secondary"
                     aria-live="polite"
                   >
-                    <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
                     <span>{{ kaliLoadingPhrase }}</span>
+                    <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
                   </div>
                   <p v-else class="whitespace-pre-wrap break-words">{{ message.content }}</p>
                 </div>
@@ -93,7 +93,7 @@
                 v-model="draft"
                 rows="2"
                 maxlength="2000"
-                class="min-h-12 flex-1 resize-none rounded-lg border border-card-border bg-white px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                class="min-h-12 flex-1 resize-none rounded-lg border border-card-border bg-white px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="Pregunta sobre ventas o food cost"
                 :disabled="isStreaming"
                 @keydown.enter.exact.prevent="sendMessage"
@@ -102,7 +102,7 @@
                 <button
                   v-if="lastFailedPrompt"
                   type="button"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-card-border bg-card-bg px-4 text-sm font-semibold text-text-secondary transition hover:border-amber-200 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   :disabled="isStreaming"
                   @click="retryLastPrompt"
                 >
@@ -111,7 +111,7 @@
                 </button>
                 <button
                   type="submit"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-stone-900 px-4 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-stone-300"
+                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98]"
                   :disabled="!canSend"
                 >
                   <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
@@ -130,10 +130,10 @@
               v-for="workflow in workflows"
               :key="workflow.id"
               type="button"
-              class="h-10 rounded-md px-3 text-center text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
+              class="h-10 rounded-md px-3 text-center text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
               :class="workflow.id === selectedWorkflowId
-                ? 'bg-stone-900 text-white shadow-sm'
-                : 'text-text-secondary hover:bg-stone-100 hover:text-text-primary'"
+                ? 'bg-primary text-white shadow-sm shadow-primary/20'
+                : 'text-text-secondary hover:bg-primary/8 hover:text-primary'"
               :disabled="isStreaming && workflow.id !== selectedWorkflowId"
               :title="workflow.description"
               @click="selectWorkflow(workflow.id)"
@@ -170,16 +170,16 @@
               <li
                 v-for="event in visibleProgressEvents"
                 :key="event.id"
-                class="flex min-w-0 gap-2 py-2.5"
+                class="activity-row flex min-w-0 items-center gap-2 py-2.5"
               >
-                <span
-                  class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
-                  :class="progressDotClass(event.title)"
+                <component
+                  :is="progressIcon(event.title)"
+                  class="h-4 w-4 shrink-0"
+                  :class="progressIconClass(event.title)"
                   aria-hidden="true"
                 />
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-medium leading-5 text-text-primary">{{ event.title }}</p>
-                  <p v-if="event.detail" class="truncate text-xs leading-5 text-text-tertiary">{{ event.detail }}</p>
                 </div>
               </li>
             </ol>
@@ -194,10 +194,15 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import {
   ArrowPathIcon,
+  ArrowsRightLeftIcon,
+  CheckCircleIcon,
+  CircleStackIcon,
+  ChatBubbleLeftRightIcon,
   ExclamationTriangleIcon,
   PaperAirplaneIcon,
   SparklesIcon,
   StopIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({
@@ -281,9 +286,9 @@ const {
   start: startKaliLoadingPhrases,
   stop: stopKaliLoadingPhrases,
 } = useLoadingPhrases([
-  'Consultando datos...',
-  'Validando metricas...',
-  'Preparando respuesta...',
+  'Consultando datos',
+  'Validando metricas',
+  'Preparando respuesta',
 ])
 
 watch(isStreaming, (loading) => {
@@ -567,11 +572,21 @@ function addProgress(title: string, detail?: string) {
   ].slice(-24)
 }
 
-function progressDotClass(title: string) {
-  if (title.toLowerCase().includes('error')) return 'bg-status-error-text'
-  if (['Respuesta lista', 'Datos listos', 'Completado'].includes(title)) return 'bg-status-success-text'
-  if (['Consultando', 'Redactando', 'Router'].includes(title)) return 'bg-amber-500'
-  return 'bg-stone-300'
+function progressIcon(title: string) {
+  if (title.toLowerCase().includes('error')) return ExclamationTriangleIcon
+  if (title === 'Router') return ArrowsRightLeftIcon
+  if (title === 'Consultando') return WrenchScrewdriverIcon
+  if (title === 'Datos listos') return CircleStackIcon
+  if (title === 'Redactando') return ChatBubbleLeftRightIcon
+  if (title === 'Respuesta lista') return CheckCircleIcon
+  return SparklesIcon
+}
+
+function progressIconClass(title: string) {
+  if (title.toLowerCase().includes('error')) return 'text-status-error-text'
+  if (['Respuesta lista', 'Datos listos'].includes(title)) return 'text-status-success-text'
+  if (['Consultando', 'Redactando', 'Router'].includes(title)) return 'text-primary activity-icon-active'
+  return 'text-text-tertiary'
 }
 
 function setupErrorMessage(status: number) {
@@ -629,5 +644,43 @@ onBeforeUnmount(() => {
 
 .kali-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.activity-row {
+  animation: activity-fade-in 220ms ease-out both;
+}
+
+.activity-icon-active {
+  animation: activity-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes activity-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes activity-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-row,
+  .activity-icon-active {
+    animation: none;
+  }
 }
 </style>
