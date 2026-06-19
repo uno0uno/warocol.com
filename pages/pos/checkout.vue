@@ -931,6 +931,10 @@ const addSplitPayment = async () => {
   if (amountToCharge <= 0) return
   isAddingPayment.value = true
   processingError.value = ''
+  if (!(await ensureWalletTenderCanPay(amountToCharge))) {
+    isAddingPayment.value = false
+    return
+  }
 
   try {
     let paidTotal = 0
@@ -1098,7 +1102,7 @@ const addSplitPayment = async () => {
       prefacturaPrintSnapshot.value = null
     }
   } catch (e: any) {
-    processingError.value = e.data?.message || 'Error al registrar el pago parcial'
+    processingError.value = checkoutErrorMessage(e, 'Error al registrar el pago parcial')
   } finally {
     isAddingPayment.value = false
   }
@@ -1344,6 +1348,10 @@ function isPaymentGroupVisible(group: PosPaymentGroup) {
 }
 
 const isWalletMethod = computed(() => selectedGroup.value?.slug === WALLET_PAYMENT_SLUG)
+
+const walletGroupAvailable = computed(() =>
+  posPaymentGroups.value.some(group => group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet)
+)
 
 watch(
   [
@@ -1631,6 +1639,15 @@ const formatModifierPrintDesc = (mod: PrintModifier) => {
   return qty > 1 ? `+ ${mod.name} ×${qty}` : `+ ${mod.name}`
 }
 
+function checkoutErrorMessage(error: any, fallback: string) {
+  const detail = error?.data?.detail
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail.map((item: any) => item?.msg ?? JSON.stringify(item)).join('; ')
+  }
+  return error?.data?.message || error?.message || fallback
+}
+
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
@@ -1704,7 +1721,7 @@ const processOrder = async () => {
         prefacturaPrintSnapshot.value = null
       }
     } catch (error: any) {
-      processingError.value = error.data?.message || error.message || 'Error al dejar la venta pendiente'
+      processingError.value = checkoutErrorMessage(error, 'Error al dejar la venta pendiente')
     } finally {
       isProcessing.value = false
     }
@@ -1720,6 +1737,7 @@ const processOrder = async () => {
     try {
       isProcessing.value = true
       processingError.value = ''
+      if (!(await ensureWalletTenderCanPay(finalAmountToCollect.value))) return
       const _discountAmt = discountAmount.value
       const _subtotal = cartTotal.value
       const _discountedTotal = discountedTotal.value
@@ -1811,11 +1829,7 @@ const processOrder = async () => {
       document.body.classList.remove('printing-prefactura')
       prefacturaPrintSnapshot.value = null
     } catch (error: any) {
-      const detail = error.data?.detail
-      processingError.value = error.data?.message
-        || (typeof detail === 'string' ? detail : null)
-        || error.message
-        || `Error al cerrar la ${tableSingularLower.value}`
+      processingError.value = checkoutErrorMessage(error, `Error al cerrar la ${tableSingularLower.value}`)
     } finally {
       isProcessing.value = false
     }
@@ -1841,6 +1855,7 @@ const processOrder = async () => {
   try {
     isProcessing.value = true
     processingError.value = ''
+    if (!(await ensureWalletTenderCanPay(finalAmountToCollect.value))) return
 
     const preEmail = selectedCustomer.value?.email ?? ''
     const emailForReceipt = preEmail && !preEmail.endsWith('@customer.temp') ? preEmail : undefined
@@ -1960,7 +1975,7 @@ const processOrder = async () => {
       prefacturaPrintSnapshot.value = null
     }
   } catch (error: any) {
-    processingError.value = error.data?.message || error.message || 'Error processing order'
+    processingError.value = checkoutErrorMessage(error, 'Error processing order')
   } finally {
     isProcessing.value = false
   }
@@ -2042,6 +2057,50 @@ const mesaAdvanceAppliedEstimate = computed(() => {
 const finalAmountToCollect = computed(() =>
   Math.max(0, finalChargedAmount.value - mesaAdvanceAppliedEstimate.value)
 )
+
+const walletChargeAmount = computed(() =>
+  splitMode.value ? splitAmountToCharge.value : finalAmountToCollect.value
+)
+
+const walletUnavailableMessage = computed(() => {
+  if (!walletGroupAvailable.value) return ''
+  if (!selectedCustomer.value) return 'Identifica un cliente para usar saldo wallet.'
+  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado.'
+  if (isWalletPending.value) return 'Consultando saldo wallet...'
+  if (walletBalanceCop.value <= 0) return 'Este cliente no tiene saldo wallet disponible.'
+  return ''
+})
+
+const walletTenderValidationMessage = computed(() => {
+  if (!isWalletMethod.value) return ''
+  if (walletUnavailableMessage.value) return walletUnavailableMessage.value
+  if (walletChargeAmount.value > walletBalanceCop.value) {
+    return `Saldo wallet insuficiente: disponible ${formatCurrency(walletBalanceCop.value)}.`
+  }
+  return ''
+})
+
+async function ensureWalletTenderCanPay(amount: number) {
+  if (!isWalletMethod.value) return true
+  if (!selectedCustomer.value || isAnonymousCustomer.value) {
+    processingError.value = 'Identifica un cliente real para pagar con wallet'
+    return false
+  }
+  try {
+    await refetchWallet()
+  } catch {
+    // The backend remains authoritative; use the last cached balance if refresh fails.
+  }
+  if (walletBalanceCop.value <= 0) {
+    processingError.value = 'Este cliente no tiene saldo wallet disponible'
+    return false
+  }
+  if (amount > walletBalanceCop.value) {
+    processingError.value = `Saldo wallet insuficiente: disponible ${formatCurrency(walletBalanceCop.value)}`
+    return false
+  }
+  return true
+}
 
 // warocol.com#639 — single-payment cash flow must cover total + tip (#737: split too).
 const cashAmountToCharge = computed(() =>
@@ -3177,6 +3236,19 @@ onUnmounted(() => {
             </label>
           </div>
 
+          <p
+            v-if="walletUnavailableMessage && !isWalletMethod"
+            class="mt-3 text-xs font-medium text-text-secondary"
+          >
+            {{ walletUnavailableMessage }}
+          </p>
+          <p
+            v-else-if="walletTenderValidationMessage"
+            class="mt-3 text-xs font-semibold text-state-danger-text"
+          >
+            {{ walletTenderValidationMessage }}
+          </p>
+
           <!-- Sub-method selector — shown when selected group has subtypes (e.g. Nequi, Daviplata) -->
           <div v-if="selectedGroup?.methods?.length" class="mt-3">
             <p class="text-xs font-semibold mb-2 flex items-center gap-1.5" :class="requiresMethodSelection ? 'text-destructive' : 'text-text-secondary'">
@@ -3882,7 +3954,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
@@ -3928,7 +4000,7 @@ onUnmounted(() => {
           <button
             @click="processOrder"
             v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
             class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -4261,7 +4333,7 @@ onUnmounted(() => {
         <button
           @click="processOrder"
           v-if="!splitMode"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
