@@ -1,41 +1,39 @@
 <template>
-  <section class="mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
-    <header class="flex flex-col gap-4 rounded-lg border border-card-border bg-card-bg p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-4">
-        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
-          <SparklesIcon class="h-6 w-6" aria-hidden="true" />
+  <section class="mx-auto flex w-full max-w-7xl flex-col gap-4">
+    <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-text-tertiary">
+          <SparklesIcon class="h-4 w-4 text-amber-600" aria-hidden="true" />
+          Asistente
         </div>
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-text-secondary">Asistente</p>
-          <h1 class="text-2xl font-semibold text-text-primary">Kali</h1>
-        </div>
+        <h1 class="mt-1 text-2xl font-semibold tracking-normal text-text-primary">Kali</h1>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="inline-flex w-fit items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="inline-flex w-fit items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
           Beta interna
         </span>
         <span
-          class="inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold"
+          class="inline-flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 font-medium"
           :class="statusTone.class"
         >
-          <span class="h-2 w-2 rounded-full" :class="statusTone.dot" aria-hidden="true" />
+          <span class="h-1.5 w-1.5 rounded-full" :class="statusTone.dot" aria-hidden="true" />
           {{ statusTone.label }}
         </span>
       </div>
     </header>
 
-    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <section class="min-h-[620px] rounded-lg border border-card-border bg-card-bg shadow-sm">
-        <div class="flex h-full min-h-[620px] flex-col">
-          <div class="flex items-center justify-between gap-3 border-b border-card-border px-5 py-4">
+    <div class="grid min-h-[calc(100vh-11rem)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <section class="min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
+        <div class="flex h-[calc(100vh-11rem)] min-h-[620px] flex-col">
+          <div class="flex items-center justify-between gap-3 border-b border-card-border px-4 py-3 md:px-5">
             <div>
               <p class="text-sm font-semibold text-text-primary">Conversacion</p>
-              <p class="mt-0.5 text-xs text-text-secondary">{{ activeWorkflow.label }}</p>
+              <p class="mt-0.5 text-xs text-text-tertiary">{{ activeWorkflow.label }}</p>
             </div>
             <button
               v-if="isStreaming"
               type="button"
-              class="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-shell-bg px-3 text-sm font-medium text-text-secondary transition hover:border-status-error-border hover:text-status-error-text"
+              class="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-card-bg px-3 text-sm font-medium text-text-secondary transition hover:border-status-error-border hover:text-status-error-text focus:outline-none focus:ring-2 focus:ring-amber-100"
               @click="cancelStream"
             >
               <StopIcon class="h-4 w-4" aria-hidden="true" />
@@ -43,20 +41,17 @@
             </button>
           </div>
 
-          <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-5 md:px-5">
+          <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-[#fbfaf8] px-4 py-5 md:px-6">
             <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-10">
               <div class="flex max-w-sm flex-col items-center gap-3 text-center">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
-                  <SparklesIcon class="h-5 w-5" aria-hidden="true" />
-                </div>
                 <div>
                   <p class="text-base font-semibold text-text-primary">Sin conversaciones</p>
-                  <p class="mt-1 text-sm text-text-secondary">Elige un workflow y escribe tu mensaje.</p>
+                  <p class="mt-1 text-sm leading-6 text-text-secondary">Elige un workflow y escribe tu mensaje.</p>
                 </div>
               </div>
             </div>
 
-            <div v-else class="flex flex-col gap-4">
+            <div v-else class="flex flex-col gap-3">
               <article
                 v-for="message in messages"
                 :key="message.id"
@@ -64,10 +59,10 @@
                 :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
               >
                 <div
-                  class="max-w-[88%] rounded-lg px-4 py-3 text-sm leading-6 md:max-w-[78%]"
+                  class="max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm md:max-w-[74%]"
                   :class="message.role === 'user'
-                    ? 'bg-violet-600 text-white'
-                    : 'border border-card-border bg-shell-bg text-text-primary'"
+                    ? 'rounded-br-md bg-stone-900 text-white'
+                    : 'rounded-bl-md border border-stone-200 bg-white text-text-primary'"
                 >
                   <p class="whitespace-pre-wrap break-words">{{ message.content || typingPlaceholder }}</p>
                 </div>
@@ -75,7 +70,7 @@
             </div>
           </div>
 
-          <div class="border-t border-card-border p-4">
+          <div class="border-t border-card-border bg-card-bg p-3 md:p-4">
             <div v-if="errorMessage" class="mb-3 rounded-lg border border-status-error-border bg-status-error-bg px-3 py-2 text-sm text-status-error-text">
               <div class="flex items-start gap-2">
                 <ExclamationTriangleIcon class="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -90,7 +85,7 @@
                 v-model="draft"
                 rows="2"
                 maxlength="2000"
-                class="min-h-12 flex-1 resize-none rounded-lg border border-card-border bg-shell-bg px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-60"
+                class="min-h-12 flex-1 resize-none rounded-lg border border-card-border bg-white px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="Pregunta sobre ventas o food cost"
                 :disabled="isStreaming"
                 @keydown.enter.exact.prevent="sendMessage"
@@ -99,7 +94,7 @@
                 <button
                   v-if="lastFailedPrompt"
                   type="button"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-card-border bg-card-bg px-4 text-sm font-semibold text-text-secondary transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-card-border bg-card-bg px-4 text-sm font-semibold text-text-secondary transition hover:border-amber-200 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
                   :disabled="isStreaming"
                   @click="retryLastPrompt"
                 >
@@ -108,7 +103,7 @@
                 </button>
                 <button
                   type="submit"
-                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-stone-900 px-4 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-stone-300"
                   :disabled="!canSend"
                 >
                   <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
@@ -120,55 +115,56 @@
         </div>
       </section>
 
-      <aside class="flex flex-col gap-4">
-        <section class="rounded-lg border border-card-border bg-card-bg p-4 shadow-sm">
-          <p class="text-sm font-semibold text-text-primary">Workflows</p>
+      <aside class="flex min-h-0 flex-col gap-3">
+        <section class="rounded-lg border border-card-border bg-card-bg p-3 shadow-sm">
+          <p class="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Workflows</p>
           <div class="mt-3 grid gap-2">
             <button
               v-for="workflow in workflows"
               :key="workflow.id"
               type="button"
-              class="rounded-lg border px-3 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
+              class="rounded-lg border px-3 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-amber-100"
               :class="workflow.id === selectedWorkflowId
-                ? 'border-violet-200 bg-violet-50 text-violet-800'
-                : 'border-card-border bg-shell-bg text-text-primary hover:border-violet-200'"
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : 'border-card-border bg-white text-text-primary hover:border-amber-200'"
               :disabled="isStreaming && workflow.id !== selectedWorkflowId"
               @click="selectWorkflow(workflow.id)"
             >
               <span class="block text-sm font-semibold">{{ workflow.label }}</span>
-              <span class="mt-1 block text-xs text-text-secondary">{{ workflow.description }}</span>
+              <span class="mt-1 block text-xs leading-5 text-text-secondary">{{ workflow.description }}</span>
             </button>
           </div>
         </section>
 
-        <section class="rounded-lg border border-card-border bg-card-bg p-4 shadow-sm">
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-sm font-semibold text-text-primary">Progreso</p>
-            <span class="text-xs text-text-tertiary">{{ progressEvents.length }}/6</span>
+        <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
+          <div class="flex items-center justify-between gap-2 border-b border-card-border px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Actividad</p>
+            <span class="text-xs text-text-tertiary">{{ progressEvents.length }}</span>
           </div>
-          <div class="mt-3 flex flex-col gap-2">
+          <div class="kali-scroll min-h-[220px] flex-1 overflow-y-auto p-3">
             <div
               v-if="progressEvents.length === 0"
-              class="rounded-lg border border-dashed border-card-border bg-shell-bg px-3 py-3 text-sm text-text-tertiary"
+              class="rounded-lg border border-dashed border-card-border bg-[#fbfaf8] px-3 py-3 text-sm leading-6 text-text-tertiary"
             >
               Sin actividad
             </div>
-            <div
-              v-for="event in progressEvents"
-              :key="event.id"
-              class="rounded-lg border border-card-border bg-shell-bg px-3 py-2"
-            >
-              <p class="text-sm font-medium text-text-primary">{{ event.title }}</p>
-              <p v-if="event.detail" class="mt-0.5 text-xs text-text-secondary">{{ event.detail }}</p>
+            <div v-else class="flex flex-col gap-2">
+              <div
+                v-for="event in progressEvents"
+                :key="event.id"
+                class="rounded-lg border border-stone-200 bg-white px-3 py-2"
+              >
+                <p class="text-sm font-medium leading-5 text-text-primary">{{ event.title }}</p>
+                <p v-if="event.detail" class="mt-1 break-words text-xs leading-5 text-text-secondary">{{ event.detail }}</p>
+              </div>
             </div>
           </div>
-        </section>
-
-        <section class="rounded-lg border border-card-border bg-card-bg p-4 shadow-sm">
-          <p class="text-sm font-semibold text-text-primary">Estado</p>
-          <div class="mt-3 flex items-center gap-2 text-sm text-text-secondary">
-            <span class="h-2 w-2 rounded-full" :class="statusTone.dot" aria-hidden="true" />
-            {{ statusTone.label }}
+          <div class="border-t border-card-border px-4 py-3">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Estado</p>
+            <div class="flex items-center gap-2 text-sm text-text-secondary">
+              <span class="h-2 w-2 rounded-full" :class="statusTone.dot" aria-hidden="true" />
+              {{ statusTone.label }}
+            </div>
           </div>
         </section>
       </aside>
@@ -263,8 +259,8 @@ const statusTone = computed(() => {
   if (streamStatus.value === 'streaming') {
     return {
       label: 'Trabajando',
-      class: 'border-violet-200 bg-violet-50 text-violet-700',
-      dot: 'bg-violet-500',
+      class: 'border-amber-200 bg-amber-50 text-amber-800',
+      dot: 'bg-amber-500',
     }
   }
   if (streamStatus.value === 'error') {
@@ -291,7 +287,7 @@ const statusTone = computed(() => {
   return {
     label: 'Disponible para este tenant',
     class: 'border-card-border bg-shell-bg text-text-secondary',
-    dot: 'bg-violet-500',
+    dot: 'bg-amber-500',
   }
 })
 
@@ -525,7 +521,7 @@ function addProgress(title: string, detail?: string) {
   progressEvents.value = [
     ...progressEvents.value,
     { id: createId(), title, detail },
-  ].slice(-6)
+  ].slice(-24)
 }
 
 function setupErrorMessage(status: number) {
@@ -563,3 +559,25 @@ onBeforeUnmount(() => {
   activeController = null
 })
 </script>
+
+<style scoped>
+.kali-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(214 211 209) transparent;
+}
+
+.kali-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.kali-scroll::-webkit-scrollbar-thumb {
+  background-color: rgb(214 211 209);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+.kali-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+</style>
