@@ -638,6 +638,46 @@ const discountAmount = computed(() => {
   }
   return Math.min(Math.round(val), Math.round(subtotalAfterPromos.value))
 })
+const discountInputNumber = computed(() => Number(discountInput.value))
+const discountValidationError = computed(() => {
+  if (!discountEnabled.value || !discountInput.value) return ''
+  const val = discountInputNumber.value
+  if (!Number.isFinite(val) || val <= 0) {
+    return 'Ingresa un descuento mayor a 0'
+  }
+  if (discountType.value === 'percent') {
+    if (val > 100) return 'El descuento porcentual no puede superar el 100%'
+    return ''
+  }
+  const maxFixedDiscount = Math.round(subtotalAfterPromos.value)
+  if (maxFixedDiscount <= 0) {
+    return 'No hay subtotal disponible para aplicar descuento'
+  }
+  if (Math.round(val) > maxFixedDiscount) {
+    return `El descuento fijo no puede superar $${maxFixedDiscount.toLocaleString('es-CO')}`
+  }
+  return ''
+})
+const manualDiscountIsValid = computed(() => !discountValidationError.value)
+
+function toggleManualDiscount() {
+  discountEnabled.value = !discountEnabled.value
+  if (!discountEnabled.value) {
+    discountInput.value = ''
+    processingError.value = ''
+  }
+}
+
+function selectDiscountType(type: 'percent' | 'fixed') {
+  discountType.value = type
+  discountInput.value = ''
+  processingError.value = ''
+}
+
+function clearManualDiscount() {
+  discountInput.value = ''
+  processingError.value = ''
+}
 const {
   preview: waroPreview,
   isLoading: isLoadingWaroPreview,
@@ -877,6 +917,10 @@ const splitAmountToCharge = computed(() =>
 const addSplitPayment = async () => {
   if ((!isKitchenServiceMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
     processingError.value = 'Selecciona método de pago y cliente antes de continuar'
+    return
+  }
+  if (!manualDiscountIsValid.value) {
+    processingError.value = discountValidationError.value
     return
   }
   const amountToCharge = splitAmountToCharge.value
@@ -1581,6 +1625,10 @@ const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
     processingError.value = 'Selecciona o identifica al cliente antes de continuar'
+    return
+  }
+  if (!manualDiscountIsValid.value) {
+    processingError.value = discountValidationError.value
     return
   }
 
@@ -3234,7 +3282,7 @@ onUnmounted(() => {
               type="button"
               role="switch"
               :aria-checked="discountEnabled"
-              @click="discountEnabled = !discountEnabled"
+              @click="toggleManualDiscount"
               class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               :class="discountEnabled ? 'bg-primary' : 'bg-border'"
             >
@@ -3251,7 +3299,7 @@ onUnmounted(() => {
             <div class="flex rounded-xl border border-border overflow-hidden">
               <button
                 type="button"
-                @click="discountType = 'percent'; discountInput = ''"
+                @click="selectDiscountType('percent')"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
                 :class="discountType === 'percent' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
@@ -3259,7 +3307,7 @@ onUnmounted(() => {
               </button>
               <button
                 type="button"
-                @click="discountType = 'fixed'; discountInput = ''"
+                @click="selectDiscountType('fixed')"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
                 :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
@@ -3272,11 +3320,37 @@ onUnmounted(() => {
               <input
                 v-model="discountInput"
                 type="number"
-                :min="0"
-                :max="discountType === 'percent' ? 100 : cartTotal"
+                :min="0.01"
+                :max="discountType === 'percent' ? 100 : Math.round(subtotalAfterPromos)"
+                :step="discountType === 'percent' ? 0.01 : 1"
                 :placeholder="discountType === 'percent' ? 'Ej: 10 (10%)' : 'Ej: 5000'"
-                class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                :aria-invalid="discountValidationError ? 'true' : 'false'"
+                :class="discountValidationError ? 'border-state-danger-border focus:ring-state-danger-border' : 'border-border focus:ring-primary'"
+                class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2"
               />
+            </div>
+
+            <div class="flex items-start justify-between gap-3">
+              <p
+                v-if="discountValidationError"
+                class="text-xs font-medium text-state-danger-text"
+              >
+                {{ discountValidationError }}
+              </p>
+              <p
+                v-else
+                class="text-xs text-text-tertiary"
+              >
+                Base disponible: {{ formatCurrency(subtotalAfterPromos) }}
+              </p>
+              <button
+                v-if="discountInput"
+                type="button"
+                @click="clearManualDiscount"
+                class="text-xs font-semibold text-text-secondary hover:text-primary"
+              >
+                Limpiar
+              </button>
             </div>
 
             <!-- Live preview -->
@@ -3798,7 +3872,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
@@ -3844,7 +3918,7 @@ onUnmounted(() => {
           <button
             @click="processOrder"
             v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid"
             class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -4177,7 +4251,7 @@ onUnmounted(() => {
         <button
           @click="processOrder"
           v-if="!splitMode"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid"
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
