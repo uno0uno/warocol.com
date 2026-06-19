@@ -66,7 +66,7 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
   max-width: min(var(--receipt-logo-max-width, 42mm), 100%);
   max-height: var(--receipt-logo-max-height, 24mm);
   display: block;
-  margin: var(--receipt-logo-margin, -2mm auto 1mm);
+  margin: var(--receipt-logo-margin, 0 auto 1mm);
   object-fit: contain;
   object-position: center top;
   filter: grayscale(100%);

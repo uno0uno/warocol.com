@@ -405,7 +405,7 @@ const finalTotal = computed(() =>
     box-sizing: border-box;
     padding: 0 1.5mm 14mm;
     position: absolute;
-    top: -18mm;
+    top: 0;
     left: 0;
   }
 

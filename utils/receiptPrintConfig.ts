@@ -9,9 +9,9 @@ export const thermalReceiptPrintConfig = {
   lineHeight: 1.2,
   logoMaxWidthMm: 54,
   logoMaxHeightMm: 22,
-  logoTopOffsetMm: -2,
+  logoTopOffsetMm: 0,
   logoBottomMarginMm: 1,
-  driverTopFeedCompensationMm: -18,
+  driverTopFeedCompensationMm: 0,
 }
 
 export function buildReceiptLogoStyle() {
