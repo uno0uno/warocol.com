@@ -265,7 +265,7 @@ const ordersTableColumns = computed<Column[]>(() => [
   { key: 'source', title: 'Origen', sortable: false },
   { key: 'payment_method', title: 'Método Pago', sortable: true },
   { key: 'payment_status', title: 'Estado Pago', sortable: false },
-  ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: 'Descuento', sortable: true }] : []),
+  ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: 'Descuento manual', sortable: true }] : []),
   { key: 'total_amount', title: 'Total', sortable: true },
   { key: 'status', title: 'Estado', sortable: false }
 ])
@@ -645,7 +645,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? tableSingular : 'POS') }}
               </p>
-              <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento: -{{ formatCurrency(item.discount_amount) }}</p>
+              <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento manual: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
 
             <!-- Right: monto + badge -->
