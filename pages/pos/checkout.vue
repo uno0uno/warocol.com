@@ -5039,7 +5039,7 @@ onUnmounted(() => {
     box-sizing: border-box;
     padding: 0 1.5mm 14mm;
     position: absolute;
-    top: -42mm;
+    top: -30mm;
     left: 0;
   }
 
