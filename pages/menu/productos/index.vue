@@ -271,12 +271,11 @@
                     <div class="relative w-fit shrink-0">
                       <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
                       <label class="sr-only" :for="`mobile-price-${item.id}`">Precio</label>
-                      <input
+                      <UiDecimalInput
                         :id="`mobile-price-${item.id}`"
-                        v-model.number="ensureDraft(item).price"
-                        type="number"
-                        min="0"
-                        step="100"
+                        v-model="ensureDraft(item).price"
+                        :min="0"
+                        :precision="0"
                         class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm tabular-nums text-right"
                         :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                         placeholder="Precio"
@@ -284,12 +283,11 @@
                     </div>
                     <div class="relative w-fit shrink-0">
                       <label class="sr-only" :for="`mobile-costo-${item.id}`">Mi costo</label>
-                      <input
+                      <UiDecimalInput
                         :id="`mobile-costo-${item.id}`"
-                        v-model.number="ensureDraft(item).costo_percibido"
-                        type="number"
-                        min="0"
-                        step="100"
+                        v-model="ensureDraft(item).costo_percibido"
+                        :min="0"
+                        :precision="0"
                         class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm tabular-nums text-right"
                         :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                         placeholder="Mi costo"
@@ -508,11 +506,10 @@
               @click.stop
             >
               <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
-              <input
-                v-model.number="ensureDraft(item).price"
-                type="number"
-                min="0"
-                step="100"
+              <UiDecimalInput
+                v-model="ensureDraft(item).price"
+                :min="0"
+                :precision="0"
                 class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
                 :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                 :aria-label="`Precio de ${item.name}`"
@@ -538,11 +535,10 @@
                 class="relative w-fit ml-auto shrink-0"
                 @click.stop
               >
-                <input
-                  v-model.number="ensureDraft(item).costo_percibido"
-                  type="number"
-                  min="0"
-                  step="100"
+                <UiDecimalInput
+                  v-model="ensureDraft(item).costo_percibido"
+                  :min="0"
+                  :precision="0"
                   class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm text-right tabular-nums"
                   :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                   :aria-label="`Mi costo de ${item.name}`"
