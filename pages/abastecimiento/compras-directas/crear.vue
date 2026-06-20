@@ -330,14 +330,13 @@
                     <div class="grid grid-cols-3 gap-3">
                       <div>
                         <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
-                        <input
-                          v-model.number="item.purchase_quantity"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
+                        <UiDecimalInput
+                          v-model="item.purchase_quantity"
+                          :min="0.000001"
+                          :precision="QUANTITY_PRECISION"
                           required
                           class="input-base w-full px-2 py-1.5 text-sm"
-                          @input="() => onQuantityChange(index)"
+                          @update:model-value="() => onQuantityChange(index)"
                           placeholder="0"
                         />
                       </div>
@@ -355,14 +354,13 @@
                         </label>
                         <div class="relative">
                           <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
-                          <input
-                            v-model.number="item.unit_cost"
-                            type="number"
-                            min="0"
-                            step="0.01"
+                          <UiDecimalInput
+                            v-model="item.unit_cost"
+                            :min="0"
+                            :precision="UNIT_COST_PRECISION"
                             required
                             class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                            @input="() => onUnitCostChange(index)"
+                            @update:model-value="() => onUnitCostChange(index)"
                             placeholder="0"
                           />
                         </div>
@@ -371,14 +369,13 @@
                         <label class="block text-xs font-medium text-text-primary mb-1">Total *</label>
                         <div class="relative">
                           <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
-                          <input
-                            v-model.number="item.total_cost"
-                            type="number"
-                            min="0"
-                            step="0.01"
+                          <UiDecimalInput
+                            v-model="item.total_cost"
+                            :min="0"
+                            :precision="MONEY_PRECISION"
                             required
                             class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                            @input="() => onTotalCostChange(index)"
+                            @update:model-value="() => onTotalCostChange(index)"
                             placeholder="0"
                           />
                         </div>
@@ -890,6 +887,28 @@ const formatPrice = (price: number) => {
   return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
 }
 
+const MONEY_PRECISION = 0
+const UNIT_COST_PRECISION = 2
+const QUANTITY_PRECISION = 6
+const CONVERTED_QUANTITY_PRECISION = 6
+
+const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
+const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
+
+function roundDecimal(value: number, precision: number) {
+  if (!Number.isFinite(value)) return 0
+  const factor = 10 ** precision
+  return Math.round((value + Number.EPSILON) * factor) / factor
+}
+
+function formatQuantity(value: number) {
+  if (!Number.isFinite(value)) return '0'
+  return value.toLocaleString('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: CONVERTED_QUANTITY_PRECISION,
+  })
+}
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'
   const k = 1024
@@ -1016,7 +1035,7 @@ const getConvertedQuantity = (index: number) => {
   const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
   const converted = item.purchase_quantity * factor
 
-  return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return formatQuantity(converted)
 }
 
 // Fetch supplier catalog when supplier changes
@@ -1104,7 +1123,7 @@ const onUnitCostChange = (index: number) => {
   const qty = Number(item.purchase_quantity) || 0
   const unit = Number(item.unit_cost) || 0
   if (qty > 0) {
-    item.total_cost = qty * unit
+    item.total_cost = roundMoney(qty * unit)
   }
 }
 
@@ -1113,7 +1132,7 @@ const onTotalCostChange = (index: number) => {
   const qty = Number(item.purchase_quantity) || 0
   const total = Number(item.total_cost) || 0
   if (qty > 0) {
-    item.unit_cost = total / qty
+    item.unit_cost = roundUnitCost(total / qty)
   }
 }
 
@@ -1124,9 +1143,9 @@ const onQuantityChange = (index: number) => {
   const unit = Number(item.unit_cost) || 0
   const total = Number(item.total_cost) || 0
   if (unit > 0) {
-    item.total_cost = qty * unit
+    item.total_cost = roundMoney(qty * unit)
   } else if (total > 0) {
-    item.unit_cost = total / qty
+    item.unit_cost = roundUnitCost(total / qty)
   }
 }
 
@@ -1139,14 +1158,14 @@ function normalizeItemCosts(item: PurchaseItem) {
   const unit = Number(item.unit_cost) || 0
   const total = Number(item.total_cost) || 0
   if (unit > 0 && total <= 0) {
-    item.total_cost = qty * unit
+    item.total_cost = roundMoney(qty * unit)
   } else if (total > 0 && unit <= 0) {
-    item.unit_cost = total / qty
+    item.unit_cost = roundUnitCost(total / qty)
   } else if (unit > 0 && total > 0) {
     // OCR may send both; prefer line total when they disagree slightly
     const expected = qty * unit
     if (Math.abs(expected - total) > 0.02) {
-      item.unit_cost = total / qty
+      item.unit_cost = roundUnitCost(total / qty)
     }
   }
 }
