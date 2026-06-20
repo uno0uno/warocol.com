@@ -99,12 +99,11 @@
 
                     <div class="md:col-span-3">
                       <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
-                      <input
-                        v-model.number="ingredient.base_quantity"
-                        type="number"
+                      <UiDecimalInput
+                        v-model="ingredient.base_quantity"
                         required
-                        min="0.01"
-                        step="any"
+                        :min="0.01"
+                        :precision="6"
                         class="input-base w-full px-3 py-2 text-sm"
                         placeholder="0"
                       />

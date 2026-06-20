@@ -182,12 +182,11 @@
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    v-model.number="form.price"
-                    type="number"
+                  <UiDecimalInput
+                    v-model="form.price"
                     required
-                    min="0"
-                    step="100"
+                    :precision="0"
+                    :min="0"
                     class="input-base w-full pl-8 pr-4 py-2"
                     placeholder="15000"
                   />
@@ -222,11 +221,10 @@
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    v-model.number="form.costo_percibido"
-                    type="number"
-                    min="0"
-                    step="100"
+                  <UiDecimalInput
+                    v-model="form.costo_percibido"
+                    :precision="0"
+                    :min="0"
                     class="input-base w-full pl-8 pr-4 py-2"
                     placeholder="Opcional"
                   />
@@ -499,12 +497,10 @@
                       </option>
                     </select>
                     <div class="flex items-center gap-1.5 sm:w-32">
-                      <input
-                        v-model.number="link.quantity"
-                        type="number"
-                        min="0"
-                        step="any"
-                        inputmode="decimal"
+                      <UiDecimalInput
+                        v-model="link.quantity"
+                        :min="0"
+                        :precision="6"
                         class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
                         :aria-label="`Cantidad de la receta ${index + 1}`"
                         :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
@@ -522,7 +518,7 @@
                         class="flex justify-between text-text-secondary"
                       >
                         <span>{{ ing.ingredient_name }}</span>
-                        <span>{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
+                        <span>{{ formatDomainQuantity(Number(ing.base_quantity) * (Number(link.quantity) || 1), 6) }} {{ ing.unit }}</span>
                       </div>
                     </div>
                   </div>
@@ -575,11 +571,10 @@
                     />
                   </div>
                   <div>
-                    <input
-                      v-model.number="ingredient.quantity"
-                      type="number"
-                      min="0.01"
-                      step="any"
+                    <UiDecimalInput
+                      v-model="ingredient.quantity"
+                      :min="0.01"
+                      :precision="6"
                       placeholder="Cantidad"
                       required
                       class="input-base w-full px-3 py-2 text-sm"
@@ -866,6 +861,7 @@ import {
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue

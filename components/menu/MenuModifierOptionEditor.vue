@@ -29,10 +29,9 @@
         <label class="block text-xs font-medium text-text-secondary mb-1">Precio venta</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-          <input
-            v-model.number="modifier.price"
-            type="number"
-            step="100"
+          <UiDecimalInput
+            v-model="modifier.price"
+            :precision="0"
             class="input-base w-full pl-8 pr-3 py-2 text-sm"
           />
         </div>
@@ -85,11 +84,10 @@
       </div>
       <div class="md:col-span-2">
         <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-        <input
-          v-model.number="modifier.ingredient_quantity"
-          type="number"
-          min="0.01"
-          step="any"
+        <UiDecimalInput
+          v-model="modifier.ingredient_quantity"
+          :min="0.01"
+          :precision="6"
           class="input-base w-full px-3 py-2 text-sm"
         />
       </div>
@@ -129,11 +127,10 @@
         </div>
         <div class="md:col-span-3">
           <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad × receta</label>
-          <input
-            v-model.number="modifier.recipe_base_quantity"
-            type="number"
-            min="0.01"
-            step="any"
+          <UiDecimalInput
+            v-model="modifier.recipe_base_quantity"
+            :min="0.01"
+            :precision="6"
             class="input-base w-full px-3 py-2 text-sm"
           />
         </div>
@@ -171,11 +168,10 @@
       </div>
       <div class="md:col-span-3">
         <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad × producto</label>
-        <input
-          v-model.number="modifier.linked_product_quantity"
-          type="number"
-          min="0.01"
-          step="any"
+        <UiDecimalInput
+          v-model="modifier.linked_product_quantity"
+          :min="0.01"
+          :precision="6"
           class="input-base w-full px-3 py-2 text-sm"
         />
       </div>
@@ -210,6 +206,7 @@ import {
   type ModifierFormRow,
   type ModifierOptionType,
 } from '~/composables/useModifierOptionForm'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 const props = defineProps<{
   modifier: ModifierFormRow
@@ -276,7 +273,7 @@ const recipeBaseIngredients = computed(() => {
 
 function scaledRecipeQty(ing: Record<string, unknown>) {
   const mult = Number(props.modifier.recipe_base_quantity) || 1
-  return (Number(ing.base_quantity ?? ing.quantity ?? 0) * mult).toFixed(2)
+  return formatDomainQuantity(Number(ing.base_quantity ?? ing.quantity ?? 0) * mult, 6)
 }
 
 function estimateRecipeCost(): number | null {

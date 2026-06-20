@@ -89,12 +89,11 @@
             </label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-              <input
+              <UiDecimalInput
                 id="product-quick-price"
-                v-model.number="form.price"
-                type="number"
-                min="0"
-                step="100"
+                v-model="form.price"
+                :min="0"
+                :precision="0"
                 placeholder="2500"
                 class="h-10 w-full rounded-lg border-2 border-border bg-background pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                 @input="clearError('price')"
@@ -109,12 +108,11 @@
             </label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-              <input
+              <UiDecimalInput
                 id="product-quick-costo"
-                v-model.number="form.costo_percibido"
-                type="number"
-                min="0"
-                step="100"
+                v-model="form.costo_percibido"
+                :min="0"
+                :precision="0"
                 placeholder="Opcional"
                 class="h-10 w-full rounded-lg border-2 border-border bg-background pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               />
