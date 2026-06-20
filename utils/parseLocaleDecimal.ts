@@ -1,5 +1,5 @@
 /** Decimal precision used by {@link DecimalInput} and purchase forms. */
-export type DecimalPrecision = 1 | 2 | 3
+export type DecimalPrecision = number
 
 /** OCR receipt fields: qty vs COP amounts interpret separators differently. */
 export type ReceiptNumberKind = 'quantity' | 'amount'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Locale-safe decimal input — avoids HTML5 `type="number"` step validation.
- * Use in purchase/quantity forms (see epic #1074). Batch migrations: pass `precision` 1|2|3.
+ * Use in purchase/quantity forms (see epic #1074). Batch migrations: pass field-specific `precision`.
  */
 import {
   parseLocaleDecimal,

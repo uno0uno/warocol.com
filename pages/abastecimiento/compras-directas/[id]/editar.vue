@@ -262,8 +262,8 @@
                     </label>
                     <UiDecimalInput
                       v-model="item.purchase_quantity"
-                      :min="0.01"
-                      :precision="2"
+                      :min="0.000001"
+                      :precision="QUANTITY_PRECISION"
                       required
                       class="w-full px-4 py-2"
                       @update:model-value="updateItemTotal(index)"
@@ -280,7 +280,7 @@
                       <UiDecimalInput
                         v-model="item.unit_cost"
                         :min="0"
-                        :precision="2"
+                        :precision="UNIT_COST_PRECISION"
                         required
                         class="w-full pl-8 pr-4 py-2"
                         @update:model-value="updateItemTotal(index)"
@@ -849,7 +849,7 @@ watch(originalPurchase, (purchase) => {
       const purchaseQty = item.purchase_quantity || item.quantity || 1
       const totalCost = item.total_cost || 0
       // unit_cost in DB is per base unit; recover per-purchase-unit cost from total
-      const unitCostPerPurchaseUnit = purchaseQty > 0 ? totalCost / purchaseQty : (item.unit_cost || 0)
+      const unitCostPerPurchaseUnit = purchaseQty > 0 ? roundUnitCost(totalCost / purchaseQty) : roundUnitCost(item.unit_cost || 0)
       return {
         id: item.id,
         ingredient_id: item.ingredient_id,
@@ -912,6 +912,19 @@ const isStepValid = computed(() => {
 const formatPrice = (price: number) => {
   if (!price) return '0'
   return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
+}
+
+const MONEY_PRECISION = 0
+const UNIT_COST_PRECISION = 2
+const QUANTITY_PRECISION = 6
+
+const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
+const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
+
+function roundDecimal(value: number, precision: number) {
+  if (!Number.isFinite(value)) return 0
+  const factor = 10 ** precision
+  return Math.round((value + Number.EPSILON) * factor) / factor
 }
 
 const { formatDate: _fmtDate } = useFormatters()
@@ -980,7 +993,7 @@ const onUnitChange = (index: number) => {
 
 const updateItemTotal = (index: number) => {
   const item = form.value.items[index]
-  item.total_cost = (item.purchase_quantity || 0) * (item.unit_cost || 0)
+  item.total_cost = roundMoney((item.purchase_quantity || 0) * (item.unit_cost || 0))
 }
 
 const addItem = () => {
