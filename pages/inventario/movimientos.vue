@@ -140,6 +140,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useFormatters } from '~/composables/useFormatters'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 useHead({ title: 'Movimientos de Inventario' })
 
@@ -355,10 +356,7 @@ const getMovementTypeVariant = (type: string) => {
 }
 
 const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(value)
+  return formatDomainQuantity(value)
 }
 
 const { formatDate } = useFormatters()

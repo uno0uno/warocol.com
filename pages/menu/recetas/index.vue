@@ -249,7 +249,7 @@
                     />
                   </td>
                   <td class="py-3 px-2 text-sm text-text-primary text-right">
-                    {{ ing.cantidad }} {{ ing.unidad }}
+                    {{ formatQuantity(ing.cantidad) }} {{ ing.unidad }}
                   </td>
                   <td class="py-3 px-2 text-sm text-text-primary text-right">
                     {{ formatCurrency(ing.costo_unitario) }}
@@ -282,6 +282,7 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { formatDomainQuantity, normalizeDomainNumber } from '~/utils/domainNumberFormat'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -370,7 +371,7 @@ const recetas = computed(() => {
     is_active: recipeBase.is_active,
     ingredientes: recipeBase.ingredients?.map((ing: any) => {
       const costoUnitario = Number(ing.costo_unitario || 0)
-      const cantidad = Number(ing.base_quantity || 0)
+      const cantidad = normalizeDomainNumber(ing.base_quantity, 6)
       return {
         ingrediente_id: ing.ingredient_id,
         ingrediente_name: ing.ingredient_name,
@@ -501,6 +502,8 @@ const formatCurrency = (value: number) => {
     minimumFractionDigits: 0
   }).format(value)
 }
+
+const formatQuantity = (value: number) => formatDomainQuantity(value, 6)
 
 const toggleExpanded = (recipeId: number) => {
   if (expandedRows.value.has(recipeId)) {

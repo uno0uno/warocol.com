@@ -284,6 +284,8 @@
 </template>
 
 <script setup lang="ts">
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
 interface StockStats {
   total_ingredients: number
   critical_count: number
@@ -504,9 +506,6 @@ const formatCurrency = (value: number) => {
 }
 
 const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(value)
+  return formatDomainQuantity(value)
 }
 </script>
