@@ -50,6 +50,7 @@ export interface Tenant {
 
 export const useTenantsStore = defineStore('tenants', () => {
   const cache = useQueryCache()
+  const accessStore = useAccessStore()
 
   // ── UI state ──────────────────────────────────────────────────────────────────
   const selectedTenant = ref<Tenant | null>(null)
@@ -175,7 +176,16 @@ export const useTenantsStore = defineStore('tenants', () => {
       error.value = err?.message ?? 'Failed to switch tenant'
       return null
     })
-    return !!res?.success
+    if (!res?.success) return false
+
+    try {
+      await accessStore.load()
+    } catch (err: any) {
+      error.value = err?.message ?? 'Failed to refresh tenant access'
+      return false
+    }
+
+    return true
   }
 
   const selectTenantBySlug = async (slug: string): Promise<boolean> => {
