@@ -913,18 +913,6 @@ const toggleSplitMode = () => {
   }
 }
 
-const splitDuplicatePaymentMessage = computed(() => {
-  if (!splitMode.value || !selectedPaymentMethod.value || splitPayments.value.length === 0) return ''
-  const selectedMethodId = selectedPaymentMethodId.value ?? null
-  const duplicate = splitPayments.value.some(row =>
-    row.payment_method === selectedPaymentMethod.value
-    && (row.payment_method_id ?? null) === selectedMethodId
-  )
-  return duplicate
-    ? 'Este método ya fue registrado en este cobro dividido. Elige otro método para continuar.'
-    : ''
-})
-
 const splitAmountValidationMessage = computed(() => {
   if (!splitMode.value || splitIsComplete.value) return ''
   const amount = splitPartialAmount.value
@@ -937,7 +925,7 @@ const splitAmountValidationMessage = computed(() => {
 })
 
 const splitPaymentValidationMessage = computed(
-  () => splitAmountValidationMessage.value || splitDuplicatePaymentMessage.value,
+  () => splitAmountValidationMessage.value,
 )
 
 const splitAmountToCharge = computed(() =>
