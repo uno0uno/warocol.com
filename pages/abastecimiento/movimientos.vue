@@ -149,6 +149,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 useHead({ title: 'Movimientos' })
 
@@ -295,10 +296,7 @@ const getMovementTypeVariant = (type: string) => {
 }
 
 const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(value)
+  return formatDomainQuantity(value)
 }
 
 const { formatDate } = useFormatters()

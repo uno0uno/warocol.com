@@ -161,7 +161,7 @@ function formatValue(value: any, column: TableColumn): string {
       return `${numValue.toFixed(precision)}%`
     case 'number':
       // Formato COP: usar puntos como separadores de miles
-      return numValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+      return numValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: column.precision ?? 0 })
     case 'text':
     default:
       // Check if it's a numeric string that should be formatted
