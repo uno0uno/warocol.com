@@ -47,7 +47,7 @@
                 <div>
                   <h4 class="font-semibold text-text-primary">{{ getIngredientName(item.ingredient_id) }}</h4>
                   <p class="text-sm text-text-secondary">
-                    Cantidad: {{ item.quantity }} {{ item.unit }}
+                    Cantidad: {{ formatQuantity(item.quantity) }} {{ item.unit }}
                   </p>
                 </div>
                 <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -63,7 +63,7 @@
                   <UiDecimalInput
                     v-model="item.unit_cost"
                     :min="0"
-                    :precision="2"
+                    :precision="TECHNICAL_UNIT_COST_PRECISION"
                     required
                     class="input-base w-full px-4 py-2"
                     placeholder="0.00"
@@ -183,6 +183,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const TECHNICAL_UNIT_COST_PRECISION = 6
+const QUANTITY_PRECISION = 6
+
+const formatQuantity = (value: number | string | null | undefined) =>
+  formatDomainQuantity(value, QUANTITY_PRECISION)
 
 const props = defineProps<{
   isOpen: boolean

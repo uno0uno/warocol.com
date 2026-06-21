@@ -156,8 +156,8 @@
                   <label class="block text-sm font-medium text-text-primary mb-2">Cantidad *</label>
                   <UiDecimalInput
                     v-model="item.purchase_quantity"
-                    :min="0.01"
-                    :precision="2"
+                    :min="0.000001"
+                    :precision="QUANTITY_PRECISION"
                     required
                     class="w-full px-4 py-2"
                   />
@@ -342,10 +342,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                           </svg>
-                          <span class="text-text-primary font-semibold text-xs">{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</span>
+                          <span class="text-text-primary font-semibold text-xs">{{ formatQuantity(item.purchase_quantity || item.quantity) }} {{ item.purchase_unit || item.unit }}</span>
                         </div>
                         <span v-if="item.weight_value && item.weight_unit" class="text-text-secondary text-xs ml-5">
-                          Peso: {{ item.weight_value }} {{ item.weight_unit }}
+                          Peso: {{ formatQuantity(item.weight_value) }} {{ item.weight_unit }}
                         </span>
                       </div>
 
@@ -404,9 +404,9 @@
                       </div>
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary text-right font-medium">
-                      <div>{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</div>
+                      <div>{{ formatQuantity(item.purchase_quantity || item.quantity) }} {{ item.purchase_unit || item.unit }}</div>
                       <div v-if="item.weight_value && item.weight_unit" class="text-xs text-text-secondary mt-1">
-                        Peso: {{ item.weight_value }} {{ item.weight_unit }} ({{ item.weight_per_unit_grams }} gr/und)
+                        Peso: {{ formatQuantity(item.weight_value) }} {{ item.weight_unit }} ({{ formatQuantity(item.weight_per_unit_grams) }} gr/und)
                       </div>
                     </td>
                     <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-right">
@@ -676,11 +676,16 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 // Get order ID from route
 const route = useRoute()
 const router = useRouter()
 const purchaseId = route.params.id as string
+const QUANTITY_PRECISION = 6
+
+const formatQuantity = (value: number | string | null | undefined) =>
+  formatDomainQuantity(value, QUANTITY_PRECISION)
 
 useHead({
   title: `Editar Orden ${purchaseId} - Abastecimiento`

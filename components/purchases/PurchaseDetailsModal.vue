@@ -276,7 +276,7 @@
                 <div class="flex-1">
                   <p class="font-medium text-text-primary">{{ item.ingredient_name }}</p>
                   <p class="text-sm text-text-secondary">
-                    Cantidad: {{ item.quantity }} {{ item.unit }}
+                    Cantidad: {{ formatQuantity(item.quantity) }} {{ item.unit }}
                   </p>
                   <p v-if="item.notes" class="text-xs text-text-secondary mt-1">
                     Nota: {{ item.notes }}
@@ -330,6 +330,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 const props = defineProps<{
   isOpen: boolean
@@ -429,6 +430,10 @@ const { formatDate } = useFormatters()
 function formatCurrency(value: number | null): string {
   if (value === null || value === undefined) return '$0'
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+}
+
+function formatQuantity(value: number | string | null | undefined): string {
+  return formatDomainQuantity(value, 6)
 }
 
 const closeModal = () => {

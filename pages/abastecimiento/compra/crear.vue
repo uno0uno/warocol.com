@@ -397,8 +397,8 @@
                     <div class="flex gap-2">
                       <UiDecimalInput
                         v-model="item.quantity"
-                        :min="0.01"
-                        :precision="2"
+                        :min="0.000001"
+                        :precision="QUANTITY_PRECISION"
                         required
                         class="flex-1 px-4 py-2"
                         @update:model-value="updateItemTotal(index)"
@@ -544,7 +544,7 @@
                     <div>
                       <p class="text-xs text-text-secondary mb-1">Cantidad Solicitada</p>
                       <p class="text-sm text-text-primary font-semibold">
-                        {{ item.quantity }} {{ item.purchase_unit }}
+                        {{ formatQuantity(item.quantity) }} {{ item.purchase_unit }}
                       </p>
                     </div>
                     <div>
@@ -557,10 +557,10 @@
                   <div v-if="shouldShowWeightPerUnit(index)" class="col-span-2 bg-background/50 p-2 rounded border border-border">
                     <p class="text-xs text-text-secondary mb-1">Detalles del Paquete</p>
                     <p class="text-xs text-text-primary">
-                      Peso total: {{ item.quantity }} {{ item.weight_unit }}
+                      Peso total: {{ formatQuantity(item.quantity) }} {{ item.weight_unit }}
                     </p>
                     <p class="text-xs text-text-secondary mt-1">
-                      ≈ {{ (convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)).toFixed(2) }} gr por unidad
+                      ≈ {{ formatQuantity(convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)) }} gr por unidad
                     </p>
                   </div>
                 </div>
@@ -596,7 +596,7 @@
                     <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                   </td>
                   <td class="text-right py-4 text-text-primary font-semibold">
-                    {{ item.quantity }} {{ item.purchase_unit }}
+                    {{ formatQuantity(item.quantity) }} {{ item.purchase_unit }}
                   </td>
                   <td class="text-right py-4 text-text-secondary text-sm">
                     {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
@@ -604,10 +604,10 @@
                   <td class="text-right py-4">
                     <div v-if="shouldShowWeightPerUnit(index)" class="text-xs space-y-1">
                       <p class="text-text-primary">
-                        Peso: {{ item.quantity }} {{ item.weight_unit }}
+                        Peso: {{ formatQuantity(item.quantity) }} {{ item.weight_unit }}
                       </p>
                       <p class="text-text-secondary">
-                        ({{ (convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)).toFixed(2) }} gr/und)
+                        ({{ formatQuantity(convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)) }} gr/und)
                       </p>
                     </div>
                     <span v-else class="text-text-secondary text-xs">-</span>
@@ -674,10 +674,13 @@
 <script setup lang="ts">
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 useHead({
   title: 'Crear Cotización - Abastecimiento'
 })
+
+const QUANTITY_PRECISION = 6
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -915,6 +918,9 @@ const formatPrice = (price) => {
   return price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
+const formatQuantity = (value: number | string | null | undefined) =>
+  formatDomainQuantity(value, QUANTITY_PRECISION)
+
 const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -979,7 +985,7 @@ const getConvertedQuantity = (index) => {
   const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
   const converted = item.quantity * factor
 
-  return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return formatQuantity(converted)
 }
 
 // Get dynamic label for quantity field
@@ -1031,7 +1037,7 @@ const getWeightPerUnitText = (index) => {
   const weightInGrams = convertWeightToGrams(item.quantity, item.weight_unit || 'gr')
   const weightPerUnit = weightInGrams / conversionFactor
 
-  return `≈ ${weightPerUnit.toFixed(2)} gr por unidad (${conversionFactor} unidades)`
+  return `≈ ${formatQuantity(weightPerUnit)} gr por unidad (${formatQuantity(conversionFactor)} unidades)`
 }
 
 // Convert weight to grams
@@ -1282,7 +1288,7 @@ const handleSubmit = async () => {
         weight_value: baseUnit === 'und' && factor > 1 ? item.quantity : null,
         weight_unit: baseUnit === 'und' && factor > 1 ? item.weight_unit : null,
         weight_per_unit_grams: baseUnit === 'und' && factor > 1
-          ? (convertWeightToGrams(item.quantity, item.weight_unit || 'gr') / factor).toFixed(2)
+          ? formatQuantity(convertWeightToGrams(item.quantity, item.weight_unit || 'gr') / factor)
           : null
       }
     })

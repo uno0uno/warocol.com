@@ -64,7 +64,7 @@
                     <UiDecimalInput
                       v-model="item.quantity_received"
                       :min="0"
-                      :precision="3"
+                      :precision="QUANTITY_PRECISION"
                       required
                       class="w-full px-3 py-2 rounded-lg text-text-primary transition-all border-2"
                       style="background-color: hsl(var(--surface)); border-color: hsl(var(--crocus-600) / 0.3);"
@@ -173,6 +173,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+
+const QUANTITY_PRECISION = 6
 
 const props = defineProps<{
   isOpen: boolean
