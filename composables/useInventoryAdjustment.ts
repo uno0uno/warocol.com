@@ -13,6 +13,9 @@ import { computed, reactive, ref } from 'vue'
 
 export type AdjustmentType = 'increment' | 'decrement' | 'set'
 
+export const INVENTORY_QUANTITY_PRECISION = 6
+export const TECHNICAL_UNIT_COST_PRECISION = 6
+
 export interface AdjustmentReason {
   value: string
   label: string

@@ -186,6 +186,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 useHead({ title: 'Ajustes de Inventario' })
 
@@ -406,12 +407,7 @@ const adjustmentsTableColumns = [
   }
 ]
 
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(value)
-}
+const formatNumber = (value: number) => formatDomainQuantity(value, 6)
 
 const { formatDateTime: formatDate } = useFormatters()
 

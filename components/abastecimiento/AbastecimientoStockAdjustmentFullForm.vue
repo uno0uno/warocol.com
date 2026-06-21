@@ -179,7 +179,7 @@
                   <UiDecimalInput
                     v-model="form.quantity"
                     :min="0"
-                    :precision="2"
+                    :precision="INVENTORY_QUANTITY_PRECISION"
                     required
                     class="w-full px-4 py-2"
                     :placeholder="form.adjustmentType === 'set' ? 'Ingrese el stock correcto' : 'Ingrese la cantidad'"
@@ -226,7 +226,7 @@
                   <UiDecimalInput
                     v-model="form.cost_per_unit"
                     :min="0"
-                    :precision="2"
+                    :precision="TECHNICAL_UNIT_COST_PRECISION"
                     class="w-full px-4 py-2 pl-8"
                     placeholder="Ingrese el costo unitario (opcional)"
                   />
@@ -244,7 +244,7 @@
                   <span class="font-bold">{{ formatNumber(newStockInBase) }} {{ selectedIngredient?.unit }}</span>
                 </p>
                 <p v-if="form.cost_per_unit && form.adjustmentType === 'increment'" class="text-xs text-state-info-text mt-1">
-                  Costo unitario: ${{ form.cost_per_unit.toLocaleString('es-CO') }} por {{ form.unit }}
+                  Costo unitario: ${{ formatTechnicalUnitCost(form.cost_per_unit) }} por {{ form.unit }}
                 </p>
               </div>
 
@@ -380,9 +380,12 @@ import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useIngredientPurchaseUnits } from '~/composables/useIngredientPurchaseUnits'
 import {
   ADJUSTMENT_REASONS,
+  INVENTORY_QUANTITY_PRECISION,
+  TECHNICAL_UNIT_COST_PRECISION,
   useInventoryAdjustment,
 } from '~/composables/useInventoryAdjustment'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 interface Props {
   cancelRedirectUrl: string
@@ -432,8 +435,11 @@ const REASON_LABELS = ADJUSTMENT_REASONS.reduce((acc, r) => {
 const reasonLabel = (value: string) => REASON_LABELS[value] || value
 
 const formatNumber = (value: number | null | undefined) => {
-  const v = Number(value ?? 0)
-  return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v)
+  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION)
+}
+
+const formatTechnicalUnitCost = (value: number | null | undefined) => {
+  return formatDomainQuantity(value, TECHNICAL_UNIT_COST_PRECISION)
 }
 
 const purchaseUnitOptions = computed(() =>

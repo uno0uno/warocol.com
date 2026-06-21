@@ -6,6 +6,7 @@ describe('formatDomainQuantity', () => {
   it('keeps meaningful sub-unit precision without long tails', () => {
     assert.equal(formatDomainQuantity(1.345), '1,345')
     assert.equal(formatDomainQuantity(0.3333333333333), '0,3333')
+    assert.equal(formatDomainQuantity(0.3333333333333, 6), '0,333333')
   })
 
   it('formats tiny float residue as a clean zero', () => {

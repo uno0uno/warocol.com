@@ -185,7 +185,7 @@
                 :id="qtyId"
                 v-model="form.quantity"
                 :min="0"
-                :precision="2"
+                :precision="INVENTORY_QUANTITY_PRECISION"
                 class="w-full px-3 py-2 min-h-[44px]"
                 :placeholder="form.adjustmentType === 'set' ? 'Stock objetivo' : 'Cantidad'"
               />
@@ -257,7 +257,7 @@
                 :id="costId"
                 v-model="form.cost_per_unit"
                 :min="0"
-                :precision="2"
+                :precision="TECHNICAL_UNIT_COST_PRECISION"
                 class="w-full pl-7 pr-3 py-2 min-h-[44px]"
                 placeholder="0"
               />
@@ -392,8 +392,11 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   useInventoryAdjustment,
   ADJUSTMENT_REASONS,
+  INVENTORY_QUANTITY_PRECISION,
+  TECHNICAL_UNIT_COST_PRECISION,
   type SelectedIngredient,
 } from '~/composables/useInventoryAdjustment'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 interface Props {
   modelValue: boolean
@@ -569,8 +572,7 @@ const close = () => {
 }
 
 const formatNumber = (value: number | null | undefined) => {
-  const v = Number(value ?? 0)
-  return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v)
+  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION)
 }
 </script>
 

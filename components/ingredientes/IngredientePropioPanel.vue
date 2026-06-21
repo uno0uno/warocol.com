@@ -348,7 +348,7 @@
                 id="ing-weight"
                 v-model="form.unitWeightGr"
                 :min="0"
-                :precision="1"
+                :precision="6"
                 :placeholder="`Ej: 400 (1 und = 400 ${unitWeightUnit})`"
                 :class="inputClass + ' flex-1'"
               />
