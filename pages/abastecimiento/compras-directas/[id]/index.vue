@@ -134,7 +134,7 @@
               <div class="px-4 py-3 flex items-center justify-between gap-4">
                 <div>
                   <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">Precio</p>
-                  <p class="text-sm font-medium text-text-primary">${{ formatCurrency(getPurchaseUnitCost(item)) }}</p>
+                  <p class="text-sm font-medium text-text-primary">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</p>
                   <p class="text-[11px] text-text-secondary">/ {{ item.purchase_unit || item.unit }}</p>
                 </div>
                 <div class="h-8 w-px bg-border"></div>
@@ -188,7 +188,7 @@
                     <span class="text-sm text-text-primary">{{ item.purchase_unit || item.unit }}</span>
                   </td>
                   <td class="px-4 py-3.5 text-right border-r border-dashed border-border/60">
-                    <span class="text-sm text-text-primary tabular-nums">${{ formatCurrency(getPurchaseUnitCost(item)) }}</span>
+                    <span class="text-sm text-text-primary tabular-nums">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</span>
                   </td>
                   <td class="px-4 py-3.5 text-right">
                     <span class="text-sm font-bold text-text-primary tabular-nums">${{ formatCurrency(item.total_cost) }}</span>
@@ -234,8 +234,8 @@
                 <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
                 <UiDecimalInput
                   v-model="item.purchase_quantity"
-                  :min="0.01"
-                  :precision="2"
+                  :min="0.000001"
+                  :precision="QUANTITY_PRECISION"
                   class="w-full px-3 py-2 text-sm"
                   @update:model-value="updateItemTotal(index)"
                 />
@@ -266,7 +266,7 @@
                 <UiDecimalInput
                   v-model="item.unit_cost"
                   :min="0"
-                  :precision="2"
+                  :precision="UNIT_COST_PRECISION"
                   class="w-full px-3 py-2 text-sm"
                   @update:model-value="updateItemTotal(index)"
                 />
@@ -338,8 +338,8 @@
                   <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
                   <UiDecimalInput
                     v-model="newItem.purchase_quantity"
-                    :min="0.01"
-                    :precision="2"
+                    :min="0.000001"
+                    :precision="QUANTITY_PRECISION"
                     class="w-full px-3 py-2 text-sm"
                   />
                 </div>
@@ -370,7 +370,7 @@
                   <UiDecimalInput
                     v-model="newItem.unit_cost"
                     :min="0"
-                    :precision="2"
+                    :precision="UNIT_COST_PRECISION"
                     class="w-full px-3 py-2 text-sm"
                   />
                 </div>
@@ -379,7 +379,7 @@
                 <div>
                   <label class="block text-xs font-medium text-text-secondary mb-1">Total</label>
                   <div class="input-base w-full px-3 py-2 text-sm bg-primary/10 text-primary font-bold">
-                    ${{ formatCurrency(newItem.purchase_quantity * newItem.unit_cost) }}
+                    ${{ formatCurrency(roundMoney(newItem.purchase_quantity * newItem.unit_cost)) }}
                   </div>
                 </div>
               </div>
@@ -646,6 +646,19 @@ const { data: purchaseUnitsData } = useFetch('/api/suppliers/ingredient-purchase
 
 const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
 
+const MONEY_PRECISION = 0
+const UNIT_COST_PRECISION = 6
+const QUANTITY_PRECISION = 6
+
+const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
+const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
+
+function roundDecimal(value: number, precision: number) {
+  if (!Number.isFinite(value)) return 0
+  const factor = 10 ** precision
+  return Math.round((value + Number.EPSILON) * factor) / factor
+}
+
 // Edit mode computed
 const editTotal = computed(() => {
   return editItems.value.reduce((sum, item) => sum + (item.total_cost || 0), 0)
@@ -666,7 +679,7 @@ const enterEditMode = () => {
   editItems.value = (purchase.value.items || []).map((item: any) => {
     const pqty = item.purchase_quantity || item.quantity || 1
     // unit_cost in DB is per base unit (gr). Convert to per purchase unit for display/edit.
-    const purchaseUnitCost = pqty > 0 ? (item.total_cost || 0) / pqty : 0
+    const purchaseUnitCost = pqty > 0 ? roundUnitCost((item.total_cost || 0) / pqty) : 0
     return {
       ingredient_id: item.ingredient_id,
       ingredient_name: item.ingredient_name,
@@ -693,12 +706,12 @@ const cancelEdit = () => {
 // unit_cost in DB is stored per base unit (gr/ml/und), so we derive from total/qty
 const getPurchaseUnitCost = (item: any): number => {
   const qty = item.purchase_quantity || item.quantity || 1
-  return qty > 0 ? (item.total_cost || 0) / qty : 0
+  return qty > 0 ? roundUnitCost((item.total_cost || 0) / qty) : 0
 }
 
 const updateItemTotal = (index: number) => {
   const item = editItems.value[index]
-  item.total_cost = (item.purchase_quantity || 0) * (item.unit_cost || 0)
+  item.total_cost = roundMoney((item.purchase_quantity || 0) * (item.unit_cost || 0))
 }
 
 const removeItem = (index: number) => {
@@ -787,7 +800,7 @@ const addNewItem = () => {
     purchase_quantity: newItem.value.purchase_quantity,
     purchase_unit: newItem.value.purchase_unit || ingredient?.unit || '',
     unit_cost: newItem.value.unit_cost,
-    total_cost: newItem.value.purchase_quantity * newItem.value.unit_cost,
+    total_cost: roundMoney(newItem.value.purchase_quantity * newItem.value.unit_cost),
     notes: newItem.value.notes
   })
 
@@ -929,6 +942,14 @@ const formatDate = (date: string) => _fmtDate(date)
 const formatCurrency = (value: number) => {
   if (!value) return '0'
   return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+
+const formatUnitCost = (value: number) => {
+  if (!value) return '0'
+  return value.toLocaleString('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: UNIT_COST_PRECISION,
+  })
 }
 
 const getStatusText = (status: string) => {

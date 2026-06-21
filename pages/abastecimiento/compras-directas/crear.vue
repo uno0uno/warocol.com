@@ -349,7 +349,7 @@
                             @click="item.unit_cost = item.suggested_price; onUnitCostChange(index)"
                             title="Usar precio sugerido"
                           >
-                            (Sug: {{ formatPrice(item.suggested_price) }})
+                            (Sug: {{ formatUnitCost(item.suggested_price) }})
                           </span>
                         </label>
                         <div class="relative">
@@ -888,12 +888,20 @@ const formatPrice = (price: number) => {
 }
 
 const MONEY_PRECISION = 0
-const UNIT_COST_PRECISION = 2
+const UNIT_COST_PRECISION = 6
 const QUANTITY_PRECISION = 6
 const CONVERTED_QUANTITY_PRECISION = 6
 
 const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
 const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
+
+const formatUnitCost = (price: number) => {
+  if (!price) return '0'
+  return price.toLocaleString('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: UNIT_COST_PRECISION,
+  })
+}
 
 function roundDecimal(value: number, precision: number) {
   if (!Number.isFinite(value)) return 0
