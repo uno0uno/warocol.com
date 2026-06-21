@@ -296,7 +296,7 @@ const getMovementTypeVariant = (type: string) => {
 }
 
 const formatNumber = (value: number) => {
-  return formatDomainQuantity(value)
+  return formatDomainQuantity(value, 6)
 }
 
 const { formatDate } = useFormatters()

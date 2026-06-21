@@ -26,7 +26,7 @@
             <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
           </div>
           <span class="text-xs text-text-tertiary font-mono flex-shrink-0">
-            {{ Number(u.conversion_factor).toLocaleString('es-CO') }} {{ baseUnit }}
+            {{ formatConversionFactor(u.conversion_factor) }} {{ baseUnit }}
           </span>
           <button
             v-if="draftUnits.length > 1"
@@ -59,8 +59,8 @@
             <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
             <UiDecimalInput
               v-model="newUnit.conversion_factor"
-              :min="0.001"
-              :precision="3"
+              :min="0.000001"
+              :precision="CONVERSION_PRECISION"
               :placeholder="factorPlaceholder"
               :class="inputClass"
               @keyup.enter="addDraftUnit"
@@ -111,7 +111,7 @@
             </button>
             <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
           </div>
-          <span class="text-xs text-text-tertiary font-mono flex-shrink-0">{{ Number(u.conversion_factor).toLocaleString('es-CO') }} {{ baseUnit }}</span>
+          <span class="text-xs text-text-tertiary font-mono flex-shrink-0">{{ formatConversionFactor(u.conversion_factor) }} {{ baseUnit }}</span>
           <button
             type="button"
             :disabled="deletingUnitId === u.id"
@@ -132,7 +132,7 @@
             <span class="text-sm text-text-primary">{{ s.label }}</span>
             <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
           </div>
-          <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">{{ s.conversion_factor.toLocaleString('es-CO') }} {{ baseUnit }}</span>
+          <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">{{ formatConversionFactor(s.conversion_factor) }} {{ baseUnit }}</span>
         </div>
       </div>
 
@@ -153,8 +153,8 @@
             <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
             <UiDecimalInput
               v-model="newUnit.conversion_factor"
-              :min="0.001"
-              :precision="3"
+              :min="0.000001"
+              :precision="CONVERSION_PRECISION"
               placeholder="Ej: 12"
               :class="inputClass"
               @keyup.enter="addPurchaseUnit"
@@ -187,6 +187,9 @@
 
 <script setup lang="ts">
 import type { DraftPurchaseUnit, PurchaseUnitSuggestion } from '@/composables/useIngredientPurchaseUnitsDraft'
+import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const CONVERSION_PRECISION = 6
 
 const props = withDefaults(defineProps<{
   mode: 'create' | 'edit'
@@ -221,6 +224,10 @@ const savingUnit = ref(false)
 const deletingUnitId = ref<string | null>(null)
 const formError = ref('')
 const newUnit = ref({ purchase_unit_label: '', conversion_factor: null as number | null })
+
+function formatConversionFactor(value: number | string | null | undefined) {
+  return formatDomainQuantity(value, CONVERSION_PRECISION)
+}
 
 function slugifyPurchaseUnit(label: string) {
   return label.toLowerCase().replace(/\s+/g, '_')
