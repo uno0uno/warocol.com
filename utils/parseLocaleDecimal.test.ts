@@ -19,6 +19,11 @@ describe('parseLocaleDecimal', () => {
     assert.equal(parseLocaleDecimal('1,234.56'), 1234.56)
   })
 
+  it('preserves six-decimal physical quantities from comma and dot input', () => {
+    assert.equal(parseLocaleDecimal('0,333333'), 0.333333)
+    assert.equal(parseLocaleDecimal('1.345678'), 1.345678)
+  })
+
   it('strips whitespace and currency symbol', () => {
     assert.equal(parseLocaleDecimal('  $ 2,5 '), 2.5)
   })
@@ -47,6 +52,7 @@ describe('parseReceiptDecimal', () => {
   it('parses decimal produce quantities from POS receipts', () => {
     assert.equal(parseReceiptDecimal('1.345', 'quantity'), 1.345)
     assert.equal(parseReceiptDecimal('1,345', 'quantity'), 1.345)
+    assert.equal(parseReceiptDecimal('0,333333', 'quantity'), 0.333333)
     assert.equal(parseReceiptDecimal(1, 'quantity'), 1)
   })
 
@@ -63,6 +69,11 @@ describe('roundToPrecision', () => {
 
   it('rounds to 3 decimals', () => {
     assert.equal(roundToPrecision(1.23456, 3), 1.235)
+  })
+
+  it('rounds quantity-style values to 6 decimals', () => {
+    assert.equal(roundToPrecision(0.3333334, 6), 0.333333)
+    assert.equal(roundToPrecision(0.3333336, 6), 0.333334)
   })
 
   it('rounds to 1 decimal', () => {
