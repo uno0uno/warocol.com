@@ -613,7 +613,7 @@
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Precio Unit.</p>
-                    <p class="font-semibold">${{ formatPrice(item.unit_cost) }}</p>
+                    <p class="font-semibold">${{ formatUnitCost(item.unit_cost) }}</p>
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Total</p>
@@ -647,7 +647,7 @@
                     {{ item.purchase_quantity }} {{ item.purchase_unit }}
                   </td>
                   <td class="text-right py-4 text-text-primary">
-                    ${{ formatPrice(item.unit_cost) }}
+                    ${{ formatUnitCost(item.unit_cost) }}
                   </td>
                   <td class="text-right py-4 font-bold text-primary">
                     ${{ formatPrice(item.total_cost) }}
@@ -915,11 +915,19 @@ const formatPrice = (price: number) => {
 }
 
 const MONEY_PRECISION = 0
-const UNIT_COST_PRECISION = 2
+const UNIT_COST_PRECISION = 6
 const QUANTITY_PRECISION = 6
 
 const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
 const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
+
+const formatUnitCost = (price: number) => {
+  if (!price) return '0'
+  return price.toLocaleString('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: UNIT_COST_PRECISION,
+  })
+}
 
 function roundDecimal(value: number, precision: number) {
   if (!Number.isFinite(value)) return 0
