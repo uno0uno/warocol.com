@@ -616,14 +616,16 @@ onBeforeUnmount(() => {
   background: hsl(var(--ebony-900));
   color: white;
   padding: 0.75rem 1rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.925rem;
+  font-weight: 600;
   line-height: 1.65;
   box-shadow: 0 8px 24px hsl(var(--ebony-900) / 0.12);
 }
 
 .kali-assistant-report {
   width: 100%;
-  max-width: 54rem;
+  max-width: none;
   padding: 0.25rem 0 0.75rem;
   color: hsl(var(--ebony-900));
 }
@@ -637,12 +639,12 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown {
   color: hsl(var(--ebony-900));
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
-  font-weight: 350;
-  line-height: 1.78;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.72;
   letter-spacing: 0;
-  max-width: 72ch;
+  max-width: none;
   text-rendering: optimizeLegibility;
 }
 
@@ -656,19 +658,21 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown :deep(p) {
   margin: 0;
+  max-width: 76rem;
   color: hsl(var(--ebony-800));
 }
 
 .kali-report-markdown :deep(p:first-child) {
   color: hsl(var(--ebony-900));
-  font-size: clamp(1.08rem, 1.02rem + 0.3vw, 1.25rem);
-  line-height: 1.7;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.68;
 }
 
 .kali-report-markdown :deep(h1),
 .kali-report-markdown :deep(h2),
 .kali-report-markdown :deep(h3) {
-  max-width: 18em;
+  max-width: 76rem;
   color: hsl(var(--ebony-900));
   font-family: Quantico, ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
@@ -677,21 +681,21 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown :deep(h1) {
   margin: 2.25rem 0 0;
-  font-size: clamp(1.75rem, 1.45rem + 1.1vw, 2.45rem);
-  line-height: 1.08;
+  font-size: clamp(1.35rem, 1.15rem + 0.7vw, 1.85rem);
+  line-height: 1.16;
 }
 
 .kali-report-markdown :deep(h2) {
-  margin: 2.5rem 0 0;
-  padding-top: 1.25rem;
+  margin: 2.25rem 0 0;
+  padding-top: 1rem;
   border-top: 1px solid hsl(var(--titan-300));
-  font-size: clamp(1.28rem, 1.12rem + 0.55vw, 1.7rem);
-  line-height: 1.18;
+  font-size: clamp(1.15rem, 1.04rem + 0.38vw, 1.42rem);
+  line-height: 1.24;
 }
 
 .kali-report-markdown :deep(h3) {
   margin: 2rem 0 0;
-  font-size: clamp(1.08rem, 1rem + 0.28vw, 1.25rem);
+  font-size: 1.05rem;
   line-height: 1.28;
 }
 
@@ -710,6 +714,7 @@ onBeforeUnmount(() => {
   gap: 0.7rem;
   margin: 1.25rem 0 0;
   padding-left: 1.35rem;
+  max-width: 76rem;
   color: hsl(var(--ebony-800));
 }
 
@@ -725,10 +730,10 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown :deep(blockquote) {
   margin: 1.75rem 0 0;
+  max-width: 76rem;
   border-left: 2px solid hsl(var(--crocus-500));
   padding: 0.25rem 0 0.25rem 1.1rem;
   color: hsl(var(--ebony-700));
-  font-style: italic;
 }
 
 .kali-report-markdown :deep(hr) {
@@ -770,7 +775,6 @@ onBeforeUnmount(() => {
   border-collapse: collapse;
   border-top: 1px solid hsl(var(--ebony-900));
   border-bottom: 1px solid hsl(var(--ebony-900));
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.875rem;
   line-height: 1.45;
   -webkit-overflow-scrolling: touch;
