@@ -26,30 +26,30 @@
               </div>
             </div>
 
-            <div v-else class="flex flex-col gap-3">
+            <div v-else class="flex flex-col gap-8 md:gap-10">
               <article
                 v-for="message in messages"
                 :key="message.id"
-                class="flex"
+                class="flex w-full"
                 :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
               >
                 <div
-                  class="max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm md:max-w-[74%]"
+                  class="kali-message"
                   :class="message.role === 'user'
-                    ? 'rounded-br-md bg-stone-900 text-white'
-                    : 'rounded-bl-md border border-stone-200 bg-white text-text-primary'"
+                    ? 'kali-user-message'
+                    : 'kali-assistant-report'"
                 >
                   <div
                     v-if="message.role === 'assistant' && !message.content && isStreaming"
-                    class="min-w-[260px] max-w-sm text-text-secondary"
+                    class="kali-assistant-loading"
                     aria-live="polite"
                   >
-                    <div class="inline-flex items-center gap-2">
+                    <div class="inline-flex items-center gap-2 text-sm">
                       <span>Procesando desde hace {{ processingElapsedLabel }}</span>
                       <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
                     </div>
-                    <p class="mt-2 text-xs leading-5 text-text-tertiary">{{ kaliLoadingPhrase }}</p>
-                    <ol v-if="visibleProgressEvents.length" class="mt-3 space-y-2 border-t border-stone-100 pt-3">
+                    <p class="mt-3 text-sm leading-6 text-text-secondary">{{ kaliLoadingPhrase }}</p>
+                    <ol v-if="visibleProgressEvents.length" class="mt-5 space-y-3 border-t border-stone-200 pt-5">
                       <li
                         v-for="event in visibleProgressEvents"
                         :key="event.id"
@@ -65,6 +65,11 @@
                       </li>
                     </ol>
                   </div>
+                  <div
+                    v-else-if="message.role === 'assistant'"
+                    class="kali-report-markdown"
+                    v-html="renderMarkdown(message.content)"
+                  />
                   <p v-else class="whitespace-pre-wrap break-words">{{ message.content }}</p>
                 </div>
               </article>
@@ -141,6 +146,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import MarkdownIt from 'markdown-it'
 import {
   ArrowPathIcon,
   ArrowsRightLeftIcon,
@@ -229,6 +235,11 @@ const activeWorkflow = computed(() =>
 const isStreaming = computed(() => streamStatus.value === 'streaming')
 const canSend = computed(() => draft.value.trim().length >= 3 && !isStreaming.value)
 const visibleProgressEvents = computed(() => progressEvents.value.slice(-5))
+const markdownRenderer = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+})
 const processingElapsedLabel = computed(() => {
   if (!processingStartedAt.value) return '0s'
   return formatElapsed(processingNow.value - processingStartedAt.value)
@@ -508,6 +519,11 @@ function progressIconClass(title: string) {
   return 'text-text-tertiary'
 }
 
+function renderMarkdown(content: string) {
+  if (!content.trim()) return ''
+  return markdownRenderer.render(content)
+}
+
 function setupErrorMessage(status: number) {
   if (status === 401) return 'Tu sesion expiro. Vuelve a iniciar sesion para usar Kali.'
   if (status === 403) return 'Kali no esta habilitado para este tenant o modulo.'
@@ -588,6 +604,211 @@ onBeforeUnmount(() => {
 
 .kali-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.kali-message {
+  min-width: 0;
+}
+
+.kali-user-message {
+  max-width: min(90%, 42rem);
+  border-radius: 1rem 1rem 0.375rem 1rem;
+  background: hsl(var(--ebony-900));
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.925rem;
+  line-height: 1.65;
+  box-shadow: 0 8px 24px hsl(var(--ebony-900) / 0.12);
+}
+
+.kali-assistant-report {
+  width: 100%;
+  max-width: 54rem;
+  padding: 0.25rem 0 0.75rem;
+  color: hsl(var(--ebony-900));
+}
+
+.kali-assistant-loading {
+  max-width: 34rem;
+  border-left: 2px solid hsl(var(--crocus-400));
+  padding-left: 1rem;
+  color: hsl(var(--text-secondary));
+}
+
+.kali-report-markdown {
+  color: hsl(var(--ebony-900));
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  font-weight: 350;
+  line-height: 1.78;
+  letter-spacing: 0;
+  max-width: 72ch;
+  text-rendering: optimizeLegibility;
+}
+
+.kali-report-markdown :deep(*) {
+  overflow-wrap: anywhere;
+}
+
+.kali-report-markdown :deep(> * + *) {
+  margin-top: 1.15rem;
+}
+
+.kali-report-markdown :deep(p) {
+  margin: 0;
+  color: hsl(var(--ebony-800));
+}
+
+.kali-report-markdown :deep(p:first-child) {
+  color: hsl(var(--ebony-900));
+  font-size: clamp(1.08rem, 1.02rem + 0.3vw, 1.25rem);
+  line-height: 1.7;
+}
+
+.kali-report-markdown :deep(h1),
+.kali-report-markdown :deep(h2),
+.kali-report-markdown :deep(h3) {
+  max-width: 18em;
+  color: hsl(var(--ebony-900));
+  font-family: Quantico, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.kali-report-markdown :deep(h1) {
+  margin: 2.25rem 0 0;
+  font-size: clamp(1.75rem, 1.45rem + 1.1vw, 2.45rem);
+  line-height: 1.08;
+}
+
+.kali-report-markdown :deep(h2) {
+  margin: 2.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid hsl(var(--titan-300));
+  font-size: clamp(1.28rem, 1.12rem + 0.55vw, 1.7rem);
+  line-height: 1.18;
+}
+
+.kali-report-markdown :deep(h3) {
+  margin: 2rem 0 0;
+  font-size: clamp(1.08rem, 1rem + 0.28vw, 1.25rem);
+  line-height: 1.28;
+}
+
+.kali-report-markdown :deep(strong) {
+  color: hsl(var(--ebony-900));
+  font-weight: 700;
+}
+
+.kali-report-markdown :deep(em) {
+  color: hsl(var(--ebony-700));
+}
+
+.kali-report-markdown :deep(ul),
+.kali-report-markdown :deep(ol) {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1.25rem 0 0;
+  padding-left: 1.35rem;
+  color: hsl(var(--ebony-800));
+}
+
+.kali-report-markdown :deep(li) {
+  padding-left: 0.15rem;
+}
+
+.kali-report-markdown :deep(li::marker) {
+  color: hsl(var(--crocus-600));
+  font-family: Quantico, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82em;
+}
+
+.kali-report-markdown :deep(blockquote) {
+  margin: 1.75rem 0 0;
+  border-left: 2px solid hsl(var(--crocus-500));
+  padding: 0.25rem 0 0.25rem 1.1rem;
+  color: hsl(var(--ebony-700));
+  font-style: italic;
+}
+
+.kali-report-markdown :deep(hr) {
+  margin: 2.25rem 0;
+  border: 0;
+  border-top: 1px solid hsl(var(--titan-300));
+}
+
+.kali-report-markdown :deep(code) {
+  border-radius: 0.35rem;
+  background: hsl(var(--titan-200) / 0.7);
+  color: hsl(var(--ebony-900));
+  padding: 0.08rem 0.34rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.86em;
+}
+
+.kali-report-markdown :deep(pre) {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: hsl(var(--ebony-900));
+  color: hsl(var(--titan-100));
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.kali-report-markdown :deep(pre code) {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.kali-report-markdown :deep(table) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-top: 1px solid hsl(var(--ebony-900));
+  border-bottom: 1px solid hsl(var(--ebony-900));
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  -webkit-overflow-scrolling: touch;
+}
+
+.kali-report-markdown :deep(thead) {
+  border-bottom: 1px solid hsl(var(--titan-400));
+}
+
+.kali-report-markdown :deep(th) {
+  color: hsl(var(--ebony-900));
+  font-family: Quantico, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.kali-report-markdown :deep(td) {
+  border-top: 1px solid hsl(var(--titan-200));
+  color: hsl(var(--ebony-800));
+  padding: 0.85rem 0.9rem;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.kali-report-markdown :deep(tbody tr:nth-child(even)) {
+  background: hsl(var(--titan-100) / 0.45);
+}
+
+.kali-report-markdown :deep(a) {
+  color: hsl(var(--crocus-700));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
 }
 
 .activity-row {
