@@ -283,7 +283,10 @@ onUnmounted(() => {
                       <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0" aria-hidden="true">
                         🍽️
                       </div>
-                      <span class="text-sm font-semibold text-text-primary">{{ item.product_name }}</span>
+                      <div class="min-w-0">
+                        <span class="text-sm font-semibold text-text-primary">{{ item.product_name }}</span>
+                        <p v-if="item.notes" class="text-xs italic text-text-secondary mt-1">{{ item.notes }}</p>
+                      </div>
                     </div>
                   </td>
                   <td class="px-6 py-4 text-center">
