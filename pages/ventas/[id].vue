@@ -110,15 +110,8 @@ const { data: invoiceData, refetch: refetchInvoice } = useQuery({
 // DIAN invoicing readiness — read from the POS restaurant-context aggregator.
 // /api/api/tenant/invoicing-readiness (the richer detail) is owner-only MI_NEGOCIO;
 // this page is cashier-accessible, so we use the POS-gated boolean instead.
-// Shares the cache key with /pos/index + /pos/checkout — no extra request.
-const { data: posContextRes, asyncStatus: posContextAsyncStatus } = useQuery({
-  key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: { invoicing_ready: boolean } }>('/api/pos/restaurant-context'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 60_000,
-})
-const isInvoicingReady = computed(() => posContextRes.value?.data?.invoicing_ready === true)
-const isReadinessLoading = computed(() => posContextAsyncStatus.value === 'loading' && !posContextRes.value)
+const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
+const isReadinessLoading = computed(() => !settingsData.value)
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
 // Invoice emit state
@@ -203,6 +196,23 @@ const order = computed(() => {
     customer_phone: orderData.value.customer?.phone || 'N/A'
   }
 })
+
+const orderCustomer = computed(() => order.value?.customer ?? null)
+const orderHasInvoiceCustomer = computed(() => Boolean(orderCustomer.value?.id))
+const canEmitInvoiceForOrder = computed(() => Boolean(
+  !invoiceData.value
+    && isInvoicingReady.value
+    && order.value?.status === 'completed'
+    && orderHasInvoiceCustomer.value
+))
+const shouldShowInvoiceSection = computed(() => Boolean(
+  invoiceData.value
+    || (
+      isInvoicingReady.value
+      && !isReadinessLoading.value
+      && orderHasInvoiceCustomer.value
+    ),
+))
 
 const orderTipPercent = computed(() => {
   const o = order.value
@@ -876,10 +886,11 @@ onUnmounted(() => {
 
       <!-- Electronic Invoice Section — visible when:
            (a) the order already has an emitted invoice (historical data), OR
-           (b) the tenant has DIAN invoicing configured and ready.
+           (b) the tenant has DIAN invoicing configured and ready and the order
+               has an associated customer. Payment method is not part of this gate.
            Otherwise hidden entirely (matches the POS checkout guard pattern). -->
       <div
-        v-if="invoiceData || (isInvoicingReady && !isReadinessLoading)"
+        v-if="shouldShowInvoiceSection"
         class="bg-surface border border-border rounded-2xl overflow-hidden"
       >
         <!-- Invoice exists -->
@@ -1061,8 +1072,8 @@ onUnmounted(() => {
           </div>
         </template>
 
-        <!-- No invoice — completed order: show emit button -->
-        <template v-else-if="order.status === 'completed'">
+        <!-- No invoice — eligible completed order: show emit button -->
+        <template v-else-if="canEmitInvoiceForOrder">
           <div class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
             <span class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0" aria-hidden="true">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
