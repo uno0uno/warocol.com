@@ -689,14 +689,23 @@ onBeforeUnmount(() => {
   margin: 2.25rem 0 0;
   padding-top: 1rem;
   border-top: 1px solid hsl(var(--titan-300));
+  color: hsl(var(--crocus-800));
   font-size: clamp(1.15rem, 1.04rem + 0.38vw, 1.42rem);
   line-height: 1.24;
 }
 
 .kali-report-markdown :deep(h3) {
   margin: 2rem 0 0;
+  color: hsl(var(--ebony-800));
   font-size: 1.05rem;
   line-height: 1.28;
+}
+
+.kali-report-markdown :deep(h3::before) {
+  content: '→';
+  color: hsl(var(--crocus-500));
+  margin-right: 0.45rem;
+  font-weight: 700;
 }
 
 .kali-report-markdown :deep(strong) {
@@ -731,8 +740,10 @@ onBeforeUnmount(() => {
 .kali-report-markdown :deep(blockquote) {
   margin: 1.75rem 0 0;
   max-width: 76rem;
-  border-left: 2px solid hsl(var(--crocus-500));
-  padding: 0.25rem 0 0.25rem 1.1rem;
+  border-left: 3px solid hsl(var(--crocus-500));
+  border-radius: 0.75rem;
+  background: hsl(var(--crocus-50) / 0.62);
+  padding: 0.9rem 1rem 0.9rem 1.1rem;
   color: hsl(var(--ebony-700));
 }
 
@@ -744,8 +755,9 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown :deep(code) {
   border-radius: 0.35rem;
-  background: hsl(var(--titan-200) / 0.7);
-  color: hsl(var(--ebony-900));
+  border: 1px solid hsl(var(--crocus-200));
+  background: hsl(var(--crocus-50));
+  color: hsl(var(--crocus-700));
   padding: 0.08rem 0.34rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.86em;
@@ -773,19 +785,22 @@ onBeforeUnmount(() => {
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
-  border-top: 1px solid hsl(var(--ebony-900));
-  border-bottom: 1px solid hsl(var(--ebony-900));
+  border: 1px solid hsl(var(--titan-400));
+  border-radius: 0.625rem;
+  background: hsl(var(--titan-50));
   font-size: 0.875rem;
   line-height: 1.45;
+  box-shadow: 0 2px 8px hsl(var(--ebony-900) / 0.07);
   -webkit-overflow-scrolling: touch;
 }
 
 .kali-report-markdown :deep(thead) {
-  border-bottom: 1px solid hsl(var(--titan-400));
+  border-bottom: 2px solid hsl(var(--titan-400));
+  background: hsl(var(--titan-300));
 }
 
 .kali-report-markdown :deep(th) {
-  color: hsl(var(--ebony-900));
+  color: hsl(var(--ebony-800));
   font-family: Quantico, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
@@ -797,22 +812,42 @@ onBeforeUnmount(() => {
 }
 
 .kali-report-markdown :deep(td) {
-  border-top: 1px solid hsl(var(--titan-200));
-  color: hsl(var(--ebony-800));
-  padding: 0.85rem 0.9rem;
+  border-top: 1px solid hsl(var(--titan-100));
+  color: hsl(var(--ebony-700));
+  padding: 0.9rem 1rem;
   vertical-align: top;
   white-space: nowrap;
 }
 
+.kali-report-markdown :deep(tbody tr) {
+  transition: background-color 100ms ease;
+}
+
 .kali-report-markdown :deep(tbody tr:nth-child(even)) {
-  background: hsl(var(--titan-100) / 0.45);
+  background: hsl(var(--titan-100));
+}
+
+.kali-report-markdown :deep(tbody tr:hover) {
+  background: hsl(var(--crocus-50));
+}
+
+.kali-report-markdown :deep(tbody td:first-child) {
+  color: hsl(var(--ebony-900));
+  font-weight: 700;
 }
 
 .kali-report-markdown :deep(a) {
-  color: hsl(var(--crocus-700));
+  color: hsl(var(--crocus-600));
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
+  text-decoration-color: hsl(var(--crocus-300));
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.kali-report-markdown :deep(a:hover) {
+  color: hsl(var(--crocus-700));
+  text-decoration-color: hsl(var(--crocus-500));
 }
 
 .activity-row {
