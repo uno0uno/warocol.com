@@ -776,8 +776,8 @@ onBeforeUnmount(() => {
 }
 
 .kali-report-markdown :deep(table) {
-  display: block;
-  width: 100%;
+  display: inline-block;
+  width: max-content;
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
