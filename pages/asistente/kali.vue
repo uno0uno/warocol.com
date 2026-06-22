@@ -1,5 +1,5 @@
 <template>
-  <section class="mx-auto flex w-full max-w-7xl flex-col">
+  <section class="mx-auto flex w-full max-w-5xl flex-col">
     <div class="min-h-[calc(100vh-7rem)]">
       <section class="min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
         <div class="flex h-[calc(100vh-7rem)] min-h-[620px] flex-col">
