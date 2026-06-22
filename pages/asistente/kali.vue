@@ -14,7 +14,7 @@
             </button>
           </div>
 
-          <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-[#fbfaf8] px-4 py-5 md:px-6">
+          <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-card-bg px-4 py-5 md:px-6">
             <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-10">
               <div class="flex max-w-md flex-col items-center gap-3 text-center">
                 <div>
@@ -240,6 +240,7 @@ const markdownRenderer = new MarkdownIt({
   linkify: true,
   typographer: true,
 })
+const emojiPattern = /[\p{Extended_Pictographic}\uFE0F\u200D]/gu
 const processingElapsedLabel = computed(() => {
   if (!processingStartedAt.value) return '0s'
   return formatElapsed(processingNow.value - processingStartedAt.value)
@@ -521,7 +522,7 @@ function progressIconClass(title: string) {
 
 function renderMarkdown(content: string) {
   if (!content.trim()) return ''
-  return markdownRenderer.render(content)
+  return markdownRenderer.render(content.replace(emojiPattern, '').trim())
 }
 
 function setupErrorMessage(status: number) {
@@ -696,16 +697,11 @@ onBeforeUnmount(() => {
 
 .kali-report-markdown :deep(h3) {
   margin: 2rem 0 0;
+  border-left: 3px solid hsl(var(--crocus-500));
   color: hsl(var(--ebony-800));
+  padding-left: 0.65rem;
   font-size: 1.05rem;
   line-height: 1.28;
-}
-
-.kali-report-markdown :deep(h3::before) {
-  content: '→';
-  color: hsl(var(--crocus-500));
-  margin-right: 0.45rem;
-  font-weight: 700;
 }
 
 .kali-report-markdown :deep(strong) {
