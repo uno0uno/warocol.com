@@ -292,6 +292,7 @@ const fiscalForm = reactive({
   city_id: 149,
   phone: '',
   email: '',
+  matias_company_id: '',
   receipt_document_label: 'Prefactura',
   receipt_tip_label: 'Propina',
   show_logo_on_receipts: true,
@@ -310,6 +311,7 @@ watch(fiscal, (f) => {
   fiscalForm.city_id = f.city_id ?? 149
   fiscalForm.phone = f.phone || ''
   fiscalForm.email = f.email || ''
+  fiscalForm.matias_company_id = f.matias_company_id || ''
   fiscalForm.receipt_document_label = f.receipt_document_label || 'Prefactura'
   fiscalForm.receipt_tip_label = f.receipt_tip_label || 'Propina'
   fiscalForm.show_logo_on_receipts = f.show_logo_on_receipts !== false
@@ -322,6 +324,7 @@ const savePrintSettings = async () => {
       method: 'PUT',
       body: {
         ...fiscalForm,
+        matias_company_id: fiscalForm.matias_company_id.trim(),
         receipt_document_label: fiscalForm.receipt_document_label.trim() || 'Prefactura',
         receipt_tip_label: fiscalForm.receipt_tip_label.trim() || 'Propina',
       },
@@ -339,7 +342,13 @@ const savePrintSettings = async () => {
 const saveFiscalData = async () => {
   isSavingFiscal.value = true
   try {
-    await $fetch('/api/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
+    await $fetch('/api/api/tenant/fiscal-data', {
+      method: 'PUT',
+      body: {
+        ...fiscalForm,
+        matias_company_id: fiscalForm.matias_company_id.trim(),
+      },
+    })
     await refreshFiscal()
     invalidateReadiness()
     await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
@@ -1062,6 +1071,37 @@ const taxLevels = [
       </h3>
 
       <div class="space-y-3">
+        <!-- Casa de Software companyId -->
+        <div class="flex flex-col gap-1 pb-2">
+          <label for="matias-company-id" class="text-sm font-medium text-text-primary">
+            UUID cliente Matias
+            <span class="text-xs font-normal text-text-tertiary">(opcional)</span>
+          </label>
+          <input
+            id="matias-company-id"
+            v-model="fiscalForm.matias_company_id"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            placeholder="8d4f2f79-4a4e-4d7d-bf07-7bd61c9e4f37"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+          <p class="text-xs text-text-secondary leading-snug">
+            Identificador companyId del cliente en Matias para Casa de Software. No es el ID del negocio en WARO.
+          </p>
+          <div class="mt-2 flex justify-end">
+            <button
+              type="button"
+              @click="saveFiscalData"
+              :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name"
+              class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+            >
+              <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
+              <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Environment -->
         <div class="flex items-center justify-between py-1">
           <span class="text-sm text-text-secondary">Entorno</span>
