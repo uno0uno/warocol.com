@@ -14,6 +14,7 @@ En la parte superior aparece un **banner de readiness** que revisa automáticame
 
 - ✓ **Listo para facturar** — todos los checks aprobados.
 - ⚠ **Faltan datos** — el banner lista exactamente qué tienes que completar antes de poder facturar.
+- En producción, también debe estar configurado el **UUID cliente Matias** (`companyId`) cuando WARO emite como Casa de Software.
 
 ---
 
@@ -76,9 +77,16 @@ Presiona **Guardar configuración** después de cualquier cambio.
 Tarjeta de salud del proveedor técnico de facturación:
 
 - **Entorno** — Habilitación (pruebas) o Producción
+- **UUID cliente Matias** — `companyId` del cliente emisor en Matias
 - **Último documento emitido** — prefijo, número y fecha
 
 Si esta tarjeta muestra errores, no podrás emitir facturas hasta que el proveedor se recupere. Contacta a soporte si la falla dura más de una hora.
+
+### UUID cliente Matias para Casa de Software
+
+WARO usa un JWT/PAT de Casa de Software para conectarse con Matias. Ese token identifica la cuenta técnica de WARO; el campo **UUID cliente Matias** (`companyId`) identifica cuál cliente emite la factura ante Matias y la DIAN.
+
+Este valor lo entrega Matias para cada cliente. No uses el ID del negocio en WARO ni el NIT como reemplazo. En habilitación o sandbox puede estar vacío, pero en producción debe estar configurado antes de emitir.
 
 ---
 
@@ -114,6 +122,9 @@ Desde el banner de alerta o yendo a `/facturacion/audit`. La pantalla muestra:
 
 **¿Por qué no puedo emitir facturas si todo parece configurado?**
 Revisa el banner de readiness arriba: lista exactamente qué falta (resolución vencida, NIT vacío, etc.).
+
+**¿Dónde consigo el UUID cliente Matias?**
+Solicítalo o consúltalo en Matias para el cliente emisor. Es el `companyId` de Matias, no el identificador interno de WARO.
 
 **¿Cambié de régimen tributario, qué hago?**
 Actualiza el campo **Régimen tributario** en Datos fiscales y revisa la **Configuración fiscal** — los impuestos aplicables suelen cambiar.
