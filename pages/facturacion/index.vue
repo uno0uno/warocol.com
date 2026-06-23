@@ -448,7 +448,7 @@ const taxLevels = [
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
           <p class="text-sm font-semibold text-state-warning-text">Falta UUID cliente Matias</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">companyId</span> del cliente emisor en la sección <span class="font-medium">Matias API</span> antes de emitir en producción.</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Matias API</span> antes de emitir en producción.</p>
         </div>
       </div>
 
@@ -1100,7 +1100,7 @@ const taxLevels = [
             class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <p class="text-xs text-text-secondary leading-snug">
-            Identificador companyId del cliente emisor en Matias para Casa de Software. No es el ID del negocio en WARO.
+            Identificador client_uuid del cliente emisor en Matias para Casa de Software. No es el ID del negocio en WARO.
           </p>
           <div class="mt-2 flex justify-end">
             <button
