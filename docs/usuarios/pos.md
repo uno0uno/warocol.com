@@ -148,6 +148,26 @@ Dentro de una sesión de mesa, usa el botón **Cambiar mesa** en el carrito para
 
 El modal de éxito, la **tirilla impresa** y el **correo de recibo** muestran el mismo desglose: subtotal, descuento, **propina** (si aplica) y **Total cobrado** cuando hubo propina. La factura electrónica DIAN sigue reflejando solo el total de la orden (sin propina) hasta que se implemente #740.
 
+### Generar factura electrónica DIAN
+
+Después de cobrar, si el negocio está listo para emitir, el modal muestra **Generar factura electrónica DIAN**. Presiónalo cuando el cliente solicite factura electrónica o cuando la operación del negocio lo requiera.
+
+Si el cliente identificado no tiene datos fiscales, WARO abre un formulario corto para guardar tipo de documento, número y nombre legal antes de emitir. En ventas anónimas el sistema usa el comprador final configurado para facturación.
+
+Cuando la emisión termina correctamente, el modal muestra el prefijo y número de factura. El comprobante impreso incluye el CUFE y el QR de verificación DIAN cuando están disponibles. Si Matias o DIAN rechazan la emisión, el modal muestra el error y permite **Reintentar** después de corregir la causa.
+
+### Validar impuestos al vender
+
+El POS usa los impuestos configurados en **Facturación → Impuestos aplicados a ventas**:
+
+| Configuración | Qué debes ver en POS y factura |
+|---------------|--------------------------------|
+| Sin IVA/INC para persona natural no responsable | La venta se completa sin línea de IVA o INC. No actives IVA solo para desbloquear la factura. |
+| IVA 19% | El resumen, recibo y factura muestran **IVA 19%** según el modo incluido o sumado. |
+| INC 8% | El resumen, recibo y factura muestran **INC 8%** según el modo incluido o sumado. |
+
+Para validar una configuración nueva, haz una venta de prueba desde el POS, genera la factura electrónica y revisa en **Facturación** o **Documentos** que el estado sea aceptado, que exista CUFE y que puedas consultar PDF, XML y envío por correo.
+
 ---
 
 ## Recibos y comprobantes

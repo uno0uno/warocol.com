@@ -70,6 +70,14 @@ Presiona **Guardar configuración** después de cualquier cambio.
 
 > Cambiar de "incluido" a "sumado" (o viceversa), o activar un impuesto, afecta cómo se calcula y desglosa el precio final en el checkout y en la factura. Coordina con tu contador antes de modificarlo.
 
+### Cuándo dejar ventas sin IVA ni INC
+
+Si tu contador confirma que el negocio puede emitir ventas sin IVA ni INC, deja ambos toggles apagados y revisa que **Datos fiscales del negocio** refleje ese escenario: persona natural, no responsable de IVA y nivel de responsabilidad **No aplica**.
+
+En ese caso WARO no agrega impuesto estándar al POS ni fuerza IVA 19% para habilitar la emisión. La factura debe emitirse sin líneas de IVA/INC, mientras los demás requisitos siguen siendo obligatorios: resolución DIAN vigente, datos fiscales completos, facturación electrónica habilitada y UUID cliente Matias configurado.
+
+Si el negocio es responsable de IVA o sus ventas deben liquidar Impoconsumo, no uses el modo sin impuesto: activa el impuesto correspondiente antes de vender y valida el modo **Incluido** o **Sumado** con tu contador.
+
 ---
 
 ## Proveedor de facturación electrónica
@@ -128,6 +136,9 @@ Solicítalo o consúltalo en Matias para el cliente emisor. Es el `client_uuid` 
 
 **¿Cambié de régimen tributario, qué hago?**
 Actualiza el campo **Régimen tributario** en Datos fiscales y revisa **Impuestos aplicados a ventas**. El régimen describe tu responsabilidad fiscal; los toggles de impuestos controlan el cálculo aplicado en POS y facturas.
+
+**¿Puedo facturar sin IVA ni INC?**
+Sí, solo cuando la configuración fiscal del negocio permite ventas sin esos impuestos. WARO no debe activar IVA automáticamente para desbloquear la emisión; si el banner sigue marcando pendiente, revisa tipo de organización, responsabilidad IVA y nivel de responsabilidad con soporte o tu contador.
 
 **¿Qué pasa si se acaba el rango de mi resolución?**
 Solicita una nueva resolución en la DIAN, regístrala aquí con su propio prefijo y rango, y actívala. La anterior queda en histórico.
