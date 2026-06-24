@@ -227,9 +227,9 @@ const saveTaxConfig = async () => {
     await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
     await refreshTaxConfig()
     invalidateReadiness()
-    toast.success('Configuración fiscal guardada correctamente', { title: 'Guardado' })
+    toast.success('Impuestos aplicados a ventas guardados correctamente', { title: 'Guardado' })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar configuración fiscal', { title: 'Error' })
+    toast.error(error.data?.detail || 'Error al guardar impuestos aplicados a ventas', { title: 'Error' })
   } finally {
     isSavingTax.value = false
   }
@@ -434,8 +434,8 @@ const taxLevels = [
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">No hay impuestos configurados</p>
-          <p class="text-xs text-state-info-text/90 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> en la sección <span class="font-medium">Configuración fiscal</span> para poder emitir facturas.</p>
+          <p class="text-sm font-semibold text-state-info-text">Falta definir el impuesto aplicado a ventas</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Por ahora WARO requiere seleccionar <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> para calcular y desglosar impuestos al emitir. Si tu negocio no debe aplicar ninguno, valida la configuración con soporte o tu contador antes de activar un impuesto.</p>
         </div>
       </div>
 
@@ -448,7 +448,7 @@ const taxLevels = [
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
           <p class="text-sm font-semibold text-state-warning-text">Falta UUID cliente Matias</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Matias API</span> antes de emitir con Matias.</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Proveedor de facturación electrónica</span> antes de emitir con Matias.</p>
         </div>
       </div>
 
@@ -739,10 +739,13 @@ const taxLevels = [
 
     <!-- ══════ DATOS FISCALES ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
         <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
         Datos Fiscales del Negocio
       </h3>
+      <p class="text-xs text-text-secondary mb-4">
+        Identifican al emisor ante DIAN y Matias. No activan impuestos por sí solos ni cambian el cálculo de IVA o INC.
+      </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- NIT -->
@@ -779,6 +782,7 @@ const taxLevels = [
           >
             <option v-for="opt in orgTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
+          <p class="text-[11px] text-text-tertiary leading-snug">Define si el emisor factura como persona natural o jurídica.</p>
         </div>
 
         <!-- Régimen tributario -->
@@ -791,7 +795,7 @@ const taxLevels = [
           >
             <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">Identifica si el emisor es responsable de IVA; no activa IVA ni cambia los impuestos aplicados a ventas.</p>
+          <p class="text-[11px] text-text-tertiary leading-snug">Describe la responsabilidad fiscal del emisor; no reemplaza los toggles de impuestos de ventas.</p>
         </div>
 
         <!-- Nivel de responsabilidad -->
@@ -804,6 +808,7 @@ const taxLevels = [
           >
             <option v-for="opt in taxLevels" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
+          <p class="text-[11px] text-text-tertiary leading-snug">Registra responsabilidades adicionales del emisor, como gran contribuyente o régimen simple.</p>
         </div>
 
         <!-- Dirección fiscal -->
@@ -941,12 +946,12 @@ const taxLevels = [
 
     <!-- ══════ CONFIGURACIÓN FISCAL ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
         <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
         Impuestos aplicados a ventas
       </h3>
       <p class="text-xs text-text-secondary mb-4">
-        Estos controles afectan el cálculo y desglose de impuestos en POS y facturas. No cambian tu tipo de organización ni tu responsabilidad IVA.
+        Estos controles afectan el cálculo y desglose de impuestos en POS y facturas. No cambian por sí solos tu tipo de organización ni tu responsabilidad fiscal.
       </p>
 
       <div class="space-y-5">
@@ -956,7 +961,7 @@ const taxLevels = [
           <div class="flex items-center justify-between py-1">
             <div>
               <p class="text-sm font-medium text-text-primary">INC — Impoconsumo 8%</p>
-              <p class="text-xs text-text-secondary mt-0.5">Restaurantes y bares sin franquicia (Art. 512-1 ET)</p>
+              <p class="text-xs text-text-secondary mt-0.5">Aplica cuando tus ventas deben liquidar Impoconsumo. Afecta el total y el desglose de la factura.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
               <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
@@ -1007,7 +1012,7 @@ const taxLevels = [
           <div class="flex items-center justify-between py-1">
             <div>
               <p class="text-sm font-medium text-text-primary">IVA — 19%</p>
-              <p class="text-xs text-text-secondary mt-0.5">Solo para establecimientos bajo franquicia (Form. DIAN 300)</p>
+              <p class="text-xs text-text-secondary mt-0.5">Actívalo solo si tus ventas deben llevar IVA 19%. Afecta el total y el desglose de la factura.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
               <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
@@ -1057,7 +1062,7 @@ const taxLevels = [
         <div class="flex items-center justify-between py-1">
           <div>
             <p class="text-sm font-medium text-text-primary">IVA Licores para llevar — 5%</p>
-            <p class="text-xs text-text-secondary mt-0.5">Si vendés botellas o licores para llevar (siempre se suma al precio base)</p>
+            <p class="text-xs text-text-secondary mt-0.5">Para botellas o licores para llevar cuando corresponda; siempre se suma al precio base.</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
             <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
@@ -1084,7 +1089,7 @@ const taxLevels = [
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
         <SignalIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        Matias API
+        Proveedor de facturación electrónica
       </h3>
 
       <div class="space-y-3">
@@ -1104,7 +1109,7 @@ const taxLevels = [
             class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <p class="text-xs text-text-secondary leading-snug">
-            Identificador client_uuid del cliente emisor en Matias para Casa de Software. No es el ID del negocio en WARO.
+            Identificador client_uuid del cliente emisor en Matias para Casa de Software. Es un requisito técnico del proveedor; no define tu régimen fiscal ni los impuestos de venta.
           </p>
           <div class="mt-2 flex justify-end">
             <button
