@@ -3,6 +3,7 @@ import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
 
 export interface InvoicingReadinessChecks {
+  customer_requested:   boolean
   dev_flag_enabled:     boolean
   fiscal_data_complete: boolean
   active_resolution:    boolean

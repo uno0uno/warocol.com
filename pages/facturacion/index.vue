@@ -292,6 +292,7 @@ const fiscalForm = reactive({
   city_id: 149,
   phone: '',
   email: '',
+  electronic_invoicing_requested: false,
   matias_company_id: '',
   receipt_document_label: 'Prefactura',
   receipt_tip_label: 'Propina',
@@ -311,6 +312,7 @@ watch(fiscal, (f) => {
   fiscalForm.city_id = f.city_id ?? 149
   fiscalForm.phone = f.phone || ''
   fiscalForm.email = f.email || ''
+  fiscalForm.electronic_invoicing_requested = f.electronic_invoicing_requested === true
   fiscalForm.matias_company_id = f.matias_company_id || ''
   fiscalForm.receipt_document_label = f.receipt_document_label || 'Prefactura'
   fiscalForm.receipt_tip_label = f.receipt_tip_label || 'Propina'
@@ -387,6 +389,19 @@ const taxLevels = [
 
     <!-- ══════ READINESS BANNERS (issue #450) ══════ -->
     <div v-if="readinessChecks" class="space-y-3">
+      <!-- Customer request missing -->
+      <div
+        v-if="!readinessChecks.customer_requested"
+        class="flex items-start gap-3 rounded-lg border border-state-info-border bg-state-info-bg p-4"
+        role="status"
+      >
+        <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-state-info-text">Solicita la activación de facturación electrónica</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Activa la solicitud en la sección <span class="font-medium">Proveedor de facturación electrónica</span>. WARO validará la habilitación técnica con Matias antes de emitir.</p>
+        </div>
+      </div>
+
       <!-- Dev flag disabled — only WARO team can flip this -->
       <div
         v-if="!readinessChecks.dev_flag_enabled"
@@ -395,8 +410,8 @@ const taxLevels = [
       >
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-warning-text">Cuenta no habilitada para facturación electrónica</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">Tu cuenta aún no está habilitada por el equipo de WARO. Contáctanos para activarla.</p>
+          <p class="text-sm font-semibold text-state-warning-text">Habilitación interna pendiente</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">La solicitud puede estar activa, pero WARO debe completar la habilitación técnica con Matias antes de emitir.</p>
         </div>
       </div>
 
@@ -1093,6 +1108,27 @@ const taxLevels = [
       </h3>
 
       <div class="space-y-3">
+        <!-- Customer self-service request -->
+        <div class="flex items-start justify-between gap-4 rounded-lg border border-border bg-background p-3">
+          <div class="min-w-0">
+            <label for="electronic-invoicing-request" class="text-sm font-medium text-text-primary">
+              Solicitar facturación electrónica
+            </label>
+            <p class="text-xs text-text-secondary leading-snug mt-0.5">
+              Indica que quieres emitir facturas electrónicas desde WARO. Esta solicitud no reemplaza la habilitación interna con Matias ni cambia IVA o INC.
+            </p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+            <input
+              id="electronic-invoicing-request"
+              v-model="fiscalForm.electronic_invoicing_requested"
+              type="checkbox"
+              class="sr-only peer"
+            />
+            <span class="w-11 h-6 bg-form-control-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></span>
+          </label>
+        </div>
+
         <!-- Casa de Software companyId -->
         <div class="flex flex-col gap-1 pb-2">
           <label for="matias-company-id" class="text-sm font-medium text-text-primary">
