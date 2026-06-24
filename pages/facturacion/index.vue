@@ -366,7 +366,7 @@ const orgTypes = [
 ]
 const taxRegimes = [
   { value: 1, label: 'Responsable de IVA' },
-  { value: 2, label: 'No responsable del impuesto' },
+  { value: 2, label: 'No responsable de IVA' },
 ]
 const taxLevels = [
   { value: 1, label: 'Gran contribuyente' },
@@ -783,7 +783,7 @@ const taxLevels = [
 
         <!-- Régimen tributario -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Régimen tributario</label>
+          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Responsabilidad IVA</label>
           <select
             id="fiscal-regime"
             v-model="fiscalForm.tax_regime_id"
@@ -791,6 +791,7 @@ const taxLevels = [
           >
             <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
+          <p class="text-[11px] text-text-tertiary leading-snug">Identifica si el emisor es responsable de IVA; no activa IVA ni cambia los impuestos aplicados a ventas.</p>
         </div>
 
         <!-- Nivel de responsabilidad -->
@@ -942,8 +943,11 @@ const taxLevels = [
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
         <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        Configuración fiscal
+        Impuestos aplicados a ventas
       </h3>
+      <p class="text-xs text-text-secondary mb-4">
+        Estos controles afectan el cálculo y desglose de impuestos en POS y facturas. No cambian tu tipo de organización ni tu responsabilidad IVA.
+      </p>
 
       <div class="space-y-5">
 
