@@ -14,7 +14,7 @@ En la parte superior aparece un **banner de readiness** que revisa automáticame
 
 - ✓ **Listo para facturar** — todos los checks aprobados.
 - ⚠ **Faltan datos** — el banner lista exactamente qué tienes que completar antes de poder facturar.
-- En producción, también debe estar configurado el **UUID cliente Matias** (`client_uuid`) cuando WARO emite como Casa de Software.
+- También debe estar configurado el **UUID cliente Matias** (`client_uuid`) cuando WARO emite como Casa de Software.
 
 ---
 
@@ -86,7 +86,7 @@ Si esta tarjeta muestra errores, no podrás emitir facturas hasta que el proveed
 
 WARO usa un JWT/PAT de Casa de Software para conectarse con Matias. Ese token identifica la cuenta técnica de WARO; el campo **UUID cliente Matias** (`client_uuid`) identifica cuál cliente emite la factura ante Matias y la DIAN.
 
-Este valor lo entrega Matias para cada cliente. No uses el ID del negocio en WARO ni el NIT como reemplazo. En habilitación o sandbox puede estar vacío, pero en producción debe estar configurado antes de emitir.
+Este valor lo entrega Matias para cada cliente. No uses el ID del negocio en WARO ni el NIT como reemplazo. Debe estar configurado antes de emitir en cualquier ambiente Matias.
 
 ---
 

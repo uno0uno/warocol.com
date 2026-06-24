@@ -448,7 +448,7 @@ const taxLevels = [
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
           <p class="text-sm font-semibold text-state-warning-text">Falta UUID cliente Matias</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Matias API</span> antes de emitir en producción.</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Matias API</span> antes de emitir con Matias.</p>
         </div>
       </div>
 
@@ -1088,7 +1088,7 @@ const taxLevels = [
         <div class="flex flex-col gap-1 pb-2">
           <label for="matias-company-id" class="text-sm font-medium text-text-primary">
             UUID cliente Matias
-            <span class="text-xs font-normal text-text-tertiary">(requerido en producción)</span>
+            <span class="text-xs font-normal text-text-tertiary">(requerido para emitir)</span>
           </label>
           <input
             id="matias-company-id"
