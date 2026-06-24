@@ -211,6 +211,19 @@ const form = reactive({
   expenseType: '' as string,
 })
 
+const paymentOptionValues = computed(() => paymentGroups.value.flatMap((group: any) => {
+  if (group.methods?.length) return group.methods.map((method: any) => method.id)
+  return [group.slug]
+}))
+
+const firstPaymentOption = computed(() => paymentOptionValues.value[0] || 'cash')
+
+watch(paymentGroups, () => {
+  if (!paymentOptionValues.value.includes(form.paymentMethod)) {
+    form.paymentMethod = firstPaymentOption.value
+  }
+}, { immediate: true, deep: true })
+
 // Initialize form with expense data
 watch(expense, (newExpense) => {
   if (newExpense) {
@@ -218,7 +231,7 @@ watch(expense, (newExpense) => {
     form.expenseCategoryId = newExpense.expenseCategoryId || ''
     form.description = newExpense.description || ''
     form.amount = newExpense.amount || null
-    form.paymentMethod = newExpense.paymentMethod || 'cash'
+    form.paymentMethod = newExpense.paymentMethodId || newExpense.paymentMethod || firstPaymentOption.value
     form.expenseType = newExpense.expenseType || ''
   }
 }, { immediate: true })

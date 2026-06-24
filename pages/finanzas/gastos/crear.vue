@@ -557,6 +557,19 @@ const form = reactive({
   recurringEndDate: ''
 })
 
+const paymentOptionValues = computed(() => paymentGroups.value.flatMap((group: any) => {
+  if (group.methods?.length) return group.methods.map((method: any) => method.id)
+  return [group.slug]
+}))
+
+const firstPaymentOption = computed(() => paymentOptionValues.value[0] || 'cash')
+
+watch(paymentGroups, () => {
+  if (!paymentOptionValues.value.includes(form.paymentMethod)) {
+    form.paymentMethod = firstPaymentOption.value
+  }
+}, { immediate: true, deep: true })
+
 // File upload state
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
