@@ -7,6 +7,7 @@ export interface InvoicingReadinessChecks {
   fiscal_data_complete: boolean
   active_resolution:    boolean
   taxes_configured:     boolean
+  tax_requirement_satisfied: boolean
   matias_company_id_configured: boolean
 }
 

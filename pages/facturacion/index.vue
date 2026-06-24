@@ -426,16 +426,16 @@ const taxLevels = [
         </div>
       </div>
 
-      <!-- No taxes configured (4th check — added in plan amendment) -->
+      <!-- Tax requirement not satisfied: needs IVA/INC or valid no-tax fiscal setup. -->
       <div
-        v-if="!readinessChecks.taxes_configured"
+        v-if="!readinessChecks.tax_requirement_satisfied"
         class="flex items-start gap-3 rounded-lg border border-state-info-border bg-state-info-bg p-4"
         role="status"
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">Falta definir el impuesto aplicado a ventas</p>
-          <p class="text-xs text-state-info-text/90 mt-0.5">Por ahora WARO requiere seleccionar <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> para calcular y desglosar impuestos al emitir. Si tu negocio no debe aplicar ninguno, valida la configuración con soporte o tu contador antes de activar un impuesto.</p>
+          <p class="text-sm font-semibold text-state-info-text">Revisa el impuesto aplicado a ventas</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> solo cuando aplique a tus ventas. Si tu negocio emite sin esos impuestos, confirma que los datos fiscales correspondan a persona natural no responsable antes de guardar.</p>
         </div>
       </div>
 
