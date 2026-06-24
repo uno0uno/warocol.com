@@ -366,7 +366,7 @@ const orgTypes = [
 ]
 const taxRegimes = [
   { value: 1, label: 'Responsable de IVA' },
-  { value: 2, label: 'No responsable del impuesto' },
+  { value: 2, label: 'No responsable de IVA' },
 ]
 const taxLevels = [
   { value: 1, label: 'Gran contribuyente' },
@@ -787,7 +787,7 @@ const taxLevels = [
 
         <!-- Régimen tributario -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Régimen tributario</label>
+          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Responsabilidad IVA</label>
           <select
             id="fiscal-regime"
             v-model="fiscalForm.tax_regime_id"
