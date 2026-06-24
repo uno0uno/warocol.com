@@ -145,6 +145,11 @@ const orders = computed(() => {
   }))
 })
 
+const getInvoiceLabel = (order: any) => {
+  if (!order?.invoice_number) return 'Sin factura'
+  return order.invoice_prefix ? `${order.invoice_prefix}-${order.invoice_number}` : String(order.invoice_number)
+}
+
 // Search fields for the filter bar
 const searchFields = [
   { label: 'Nº Orden', value: 'order_number' },
@@ -259,8 +264,7 @@ const ordersTableColumns = computed<Column[]>(() => [
   { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
   { key: 'order_number', title: 'Nº Orden', sortable: true },
   { key: 'order_date', title: 'Fecha', sortable: true },
-  { key: 'customer_name', title: 'Cliente', sortable: true },
-  { key: 'customer_phone', title: 'Teléfono', sortable: false },
+  { key: 'invoice', title: 'Factura', sortable: false },
   { key: 'items_count', title: 'Items', sortable: false },
   { key: 'source', title: 'Origen', sortable: false },
   { key: 'payment_method', title: 'Método Pago', sortable: true },
@@ -643,7 +647,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? tableSingular : 'POS') }}
+                {{ getInvoiceLabel(item) }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? tableSingular : 'POS') }}
               </p>
               <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento manual: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
@@ -735,12 +739,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
-        <template #cell-customer_name="{ item }">
-          <span v-if="item" class="text-sm font-medium text-text-primary">{{ item.customer_name }}</span>
-        </template>
-
-        <template #cell-customer_phone="{ item }">
-          <span v-if="item" class="text-sm text-text-secondary">{{ item.customer_phone }}</span>
+        <template #cell-invoice="{ row }">
+          <span
+            v-if="row"
+            class="text-sm font-medium"
+            :class="row.invoice_number ? 'text-text-primary' : 'text-text-secondary'"
+          >
+            {{ getInvoiceLabel(row) }}
+          </span>
         </template>
 
         <template #cell-items_count="{ value }">
