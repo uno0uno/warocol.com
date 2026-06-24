@@ -115,6 +115,7 @@ const orderResult = ref<{
   standard_tax_label?: string
   order_id?: string
   order_ids?: string[]
+  order_numbers?: number[]
   tip_amount?: number
   charged_amount?: number
   advance_applied?: number
@@ -1106,7 +1107,9 @@ const addSplitPayment = async () => {
       captureReceiptPrintContext()
       orderResult.value = {
         order_id: completeData.order_id,
+        order_ids: completeData.order_ids,
         order_number: Number(completeData.order_number) || 0,
+        order_numbers: completeData.order_numbers,
         total_amount: Number(completeData.total_amount ?? discountedTotal.value),
         payment_method: completeData.payment_method ?? selectedPaymentMethod.value,
         status: completeData.status,
