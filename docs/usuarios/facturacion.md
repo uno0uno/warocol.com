@@ -1,6 +1,6 @@
 # Facturación electrónica DIAN
 
-Desde **Facturación** configuras todo lo que tu negocio necesita para emitir facturas electrónicas válidas ante la DIAN: resolución, datos fiscales, impuestos y estado del proveedor técnico.
+Desde **Facturación** configuras todo lo que tu negocio necesita para emitir facturas electrónicas válidas ante la DIAN: resolución, identidad fiscal, impuestos aplicados a ventas y estado del proveedor técnico.
 
 ## Cómo acceder
 
@@ -10,7 +10,7 @@ Menú lateral → **Facturación**. La pantalla es una sola vista con varias tar
 
 ## Lista de verificación para empezar a facturar
 
-En la parte superior aparece un **banner de readiness** que revisa automáticamente si tu negocio tiene todo lo necesario para emitir facturas (resolución activa, datos fiscales completos, configuración fiscal definida).
+En la parte superior aparece un **banner de readiness** que revisa automáticamente si tu negocio tiene todo lo necesario para emitir facturas: resolución activa, datos fiscales completos, impuesto aplicado a ventas definido bajo el guardrail actual de WARO y proveedor técnico configurado.
 
 - ✓ **Listo para facturar** — todos los checks aprobados.
 - ⚠ **Faltan datos** — el banner lista exactamente qué tienes que completar antes de poder facturar.
@@ -38,7 +38,7 @@ Solo una resolución del mismo tipo puede estar activa a la vez. Al activar una,
 
 ## Datos fiscales del negocio
 
-Formulario con la información que aparecerá en cada factura emitida:
+Formulario con la información que identifica al emisor y aparece en cada factura emitida. Estos campos describen tu identidad y responsabilidad fiscal; no activan por sí solos IVA, INC ni facturación electrónica.
 
 | Campo | Obligatorio |
 |-------|:-----------:|
@@ -52,29 +52,29 @@ Formulario con la información que aparecerá en cada factura emitida:
 | Teléfono | Sí |
 | Email de facturación | Sí |
 
-Presiona **Guardar datos fiscales** para aplicar los cambios.
+Presiona **Guardar datos fiscales** para aplicar los cambios. Si cambias tipo de organización, régimen tributario o nivel de responsabilidad, revisa también los impuestos aplicados a ventas con tu contador.
 
 ---
 
-## Configuración fiscal
+## Impuestos aplicados a ventas
 
-Toggles por impuesto. Cada uno permite elegir si el valor del impuesto **está incluido en el precio del producto** o si **se suma al precio** al cobrar.
+Toggles por impuesto. Cada uno afecta el cálculo y desglose de impuestos en POS y facturas. No cambian por sí solos tu tipo de organización, tu régimen tributario ni tu obligación de facturar electrónicamente.
 
 | Impuesto | Aplica a | Modo |
 |----------|----------|------|
-| **INC 8%** | Restaurantes y bares sin franquicia | Incluido / Sumado |
-| **IVA 19%** | Franquicias y negocios responsables de IVA | Incluido / Sumado |
-| **IVA Licores 5%** | Botellas de licor para llevar | Siempre se suma |
+| **INC 8%** | Ventas que deben liquidar Impoconsumo | Incluido / Sumado |
+| **IVA 19%** | Ventas de negocios responsables de IVA | Incluido / Sumado |
+| **IVA Licores 5%** | Botellas de licor para llevar cuando corresponda | Siempre se suma |
 
 Presiona **Guardar configuración** después de cualquier cambio.
 
-> Cambiar de "incluido" a "sumado" (o viceversa) afecta cómo se desglosa el precio final en el checkout. Coordina con tu contador antes de modificarlo.
+> Cambiar de "incluido" a "sumado" (o viceversa), o activar un impuesto, afecta cómo se calcula y desglosa el precio final en el checkout y en la factura. Coordina con tu contador antes de modificarlo.
 
 ---
 
-## Estado de Matias API
+## Proveedor de facturación electrónica
 
-Tarjeta de salud del proveedor técnico de facturación:
+Tarjeta de salud del proveedor técnico de facturación. Esta sección valida la conexión operativa con Matias; es distinta de tu régimen fiscal y de los impuestos que aplicas a ventas.
 
 - **Entorno** — Habilitación (pruebas) o Producción
 - **UUID cliente Matias** — `client_uuid` del cliente emisor en Matias
@@ -86,7 +86,7 @@ Si esta tarjeta muestra errores, no podrás emitir facturas hasta que el proveed
 
 WARO usa un JWT/PAT de Casa de Software para conectarse con Matias. Ese token identifica la cuenta técnica de WARO; el campo **UUID cliente Matias** (`client_uuid`) identifica cuál cliente emite la factura ante Matias y la DIAN.
 
-Este valor lo entrega Matias para cada cliente. No uses el ID del negocio en WARO ni el NIT como reemplazo. Debe estar configurado antes de emitir en cualquier ambiente Matias.
+Este valor lo entrega Matias para cada cliente. No uses el ID del negocio en WARO ni el NIT como reemplazo. Debe estar configurado antes de emitir en cualquier ambiente Matias, pero no define si tu negocio es responsable de IVA o INC.
 
 ---
 
@@ -127,7 +127,7 @@ Revisa el banner de readiness arriba: lista exactamente qué falta (resolución 
 Solicítalo o consúltalo en Matias para el cliente emisor. Es el `client_uuid` de Matias, no el identificador interno de WARO.
 
 **¿Cambié de régimen tributario, qué hago?**
-Actualiza el campo **Régimen tributario** en Datos fiscales y revisa la **Configuración fiscal** — los impuestos aplicables suelen cambiar.
+Actualiza el campo **Régimen tributario** en Datos fiscales y revisa **Impuestos aplicados a ventas**. El régimen describe tu responsabilidad fiscal; los toggles de impuestos controlan el cálculo aplicado en POS y facturas.
 
 **¿Qué pasa si se acaba el rango de mi resolución?**
 Solicita una nueva resolución en la DIAN, regístrala aquí con su propio prefijo y rango, y actívala. La anterior queda en histórico.
