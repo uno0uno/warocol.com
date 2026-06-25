@@ -5,13 +5,14 @@
         <NuxtLink
           v-if="!hideLogo"
           to="/financiero"
-          class="dashboard-header-logo hidden xl:flex h-11 w-40 flex-shrink-0 items-center justify-center overflow-hidden px-1"
+          class="dashboard-header-logo hidden xl:flex h-12 w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
           aria-label="Ir al inicio del dashboard"
         >
           <img
-            :src="logoSrc"
-            alt="Waro Colombia"
-            class="h-9 w-full object-contain"
+            :key="route.fullPath"
+            :src="logoAnimationSrc"
+            alt="WARO Colombia"
+            class="h-10 w-full object-contain"
           />
         </NuxtLink>
 
@@ -107,7 +108,11 @@
 </template>
 
 <script setup lang="ts">
-import logoSrc from '~/public/logo_waro_colombia.png'
+const route = useRoute()
+
+const logoAnimationSrc = computed(() =>
+  `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
+)
 
 defineProps<{
   status?: { label: string; color: string }
