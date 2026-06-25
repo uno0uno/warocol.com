@@ -1,32 +1,19 @@
 <template>
-  <section class="mx-auto flex w-full max-w-5xl flex-col">
-    <div class="min-h-[calc(100vh-7rem)]">
-      <section class="min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
-        <div class="flex h-[calc(100vh-7rem)] min-h-[620px] flex-col">
-          <div v-if="isStreaming" class="flex justify-end border-b border-card-border px-4 py-3 md:px-5">
-            <button
-              type="button"
-              class="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-card-bg px-3 text-sm font-medium text-text-secondary transition hover:border-status-error-border hover:text-status-error-text focus:outline-none focus:ring-2 focus:ring-primary/20"
-              @click="cancelStream"
-            >
-              <StopIcon class="h-4 w-4" aria-hidden="true" />
-              Cancelar
-            </button>
-          </div>
-
-          <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-card-bg px-4 py-5 md:px-6">
-            <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-10">
-              <div class="flex max-w-md flex-col items-center gap-3 text-center">
-                <div>
-                  <p class="text-lg font-semibold text-text-primary">Listo para conversar</p>
-                  <p class="mt-2 text-sm leading-6 text-text-secondary">
-                    Preguntale por ventas, food cost o cualquier senal del negocio que quieras entender.
-                  </p>
-                </div>
+  <section class="mx-auto flex h-[calc(100dvh-10rem)] max-h-[calc(100dvh-10rem)] w-full max-w-[1024px] flex-col overflow-hidden md:h-[calc(100dvh-9.5rem)] md:max-h-[calc(100dvh-9.5rem)]">
+    <div class="min-h-0 flex-1 overflow-hidden">
+      <section class="h-full min-h-0 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-sm">
+        <div class="relative flex h-full min-h-0 flex-col overflow-hidden">
+          <div ref="messagesContainer" class="kali-scroll flex-1 overflow-y-auto bg-card-bg px-4 pb-28 pt-5 md:px-8 md:pb-28 md:pt-8">
+            <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-8">
+              <div class="flex max-w-md flex-col items-center gap-6 text-center">
+                <p class="font-serif text-3xl font-bold leading-tight text-text-primary md:text-4xl">
+                  Listo para conversar
+                </p>
+                <SparklesIcon class="h-32 w-32 text-slate-700" aria-hidden="true" />
               </div>
             </div>
 
-            <div v-else class="flex flex-col gap-8 md:gap-10">
+            <div v-else class="flex flex-col gap-5 md:gap-6">
               <article
                 v-for="message in messages"
                 :key="message.id"
@@ -76,65 +63,55 @@
             </div>
           </div>
 
-          <div class="border-t border-card-border bg-card-bg p-3 md:p-4">
-            <div v-if="errorMessage" class="mb-3 rounded-lg border border-status-error-border bg-status-error-bg px-3 py-2 text-sm text-status-error-text">
+          <div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-card-bg via-card-bg/95 to-transparent px-4 pb-4 pt-8">
+            <div v-if="errorMessage" class="pointer-events-auto mb-3 rounded-lg border border-status-error-border bg-status-error-bg px-3 py-2 text-sm text-status-error-text">
               <div class="flex items-start gap-2">
                 <ExclamationTriangleIcon class="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <p class="min-w-0 break-words">{{ errorMessage }}</p>
               </div>
             </div>
 
-            <form class="flex flex-col gap-2" @submit.prevent="sendMessage">
+            <form class="pointer-events-auto flex flex-col gap-2" @submit.prevent="sendMessage">
               <label class="sr-only" for="kali-message">Mensaje para Kali</label>
-              <div class="rounded-xl border border-card-border bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-                <textarea
+              <div class="flex items-center gap-2 rounded-xl border border-card-border bg-white px-4 py-3 shadow-sm transition focus-within:border-primary">
+                <input
                   id="kali-message"
                   v-model="draft"
-                  rows="2"
+                  type="text"
                   maxlength="2000"
-                  class="min-h-20 w-full resize-none rounded-t-xl border-0 bg-transparent px-4 py-3 text-sm leading-6 text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                  placeholder="Pregunta sobre ventas o food cost"
+                  class="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm leading-6 text-text-primary outline-none ring-0 placeholder:text-text-tertiary focus:border-transparent focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="Pregunta sobre ventas, precios de platos o tu restaurante"
                   :disabled="isStreaming"
                   @keydown.enter.exact.prevent="sendMessage"
                 />
-                <div class="flex items-center justify-between gap-3 px-3 pb-3">
-                  <div class="flex min-w-0 items-center gap-1" aria-label="Workflows">
-                    <button
-                      v-for="workflow in workflows"
-                      :key="workflow.id"
-                      type="button"
-                      class="h-8 rounded-md px-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
-                      :class="workflow.id === selectedWorkflowId
-                        ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                        : 'text-text-secondary hover:bg-primary/8 hover:text-primary'"
-                      :disabled="isStreaming && workflow.id !== selectedWorkflowId"
-                      :title="workflow.description"
-                      @click="selectWorkflow(workflow.id)"
-                    >
-                      {{ workflow.label }}
-                    </button>
-                  </div>
-                  <div class="flex shrink-0 items-center gap-2">
-                    <button
-                      v-if="lastFailedPrompt"
-                      type="button"
-                      class="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      :disabled="isStreaming"
-                      @click="retryLastPrompt"
-                    >
-                      <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
-                      Reintentar
-                    </button>
-                    <button
-                      type="submit"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.96]"
-                      :disabled="!canSend"
-                      aria-label="Enviar mensaje"
-                    >
-                      <PaperAirplaneIcon class="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
+                <button
+                  v-if="lastFailedPrompt"
+                  type="button"
+                  class="inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  :disabled="isStreaming"
+                  @click="retryLastPrompt"
+                >
+                  <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
+                  Reintentar
+                </button>
+                <button
+                  v-if="isStreaming"
+                  type="button"
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-status-error-text transition hover:bg-status-error-bg disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-status-error-border/60 active:scale-[0.96]"
+                  aria-label="Cancelar respuesta"
+                  @click="cancelStream"
+                >
+                  <StopIcon class="h-5 w-5" aria-hidden="true" />
+                </button>
+                <button
+                  v-else
+                  type="submit"
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-primary transition hover:bg-primary/8 disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.96]"
+                  :disabled="!canSend"
+                  aria-label="Enviar mensaje"
+                >
+                  <PaperAirplaneIcon class="h-5 w-5" aria-hidden="true" />
+                </button>
               </div>
             </form>
           </div>
@@ -171,16 +148,8 @@ useHead({
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
-type WorkflowId = 'sales' | 'food_cost'
 type MessageRole = 'user' | 'assistant'
 type StreamStatus = 'idle' | 'streaming' | 'completed' | 'error' | 'cancelled'
-
-interface WorkflowOption {
-  id: WorkflowId
-  label: string
-  description: string
-  endpoint: string
-}
 
 interface ChatMessage {
   id: string
@@ -199,39 +168,21 @@ interface ParsedSseEvent {
   data: Record<string, unknown>
 }
 
-const workflows: WorkflowOption[] = [
-  {
-    id: 'sales',
-    label: 'Ventas',
-    description: 'Metricas, ordenes y tendencias comerciales',
-    endpoint: '/api/ai/sales/messages/stream',
-  },
-  {
-    id: 'food_cost',
-    label: 'Food cost',
-    description: 'Costos, recetas y rentabilidad de menu',
-    endpoint: '/api/ai/food-cost/messages/stream',
-  },
-]
-
+const AGENT_ENDPOINT = '/api/ai/sales/messages/stream'
 const draft = ref('')
 const messages = ref<ChatMessage[]>([])
 const progressEvents = ref<ProgressEvent[]>([])
-const selectedWorkflowId = ref<WorkflowId>('sales')
 const streamStatus = ref<StreamStatus>('idle')
 const errorMessage = ref('')
 const lastFailedPrompt = ref('')
 const lastFailedAssistantId = ref('')
-const conversationIds = ref<Partial<Record<WorkflowId, string>>>({})
+const conversationId = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 const processingStartedAt = ref<number | null>(null)
 const processingNow = ref(Date.now())
 let activeController: AbortController | null = null
 let processingTimer: ReturnType<typeof setInterval> | null = null
 
-const activeWorkflow = computed(() =>
-  workflows.find((workflow) => workflow.id === selectedWorkflowId.value) ?? workflows[0]
-)
 const isStreaming = computed(() => streamStatus.value === 'streaming')
 const canSend = computed(() => draft.value.trim().length >= 3 && !isStreaming.value)
 const visibleProgressEvents = computed(() => progressEvents.value.slice(-5))
@@ -280,15 +231,6 @@ async function retryLastPrompt() {
   await startStream(prompt, { appendUserMessage: false })
 }
 
-function selectWorkflow(workflowId: WorkflowId) {
-  if (workflowId === selectedWorkflowId.value) return
-  if (isStreaming.value) cancelStream()
-  selectedWorkflowId.value = workflowId
-  progressEvents.value = []
-  errorMessage.value = ''
-  streamStatus.value = messages.value.length ? 'completed' : 'idle'
-}
-
 function cancelStream() {
   activeController?.abort()
   activeController = null
@@ -300,7 +242,6 @@ async function startStream(prompt: string, options: { appendUserMessage?: boolea
   activeController?.abort()
   const controller = new AbortController()
   activeController = controller
-  const workflow = activeWorkflow.value
   const assistantMessageId = createId()
   const appendUserMessage = options.appendUserMessage !== false
 
@@ -317,10 +258,9 @@ async function startStream(prompt: string, options: { appendUserMessage?: boolea
 
   try {
     const body: Record<string, string> = { question: prompt }
-    const conversationId = conversationIds.value[workflow.id]
-    if (conversationId) body.conversation_id = conversationId
+    if (conversationId.value) body.conversation_id = conversationId.value
 
-    const response = await fetch(workflow.endpoint, {
+    const response = await fetch(AGENT_ENDPOINT, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
@@ -414,9 +354,9 @@ function handleSseEvent(parsed: ParsedSseEvent, assistantMessageId: string) {
   }
 
   if (eventName === 'final') {
-    const conversationId = parsed.data.conversation_id
-    if (typeof conversationId === 'string') {
-      conversationIds.value[selectedWorkflowId.value] = conversationId
+    const nextConversationId = parsed.data.conversation_id
+    if (typeof nextConversationId === 'string') {
+      conversationId.value = nextConversationId
     }
     fillEmptyAssistantFromSummary(assistantMessageId, parsed.data)
     streamStatus.value = 'completed'
