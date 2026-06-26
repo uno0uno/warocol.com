@@ -231,7 +231,6 @@ import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
-import { bogotaDateAtNoon, bogotaISOFromDate, combineBogotaDateAndTimeISO, todayBogotaISO } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Abrir turno — Arqueo - Warocol' })
@@ -251,8 +250,9 @@ const route = useRoute()
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const { formatCurrency } = useFormatters()
+const { combineDateAndTimeISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
 
-const today = todayBogotaISO()
+const today = todayISO()
 const initStart = (route.query.start as string) || today
 const initEnd = (route.query.end as string) || initStart
 const initTemplate = (route.query.template as string) || ''
@@ -275,7 +275,7 @@ const isDayShiftSelected = computed(() =>
 const effectiveTemplateId = computed(() =>
   isDayShiftSelected.value ? null : (selectedTemplateId.value || null),
 )
-const anchorDate = ref<Date>(bogotaDateAtNoon(initStart))
+const anchorDate = ref<Date>(dateAtNoon(initStart))
 const stepError = ref<string | null>(null)
 const submitError = ref<string | null>(null)
 const isSubmitting = ref(false)
@@ -291,7 +291,7 @@ const {
 
 const periodStart = computed(() => {
   if (aperturaMode.value === 'custom') return initStart
-  return bogotaISOFromDate(anchorDate.value)
+  return isoFromDate(anchorDate.value)
 })
 const periodEnd = computed(() => {
   if (aperturaMode.value === 'custom') return initEnd
@@ -300,11 +300,11 @@ const periodEnd = computed(() => {
 
 const periodStartTime = computed(() => {
   if (aperturaMode.value !== 'custom' || !initStartTime) return null
-  return combineBogotaDateAndTimeISO(periodStart.value, initStartTime)
+  return combineDateAndTimeISO(periodStart.value, initStartTime)
 })
 const periodEndTime = computed(() => {
   if (aperturaMode.value !== 'custom' || !initEndTime) return null
-  return combineBogotaDateAndTimeISO(periodEnd.value, initEndTime)
+  return combineDateAndTimeISO(periodEnd.value, initEndTime)
 })
 
 const { data: rawShiftTemplates } = useQuery({
@@ -375,7 +375,7 @@ const templateHoursLabel = computed(() => {
 })
 
 const customWindowLabel = computed(() => {
-  const fmt = (iso: string) => fnsFormat(bogotaDateAtNoon(iso), 'dd/MM/yyyy', { locale: es })
+  const fmt = (iso: string) => fnsFormat(dateAtNoon(iso), 'dd/MM/yyyy', { locale: es })
   const datePart = periodStart.value === periodEnd.value
     ? fmt(periodStart.value)
     : `${fmt(periodStart.value)} – ${fmt(periodEnd.value)}`

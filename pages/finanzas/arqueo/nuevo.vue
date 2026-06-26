@@ -768,12 +768,6 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
-import {
-  addDaysBogotaISO,
-  bogotaDateAtNoon,
-  bogotaISOFromDate,
-  todayBogotaISO,
-} from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Nuevo arqueo de caja - Warocol' })
@@ -783,8 +777,9 @@ const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const cache = useQueryCache()
 const route = useRoute()
+const { addDaysISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
 
-const today = todayBogotaISO()
+const today = todayISO()
 const initStart = (route.query.start as string) || today
 
 // ── Último cierre ──────────────────────────────────────────────────────────
@@ -817,9 +812,9 @@ onUnmounted(() => { clearRefreshHandler(refetchUltimo) })
 // Día sugerido: el día siguiente al último cierre (si es ≤ hoy)
 const suggestedRange = computed(() => {
   if (!ultimoCierre.value) return null
-  const afterIso = addDaysBogotaISO(ultimoCierre.value.periodEnd, 1)
+  const afterIso = addDaysISO(ultimoCierre.value.periodEnd, 1)
   if (afterIso > today) return null
-  return { start: afterIso, startDate: bogotaDateAtNoon(afterIso) }
+  return { start: afterIso, startDate: dateAtNoon(afterIso) }
 })
 
 const applySuggested = () => {
@@ -832,24 +827,24 @@ const applySuggested = () => {
 
 interface Preset { key: string; label: string; date: Date }
 const buildPresets = (): Preset[] => {
-  const todayNoon = bogotaDateAtNoon(today)
-  const yesterdayNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -1))
+  const todayNoon = dateAtNoon(today)
+  const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
   return [
     { key: 'today',     label: 'Hoy',  date: new Date(todayNoon) },
     { key: 'yesterday', label: 'Ayer', date: yesterdayNoon },
   ]
 }
 const presets      = buildPresets()
-const selectedDate = ref<Date>(bogotaDateAtNoon(initStart))
+const selectedDate = ref<Date>(dateAtNoon(initStart))
 const activePreset = ref<string | null>(
   initStart === today ? 'today'
-    : initStart === addDaysBogotaISO(today, -1) ? 'yesterday'
+    : initStart === addDaysISO(today, -1) ? 'yesterday'
       : null,
 )
 
 const syncPresetFromDate = (iso: string) => {
   if (iso === today) activePreset.value = 'today'
-  else if (iso === addDaysBogotaISO(today, -1)) activePreset.value = 'yesterday'
+  else if (iso === addDaysISO(today, -1)) activePreset.value = 'yesterday'
   else activePreset.value = null
 }
 
@@ -860,14 +855,14 @@ const applyPreset = (p: Preset) => {
 
 const onDatePicked = (date: Date | null) => {
   if (!date) return
-  syncPresetFromDate(bogotaISOFromDate(date))
+  syncPresetFromDate(isoFromDate(date))
 }
 
 const formatSingleDate = (date: Date) =>
   date ? fnsFormat(date, 'dd/MM/yy', { locale: es }) : ''
 
 // Period — siempre un solo día
-const periodStart = computed(() => bogotaISOFromDate(selectedDate.value))
+const periodStart = computed(() => isoFromDate(selectedDate.value))
 const periodEnd   = computed(() => periodStart.value)
 
 const shiftWindowParams = computed(() =>
@@ -1148,7 +1143,7 @@ const loadFromStorage = (restorePeriod = true) => {
   try {
     const s = JSON.parse(raw)
     if (restorePeriod && s.periodStart) {
-      selectedDate.value = bogotaDateAtNoon(s.periodStart)
+      selectedDate.value = dateAtNoon(s.periodStart)
       syncPresetFromDate(s.periodStart)
     }
     // Never restore step from storage — always start at step 0 (X preview)
@@ -1173,7 +1168,7 @@ onMounted(() => {
   if (typeof window === 'undefined') return
   const queryStart = route.query.start as string | undefined
   if (queryStart) {
-    selectedDate.value = bogotaDateAtNoon(queryStart)
+    selectedDate.value = dateAtNoon(queryStart)
     syncPresetFromDate(queryStart)
     loadFromStorage(false)
   } else {

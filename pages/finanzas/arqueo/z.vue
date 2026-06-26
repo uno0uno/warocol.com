@@ -941,14 +941,6 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
-import {
-  addDaysBogotaISO,
-  bogotaDateAtNoon,
-  bogotaISOFromDate,
-  bogotaTimeHHMMFromISO,
-  combineBogotaDateAndTimeISO,
-  todayBogotaISO,
-} from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
@@ -958,6 +950,14 @@ const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const route = useRoute()
+const {
+  addDaysISO,
+  combineDateAndTimeISO,
+  dateAtNoon,
+  isoFromDate,
+  timeHHMMFromISO,
+  todayISO,
+} = useTenantTimezone()
 
 type ArqueoWindowMode = 'template' | 'custom'
 interface ShiftTemplateOption {
@@ -975,24 +975,24 @@ const initTemplate = (route.query.template as string) || ''
 const selectedTemplateId = ref<string>(initTemplate)
 const suggestedLoading = ref(false)
 
-const today = todayBogotaISO()
+const today = todayISO()
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
 const initStart = (route.query.start as string) || today
 const initEnd   = (route.query.end   as string) || today
 
 const dateRangeDates = ref<Date[]>([
-  bogotaDateAtNoon(initStart),
-  bogotaDateAtNoon(initEnd),
+  dateAtNoon(initStart),
+  dateAtNoon(initEnd),
 ])
 
 interface Preset { key: string; label: string; start: Date; end: Date }
 const buildPresets = (): Preset[] => {
-  const todayNoon = bogotaDateAtNoon(today)
-  const yesterdayNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -1))
-  const weekStartNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -6))
+  const todayNoon = dateAtNoon(today)
+  const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
+  const weekStartNoon = dateAtNoon(addDaysISO(today, -6))
   const [y, m] = today.split('-').map(Number)
-  const monthStartNoon = bogotaDateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
+  const monthStartNoon = dateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
   return [
     { key: 'today',     label: 'Hoy',           start: new Date(todayNoon), end: new Date(todayNoon) },
     { key: 'yesterday', label: 'Ayer',           start: yesterdayNoon,       end: yesterdayNoon },
@@ -1066,8 +1066,8 @@ const onTimeInput = (e: Event, field: 'start' | 'end') => {
 }
 
 // Period computed from date picker (Bogotá calendar day for API)
-const periodStart = computed(() => bogotaISOFromDate(dateRangeDates.value[0]))
-const periodEnd   = computed(() => bogotaISOFromDate(dateRangeDates.value[1] ?? dateRangeDates.value[0]))
+const periodStart = computed(() => isoFromDate(dateRangeDates.value[0]))
+const periodEnd   = computed(() => isoFromDate(dateRangeDates.value[1] ?? dateRangeDates.value[0]))
 const isMultiDay  = computed(() => periodStart.value !== periodEnd.value)
 
 const previewShiftTemplateId = computed(() =>
@@ -1082,8 +1082,8 @@ watch(isMultiDay, (multi) => {
 
 watch(dateRangeDates, (dates) => {
   if (arqueoWindowMode.value !== 'template' || !dates?.[0] || !dates?.[1]) return
-  const a = bogotaISOFromDate(dates[0])
-  const b = bogotaISOFromDate(dates[1])
+  const a = isoFromDate(dates[0])
+  const b = isoFromDate(dates[1])
   if (a !== b) dateRangeDates.value = [dates[0], dates[0]]
 }, { deep: true })
 
@@ -1149,9 +1149,9 @@ const templateHoursLabel = computed(() => {
 })
 
 const onTemplateAnchorPick = () => {
-  const anchor = bogotaISOFromDate(templateAnchorDate.value)
+  const anchor = isoFromDate(templateAnchorDate.value)
   if (anchor === today) activePreset.value = 'today'
-  else if (anchor === addDaysBogotaISO(today, -1)) activePreset.value = 'yesterday'
+  else if (anchor === addDaysISO(today, -1)) activePreset.value = 'yesterday'
   else activePreset.value = null
 }
 
@@ -1167,16 +1167,16 @@ const applySuggestedWindow = async () => {
     } }>('/api/cierre/suggested-window', { params: { date: periodStart.value } })
     const d = res.data
     if (arqueoWindowMode.value === 'template') {
-      const anchor = bogotaDateAtNoon(d.periodStart)
+      const anchor = dateAtNoon(d.periodStart)
       dateRangeDates.value = [anchor, anchor]
     } else {
       dateRangeDates.value = [
-        bogotaDateAtNoon(d.periodStart),
-        bogotaDateAtNoon(d.periodEnd),
+        dateAtNoon(d.periodStart),
+        dateAtNoon(d.periodEnd),
       ]
       enableTimePicker.value = true
-      startTimeInput.value = bogotaTimeHHMMFromISO(d.periodStartTime)
-      endTimeInput.value = bogotaTimeHHMMFromISO(d.periodEndTime)
+      startTimeInput.value = timeHHMMFromISO(d.periodStartTime)
+      endTimeInput.value = timeHHMMFromISO(d.periodEndTime)
     }
     activePreset.value = null
   } catch (err: any) {
@@ -1189,12 +1189,12 @@ const applySuggestedWindow = async () => {
 const periodStartTime = computed((): string | null => {
   if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
-  return combineBogotaDateAndTimeISO(periodStart.value, startTimeInput.value)
+  return combineDateAndTimeISO(periodStart.value, startTimeInput.value)
 })
 const periodEndTime = computed((): string | null => {
   if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
-  return combineBogotaDateAndTimeISO(periodEnd.value, endTimeInput.value)
+  return combineDateAndTimeISO(periodEnd.value, endTimeInput.value)
 })
 
 const shiftWindowParams = computed(() =>
@@ -1522,8 +1522,8 @@ const loadFromStorage = () => {
     const hasQueryParams = !!route.query.start || !!route.query.end
     if (!hasQueryParams) {
       if (s.periodStart) {
-        const d0 = bogotaDateAtNoon(s.periodStart)
-        const d1 = s.periodEnd ? bogotaDateAtNoon(s.periodEnd) : d0
+        const d0 = dateAtNoon(s.periodStart)
+        const d1 = s.periodEnd ? dateAtNoon(s.periodEnd) : d0
         dateRangeDates.value = [d0, d1]
       }
       if (s.periodStartTime) { startTimeInput.value = s.periodStartTime; enableTimePicker.value = true }
@@ -1589,7 +1589,7 @@ const cierreWindowSummary = computed(() => {
     return {
       title: 'Ventana',
       period: formatPeriod(periodStart.value, periodEnd.value),
-      detail: `${bogotaTimeHHMMFromISO(periodStartTime.value)} – ${bogotaTimeHHMMFromISO(periodEndTime.value)}`,
+      detail: `${timeHHMMFromISO(periodStartTime.value)} – ${timeHHMMFromISO(periodEndTime.value)}`,
     }
   }
   return {
