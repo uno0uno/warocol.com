@@ -398,14 +398,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
-import {
-  addDaysBogotaISO,
-  bogotaDateAtNoon,
-  bogotaISOFromDate,
-  bogotaMonthBounds,
-  todayBogotaISO,
-} from '~/utils/bogotaDate'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { buildCierreCloseRoute, isCierreOpen } from '~/composables/useCierreShiftWindow'
 
@@ -414,32 +406,37 @@ useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { todayISO, addDaysISO, dateAtNoon, isoFromDate, monthBounds } = useTenantTimezone()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
+const formatIsoShort = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year.slice(2)}`
+}
 
-const today = todayBogotaISO()
-const todayNoon = bogotaDateAtNoon(today)
+const today = computed(() => todayISO())
+const todayNoon = computed(() => dateAtNoon(today.value))
 
 const dateRangeDates = ref<Date[] | null>(null)
 
-const presetDates = ref([
-  { label: 'Hoy',           value: [new Date(todayNoon), new Date(todayNoon)] },
-  { label: 'Ayer',          value: (() => { const d = bogotaDateAtNoon(addDaysBogotaISO(today, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [bogotaDateAtNoon(addDaysBogotaISO(today, -7)), new Date(todayNoon)] },
-  { label: 'Último mes',    value: [bogotaDateAtNoon(addDaysBogotaISO(today, -30)), new Date(todayNoon)] },
+const presetDates = computed(() => [
+  { label: 'Hoy',           value: [new Date(todayNoon.value), new Date(todayNoon.value)] },
+  { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today.value, -1)); return [d, d] })() },
+  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today.value, -7)), new Date(todayNoon.value)] },
+  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today.value, -30)), new Date(todayNoon.value)] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = formatIsoShort(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+  return `${from} - ${formatIsoShort(isoFromDate(dates[1]))}`
 }
 
 const periodStart = computed(() =>
-  dateRangeDates.value?.[0] ? bogotaISOFromDate(dateRangeDates.value[0]) : today
+  dateRangeDates.value?.[0] ? isoFromDate(dateRangeDates.value[0]) : today.value
 )
 const periodEnd = computed(() =>
-  dateRangeDates.value?.[1] ? bogotaISOFromDate(dateRangeDates.value[1]) : today
+  dateRangeDates.value?.[1] ? isoFromDate(dateRangeDates.value[1]) : today.value
 )
 
 const activeStart = computed(() => dateRangeDates.value ? periodStart.value : null)
@@ -449,7 +446,7 @@ const activeEnd   = computed(() => dateRangeDates.value ? periodEnd.value   : nu
 const { data: todayPreview } = useQuery({
   key: () => ['cierre', 'open-tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: today, period_end: today, completed_only: false },
+    params: { period_start: today.value, period_end: today.value, completed_only: false },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
@@ -505,13 +502,13 @@ const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
 const filterCurrentMonth = () => {
-  const { first, last } = bogotaMonthBounds(today)
-  dateRangeDates.value = [bogotaDateAtNoon(first), bogotaDateAtNoon(last)]
+  const { first, last } = monthBounds(today.value)
+  dateRangeDates.value = [dateAtNoon(first), dateAtNoon(last)]
 }
 
 const isCurrentMonthActive = computed(() => {
   if (!dateRangeDates.value?.[0] || !dateRangeDates.value?.[1]) return false
-  const { first, last } = bogotaMonthBounds(today)
+  const { first, last } = monthBounds(today.value)
   return activeStart.value === first && activeEnd.value === last
 })
 

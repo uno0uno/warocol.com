@@ -29,6 +29,7 @@ export interface TenantBusinessProfile {
   neighborhood: string | null
   latitude: number | null
   longitude: number | null
+  timezone?: string | null
   business_hours: Record<string, BusinessHours> | null
   social_media: Record<string, string> | null
   accepts_online_orders: boolean

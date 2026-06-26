@@ -46,21 +46,27 @@ const channelFilter = ref<'pos' | 'mesa' | 'online' | null>(null)
 const dateRangeDates = ref<Date[] | null>(null)
 const sortField = ref<'order_number' | 'order_date' | 'total_amount' | 'tip_amount' | 'payment_method'>('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
+const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
+const presetRange = (fromIso: string, toIso = todayISO()) => [dateAtNoon(fromIso), dateAtNoon(toIso)]
+const formatIsoShort = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year.slice(2)}`
+}
 
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  { label: 'Ayer', value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+const presetDates = computed(() => [
+  { label: 'Hoy', value: presetRange(todayISO()) },
+  { label: 'Ayer', value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)) },
+  { label: 'Última semana', value: presetRange(addDaysISO(todayISO(), -7)) },
+  { label: 'Últimos 15 días', value: presetRange(addDaysISO(todayISO(), -15)) },
+  { label: 'Último mes', value: presetRange(addDaysISO(todayISO(), -30)) },
+  { label: 'Últimos 90 días', value: presetRange(addDaysISO(todayISO(), -90)) },
 ])
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = formatIsoShort(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
+  const to = formatIsoShort(isoFromDate(dates[1]))
   return `${from} - ${to}`
 }
 
@@ -68,7 +74,7 @@ const dateRange = computed(() => {
   if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null as string | null, to: null as string | null }
   const [from, to] = dateRangeDates.value
   if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
+  return { from: isoFromDate(from), to: isoFromDate(to) }
 })
 
 // Pagination

@@ -1,35 +1,35 @@
-import { bogotaDateAtNoon } from '~/utils/bogotaDate'
-
-const _dateFormatter = new Intl.DateTimeFormat('es-CO', {
-  day: '2-digit', month: '2-digit', year: '2-digit',
-  timeZone: 'America/Bogota',
-})
-
-const _dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
-  day: '2-digit', month: '2-digit', year: '2-digit',
-  hour: '2-digit', minute: '2-digit', hour12: false,
-  timeZone: 'America/Bogota',
-})
-
 export const useFormatters = () => {
+  const { timezone, dateAtNoon } = useTenantTimezone()
+
+  const dateFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    timeZone: timezone.value,
+  }))
+
+  const dateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+    timeZone: timezone.value,
+  }))
+
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'No especificada'
-    return _dateFormatter.format(new Date(dateString))
+    return dateFormatter.value.format(new Date(dateString))
   }
 
-  /** YYYY-MM-DD (or API date field) → calendar day in Bogotá — matches arqueo transaction_date. */
+  /** YYYY-MM-DD (or API date field) -> tenant calendar day. */
   const formatCalendarDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'No especificada'
     const day = dateString.split('T')[0]
     if (/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      return _dateFormatter.format(bogotaDateAtNoon(day))
+      return dateFormatter.value.format(dateAtNoon(day))
     }
     return formatDate(dateString)
   }
 
   const formatDateShort = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A'
-    return _dateFormatter.format(new Date(dateString))
+    return dateFormatter.value.format(new Date(dateString))
   }
 
   const formatCurrency = (value: number | null): string => {
@@ -43,7 +43,7 @@ export const useFormatters = () => {
 
   const formatDateTime = (dateString: string | null | undefined): string => {
     if (!dateString) return 'No especificada'
-    return _dateTimeFormatter.format(new Date(dateString))
+    return dateTimeFormatter.value.format(new Date(dateString))
   }
 
   const formatRelativeDate = (dateString: string): string => {

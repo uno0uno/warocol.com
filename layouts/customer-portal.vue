@@ -204,6 +204,7 @@ async function handleLogout() {
 
 // Date/time
 const currentDateTime = ref('')
+const { timezone } = useTenantTimezone()
 const updateDateTime = () => {
   const now = new Date()
   currentDateTime.value = now.toLocaleDateString('es-CO', {
@@ -213,7 +214,7 @@ const updateDateTime = () => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/Bogota'
+    timeZone: timezone.value
   })
 }
 let dateTimeInterval: ReturnType<typeof setInterval> | null = null

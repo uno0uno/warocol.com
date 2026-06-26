@@ -164,6 +164,7 @@ const goBack = () => {
 
 // Date and time functionality
 const currentDateTime = ref('')
+const { timezone } = useTenantTimezone()
 
 const updateDateTime = () => {
   const now = new Date()
@@ -174,7 +175,7 @@ const updateDateTime = () => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/Bogota'
+    timeZone: timezone.value
   }
   currentDateTime.value = now.toLocaleDateString('es-CO', options)
 }

@@ -10,15 +10,16 @@ export interface CierrePeriodLike {
   shiftTemplateName?: string | null
 }
 
-const _timeFormatter = new Intl.DateTimeFormat('es-CO', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'America/Bogota',
-})
-
 export function useCierrePeriod() {
   const { formatDate } = useFormatters()
+  const { timezone } = useTenantTimezone()
+
+  const timeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: timezone.value,
+  }))
 
   const hasTimeWindow = (cierre: CierrePeriodLike | null | undefined): boolean =>
     !!(cierre?.periodStartTime || cierre?.periodEndTime)
@@ -38,9 +39,9 @@ export function useCierrePeriod() {
     if (!hasTimeWindow(cierre)) return null
     const start = cierre?.periodStartTime
     const end = cierre?.periodEndTime
-    if (start && end) return `${_timeFormatter.format(new Date(start))} – ${_timeFormatter.format(new Date(end))}`
-    if (start) return `Desde ${_timeFormatter.format(new Date(start))}`
-    if (end) return `Hasta ${_timeFormatter.format(new Date(end))}`
+    if (start && end) return `${timeFormatter.value.format(new Date(start))} – ${timeFormatter.value.format(new Date(end))}`
+    if (start) return `Desde ${timeFormatter.value.format(new Date(start))}`
+    if (end) return `Hasta ${timeFormatter.value.format(new Date(end))}`
     return null
   }
 
