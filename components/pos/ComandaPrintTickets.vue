@@ -32,11 +32,11 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
         Comanda #{{ c.comanda_number }}
       </div>
       <div class="receipt-divider">--------------------------------</div>
-      <div v-for="(item, i) in c.items" :key="i" class="receipt-item receipt-small">
-        <span class="comanda-item-qty">{{ item.quantity }}×</span>
-        <span class="comanda-item-name">{{ item.kitchen_name }}</span>
-      </div>
-      <template v-for="(item, i) in c.items" :key="`mod-${i}`">
+      <template v-for="(item, i) in c.items" :key="i">
+        <div class="receipt-item receipt-small">
+          <span class="comanda-item-qty">{{ item.quantity }}×</span>
+          <span class="comanda-item-name">{{ item.kitchen_name }}</span>
+        </div>
         <div
           v-for="(mod, mi) in modifierLines(item)"
           :key="`${i}-${mi}`"
