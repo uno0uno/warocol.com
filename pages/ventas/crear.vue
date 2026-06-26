@@ -51,6 +51,13 @@ interface SelectedCustomer {
   email: string | null
 }
 
+interface ManualSplitPayment {
+  id: string
+  amount: number
+  payment_method: string
+  payment_method_id: string | null
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
 
 const loading = ref(false)
@@ -62,6 +69,12 @@ const pendingItem = ref<LineItem | null>(null)
 const searchQuery = ref('')
 const selectedCategory = ref('all')
 const showMobileCartSheet = ref(false)
+const discountEnabled = ref(false)
+const discountType = ref<'percent' | 'fixed'>('percent')
+const discountInput = ref('')
+const splitMode = ref(false)
+const splitAmountInput = ref<number | null>(null)
+const splitPayments = ref<ManualSplitPayment[]>([])
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -398,13 +411,59 @@ function itemTotal(item: LineItem) {
   return base + modifiersCartTotal(item.selected_modifiers)
 }
 
-const total = computed(() =>
+const subtotal = computed(() =>
   form.value.items.reduce((sum, item) => sum + itemTotal(item), 0)
 )
+
+const discountInputNumber = computed(() => Number(discountInput.value))
+const discountValidationError = computed(() => {
+  if (!discountEnabled.value || !discountInput.value) return ''
+  const value = discountInputNumber.value
+  if (!Number.isFinite(value) || value <= 0) return 'Ingresa un descuento mayor a 0'
+  if (discountType.value === 'percent' && value > 100) return 'El descuento porcentual no puede superar el 100%'
+  if (discountType.value === 'fixed' && value > subtotal.value) return 'El descuento fijo no puede superar el subtotal'
+  return ''
+})
+
+const discountAmount = computed(() => {
+  if (!discountEnabled.value || !discountInput.value || discountValidationError.value) return 0
+  if (discountType.value === 'percent') return Math.round(subtotal.value * discountInputNumber.value / 100)
+  return Math.min(subtotal.value, Math.round(discountInputNumber.value))
+})
+
+const total = computed(() => Math.max(0, subtotal.value - discountAmount.value))
+const splitPaidTotal = computed(() => splitPayments.value.reduce((sum, payment) => sum + payment.amount, 0))
+const splitRemaining = computed(() => Math.max(0, total.value - splitPaidTotal.value))
+const splitIsComplete = computed(() =>
+  splitMode.value && splitPayments.value.length > 0 && Math.abs(splitPaidTotal.value - total.value) <= 0.01
+)
+const splitAmountToAdd = computed(() => Number(splitAmountInput.value) || 0)
+const currentPaymentIsWallet = computed(() => form.value.payment_method === WALLET_PAYMENT_SLUG)
+const singlePaymentValidationError = computed(() => {
+  if (splitMode.value) return ''
+  if (!currentPaymentIsWallet.value) return ''
+  if (!selectedCustomer.value) return 'Identifica un cliente para usar wallet'
+  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado'
+  if (total.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
+  return ''
+})
+const splitAmountValidationError = computed(() => {
+  if (!splitMode.value || splitIsComplete.value) return ''
+  if (splitAmountToAdd.value <= 0) return 'Ingresa un monto a cobrar'
+  if (splitAmountToAdd.value - splitRemaining.value > 0.01) return 'El pago excede el saldo pendiente'
+  if (!currentPaymentIsWallet.value) return ''
+  if (!selectedCustomer.value) return 'Identifica un cliente para usar wallet'
+  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado'
+  if (splitAmountToAdd.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
+  return ''
+})
 
 const canSubmit = computed(() =>
   form.value.items.length > 0 &&
   form.value.items.every(i => i.product_id && Number(i.quantity) > 0) &&
+  !discountValidationError.value &&
+  !singlePaymentValidationError.value &&
+  (!splitMode.value || splitIsComplete.value) &&
   !loading.value
 )
 
@@ -418,6 +477,35 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
 
 const mobileCartFormattedTotal = computed(() => formatCurrency(total.value))
+
+function paymentLabel(payment: Pick<ManualSplitPayment, 'payment_method' | 'payment_method_id'>) {
+  const group = paymentGroups.value.find(g => g.slug === payment.payment_method)
+  const method = group?.methods.find(m => m.id === payment.payment_method_id)
+  return method ? `${group?.name} · ${method.name}` : (group?.name || payment.payment_method)
+}
+
+function addSplitPayment() {
+  if (splitAmountValidationError.value) {
+    useToast().warning(splitAmountValidationError.value, { title: 'Pago dividido' })
+    return
+  }
+  splitPayments.value.push({
+    id: crypto.randomUUID(),
+    amount: splitAmountToAdd.value,
+    payment_method: form.value.payment_method,
+    payment_method_id: form.value.payment_method_id,
+  })
+  splitAmountInput.value = splitRemaining.value > 0 ? Math.round(splitRemaining.value) : null
+}
+
+function removeSplitPayment(id: string) {
+  splitPayments.value = splitPayments.value.filter(payment => payment.id !== id)
+}
+
+watch([total, splitMode], () => {
+  splitPayments.value = []
+  splitAmountInput.value = splitMode.value && total.value > 0 ? Math.round(total.value) : null
+})
 
 const { setMobileCart, setOpenCartHandler, setMobileCartSheetOpen, clearMobileCart } = usePosMobileCart()
 
@@ -454,6 +542,15 @@ function clearCustomer() {
   selectedCustomer.value = null
 }
 
+watch(selectedCustomer, () => {
+  splitPayments.value = splitPayments.value.filter(payment => payment.payment_method !== WALLET_PAYMENT_SLUG)
+  if (form.value.payment_method !== WALLET_PAYMENT_SLUG) return
+  const fallback = visiblePaymentGroups.value.find(group => group.slug !== WALLET_PAYMENT_SLUG)
+  if (!fallback) return
+  form.value.payment_method = fallback.slug
+  form.value.payment_method_id = null
+})
+
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
 async function submit() {
@@ -482,6 +579,23 @@ async function submit() {
         payment_method: form.value.payment_method,
         payment_method_id: form.value.payment_method_id,
         customer_id: selectedCustomer.value?.id || undefined,
+        ...(discountAmount.value > 0
+          ? {
+              discount_type: discountType.value,
+              discount_value: discountInputNumber.value,
+            }
+          : {}),
+        ...(splitMode.value
+          ? {
+              payment_method: splitPayments.value[0]?.payment_method ?? form.value.payment_method,
+              payment_method_id: splitPayments.value[0]?.payment_method_id ?? null,
+              payments: splitPayments.value.map(payment => ({
+                amount: payment.amount,
+                payment_method: payment.payment_method,
+                payment_method_id: payment.payment_method_id,
+              })),
+            }
+          : {}),
         items: form.value.items.map(i => ({
           product_id: i.product_id,
           quantity: i.quantity,
@@ -999,10 +1113,102 @@ async function submit() {
 
           <!-- Total + Submit (desktop) -->
           <div class="p-4 border-t border-border flex flex-col gap-3 bg-surface">
+            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-medium text-text-primary">Descuento</span>
+                <button
+                  type="button"
+                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                  :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
+                  @click="discountEnabled = !discountEnabled"
+                >
+                  {{ discountEnabled ? 'Activo' : 'Agregar' }}
+                </button>
+              </div>
+              <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+                <select
+                  v-model="discountType"
+                  class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary"
+                >
+                  <option value="percent">Porcentaje</option>
+                  <option value="fixed">Fijo COP</option>
+                </select>
+                <input
+                  v-model="discountInput"
+                  type="number"
+                  min="0"
+                  :max="discountType === 'percent' ? 100 : Math.round(subtotal)"
+                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                  :placeholder="discountType === 'percent' ? '10' : '5000'"
+                />
+              </div>
+              <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
+              <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
+                <span>Descuento manual</span>
+                <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-medium text-text-primary">Pago dividido</span>
+                <button
+                  type="button"
+                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                  :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
+                  @click="splitMode = !splitMode"
+                >
+                  {{ splitMode ? 'Activo' : 'Dividir' }}
+                </button>
+              </div>
+              <div v-if="splitMode" class="flex flex-col gap-2">
+                <div v-if="splitPayments.length > 0" class="flex flex-col gap-1">
+                  <div
+                    v-for="payment in splitPayments"
+                    :key="payment.id"
+                    class="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
+                      <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">Quitar</button>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                  <input
+                    v-model.number="splitAmountInput"
+                    type="number"
+                    min="1"
+                    :max="Math.round(splitRemaining)"
+                    class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                    placeholder="Monto"
+                  />
+                  <button
+                    type="button"
+                    class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                    :disabled="!!splitAmountValidationError"
+                    @click="addSplitPayment"
+                  >
+                    Agregar
+                  </button>
+                </div>
+                <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-text-secondary">{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+                  <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="subtotal !== total" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Subtotal</span>
+              <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
+            </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
             </div>
+            <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>
             <button
               type="submit"
               :disabled="!canSubmit"
@@ -1107,10 +1313,93 @@ async function submit() {
 
         <template #footer>
           <div class="p-4 flex flex-col gap-3">
+            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-medium text-text-primary">Descuento</span>
+                <button
+                  type="button"
+                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                  :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
+                  @click="discountEnabled = !discountEnabled"
+                >
+                  {{ discountEnabled ? 'Activo' : 'Agregar' }}
+                </button>
+              </div>
+              <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+                <select v-model="discountType" class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary">
+                  <option value="percent">Porcentaje</option>
+                  <option value="fixed">Fijo COP</option>
+                </select>
+                <input
+                  v-model="discountInput"
+                  type="number"
+                  min="0"
+                  :max="discountType === 'percent' ? 100 : Math.round(subtotal)"
+                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                  :placeholder="discountType === 'percent' ? '10' : '5000'"
+                />
+              </div>
+              <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
+              <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
+                <span>Descuento manual</span>
+                <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-medium text-text-primary">Pago dividido</span>
+                <button
+                  type="button"
+                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                  :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
+                  @click="splitMode = !splitMode"
+                >
+                  {{ splitMode ? 'Activo' : 'Dividir' }}
+                </button>
+              </div>
+              <div v-if="splitMode" class="flex flex-col gap-2">
+                <div v-for="payment in splitPayments" :key="payment.id" class="flex items-center justify-between gap-2 text-sm">
+                  <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
+                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">Quitar</button>
+                  </div>
+                </div>
+                <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                  <input
+                    v-model.number="splitAmountInput"
+                    type="number"
+                    min="1"
+                    :max="Math.round(splitRemaining)"
+                    class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                    placeholder="Monto"
+                  />
+                  <button
+                    type="button"
+                    class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                    :disabled="!!splitAmountValidationError"
+                    @click="addSplitPayment"
+                  >
+                    Agregar
+                  </button>
+                </div>
+                <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-text-secondary">{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+                  <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="subtotal !== total" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Subtotal</span>
+              <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
+            </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
             </div>
+            <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>
             <button
               type="button"
               :disabled="!canSubmit"
