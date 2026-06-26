@@ -14,6 +14,10 @@ function modifiersKey(mods: CartModifier[]): string {
   )
 }
 
+function notesKey(notes?: string | null): string {
+  return (notes ?? '').trim()
+}
+
 function newItemId(): string {
   return `tqr_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
@@ -50,7 +54,10 @@ export const useTableQrCartStore = defineStore('tableQrCart', () => {
     const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
     const modifiersTotal = modifiersCartTotal(modifiers)
     const existingIndex = items.value.findIndex(
-      item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(modifiers),
+      item =>
+        item.product_id === product.id &&
+        modifiersKey(item.modifiers) === modifiersKey(modifiers) &&
+        notesKey(item.notes) === notesKey(notes),
     )
     if (existingIndex >= 0) {
       items.value[existingIndex].quantity += quantity

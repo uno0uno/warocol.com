@@ -27,6 +27,10 @@ function modifiersKey(mods: CartModifier[]): string {
   )
 }
 
+function notesKey(notes?: string | null): string {
+  return (notes ?? '').trim()
+}
+
 export interface CartModifier {
   id: string
   name: string
@@ -150,6 +154,19 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     return JSON.stringify([...mods].sort((a, b) => a.modifier_id.localeCompare(b.modifier_id)).map(m => m.modifier_id))
   }
 
+  function sameCartLine(
+    item: OnlineCartItem,
+    productId: string,
+    modifiers: CartModifier[],
+    notes?: string | null
+  ): boolean {
+    return (
+      String(item.product_id) === String(productId) &&
+      modifiersKey(item.modifiers) === modifiersKey(modifiers) &&
+      notesKey(item.notes) === notesKey(notes)
+    )
+  }
+
   /** Map backend item UUIDs onto local lines after batch (always overwrite — batch creates a new cart). */
   function syncItemIds(backendItems: BackendCartItem[]) {
     const matchedLocalIds = new Set<string>()
@@ -159,6 +176,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
         item =>
           !matchedLocalIds.has(item.id) &&
           String(item.product_id) === String(backendItem.product_id) &&
+          notesKey(item.notes) === notesKey(backendItem.notes) &&
           (
             backendHasQuantities
               ? modifiersKey(item.modifiers) === backendModifiersKey(backendItem.modifiers)
@@ -198,7 +216,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
       const modifiersTotal = modifiersCartTotal(modifiers)
       const existingIndex = items.value.findIndex(
-        item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(modifiers)
+        item => sameCartLine(item, product.id, modifiers, notes)
       )
       if (existingIndex >= 0) {
         items.value[existingIndex].quantity += quantity
@@ -246,7 +264,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
         const sortedModifiers = [...unit.modifiers].sort((a, b) => a.id.localeCompare(b.id))
         const modifiersTotal = modifiersCartTotal(unit.modifiers)
         const existingIndex = items.value.findIndex(
-          item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(unit.modifiers)
+          item => sameCartLine(item, product.id, unit.modifiers, unit.notes)
         )
         if (existingIndex >= 0) {
           items.value[existingIndex].quantity += 1
