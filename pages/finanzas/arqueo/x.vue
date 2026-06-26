@@ -185,12 +185,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
-import {
-  addDaysBogotaISO,
-  bogotaDateAtNoon,
-  bogotaISOFromDate,
-  todayBogotaISO,
-} from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Previsualización arqueo - Warocol' })
@@ -199,8 +193,9 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { currentTenant } = useTenantReactive()
 const { plural: tablePlural } = useTableLabel()
 const route = useRoute()
+const { addDaysISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
 
-const today = todayBogotaISO()
+const today = todayISO()
 
 // Initialise from query params if present
 const initStart     = (route.query.start     as string) || today
@@ -208,18 +203,18 @@ const initEnd       = (route.query.end       as string) || today
 const initStartTime = (route.query.startTime as string) || null
 const initEndTime   = (route.query.endTime   as string) || null
 const dateRangeDates = ref<Date[] | null>([
-  bogotaDateAtNoon(initStart),
-  bogotaDateAtNoon(initEnd),
+  dateAtNoon(initStart),
+  dateAtNoon(initEnd),
 ])
 const periodStartTime = ref<string | null>(initStartTime)
 const periodEndTime   = ref<string | null>(initEndTime)
 
-const todayNoon = bogotaDateAtNoon(today)
+const todayNoon = dateAtNoon(today)
 const presetDates = ref([
   { label: 'Hoy',           value: [new Date(todayNoon), new Date(todayNoon)] },
-  { label: 'Ayer',          value: (() => { const d = bogotaDateAtNoon(addDaysBogotaISO(today, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [bogotaDateAtNoon(addDaysBogotaISO(today, -7)), new Date(todayNoon)] },
-  { label: 'Último mes',    value: [bogotaDateAtNoon(addDaysBogotaISO(today, -30)), new Date(todayNoon)] },
+  { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today, -1)); return [d, d] })() },
+  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today, -7)), new Date(todayNoon)] },
+  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today, -30)), new Date(todayNoon)] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
@@ -230,10 +225,10 @@ const formatDateRange = (dates: Date[]) => {
 }
 
 const periodStart = computed(() =>
-  dateRangeDates.value?.[0] ? bogotaISOFromDate(dateRangeDates.value[0]) : today
+  dateRangeDates.value?.[0] ? isoFromDate(dateRangeDates.value[0]) : today
 )
 const periodEnd = computed(() =>
-  dateRangeDates.value?.[1] ? bogotaISOFromDate(dateRangeDates.value[1]) : today
+  dateRangeDates.value?.[1] ? isoFromDate(dateRangeDates.value[1]) : today
 )
 
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, error: previewErr, refetch } = useQuery({

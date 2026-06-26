@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, startOfMonth } from 'date-fns'
-import { TZDate } from '@date-fns/tz'
-
-const TZ = 'America/Bogota'
-const nowCO = () => new TZDate(new Date(), TZ)
+import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -13,6 +9,7 @@ useHead({ title: 'Cuentas contables' })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, todayISO } = useTenantTimezone()
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
@@ -20,15 +17,16 @@ const formatCOP = (v: number) =>
 const showAll = ref(false)
 
 // ── Date range filter (default: current month) ─────────────────────────────
-const now = nowCO()
-const dateRangeDates = ref<Date[] | null>([startOfMonth(now), now])
+const today = todayISO()
+const currentMonth = monthBounds(today)
+const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
-  { label: 'Hoy',             value: [nowCO(), nowCO()] },
-  { label: 'Esta semana',     value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 7); return d })(), nowCO()] },
-  { label: 'Este mes',        value: [startOfMonth(nowCO()), nowCO()] },
-  { label: 'Último mes',      value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 30); return d })(), nowCO()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 90); return d })(), nowCO()] },
+  { label: 'Hoy',             value: [dateAtNoon(today), dateAtNoon(today)] },
+  { label: 'Esta semana',     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: 'Este mes',        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: 'Último mes',      value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
+  { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
 
 const formatDateRange = (dates: Date[]) => {
@@ -43,8 +41,8 @@ const dateRange = computed(() => {
   const [from, to] = dateRangeDates.value
   if (!from || !to) return { from: null, to: null }
   return {
-    from: fnsFormat(new TZDate(from, TZ), 'yyyy-MM-dd'),
-    to:   fnsFormat(new TZDate(to,   TZ), 'yyyy-MM-dd'),
+    from: isoFromDate(from),
+    to:   isoFromDate(to),
   }
 })
 

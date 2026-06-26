@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { todayBogotaISO } from '~/utils/bogotaDate'
 
 definePageMeta({
   layout: 'dashboard'
@@ -14,6 +13,7 @@ useHead({ title: 'Nueva Instancia de Pago' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { todayISO } = useTenantTimezone()
 
 // Loading states
 const isLoading = ref(true)
@@ -34,8 +34,8 @@ const expense = computed(() => expenseData.value?.data)
 
 // Form state
 const instanceForm = reactive({
-  periodMonth: todayBogotaISO().slice(0, 7), // YYYY-MM format
-  scheduledDate: todayBogotaISO(),
+  periodMonth: todayISO().slice(0, 7), // YYYY-MM format
+  scheduledDate: todayISO(),
   amount: null as number | null,
   notes: '',
   selectedFiles: [] as File[]

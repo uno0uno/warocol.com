@@ -48,7 +48,7 @@
                 Fecha
               </p>
               <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                {{ formatCalendarDate(todayBogotaISO()) }}
+                {{ formatCalendarDate(todayISO()) }}
               </p>
             </div>
           </div>
@@ -498,7 +498,6 @@
 <script setup lang="ts">
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
-import { todayBogotaISO } from '~/utils/bogotaDate'
 import { computed } from 'vue'
 
 definePageMeta({
@@ -508,6 +507,7 @@ definePageMeta({
 useHead({ title: 'Registrar Gasto' })
 
 const { currentTenant } = useTenantReactive()
+const { todayISO } = useTenantTimezone()
 
 // Payment methods
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
@@ -546,7 +546,7 @@ onMounted(() => {
 
 // Form state
 const form = reactive({
-  transactionDate: todayBogotaISO(),
+  transactionDate: todayISO(),
   expenseCategoryId: '',
   description: '',
   amount: null as number | null,

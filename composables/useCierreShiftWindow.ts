@@ -1,4 +1,4 @@
-import { bogotaTimeHHMMFromISO } from '~/utils/bogotaDate'
+import { DEFAULT_TENANT_TIMEZONE, timeHHMMFromISO } from '~/utils/bogotaDate'
 
 export interface CierreListRowLike {
   status?: string
@@ -15,7 +15,10 @@ export function isCierreOpen(row: CierreListRowLike | null | undefined): boolean
 }
 
 /** Deep link to the correct close wizard for an open shift list row. */
-export function buildCierreCloseRoute(row: CierreListRowLike): string {
+export function buildCierreCloseRoute(
+  row: CierreListRowLike,
+  timezone = DEFAULT_TENANT_TIMEZONE,
+): string {
   const start = row.periodStart ?? ''
   const end = row.periodEnd ?? start
 
@@ -34,8 +37,8 @@ export function buildCierreCloseRoute(row: CierreListRowLike): string {
       mode: 'custom',
       start,
       end,
-      startTime: bogotaTimeHHMMFromISO(row.periodStartTime),
-      endTime: bogotaTimeHHMMFromISO(row.periodEndTime),
+      startTime: timeHHMMFromISO(row.periodStartTime, timezone),
+      endTime: timeHHMMFromISO(row.periodEndTime, timezone),
     })
     return `/finanzas/arqueo/z?${q.toString()}`
   }

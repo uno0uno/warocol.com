@@ -514,6 +514,7 @@ const isCurrentMonthActive = computed(() => {
 
 const { formatDateTime: _fmtDateTime } = useFormatters()
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
+const { timezone } = useTenantTimezone()
 
 const formatDay = (d: string) => {
   if (!d) return ''
@@ -532,7 +533,7 @@ const selectedCierreId = ref<string | null>(null)
 
 const onRowClick = (item: any) => {
   if (isCierreOpen(item)) {
-    navigateTo(buildCierreCloseRoute(item))
+    navigateTo(buildCierreCloseRoute(item, timezone.value))
     return
   }
   openPanel(item.id)

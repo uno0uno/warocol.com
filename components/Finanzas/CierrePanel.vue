@@ -246,13 +246,14 @@ const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
+const { timezone } = useTenantTimezone()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
   return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: true,
-    timeZone: 'America/Bogota',
+    timeZone: timezone.value,
   }).format(new Date(iso))
 }
 </script>

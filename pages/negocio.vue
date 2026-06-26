@@ -746,11 +746,19 @@ const DAY_LABELS: Record<string, string> = {
   saturday: 'Sábado',
   sunday: 'Domingo',
 }
-const DAY_NAMES_JS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+const { zonedParts } = useTenantTimezone()
 
 const isToday = (i: number) => {
-  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
-  return DAY_ORDER[i] === DAY_NAMES_JS[d.getDay()]
+  const weekdayMap: Record<string, string> = {
+    Mon: 'monday',
+    Tue: 'tuesday',
+    Wed: 'wednesday',
+    Thu: 'thursday',
+    Fri: 'friday',
+    Sat: 'saturday',
+    Sun: 'sunday',
+  }
+  return DAY_ORDER[i] === weekdayMap[zonedParts(new Date()).weekday ?? '']
 }
 
 const hasSocialMedia = computed(() => {
