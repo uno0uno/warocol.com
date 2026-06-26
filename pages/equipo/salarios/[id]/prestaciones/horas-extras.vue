@@ -388,13 +388,10 @@ const { formatDate } = useFormatters()
 
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
+const { todayISO } = useTenantTimezone()
 
 // Default period_month = current YYYY-MM
-const defaultPeriodMonth = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Bogota',
-  year: 'numeric',
-  month: '2-digit',
-}).format(new Date())
+const defaultPeriodMonth = todayISO().slice(0, 7)
 
 // Form state
 const form = reactive({
@@ -405,7 +402,7 @@ const form = reactive({
   hours_dominical_diurna: 0,
   hours_dominical_nocturna: 0,
   payment_method: 'transfer',
-  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
+  payment_date: todayISO(),
   notes: '',
 })
 

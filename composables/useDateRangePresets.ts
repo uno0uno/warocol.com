@@ -1,45 +1,47 @@
 import { ref, computed, type Ref } from 'vue'
-import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 
 export type DateRangeApi = { from: string | null; to: string | null }
 
+const formatIsoShort = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year.slice(2)}`
+}
+
 export function useDateRangePresets(existing?: Ref<Date[] | null>) {
   const dateRangeDates = existing ?? ref<Date[] | null>(null)
+  const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
 
-  const presetDates = ref([
-    { label: 'Hoy', value: [new Date(), new Date()] },
+  const presetRange = (fromIso: string, toIso = todayISO()) => [dateAtNoon(fromIso), dateAtNoon(toIso)]
+
+  const presetDates = computed(() => [
+    { label: 'Hoy', value: presetRange(todayISO()) },
     {
       label: 'Ayer',
-      value: (() => {
-        const d = new Date()
-        d.setDate(d.getDate() - 1)
-        return [d, d]
-      })(),
+      value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)),
     },
     {
       label: 'Última semana',
-      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()],
+      value: presetRange(addDaysISO(todayISO(), -7)),
     },
     {
       label: 'Últimos 15 días',
-      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()],
+      value: presetRange(addDaysISO(todayISO(), -15)),
     },
     {
       label: 'Último mes',
-      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()],
+      value: presetRange(addDaysISO(todayISO(), -30)),
     },
     {
       label: 'Últimos 90 días',
-      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()],
+      value: presetRange(addDaysISO(todayISO(), -90)),
     },
   ])
 
   const formatDateRange = (dates: Date[]) => {
     if (!dates || !dates[0]) return ''
-    const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+    const from = formatIsoShort(isoFromDate(dates[0]))
     if (!dates[1]) return from
-    const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
+    const to = formatIsoShort(isoFromDate(dates[1]))
     return `${from} - ${to}`
   }
 
@@ -50,8 +52,8 @@ export function useDateRangePresets(existing?: Ref<Date[] | null>) {
     const [from, to] = dateRangeDates.value
     if (!from || !to) return { from: null, to: null }
     return {
-      from: fnsFormat(from, 'yyyy-MM-dd'),
-      to: fnsFormat(to, 'yyyy-MM-dd'),
+      from: isoFromDate(from),
+      to: isoFromDate(to),
     }
   })
 

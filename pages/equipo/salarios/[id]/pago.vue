@@ -410,6 +410,8 @@ import { SLUG_ICON_MAP, SLUG_ICON_FALLBACK } from '~/utils/paymentDefaults'
 
 const { paymentGroups, fetchPaymentMethods, isLoading: isLoadingMethods } = usePaymentMethods()
 fetchPaymentMethods()
+const { todayISO } = useTenantTimezone()
+const tenantToday = computed(() => todayISO())
 
 const paymentMethods = computed(() => {
   const items: { value: string; label: string; icon: any }[] = []
@@ -431,8 +433,8 @@ const form = reactive({
   payment_amount: null as number | null,
   payment_method: 'cash',
   payment_reference: '',
-  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
-  period_month: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()).slice(0, 7),
+  payment_date: tenantToday.value,
+  period_month: tenantToday.value.slice(0, 7),
   attachments: [],
   notes: '',
   withholding_enabled: false,
@@ -440,6 +442,11 @@ const form = reactive({
   ss_enabled: false,
   arl_rate_pct: 0.522,  // ARL clase I default
   caja_rate_pct: 4
+})
+
+watch(tenantToday, (next, prev) => {
+  if (form.payment_date === prev) form.payment_date = next
+  if (form.period_month === prev.slice(0, 7)) form.period_month = next.slice(0, 7)
 })
 
 // Computed withholding and net amounts (only for contractors)

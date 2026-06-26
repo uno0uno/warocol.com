@@ -375,6 +375,7 @@ const { formatDate } = useFormatters()
 // Payment methods
 const { paymentGroups, fetchPaymentMethods, isLoading: isLoadingMethods } = usePaymentMethods()
 fetchPaymentMethods()
+const { todayISO } = useTenantTimezone()
 
 const paymentMethods = computed(() => {
   const items: { value: string; label: string; icon: any }[] = []
@@ -410,7 +411,7 @@ const form = reactive({
   gross_salary: null as number | null,
   days_worked: 360,
   payment_method: 'transfer',
-  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
+  payment_date: todayISO(),
   notes: '',
 })
 

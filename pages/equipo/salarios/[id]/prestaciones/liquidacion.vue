@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()
 const employeeId = route.params.id
+const { todayISO } = useTenantTimezone()
 
 // ── Employee & existing liquidación ──────────────────────────────────────────
 const { data: employeeData } = await useAsyncData(
@@ -31,7 +32,7 @@ const form = reactive({
   base_salary: '',
   employment_type: '',
   payment_method: '',
-  payment_date: new Date().toISOString().split('T')[0],
+  payment_date: todayISO(),
   notes: '',
 })
 
@@ -47,7 +48,7 @@ watch(employee, (emp) => {
   if (emp.employment_type) {
     form.employment_type = emp.employment_type
   }
-  form.termination_date = new Date().toISOString().split('T')[0]
+  form.termination_date = todayISO()
 }, { immediate: true })
 
 // ── Breakdown preview ────────────────────────────────────────────────────────

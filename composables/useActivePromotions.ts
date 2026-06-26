@@ -1,7 +1,7 @@
 import { computed, onUnmounted, ref, watch, type ComputedRef, type Ref } from 'vue'
 import { $fetch } from 'ofetch'
 import type { PromotionScheduleRow } from '~/utils/promotionPreview'
-import { BOGOTA_TZ } from '~/utils/bogotaDate'
+import { DEFAULT_TENANT_TIMEZONE, zonedParts } from '~/utils/bogotaDate'
 import {
   normalizePromoTypeBlockMap,
   type ActivePromotionRow,
@@ -13,17 +13,8 @@ export type { ActivePromotionRow }
 const MIN_REFETCH_MS = 30_000
 const MAX_REFETCH_MS = 5 * 60_000
 
-function bogotaNowParts(now = new Date()) {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: BOGOTA_TZ,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-  const parts = Object.fromEntries(
-    fmt.formatToParts(now).map((p) => [p.type, p.value]),
-  ) as Record<string, string>
+function tenantNowParts(now = new Date(), timezone = DEFAULT_TENANT_TIMEZONE) {
+  const parts = zonedParts(now, timezone)
   const weekdayMap: Record<string, number> = {
     Mon: 0,
     Tue: 1,
@@ -33,7 +24,7 @@ function bogotaNowParts(now = new Date()) {
     Sat: 5,
     Sun: 6,
   }
-  const weekday = weekdayMap[parts.weekday] ?? 0
+  const weekday = weekdayMap[parts.weekday ?? ''] ?? 0
   const [hour, minute] = parts.hour.split(':').map(Number)
   return { weekday, minutes: hour * 60 + minute }
 }
@@ -43,14 +34,15 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-/** Ms until the next schedule start/end in Bogotá (for mid-shift refresh). */
+/** Ms until the next schedule start/end in tenant local time (for mid-shift refresh). */
 export function msUntilNextPromoBoundary(
   schedules: PromotionScheduleRow[],
   now = new Date(),
+  timezone = DEFAULT_TENANT_TIMEZONE,
 ): number {
   if (schedules.length === 0) return MAX_REFETCH_MS
 
-  const { weekday, minutes: nowMin } = bogotaNowParts(now)
+  const { weekday, minutes: nowMin } = tenantNowParts(now, timezone)
   const todayBit = 1 << weekday
   let bestMs = MAX_REFETCH_MS
 
@@ -86,6 +78,7 @@ export function useActivePromotions(options?: {
   onActivePromosChanged?: () => void
 }) {
   const { currentTenant } = useTenantReactive()
+  const { timezone } = useTenantTimezone()
   const activeSignature = ref('')
   let boundaryTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -128,15 +121,15 @@ export function useActivePromotions(options?: {
     if (boundaryTimer) clearTimeout(boundaryTimer)
     if (!hasActivePromos.value) return
     const allSchedules = activePromos.value.flatMap((p) => p.schedules ?? [])
-    const delay = msUntilNextPromoBoundary(allSchedules)
+    const delay = msUntilNextPromoBoundary(allSchedules, new Date(), timezone.value)
     boundaryTimer = setTimeout(() => {
       refetch()
     }, delay)
   }
 
   watch(
-    activePromos,
-    (promos) => {
+    [activePromos, timezone],
+    ([promos]) => {
       const nextSig = promos.map((p) => p.id).sort().join(',')
       if (activeSignature.value && nextSig !== activeSignature.value) {
         options?.onActivePromosChanged?.()

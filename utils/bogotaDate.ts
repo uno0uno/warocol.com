@@ -1,18 +1,39 @@
-/** Business calendar dates/times for Colombia (America/Bogota). Issue #698 */
+/** Tenant operational calendar helpers. Legacy Bogotá wrappers remain for old callers. */
 
-export const BOGOTA_TZ = 'America/Bogota'
+export const DEFAULT_TENANT_TIMEZONE = 'America/Bogota'
+export const BOGOTA_TZ = DEFAULT_TENANT_TIMEZONE
 
-type DateParts = {
+export type DateParts = {
   year: string
   month: string
   day: string
   hour: string
   minute: string
+  weekday?: string
 }
 
-function bogotaParts(date: Date): DateParts {
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>()
+const dateTimeWeekdayFormatters = new Map<string, Intl.DateTimeFormat>()
+
+export function normalizeTimezone(value?: string | null): string {
+  const tz = typeof value === 'string' ? value.trim() : ''
+  if (!tz) return DEFAULT_TENANT_TIMEZONE
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date())
+    return tz
+  } catch {
+    return DEFAULT_TENANT_TIMEZONE
+  }
+}
+
+function formatterFor(timezone: string, weekday = false): Intl.DateTimeFormat {
+  const tz = normalizeTimezone(timezone)
+  const cache = weekday ? dateTimeWeekdayFormatters : dateTimeFormatters
+  const cached = cache.get(tz)
+  if (cached) return cached
   const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: BOGOTA_TZ,
+    timeZone: tz,
+    ...(weekday ? { weekday: 'short' as const } : {}),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -20,8 +41,13 @@ function bogotaParts(date: Date): DateParts {
     minute: '2-digit',
     hour12: false,
   })
+  cache.set(tz, fmt)
+  return fmt
+}
+
+export function zonedParts(date: Date, timezone = DEFAULT_TENANT_TIMEZONE): DateParts {
   const parts = Object.fromEntries(
-    fmt.formatToParts(date).map((p) => [p.type, p.value]),
+    formatterFor(timezone, true).formatToParts(date).map((p) => [p.type, p.value]),
   ) as Record<string, string>
   return {
     year: parts.year,
@@ -29,27 +55,80 @@ function bogotaParts(date: Date): DateParts {
     day: parts.day,
     hour: parts.hour,
     minute: parts.minute,
+    weekday: parts.weekday,
   }
 }
 
-/** Today's calendar date in Bogotá as YYYY-MM-DD. */
-export function todayBogotaISO(): string {
-  const p = bogotaParts(new Date())
+export function todayISO(timezone = DEFAULT_TENANT_TIMEZONE, now = new Date()): string {
+  const p = zonedParts(now, timezone)
   return `${p.year}-${p.month}-${p.day}`
 }
 
-/** Calendar day in Bogotá for any instant (e.g. date-picker value). */
-export function bogotaISOFromDate(date: Date): string {
-  const p = bogotaParts(date)
+export function isoFromDate(date: Date, timezone = DEFAULT_TENANT_TIMEZONE): string {
+  const p = zonedParts(date, timezone)
   return `${p.year}-${p.month}-${p.day}`
 }
 
-/** Stable noon anchor for date pickers (avoids DST edge cases; Colombia has no DST). */
-export function bogotaDateAtNoon(iso: string): Date {
-  return new Date(`${iso}T12:00:00-05:00`)
+function zonedWallTimeToDate(iso: string, hhmm: string, timezone = DEFAULT_TENANT_TIMEZONE): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !hhmm || hhmm.length < 5) return null
+  const [year, month, day] = iso.split('-').map(Number)
+  const [hour, minute] = hhmm.slice(0, 5).split(':').map(Number)
+  if ([year, month, day, hour, minute].some(Number.isNaN)) return null
+
+  const targetWallUtc = Date.UTC(year, month - 1, day, hour, minute)
+  let utc = targetWallUtc
+  for (let i = 0; i < 3; i++) {
+    const p = zonedParts(new Date(utc), timezone)
+    const actualWallUtc = Date.UTC(
+      Number(p.year),
+      Number(p.month) - 1,
+      Number(p.day),
+      Number(p.hour),
+      Number(p.minute),
+    )
+    const diff = targetWallUtc - actualWallUtc
+    if (diff === 0) break
+    utc += diff
+  }
+  return new Date(utc)
 }
 
-/** ISO timestamp for API period_*_time params (Bogotá wall clock). */
+export function dateAtNoon(iso: string, timezone = DEFAULT_TENANT_TIMEZONE): Date {
+  return zonedWallTimeToDate(iso, '12:00', timezone) ?? new Date(`${iso}T12:00:00-05:00`)
+}
+
+export function combineDateAndTimeISO(
+  iso: string,
+  hhmm: string,
+  timezone = DEFAULT_TENANT_TIMEZONE,
+): string | null {
+  return zonedWallTimeToDate(iso, hhmm, timezone)?.toISOString() ?? null
+}
+
+export function addDaysISO(iso: string, days: number, timezone = DEFAULT_TENANT_TIMEZONE): string {
+  const base = dateAtNoon(iso, timezone)
+  const next = new Date(base.getTime() + days * 24 * 60 * 60 * 1000)
+  return isoFromDate(next, timezone)
+}
+
+export function timeHHMMFromISO(iso: string, timezone = DEFAULT_TENANT_TIMEZONE): string {
+  const p = zonedParts(new Date(iso), timezone)
+  return `${p.hour}:${p.minute}`
+}
+
+export function monthBounds(iso?: string, timezone = DEFAULT_TENANT_TIMEZONE): { first: string; last: string } {
+  const base = iso ?? todayISO(timezone)
+  const [y, m] = base.split('-').map(Number)
+  const first = `${y}-${String(m).padStart(2, '0')}-01`
+  const lastDay = new Date(y, m, 0).getDate()
+  const last = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { first, last }
+}
+
+export const todayBogotaISO = () => todayISO(BOGOTA_TZ)
+export const bogotaISOFromDate = (date: Date) => isoFromDate(date, BOGOTA_TZ)
+export const bogotaDateAtNoon = (iso: string) => dateAtNoon(iso, BOGOTA_TZ)
+
 export function combineBogotaDateAndTimeISO(iso: string, hhmm: string): string | null {
   if (!hhmm || hhmm.length < 5) return null
   const [h, m] = hhmm.split(':').map(Number)
@@ -59,25 +138,6 @@ export function combineBogotaDateAndTimeISO(iso: string, hhmm: string): string |
   return `${iso}T${hh}:${mm}:00-05:00`
 }
 
-/** Add calendar days to a Bogotá ISO date string. */
-export function addDaysBogotaISO(iso: string, days: number): string {
-  const base = bogotaDateAtNoon(iso)
-  const next = new Date(base.getTime() + days * 24 * 60 * 60 * 1000)
-  return bogotaISOFromDate(next)
-}
-
-/** HH:mm in Bogotá from an ISO timestamp string. */
-export function bogotaTimeHHMMFromISO(iso: string): string {
-  const p = bogotaParts(new Date(iso))
-  return `${p.hour}:${p.minute}`
-}
-
-/** First and last calendar day of the month containing `iso` (Bogotá). */
-export function bogotaMonthBounds(iso?: string): { first: string; last: string } {
-  const base = iso ?? todayBogotaISO()
-  const [y, m] = base.split('-').map(Number)
-  const first = `${y}-${String(m).padStart(2, '0')}-01`
-  const lastDay = new Date(y, m, 0).getDate()
-  const last = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-  return { first, last }
-}
+export const addDaysBogotaISO = (iso: string, days: number) => addDaysISO(iso, days, BOGOTA_TZ)
+export const bogotaTimeHHMMFromISO = (iso: string) => timeHHMMFromISO(iso, BOGOTA_TZ)
+export const bogotaMonthBounds = (iso?: string) => monthBounds(iso, BOGOTA_TZ)

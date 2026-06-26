@@ -371,7 +371,6 @@ import {
 
 /** Above this count, panel shows summary + modal instead of chips. */
 const PRODUCT_CHIP_THRESHOLD = 15
-import { bogotaDateAtNoon, combineBogotaDateAndTimeISO } from '~/utils/bogotaDate'
 
 interface OverlapWarning {
   promotion_id: string
@@ -407,6 +406,7 @@ const emit = defineEmits<Emits>()
 const toast = useToast()
 const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
+const { combineDateAndTimeISO, dateAtNoon } = useTenantTimezone()
 
 const isEdit = computed(() => !!props.promotionId)
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
@@ -666,10 +666,10 @@ function buildPayload() {
   let starts_at: string | null = null
   let ends_at: string | null = null
   if (form.startsAtDate) {
-    starts_at = combineBogotaDateAndTimeISO(form.startsAtDate, '00:00') ?? bogotaDateAtNoon(form.startsAtDate).toISOString()
+    starts_at = combineDateAndTimeISO(form.startsAtDate, '00:00') ?? dateAtNoon(form.startsAtDate).toISOString()
   }
   if (form.endsAtDate) {
-    ends_at = combineBogotaDateAndTimeISO(form.endsAtDate, '23:59') ?? null
+    ends_at = combineDateAndTimeISO(form.endsAtDate, '23:59') ?? null
   }
 
   return {

@@ -9,6 +9,8 @@ useHead({ title: 'Nómina — Equipo' })
 
 const { currentTenant } = useTenantReactive()
 const { formatCurrency } = useFormatters()
+const { todayISO } = useTenantTimezone()
+const tenantToday = computed(() => todayISO())
 
 // ── Filters ───────────────────────────────────────────────────────────────
 const currentYear = new Date().getFullYear()
@@ -243,7 +245,7 @@ const pilaForm = reactive({
   employer_ss_amount: 0,
   total_amount: 0,
   payment_method: 'transfer',
-  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
+  payment_date: todayISO(),
   notes: '',
 })
 
@@ -440,10 +442,8 @@ const selectedByEmployee = computed(() => {
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
 
 // ── Slide-over state ──────────────────────────────────────────────────────
-const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
-
 const showSlideOver = ref(false)
-const slideDate    = ref(TODAY_STR)
+const slideDate    = ref(tenantToday.value)
 const slideMethod  = ref('')
 const isSlideSubmitting = ref(false)
 const slideError   = ref<string | null>(null)
@@ -451,6 +451,11 @@ const slideSuccess = ref<string | null>(null)
 
 function openSlideOver() { showSlideOver.value = true }
 function closeSlideOver() { showSlideOver.value = false; slideError.value = null; slideSuccess.value = null }
+
+watch(tenantToday, (next, prev) => {
+  if (pilaForm.payment_date === prev) pilaForm.payment_date = next
+  if (slideDate.value === prev) slideDate.value = next
+})
 
 type EmpSlideData = {
   gross_salary: number
