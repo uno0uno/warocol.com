@@ -2,6 +2,8 @@
  * Kitchen comanda ticket printing (#753) — browser print via hidden DOM + body class.
  */
 
+import { DEFAULT_TENANT_TIMEZONE, normalizeTimezone } from '~/utils/bogotaDate'
+
 export type ComandaModifierSnapshot = {
   name: string
   price?: number
@@ -44,11 +46,16 @@ export type ComandaPrintPayload = {
   items: ComandaPrintItem[]
 }
 
-export function formatComandaPrintTime(firedAt?: string | null): string {
+export function formatComandaPrintTime(
+  firedAt?: string | null,
+  timezone = DEFAULT_TENANT_TIMEZONE,
+): string {
+  const timeZone = normalizeTimezone(timezone)
   if (!firedAt) {
     return new Intl.DateTimeFormat('es-CO', {
       dateStyle: 'short',
       timeStyle: 'short',
+      timeZone,
     }).format(new Date())
   }
   const d = new Date(firedAt)
@@ -56,6 +63,7 @@ export function formatComandaPrintTime(firedAt?: string | null): string {
   return new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'short',
     timeStyle: 'short',
+    timeZone,
   }).format(d)
 }
 

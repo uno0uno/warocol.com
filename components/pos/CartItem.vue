@@ -213,6 +213,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 defineEmits<Emits>()
 
+const { timezone } = useTenantTimezone()
 const hideEdit = computed(() => props.hideEdit || props.hideEditDuplicate)
 const hideDuplicate = computed(() => props.hideDuplicate || props.hideEditDuplicate)
 
@@ -257,6 +258,7 @@ const formatTime = (isoString: string) => {
   return new Date(isoString).toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: timezone.value,
   })
 }
 </script>

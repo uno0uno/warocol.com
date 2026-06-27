@@ -1006,6 +1006,12 @@ const TIMEZONE_OPTIONS = [
   { value: 'America/Caracas', label: 'Venezuela - Caracas (UTC-4)' },
   { value: 'America/Santiago', label: 'Chile - Santiago' },
   { value: 'America/New_York', label: 'Estados Unidos - New York' },
+  { value: 'Europe/Madrid', label: 'Espana - Madrid' },
+  { value: 'Asia/Kathmandu', label: 'Nepal - Kathmandu (UTC+5:45)' },
+  { value: 'Australia/Adelaide', label: 'Australia - Adelaide' },
+  { value: 'Pacific/Apia', label: 'Samoa - Apia' },
+  { value: 'Pacific/Kiritimati', label: 'Kiribati - Kiritimati (UTC+14)' },
+  { value: 'Pacific/Pago_Pago', label: 'Samoa Americana - Pago Pago (UTC-11)' },
 ]
 const { zonedParts, normalizeTimezone } = useTenantTimezone()
 
