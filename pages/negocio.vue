@@ -367,23 +367,91 @@
                 Ciudad
                 <span class="text-amber-600" aria-hidden="true">*</span>
               </label>
-              <select
-                id="negocio-city"
-                :value="editForm.city_slug"
-                class="input-base w-full px-3 py-2 text-sm"
-                @change="onCityChange(($event.target as HTMLSelectElement).value)"
-              >
-                <option value="">Selecciona tu ciudad…</option>
-                <option
-                  v-for="c in cityCatalog"
-                  :key="c.city_slug"
-                  :value="c.city_slug"
+              <div ref="citySearchAnchorRef" class="relative">
+                <input
+                  id="negocio-city"
+                  v-model="citySearchTerm"
+                  type="text"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  :aria-expanded="cityDropdownOpen"
+                  :aria-controls="cityListboxId"
+                  :aria-activedescendant="activeCityOptionId"
+                  :aria-describedby="cityHelpId"
+                  autocomplete="off"
+                  class="input-base w-full px-3 py-2 pl-9 pr-10 text-sm"
+                  placeholder="Busca ciudad o municipio..."
+                  @input="onCitySearchInput"
+                  @focus="openCitySearch"
+                  @blur="closeCitySearchSoon"
+                  @keydown.down.prevent="moveCityHighlight(1)"
+                  @keydown.up.prevent="moveCityHighlight(-1)"
+                  @keydown.enter.prevent="selectHighlightedCity"
+                  @keydown.esc.prevent="closeCitySearch"
+                />
+                <MagnifyingGlassIcon
+                  class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
+                  aria-hidden="true"
+                />
+                <button
+                  v-if="citySearchTerm"
+                  type="button"
+                  class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  aria-label="Limpiar ciudad"
+                  @mousedown.prevent
+                  @click="clearCitySelection"
                 >
-                  {{ c.city }}
-                </option>
-              </select>
-              <p class="text-[10px] text-text-tertiary mt-1">
+                  <XMarkIcon class="h-4 w-4" aria-hidden="true" />
+                </button>
+                <span
+                  v-else-if="cityCatalogLoading"
+                  class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-text-tertiary/30 border-t-text-tertiary"
+                  aria-hidden="true"
+                />
+              </div>
+              <Teleport to="body">
+                <ul
+                  v-if="cityDropdownOpen"
+                  :id="cityListboxId"
+                  role="listbox"
+                  :style="cityPanelStyle"
+                  class="bg-surface border border-border rounded-lg shadow-lg overflow-y-auto"
+                >
+                  <li
+                    v-for="(city, index) in visibleCityResults"
+                    :id="cityOptionId(city)"
+                    :key="city.city_slug"
+                    role="option"
+                    :aria-selected="index === citySearchActiveIndex"
+                    :class="[
+                      'min-h-[44px] cursor-pointer px-3 py-2 text-sm flex flex-col justify-center',
+                      index === citySearchActiveIndex ? 'bg-surface-secondary text-text-primary' : 'text-text-primary hover:bg-surface-secondary',
+                    ]"
+                    @mousedown.prevent="selectCity(city)"
+                  >
+                    <span class="font-medium leading-snug">{{ city.city }}</span>
+                    <span v-if="cityDepartment(city)" class="text-xs text-text-secondary leading-snug">
+                      {{ cityDepartment(city) }}
+                    </span>
+                  </li>
+                  <li
+                    v-if="!visibleCityResults.length"
+                    role="presentation"
+                    aria-hidden="true"
+                    class="px-3 py-2 text-sm text-text-secondary/70 select-none"
+                  >
+                    {{ cityEmptyMessage }}
+                  </li>
+                </ul>
+              </Teleport>
+              <p :id="cityHelpId" class="text-[10px] text-text-tertiary mt-1">
                 Define en qué directorio aparece tu negocio (warocol.com/&lt;ciudad&gt;).
+              </p>
+              <p
+                v-if="cityCatalogError"
+                class="text-[10px] text-amber-700 dark:text-amber-400 mt-1"
+              >
+                No pudimos cargar el catálogo. Puedes seguir editando el resto del perfil e intentarlo de nuevo.
               </p>
             </div>
             <div>
@@ -662,8 +730,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
-import { useCityCatalog } from '~/composables/useCityCatalog'
+import { computed, nextTick, onMounted, watch } from 'vue'
+import { useCityCatalog, type PublicCity } from '~/composables/useCityCatalog'
+import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
 import { usePOSStore } from '~/stores/usePOSStore'
 import {
   BuildingStorefrontIcon,
@@ -679,6 +748,8 @@ import {
   ClipboardDocumentIcon,
   ShareIcon,
   ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
@@ -727,18 +798,172 @@ const editForm = reactive({
 })
 
 // ─── City catalog (warocol.com#615) ───
-const { cities: cityCatalog, fetchCatalog: ensureCityCatalog } = useCityCatalog()
+const {
+  cities: cityCatalog,
+  fetchCatalog: ensureCityCatalog,
+  isLoading: cityCatalogLoading,
+  error: cityCatalogError,
+  hasLoaded: cityCatalogLoaded,
+} = useCityCatalog()
 // Make sure the selector has the full catalog (include_empty=true). The SSR
 // plugin already warmed this — this is a no-op on subsequent visits and only
 // hits the API on a fresh client load.
 onMounted(() => { ensureCityCatalog({ includeEmpty: true }) })
+
+const CITY_RESULT_LIMIT = 40
+const cityListboxId = 'negocio-city-results'
+const cityHelpId = 'negocio-city-help'
+const citySearchAnchorRef = ref<HTMLElement | null>(null)
+const citySearchTerm = ref('')
+const citySearchOpen = ref(false)
+const citySearchActiveIndex = ref(0)
+
+const normalizeCitySearch = (value: string | null | undefined) =>
+  (value ?? '')
+    .toLocaleLowerCase('es-CO')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+const cityDepartment = (city: PublicCity) => city.department_name || city.department || null
+
+const citySearchText = (city: PublicCity) =>
+  normalizeCitySearch([city.city, city.city_slug, cityDepartment(city)].filter(Boolean).join(' '))
+
+const selectedCity = computed(() =>
+  cityCatalog.value.find((c) => c.city_slug === editForm.city_slug) ?? null,
+)
+
+const visibleCityResults = computed(() => {
+  const query = normalizeCitySearch(citySearchTerm.value)
+  const source = cityCatalog.value
+
+  if (!query) {
+    return source.slice(0, CITY_RESULT_LIMIT)
+  }
+
+  const startsWithMatches: PublicCity[] = []
+  const includesMatches: PublicCity[] = []
+
+  for (const city of source) {
+    const cityName = normalizeCitySearch(city.city)
+    const haystack = citySearchText(city)
+    if (cityName.startsWith(query)) {
+      startsWithMatches.push(city)
+    } else if (haystack.includes(query)) {
+      includesMatches.push(city)
+    }
+
+    if (startsWithMatches.length + includesMatches.length >= CITY_RESULT_LIMIT) break
+  }
+
+  return [...startsWithMatches, ...includesMatches].slice(0, CITY_RESULT_LIMIT)
+})
+
+const cityDropdownOpen = computed(() =>
+  citySearchOpen.value
+  && (
+    visibleCityResults.value.length > 0
+    || Boolean(citySearchTerm.value.trim())
+    || cityCatalogLoading.value
+    || cityCatalogLoaded.value
+    || Boolean(cityCatalogError.value)
+  ),
+)
+
+const { panelStyle: cityPanelStyle, updatePlacement: updateCitySearchPlacement } = useCatalogSearchDropdownPlacement(
+  citySearchAnchorRef,
+  cityDropdownOpen,
+)
+
+const cityEmptyMessage = computed(() => {
+  if (cityCatalogLoading.value) return 'Cargando ciudades...'
+  if (cityCatalogError.value) return 'No se pudo cargar el catálogo'
+  if (!cityCatalog.value.length && cityCatalogLoaded.value) return 'No hay ciudades disponibles'
+  return 'Sin resultados'
+})
+
+const activeCityOptionId = computed(() => {
+  const city = visibleCityResults.value[citySearchActiveIndex.value]
+  return city ? cityOptionId(city) : undefined
+})
+
+const cityOptionId = (city: PublicCity) => `negocio-city-option-${city.city_slug}`
+
+const syncCitySearchTerm = () => {
+  citySearchTerm.value = selectedCity.value?.city || editForm.city || ''
+}
 
 const onCityChange = (slug: string) => {
   editForm.city_slug = slug
   const entry = cityCatalog.value.find((c) => c.city_slug === slug)
   editForm.city = entry?.city || ''
   editForm.country = entry?.country || 'Colombia'
+  syncCitySearchTerm()
 }
+
+const selectCity = (city: PublicCity) => {
+  onCityChange(city.city_slug)
+  closeCitySearch()
+}
+
+const clearCitySelection = () => {
+  citySearchTerm.value = ''
+  editForm.city_slug = ''
+  editForm.city = ''
+  editForm.country = 'Colombia'
+  citySearchActiveIndex.value = 0
+  citySearchOpen.value = true
+  nextTick(updateCitySearchPlacement)
+}
+
+const onCitySearchInput = () => {
+  const currentSelection = selectedCity.value
+  if (!currentSelection || normalizeCitySearch(citySearchTerm.value) !== normalizeCitySearch(currentSelection.city)) {
+    editForm.city_slug = ''
+    editForm.city = ''
+    editForm.country = 'Colombia'
+  }
+  citySearchActiveIndex.value = 0
+  citySearchOpen.value = true
+}
+
+const openCitySearch = () => {
+  citySearchOpen.value = true
+  nextTick(updateCitySearchPlacement)
+}
+
+const closeCitySearch = () => {
+  citySearchOpen.value = false
+  citySearchActiveIndex.value = 0
+  syncCitySearchTerm()
+}
+
+const closeCitySearchSoon = () => {
+  setTimeout(closeCitySearch, 150)
+}
+
+const moveCityHighlight = (delta: number) => {
+  if (!citySearchOpen.value) openCitySearch()
+  const count = visibleCityResults.value.length
+  if (!count) return
+  citySearchActiveIndex.value = (citySearchActiveIndex.value + delta + count) % count
+}
+
+const selectHighlightedCity = () => {
+  const city = visibleCityResults.value[citySearchActiveIndex.value]
+  if (city) selectCity(city)
+}
+
+watch(selectedCity, (city) => {
+  if (isEditMode.value && city) citySearchTerm.value = city.city
+})
+
+watch(() => visibleCityResults.value.length, (length) => {
+  if (citySearchActiveIndex.value >= length) {
+    citySearchActiveIndex.value = Math.max(0, length - 1)
+  }
+})
 
 const publicCityPath = computed(() => {
   const slug = businessProfile.value?.city_slug
@@ -894,6 +1119,7 @@ const enterEditMode = () => {
     tiktok: sm.tiktok || '',
   }
 
+  syncCitySearchTerm()
   isEditMode.value = true
 }
 

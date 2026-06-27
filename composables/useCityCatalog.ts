@@ -22,15 +22,26 @@ export interface PublicCity {
   city: string
   city_slug: string
   tenant_count: number
+  department?: string | null
+  department_name?: string | null
 }
 
 export function useCityCatalog() {
   const cities = useState<PublicCity[]>('city-catalog', () => [])
+  const isLoading = useState<boolean>('city-catalog-loading', () => false)
+  const error = useState<string | null>('city-catalog-error', () => null)
+  const hasLoaded = useState<boolean>('city-catalog-loaded', () => false)
 
   const fetchCatalog = async (opts?: { includeEmpty?: boolean }): Promise<void> => {
     // Skip when already hydrated from SSR. The catalog is small (~10 rows)
     // and changes rarely, so a per-request fetch is enough.
-    if (cities.value.length > 0) return
+    if (cities.value.length > 0) {
+      error.value = null
+      hasLoaded.value = true
+      return
+    }
+    isLoading.value = true
+    error.value = null
     try {
       // Endpoint lives under the public_restaurant router (prefix
       // /public/restaurant), so the canonical path is
@@ -42,10 +53,15 @@ export function useCityCatalog() {
         { params: { include_empty: opts?.includeEmpty ? 'true' : 'false' } },
       )
       cities.value = res?.data ?? []
-    } catch {
+      hasLoaded.value = true
+    } catch (err) {
       // Silent fail — UI fallback is "no cities" which renders an empty
       // discovery section and falls back to free-text on the selector.
       cities.value = []
+      hasLoaded.value = true
+      error.value = err instanceof Error ? err.message : 'No se pudo cargar el catálogo de ciudades.'
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -131,5 +147,8 @@ export function useCityCatalog() {
     isCityRoute,
     cityFromRoute,
     fetchCatalog,
+    isLoading,
+    error,
+    hasLoaded,
   }
 }
