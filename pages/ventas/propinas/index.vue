@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
@@ -226,11 +225,7 @@ const formatCurrency = (value: number) =>
     minimumFractionDigits: 0,
   }).format(value || 0)
 
-const formatDate = (iso: string | null | undefined) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return fnsFormat(d, "d MMM yyyy, h:mm a", { locale: es })
-}
+const { formatDateTime: formatDate } = useFormatters()
 
 const formatPercent = (value: number) => `${(value || 0).toFixed(2)}%`
 
