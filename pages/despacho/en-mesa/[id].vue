@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { inject, watch, onMounted, onUnmounted } from 'vue'
+import { inject, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { Printer } from 'lucide-vue-next'
+import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import { printComandaTickets } from '~/composables/useComandaPrint'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useNotifications } from '~/composables/useNotifications'
@@ -17,6 +20,7 @@ const { markAsRead, notifications } = useNotifications()
 const requestId = computed(() => route.params.id as string)
 const { formatCurrency } = useFormatters()
 const { timezone } = useTenantTimezone()
+const { businessProfile, currentTenant } = useTenantReactive()
 
 interface TableQrItem {
   product_id: string
@@ -210,6 +214,44 @@ const modifierSubtotal = (modifier: NonNullable<TableQrItem['modifiers']>[number
 
 const formatQuantity = (quantity: number) =>
   quantity % 1 === 0 ? quantity.toFixed(0) : String(quantity)
+
+const businessName = computed(() =>
+  businessProfile.value?.display_name
+  || currentTenant.value?.name
+  || 'WARO'
+)
+
+const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
+  const req = request.value
+  if (!req) return []
+  return [{
+    id: req.id,
+    comanda_number: `QR-${req.id.slice(0, 8)}`,
+    station_name: 'Pedido QR en mesa',
+    table_display_name: req.table_name,
+    fired_at: req.created_at,
+    items: req.items.map(item => ({
+      kitchen_name: itemDisplayName(item),
+      quantity: itemQuantity(item),
+      modifiers_snapshot: item.modifiers?.map(mod => ({
+        name: mod.name,
+        price: mod.price,
+        quantity: modifierQuantity(mod),
+      })) ?? [],
+      notes: item.notes ?? null,
+    })),
+  }]
+})
+
+const canPrintComanda = computed(() =>
+  !!request.value && comandaPrintPayload.value.some(comanda => comanda.items.length > 0),
+)
+
+async function printQrComanda() {
+  if (!canPrintComanda.value) return
+  await nextTick()
+  printComandaTickets()
+}
 </script>
 
 <template>
@@ -271,6 +313,18 @@ const formatQuantity = (quantity: number) =>
           </UiButton>
           <UiButton variant="destructive" size="lg" :disabled="isWorking" @click="rejectRequest">
             {{ isWorking ? 'Procesando...' : 'Rechazar' }}
+          </UiButton>
+          <UiButton
+            variant="crocus-outline"
+            size="lg"
+            class="gap-2"
+            :disabled="isWorking || !canPrintComanda"
+            aria-label="Imprimir comanda"
+            title="Imprimir comanda"
+            @click="printQrComanda"
+          >
+            <Printer class="h-4 w-4" aria-hidden="true" />
+            <span>Imprimir</span>
           </UiButton>
         </div>
         <p v-if="actionError" role="alert" class="mt-3 text-sm text-destructive">{{ actionError }}</p>
@@ -369,5 +423,10 @@ const formatQuantity = (quantity: number) =>
         <p class="text-sm text-text-primary">{{ request.customer_notes }}</p>
       </div>
     </div>
+
+    <PosComandaPrintTickets
+      :comandas="comandaPrintPayload"
+      :business-name="businessName"
+    />
   </div>
 </template>

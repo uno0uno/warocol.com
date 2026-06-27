@@ -58,49 +58,51 @@ const printTicket = computed(() => {
 </script>
 
 <template>
-  <div id="pos-comanda-print" aria-hidden="true">
-    <div
-      v-if="printTicket"
-      class="comanda-ticket"
-    >
-      <div class="receipt-header">{{ businessName || 'WARO' }}</div>
-      <div class="receipt-row receipt-small">*** COMANDA POS ***</div>
-      <div class="receipt-row receipt-small">{{ formatTicketTime(printTicket.firedAt) }}</div>
-      <div v-if="printTicket.tableDisplayName" class="receipt-row receipt-small">
-        {{ printTicket.tableDisplayName }}
-      </div>
-      <div class="receipt-row receipt-small">
-        Comanda #{{ printTicket.comandaNumbers.join(', ') }}
-      </div>
-      <div class="receipt-divider">--------------------------------</div>
-
-      <section
-        v-for="section in printTicket.sections"
-        :key="section.key"
-        class="comanda-station-section"
+  <Teleport to="body">
+    <div id="pos-comanda-print" aria-hidden="true">
+      <div
+        v-if="printTicket"
+        class="comanda-ticket"
       >
-        <div class="receipt-row receipt-small station-title">
-          Estación: {{ section.stationName }}
+        <div class="receipt-header">{{ businessName || 'WARO' }}</div>
+        <div class="receipt-row receipt-small">*** COMANDA POS ***</div>
+        <div class="receipt-row receipt-small">{{ formatTicketTime(printTicket.firedAt) }}</div>
+        <div v-if="printTicket.tableDisplayName" class="receipt-row receipt-small">
+          {{ printTicket.tableDisplayName }}
         </div>
-        <template v-for="(item, i) in section.items" :key="`${section.key}-${i}`">
-          <div class="receipt-item receipt-small">
-            <span class="comanda-item-qty">{{ item.quantity }}×</span>
-            <span class="comanda-item-name">{{ item.kitchen_name }}</span>
+        <div class="receipt-row receipt-small">
+          Comanda #{{ printTicket.comandaNumbers.join(', ') }}
+        </div>
+        <div class="receipt-divider">--------------------------------</div>
+
+        <section
+          v-for="section in printTicket.sections"
+          :key="section.key"
+          class="comanda-station-section"
+        >
+          <div class="receipt-row receipt-small station-title">
+            Estación: {{ section.stationName }}
           </div>
-          <div
-            v-for="(mod, mi) in modifierLines(item)"
-            :key="`${section.key}-${i}-${mi}`"
-            class="receipt-row receipt-small item-detail"
-          >
-            ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
-          </div>
-          <div v-if="item.notes" class="receipt-row receipt-small item-detail">
-            Notas Especiales: {{ item.notes }}
-          </div>
-        </template>
-      </section>
+          <template v-for="(item, i) in section.items" :key="`${section.key}-${i}`">
+            <div class="receipt-item receipt-small">
+              <span class="comanda-item-qty">{{ item.quantity }}×</span>
+              <span class="comanda-item-name">{{ item.kitchen_name }}</span>
+            </div>
+            <div
+              v-for="(mod, mi) in modifierLines(item)"
+              :key="`${section.key}-${i}-${mi}`"
+              class="receipt-row receipt-small item-detail"
+            >
+              ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
+            </div>
+            <div v-if="item.notes" class="receipt-row receipt-small item-detail">
+              Notas Especiales: {{ item.notes }}
+            </div>
+          </template>
+        </section>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style>
@@ -156,7 +158,11 @@ const printTicket = computed(() => {
 }
 
 @media print {
-  body.printing-comanda * { visibility: hidden; }
+  body.printing-comanda > :not(#pos-comanda-print) {
+    display: none !important;
+  }
+
+  body.printing-comanda * { visibility: hidden !important; }
   body.printing-comanda #pos-comanda-print,
   body.printing-comanda #pos-comanda-print * { visibility: visible !important; }
 
@@ -165,9 +171,9 @@ const printTicket = computed(() => {
 
   #pos-comanda-print {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
     line-height: 1.25;
@@ -175,6 +181,7 @@ const printTicket = computed(() => {
     color: #000;
     background: #fff;
     padding: 2mm;
+    margin: 0 !important;
   }
 
   @page {

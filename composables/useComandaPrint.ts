@@ -118,6 +118,7 @@ export function orderItemIdsFromComandas(rawComandas: unknown[]): Set<string> {
 
 export function printComandaTickets(): void {
   document.body.classList.add('printing-comanda')
+  void document.body.offsetHeight
   const cleanup = () => {
     document.body.classList.remove('printing-comanda')
   }
