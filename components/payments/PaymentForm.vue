@@ -155,6 +155,7 @@ const formData = ref({
 })
 
 const selectedFiles = ref<File[]>([])
+const { todayISO, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
 
 // Computed properties
 const isBulkPayment = computed(() => props.purchases.length > 1)
@@ -179,18 +180,20 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
+const tenantDateTimeLocalNow = () => `${todayISO()}T${timeHHMMFromISO(new Date().toISOString())}`
+
+const paymentDateToISO = (value: string) => {
+  const [date, time] = value.split('T')
+  return combineDateAndTimeISO(date, time) ?? new Date(value).toISOString()
+}
+
 // Initialize form data
 onMounted(() => {
-  const now = new Date()
-  // Adjust to local timezone for datetime-local input
-  const offset = now.getTimezoneOffset() * 60000
-  const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16)
-  
   formData.value = {
     payment_method: '',
     payment_reference: '',
     payment_amount: totalAmount.value,
-    payment_date: localISOTime,
+    payment_date: tenantDateTimeLocalNow(),
     notes: ''
   }
 })
@@ -223,7 +226,7 @@ const handleSubmit = async () => {
           const purchase = props.purchases.find(p => p.id === purchaseId)
           const individualAmount = getPurchaseAmount(purchase)
           formDataPayload.append('payment_amount', individualAmount.toString())
-          formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
+          formDataPayload.append('payment_date', paymentDateToISO(formData.value.payment_date))
 
           if (formData.value.notes) {
             formDataPayload.append('notes', formData.value.notes)
@@ -267,7 +270,7 @@ const handleSubmit = async () => {
       formDataPayload.append('payment_method', formData.value.payment_method)
       formDataPayload.append('payment_reference', formData.value.payment_reference)
       formDataPayload.append('payment_amount', formData.value.payment_amount.toString())
-      formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
+      formDataPayload.append('payment_date', paymentDateToISO(formData.value.payment_date))
 
       if (formData.value.notes) {
         formDataPayload.append('notes', formData.value.notes)

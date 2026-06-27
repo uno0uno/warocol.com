@@ -46,15 +46,16 @@ watch(station, (s) => {
 useHead({ title: computed(() => station.value ? `KDS · ${station.value.name}` : 'KDS') })
 
 // ── Comandas fetch ──────────────────────────────────────────────────────────
-const today = new Date().toISOString().split('T')[0]
+const { todayISO } = useTenantTimezone()
+const today = computed(() => todayISO())
 
 const { data: comandasData, status: comandasStatus, asyncStatus: comandasAsyncStatus, refetch } = useQuery({
-  key: () => ['kds-comandas', stationId.value],
+  key: () => ['kds-comandas', stationId.value, today.value],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/comandas', {
     params: {
       station_id: stationId.value,
       status: 'pending,preparing,ready',
-      date: today,
+      date: today.value,
       token: kdsToken.value || undefined,
     },
   }),

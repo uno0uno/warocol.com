@@ -189,7 +189,7 @@
                   :locale="es"
                   auto-apply
                   :teleport="true"
-                  :max-date="new Date()"
+                  :max-date="maxPurchaseDate"
                   :format="formatPurchaseDate"
                   input-class-name="dp-custom-input"
                   menu-class-name="dp-custom-menu"
@@ -772,7 +772,12 @@ import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 
+const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
+const tenantNowISO = () => combineDateAndTimeISO(todayISO(), timeHHMMFromISO(new Date().toISOString())) ?? new Date().toISOString()
+const purchaseDatePayloadISO = (date: Date) => dateAtNoon(isoFromDate(date)).toISOString()
+const maxPurchaseDate = computed(() => dateAtNoon(todayISO()))
 
 const route = useRoute()
 const purchaseId = route.params.id as string
@@ -839,7 +844,7 @@ const existingPaymentAttachments = computed(() =>
 // Initialize form when purchase loads
 watch(originalPurchase, (purchase) => {
   if (purchase) {
-    form.value.purchase_date = purchase.purchase_date ? new Date(purchase.purchase_date) : new Date()
+    form.value.purchase_date = purchase.purchase_date ? new Date(purchase.purchase_date) : dateAtNoon(todayISO())
     form.value.notes = purchase.notes || ''
     form.value.invoice_number = purchase.invoice_number || ''
     form.value.payment_method = purchase.payment_method || ''
@@ -1093,14 +1098,14 @@ const handleSubmit = async () => {
         unit_cost: item.unit_cost,
         notes: item.notes
       }))),
-      purchase_date: form.value.purchase_date ? form.value.purchase_date.toISOString() : null,
+      purchase_date: form.value.purchase_date ? purchaseDatePayloadISO(form.value.purchase_date) : null,
       notes: form.value.notes,
       invoice_number: form.value.invoice_number,
       payment_method: form.value.payment_method || null,
       payment_method_id: form.value.payment_method_id || null,
       payment_reference: form.value.payment_reference || null,
       payment_amount: form.value.payment_method ? Number(totalAmount.value) : null,
-      payment_date: form.value.payment_method ? new Date().toISOString() : null
+      payment_date: form.value.payment_method ? tenantNowISO() : null
     }
 
     // 2. Update Direct Purchase (PUT - JSON)

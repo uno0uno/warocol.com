@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
@@ -11,30 +11,7 @@ const { currentTenant } = useTenantReactive()
 const lastUpdate = ref<Date>(new Date())
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
-const dateRangeDates = ref<Date[] | null>(null)
-
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  { label: 'Ayer', value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
-])
-
-const formatDateRange = (dates: Date[]) => {
-  if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
-}
-
-const dateRange = computed(() => {
-  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
-  const [from, to] = dateRangeDates.value
-  if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
-})
+const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 
 const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, error: foodCostError, refetch: refetchFoodCost } = useQuery({
   key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
@@ -181,7 +158,7 @@ onUnmounted(() => {
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"

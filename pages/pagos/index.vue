@@ -276,6 +276,7 @@ if (route.query.highlight) {
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { todayISO } = useTenantTimezone()
 
 // Fetch suppliers (static lookup per tenant)
 const { data: suppliersData } = useQuery({
@@ -517,9 +518,8 @@ function formatCurrency(value: number): string {
 
 function isOverdue(dueDate: string | null | undefined): boolean {
   if (!dueDate) return false
-  const today = new Date()
-  const due = new Date(dueDate)
-  return due < today
+  const dueIso = dueDate.match(/^\d{4}-\d{2}-\d{2}/)?.[0]
+  return !!dueIso && dueIso < todayISO()
 }
 
 // Selection functions
