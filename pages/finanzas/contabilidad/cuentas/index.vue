@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -9,7 +8,8 @@ useHead({ title: 'Cuentas contables' })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, todayISO } = useTenantTimezone()
+const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
+const { formatCalendarDate } = useFormatters()
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
@@ -19,6 +19,7 @@ const showAll = ref(false)
 // ── Date range filter (default: current month) ─────────────────────────────
 const today = todayISO()
 const currentMonth = monthBounds(today)
+const maxDate = computed(() => dateAtNoon(todayISO()))
 const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
@@ -31,9 +32,9 @@ const presetDates = [
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = formatCalendarDate(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+  return `${from} - ${formatCalendarDate(isoFromDate(dates[1]))}`
 }
 
 const dateRange = computed(() => {
@@ -259,7 +260,8 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :timezone="timezone"
+          :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"

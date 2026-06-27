@@ -42,6 +42,7 @@ export const OPERATION_EVENT_ACTIONS = [
   'cart_cleared',
   'payment_voided',
   'comanda_line_cancelled',
+  'promotion_deleted',
 ] as const
 
 export const ACTION_LABELS: Record<string, string> = {
@@ -55,6 +56,7 @@ export const ACTION_LABELS: Record<string, string> = {
   cart_cleared: 'Carrito vaciado',
   payment_voided: 'Pago anulado',
   comanda_line_cancelled: 'Línea de comanda cancelada',
+  promotion_deleted: 'Promoción eliminada',
 }
 
 export const CHANNEL_LABELS: Record<string, string> = {
@@ -93,6 +95,13 @@ export function formatOperationEventSummary(
   if (action === 'tab_cleared' || action === 'cart_cleared') {
     const count = payload.items_count as number | undefined
     if (count != null) return `${count} línea${count === 1 ? '' : 's'}`
+  }
+
+  if (action === 'promotion_deleted') {
+    const promotionName = payload.promotion_name as string | undefined
+    const promoType = payload.promo_type as string | undefined
+    if (promotionName && promoType) return `${promotionName} · ${promoType}`
+    if (promotionName) return promotionName
   }
 
   if (payload.order_number != null) {

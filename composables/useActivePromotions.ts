@@ -25,7 +25,8 @@ function tenantNowParts(now = new Date(), timezone = DEFAULT_TENANT_TIMEZONE) {
     Sun: 6,
   }
   const weekday = weekdayMap[parts.weekday ?? ''] ?? 0
-  const [hour, minute] = parts.hour.split(':').map(Number)
+  const hour = Number(parts.hour)
+  const minute = Number(parts.minute)
   return { weekday, minutes: hour * 60 + minute }
 }
 

@@ -334,7 +334,7 @@
               type="button"
               :disabled="isSaving"
               class="h-10 w-full rounded-lg border border-destructive/40 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/20 disabled:opacity-50"
-              @click="onDelete"
+              @click="openDeleteConfirm"
             >
               Eliminar promoción
             </button>
@@ -348,6 +348,18 @@
       :products="selectedProducts"
       @remove="removeProduct"
       @clear-all="clearAllProducts"
+    />
+
+    <PosDestructiveReasonModal
+      v-model="deleteConfirmOpen"
+      :title="deleteConfirmTitle"
+      message="Se eliminará la promoción y el motivo quedará registrado en la bitácora de operaciones."
+      confirm-label="Sí, eliminar"
+      reason-placeholder="Ej: promoción vencida, regla duplicada, campaña finalizada"
+      :loading="isSaving"
+      :error="deleteError"
+      @confirm="onDelete"
+      @cancel="cancelDeleteConfirm"
     />
   </Teleport>
 </template>
@@ -406,9 +418,10 @@ const emit = defineEmits<Emits>()
 const toast = useToast()
 const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
-const { combineDateAndTimeISO, dateAtNoon } = useTenantTimezone()
+const { combineDateAndTimeISO, dateAtNoon, isoFromDate } = useTenantTimezone()
 
 const isEdit = computed(() => !!props.promotionId)
+const deleteConfirmTitle = computed(() => form.name.trim() ? `¿Eliminar ${form.name.trim()}?` : '¿Eliminar promoción?')
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
 const promoTypeOptions: {
@@ -477,6 +490,8 @@ const validationErrors = ref<string[]>([])
 const isSaving = ref(false)
 const loadError = ref(false)
 const loadingPromotion = ref(false)
+const deleteConfirmOpen = ref(false)
+const deleteError = ref('')
 
 function resetForm() {
   form.name = ''
@@ -495,6 +510,8 @@ function resetForm() {
   selectedProducts.value = []
   scopePickerOpen.value = false
   validationErrors.value = []
+  deleteConfirmOpen.value = false
+  deleteError.value = ''
   loadError.value = false
 }
 
@@ -531,8 +548,8 @@ async function loadPromotion(id: string) {
         end_time: (s.end_time || '18:00').slice(0, 5),
         crosses_midnight: !!s.crosses_midnight,
       }))
-    form.startsAtDate = p.starts_at ? p.starts_at.slice(0, 10) : ''
-    form.endsAtDate = p.ends_at ? p.ends_at.slice(0, 10) : ''
+    form.startsAtDate = p.starts_at ? isoFromDate(new Date(p.starts_at)) : ''
+    form.endsAtDate = p.ends_at ? isoFromDate(new Date(p.ends_at)) : ''
     const cats = catsRes.data ?? []
     selectedCategories.value = (p.category_ids ?? [])
       .map((cid: string) => cats.find((c) => c.id === cid))
@@ -781,17 +798,35 @@ async function onSubmit() {
   }
 }
 
-async function onDelete() {
-  if (!props.promotionId || !confirm('¿Eliminar esta promoción?')) return
+function openDeleteConfirm() {
+  if (!props.promotionId || isSaving.value) return
+  deleteError.value = ''
+  deleteConfirmOpen.value = true
+}
+
+function cancelDeleteConfirm() {
+  if (isSaving.value) return
+  deleteError.value = ''
+  deleteConfirmOpen.value = false
+}
+
+async function onDelete(reason: string) {
+  if (!props.promotionId) return
   isSaving.value = true
+  deleteError.value = ''
   try {
-    await $fetch(`/api/api/promotions/${props.promotionId}`, { method: 'DELETE' })
+    await $fetch(`/api/api/promotions/${props.promotionId}`, {
+      method: 'DELETE',
+      body: { reason: reason.trim() },
+    })
     toast.success('Promoción eliminada')
     await invalidatePromotionCaches()
+    deleteConfirmOpen.value = false
     close()
     emit('deleted')
   } catch (e: any) {
-    toast.error(e?.data?.detail ?? 'No se pudo eliminar', { title: 'Error' })
+    deleteError.value = e?.data?.detail ?? 'No se pudo eliminar'
+    toast.error(deleteError.value, { title: 'Error' })
   } finally {
     isSaving.value = false
   }

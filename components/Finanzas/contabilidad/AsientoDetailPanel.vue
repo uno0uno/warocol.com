@@ -48,6 +48,7 @@ const emit = defineEmits<{
 }>()
 
 const close = () => emit('update:modelValue', false)
+const { formatDateTime } = useFormatters()
 
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -338,10 +339,10 @@ watch(
             <!-- Timestamps -->
             <div class="text-xs text-text-secondary space-y-1 pt-2 border-t border-border/50">
               <p v-if="entry.postedAt">
-                <span class="font-medium">Publicado:</span> {{ new Date(entry.postedAt).toLocaleString('es-CO') }}
+                <span class="font-medium">Publicado:</span> {{ formatDateTime(entry.postedAt) }}
               </p>
               <p v-if="entry.voidedAt">
-                <span class="font-medium text-destructive">Anulado:</span> {{ new Date(entry.voidedAt).toLocaleString('es-CO') }}
+                <span class="font-medium text-destructive">Anulado:</span> {{ formatDateTime(entry.voidedAt) }}
               </p>
             </div>
 

@@ -145,7 +145,7 @@
                   type="button"
                   class="text-xs text-left text-primary hover:underline truncate max-w-full min-h-[44px]"
                   :aria-label="`Ver alcance de ${item.name}`"
-                  @click="openScopePopover(item)"
+                  @click.stop="openScopePopover(item)"
                 >
                   {{ rowScope(item) }}
                 </button>
@@ -163,10 +163,25 @@
                 type="button"
                 :aria-label="`Editar ${item.name}`"
                 title="Editar"
-                class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
-                @click="openEdit(item)"
+                class="group flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary focus:outline-none transition-colors"
+                @click.stop="openEdit(item)"
               >
-                <PencilSquareIcon class="w-4 h-4" />
+                <PencilOutlineIcon class="w-4 h-4 group-hover:hidden" />
+                <PencilSolidIcon class="hidden w-4 h-4 group-hover:block" />
+              </button>
+              <button
+                type="button"
+                :aria-label="`Eliminar ${item.name}`"
+                title="Eliminar"
+                class="group flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="deletingPromotionId === item.id"
+                @click.stop="openDeletePromotion(item)"
+              >
+                <UiLoadingDots v-if="deletingPromotionId === item.id" size="12px" />
+                <template v-else>
+                  <TrashOutlineIcon class="w-4 h-4 group-hover:hidden" />
+                  <TrashSolidIcon class="hidden w-4 h-4 group-hover:block" />
+                </template>
               </button>
             </div>
           </template>
@@ -199,7 +214,7 @@
               type="button"
               class="text-sm text-left text-primary hover:underline min-h-[44px]"
               :aria-label="`Ver alcance de ${item.name}`"
-              @click="openScopePopover(item)"
+              @click.stop="openScopePopover(item)"
             >
               {{ rowScope(item) }}
             </button>
@@ -233,10 +248,25 @@
                 type="button"
                 :aria-label="`Editar ${item.name}`"
                 title="Editar"
-                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
-                @click="openEdit(item)"
+                class="group min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary focus:outline-none transition-colors"
+                @click.stop="openEdit(item)"
               >
-                <PencilSquareIcon class="w-4 h-4" />
+                <PencilOutlineIcon class="w-4 h-4 group-hover:hidden" />
+                <PencilSolidIcon class="hidden w-4 h-4 group-hover:block" />
+              </button>
+              <button
+                type="button"
+                :aria-label="`Eliminar ${item.name}`"
+                title="Eliminar"
+                class="group min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="deletingPromotionId === item.id"
+                @click.stop="openDeletePromotion(item)"
+              >
+                <UiLoadingDots v-if="deletingPromotionId === item.id" size="12px" />
+                <template v-else>
+                  <TrashOutlineIcon class="w-4 h-4 group-hover:hidden" />
+                  <TrashSolidIcon class="hidden w-4 h-4 group-hover:block" />
+                </template>
               </button>
             </div>
           </template>
@@ -256,13 +286,26 @@
       :promotion-name="scopePopoverPromo?.name ?? ''"
       :scope-type="scopePopoverPromo?.scope_type ?? ''"
     />
+
+    <PosDestructiveReasonModal
+      v-model="deleteModalOpen"
+      :title="deleteModalTitle"
+      :message="deleteModalMessage"
+      confirm-label="Sí, eliminar"
+      reason-placeholder="Ej: promoción vencida, regla duplicada, campaña finalizada"
+      :loading="!!deletingPromotionId"
+      :error="deleteError"
+      @confirm="confirmDeletePromotion"
+      @cancel="cancelDeletePromotion"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
-import { PencilSquareIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon as PencilOutlineIcon, TrashIcon as TrashOutlineIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon as PencilSolidIcon, TrashIcon as TrashSolidIcon } from '@heroicons/vue/24/solid'
 import {
   formatPromoTypeLabel,
   formatPromoValue,
@@ -336,9 +379,31 @@ const togglePromoLineOptOutSetting = async () => {
 
 const showPanel = ref(false)
 const panelPromotionId = ref<string | null>(null)
+const deletingPromotionId = ref<string | null>(null)
+const deletePromotionTarget = ref<PromotionRow | null>(null)
+const deleteError = ref('')
 const skipOpenFromQuery = ref(false)
 const scopePopoverOpen = ref(false)
 const scopePopoverPromo = ref<PromotionRow | null>(null)
+const deleteModalOpen = computed({
+  get: () => deletePromotionTarget.value !== null,
+  set: (open: boolean) => {
+    if (!open && !deletingPromotionId.value) {
+      deletePromotionTarget.value = null
+      deleteError.value = ''
+    }
+  },
+})
+const deleteModalTitle = computed(() =>
+  deletePromotionTarget.value
+    ? `¿Eliminar ${deletePromotionTarget.value.name}?`
+    : '¿Eliminar promoción?',
+)
+const deleteModalMessage = computed(() =>
+  deletePromotionTarget.value
+    ? 'Se eliminará la promoción y el motivo quedará registrado en la bitácora de operaciones.'
+    : '',
+)
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const statusFilter = ref<'' | 'active' | 'inactive'>('')
@@ -514,6 +579,44 @@ function openPanel(item: PromotionRow | null) {
 
 function openEdit(item: PromotionRow) {
   openPanel(item)
+}
+
+function openDeletePromotion(item: PromotionRow) {
+  if (deletingPromotionId.value) return
+  deletePromotionTarget.value = item
+  deleteError.value = ''
+}
+
+function cancelDeletePromotion() {
+  if (deletingPromotionId.value) return
+  deletePromotionTarget.value = null
+  deleteError.value = ''
+}
+
+async function confirmDeletePromotion(reason: string) {
+  const item = deletePromotionTarget.value
+  if (!item) return
+  await deletePromotion(item, reason)
+}
+
+async function deletePromotion(item: PromotionRow, reason: string) {
+  if (deletingPromotionId.value) return
+  deletingPromotionId.value = item.id
+  deleteError.value = ''
+  try {
+    await $fetch(`/api/api/promotions/${item.id}`, {
+      method: 'DELETE',
+      body: { reason: reason.trim() },
+    })
+    toast.success('Promoción eliminada')
+    deletePromotionTarget.value = null
+    await refreshHandler()
+  } catch (error: any) {
+    deleteError.value = error?.data?.detail ?? 'No se pudo eliminar la promoción'
+    toast.error(deleteError.value, { title: 'Error' })
+  } finally {
+    deletingPromotionId.value = null
+  }
 }
 
 async function onPanelSaved() {
