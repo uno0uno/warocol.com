@@ -356,12 +356,30 @@ const tabSuccess = ref<string | null>(null)
 const lastFiredComandasRaw = ref<unknown[]>([])
 const comandasForPrint = ref<ComandaPrintPayload[]>([])
 const selectedTabItemIds = ref<string[]>([])
+const comandaPrintSessionKey = ref<string | null>(null)
 const posBusinessName = computed(
   () => settingsData.value?.data?.business_name
     ?? settingsData.value?.data?.display_name
     ?? 'WARO',
 )
-const canPrintComandas = computed(() => comandasForPrint.value.length > 0)
+
+const currentComandaPrintSessionKey = () => {
+  const session = posStore.activeTableSession
+  return session ? `${session.tableId}:${session.sessionId}` : null
+}
+
+function resetComandaPrintState() {
+  lastFiredComandasRaw.value = []
+  comandasForPrint.value = []
+  selectedTabItemIds.value = []
+  comandaPrintSessionKey.value = null
+}
+
+const canPrintComandas = computed(
+  () =>
+    comandasForPrint.value.length > 0
+    && comandaPrintSessionKey.value === currentComandaPrintSessionKey(),
+)
 
 /** Tab lines from the last fire batch — checkboxes select tickets to re-print (#812). */
 const printableOrderItemIds = computed(
@@ -377,6 +395,7 @@ const showPrintItemSelection = computed(
 )
 
 const comandasForPrintDisplay = computed(() => {
+  if (!canPrintComandas.value) return []
   const sel = selectedTabItemIds.value
   const raw = lastFiredComandasRaw.value
   if (!Array.isArray(raw) || sel.length === 0) {
@@ -407,6 +426,9 @@ function applyFireResult(rawComandas: unknown[], firedCount: number) {
   if (rawComandas.length > 0) {
     lastFiredComandasRaw.value = rawComandas
     comandasForPrint.value = mapComandasForPrint(rawComandas)
+    comandaPrintSessionKey.value = currentComandaPrintSessionKey()
+  } else {
+    resetComandaPrintState()
   }
   const firedIds = orderItemIdsFromComandas(rawComandas)
   if (firedCount > 0 && posStore.activeTableSession) {
@@ -558,6 +580,7 @@ const loadCurrentTableSession = async (
 const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }) => {
   isEnteringTable.value = true
   tableSessionBackendReady.value = false
+  resetComandaPrintState()
   posStore.clearAll()
   bumpTableSessionFetchGen()
   isLoadingTabItems.value = true
@@ -869,6 +892,7 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   if (!posStore.activeTableSession) return
   const previousTabItems = storeTabItems.value
   bumpTableSessionFetchGen()
+  resetComandaPrintState()
   posStore.setTabItems(previousTabItems.filter((i: TabItem) => i.orderItemId !== orderItemId))
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
@@ -896,6 +920,7 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
 const updateTabItemQuantity = async (orderItemId: string, quantity: number, reason?: string) => {
   if (!posStore.activeTableSession) return
   bumpTableSessionFetchGen()
+  resetComandaPrintState()
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
@@ -944,6 +969,7 @@ const addToTab = async () => {
     || isAddingToTab.value
   ) return
   bumpTableSessionFetchGen()
+  resetComandaPrintState()
   isAddingToTab.value = true
   tabError.value = null
   try {
@@ -1041,6 +1067,7 @@ const executeBannerClose = async (reason: string) => {
     destructiveError.value = destructiveFetchError(e, `Error al liberar la ${tableSingularLower.value}`)
     return
   }
+  resetComandaPrintState()
   posStore.clearAll()
   queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
@@ -1054,6 +1081,7 @@ const executeClearBarTab = async (reason: string) => {
       method: 'DELETE',
       body: { reason: reason.trim() || null },
     })
+    resetComandaPrintState()
     posStore.clearAll()
     queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
   } catch (e: unknown) {
@@ -1106,7 +1134,10 @@ registerProgressiveLoading(isRefreshing)
 registerProgressiveLoading(isRefreshingSession)
 
 // Clear POS state when tenant changes
-watch(() => currentTenant.value?.id, () => { posStore.clearAll() })
+watch(() => currentTenant.value?.id, () => {
+  resetComandaPrintState()
+  posStore.clearAll()
+})
 
 // Cachear productos con modificadores cuando cargan
 watch(() => productsData.value, (data) => {
@@ -1273,6 +1304,7 @@ const handleOpenSaleClick = () => {
 const addOpenSaleToTab = async (amount: number, description?: string) => {
   if (!posStore.activeTableSession || !tableSessionBackendReady.value || !isKitchenServiceMode.value || isAddingToTab.value) return
   bumpTableSessionFetchGen()
+  resetComandaPrintState()
   isAddingToTab.value = true
   tabError.value = null
   try {
@@ -1341,6 +1373,16 @@ const duplicateCartItem = async (index: number) => {
   await posStore.duplicateCartItem(index)
 }
 
+const leaveActiveTableSession = () => {
+  resetComandaPrintState()
+  posStore.clearAll()
+}
+
+const exitActiveTableSession = () => {
+  resetComandaPrintState()
+  posStore.exitSession()
+}
+
 const clearCart = () => {
   destructiveError.value = ''
   destructiveFlow.value = { kind: 'clear-cart' }
@@ -1356,6 +1398,7 @@ const executeClearCart = async (reason: string) => {
         method: 'DELETE',
         body: { reason: reason.trim() || null },
       })
+      resetComandaPrintState()
       posStore.setTabItems([])
       if (posStore.activeTableSession) {
         posStore.setTableSession({
@@ -1427,7 +1470,10 @@ watch(
 
 watch(
   () => posStore.activeTableSession,
-  (session) => {
+  (session, previousSession) => {
+    const nextKey = session ? `${session.tableId}:${session.sessionId}` : null
+    const previousKey = previousSession ? `${previousSession.tableId}:${previousSession.sessionId}` : null
+    if (nextKey !== previousKey) resetComandaPrintState()
     if (!session) tableSessionBackendReady.value = false
   },
 )
@@ -1624,7 +1670,7 @@ onUnmounted(() => {
           <button
             type="button"
             class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
-            @click="posStore.exitSession()"
+            @click="exitActiveTableSession"
           >
             Salir
           </button>
@@ -1728,7 +1774,7 @@ onUnmounted(() => {
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
-              @click="posStore.clearAll()"
+              @click="leaveActiveTableSession"
             >
               <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />

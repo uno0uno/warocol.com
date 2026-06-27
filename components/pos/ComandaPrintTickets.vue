@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { formatComandaModifierLabel, formatComandaPrintTime } from '~/composables/useComandaPrint'
 
@@ -10,45 +11,88 @@ const props = defineProps<{
 function modifierLines(item: ComandaPrintPayload['items'][0]) {
   return item.modifiers_snapshot ?? []
 }
+
+const printTicket = computed(() => {
+  const first = props.comandas[0]
+  if (!first) return null
+
+  const comandaNumbers = [
+    ...new Set(props.comandas.map(c => String(c.comanda_number ?? '—'))),
+  ]
+
+  const sections: Array<{
+    key: string
+    stationName: string
+    items: ComandaPrintPayload['items']
+  }> = []
+  const sectionByStation = new Map<string, (typeof sections)[number]>()
+
+  for (const comanda of props.comandas) {
+    const stationName = comanda.station_name || 'Sin cocina asignada'
+    let section = sectionByStation.get(stationName)
+    if (!section) {
+      section = {
+        key: `${stationName}-${sections.length}`,
+        stationName,
+        items: [],
+      }
+      sectionByStation.set(stationName, section)
+      sections.push(section)
+    }
+    section.items.push(...comanda.items)
+  }
+
+  return {
+    firedAt: first.fired_at,
+    tableDisplayName: first.table_display_name,
+    comandaNumbers,
+    sections,
+  }
+})
 </script>
 
 <template>
   <div id="pos-comanda-print" aria-hidden="true">
     <div
-      v-for="(c, idx) in comandas"
-      :key="c.id || `${c.comanda_number}-${idx}`"
+      v-if="printTicket"
       class="comanda-ticket"
     >
       <div class="receipt-header">{{ businessName || 'WARO' }}</div>
-      <div class="receipt-row receipt-small">*** COMANDA COCINA ***</div>
-      <div class="receipt-row receipt-small">{{ formatComandaPrintTime(c.fired_at) }}</div>
-      <div v-if="c.table_display_name" class="receipt-row receipt-small">
-        {{ c.table_display_name }}
-      </div>
-      <div v-if="c.station_name" class="receipt-row receipt-small">
-        Estación: {{ c.station_name }}
+      <div class="receipt-row receipt-small">*** COMANDA POS ***</div>
+      <div class="receipt-row receipt-small">{{ formatComandaPrintTime(printTicket.firedAt) }}</div>
+      <div v-if="printTicket.tableDisplayName" class="receipt-row receipt-small">
+        {{ printTicket.tableDisplayName }}
       </div>
       <div class="receipt-row receipt-small">
-        Comanda #{{ c.comanda_number }}
+        Comanda #{{ printTicket.comandaNumbers.join(', ') }}
       </div>
       <div class="receipt-divider">--------------------------------</div>
-      <template v-for="(item, i) in c.items" :key="i">
-        <div class="receipt-item receipt-small">
-          <span class="comanda-item-qty">{{ item.quantity }}×</span>
-          <span class="comanda-item-name">{{ item.kitchen_name }}</span>
+
+      <section
+        v-for="section in printTicket.sections"
+        :key="section.key"
+        class="comanda-station-section"
+      >
+        <div class="receipt-row receipt-small station-title">
+          Estación: {{ section.stationName }}
         </div>
-        <div
-          v-for="(mod, mi) in modifierLines(item)"
-          :key="`${i}-${mi}`"
-          class="receipt-row receipt-small"
-          style="padding-left: 8px;"
-        >
-          ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
-        </div>
-        <div v-if="item.notes" class="receipt-row receipt-small" style="padding-left: 8px;">
-          Notas Especiales: {{ item.notes }}
-        </div>
-      </template>
+        <template v-for="(item, i) in section.items" :key="`${section.key}-${i}`">
+          <div class="receipt-item receipt-small">
+            <span class="comanda-item-qty">{{ item.quantity }}×</span>
+            <span class="comanda-item-name">{{ item.kitchen_name }}</span>
+          </div>
+          <div
+            v-for="(mod, mi) in modifierLines(item)"
+            :key="`${section.key}-${i}-${mi}`"
+            class="receipt-row receipt-small item-detail"
+          >
+            ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
+          </div>
+          <div v-if="item.notes" class="receipt-row receipt-small item-detail">
+            Notas Especiales: {{ item.notes }}
+          </div>
+        </template>
+      </section>
     </div>
   </div>
 </template>
@@ -65,6 +109,23 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
 .comanda-ticket .receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
 .comanda-ticket .receipt-row { text-align: center; margin: 2px 0; }
 .comanda-ticket .receipt-divider { letter-spacing: 0; margin: 4px 0; text-align: center; }
+.comanda-ticket .comanda-station-section {
+  margin-top: 7px;
+  padding-top: 5px;
+  border-top: 1px dashed #000;
+}
+.comanda-ticket .comanda-station-section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.comanda-ticket .station-title {
+  font-weight: 900;
+  text-align: left;
+}
+.comanda-ticket .item-detail {
+  padding-left: 8px;
+}
 .comanda-ticket .receipt-item {
   display: flex;
   align-items: flex-start;
@@ -108,14 +169,6 @@ function modifierLines(item: ComandaPrintPayload['items'][0]) {
     color: #000;
     background: #fff;
     padding: 2mm;
-  }
-
-  .comanda-ticket {
-    page-break-after: always;
-  }
-
-  .comanda-ticket:last-child {
-    page-break-after: auto;
   }
 
   @page {

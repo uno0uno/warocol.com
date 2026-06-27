@@ -67,10 +67,11 @@ Comparte este link en tus redes y QR para que los clientes hagan pedidos online.
 
 Configura los horarios de atención día por día (lunes a domingo). El día actual se resalta. Para cada día puedes:
 
+- Elegir la **zona horaria operativa** del negocio.
 - Definir hora de **apertura** y **cierre**.
 - Marcar el checkbox **Cerrado** si no abres ese día.
 
-> Todos los horarios usan zona horaria de **Bogotá (UTC-5)**.
+> La zona horaria se usa para calcular abierto/cerrado, cierres y reportes operativos. Si no se configura, WARO usa **America/Bogota** por defecto.
 
 El estado "abierto/cerrado" del badge del perfil se calcula en vivo a partir de este horario.
 
@@ -109,4 +110,4 @@ Revisa: (1) que la **ciudad** esté seleccionada, (2) que el toggle **Visibilida
 Necesitas tener al menos productos publicados en el [Menú](./menu) para que aparezcan en tu storefront.
 
 **¿Cuándo se actualiza el estado abierto/cerrado?**
-En tiempo real, según el horario que definiste y la hora de Bogotá.
+En tiempo real, según el horario que definiste y la zona horaria operativa de tu negocio.

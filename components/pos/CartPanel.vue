@@ -506,8 +506,8 @@ const openSaleButtonClass = computed(() => [
 
 const printComandaLabel = computed(() => {
   const n = props.selectedTabItemIds?.length ?? 0
-  if (n > 0) return `Imprimir comanda (${n})`
-  return 'Imprimir comanda'
+  if (n > 0) return `Reimprimir seleccionados (${n})`
+  return 'Reimprimir última comanda'
 })
 const emit = defineEmits<Emits>()
 

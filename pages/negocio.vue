@@ -407,6 +407,12 @@
 
         <!-- View -->
         <template v-if="!isEditMode">
+          <div class="mb-4 flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
+            <span class="text-sm text-text-secondary">Zona horaria</span>
+            <span class="text-sm font-semibold text-text-primary text-right">
+              {{ businessTimezoneLabel }}
+            </span>
+          </div>
           <div class="space-y-0">
             <div
               v-for="(dayKey, index) in DAY_ORDER"
@@ -444,6 +450,25 @@
 
         <!-- Edit -->
         <template v-else>
+          <div class="mb-4">
+            <label for="negocio-timezone" class="block text-xs font-medium text-text-secondary mb-1">Zona horaria</label>
+            <select
+              id="negocio-timezone"
+              v-model="editForm.timezone"
+              class="input-base w-full px-3 py-2 text-sm"
+            >
+              <option
+                v-for="option in TIMEZONE_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+            <p class="text-[10px] text-text-tertiary mt-1">
+              Se usa para calcular abierto/cerrado, cierres y reportes operativos.
+            </p>
+          </div>
           <div class="space-y-1">
             <div
               v-for="(dayKey, index) in DAY_ORDER"
@@ -692,6 +717,7 @@ const editForm = reactive({
   city: '',
   city_slug: '',
   neighborhood: '',
+  timezone: 'America/Bogota',
   accepts_online_orders: false,
   min_order_amount: 0,
   online_order_max_amount: '' as number | string,
@@ -746,7 +772,24 @@ const DAY_LABELS: Record<string, string> = {
   saturday: 'Sábado',
   sunday: 'Domingo',
 }
-const { zonedParts } = useTenantTimezone()
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Bogota', label: 'Colombia - Bogota (UTC-5)' },
+  { value: 'America/Lima', label: 'Peru - Lima (UTC-5)' },
+  { value: 'America/Guayaquil', label: 'Ecuador - Guayaquil (UTC-5)' },
+  { value: 'America/Panama', label: 'Panama (UTC-5)' },
+  { value: 'America/Mexico_City', label: 'Mexico - Ciudad de Mexico' },
+  { value: 'America/Caracas', label: 'Venezuela - Caracas (UTC-4)' },
+  { value: 'America/Santiago', label: 'Chile - Santiago' },
+  { value: 'America/New_York', label: 'Estados Unidos - New York' },
+]
+const { zonedParts, normalizeTimezone } = useTenantTimezone()
+
+const timezoneLabel = (value?: string | null) => {
+  const timezone = normalizeTimezone(value)
+  return TIMEZONE_OPTIONS.find(option => option.value === timezone)?.label ?? timezone
+}
+
+const businessTimezoneLabel = computed(() => timezoneLabel(businessProfile.value?.timezone))
 
 const isToday = (i: number) => {
   const weekdayMap: Record<string, string> = {
@@ -824,6 +867,7 @@ const enterEditMode = () => {
   editForm.city = bp?.city || ''
   editForm.city_slug = bp?.city_slug || ''
   editForm.neighborhood = bp?.neighborhood || ''
+  editForm.timezone = normalizeTimezone(bp?.timezone)
   editForm.accepts_online_orders = bp?.accepts_online_orders ?? false
   editForm.min_order_amount = Number(bp?.min_order_amount) || 0
   editForm.online_order_max_amount = bp?.online_order_max_amount === null || bp?.online_order_max_amount === undefined
@@ -969,6 +1013,7 @@ const saveChanges = async () => {
       city: editForm.city || null,
       city_slug: editForm.city_slug || null,
       neighborhood: editForm.neighborhood || null,
+      timezone: normalizeTimezone(editForm.timezone),
       accepts_online_orders: editForm.accepts_online_orders,
       min_order_amount: editForm.min_order_amount,
       online_order_max_amount: normalizeOnlineOrderMaxAmount(editForm.online_order_max_amount),
