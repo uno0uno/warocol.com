@@ -394,7 +394,7 @@ const closeLink = computed(() => {
     return `/finanzas/arqueo/z?${q.toString()}`
   }
   if (!effectiveTemplateId.value) return null
-  return `/finanzas/arqueo/z?mode=template&start=${periodStart.value}&end=${periodEnd.value}&template=${effectiveTemplateId.value}`
+  return `/finanzas/arqueo/z?mode=template&start=${periodStart.value}&template=${effectiveTemplateId.value}`
 })
 
 const closeLinkLabel = computed(() =>

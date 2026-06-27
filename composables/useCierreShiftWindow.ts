@@ -27,7 +27,6 @@ export function buildCierreCloseRoute(
       mode: 'template',
       template: row.shiftTemplateId,
       start,
-      end,
     })
     return `/finanzas/arqueo/z?${q.toString()}`
   }

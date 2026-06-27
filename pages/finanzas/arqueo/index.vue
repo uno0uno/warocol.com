@@ -124,7 +124,7 @@
                 </div>
               </NuxtLink>
               <NuxtLink
-                :to="`/finanzas/arqueo/z?mode=template&start=${today}&end=${today}`"
+                :to="`/finanzas/arqueo/z?mode=template&start=${today}`"
                 class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
               >
                 <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
@@ -170,7 +170,7 @@
             </div>
           </NuxtLink>
           <NuxtLink
-            :to="`/finanzas/arqueo/z?mode=template&start=${today}&end=${today}`"
+            :to="`/finanzas/arqueo/z?mode=template&start=${today}`"
             class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
           >
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
