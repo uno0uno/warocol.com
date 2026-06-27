@@ -45,8 +45,9 @@ const channelFilter = ref<'pos' | 'mesa' | 'online' | null>(null)
 const dateRangeDates = ref<Date[] | null>(null)
 const sortField = ref<'order_number' | 'order_date' | 'total_amount' | 'tip_amount' | 'payment_method'>('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
-const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
+const { timezone, todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
 const presetRange = (fromIso: string, toIso = todayISO()) => [dateAtNoon(fromIso), dateAtNoon(toIso)]
+const maxDate = computed(() => dateAtNoon(todayISO()))
 const formatIsoShort = (iso: string) => {
   const [year, month, day] = iso.split('-')
   return `${day}/${month}/${year.slice(2)}`
@@ -303,9 +304,9 @@ onMounted(() => {
   const qFrom = route.query.date_from as string | undefined
   const qTo = route.query.date_to as string | undefined
   if (qFrom && qTo) {
-    const from = new Date(`${qFrom}T00:00:00`)
-    const to = new Date(`${qTo}T00:00:00`)
-    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+    const from = /^\d{4}-\d{2}-\d{2}$/.test(qFrom) ? dateAtNoon(qFrom) : null
+    const to = /^\d{4}-\d{2}-\d{2}$/.test(qTo) ? dateAtNoon(qTo) : null
+    if (from && to && !isNaN(from.getTime()) && !isNaN(to.getTime())) {
       dateRangeDates.value = [from, to]
     }
   }
@@ -403,7 +404,8 @@ onUnmounted(() => clearRefreshHandler(refetch))
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :timezone="timezone"
+          :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"

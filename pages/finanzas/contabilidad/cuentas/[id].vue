@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, startOfMonth } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -10,6 +9,8 @@ const route = useRoute()
 const accountId = computed(() => route.params.id as string)
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
+const { formatCalendarDate } = useFormatters()
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
@@ -224,30 +225,32 @@ const saveSubAccount = async () => {
 }
 
 // ── Date range filter (default: current month) ─────────────────────────────
-const now = new Date()
-const dateRangeDates = ref<Date[] | null>([startOfMonth(now), now])
+const today = todayISO()
+const currentMonth = monthBounds(today)
+const maxDate = computed(() => dateAtNoon(todayISO()))
+const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
-  { label: 'Hoy',           value: [new Date(), new Date()] },
-  { label: 'Ayer',          value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
-  { label: 'Esta semana',   value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Este mes',      value: [startOfMonth(new Date()), new Date()] },
-  { label: 'Último mes',    value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+  { label: 'Hoy',             value: [dateAtNoon(today), dateAtNoon(today)] },
+  { label: 'Ayer',            value: [dateAtNoon(addDaysISO(today, -1)), dateAtNoon(addDaysISO(today, -1))] },
+  { label: 'Esta semana',     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: 'Este mes',        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: 'Último mes',      value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
+  { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = formatCalendarDate(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+  return `${from} - ${formatCalendarDate(isoFromDate(dates[1]))}`
 }
 
 const dateRange = computed(() => {
   if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
   const [from, to] = dateRangeDates.value
   if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
+  return { from: isoFromDate(from), to: isoFromDate(to) }
 })
 
 // ── Journal entries filters ────────────────────────────────────────────────
@@ -584,7 +587,8 @@ const openEntryDetail = (entry: { id: string }) => {
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :timezone="timezone"
+          :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"
