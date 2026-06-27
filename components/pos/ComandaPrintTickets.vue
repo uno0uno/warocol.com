@@ -8,8 +8,14 @@ const props = defineProps<{
   businessName?: string
 }>()
 
+const { timezone } = useTenantTimezone()
+
 function modifierLines(item: ComandaPrintPayload['items'][0]) {
   return item.modifiers_snapshot ?? []
+}
+
+function formatTicketTime(firedAt?: string | null) {
+  return formatComandaPrintTime(firedAt, timezone.value)
 }
 
 const printTicket = computed(() => {
@@ -59,7 +65,7 @@ const printTicket = computed(() => {
     >
       <div class="receipt-header">{{ businessName || 'WARO' }}</div>
       <div class="receipt-row receipt-small">*** COMANDA POS ***</div>
-      <div class="receipt-row receipt-small">{{ formatComandaPrintTime(printTicket.firedAt) }}</div>
+      <div class="receipt-row receipt-small">{{ formatTicketTime(printTicket.firedAt) }}</div>
       <div v-if="printTicket.tableDisplayName" class="receipt-row receipt-small">
         {{ printTicket.tableDisplayName }}
       </div>

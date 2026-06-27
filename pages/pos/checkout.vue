@@ -42,8 +42,17 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
+const { timezone } = useTenantTimezone()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
+
+function formatTenantDateTime(date = new Date()) {
+  return date.toLocaleString('es-CO', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: timezone.value,
+  })
+}
 
 function invalidateCheckoutPromoPreview() {
   cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] })
@@ -2531,7 +2540,7 @@ function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null;
   const customer = selectedCustomer.value
   const tableName = session?.tableName ?? null
   receiptPrintContext.value = {
-    soldAt: new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }),
+    soldAt: formatTenantDateTime(),
     wasMesa: wasMesaMode.value || isMesaMode.value,
     isBar: session?.isBar ?? false,
     tableName,
@@ -2555,7 +2564,7 @@ function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null;
 // exposed (#pos-prefactura instead of the default #pos-receipt). The post-
 // payment receipt path is undisturbed.
 const prefacturaDateTime = computed(() =>
-  new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+  formatTenantDateTime()
 )
 // Prefactura is purely visual — never block on tax preview state. If taxes
 // haven't loaded (or the tenant has no taxes configured), the prefactura
