@@ -68,9 +68,9 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching restaurants for sitemap:', error)
   }
 
-  // URLs de directorios por ciudad (warocol.com#615) — un entry por ciudad
-  // con tenants activos. Sin estas entries el directorio /<ciudad> existe
-  // pero no llega a Google.
+  // URLs de directorios por ciudad/municipio (warocol.com#615) — solo
+  // entries con tenants activos. Los municipios vacios pueden resolver por
+  // ruta directa, pero no se indexan masivamente desde el sitemap.
   let cityUrls: Array<{ loc: string; lastmod: string; changefreq: string; priority: string }> = []
   try {
     const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }

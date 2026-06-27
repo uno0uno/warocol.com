@@ -37,6 +37,8 @@ const {
 
 const restaurants = computed(() => (responseData.value as { data?: unknown[] } | null)?.data ?? [])
 const error = computed(() => (fetchError.value as { message?: string } | null)?.message ?? null)
+const hasRestaurants = computed(() => restaurants.value.length > 0)
+const isEmptyDirectory = computed(() => !pending.value && !error.value && !hasRestaurants.value)
 
 useSeoMeta({
   title: () => `Restaurantes en ${cityName.value} - Waro Colombia`,
@@ -53,9 +55,12 @@ useSeoMeta({
   twitterDescription: () => `Descubre los mejores restaurantes en ${cityName.value}.`,
 })
 
-useHead({
-  link: [{ rel: 'canonical', href: () => `${siteUrl}/${props.citySlug}` }],
-})
+useHead(() => ({
+  link: [{ rel: 'canonical', href: `${siteUrl}/${props.citySlug}` }],
+  meta: isEmptyDirectory.value
+    ? [{ name: 'robots', content: 'noindex,follow' }]
+    : [],
+}))
 </script>
 
 <template>
@@ -77,7 +82,7 @@ useHead({
           Descubre los mejores restaurantes de la ciudad
         </p>
         <span
-          v-if="!pending && restaurants.length > 0"
+          v-if="!pending && hasRestaurants"
           class="inline-block px-4 py-1.5 bg-surface/20 backdrop-blur-sm rounded-full text-sm font-semibold text-action-primary-text"
         >
           {{ restaurants.length }} restaurante{{ restaurants.length !== 1 ? 's' : '' }}
@@ -109,7 +114,7 @@ useHead({
     </div>
 
     <!-- Restaurants Grid -->
-    <div v-else-if="restaurants.length > 0" class="max-w-6xl mx-auto px-4 py-10">
+    <div v-else-if="hasRestaurants" class="max-w-6xl mx-auto px-4 py-10">
       <div class="flex items-center gap-4 mb-8">
         <h2 class="text-xl font-semibold text-foreground whitespace-nowrap">
           Todos los restaurantes · {{ cityName }}

@@ -4,9 +4,10 @@ import { MapPinIcon } from '@heroicons/vue/24/outline'
 import { useCityCatalog, type PublicCity } from '~/composables/useCityCatalog'
 
 /**
- * Directory hub (warocol.com#619). Lists every city in the curated
- * `public_cities` catalog: cities with active tenants get a count badge;
- * cities seeded for future expansion get a muted "Próximamente" tag.
+ * Directory hub (warocol.com#619). Lists cities/municipalities in the
+ * `public_cities` catalog only when they have active tenants. Empty catalog
+ * rows remain valid for operators and direct routes, but are not mass-linked
+ * here.
  *
  * The hub complements the discovery section on `/` — that one is a
  * marketing teaser, this one is the canonical entry point linked from
@@ -40,11 +41,12 @@ const CITY_VISUALS: Record<string, { displayName: string; imageUrl: string }> = 
 const cityDisplayName = (city: PublicCity) => CITY_VISUALS[city.city_slug]?.displayName ?? city.city
 const cityImageUrl = (city: PublicCity) => CITY_VISUALS[city.city_slug]?.imageUrl ?? null
 
-// The SSR plugin already prefetches with include_empty=true, so the
-// catalog is populated by the time this page renders. Sort: active first,
-// then by sort_order from the backend (already applied server-side).
+// The SSR plugin already prefetches with include_empty=true, so the catalog is
+// populated by the time this page renders. Only link populated directories:
+// sitemap.xml uses the same active-only intent with include_empty=false.
 const activeCities = computed(() => cities.value.filter((c) => c.tenant_count > 0))
 const upcomingCities = computed(() => cities.value.filter((c) => c.tenant_count === 0))
+const hasHiddenUpcomingCities = computed(() => upcomingCities.value.length > 0)
 
 useSeoMeta({
   title: 'Ciudades · WaRo Colombia',
@@ -70,7 +72,7 @@ useHead({
     <section class="ciudades-hero">
       <h1 class="ciudades-title font-quantico">RESTAURANTES POR CIUDAD</h1>
       <p class="ciudades-subtitle">
-        Descubre los restaurantes en cada ciudad donde WaRo está presente.
+        Descubre restaurantes en las ciudades y municipios donde WaRo está presente.
       </p>
     </section>
 
@@ -113,43 +115,11 @@ useHead({
       </div>
     </section>
 
-    <!-- Upcoming cities -->
-    <section v-if="upcomingCities.length > 0" class="ciudades-section">
-      <h2 class="ciudades-section-title">
-        <MapPinIcon class="ciudades-section-icon" aria-hidden="true" />
-        Próximamente
-      </h2>
-      <div class="ciudades-row">
-        <NuxtLink
-          v-for="city in upcomingCities"
-          :key="city.city_slug"
-          :to="`/${city.city_slug}`"
-          class="city-card city-card--upcoming"
-        >
-          <div class="city-card__image">
-            <div
-              :class="[
-                'city-card__gradient',
-                cityImageUrl(city) ? '' : 'city-card__gradient--upcoming',
-              ]"
-            >
-              <img
-                v-if="cityImageUrl(city)"
-                :src="cityImageUrl(city) || undefined"
-                alt=""
-                aria-hidden="true"
-                class="city-card__photo"
-              >
-              <span class="city-card__overlay-name">{{ cityDisplayName(city) }}</span>
-            </div>
-            <span class="city-card__badge">Próximamente</span>
-          </div>
-          <div class="city-card__meta">
-            <MapPinIcon class="city-card__meta-icon" aria-hidden="true" />
-            <span class="city-card__meta-text">{{ cityDisplayName(city) }}, {{ city.country }}</span>
-          </div>
-        </NuxtLink>
-      </div>
+    <section v-if="hasHiddenUpcomingCities" class="ciudades-note">
+      <MapPinIcon class="ciudades-note__icon" aria-hidden="true" />
+      <p>
+        El catálogo de WARO cubre municipios de Colombia. Aquí solo enlazamos lugares con restaurantes activos.
+      </p>
     </section>
 
     <!-- Defensive empty state (only fires if the catalog is unreachable) -->
@@ -266,13 +236,6 @@ useHead({
   outline: 2px solid hsl(262, 83%, 58%);
   outline-offset: 2px;
 }
-.city-card--upcoming {
-  opacity: 0.85;
-}
-.city-card--upcoming:hover {
-  opacity: 1;
-}
-
 /* Image area inside the card. Uses uploaded city artwork when available,
    otherwise falls back to the previous gradient placeholder. */
 .city-card__image {
@@ -307,10 +270,6 @@ useHead({
     linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.42) 100%),
     radial-gradient(circle at 70% 110%, rgba(255,255,255,0.18), transparent 55%);
   pointer-events: none;
-}
-.city-card__gradient--upcoming {
-  background:
-    linear-gradient(160deg, hsl(220, 18%, 70%) 0%, hsl(220, 14%, 45%) 100%);
 }
 .city-card__overlay-name {
   position: relative;
@@ -352,21 +311,6 @@ useHead({
   color: hsl(250, 10%, 35%);
 }
 
-/* "Próximamente" badge bottom-right (upcoming cities) */
-.city-card__badge {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(4px);
-  color: hsl(28, 80%, 32%);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 /* Meta row: pin + location text. */
 .city-card__meta {
   display: flex;
@@ -385,6 +329,28 @@ useHead({
   font-weight: 500;
   color: hsl(250, 30%, 30%);
   line-height: 1.25;
+}
+
+.ciudades-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 680px;
+  margin: 8px auto 48px;
+  padding: 16px 18px;
+  border: 1px solid hsl(220, 14%, 88%);
+  border-radius: 8px;
+  background: #ffffff;
+  color: hsl(250, 10%, 35%);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.ciudades-note__icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: hsl(262, 83%, 58%);
 }
 
 /* Empty (defensive) */

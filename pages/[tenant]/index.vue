@@ -312,8 +312,8 @@ const cancelSwitch = () => {
 </script>
 
 <template>
-  <!-- City directory dispatch (warocol.com#615). When the URL slug matches an
-       active public_cities entry, render the generic directory instead of the
+  <!-- City directory dispatch (warocol.com#615). When the URL slug matches a
+       known public_cities entry, render the generic directory instead of the
        tenant profile. The catalog is prefetched on SSR so this branches
        synchronously and Vue does not see a hydration mismatch. -->
   <NuxtLayout v-if="isCity" name="default">

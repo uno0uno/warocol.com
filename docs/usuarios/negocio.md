@@ -30,12 +30,12 @@ Define cómo te ven los clientes que te encuentran en WARO o en tu enlace direct
 
 ## Visibilidad en el directorio
 
-Toggle que controla si tu negocio aparece listado en `warocol.com/{ciudad}` para que clientes nuevos te descubran.
+Toggle que controla si tu negocio aparece listado en `warocol.com/{ciudad-o-municipio}` para que clientes nuevos te descubran.
 
-- **Activado** — apareces en el directorio público de tu ciudad.
+- **Activado** — apareces en el directorio público de tu ciudad o municipio cuando tu perfil está listo para mostrarse.
 - **Desactivado** — solo te encuentran quienes tengan tu enlace directo.
 
-> Si activas el directorio pero **no tienes ciudad seleccionada**, aparece una advertencia. Sin ciudad no apareces en ningún listado.
+> Si activas el directorio pero **no tienes ciudad o municipio seleccionado**, aparece una advertencia. Sin ubicación no apareces en ningún listado.
 
 ---
 
@@ -57,7 +57,7 @@ Comparte este link en tus redes y QR para que los clientes hagan pedidos online.
 | **Dirección** | Calle, número, complemento |
 | **Barrio** | Zona del local |
 | **País** | Bloqueado en Colombia |
-| **Ciudad** | Obligatoria si quieres aparecer en el directorio. Se elige de un catálogo |
+| **Ciudad o municipio** | Obligatorio si quieres aparecer en el directorio. Se elige del catálogo de Colombia |
 | **Teléfono** | Para que clientes te contacten |
 | **Email** | Para comunicaciones del negocio |
 
@@ -103,8 +103,8 @@ Links a tus cuentas. Aparecen como íconos en tu storefront público.
 
 ## Preguntas frecuentes
 
-**¿Por qué mi negocio no aparece en `warocol.com/{ciudad}`?**
-Revisa: (1) que la **ciudad** esté seleccionada, (2) que el toggle **Visibilidad en el directorio** esté activo, y (3) que tengas al menos un horario abierto en la semana.
+**¿Por qué mi negocio no aparece en `warocol.com/{ciudad-o-municipio}`?**
+Revisa: (1) que la **ciudad o municipio** esté seleccionada, (2) que el toggle **Visibilidad en el directorio** esté activo, y (3) que tengas al menos un horario abierto en la semana.
 
 **¿Puedo recibir pedidos sin tener menú en línea?**
 Necesitas tener al menos productos publicados en el [Menú](./menu) para que aparezcan en tu storefront.
