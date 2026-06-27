@@ -979,7 +979,9 @@ const today = todayISO()
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
 const initStart = (route.query.start as string) || today
-const initEnd   = (route.query.end   as string) || today
+const initEnd = arqueoWindowMode.value === 'template'
+  ? initStart
+  : ((route.query.end as string) || today)
 
 const dateRangeDates = ref<Date[]>([
   dateAtNoon(initStart),
