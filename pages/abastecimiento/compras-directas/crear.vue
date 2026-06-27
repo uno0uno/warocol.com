@@ -198,7 +198,7 @@
                     :locale="es"
                     auto-apply
                     :teleport="true"
-                    :max-date="new Date()"
+                    :max-date="maxPurchaseDate"
                     :format="formatPurchaseDate"
                     input-class-name="dp-custom-input"
                     menu-class-name="dp-custom-menu"
@@ -698,7 +698,12 @@ import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
 
+const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
+const tenantNowISO = () => combineDateAndTimeISO(todayISO(), timeHHMMFromISO(new Date().toISOString())) ?? new Date().toISOString()
+const purchaseDatePayloadISO = (date: Date) => dateAtNoon(isoFromDate(date)).toISOString()
+const maxPurchaseDate = computed(() => dateAtNoon(todayISO()))
 
 useHead({
   title: 'Nueva Compra Directa - Abastecimiento'
@@ -743,7 +748,7 @@ const localPurchaseUnits = ref<LocalPurchaseUnit[]>([])
 const form = ref({
   supplier_id: '',
   payment_type: 'contado',
-  purchase_date: new Date() as Date | null,
+  purchase_date: dateAtNoon(todayISO()) as Date | null,
   notes: '',
   invoice_number: '',
   invoice_files: [] as File[],
@@ -1589,7 +1594,7 @@ const handleSubmit = async () => {
       payment_type: form.value.payment_type
     }
 
-    if (form.value.purchase_date) payload.purchase_date = form.value.purchase_date.toISOString()
+    if (form.value.purchase_date) payload.purchase_date = purchaseDatePayloadISO(form.value.purchase_date)
     if (form.value.notes) payload.notes = form.value.notes
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
     if (form.value.payment_method) {
@@ -1598,7 +1603,7 @@ const handleSubmit = async () => {
         payload.payment_method_id = form.value.payment_method_id
       }
       payload.payment_amount = totalAmount.value
-      payload.payment_date = new Date().toISOString()
+      payload.payment_date = tenantNowISO()
     }
     if (form.value.payment_reference) payload.payment_reference = form.value.payment_reference
 

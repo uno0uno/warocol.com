@@ -12,6 +12,7 @@ export function useDateRangePresets(existing?: Ref<Date[] | null>) {
   const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
 
   const presetRange = (fromIso: string, toIso = todayISO()) => [dateAtNoon(fromIso), dateAtNoon(toIso)]
+  const maxDate = computed(() => dateAtNoon(todayISO()))
 
   const presetDates = computed(() => [
     { label: 'Hoy', value: presetRange(todayISO()) },
@@ -64,6 +65,7 @@ export function useDateRangePresets(existing?: Ref<Date[] | null>) {
   return {
     dateRangeDates,
     presetDates,
+    maxDate,
     formatDateRange,
     dateRange,
     clearDateRange,

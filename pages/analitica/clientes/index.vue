@@ -13,7 +13,7 @@ const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgr
 const lastUpdate = ref<Date>(new Date());
 
 // ── Filters ──────────────────────────────────────────────────────────────
-const dateRangeDates = ref<Date[] | null>(null);
+const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 
 // ── Search ────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
@@ -30,29 +30,6 @@ watch(searchQuery, () => {
   isSearchPending.value = !!searchQuery.value.trim()
   commitSearch()
 })
-
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  { label: 'Ayer', value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
-]);
-
-const formatDateRange = (dates: Date[]) => {
-  if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
-};
-
-const dateRange = computed(() => {
-  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
-  const [from, to] = dateRangeDates.value
-  if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
-});
 
 // ── Pagination ────────────────────────────────────────────────────────────
 const currentPage = ref(1)
@@ -228,7 +205,7 @@ onUnmounted(() => {
             placeholder="Rango de fechas"
             auto-apply
             :teleport="true"
-            :max-date="new Date()"
+            :max-date="maxDate"
             :format="formatDateRange"
             input-class-name="dp-custom-input"
             menu-class-name="dp-custom-menu"
