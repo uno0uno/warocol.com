@@ -3,6 +3,7 @@ import { inject, watch, onMounted, onUnmounted } from 'vue'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useNotifications } from '~/composables/useNotifications'
+import { normalizeTimezone } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -14,7 +15,8 @@ const toast = useToast()
 const cache = useQueryCache()
 const { markAsRead, notifications } = useNotifications()
 const requestId = computed(() => route.params.id as string)
-const { formatDateTime, formatCurrency } = useFormatters()
+const { formatCurrency } = useFormatters()
+const { timezone } = useTenantTimezone()
 
 interface TableQrItem {
   product_id: string
@@ -40,6 +42,7 @@ interface TableQrRequestDetail {
   payment_display?: string | null
   customer_notes?: string | null
   created_at: string
+  tenant_timezone?: string | null
   total_amount: number
 }
 
@@ -57,6 +60,18 @@ const {
 })
 
 const request = computed(() => requestResponse.value?.data ?? null)
+const requestTimezone = computed(() => normalizeTimezone(request.value?.tenant_timezone ?? timezone.value))
+const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: requestTimezone.value,
+}))
+const formatRequestDateTime = (value: string | null | undefined) =>
+  value ? tenantDateTimeFormatter.value.format(new Date(value)) : 'No especificada'
 const isPending = computed(() => request.value?.status === 'pending')
 const isLoading = computed(() => !requestResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestResponse.value != null)
@@ -222,7 +237,7 @@ const formatQuantity = (quantity: number) =>
 
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Fecha</p>
-          <p class="text-lg font-bold text-text-primary">{{ formatDateTime(request.created_at) }}</p>
+          <p class="text-lg font-bold text-text-primary">{{ formatRequestDateTime(request.created_at) }}</p>
         </div>
 
         <div class="bg-surface border border-border rounded-xl p-4">

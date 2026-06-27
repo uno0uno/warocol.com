@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
+import { normalizeTimezone } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -10,8 +11,9 @@ useHead({ title: 'Pedidos en mesa (QR) — WARO' })
 
 const route = useRoute()
 const router = useRouter()
-const { formatCurrency, formatDateTime } = useFormatters()
+const { formatCurrency } = useFormatters()
 const { currentTenant } = useTenantReactive()
+const { timezone } = useTenantTimezone()
 
 interface TableQrRequest {
   id: string
@@ -24,6 +26,7 @@ interface TableQrRequest {
   payment_method_name?: string | null
   payment_display?: string | null
   created_at: string
+  tenant_timezone?: string | null
 }
 
 interface TableQrRequestRow extends TableQrRequest {
@@ -34,6 +37,15 @@ interface TableGroup {
   table_id: string
   table_name: string
   requests: TableQrRequest[]
+}
+
+interface TableQrRequestsResponse {
+  success: boolean
+  data: {
+    tables: TableGroup[]
+    total_pending: number
+    tenant_timezone?: string | null
+  }
 }
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
@@ -62,7 +74,7 @@ const {
   refetch: refetchPending,
 } = useQuery({
   key: () => ['table-qr-requests', 'pending', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { tables: TableGroup[]; total_pending: number } }>(
+  query: () => $fetch<TableQrRequestsResponse>(
     '/api/table-qr-requests',
     { params: { status: 'pending' } },
   ),
@@ -72,6 +84,18 @@ const {
 
 const isLoading = computed(() => pendingStatus.value === 'loading' || (!pendingData.value && !fetchError.value))
 const isRefreshing = computed(() => pendingAsyncStatus.value === 'loading' && pendingData.value != null)
+const tenantTimezone = computed(() => normalizeTimezone(pendingData.value?.data?.tenant_timezone ?? timezone.value))
+const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: tenantTimezone.value,
+}))
+const formatRequestDateTime = (value: string | null | undefined) =>
+  value ? tenantDateTimeFormatter.value.format(new Date(value)) : 'No especificada'
 
 const tableOptions = computed(() =>
   (pendingData.value?.data?.tables ?? []).map(t => ({
@@ -242,7 +266,7 @@ const viewRequest = (request: TableQrRequestRow) => {
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ item.item_count }} item{{ item.item_count !== 1 ? 's' : '' }}
-                  · {{ formatDateTime(item.created_at) }}
+                  · {{ formatRequestDateTime(item.created_at) }}
                   <span v-if="formatTableQrPayment(item) !== '—'"> · {{ formatTableQrPayment(item) }}</span>
                 </p>
               </div>
@@ -256,7 +280,7 @@ const viewRequest = (request: TableQrRequestRow) => {
             <span class="text-sm font-semibold text-text-primary">{{ value }}</span>
           </template>
           <template #cell-created_at="{ value }">
-            <span class="text-sm text-text-secondary">{{ formatDateTime(value) }}</span>
+            <span class="text-sm text-text-secondary">{{ formatRequestDateTime(value) }}</span>
           </template>
           <template #cell-item_count="{ value }">
             <span class="text-sm text-text-secondary">{{ value }}</span>
