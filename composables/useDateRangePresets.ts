@@ -1,18 +1,24 @@
 import { ref, computed, type Ref } from 'vue'
 
 export type DateRangeApi = { from: string | null; to: string | null }
+export type DateRangeModel = Date[] | string[]
 
 const formatIsoShort = (iso: string) => {
   const [year, month, day] = iso.split('-')
   return `${day}/${month}/${year.slice(2)}`
 }
 
-export function useDateRangePresets(existing?: Ref<Date[] | null>) {
-  const dateRangeDates = existing ?? ref<Date[] | null>(null)
+export function useDateRangePresets(
+  existing?: Ref<DateRangeModel | null>,
+  options: { modelType?: 'date' | 'iso' } = {},
+) {
+  const modelType = options.modelType ?? 'date'
+  const dateRangeDates = existing ?? ref<DateRangeModel | null>(null)
   const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
 
-  const presetRange = (fromIso: string, toIso = todayISO()) => [dateAtNoon(fromIso), dateAtNoon(toIso)]
-  const maxDate = computed(() => dateAtNoon(todayISO()))
+  const presetValue = (iso: string) => modelType === 'iso' ? iso : dateAtNoon(iso)
+  const presetRange = (fromIso: string, toIso = todayISO()) => [presetValue(fromIso), presetValue(toIso)]
+  const maxDate = computed(() => presetValue(todayISO()))
 
   const presetDates = computed(() => [
     { label: 'Hoy', value: presetRange(todayISO()) },
@@ -38,11 +44,14 @@ export function useDateRangePresets(existing?: Ref<Date[] | null>) {
     },
   ])
 
-  const formatDateRange = (dates: Date[]) => {
+  const modelValueToIso = (value: Date | string) =>
+    typeof value === 'string' ? value : isoFromDate(value)
+
+  const formatDateRange = (dates: DateRangeModel) => {
     if (!dates || !dates[0]) return ''
-    const from = formatIsoShort(isoFromDate(dates[0]))
+    const from = formatIsoShort(modelValueToIso(dates[0]))
     if (!dates[1]) return from
-    const to = formatIsoShort(isoFromDate(dates[1]))
+    const to = formatIsoShort(modelValueToIso(dates[1]))
     return `${from} - ${to}`
   }
 
@@ -53,8 +62,8 @@ export function useDateRangePresets(existing?: Ref<Date[] | null>) {
     const [from, to] = dateRangeDates.value
     if (!from || !to) return { from: null, to: null }
     return {
-      from: isoFromDate(from),
-      to: isoFromDate(to),
+      from: modelValueToIso(from),
+      to: modelValueToIso(to),
     }
   })
 
