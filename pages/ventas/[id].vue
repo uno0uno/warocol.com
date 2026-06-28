@@ -136,8 +136,17 @@ const isUnrecoverableRejection = computed(() => {
   return msg.includes('ya se encuentra validado')
 })
 
+const isCreditOnlyInvoiceBlocked = computed(() => {
+  const o = orderData.value
+  if (!o) return false
+  return o.payment_method === 'credit'
+    && ((o.split_payments ?? []).length === 0)
+})
+
 const canRetryInvoice = computed(() =>
-  invoiceData.value?.status === 'rejected' && !isUnrecoverableRejection.value,
+  invoiceData.value?.status === 'rejected'
+    && !isUnrecoverableRejection.value
+    && !isCreditOnlyInvoiceBlocked.value,
 )
 
 const isMatiasAuthInvoiceError = computed(() => {
@@ -147,6 +156,10 @@ const isMatiasAuthInvoiceError = computed(() => {
 
 const emitInvoice = async () => {
   if (isEmittingInvoice.value) return
+  if (isCreditOnlyInvoiceBlocked.value) {
+    emitInvoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    return
+  }
   isEmittingInvoice.value = true
   emitInvoiceError.value = ''
   try {
@@ -204,9 +217,11 @@ const canEmitInvoiceForOrder = computed(() => Boolean(
     && isInvoicingReady.value
     && order.value?.status === 'completed'
     && orderHasInvoiceCustomer.value
+    && !isCreditOnlyInvoiceBlocked.value
 ))
 const shouldShowInvoiceSection = computed(() => Boolean(
   invoiceData.value
+    || isCreditOnlyInvoiceBlocked.value
     || (
       isInvoicingReady.value
       && !isReadinessLoading.value
@@ -1069,6 +1084,24 @@ onUnmounted(() => {
               </svg>
               {{ emitInvoiceError }}
             </p>
+          </div>
+        </template>
+
+        <!-- No invoice — pure credit orders are not emitted from this flow -->
+        <template v-else-if="isCreditOnlyInvoiceBlocked">
+          <div class="px-5 py-3 flex items-start gap-3">
+            <span class="w-9 h-9 rounded-lg bg-state-warning-bg text-state-warning-text flex items-center justify-center flex-shrink-0" aria-hidden="true">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 9v3.75m0 3.75h.008v.008H12v-.008Zm9-3.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary leading-tight">Factura electrónica no disponible</p>
+              <p class="text-xs text-text-secondary leading-snug">
+                Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.
+              </p>
+            </div>
           </div>
         </template>
 

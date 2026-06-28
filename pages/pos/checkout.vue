@@ -2248,6 +2248,10 @@ async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
 
 const generateInvoice = async () => {
   if (invoiceLoading.value) return
+  if (isCreditOnlyInvoiceBlocked.value) {
+    invoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    return
+  }
 
   // Determine which order_ids to invoice
   const ids: string[] = []
@@ -2471,6 +2475,10 @@ const orderResultChargedAmount = computed(() => {
       - (Number(result.advance_applied) || 0),
   )
 })
+const isCreditOnlyInvoiceBlocked = computed(() =>
+  orderResult.value?.payment_method === 'credit'
+  && splitPaymentsSnapshot.value.length === 0
+)
 
 const receiptPromoBreakdown = computed(() => {
   const breakdown = orderResult.value?.promo_breakdown ?? []
@@ -2598,6 +2606,10 @@ const retryInvoice = async () => {
 // wizard when the customer has no fiscal data, otherwise emits directly.
 const requestInvoice = async () => {
   if (invoiceLoading.value) return
+  if (isCreditOnlyInvoiceBlocked.value) {
+    invoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    return
+  }
   if (selectedCustomer.value && !selectedCustomer.value.fiscal_id && !isAnonymousCustomer.value) {
     fiscalWizardError.value = ''
     fiscalWizardForm.value = {
@@ -4640,7 +4652,7 @@ onUnmounted(() => {
           <!-- Electronic invoice (DIAN) — cashier triggers emission, but never sees CUFE/PDF -->
           <div v-if="orderResult?.status !== 'pending' && (orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0)" class="mb-4">
             <!-- Not requested yet — gated on tenant readiness (#450) -->
-            <template v-if="isInvoicingReady && !isReadinessLoading && !invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
+            <template v-if="isInvoicingReady && !isReadinessLoading && !isCreditOnlyInvoiceBlocked && !invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
               <button
                 @click="requestInvoice"
                 class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -4651,6 +4663,9 @@ onUnmounted(() => {
                 {{ (orderResult?.order_ids?.length ?? 0) > 1 ? `Facturar ${orderResult?.order_ids?.length} órdenes` : 'Generar factura electrónica DIAN' }}
               </button>
             </template>
+            <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-xl border border-state-warning-border bg-state-warning-bg px-4 py-3 text-sm text-state-warning-text">
+              Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.
+            </div>
 
             <!-- Inline fiscal-data wizard -->
             <div v-else-if="fiscalWizardOpen" class="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
