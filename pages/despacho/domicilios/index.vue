@@ -12,6 +12,7 @@ const { currentTenant } = useTenantReactive()
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
+const { isoFromDate } = useTenantTimezone()
 const statusFilter = ref<string | null>(null)
 const orderTypeFilter = ref<string | null>(null)
 const statusHeaderFilter = computed({
@@ -87,7 +88,7 @@ const displayOrders = computed(() => {
   return ordersRaw.value.filter((order: any) => {
     if (orderTypeFilter.value && order.order_type !== orderTypeFilter.value) return false
     if (from && to) {
-      const day = String(order.order_date ?? '').slice(0, 10)
+      const day = order.order_date ? isoFromDate(new Date(order.order_date)) : ''
       if (!day || day < from || day > to) return false
     }
     if (!q) return true

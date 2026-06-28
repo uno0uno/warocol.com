@@ -52,7 +52,8 @@
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :timezone="effectiveTimezone"
+          :max-date="effectiveMaxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"
@@ -102,12 +103,14 @@ interface Props {
   dateRange?: Date[] | null
   presetDates?: { label: string; value: Date[] }[]
   formatDateRange?: (dates: Date[]) => string
+  timezone?: string
+  maxDate?: Date
   showSearch?: boolean
   showDateRange?: boolean
   showClear?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   search: '',
   searchPlaceholder: 'Buscar...',
   searchField: '',
@@ -115,10 +118,16 @@ withDefaults(defineProps<Props>(), {
   dateRange: null,
   presetDates: () => [],
   formatDateRange: () => '',
+  timezone: undefined,
+  maxDate: undefined,
   showSearch: true,
   showDateRange: true,
   showClear: false,
 })
+
+const { timezone: tenantTimezone, todayISO, dateAtNoon } = useTenantTimezone()
+const effectiveTimezone = computed(() => props.timezone ?? tenantTimezone.value)
+const effectiveMaxDate = computed(() => props.maxDate ?? dateAtNoon(todayISO()))
 
 const emit = defineEmits<{
   'update:search': [value: string]
