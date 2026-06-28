@@ -28,24 +28,28 @@ const CLASS_SHORT: Record<string, string> = {
   '1': 'Activos', '2': 'Pasivos', '3': 'Patrimonio',
   '4': 'Ingresos', '5': 'Gastos', '6': 'Costos',
 }
-const CLASS_VARIANTS: Record<string, string> = {
-  '1': 'primary', '2': 'warning', '3': 'secondary',
-  '4': 'success', '5': 'destructive', '6': 'warning',
-}
 const CLASS_BG: Record<string, string> = {
   '1': 'bg-primary/10', '2': 'bg-state-warning-bg', '3': 'bg-status-chip-bg',
-  '4': 'bg-state-success-bg',  '5': 'bg-state-danger-bg',   '6': 'bg-state-warning-bg',
+  '4': 'bg-state-success-bg', '5': 'bg-state-danger-bg', '6': 'bg-state-warning-bg',
 }
 const CLASS_TEXT: Record<string, string> = {
-  '1': 'text-primary',   '2': 'text-state-warning-text',  '3': 'text-status-chip-text',
-  '4': 'text-state-success-text', '5': 'text-state-danger-text',     '6': 'text-state-warning-text',
+  '1': 'text-primary', '2': 'text-state-warning-text', '3': 'text-status-chip-text',
+  '4': 'text-state-success-text', '5': 'text-state-danger-text', '6': 'text-state-warning-text',
+}
+const ACCOUNT_CLASS_CHIP: Record<string, string> = {
+  '1': 'bg-[rgba(124,59,237,0.10)] text-[#7c3bed]',
+  '2': 'bg-[rgba(112,44,0,0.10)] text-[#702c00]',
+  '3': 'bg-[rgba(33,29,53,0.10)] text-[#211d35]',
+  '4': 'bg-[rgba(0,79,0,0.10)] text-[#004f00]',
+  '5': 'bg-[rgba(220,38,38,0.10)] text-[#991b1b]',
+  '6': 'bg-[rgba(112,44,0,0.10)] text-[#702c00]',
 }
 const pucLevel = (code: string) => {
   const len = code.length
-  if (len === 1) return { label: 'Clase',    variant: 'primary' }
-  if (len === 2) return { label: 'Grupo',    variant: 'secondary' }
-  if (len === 4) return { label: 'Cuenta',   variant: 'warning' }
-  return              { label: 'Subcuenta', variant: 'success' }
+  if (len === 1) return { label: 'Clase', variant: 'primary' }
+  if (len === 2) return { label: 'Grupo', variant: 'secondary' }
+  if (len === 4) return { label: 'Cuenta', variant: 'warning' }
+  return { label: 'Subcuenta', variant: 'success' }
 }
 const SOURCE_LABELS: Record<string, string> = {
   ventas: 'Ventas', gastos: 'Gastos', nomina: 'Nómina',
@@ -81,6 +85,15 @@ const { data: accountsData, refetch: refetchAccounts } = useQuery({
 
 const account = computed<TenantAccount | null>(() =>
   accountsData.value?.data?.find(a => a.id === accountId.value) ?? null
+)
+const accountClassLabel = computed(() =>
+  account.value ? (CLASS_SHORT[account.value.accountClass] || account.value.accountClass) : ''
+)
+const accountClassChipClass = computed(() =>
+  account.value ? (ACCOUNT_CLASS_CHIP[account.value.accountClass] || 'bg-[rgba(62,68,81,0.10)] text-[#3e4451]') : ''
+)
+const accountBalanceLabel = computed(() =>
+  account.value?.normalBalance === 'debit' ? 'Débito' : 'Crédito'
 )
 
 // Sub-accounts: direct children of this account
@@ -155,14 +168,14 @@ const availableMethods = computed<PaymentMethod[]>(() => {
 })
 
 // ── Create sub-account slide-over ──────────────────────────────────────────
-const showCreatePanel  = ref(false)
-const createSuffix     = ref('')   // only the part the user types (e.g. "05")
-const createName       = ref('')
-const createIsDetail   = ref(true)
-const createMethodId   = ref('')   // optional: associate to payment method
-const creating         = ref(false)
-const createError      = ref('')
-const codeInput        = ref<HTMLInputElement | null>(null)
+const showCreatePanel = ref(false)
+const createSuffix = ref('')   // only the part the user types (e.g. "05")
+const createName = ref('')
+const createIsDetail = ref(true)
+const createMethodId = ref('')   // optional: associate to payment method
+const creating = ref(false)
+const createError = ref('')
+const codeInput = ref<HTMLInputElement | null>(null)
 
 // Full code = parent prefix + user-typed suffix
 const createFullCode = computed(() => (account.value?.code ?? '') + createSuffix.value.trim())
@@ -172,11 +185,11 @@ const suggestSuffix = (parentCode: string): string =>
   suggestSubAccountSuffix(parentCode, accountsData.value?.data ?? [])
 
 const openCreatePanel = async () => {
-  createSuffix.value   = account.value ? suggestSuffix(account.value.code) : ''
-  createName.value     = ''
+  createSuffix.value = account.value ? suggestSuffix(account.value.code) : ''
+  createName.value = ''
   createIsDetail.value = true
   createMethodId.value = ''
-  createError.value    = ''
+  createError.value = ''
   showCreatePanel.value = true
   await nextTick()
   codeInput.value?.focus()
@@ -231,11 +244,11 @@ const maxDate = computed(() => dateAtNoon(todayISO()))
 const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
-  { label: 'Hoy',             value: [dateAtNoon(today), dateAtNoon(today)] },
-  { label: 'Ayer',            value: [dateAtNoon(addDaysISO(today, -1)), dateAtNoon(addDaysISO(today, -1))] },
-  { label: 'Esta semana',     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
-  { label: 'Este mes',        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
-  { label: 'Último mes',      value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
+  { label: 'Hoy', value: [dateAtNoon(today), dateAtNoon(today)] },
+  { label: 'Ayer', value: [dateAtNoon(addDaysISO(today, -1)), dateAtNoon(addDaysISO(today, -1))] },
+  { label: 'Esta semana', value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: 'Este mes', value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: 'Último mes', value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
   { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
 
@@ -300,11 +313,11 @@ const { data: entriesData, asyncStatus: entriesAsyncStatus, error: entriesError,
   staleTime: 30_000,
 })
 
-const isLoading    = computed(() => entriesData.value == null && !entriesError.value)
+const isLoading = computed(() => entriesData.value == null && !entriesError.value)
 const isRefreshing = computed(() => entriesAsyncStatus.value === 'loading' && entriesData.value != null)
-const entries      = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
+const entries = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
 const totalEntries = computed(() => entriesData.value?.total ?? 0)
-const totalPages   = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
+const totalPages = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
 const openingBalance = computed(() => entriesData.value?.openingBalance ?? 0)
 
 // ── Running balance per row ────────────────────────────────────────────────
@@ -328,7 +341,7 @@ const entriesWithBalance = computed<EntryWithBalance[]>(() => {
 })
 
 // Period totals (all entries in range, not just current page — approximated from page)
-const periodDebits  = computed(() => entries.value.reduce((s, e) => s + (e.totalDebit ?? 0), 0))
+const periodDebits = computed(() => entries.value.reduce((s, e) => s + (e.totalDebit ?? 0), 0))
 const periodCredits = computed(() => entries.value.reduce((s, e) => s + (e.totalCredit ?? 0), 0))
 const closingBalance = computed(() => {
   const last = entriesWithBalance.value[entriesWithBalance.value.length - 1]
@@ -337,14 +350,14 @@ const closingBalance = computed(() => {
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'entryDate',      title: 'Fecha',      sortable: false },
-  { key: 'description',    title: 'Descripción', sortable: false },
-  { key: 'sourceModule',   title: 'Módulo',      sortable: false },
-  { key: 'reference',      title: 'Referencia',  sortable: false },
-  { key: 'totalDebit',     title: 'Débito',      sortable: false },
-  { key: 'totalCredit',    title: 'Crédito',     sortable: false },
-  { key: 'runningBalance', title: 'Saldo',       sortable: false },
-  { key: 'status',         title: 'Estado',      sortable: false },
+  { key: 'entryDate', title: 'Fecha', sortable: false },
+  { key: 'description', title: 'Descripción', sortable: false },
+  { key: 'sourceModule', title: 'Módulo', sortable: false },
+  { key: 'reference', title: 'Referencia', sortable: false },
+  { key: 'totalDebit', title: 'Débito', sortable: false },
+  { key: 'totalCredit', title: 'Crédito', sortable: false },
+  { key: 'runningBalance', title: 'Saldo', sortable: false },
+  { key: 'status', title: 'Estado', sortable: false },
 ]
 
 const formatDate = (iso: string) => {
@@ -391,151 +404,87 @@ const openEntryDetail = (entry: { id: string }) => {
 <template>
   <div class="page-layout">
 
-    <!-- ── Account header card (matches clientes/[id] visual style) ──── -->
-    <div v-if="account" class="bg-white border border-border rounded-xl overflow-hidden">
-
-      <!-- Top: avatar + name (left) / code + toggle (right) -->
-      <div class="p-5 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
-          <!-- Left: class-colored circle + name + subtitle -->
-          <div class="flex items-center gap-3 min-w-0">
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-              :class="CLASS_BG[account.accountClass] || 'bg-primary/10'"
-            >
-              <span class="text-lg font-bold font-mono" :class="CLASS_TEXT[account.accountClass] || 'text-primary'">
-                {{ account.code[0] }}
+    <!-- ── Account card (Figma Account Card, adapted to WARO tokens) ──── -->
+    <div v-if="account" class="bg-white border border-[#d6d8dc] rounded-xl px-5 py-4 overflow-hidden">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex min-w-0 flex-1 flex-col items-start gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs leading-4 font-semibold"
+                :class="accountClassChipClass">
+                {{ accountClassLabel }}
+              </span>
+              <span
+                class="inline-flex items-center rounded-full bg-[rgba(112,44,0,0.10)] px-2.5 py-1 text-xs leading-4 font-semibold text-[#702c00]">
+                {{ pucLevel(account.code).label }}
+              </span>
+              <span
+                class="inline-flex items-center rounded-full bg-[rgba(33,29,53,0.10)] px-2.5 py-1 text-xs leading-4 font-semibold text-[#211d35]">
+                {{ accountBalanceLabel }}
+              </span>
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs leading-4 font-semibold"
+                :class="account.isActive ? 'bg-[rgba(0,79,0,0.10)] text-[#004f00]' : 'bg-[rgba(62,68,81,0.10)] text-[#3e4451]'">
+                {{ account.isActive ? 'Activa' : 'Inactiva' }}
               </span>
             </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <h2 class="text-xl font-bold text-text-primary truncate">{{ account.name }}</h2>
-                <svg v-if="account.isSystem" class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <div class="min-w-0 lg:min-h-[48px] flex flex-col justify-center">
+              <div class="flex items-start gap-2 min-w-0">
+                <h2
+                  class="text-[22px] sm:text-[24px] leading-[29px] sm:leading-[32px] font-extrabold text-[#211d35] break-words">
+                  {{ account.name }}
+                </h2>
+                <svg v-if="account.isSystem" class="mt-1.5 h-4 w-4 flex-shrink-0 text-[#3e4451]/70" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Cuenta PUC</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div class="inline-flex h-4 items-center gap-2 whitespace-nowrap">
+                <span class="text-xs leading-4 font-semibold uppercase tracking-[0.04em] text-[#3e4451]">
+                  Cuenta PUC
+                </span>
+                <span class="font-mono text-sm leading-5 font-bold text-[#211d35]">
+                  {{ account.code }}
+                </span>
+              </div>
             </div>
           </div>
-
-          <!-- Right: account code (big) + actions -->
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <div class="text-right mr-1">
-              <p class="text-2xl sm:text-3xl font-bold font-mono text-text-primary">{{ account.code }}</p>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Código PUC</p>
-            </div>
-
-            <!-- + Subcuenta (only for Clase/Grupo/Cuenta — not for Subcuenta 6+ digits) -->
-            <button
-              v-if="account.code.length < 6"
-              type="button"
-              class="min-h-[44px] px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-1.5"
-              aria-label="Crear subcuenta"
-              @click="openCreatePanel"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="flex flex-shrink-0 flex-wrap items-center gap-2 lg:justify-end">
+            <button v-if="account.code.length < 6" type="button"
+              class="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#7c3bed] px-4 text-sm font-semibold leading-5 text-white transition-colors hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/30 active:scale-[0.98]"
+              aria-label="Crear subcuenta" @click="openCreatePanel">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="hidden sm:inline">Subcuenta</span>
+              <span>Subcuenta</span>
             </button>
 
-            <button
-              type="button"
-              class="min-h-[44px] px-3 rounded-lg border-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-              :class="account.isActive
-                ? 'border-border text-text-secondary hover:border-destructive hover:text-destructive'
-                : 'border-primary text-primary hover:bg-primary/10'"
-              :disabled="togglingActive"
-              :aria-label="account.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
-              @click="toggleActive"
-            >
-              <svg v-if="togglingActive" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button"
+              class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#d6d8dc] px-3.5 text-sm font-semibold leading-5 text-[#3e4451] transition-colors hover:border-[#c4c7ce] hover:bg-[#f7f7f8] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="togglingActive" :aria-label="account.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
+              @click="toggleActive">
+              <svg v-if="togglingActive" class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"
+                aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
               <span>{{ account.isActive ? 'Desactivar' : 'Activar' }}</span>
             </button>
 
-            <!-- Issue #531 — Actualizar saldo real (solo Activo debit-normal hoja activa) -->
             <button
               v-if="account.isDetail && account.accountClass === '1' && account.normalBalance === 'debit' && account.isActive"
               type="button"
-              class="min-h-[44px] px-3 rounded-lg border-2 border-primary text-primary text-sm font-medium transition-colors hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98] flex items-center gap-1.5"
-              :aria-label="`Actualizar saldo real de ${account.name}`"
-              @click="showAdjustPanel = true"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#7c3bed] px-3.5 text-sm font-semibold leading-5 text-[#7c3bed] transition-colors hover:bg-[rgba(124,59,237,0.08)] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/25 active:scale-[0.98]"
+              :aria-label="`Actualizar saldo real de ${account.name}`" @click="showAdjustPanel = true">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Actualizar saldo</span>
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- Info grid: Clase / Nivel / Saldo normal / Estado -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-border">
-
-        <!-- Clase -->
-        <div class="p-4 border-b sm:border-b-0 border-r border-border">
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Clase</p>
-          </div>
-          <UiStatusBadge
-            :value="CLASS_SHORT[account.accountClass] || account.accountClass"
-            format="text"
-            :variant="CLASS_VARIANTS[account.accountClass] || 'secondary'"
-            size="sm"
-          />
-        </div>
-
-        <!-- Nivel -->
-        <div class="p-4 border-b sm:border-b-0 sm:border-r border-border">
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h4" />
-            </svg>
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Nivel</p>
-          </div>
-          <UiStatusBadge
-            :value="pucLevel(account.code).label"
-            format="text"
-            :variant="pucLevel(account.code).variant"
-            size="sm"
-          />
-        </div>
-
-        <!-- Saldo normal -->
-        <div class="p-4 border-r border-border">
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-            </svg>
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Saldo normal</p>
-          </div>
-          <p class="text-sm font-semibold text-text-primary">
-            {{ account.normalBalance === 'debit' ? 'Débito' : 'Crédito' }}
-          </p>
-        </div>
-
-        <!-- Estado -->
-        <div class="p-4">
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Estado</p>
-          </div>
-          <UiStatusBadge
-            :value="account.isActive ? 'Activa' : 'Inactiva'"
-            format="text"
-            :variant="account.isActive ? 'success' : 'secondary'"
-            size="sm"
-          />
         </div>
       </div>
     </div>
@@ -544,21 +493,14 @@ const openEntryDetail = (entry: { id: string }) => {
     <div v-if="subAccounts.length" class="flex flex-col gap-1.5">
       <p class="text-xs font-medium text-text-secondary uppercase tracking-wider">Subcuentas</p>
       <div class="flex flex-wrap gap-2">
-        <NuxtLink
-          v-for="sub in subAccounts"
-          :key="sub.id"
-          :to="`/finanzas/contabilidad/cuentas/${sub.id}`"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group"
-        >
+        <NuxtLink v-for="sub in subAccounts" :key="sub.id" :to="`/finanzas/contabilidad/cuentas/${sub.id}`"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group">
           <span class="text-xs font-mono font-medium text-text-primary">{{ sub.code }}</span>
           <span class="text-xs text-text-secondary truncate max-w-[160px]">{{ sub.name }}</span>
-          <UiStatusBadge
-            :value="sub.isActive ? 'Activa' : 'Inactiva'"
-            format="text"
-            :variant="sub.isActive ? 'success' : 'secondary'"
-            size="sm"
-          />
-          <svg class="w-3.5 h-3.5 text-text-secondary group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <UiStatusBadge :value="sub.isActive ? 'Activa' : 'Inactiva'" format="text"
+            :variant="sub.isActive ? 'success' : 'secondary'" size="sm" />
+          <svg class="w-3.5 h-3.5 text-text-secondary group-hover:text-primary transition-colors flex-shrink-0"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </NuxtLink>
@@ -578,40 +520,23 @@ const openEntryDetail = (entry: { id: string }) => {
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
 
         <!-- Date range picker (same pattern as ordenes) -->
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :timezone="timezone"
-          :max-date="maxDate"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="page = 1"
-        />
+        <VueDatePicker v-model="dateRangeDates" range :preset-dates="presetDates" :enable-time-picker="false"
+          :locale="es" placeholder="Rango de fechas" auto-apply :teleport="true" :timezone="timezone"
+          :max-date="maxDate" :format="formatDateRange" input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell" @update:model-value="page = 1" />
 
-        <select
-          v-model="statusFilter"
+        <select v-model="statusFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          @change="page = 1"
-        >
+          @change="page = 1">
           <option :value="null">Estado</option>
           <option value="draft">Borrador</option>
           <option value="posted">Publicado</option>
           <option value="void">Anulado</option>
         </select>
 
-        <select
-          v-model="sourceFilter"
+        <select v-model="sourceFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          @change="page = 1"
-        >
+          @change="page = 1">
           <option :value="null">Módulo</option>
           <option value="ventas">Ventas</option>
           <option value="gastos">Gastos</option>
@@ -621,13 +546,9 @@ const openEntryDetail = (entry: { id: string }) => {
           <option value="manual">Manual</option>
         </select>
 
-        <button
-          v-if="hasActiveFilters"
-          type="button"
+        <button v-if="hasActiveFilters" type="button"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          aria-label="Limpiar filtros"
-          @click="clearFilters"
-        >
+          aria-label="Limpiar filtros" @click="clearFilters">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -635,10 +556,8 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <div class="flex-1" />
 
-        <NuxtLink
-          to="/finanzas/contabilidad/asientos/crear"
-          class="flex items-center gap-1.5 h-10 px-3 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap flex-shrink-0"
-        >
+        <NuxtLink to="/finanzas/contabilidad/asientos/crear"
+          class="flex items-center gap-1.5 h-10 px-3 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap flex-shrink-0">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -648,116 +567,123 @@ const openEntryDetail = (entry: { id: string }) => {
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-        <MetricCard
-          title="Saldo inicial"
-          :value="openingBalance"
-          format="currency"
-          :variant="openingBalance >= 0 ? 'primary' : 'destructive'"
-        />
+        <MetricCard title="Saldo inicial" :value="openingBalance" format="currency"
+          :variant="openingBalance >= 0 ? 'primary' : 'destructive'" />
         <MetricCard title="Débitos período" :value="periodDebits" format="currency" variant="primary" />
         <MetricCard title="Créditos período" :value="periodCredits" format="currency" variant="primary" />
-        <MetricCard
-          title="Saldo cierre"
-          :value="closingBalance"
-          format="currency"
-          :variant="closingBalance >= 0 ? 'primary' : 'destructive'"
-        />
+        <MetricCard title="Saldo cierre" :value="closingBalance" format="currency"
+          :variant="closingBalance >= 0 ? 'primary' : 'destructive'" />
       </div>
 
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
       <div class="[&_td]:!py-1 [&_th]:!py-1.5">
-          <UiResponsiveDataView
-            row-size="sm"
-            :columns="tableColumns"
-            :data="entriesWithBalance"
-            empty-message="Sin asientos para esta cuenta en el período"
-            empty-sub-message="Selecciona otro rango de fechas o crea un nuevo asiento"
-            variant="default"
-            @row-click="openEntryDetail"
-          >
-            <!-- Mobile card -->
-            <template #card="{ item, index }">
-              <button
-                type="button"
-                class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-left hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
-                :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-                :aria-label="`Ver detalle del asiento ${item.reference || item.description}`"
-                @click="openEntryDetail(item)"
-              >
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
-                    <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_LABELS[item.sourceModule] || item.sourceModule" format="text" :variant="SOURCE_VARIANTS[item.sourceModule] || 'secondary'" size="sm" />
-                  </div>
-                  <p class="text-sm font-medium text-text-primary mt-0.5" :title="item.description">{{ truncateDescription(item.description) }}</p>
+        <UiResponsiveDataView row-size="sm" :columns="tableColumns" :data="entriesWithBalance"
+          empty-message="Sin asientos para esta cuenta en el período"
+          empty-sub-message="Selecciona otro rango de fechas o crea un nuevo asiento" variant="default"
+          @row-click="openEntryDetail">
+          <!-- Mobile card -->
+          <template #card="{ item, index }">
+            <button type="button"
+              class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-left hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              :aria-label="`Ver detalle del asiento ${item.reference || item.description}`"
+              @click="openEntryDetail(item)">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
+                  <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_LABELS[item.sourceModule] || item.sourceModule"
+                    format="text" :variant="SOURCE_VARIANTS[item.sourceModule] || 'secondary'" size="sm" />
                 </div>
-                <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-                  <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{ formatCOP(item.totalDebit) }}</span>
-                  <span v-if="item.totalCredit" class="text-xs font-mono text-text-secondary tabular-nums">-{{ formatCOP(item.totalCredit) }}</span>
-                  <span class="text-xs font-mono font-semibold tabular-nums" :class="item.runningBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-                    {{ formatCOP(item.runningBalance) }}
-                  </span>
-                </div>
-              </button>
-            </template>
+                <p class="text-sm font-medium text-text-primary mt-0.5" :title="item.description">{{
+                  truncateDescription(item.description) }}</p>
+              </div>
+              <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+                <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{
+                  formatCOP(item.totalDebit) }}</span>
+                <span v-if="item.totalCredit" class="text-xs font-mono text-text-secondary tabular-nums">-{{
+                  formatCOP(item.totalCredit) }}</span>
+                <span class="text-xs font-mono font-semibold tabular-nums"
+                  :class="item.runningBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+                  {{ formatCOP(item.runningBalance) }}
+                </span>
+              </div>
+            </button>
+          </template>
 
-            <template #cell-entryDate="{ value }">
-              <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
-            </template>
+          <template #cell-entryDate="{ value }">
+            <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
+          </template>
 
-            <template #cell-description="{ value }">
-              <span
-                class="text-sm text-text-primary"
-                :title="value"
-              >{{ truncateDescription(value) }}</span>
-            </template>
+          <template #cell-description="{ value }">
+            <span class="text-sm text-text-primary" :title="value">{{ truncateDescription(value) }}</span>
+          </template>
 
-            <template #cell-sourceModule="{ value }">
-              <UiStatusBadge v-if="value" :value="SOURCE_LABELS[value] || value" format="text" :variant="SOURCE_VARIANTS[value] || 'secondary'" size="sm" />
-              <span v-else class="text-xs text-text-secondary">—</span>
-            </template>
+          <template #cell-sourceModule="{ value }">
+            <UiStatusBadge v-if="value" :value="SOURCE_LABELS[value] || value" format="text"
+              :variant="SOURCE_VARIANTS[value] || 'secondary'" size="sm" />
+            <span v-else class="text-xs text-text-secondary">—</span>
+          </template>
 
-            <template #cell-reference="{ value }">
-              <span class="text-xs font-mono text-text-secondary">{{ value || '—' }}</span>
-            </template>
+          <template #cell-reference="{ value }">
+            <span class="text-xs font-mono text-text-secondary">{{ value || '—' }}</span>
+          </template>
 
-            <template #cell-totalDebit="{ value }">
-              <span v-if="value" class="text-sm font-mono font-medium text-primary tabular-nums">{{ formatCOP(value) }}</span>
-              <span v-else class="text-xs text-text-secondary">—</span>
-            </template>
+          <template #cell-totalDebit="{ value }">
+            <span v-if="value" class="text-sm font-mono font-medium text-primary tabular-nums">{{ formatCOP(value)
+              }}</span>
+            <span v-else class="text-xs text-text-secondary">—</span>
+          </template>
 
-            <template #cell-totalCredit="{ value }">
-              <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatCOP(value) }}</span>
-              <span v-else class="text-xs text-text-secondary">—</span>
-            </template>
+          <template #cell-totalCredit="{ value }">
+            <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatCOP(value) }}</span>
+            <span v-else class="text-xs text-text-secondary">—</span>
+          </template>
 
-            <template #cell-runningBalance="{ value }">
-              <span class="text-sm font-mono font-semibold tabular-nums" :class="value >= 0 ? 'text-text-primary' : 'text-destructive'">
-                {{ formatCOP(value) }}
-              </span>
-            </template>
+          <template #cell-runningBalance="{ value }">
+            <span class="text-sm font-mono font-semibold tabular-nums"
+              :class="value >= 0 ? 'text-text-primary' : 'text-destructive'">
+              {{ formatCOP(value) }}
+            </span>
+          </template>
 
-            <template #cell-status="{ value }">
-              <UiStatusBadge :value="STATUS_LABELS[value] || value" format="text" :variant="STATUS_VARIANTS[value] || 'secondary'" size="sm" />
-            </template>
-          </UiResponsiveDataView>
+          <template #cell-status="{ value }">
+            <UiStatusBadge :value="STATUS_LABELS[value] || value" format="text"
+              :variant="STATUS_VARIANTS[value] || 'secondary'" size="sm" />
+          </template>
+        </UiResponsiveDataView>
       </div>
 
       <!-- Pagination -->
       <div v-if="totalEntries > PAGE_SIZE" class="flex items-center justify-end px-1 py-2">
         <div class="flex items-center gap-1">
-          <button :disabled="page <= 1" @click="page = 1" class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Primera página">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          <button :disabled="page <= 1" @click="page = 1"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Primera página">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
           </button>
-          <button :disabled="page <= 1" @click="page--" class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Anterior">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          <button :disabled="page <= 1" @click="page--"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Anterior">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
           <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ page }} / {{ totalPages }}</span>
-          <button :disabled="page >= totalPages" @click="page++" class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Siguiente">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          <button :disabled="page >= totalPages" @click="page++"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Siguiente">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
-          <button :disabled="page >= totalPages" @click="page = totalPages" class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Última página">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          <button :disabled="page >= totalPages" @click="page = totalPages"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Última página">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -767,32 +693,18 @@ const openEntryDetail = (entry: { id: string }) => {
 
   <!-- ── Slide-over: crear subcuenta ───────────────────────────────────────── -->
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="showCreatePanel"
-        class="fixed inset-0 z-40 bg-overlay-backdrop/40"
-        aria-hidden="true"
-        @click="closeCreatePanel"
-      />
+    <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
+      enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100"
+      leave-to-class="opacity-0">
+      <div v-if="showCreatePanel" class="fixed inset-0 z-40 bg-overlay-backdrop/40" aria-hidden="true"
+        @click="closeCreatePanel" />
     </Transition>
 
     <Transition name="cuenta-panel">
-      <div
-        v-if="showCreatePanel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Crear subcuenta"
+      <div v-if="showCreatePanel" role="dialog" aria-modal="true" aria-label="Crear subcuenta"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
-      >
+               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-border" aria-hidden="true" />
@@ -802,12 +714,10 @@ const openEntryDetail = (entry: { id: string }) => {
         <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div
-                class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                :class="CLASS_BG[account?.accountClass ?? '1'] || 'bg-primary/10'"
-                aria-hidden="true"
-              >
-                <svg class="w-5 h-5" :class="CLASS_TEXT[account?.accountClass ?? '1'] || 'text-primary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                :class="CLASS_BG[account?.accountClass ?? '1'] || 'bg-primary/10'" aria-hidden="true">
+                <svg class="w-5 h-5" :class="CLASS_TEXT[account?.accountClass ?? '1'] || 'text-primary'" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4" />
                 </svg>
               </div>
@@ -818,12 +728,9 @@ const openEntryDetail = (entry: { id: string }) => {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              aria-label="Cerrar panel"
+            <button type="button" aria-label="Cerrar panel"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-              @click="closeCreatePanel"
-            >
+              @click="closeCreatePanel">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -840,18 +747,12 @@ const openEntryDetail = (entry: { id: string }) => {
               Código PUC <span class="text-destructive" aria-hidden="true">*</span>
             </label>
             <div class="flex items-center rounded-lg bg-background overflow-hidden">
-              <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code }}</span>
+              <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code
+                }}</span>
               <span class="text-text-secondary select-none flex-shrink-0 pr-1">·</span>
-              <input
-                id="create-code"
-                ref="codeInput"
-                v-model="createSuffix"
-                type="text"
-                placeholder="05"
-                maxlength="6"
+              <input id="create-code" ref="codeInput" v-model="createSuffix" type="text" placeholder="05" maxlength="6"
                 class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
-                @keydown.escape="closeCreatePanel"
-              />
+                @keydown.escape="closeCreatePanel" />
             </div>
             <p class="text-xs text-text-secondary">
               Código completo:
@@ -864,15 +765,9 @@ const openEntryDetail = (entry: { id: string }) => {
             <label for="create-name" class="text-sm font-medium text-text-primary">
               Nombre <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <input
-              id="create-name"
-              v-model="createName"
-              type="text"
-              placeholder="ej: Nequi, Daviplata…"
+            <input id="create-name" v-model="createName" type="text" placeholder="ej: Nequi, Daviplata…"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
-              @keydown.enter="saveSubAccount"
-              @keydown.escape="closeCreatePanel"
-            />
+              @keydown.enter="saveSubAccount" @keydown.escape="closeCreatePanel" />
           </div>
 
           <!-- Asociar a método de pago (opcional) -->
@@ -881,11 +776,8 @@ const openEntryDetail = (entry: { id: string }) => {
               Asociar a método de pago
               <span class="text-text-secondary font-normal">(opcional)</span>
             </label>
-            <select
-              id="create-method"
-              v-model="createMethodId"
-              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
+            <select id="create-method" v-model="createMethodId"
+              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
               <option value="">— Sin asociar —</option>
               <option v-for="m in availableMethods" :key="m.id" :value="m.id">
                 {{ m.name }}
@@ -899,39 +791,36 @@ const openEntryDetail = (entry: { id: string }) => {
           <div class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-text-primary">Tipo</span>
             <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de cuenta">
-              <button
-                type="button"
-                :class="[
-                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
-                  createIsDetail
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-                @click="createIsDetail = true"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              <button type="button" :class="[
+                'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                createIsDetail
+                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+              ]" @click="createIsDetail = true">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 <span class="text-xs font-bold tracking-wide">Detalle</span>
-                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
+                <span
+                  :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
                   registra movimientos
                 </span>
               </button>
-              <button
-                type="button"
-                :class="[
-                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
-                  !createIsDetail
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-                @click="createIsDetail = false"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+              <button type="button" :class="[
+                'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                !createIsDetail
+                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+              ]" @click="createIsDetail = false">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"
+                  aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h4" />
                 </svg>
                 <span class="text-xs font-bold tracking-wide">Agrupadora</span>
-                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', !createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
+                <span
+                  :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', !createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
                   solo agrupa saldos
                 </span>
               </button>
@@ -939,9 +828,12 @@ const openEntryDetail = (entry: { id: string }) => {
           </div>
 
           <!-- Error inline -->
-          <div v-if="createError" class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-sm text-destructive" role="alert">
+          <div v-if="createError"
+            class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-sm text-destructive"
+            role="alert">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {{ createError }}
           </div>
@@ -949,11 +841,9 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <!-- Footer -->
         <div class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-3">
-          <button
-            :disabled="creating || !createSuffix.trim() || !createName.trim()"
+          <button :disabled="creating || !createSuffix.trim() || !createName.trim()"
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            @click="saveSubAccount"
-          >
+            @click="saveSubAccount">
             <svg v-if="creating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -962,8 +852,7 @@ const openEntryDetail = (entry: { id: string }) => {
           </button>
           <button
             class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-            @click="closeCreatePanel"
-          >
+            @click="closeCreatePanel">
             Cancelar
           </button>
         </div>
@@ -972,20 +861,12 @@ const openEntryDetail = (entry: { id: string }) => {
   </Teleport>
 
   <!-- Issue #531 — Actualizar saldo real -->
-  <FinanzasContabilidadAjustarSaldoPanel
-    v-model="showAdjustPanel"
-    :account="account"
-    :book-balance="closingBalance"
-    :all-accounts="allAccountsForPanel"
-    @success="onAdjustSuccess"
-  />
+  <FinanzasContabilidadAjustarSaldoPanel v-model="showAdjustPanel" :account="account" :book-balance="closingBalance"
+    :all-accounts="allAccountsForPanel" @success="onAdjustSuccess" />
 
   <!-- Issue #531 — Detalle del asiento (slide-over) -->
-  <FinanzasContabilidadAsientoDetailPanel
-    v-model="showEntryDetailPanel"
-    :entry-id="selectedEntryId"
-    :all-accounts="allAccountsForPanel"
-  />
+  <FinanzasContabilidadAsientoDetailPanel v-model="showEntryDetailPanel" :entry-id="selectedEntryId"
+    :all-accounts="allAccountsForPanel" />
 </template>
 
 <style scoped>
@@ -993,11 +874,14 @@ const openEntryDetail = (entry: { id: string }) => {
 .cuenta-panel-leave-active {
   transition: transform 0.3s ease;
 }
+
 .cuenta-panel-enter-from,
 .cuenta-panel-leave-to {
   transform: translateY(100%);
 }
+
 @media (min-width: 768px) {
+
   .cuenta-panel-enter-from,
   .cuenta-panel-leave-to {
     transform: translateX(100%);

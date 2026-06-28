@@ -8,154 +8,29 @@
       indicator="matrix"
     />
 
-    <!-- Loading State -->
     <div v-if="isLoadingCategories" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Main Content -->
-    <template v-else>
-    <!-- Header Card -->
-    <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
-      <div class="p-4 sm:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <!-- Expense Number -->
-          <div class="flex items-center space-x-2 sm:space-x-3">
-            <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-              </svg>
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                Nuevo Gasto
-              </p>
-              <p class="text-lg font-semibold text-text-primary">
-                Registro
-              </p>
-            </div>
-          </div>
-
-          <!-- Date -->
-          <div class="flex items-center space-x-2 sm:space-x-3">
-            <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                Fecha
-              </p>
-              <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                {{ formatCalendarDate(todayISO()) }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Progress Steps -->
-    <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
-      <div class="p-3 sm:p-6">
-        <div class="flex items-center justify-between">
-          <!-- Step 1 -->
-          <div class="flex items-center flex-1">
-            <div
-              class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-              :class="{
-                'bg-primary text-primary-foreground border-primary': currentStep === 1,
-                'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
-                'border-border text-text-secondary bg-transparent': currentStep < 1
-              }"
-            >
-              <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span v-else class="font-semibold text-sm sm:text-base">1</span>
-            </div>
-            <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-              <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
-                Datos Básicos
-              </p>
-              <p class="text-xs text-text-secondary hidden sm:block">Categoría y fecha</p>
-            </div>
-            <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="flex items-center flex-1">
-            <div
-              class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-              :class="{
-                'bg-primary text-primary-foreground border-primary': currentStep === 2,
-                'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
-                'border-border text-text-secondary bg-transparent': currentStep < 2
-              }"
-            >
-              <span class="font-semibold text-sm sm:text-base">2</span>
-              <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-              <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
-                Documentos
-              </p>
-              <p class="text-xs text-text-secondary hidden sm:block">Opcional</p>
-            </div>
-            <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="flex items-center">
-            <div
-              class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-              :class="{
-                'bg-primary text-primary-foreground border-primary': currentStep === 3,
-                'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
-                'border-border text-text-secondary bg-transparent': currentStep < 3
-              }"
-            >
-              <span class="font-semibold text-sm sm:text-base">3</span>
-            </div>
-            <div class="ml-1 sm:ml-3 min-w-0">
-              <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
-                Confirmar
-              </p>
-              <p class="text-xs text-text-secondary hidden sm:block">Revisar y guardar</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Form Content -->
-    <form @submit.prevent="handleNext">
-      <!-- Step 1: Basic Data -->
-      <Transition name="fade" mode="out-in">
-        <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Información del Gasto</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <!-- Date -->
+    <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+      <div class="xl:col-span-2 space-y-6">
+        <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
+          <UiFormSection title="Información del gasto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Fecha del Gasto *
+                <label class="block text-sm font-medium text-text-primary mb-1">
+                  Fecha del gasto *
                 </label>
                 <input
-                  type="date"
                   v-model="form.transactionDate"
+                  type="date"
                   required
                   class="input-base w-full px-4 py-2"
                 />
               </div>
 
-              <!-- Category -->
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
+                <label class="block text-sm font-medium text-text-primary mb-1">
                   Categoría *
                 </label>
                 <select
@@ -165,35 +40,33 @@
                 >
                   <option value="" disabled>Seleccionar categoría...</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                    {{ cat.categoryName }}
+                    {{ cat.categoryName || cat.name }}
                   </option>
                 </select>
               </div>
 
-              <!-- Description -->
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
+                <label class="block text-sm font-medium text-text-primary mb-1">
                   Descripción *
                 </label>
                 <input
-                  type="text"
                   v-model="form.description"
+                  type="text"
                   required
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej: Reparación de tubería"
+                  placeholder="Ej. reparación de tubería"
                 />
               </div>
 
-              <!-- Amount -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">
                   Monto *
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
-                    type="number"
                     v-model.number="form.amount"
+                    type="number"
                     required
                     min="0"
                     step="100"
@@ -203,15 +76,29 @@
                 </div>
               </div>
 
-              <!-- Expense Type -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de gasto
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">
+                  Método de pago *
                 </label>
                 <select
-                  v-model="form.expenseType"
+                  v-model="form.paymentMethod"
+                  required
                   class="input-base w-full px-4 py-2"
                 >
+                  <template v-for="group in paymentGroups" :key="group.slug">
+                    <option v-if="!group.methods.length" :value="group.slug">{{ group.name }}</option>
+                    <optgroup v-else :label="group.name">
+                      <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    </optgroup>
+                  </template>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">
+                  Tipo de gasto
+                </label>
+                <select v-model="form.expenseType" class="input-base w-full px-4 py-2">
                   <option value="">Sin clasificar</option>
                   <option value="cogs">Costo de ventas</option>
                   <option value="admin_expense">Gasto administrativo</option>
@@ -220,285 +107,196 @@
                   <option value="other_expense">Otro gasto</option>
                 </select>
               </div>
+            </div>
+          </UiFormSection>
 
-              <!-- Payment Method -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Método de pago *
-                </label>
-                <select
-                  v-model="form.paymentMethod"
-                  required
-                  class="input-base w-full px-4 py-2"
-                >
-                  <template v-for="group in paymentGroups">
-                    <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
-                    <optgroup v-else :key="group.slug" :label="group.name">
-                      <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
-                    </optgroup>
-                  </template>
-                </select>
-              </div>
+          <UiFormSection title="Recurrencia">
+            <div class="space-y-4">
+              <label class="flex items-start gap-3 cursor-pointer group">
+                <input
+                  v-model="form.isRecurring"
+                  type="checkbox"
+                  class="w-5 h-5 mt-0.5 text-primary border-border rounded focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                />
+                <span>
+                  <span class="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">
+                    Gasto recurrente
+                  </span>
+                  <span class="block text-xs text-text-secondary mt-1">
+                    Marca esta opción si el gasto se repite periódicamente.
+                  </span>
+                </span>
+              </label>
 
-              <!-- Recurring Expense Checkbox -->
-              <div class="md:col-span-2">
-                <label class="flex items-center space-x-3 cursor-pointer group">
+              <div v-if="form.isRecurring" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-4 border-primary pl-4 sm:pl-5">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Frecuencia *
+                  </label>
+                  <select
+                    v-model="form.frequency"
+                    :required="form.isRecurring"
+                    class="input-base w-full px-4 py-2"
+                  >
+                    <option value="" disabled>Seleccionar frecuencia...</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="biweekly">Quincenal</option>
+                    <option value="monthly">Mensual</option>
+                    <option value="quarterly">Trimestral</option>
+                    <option value="yearly">Anual</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Fecha de finalización
+                  </label>
                   <input
-                    type="checkbox"
-                    v-model="form.isRecurring"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                    v-model="form.recurringEndDate"
+                    type="date"
+                    :min="form.transactionDate"
+                    class="input-base w-full px-4 py-2"
                   />
-                  <div>
-                    <span class="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">
-                      Gasto recurrente
-                    </span>
-                    <p class="text-xs text-text-secondary">
-                      Marcar si este gasto se repite periódicamente
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              <!-- Recurring Options (conditional) -->
-              <div v-if="form.isRecurring" class="md:col-span-2 space-y-4 border-l-4 border-primary pl-4 sm:pl-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <!-- Frequency -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Frecuencia *
-                    </label>
-                    <select
-                      v-model="form.frequency"
-                      :required="form.isRecurring"
-                      class="input-base w-full px-4 py-2"
-                    >
-                      <option value="" disabled>Seleccionar frecuencia...</option>
-                      <option value="weekly">Semanal</option>
-                      <option value="biweekly">Quincenal</option>
-                      <option value="monthly">Mensual</option>
-                      <option value="quarterly">Trimestral</option>
-                      <option value="yearly">Anual</option>
-                    </select>
-                  </div>
-
-                  <!-- Recurring End Date -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Fecha de finalización
-                    </label>
-                    <input
-                      type="date"
-                      v-model="form.recurringEndDate"
-                      :min="form.transactionDate"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Opcional"
-                    />
-                    <p class="text-xs text-text-secondary mt-1">
-                      Dejar vacío si el gasto no tiene fecha de fin
-                    </p>
-                  </div>
+                  <p class="text-xs text-text-secondary mt-1">
+                    Deja vacío si no tiene fecha de fin.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </UiFormSection>
 
-        <!-- Step 2: Documents -->
-        <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Documentos de Soporte</h3>
-            <p class="text-sm text-text-secondary mb-4">Puedes adjuntar facturas, recibos u otros documentos relacionados con este gasto (opcional).</p>
-            
-            <div class="border-2 border-dashed border-border rounded-lg p-6 text-center">
+          <UiFormSection title="Documentos de soporte">
+            <p class="text-sm text-text-secondary mb-4">
+              Adjunta facturas, recibos u otros documentos relacionados con este gasto.
+            </p>
+
+            <div class="border-2 border-dashed border-border rounded-lg p-5 sm:p-6 text-center bg-background">
               <input
                 ref="fileInput"
                 type="file"
-                @change="handleFileSelect"
                 accept="image/*,application/pdf"
                 multiple
                 class="hidden"
+                @change="handleFileSelect"
               />
-              
+
               <div v-if="selectedFiles.length === 0">
-                <svg class="mx-auto h-12 w-12 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mx-auto h-10 w-10 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p class="mt-2 text-sm text-text-secondary">Arrastra archivos aquí o</p>
+                <p class="mt-2 text-sm text-text-secondary">Agrega documentos opcionales</p>
                 <button
                   type="button"
-                  @click="$refs.fileInput.click()"
-                  class="mt-2 btn-secondary px-4 py-2 rounded-lg text-sm"
+                  class="mt-3 btn-secondary px-4 py-2 rounded-lg text-sm"
+                  @click="fileInput?.click()"
                 >
                   Seleccionar archivos
                 </button>
               </div>
-              
+
               <div v-else class="space-y-2">
-                <div v-for="(file, index) in selectedFiles" :key="index" class="flex items-center justify-between bg-background p-3 rounded-lg">
-                  <div class="flex items-center space-x-3">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div
+                  v-for="(file, index) in selectedFiles"
+                  :key="`${file.name}-${index}`"
+                  class="flex items-center justify-between gap-3 bg-surface p-3 rounded-lg border border-border text-left"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <svg class="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <div class="text-left">
-                      <p class="text-sm font-medium text-text-primary">{{ file.name }}</p>
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-text-primary truncate">{{ file.name }}</p>
                       <p class="text-xs text-text-secondary">{{ formatFileSize(file.size) }}</p>
                     </div>
                   </div>
                   <button
                     type="button"
+                    class="min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
+                    :aria-label="`Eliminar ${file.name}`"
                     @click="removeFile(index)"
-                    class="text-destructive hover:text-destructive/80"
                   >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
+
                 <button
                   type="button"
-                  @click="$refs.fileInput.click()"
                   class="btn-secondary px-4 py-2 rounded-lg text-sm w-full"
+                  @click="fileInput?.click()"
                 >
                   Agregar más archivos
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Step 3: Review -->
-        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
-          <!-- Header -->
-          <div class="border-b border-border p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">GASTO</h1>
-                <p class="text-xs sm:text-sm text-text-secondary">Resumen antes de guardar</p>
-              </div>
-              <div class="text-left sm:text-right w-full sm:w-auto">
-                <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
-                  <p class="text-xs font-medium text-text-secondary">FECHA</p>
-                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ formatCalendarDate(form.transactionDate) }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Details -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Categoría</p>
-                <p class="text-lg font-bold text-text-primary">{{ getCategoryName(form.expenseCategoryId) }}</p>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Descripción</p>
-                <p class="text-base font-medium text-text-primary">{{ form.description }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recurring Information (if applicable) -->
-          <div v-if="form.isRecurring" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border bg-primary/5">
-            <div class="flex items-center gap-2 mb-4">
-              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <p class="text-sm font-bold text-primary uppercase tracking-wide">Gasto Recurrente</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Frecuencia</p>
-                <p class="text-base font-medium text-text-primary">{{ formatFrequency(form.frequency) }}</p>
-              </div>
-              <div v-if="form.recurringEndDate">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Finaliza</p>
-                <p class="text-base font-medium text-text-primary">{{ formatDate(form.recurringEndDate) }}</p>
-              </div>
-              <div v-else>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Finaliza</p>
-                <p class="text-base font-medium text-text-primary italic">Sin fecha de fin</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Amount -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 bg-primary/5 border-b border-primary/20">
-            <div class="flex justify-between items-center">
-              <span class="text-lg font-bold text-text-primary">Monto Total:</span>
-              <span class="text-2xl sm:text-3xl font-bold text-primary">{{ formatCurrency(form.amount) }}</span>
-            </div>
-          </div>
-
-          <!-- Success Message -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 bg-success/10 border-t border-success/20">
-            <div class="flex items-center gap-3">
-              <svg class="w-6 h-6 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p class="font-medium text-success">El gasto se registrará inmediatamente</p>
-                <p class="text-xs text-success/80">Podrás verlo en el listado de gastos</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </form>
-
-    <!-- Navigation Buttons -->
-    <div class="bg-surface border-t border-border shadow-lg mt-6">
-      <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
-        <div class="flex justify-between items-center gap-3">
-          <button
-            v-if="currentStep > 1"
-            type="button"
-            @click="previousStep"
-            class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
-          >
-            <span class="hidden sm:inline">← Anterior</span>
-            <span class="sm:hidden">←</span>
-          </button>
-          <NuxtLink
-            v-else
-            to='/finanzas/gastos'
-            class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
-          >
-            Cancelar
-          </NuxtLink>
-
-          <button
-            v-if="currentStep < 3"
-            type="button"
-            @click="handleNext"
-            :disabled="!isStepValid"
-            class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
-            :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }"
-          >
-            <span class="hidden sm:inline">Siguiente →</span>
-            <span class="sm:hidden">→</span>
-          </button>
-          <button
-            v-else
-            type="button"
-            @click="handleSubmit"
-            :disabled="isSubmitting"
-            class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base bg-success hover:bg-success/90"
-          >
-            <span class="hidden sm:inline">{{ isSubmitting ? 'Guardando...' : 'Guardar Gasto' }}</span>
-            <span class="sm:hidden">{{ isSubmitting ? '...' : 'Guardar' }}</span>
-          </button>
+          </UiFormSection>
         </div>
       </div>
-    </div>
-    </template>
+
+      <aside class="xl:col-span-1">
+        <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm xl:sticky xl:top-6">
+          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+
+          <div class="space-y-3">
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Fecha:</span>
+              <span class="font-semibold text-text-primary text-right">{{ formatCalendarDate(form.transactionDate) }}</span>
+            </div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Categoría:</span>
+              <span class="font-semibold text-text-primary text-right truncate">{{ getCategoryName(form.expenseCategoryId) }}</span>
+            </div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Monto:</span>
+              <span class="font-semibold text-primary text-right">{{ formatCurrency(form.amount) }}</span>
+            </div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Método:</span>
+              <span class="font-semibold text-text-primary text-right truncate">{{ paymentMethodLabel }}</span>
+            </div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Tipo:</span>
+              <span class="font-semibold text-text-primary text-right">{{ expenseTypeLabel }}</span>
+            </div>
+            <div v-if="form.isRecurring" class="flex justify-between gap-3 text-sm pt-3 border-t border-border">
+              <span class="text-text-secondary">Recurrencia:</span>
+              <span class="font-semibold text-text-primary text-right">{{ formatFrequency(form.frequency) }}</span>
+            </div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-text-secondary">Documentos:</span>
+              <span class="font-semibold text-text-primary text-right">{{ selectedFiles.length }}</span>
+            </div>
+          </div>
+
+          <div v-if="submitError" class="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            {{ submitError }}
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <button
+              type="submit"
+              :disabled="isSubmitting || !isFormValid"
+              class="btn-primary w-full min-h-[44px] px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSubmitting ? 'Guardando...' : 'Guardar gasto' }}
+            </button>
+            <NuxtLink
+              to="/finanzas/gastos"
+              class="btn-secondary w-full min-h-[44px] px-4 py-2 rounded-lg flex items-center justify-center"
+            >
+              Cancelar
+            </NuxtLink>
+          </div>
+        </div>
+      </aside>
+    </form>
   </div>
 </template>
 
 <script setup lang="ts">
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
-import { computed } from 'vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -508,16 +306,14 @@ useHead({ title: 'Registrar Gasto' })
 
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
+const { formatCalendarDate } = useFormatters()
 
-// Payment methods
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
 
-// Wizard state
-const currentStep = ref(1)
 const isSubmitting = ref(false)
+const submitError = ref<string | null>(null)
 
-// Load categories
 const { data: categoriesData, pending: isLoadingCategories } = useAsyncData(
   `expense-categories-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/finance/expenses/categories'),
@@ -530,21 +326,18 @@ const { data: categoriesData, pending: isLoadingCategories } = useAsyncData(
 const categories = computed(() => {
   const data = categoriesData.value
   if (!data) return []
-  // Handle both { data: [...] } and direct array responses
   return Array.isArray(data) ? data : (data.data || [])
 })
 
-// Set refresh handler for layout
 const { setRefreshHandler } = useLayoutActions()
 const refreshCategories = async () => {
-  // Refresh categories when refresh button is clicked
   await refreshNuxtData(`expense-categories-${currentTenant.value?.id || 'default'}`)
 }
+
 onMounted(() => {
   setRefreshHandler(refreshCategories)
 })
 
-// Form state
 const form = reactive({
   transactionDate: todayISO(),
   expenseCategoryId: '',
@@ -570,7 +363,6 @@ watch(paymentGroups, () => {
   }
 }, { immediate: true, deep: true })
 
-// File upload state
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
 
@@ -578,7 +370,7 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files) {
     selectedFiles.value.push(...Array.from(target.files))
-    target.value = '' // Reset input
+    target.value = ''
   }
 }
 
@@ -591,44 +383,25 @@ const formatFileSize = (bytes: number) => {
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
 }
 
-// Validation
-const isStepValid = computed(() => {
-  if (currentStep.value === 1) {
-    const baseValid = form.transactionDate && form.expenseCategoryId && form.description && form.amount && form.amount > 0
+const isFormValid = computed(() => {
+  const baseValid = form.transactionDate
+    && form.expenseCategoryId
+    && form.description.trim()
+    && form.amount
+    && form.amount > 0
+    && form.paymentMethod
 
-    // If recurring is enabled, frequency is required
-    if (form.isRecurring) {
-      return baseValid && form.frequency !== ''
-    }
-
-    return baseValid
-  }
-  return true
+  return form.isRecurring ? Boolean(baseValid && form.frequency) : Boolean(baseValid)
 })
-
-// Methods
-const handleNext = () => {
-  if (isStepValid.value) {
-    currentStep.value++
-  }
-}
-
-const previousStep = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--
-  }
-}
 
 const getCategoryName = (categoryId: string) => {
   if (!categoryId) return 'Sin categoría'
   const category = categories.value.find((c: any) => c.id === categoryId)
   return category?.categoryName || category?.name || 'Sin categoría'
 }
-
-const { formatDate, formatCalendarDate } = useFormatters()
 
 const formatCurrency = (value: number | null) => {
   if (!value) return '$0'
@@ -639,26 +412,56 @@ const formatCurrency = (value: number | null) => {
   }).format(value)
 }
 
+const expenseTypeLabels: Record<string, string> = {
+  cogs: 'Costo de ventas',
+  admin_expense: 'Gasto administrativo',
+  sales_expense: 'Gasto de ventas',
+  financial_expense: 'Gasto financiero',
+  other_expense: 'Otro gasto'
+}
+
+const expenseTypeLabel = computed(() => expenseTypeLabels[form.expenseType] || 'Sin clasificar')
+
 const formatFrequency = (frequency: string) => {
-  const frequencies: { [key: string]: string } = {
-    'weekly': 'Semanal',
-    'biweekly': 'Quincenal',
-    'monthly': 'Mensual',
-    'quarterly': 'Trimestral',
-    'yearly': 'Anual'
+  const frequencies: Record<string, string> = {
+    weekly: 'Semanal',
+    biweekly: 'Quincenal',
+    monthly: 'Mensual',
+    quarterly: 'Trimestral',
+    yearly: 'Anual'
   }
-  return frequencies[frequency] || frequency
+  return frequencies[frequency] || 'Sin frecuencia'
+}
+
+const paymentMethodLabel = computed(() => {
+  for (const group of paymentGroups.value as any[]) {
+    if (!group.methods?.length && group.slug === form.paymentMethod) return group.name
+    const method = group.methods?.find((m: any) => m.id === form.paymentMethod)
+    if (method) return method.name
+  }
+  return form.paymentMethod || 'Sin método'
+})
+
+const extractErrorMessage = (error: any) => {
+  if (error?.data?.detail) {
+    if (typeof error.data.detail === 'string') return error.data.detail
+    if (Array.isArray(error.data.detail)) {
+      return error.data.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ')
+    }
+    return JSON.stringify(error.data.detail)
+  }
+  return error?.message || 'Error al guardar el gasto. Por favor intenta nuevamente.'
 }
 
 const handleSubmit = async () => {
-  if (!form.amount || !form.expenseCategoryId) {
-    alert('Por favor complete todos los campos requeridos')
+  submitError.value = null
+  if (!isFormValid.value) {
+    submitError.value = 'Completa los campos requeridos antes de guardar.'
     return
   }
 
   isSubmitting.value = true
   try {
-    // Build JSON payload (backend now expects JSON)
     const payload = {
       transactionDate: form.transactionDate,
       expenseCategoryId: form.expenseCategoryId,
@@ -671,14 +474,11 @@ const handleSubmit = async () => {
       expenseType: form.expenseType || null,
     }
 
-    const response = await $fetch('/api/finance/expenses', {
+    const response: any = await $fetch('/api/finance/expenses', {
       method: 'POST',
       body: payload
     })
 
-    console.log('Expense created successfully:', response)
-
-    // If there are files, upload them separately
     if (selectedFiles.value.length > 0 && response.data?.id) {
       try {
         const formData = new FormData()
@@ -692,46 +492,17 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
-        // Don't fail the whole operation, just warn
-        alert('Gasto creado, pero hubo un error al subir los archivos')
+        submitError.value = 'Gasto creado, pero hubo un error al subir los archivos.'
+        return
       }
     }
-    
-    // Success - redirect to list
-    navigateTo('/finanzas/gastos')
+
+    await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error creating expense:', error)
-    
-    // Extract meaningful error message
-    let errorMessage = 'Error al guardar el gasto. Por favor intente nuevamente.'
-    
-    if (error?.data?.detail) {
-      if (typeof error.data.detail === 'string') {
-        errorMessage = error.data.detail
-      } else if (Array.isArray(error.data.detail)) {
-        errorMessage = error.data.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ')
-      } else {
-        errorMessage = JSON.stringify(error.data.detail)
-      }
-    } else if (error?.message) {
-      errorMessage = error.message
-    }
-    
-    alert(errorMessage)
+    submitError.value = extractErrorMessage(error)
   } finally {
     isSubmitting.value = false
   }
 }
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
