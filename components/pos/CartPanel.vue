@@ -1,5 +1,8 @@
 <template>
-  <div class="flex flex-col min-h-0 h-full lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm">
+  <div
+    class="flex flex-col min-h-0 lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm"
+    :class="fitHeight ? 'h-fit' : 'h-full'"
+  >
     <!-- Cart Header -->
     <div class="px-4 py-3.5 border-b border-border bg-surface">
       <div class="flex items-center justify-between gap-2">
@@ -445,6 +448,7 @@ interface Props {
   hideProcessOrder?: boolean
   openSaleTooltip?: string | null
   showBarProcessOrder?: boolean
+  fitHeight?: boolean
 }
 
 interface Emits {
@@ -492,6 +496,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideProcessOrder: false,
   openSaleTooltip: null,
   showBarProcessOrder: false,
+  fitHeight: false,
 })
 
 const hasCartItems = computed(() => props.items.length > 0)
