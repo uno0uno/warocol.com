@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { es } from 'date-fns/locale';
-import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
 
@@ -14,6 +14,7 @@ const currentTime = ref<Date>(new Date());
 const paymentMethodFilter = ref<string | null>(null);
 const statusFilter = ref<string | null>(null);
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
+const { timezone, todayISO, addDaysISO, monthBounds } = useTenantTimezone()
 
 const hasDateFilter = computed(() =>
   dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
@@ -119,23 +120,55 @@ const isRefreshing = computed(() =>
   (salesFlowAsyncStatus.value === 'loading' && salesFlowData.value != null)
 )
 
+const formatIsoDisplay = (iso: string, options: Intl.DateTimeFormatOptions = {}) => {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'UTC',
+    ...options,
+  }).format(new Date(Date.UTC(year, month - 1, day)))
+}
+
+const isoDayNumber = (iso: string) => {
+  const [year, month, day] = iso.split('-').map(Number)
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000)
+}
+
+const inclusiveDays = (fromIso: string, toIso: string) => isoDayNumber(toIso) - isoDayNumber(fromIso) + 1
+
+const daysInTenantYear = (iso: string) => {
+  const year = Number(iso.slice(0, 4))
+  return inclusiveDays(`${year}-01-01`, `${year}-12-31`)
+}
+
+const daysElapsedInTenantYear = (iso: string) => inclusiveDays(`${iso.slice(0, 4)}-01-01`, iso)
+
+const daysElapsedInTenantMonth = (iso: string) => {
+  const bounds = monthBounds(iso)
+  return inclusiveDays(bounds.first, iso)
+}
+
+const daysInTenantMonth = (iso: string) => {
+  const bounds = monthBounds(iso)
+  return inclusiveDays(bounds.first, bounds.last)
+}
+
 const forecast = computed(() => {
-  const today = new Date()
+  const today = todayISO()
   if (!hasDateFilter.value) {
     const yearSales = dashboardData.value?.data?.year?.total_sales
     if (!yearSales) return 0
-    const daysElapsed = differenceInCalendarDays(today, startOfYear(today)) + 1
-    return Math.round((yearSales / daysElapsed) * getDaysInYear(today))
+    return Math.round((yearSales / daysElapsedInTenantYear(today)) * daysInTenantYear(today))
   } else {
     const monthSales = dashboardData.value?.data?.month?.total_sales
     if (!monthSales) return 0
-    const daysElapsed = differenceInCalendarDays(today, startOfMonth(today)) + 1
-    return Math.round((monthSales / daysElapsed) * getDaysInMonth(today))
+    return Math.round((monthSales / daysElapsedInTenantMonth(today)) * daysInTenantMonth(today))
   }
 })
 
 const forecastLabel = computed(() =>
-  hasDateFilter.value ? `Forecast ${fnsFormat(new Date(), 'MMMM', { locale: es })}` : `Forecast ${fnsFormat(new Date(), 'yyyy')}`
+  hasDateFilter.value
+    ? `Forecast ${formatIsoDisplay(todayISO(), { month: 'long' })}`
+    : `Forecast ${todayISO().slice(0, 4)}`
 )
 const forecastSubtitle = computed(() =>
   hasDateFilter.value ? 'Proyección fin de mes' : 'Proyección fin de año'
@@ -143,10 +176,11 @@ const forecastSubtitle = computed(() =>
 
 const chartTitle = computed(() => {
   const metadata = salesFlowData.value?.metadata
-  if (!dateRangeDates.value) return `Flujo de Ventas (${new Date().getFullYear()})`
-  const [from, to] = dateRangeDates.value
+  const currentYear = todayISO().slice(0, 4)
+  if (!dateRange.value.from || !dateRange.value.to) return `Flujo de Ventas (${currentYear})`
+  const { from, to } = dateRange.value
   if (from && to) {
-    if (from.toDateString() === to.toDateString()) return `Flujo de Ventas (${fnsFormat(from, 'dd/MM/yyyy')})`
+    if (from === to) return `Flujo de Ventas (${formatIsoDisplay(from)})`
     const groupingLabel = metadata?.grouping === 'hour' ? 'por Hora' : 'por Día'
     return `Flujo de Ventas ${groupingLabel} vs ${metadata?.comparison_label}`
   }
@@ -154,15 +188,15 @@ const chartTitle = computed(() => {
 })
 
 const chartLabels = computed(() => {
-  const currentYear = new Date().getFullYear()
-  if (!dateRangeDates.value) return { current: `${currentYear}`, comparison: `${currentYear - 1}` }
-  const [from, to] = dateRangeDates.value
+  const currentYear = Number(todayISO().slice(0, 4))
+  if (!dateRange.value.from || !dateRange.value.to) return { current: `${currentYear}`, comparison: `${currentYear - 1}` }
+  const { from, to } = dateRange.value
   if (!from || !to) return { current: `${currentYear}`, comparison: `${currentYear - 1}` }
-  if (from.toDateString() === to.toDateString()) return {
-    current: fnsFormat(from, 'dd/MM'),
-    comparison: fnsFormat(new Date(from.getTime() - 86400000), 'dd/MM')
+  if (from === to) return {
+    current: formatIsoDisplay(from, { day: '2-digit', month: '2-digit' }),
+    comparison: formatIsoDisplay(addDaysISO(from, -1), { day: '2-digit', month: '2-digit' })
   }
-  const days_diff = Math.ceil((to.getTime() - from.getTime()) / 86400000) + 1
+  const days_diff = inclusiveDays(from, to)
   return days_diff <= 30
     ? { current: 'Período Actual', comparison: 'Período Anterior' }
     : { current: 'Este Año', comparison: 'Año Anterior' }
@@ -266,6 +300,7 @@ const formatCurrency = (value: number) =>
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
+          :timezone="timezone"
           :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
