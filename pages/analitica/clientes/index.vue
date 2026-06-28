@@ -13,7 +13,8 @@ const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgr
 const lastUpdate = ref<Date>(new Date());
 
 // ── Filters ──────────────────────────────────────────────────────────────
-const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets(undefined, { modelType: 'iso' })
+const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
+const { timezone } = useTenantTimezone()
 const { formatCalendarDate, formatDate: formatTenantDate } = useFormatters()
 
 // ── Search ────────────────────────────────────────────────────────────────
@@ -208,7 +209,7 @@ onUnmounted(() => {
             placeholder="Rango de fechas"
             auto-apply
             :teleport="true"
-            model-type="yyyy-MM-dd"
+            :timezone="timezone"
             :max-date="maxDate"
             :format="formatDateRange"
             input-class-name="dp-custom-input"

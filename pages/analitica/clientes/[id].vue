@@ -43,7 +43,8 @@ const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setB
 const goBack = () => router.push('/analitica/clientes')
 
 // ── Filters ───────────────────────────────────────────────────────────────
-const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets(undefined, { modelType: 'iso' })
+const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
+const { timezone } = useTenantTimezone()
 const { formatCalendarDate, formatDate: formatTenantDate } = useFormatters()
 
 // ── Pagination ────────────────────────────────────────────────────────────
@@ -741,7 +742,7 @@ onUnmounted(() => {
             placeholder="Filtrar por período"
             auto-apply
             :teleport="true"
-            model-type="yyyy-MM-dd"
+            :timezone="timezone"
             :max-date="maxDate"
             :format="formatDateRange"
             input-class-name="dp-custom-input"
