@@ -4531,12 +4531,12 @@ onUnmounted(() => {
         <div class="absolute inset-0 bg-overlay-backdrop/50"></div>
 
         <!-- Modal -->
-        <div class="relative my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface p-6 shadow-xl">
+        <div class="relative my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface p-5 shadow-xl">
           <!-- Icon -->
-          <div class="flex justify-center mb-4">
-            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-state-success-bg ">
+          <div class="flex justify-center mb-3">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center bg-state-success-bg ">
               <svg
-                class="w-8 h-8 text-state-success-text "
+                class="w-7 h-7 text-state-success-text "
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -4547,44 +4547,44 @@ onUnmounted(() => {
           </div>
 
           <!-- Title -->
-          <h3 class="text-xl font-bold text-text-primary text-center mb-2">
+          <h3 class="text-xl font-bold leading-tight text-text-primary text-center mb-1.5">
             {{
               orderResult?.status === 'pending'
                 ? 'Venta pendiente'
                 : orderResult?.payment_method === 'credit'
-                  ? 'Orden registrada como crédito'
+                  ? 'Venta a crédito registrada'
                   : 'Venta Completada'
             }}
           </h3>
-          <p class="text-text-secondary text-center mb-4">
+          <p class="text-sm leading-snug text-text-secondary text-center mb-4">
             {{
               orderResult?.status === 'pending'
-                ? 'Podrás finalizarla desde ventas cuando conozcas el método de pago.'
+                ? 'Finalízala desde ventas cuando conozcas el método de pago.'
                 : orderResult?.payment_method === 'credit'
-                  ? 'El pago queda pendiente para el cliente'
-                  : 'La orden ha sido procesada exitosamente'
+                  ? 'El saldo queda pendiente en cartera.'
+                  : 'La orden fue procesada exitosamente.'
             }}
           </p>
 
           <!-- Credit notice banner -->
-          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl space-y-2">
-            <div class="flex items-start gap-2">
-              <svg class="h-4 w-4 text-state-warning-text flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <div v-if="orderResult?.payment_method === 'credit'" class="mb-3 rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2.5">
+            <div class="flex items-center gap-2">
+              <svg class="h-4 w-4 text-state-warning-text flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <p class="text-xs text-state-warning-text">Para registrar abonos, accede al perfil del cliente donde encontrarás el estado de su cartera, historial de pagos y saldo pendiente.</p>
+              <p class="text-xs font-medium leading-snug text-state-warning-text">Abonos y saldo: perfil del cliente.</p>
             </div>
           </div>
 
           <!-- Order Details -->
-          <div v-if="orderResult" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">
-            <div v-if="(orderResult?.order_number ?? 0) > 0" class="flex items-center justify-between">
+          <div v-if="orderResult" class="bg-background rounded-lg border border-border p-3 mb-4 space-y-2.5">
+            <div v-if="(orderResult?.order_number ?? 0) > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-text-secondary">Nº Orden</span>
-              <span class="text-lg font-bold text-primary">#{{ orderResult?.order_number ?? '' }}</span>
+              <span class="text-lg font-bold leading-none text-primary">#{{ orderResult?.order_number ?? '' }}</span>
             </div>
             <div
               v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount || orderResult.waro_discount_cop) && orderResult.subtotal"
-              class="flex items-center justify-between"
+              class="flex items-center justify-between gap-3"
             >
               <span class="text-sm text-text-secondary">Subtotal</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.subtotal) }}</span>
@@ -4592,46 +4592,46 @@ onUnmounted(() => {
             <div
               v-for="promo in (orderResult.promo_breakdown ?? [])"
               :key="promo.promotion_id ?? promo.promotion_name"
-              class="flex items-center justify-between"
+              class="flex items-center justify-between gap-3"
             >
               <span class="text-sm text-state-success-text ">{{ promo.promotion_name }}</span>
               <span class="text-sm font-medium text-state-success-text ">-{{ formatCurrency(promo.savings) }}</span>
             </div>
-            <div v-if="orderResult.discount_amount" class="flex items-center justify-between">
+            <div v-if="orderResult.discount_amount" class="flex items-center justify-between gap-3">
               <span class="text-sm text-primary">Descuento manual</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
-            <div v-if="orderResultWaroDiscountCop > 0" class="flex items-center justify-between">
+            <div v-if="orderResultWaroDiscountCop > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-state-warning-text">{{ orderResultWaroLineLabel }}</span>
               <span class="text-sm font-medium text-state-warning-text">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
             </div>
-            <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between">
+            <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? 'Impuesto' }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
             </div>
-            <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between">
+            <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-text-secondary">IVA licores 5%</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.liquor_tax) }}</span>
             </div>
-            <div class="flex items-center justify-between" :class="(orderResult.discount_amount || orderResult.waro_discount_cop || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-3' : ''">
+            <div class="flex items-center justify-between gap-3" :class="(orderResult.discount_amount || orderResult.waro_discount_cop || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-2.5' : ''">
               <span class="text-sm text-text-secondary">Total</span>
-              <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
+              <span class="text-base font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
             </div>
             <!-- warocol.com#639 — show tip on a separate line + the total charged to the customer -->
-            <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0" class="flex items-center justify-between">
+            <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-text-secondary">Propina</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.tip_amount) }}</span>
             </div>
-            <div v-if="orderResult.advance_applied && orderResult.advance_applied > 0" class="flex items-center justify-between">
+            <div v-if="orderResult.advance_applied && orderResult.advance_applied > 0" class="flex items-center justify-between gap-3">
               <span class="text-sm text-state-success-text">Anticipo mesa</span>
               <span class="text-sm font-medium text-state-success-text">-{{ formatCurrency(orderResult.advance_applied) }}</span>
             </div>
             <div
               v-if="(orderResult.tip_amount && orderResult.tip_amount > 0) || (orderResult.advance_applied && orderResult.advance_applied > 0)"
-              class="flex items-center justify-between border-t border-border pt-3"
+              class="flex items-center justify-between gap-3 rounded-md bg-primary/5 px-2.5 py-2"
             >
-              <span class="text-sm text-text-secondary">Total cobrado</span>
-              <span class="text-lg font-bold text-primary">
+              <span class="text-sm font-semibold text-text-primary">Total cobrado</span>
+              <span class="text-lg font-bold leading-none text-primary">
                 {{ formatCurrency(orderResultChargedAmount) }}
               </span>
             </div>
@@ -4663,8 +4663,8 @@ onUnmounted(() => {
                 {{ (orderResult?.order_ids?.length ?? 0) > 1 ? `Facturar ${orderResult?.order_ids?.length} órdenes` : 'Generar factura electrónica DIAN' }}
               </button>
             </template>
-            <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-xl border border-state-warning-border bg-state-warning-bg px-4 py-3 text-sm text-state-warning-text">
-              Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.
+            <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2 text-xs font-medium leading-snug text-state-warning-text">
+              Crédito puro: sin factura DIAN desde POS.
             </div>
 
             <!-- Inline fiscal-data wizard -->
@@ -4818,8 +4818,8 @@ onUnmounted(() => {
 
               <!-- When no profile email: manual input -->
               <template v-else>
-                <label for="receipt-email" class="text-sm font-medium text-text-primary">
-                  Enviar recibo por correo <span class="text-text-tertiary text-xs">(opcional)</span>
+                <label for="receipt-email" class="text-xs font-semibold text-text-secondary">
+                  Recibo por correo <span class="font-normal text-text-tertiary">(opcional)</span>
                 </label>
                 <div class="flex gap-2">
                   <input
