@@ -14,11 +14,14 @@
 
       <div class="flex items-center gap-3">
         <VueDatePicker
-          v-model="dateRange"
+          v-model="dateRangeDates"
           range
           :enable-time-picker="false"
+          :preset-dates="presetDates"
           auto-apply
-          :format="dateFormat"
+          :timezone="timezone"
+          :max-date="maxDate"
+          :format="formatDateRange"
           placeholder="Seleccionar periodo"
           class="min-w-[280px]"
           @update:model-value="fetchMetrics"
@@ -211,17 +214,15 @@ useHead({
   title: 'Analítica de Cocina | WARO'
 })
 
-const dateRange = ref<[Date, Date]>([
-  new Date(new Date().setDate(new Date().getDate() - 7)),
-  new Date()
+const { timezone, todayISO, addDaysISO, dateAtNoon } = useTenantTimezone()
+const dateRangeDates = ref<Date[] | null>([
+  dateAtNoon(addDaysISO(todayISO(), -7)),
+  dateAtNoon(todayISO()),
 ])
+const { presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets(dateRangeDates)
 
 const loading = ref(false)
 const metrics = ref<any>(null)
-
-const dateFormat = (date: Date) => {
-  return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
 
 const maxOrders = computed(() => {
   if (!metrics.value) return 1
@@ -232,9 +233,9 @@ const fetchMetrics = async () => {
   loading.value = true
   try {
     const params: any = {}
-    if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
-      params.date_from = dateRange.value[0].toISOString().split('T')[0]
-      params.date_to = dateRange.value[1].toISOString().split('T')[0]
+    if (dateRange.value.from && dateRange.value.to) {
+      params.date_from = dateRange.value.from
+      params.date_to = dateRange.value.to
     }
 
     const { data } = await $fetch('/api/analytics/kitchen', { params }) as any

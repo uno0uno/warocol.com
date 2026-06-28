@@ -12,6 +12,7 @@ const lastUpdate = ref<Date>(new Date())
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
+const { timezone } = useTenantTimezone()
 
 const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, error: foodCostError, refetch: refetchFoodCost } = useQuery({
   key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
@@ -158,6 +159,7 @@ onUnmounted(() => {
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
+          :timezone="timezone"
           :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"

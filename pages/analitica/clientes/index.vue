@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core'
 import { es } from 'date-fns/locale';
-import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 
 definePageMeta({ layout: 'dashboard' })
@@ -13,7 +13,8 @@ const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgr
 const lastUpdate = ref<Date>(new Date());
 
 // ── Filters ──────────────────────────────────────────────────────────────
-const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
+const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets(undefined, { modelType: 'iso' })
+const { formatCalendarDate, formatDate: formatTenantDate } = useFormatters()
 
 // ── Search ────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
@@ -142,7 +143,9 @@ const formatCurrency = (value: number) =>
 
 const formatDate = (isoDate: string) => {
   if (!isoDate) return '-'
-  return fnsFormat(new Date(isoDate), 'dd/MM/yyyy', { locale: es })
+  return /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
+    ? formatCalendarDate(isoDate)
+    : formatTenantDate(isoDate)
 }
 
 const router = useRouter()
@@ -205,6 +208,7 @@ onUnmounted(() => {
             placeholder="Rango de fechas"
             auto-apply
             :teleport="true"
+            model-type="yyyy-MM-dd"
             :max-date="maxDate"
             :format="formatDateRange"
             input-class-name="dp-custom-input"
