@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { inject, watch, onMounted, onUnmounted } from 'vue'
+import { inject, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { Printer } from 'lucide-vue-next'
+import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import { printComandaTickets } from '~/composables/useComandaPrint'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Detalle Pedido — WARO' })
@@ -8,6 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const orderId = computed(() => route.params.id as string)
 const { formatDate, formatDateTime, formatCurrency } = useFormatters()
+const { businessProfile, currentTenant } = useTenantReactive()
 
 const { data: orderResponse, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
   key: () => ['online-orders', orderId.value],
@@ -139,6 +143,51 @@ const formatQuantity = (quantity: number) =>
 const modifierSubtotal = (modifier: any) =>
   Number(modifier?.price || 0) * modifierQuantity(modifier)
 
+const businessName = computed(() =>
+  businessProfile.value?.display_name
+  || currentTenant.value?.name
+  || 'WARO'
+)
+
+const printLocationLabel = computed(() => {
+  if (!order.value) return null
+  if (order.value.order_type === 'delivery') return 'Domicilio'
+  if (order.value.order_type === 'pickup') return 'Recogida'
+  return ORDER_TYPE_LABELS[order.value.order_type] ?? order.value.order_type
+})
+
+const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
+  const currentOrder = order.value
+  if (!currentOrder) return []
+  return [{
+    id: currentOrder.id,
+    comanda_number: currentOrder.order_number ?? `ONLINE-${orderId.value.slice(0, 8)}`,
+    station_name: printLocationLabel.value || 'Domicilio',
+    table_display_name: printLocationLabel.value,
+    fired_at: currentOrder.scheduled_time ?? currentOrder.order_date,
+    items: (currentOrder.items ?? []).map((item: any) => ({
+      kitchen_name: item.product_name ?? item.name ?? 'Producto',
+      quantity: Number(item.quantity ?? 1),
+      modifiers_snapshot: (item.modifiers ?? []).map((mod: any) => ({
+        name: mod.name,
+        price: mod.price,
+        quantity: modifierQuantity(mod),
+      })),
+      notes: item.notes ?? null,
+    })),
+  }]
+})
+
+const canPrintComanda = computed(() =>
+  !!order.value && comandaPrintPayload.value.some(comanda => comanda.items.length > 0),
+)
+
+async function printOrderComanda() {
+  if (!canPrintComanda.value) return
+  await nextTick()
+  printComandaTickets()
+}
+
 // Dashboard layout inject — dynamic back button
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
@@ -218,14 +267,38 @@ onUnmounted(() => {
         <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Acciones del pedido</p>
 
         <!-- Terminal states -->
-        <div v-if="order.status === 'completed'" class="flex items-center gap-3">
+        <div v-if="order.status === 'completed'" class="flex flex-col sm:flex-row sm:items-center gap-3">
           <span class="text-sm text-text-secondary">
             {{ order.order_type === 'delivery' ? 'Pedido aceptado.' : 'Pedido completado.' }}
             No hay más acciones disponibles.
           </span>
+          <UiButton
+            variant="crocus-outline"
+            size="lg"
+            class="gap-2 sm:ml-auto"
+            :disabled="!canPrintComanda"
+            aria-label="Imprimir comanda"
+            title="Imprimir comanda"
+            @click="printOrderComanda"
+          >
+            <Printer class="h-4 w-4" aria-hidden="true" />
+            <span>Imprimir</span>
+          </UiButton>
         </div>
-        <div v-else-if="order.status === 'cancelled'" class="flex items-center gap-3">
+        <div v-else-if="order.status === 'cancelled'" class="flex flex-col sm:flex-row sm:items-center gap-3">
           <span class="text-sm text-text-secondary">Pedido cancelado. No hay más acciones disponibles.</span>
+          <UiButton
+            variant="crocus-outline"
+            size="lg"
+            class="gap-2 sm:ml-auto"
+            :disabled="!canPrintComanda"
+            aria-label="Imprimir comanda"
+            title="Imprimir comanda"
+            @click="printOrderComanda"
+          >
+            <Printer class="h-4 w-4" aria-hidden="true" />
+            <span>Imprimir</span>
+          </UiButton>
         </div>
 
         <!-- Active states -->
@@ -251,6 +324,18 @@ onUnmounted(() => {
             @click="updateStatus('cancelled')"
           >
             {{ isStatusUpdating ? 'Cancelando...' : 'Cancelar pedido' }}
+          </UiButton>
+          <UiButton
+            variant="crocus-outline"
+            size="lg"
+            class="gap-2"
+            :disabled="isStatusUpdating || !canPrintComanda"
+            aria-label="Imprimir comanda"
+            title="Imprimir comanda"
+            @click="printOrderComanda"
+          >
+            <Printer class="h-4 w-4" aria-hidden="true" />
+            <span>Imprimir</span>
           </UiButton>
         </div>
 
@@ -557,5 +642,10 @@ onUnmounted(() => {
         </div>
       </Transition>
     </Teleport>
+
+    <PosComandaPrintTickets
+      :comandas="comandaPrintPayload"
+      :business-name="businessName"
+    />
   </div>
 </template>
