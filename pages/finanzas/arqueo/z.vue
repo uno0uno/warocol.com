@@ -1,228 +1,201 @@
 <template>
   <div class="page-layout">
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Registrando arqueo..."
+      hint="Estamos guardando el cierre y consolidando el resumen del periodo."
+      variant="glass"
+      indicator="matrix"
+    />
 
-    <!-- Loading overlay durante submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-overlay-backdrop/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-base font-semibold text-text-primary">Registrando arqueo...</p>
-      </div>
-    </div>
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="cierreSuccess"
+          class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-overlay-backdrop-strong/60 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cierre-success-title"
+        >
+          <div class="my-auto w-full max-w-md rounded-2xl border border-border bg-surface p-5 text-center shadow-2xl">
+            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-state-success-bg">
+              <svg class="h-7 w-7 text-state-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
 
-    <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
-    <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
-        <svg class="w-9 h-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-xl font-semibold text-text-primary">Arqueo registrado</p>
-        <p class="text-sm text-text-secondary mt-1">{{ formatPeriod(periodStart, periodEnd) }}</p>
-      </div>
-      <div class="w-full max-w-sm bg-surface border border-border rounded-lg divide-y divide-border">
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Total ventas</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalSales) }}</span>
+            <h2 id="cierre-success-title" class="text-xl font-bold leading-tight text-text-primary">
+              Arqueo registrado
+            </h2>
+            <p class="mt-1 text-sm text-text-secondary">
+              {{ formatPeriod(periodStart, periodEnd) }}
+            </p>
+
+            <div class="mt-4 rounded-lg border border-border bg-background p-3 text-left">
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Total ventas</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalSales) }}</span>
+              </div>
+              <div v-if="hasCapturedTips(successData)" class="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Total cobrado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalCharged) }}</span>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Efectivo contado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.cashCounted) }}</span>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
+                <span class="text-text-secondary">Diferencia</span>
+                <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
+                  {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+              <NuxtLink
+                to="/finanzas/arqueo"
+                class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary"
+              >
+                Ver historial
+              </NuxtLink>
+              <NuxtLink
+                v-if="successData?.id"
+                :to="`/finanzas/arqueo/${successData.id}`"
+                class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-action-primary-bg px-4 py-2.5 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg"
+              >
+                Ver detalle
+              </NuxtLink>
+            </div>
+          </div>
         </div>
-        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Propinas</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalTips) }}</span>
-        </div>
-        <div v-if="(successData?.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Impuesto propina</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalTipTax) }}</span>
-        </div>
-        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Total cobrado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalCharged) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Efectivo esperado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.cashExpected) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Efectivo contado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.cashCounted) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Diferencia</span>
-          <span class="font-semibold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
-            {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
-          </span>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <NuxtLink
-          to="/finanzas/arqueo"
-          class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center"
-        >
-          Ver historial
-        </NuxtLink>
-        <NuxtLink
-          v-if="successData?.id"
-          :to="`/finanzas/arqueo/${successData.id}`"
-          class="min-h-[44px] px-5 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center"
-        >
-          Ver detalle
-        </NuxtLink>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
 
     <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
-    <template v-else-if="currentStep === 0">
+    <template v-if="currentStep === 0">
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-2">
-        <button
-          type="button"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
-          :class="arqueoWindowMode === 'template' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
-          @click="setArqueoMode('template')"
-        >Plantilla</button>
-        <button
-          type="button"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
-          :class="arqueoWindowMode === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
-          @click="setArqueoMode('custom')"
-        >Personalizado</button>
+          <button
+            type="button"
+            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+            :class="arqueoWindowMode === 'template' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
+            @click="setArqueoMode('template')"
+          >Plantilla</button>
+          <button
+            type="button"
+            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+            :class="arqueoWindowMode === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
+            @click="setArqueoMode('custom')"
+          >Personalizado</button>
 
-        <select
-          v-if="arqueoWindowMode === 'template'"
-          v-model="selectedTemplateId"
-          class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 flex-shrink-0 max-w-[11rem] sm:max-w-[13rem]"
-        >
-          <option value="">Turno…</option>
-          <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
-            {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
-          </option>
-        </select>
+          <select
+            v-if="arqueoWindowMode === 'template'"
+            v-model="selectedTemplateId"
+            class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 flex-shrink-0 max-w-[11rem] sm:max-w-[13rem]"
+          >
+            <option value="">Turno...</option>
+            <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
+              {{ t.name }} ({{ t.startTime }}-{{ t.endTime }})
+            </option>
+          </select>
 
-        <button
-          type="button"
-          class="h-10 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:border-primary/50 hover:text-text-primary transition-colors flex-shrink-0 whitespace-nowrap"
-          :disabled="suggestedLoading"
-          @click="applySuggestedWindow"
-        >
-          {{ suggestedLoading ? 'Cargando…' : 'Desde último arqueo' }}
-        </button>
+          <button
+            type="button"
+            class="h-10 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:border-primary/50 hover:text-text-primary transition-colors flex-shrink-0 whitespace-nowrap"
+            :disabled="suggestedLoading"
+            @click="applySuggestedWindow"
+          >
+            {{ suggestedLoading ? 'Cargando...' : 'Desde último arqueo' }}
+          </button>
 
-        <p
-          v-if="arqueoWindowMode === 'template' && shiftTemplates.length === 0 && !templatesLoading"
-          class="text-xs text-state-warning-text whitespace-nowrap flex-shrink-0"
-        >
-          Sin turnos activos
-        </p>
-
+          <p
+            v-if="arqueoWindowMode === 'template' && shiftTemplates.length === 0 && !templatesLoading"
+            class="text-xs text-state-warning-text whitespace-nowrap flex-shrink-0"
+          >
+            Sin turnos activos
+          </p>
         <div class="h-10 w-px bg-border flex-shrink-0" aria-hidden="true" />
 
-        <button
-          v-for="p in visiblePresets" :key="p.key"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
-          :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
-          @click="applyPreset(p)"
-        >{{ p.label }}</button>
+          <button
+            v-for="p in visiblePresets" :key="p.key"
+            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+            :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+            @click="applyPreset(p)"
+          >{{ p.label }}</button>
 
-        <!-- Plantilla: un solo control — día (calendario) + horas del turno (solo lectura) -->
-        <div
-          v-if="arqueoWindowMode === 'template'"
-          class="arqueo-template-period relative flex items-center h-10 w-fit rounded-lg border-2 border-border bg-background flex-shrink-0"
-        >
-          <VueDatePicker
-            v-model="templateAnchorDate"
-            :teleport="true"
-            :enable-time-picker="false"
-            :formats="dateOnlyFormats"
-            :locale="es"
-            auto-apply
-            :max-date="new Date()"
-            :clearable="false"
-            menu-class-name="dp-custom-menu"
-            calendar-cell-class-name="dp-custom-cell"
-            class="arqueo-template-dp-trigger w-fit flex-shrink-0"
-            @update:model-value="onTemplateAnchorPick"
+          <!-- Plantilla: un solo control — día (calendario) + horas del turno (solo lectura) -->
+          <div
+            v-if="arqueoWindowMode === 'template'"
+            class="arqueo-template-period relative flex items-center h-10 w-fit rounded-lg border-2 border-border bg-background flex-shrink-0"
           >
-            <template #trigger>
-              <button
-                type="button"
-                class="flex w-fit items-center gap-1.5 h-10 px-3 text-sm text-text-primary hover:bg-surface-secondary/60 transition-colors rounded-l-md"
-              >
-                <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="font-medium tabular-nums whitespace-nowrap">{{ formatTemplateDateOnly() }}</span>
-              </button>
-            </template>
-          </VueDatePicker>
-          <span
-            v-if="templateHoursLabel"
-            class="flex items-center h-full px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
-            title="Horario definido por el turno"
-          >
-            {{ templateHoursLabel }}
-          </span>
-          <span
-            v-else-if="selectedTemplateId && templateWindowStatus === 'pending'"
-            class="flex items-center h-full px-2.5 text-xs text-text-secondary border-l border-border"
-          >
-            …
-          </span>
-        </div>
-
-        <VueDatePicker
-          v-else
-          v-model="dateRangeDates"
-          range
-          :teleport="true"
-          :preset-dates="dpPresets"
-          :enable-time-picker="false"
-          :locale="es"
-          auto-apply
-          :max-date="new Date()"
-          :formats="dateOnlyFormats"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="activePreset = null"
-        />
-
-        <div v-if="arqueoWindowMode === 'custom'" class="h-10 w-px bg-border flex-shrink-0" aria-hidden="true" />
-
-        <button
-          v-if="arqueoWindowMode === 'custom' && !isMultiDay"
-          @click="toggleTimePicker"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
-          :class="enableTimePicker ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          Horario
-        </button>
-
-        <template v-if="arqueoWindowMode === 'custom' && (isMultiDay || enableTimePicker)">
-          <div class="flex flex-col gap-0.5 flex-shrink-0">
-            <label class="text-xs text-text-secondary">Desde</label>
-            <div class="relative">
-              <input type="text" v-model="startTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
-                @input="onTimeInput($event, 'start')" @focus="showDrop.start = true" @blur="hideDrop('start')"
-                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-                :class="isMultiDay && !startTimeInput ? 'border-state-warning-border' : 'border-border'" />
-              <ul v-if="showDrop.start && filteredTimes(startTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
-                <li v-for="t in filteredTimes(startTimeInput)" :key="t" @mousedown.prevent="pickTime('start', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
-              </ul>
-            </div>
+            <VueDatePicker
+              v-model="templateAnchorDate"
+              :teleport="true"
+              :enable-time-picker="false"
+              :formats="dateOnlyFormats"
+              :locale="es"
+              auto-apply
+              :timezone="timezone"
+              :max-date="maxDate"
+              :clearable="false"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+              class="arqueo-template-dp-trigger w-fit flex-shrink-0"
+              @update:model-value="onTemplateAnchorPick"
+            >
+              <template #trigger>
+                <button
+                  type="button"
+                  class="flex w-fit items-center gap-1.5 h-10 px-3 text-sm text-text-primary hover:bg-surface-secondary/60 transition-colors rounded-l-md"
+                >
+                  <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span class="font-medium tabular-nums whitespace-nowrap">{{ formatTemplateDateOnly() }}</span>
+                </button>
+              </template>
+            </VueDatePicker>
+            <span
+              v-if="templateHoursLabel"
+              class="flex items-center h-full px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
+              title="Horario definido por el turno"
+            >
+              {{ templateHoursLabel }}
+            </span>
+            <span
+              v-else-if="selectedTemplateId && templateWindowStatus === 'pending'"
+              class="flex items-center h-full px-2.5 text-xs text-text-secondary border-l border-border"
+            >
+              ...
+            </span>
           </div>
-          <div class="flex flex-col gap-0.5 flex-shrink-0">
-            <label class="text-xs text-text-secondary">Hasta</label>
-            <div class="relative">
-              <input type="text" v-model="endTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
-                @input="onTimeInput($event, 'end')" @focus="showDrop.end = true" @blur="hideDrop('end')"
-                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-                :class="isMultiDay && !endTimeInput ? 'border-state-warning-border' : 'border-border'" />
-              <ul v-if="showDrop.end && filteredTimes(endTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
-                <li v-for="t in filteredTimes(endTimeInput)" :key="t" @mousedown.prevent="pickTime('end', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
-              </ul>
-            </div>
+
+          <div v-else class="w-[28rem] max-w-[min(28rem,calc(100vw-2rem))] flex-shrink-0">
+            <VueDatePicker
+              v-model="dateRangeDates"
+              range
+              :teleport="true"
+              :preset-dates="dpPresets"
+              :enable-time-picker="false"
+              :locale="es"
+              auto-apply
+              :timezone="timezone"
+              :max-date="maxDate"
+              :formats="dateOnlyFormats"
+              input-class-name="dp-custom-input"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+              @update:model-value="activePreset = null"
+            />
           </div>
-          <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0">{{ shiftLabel }}</span>
-        </template>
+
       </div>
 
       <p v-if="timeError" class="text-xs text-destructive">{{ timeError }}</p>
@@ -238,6 +211,10 @@
           <div class="bg-surface border-2 border-border rounded-lg">
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
             <div class="divide-y divide-border">
+              <div v-if="customInternalWindowLabel" class="flex justify-between px-4 py-2.5 text-sm">
+                <span class="text-text-secondary">Ventana del período</span>
+                <span class="font-medium text-text-primary">{{ customInternalWindowLabel }}</span>
+              </div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
               <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
               <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Impuesto propina</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
@@ -249,6 +226,10 @@
           <div class="bg-surface border-2 border-border rounded-lg">
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
             <div class="divide-y divide-border">
+              <div v-if="customInternalWindowLabel" class="flex justify-between px-4 py-2.5 text-sm">
+                <span class="text-text-secondary">Ventana del período</span>
+                <span class="font-medium text-text-primary">{{ customInternalWindowLabel }}</span>
+              </div>
               <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
               <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
@@ -937,9 +918,8 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useQueryCache } from '@pinia/colada'
-import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
+import { formatDistanceStrict } from 'date-fns'
 import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -955,8 +935,10 @@ const {
   combineDateAndTimeISO,
   dateAtNoon,
   isoFromDate,
+  timezone,
   timeHHMMFromISO,
   todayISO,
+  zonedParts,
 } = useTenantTimezone()
 
 type ArqueoWindowMode = 'template' | 'custom'
@@ -976,6 +958,11 @@ const selectedTemplateId = ref<string>(initTemplate)
 const suggestedLoading = ref(false)
 
 const today = todayISO()
+const maxDate = computed(() => dateAtNoon(todayISO()))
+const formatIsoDateLong = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return year && month && day ? `${day}/${month}/${year}` : iso
+}
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
 const initStart = (route.query.start as string) || today
@@ -996,10 +983,10 @@ const buildPresets = (): Preset[] => {
   const [y, m] = today.split('-').map(Number)
   const monthStartNoon = dateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
   return [
-    { key: 'today',     label: 'Hoy',           start: new Date(todayNoon), end: new Date(todayNoon) },
+    { key: 'today',     label: 'Hoy',           start: todayNoon,           end: todayNoon },
     { key: 'yesterday', label: 'Ayer',           start: yesterdayNoon,       end: yesterdayNoon },
-    { key: 'week',      label: 'Últimos 7 días', start: weekStartNoon,       end: new Date(todayNoon) },
-    { key: 'month',     label: 'Este mes',        start: monthStartNoon,      end: new Date(todayNoon) },
+    { key: 'week',      label: 'Últimos 7 días', start: weekStartNoon,       end: todayNoon },
+    { key: 'month',     label: 'Este mes',        start: monthStartNoon,      end: todayNoon },
   ]
 }
 const presets      = buildPresets()
@@ -1013,11 +1000,11 @@ const dpPresets    = presets.map(p => ({ label: p.label, value: [p.start, p.end]
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  const anchor = new Date(p.start)
+  const anchor = p.start
   if (arqueoWindowMode.value === 'template') {
     dateRangeDates.value = [anchor, anchor]
   } else {
-    dateRangeDates.value = [anchor, new Date(p.end)]
+    dateRangeDates.value = [anchor, p.end]
   }
 }
 
@@ -1026,9 +1013,9 @@ const dateOnlyFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates?.[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  const from = formatIsoDateLong(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })
+  const to = formatIsoDateLong(isoFromDate(dates[1]))
   if (from === to) return from
   return `${from} – ${to}`
 }
@@ -1041,30 +1028,14 @@ const startTimeInput   = ref<string>(initStartTimeQ)
 const endTimeInput     = ref<string>(initEndTimeQ)
 const timeError        = ref<string | null>(null)
 
-const timeOptions = Array.from({ length: 48 }, (_, i) => {
-  const h = Math.floor(i / 2).toString().padStart(2, '0')
-  const m = i % 2 === 0 ? '00' : '30'
-  return `${h}:${m}`
-})
-const showDrop = reactive({ start: false, end: false })
-const filteredTimes = (val: string) => val ? timeOptions.filter(t => t.startsWith(val)) : timeOptions
-const hideDrop = (f: 'start' | 'end') => setTimeout(() => { showDrop[f] = false }, 150)
-const pickTime = (f: 'start' | 'end', t: string) => {
-  if (f === 'start') startTimeInput.value = t; else endTimeInput.value = t
-  showDrop[f] = false
+const DEFAULT_CUSTOM_START_TIME = '00:00'
+const DEFAULT_CUSTOM_END_TIME = '23:59'
+const ensureCustomTimeDefaults = () => {
+  if (!startTimeInput.value) startTimeInput.value = DEFAULT_CUSTOM_START_TIME
+  if (!endTimeInput.value) endTimeInput.value = DEFAULT_CUSTOM_END_TIME
 }
-const toggleTimePicker = () => {
-  enableTimePicker.value = !enableTimePicker.value
-  if (!enableTimePicker.value) { startTimeInput.value = ''; endTimeInput.value = '' }
-}
-const onTimeInput = (e: Event, field: 'start' | 'end') => {
-  const el = e.target as HTMLInputElement
-  let v = el.value.replace(/\D/g, '').slice(0, 4)
-  if (v.length >= 3) v = v.slice(0, 2) + ':' + v.slice(2)
-  if (v.length >= 2) { const h = Math.min(23, parseInt(v.slice(0, 2), 10)); v = String(h).padStart(2, '0') + v.slice(2) }
-  if (v.length === 5) { const m = Math.min(59, parseInt(v.slice(3, 5), 10)); v = v.slice(0, 3) + String(m).padStart(2, '0') }
-  if (field === 'start') startTimeInput.value = v; else endTimeInput.value = v
-  el.value = v
+if (enableTimePicker.value && arqueoWindowMode.value === 'custom') {
+  ensureCustomTimeDefaults()
 }
 
 // Period computed from date picker (Bogotá calendar day for API)
@@ -1079,7 +1050,10 @@ const previewShiftTemplateId = computed(() =>
 )
 
 watch(isMultiDay, (multi) => {
-  if (multi && arqueoWindowMode.value === 'custom') enableTimePicker.value = true
+  if (multi && arqueoWindowMode.value === 'custom') {
+    enableTimePicker.value = true
+    ensureCustomTimeDefaults()
+  }
 })
 
 watch(dateRangeDates, (dates) => {
@@ -1093,7 +1067,7 @@ const setArqueoMode = (mode: ArqueoWindowMode) => {
   arqueoWindowMode.value = mode
   timeError.value = null
   if (mode === 'template') {
-    const d = dateRangeDates.value[0] ?? new Date()
+    const d = dateRangeDates.value[0] ?? dateAtNoon(todayISO())
     dateRangeDates.value = [d, d]
     enableTimePicker.value = false
     startTimeInput.value = ''
@@ -1111,7 +1085,7 @@ const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
 const templatesLoading = computed(() => templatesStatus.value === 'pending')
 
 const templateAnchorDate = computed({
-  get: () => dateRangeDates.value[0] ?? new Date(),
+  get: () => dateRangeDates.value[0] ?? dateAtNoon(todayISO()),
   set: (d: Date) => {
     if (!d) return
     dateRangeDates.value = [d, d]
@@ -1134,18 +1108,18 @@ const { data: rawTemplateWindow, status: templateWindowStatus } = useQuery({
 })
 
 const formatTemplateDateOnly = (date?: Date) =>
-  fnsFormat(date ?? templateAnchorDate.value, 'dd/MM/yyyy', { locale: es })
+  formatIsoDateLong(isoFromDate(date ?? templateAnchorDate.value))
 
 /** Horas del turno resueltas en servidor — no editables en plantilla */
 const templateHoursLabel = computed(() => {
   const w = rawTemplateWindow.value?.data
   if (!w?.periodStartTime || !w?.periodEndTime) return null
-  const start = new Date(w.periodStartTime)
-  const end = new Date(w.periodEndTime)
-  const startT = fnsFormat(start, 'HH:mm')
-  const endT = fnsFormat(end, 'HH:mm')
-  const endDay = fnsFormat(end, 'dd/MM', { locale: es })
-  const anchorDay = fnsFormat(start, 'dd/MM', { locale: es })
+  const startParts = zonedParts(new Date(w.periodStartTime))
+  const endParts = zonedParts(new Date(w.periodEndTime))
+  const startT = timeHHMMFromISO(w.periodStartTime)
+  const endT = timeHHMMFromISO(w.periodEndTime)
+  const endDay = `${endParts.day}/${endParts.month}`
+  const anchorDay = `${startParts.day}/${startParts.month}`
   if (anchorDay === endDay) return `${startT} – ${endT}`
   return `${startT} – ${endDay} ${endT}`
 })
@@ -1257,7 +1231,8 @@ const aperturaLink = computed(() => {
   return `/finanzas/arqueo/apertura?${q.toString()}`
 })
 
-const shiftLabel = computed(() => {
+const customInternalWindowLabel = computed(() => {
+  if (arqueoWindowMode.value !== 'custom' || !enableTimePicker.value) return null
   if (!enableTimePicker.value) return null
   const startIso = periodStartTime.value
   const endIso = periodEndTime.value
@@ -1265,7 +1240,12 @@ const shiftLabel = computed(() => {
   const s = new Date(startIso)
   const e = new Date(endIso)
   if (s >= e) return null
-  try { return formatDistanceStrict(s, e, { locale: es }) } catch { return null }
+  const hours = `${timeHHMMFromISO(startIso)} – ${timeHHMMFromISO(endIso)}`
+  try {
+    return `${hours} · ${formatDistanceStrict(s, e, { locale: es })}`
+  } catch {
+    return hours
+  }
 })
 
 // X preview (paso 0 — all orders, not completed_only)
@@ -1571,10 +1551,9 @@ const formatCurrency = (value?: number) =>
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
-const { formatDate: _fmtDate } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
+  const fmt = (d: string) => formatIsoDateLong(d)
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 

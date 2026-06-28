@@ -349,7 +349,7 @@ const tableColumns = [
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
-  return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatCalendarDate(iso)
 }
 
 const hasActiveFilters = computed(() =>

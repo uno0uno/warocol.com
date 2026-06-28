@@ -161,6 +161,7 @@ definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre contable - Warocol' })
 
 const { formatDateTime } = useFormatters()
+const { todayISO } = useTenantTimezone()
 const { fetchPeriodStatus, closePeriod } = useClosedPeriods()
 
 const MONTH_NAMES = [
@@ -168,13 +169,13 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-const now = new Date()
-const currentYear = now.getFullYear()
-const currentMonth = now.getMonth() + 1
+const tenantToday = computed(() => todayISO())
+const currentYear = computed(() => Number(tenantToday.value.slice(0, 4)))
+const currentMonth = computed(() => Number(tenantToday.value.slice(5, 7)))
 
-const selectedYear = ref(currentYear)
+const selectedYear = ref(currentYear.value)
 const prevYear = () => { selectedYear.value-- }
-const nextYear = () => { if (selectedYear.value < currentYear) selectedYear.value++ }
+const nextYear = () => { if (selectedYear.value < currentYear.value) selectedYear.value++ }
 
 const columns = [
   { key: 'name',     title: 'Mes',            sortable: false },
@@ -210,7 +211,7 @@ const months = computed(() =>
     const m = i + 1
     const key = `${selectedYear.value}-${m}`
     const cached = statusCache.value[key]
-    const isFuture = selectedYear.value === currentYear && m > currentMonth
+    const isFuture = selectedYear.value === currentYear.value && m > currentMonth.value
     return {
       number: m,
       name,

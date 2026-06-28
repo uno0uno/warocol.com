@@ -162,8 +162,8 @@
             <div class="px-4 py-2 bg-background">
               <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
             </div>
-            <div v-for="method in group.methods" :key="method.method_name" class="flex justify-between px-4 py-2 text-sm">
-              <span class="text-text-secondary pl-2">{{ method.method_name }}</span>
+            <div v-for="method in group.methods" :key="method.key" class="flex justify-between px-4 py-2 text-sm">
+              <span class="text-text-secondary pl-2">{{ method.label }}</span>
               <span class="font-medium">{{ formatCurrency(method.total) }}</span>
             </div>
           </div>
@@ -211,21 +211,50 @@ const { data: rawCierre, status, asyncStatus, error: fetchError, refetch } = use
 
 const cierre       = computed(() => rawCierre.value?.data ?? null)
 
-interface BreakdownRow { group_slug: string; method_name: string; total: number }
-interface BreakdownGroup { slug: string; label: string; methods: BreakdownRow[] }
+interface RawBreakdownRow {
+  group_slug?: string
+  groupSlug?: string
+  method_name?: string
+  methodName?: string
+  total?: number | string
+}
+
+interface BreakdownMethod {
+  key: string
+  label: string
+  total: number
+}
+
+interface BreakdownGroup {
+  slug: string
+  label: string
+  methods: BreakdownMethod[]
+}
+
+const formatMethodLabel = (groupSlug: string, methodName: string) => {
+  if (!methodName || methodName === groupSlug) return GROUP_LABELS[groupSlug] ?? methodName
+  return methodName
+}
 
 const breakdownByGroup = computed<BreakdownGroup[]>(() => {
-  const rows: BreakdownRow[] = cierre.value?.breakdown ?? []
+  const rows: RawBreakdownRow[] = cierre.value?.breakdown ?? []
   const map = new Map<string, BreakdownGroup>()
   for (const row of rows) {
-    if (!map.has(row.group_slug)) {
-      map.set(row.group_slug, {
-        slug:    row.group_slug,
-        label:   GROUP_LABELS[row.group_slug] ?? row.group_slug,
+    const groupSlug = row.group_slug ?? row.groupSlug ?? ''
+    const methodName = row.method_name ?? row.methodName ?? ''
+    if (!groupSlug) continue
+    if (!map.has(groupSlug)) {
+      map.set(groupSlug, {
+        slug:    groupSlug,
+        label:   GROUP_LABELS[groupSlug] ?? groupSlug,
         methods: [],
       })
     }
-    map.get(row.group_slug)!.methods.push(row)
+    map.get(groupSlug)!.methods.push({
+      key: `${groupSlug}__${methodName || 'group'}`,
+      label: formatMethodLabel(groupSlug, methodName),
+      total: Number(row.total ?? 0),
+    })
   }
   return Array.from(map.values())
 })

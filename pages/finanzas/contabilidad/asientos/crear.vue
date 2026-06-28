@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo asiento contable - Warocol' })
 
 const { currentTenant } = useTenantReactive()
+const { todayISO } = useTenantTimezone()
 const router = useRouter()
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -43,9 +43,9 @@ const detailAccounts = computed<TenantAccount[]>(() =>
 const accountsLoading = computed(() => accountsStatus.value === 'loading' && !accountsData.value)
 
 // ── Form state ────────────────────────────────────────────────────────────────
-const today = fnsFormat(new Date(), 'yyyy-MM-dd')
+const today = computed(() => todayISO())
 
-const entryDate = ref(today)
+const entryDate = ref(today.value)
 const description = ref('')
 const reference = ref('')
 

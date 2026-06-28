@@ -8,40 +8,32 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
-function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
+const { addDaysISO, monthBounds, todayISO } = useTenantTimezone()
 
 function todayStr(): string {
-  return toISODate(new Date())
+  return todayISO()
 }
 
 function firstDayOfCurrentMonth(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  return monthBounds(todayISO()).first
 }
 
 function firstDayOfLastMonth(): string {
-  const d = new Date()
-  d.setDate(1)
-  d.setMonth(d.getMonth() - 1)
-  return toISODate(d)
+  return monthBounds(addDaysISO(firstDayOfCurrentMonth(), -1)).first
 }
 
 function lastDayOfLastMonth(): string {
-  const d = new Date()
-  d.setDate(0)
-  return toISODate(d)
+  return addDaysISO(firstDayOfCurrentMonth(), -1)
 }
 
 function firstDayOfCurrentQuarter(): string {
-  const d = new Date()
-  const q = Math.floor(d.getMonth() / 3)
-  return `${d.getFullYear()}-${String(q * 3 + 1).padStart(2, '0')}-01`
+  const [year, month] = todayISO().split('-').map(Number)
+  const q = Math.floor((month - 1) / 3)
+  return `${year}-${String(q * 3 + 1).padStart(2, '0')}-01`
 }
 
 function firstDayOfCurrentYear(): string {
-  return `${new Date().getFullYear()}-01-01`
+  return `${todayISO().slice(0, 4)}-01-01`
 }
 
 // ── Period selector state ────────────────────────────────────────────────────

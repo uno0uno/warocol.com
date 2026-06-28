@@ -28,7 +28,8 @@
               :locale="es"
               placeholder="Rango de fechas"
               auto-apply
-              :max-date="new Date()"
+              :timezone="timezone"
+              :max-date="maxDate"
               :format="'dd/MM/yy'"
               input-class-name="dp-custom-input"
               menu-class-name="dp-custom-menu"
@@ -182,9 +183,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Previsualización arqueo - Warocol' })
@@ -193,9 +192,14 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { currentTenant } = useTenantReactive()
 const { plural: tablePlural } = useTableLabel()
 const route = useRoute()
-const { addDaysISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
+const { addDaysISO, dateAtNoon, isoFromDate, timezone, todayISO } = useTenantTimezone()
 
 const today = todayISO()
+const maxDate = computed(() => dateAtNoon(todayISO()))
+const formatIsoDateLong = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year}`
+}
 
 // Initialise from query params if present
 const initStart     = (route.query.start     as string) || today
@@ -211,17 +215,17 @@ const periodEndTime   = ref<string | null>(initEndTime)
 
 const todayNoon = dateAtNoon(today)
 const presetDates = ref([
-  { label: 'Hoy',           value: [new Date(todayNoon), new Date(todayNoon)] },
+  { label: 'Hoy',           value: [todayNoon, todayNoon] },
   { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today, -7)), new Date(todayNoon)] },
-  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today, -30)), new Date(todayNoon)] },
+  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today, -7)), todayNoon] },
+  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today, -30)), todayNoon] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = formatIsoDateLong(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+  return `${from} - ${formatIsoDateLong(isoFromDate(dates[1]))}`
 }
 
 const periodStart = computed(() =>
@@ -339,10 +343,9 @@ const formatCurrency = (value?: number) =>
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
-const { formatDate: _fmtDate } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
+  const fmt = (d: string) => formatIsoDateLong(d)
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>

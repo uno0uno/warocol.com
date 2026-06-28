@@ -12,8 +12,9 @@ useHead({ title: 'Gastos' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { todayISO } = useTenantTimezone()
 
-const defaultMonth = () => new Date().toISOString().slice(0, 7)
+const defaultMonth = () => todayISO().slice(0, 7)
 const currentMonth = ref(defaultMonth())
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const categoryFilter = ref('')

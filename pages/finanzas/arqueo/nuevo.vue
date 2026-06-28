@@ -76,6 +76,7 @@
               <div>
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Período</p>
                 <p class="text-base font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
+                <p class="text-xs font-mono text-text-secondary mt-0.5">{{ dayWindowDisplayLabel }}</p>
               </div>
             </div>
 
@@ -198,7 +199,7 @@
               <VueDatePicker
                 v-model="selectedDate"
                 :time-config="{ enableTimePicker: false }" :locale="es"
-                auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
+                auto-apply :teleport="true" :timezone="timezone" :max-date="maxDate" :format="formatSingleDate"
                 placeholder="Seleccionar fecha..."
                 input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
                 @update:model-value="onDatePicked"
@@ -675,7 +676,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
           <!-- Período -->
           <div class="bg-background rounded-lg border border-border px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Día completo</p>
+            <p class="text-xs text-text-secondary mb-0.5">{{ dayWindowDisplayLabel }}</p>
             <p class="text-sm font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
           </div>
           <!-- Total ventas -->
@@ -765,7 +766,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
@@ -777,9 +777,14 @@ const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const cache = useQueryCache()
 const route = useRoute()
-const { addDaysISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
+const { addDaysISO, dateAtNoon, isoFromDate, timeHHMMFromISO, timezone, todayISO } = useTenantTimezone()
 
 const today = todayISO()
+const maxDate = computed(() => dateAtNoon(todayISO()))
+const formatIsoDateLong = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year}`
+}
 const initStart = (route.query.start as string) || today
 
 // ── Último cierre ──────────────────────────────────────────────────────────
@@ -830,7 +835,7 @@ const buildPresets = (): Preset[] => {
   const todayNoon = dateAtNoon(today)
   const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
   return [
-    { key: 'today',     label: 'Hoy',  date: new Date(todayNoon) },
+    { key: 'today',     label: 'Hoy',  date: todayNoon },
     { key: 'yesterday', label: 'Ayer', date: yesterdayNoon },
   ]
 }
@@ -850,7 +855,7 @@ const syncPresetFromDate = (iso: string) => {
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  selectedDate.value = new Date(p.date)
+  selectedDate.value = p.date
 }
 
 const onDatePicked = (date: Date | null) => {
@@ -859,30 +864,60 @@ const onDatePicked = (date: Date | null) => {
 }
 
 const formatSingleDate = (date: Date) =>
-  date ? fnsFormat(date, 'dd/MM/yy', { locale: es }) : ''
+  date ? formatIsoDateLong(isoFromDate(date)) : ''
 
 // Period — siempre un solo día
 const periodStart = computed(() => isoFromDate(selectedDate.value))
 const periodEnd   = computed(() => periodStart.value)
 
 const shiftWindowParams = computed(() =>
-  buildCierreWindowParams({ periodStart: periodStart.value, periodEnd: periodEnd.value }),
+  buildCierreWindowParams({
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value,
+  }),
 )
-const cierreWindowBody = computed(() =>
-  buildCierreWindowBody({ periodStart: periodStart.value, periodEnd: periodEnd.value }),
-)
-const buildPreviewParams = (completedOnly: boolean) => ({
-  ...shiftWindowParams.value,
-  ...(completedOnly ? { completed_only: true } : {}),
-})
 
 const { data: rawShiftStatus } = useQuery({
-  key: () => ['cierre', 'shift-status', currentTenant.value?.id, periodStart.value],
+  key: () => ['cierre', 'shift-status', currentTenant.value?.id, JSON.stringify(shiftWindowParams.value)],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', {
     params: shiftWindowParams.value,
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 0,
+})
+
+const resolvedWindow = computed(() => rawShiftStatus.value?.data ?? null)
+const dayWindowLoading = computed(() => !resolvedWindow.value)
+const effectivePeriodStart = computed(() => resolvedWindow.value?.periodStart ?? periodStart.value)
+const effectivePeriodEnd = computed(() => resolvedWindow.value?.periodEnd ?? periodEnd.value)
+const effectivePeriodStartTime = computed(() => resolvedWindow.value?.periodStartTime ?? null)
+const effectivePeriodEndTime = computed(() => resolvedWindow.value?.periodEndTime ?? null)
+const resolvedWindowParams = computed(() =>
+  buildCierreWindowParams({
+    periodStart: effectivePeriodStart.value,
+    periodEnd: effectivePeriodEnd.value,
+    periodStartTime: effectivePeriodStartTime.value,
+    periodEndTime: effectivePeriodEndTime.value,
+  }),
+)
+const cierreWindowBody = computed(() =>
+  buildCierreWindowBody({
+    periodStart: effectivePeriodStart.value,
+    periodEnd: effectivePeriodEnd.value,
+    periodStartTime: effectivePeriodStartTime.value,
+    periodEndTime: effectivePeriodEndTime.value,
+  }),
+)
+const buildPreviewParams = (completedOnly: boolean) => ({
+  ...resolvedWindowParams.value,
+  ...(completedOnly ? { completed_only: true } : {}),
+})
+const dayWindowDisplayLabel = computed(() => {
+  if (dayWindowLoading.value) return 'Resolviendo ventana...'
+  if (effectivePeriodStartTime.value && effectivePeriodEndTime.value) {
+    return `Día restante · ${timeHHMMFromISO(effectivePeriodStartTime.value)} – ${timeHHMMFromISO(effectivePeriodEndTime.value)}`
+  }
+  return 'Día completo · 00:00 – 23:59'
 })
 
 const shiftOpenForWindow = computed(() => isShiftOpen(rawShiftStatus.value?.data))
@@ -903,7 +938,7 @@ const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: buildPreviewParams(true),
   }),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && !dayWindowLoading.value,
   staleTime: 0,
 })
 const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
@@ -978,7 +1013,7 @@ const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: buildPreviewParams(true),
   }),
-  enabled: () => !!currentTenant.value && currentStep.value > 1,
+  enabled: () => !!currentTenant.value && currentStep.value > 1 && !dayWindowLoading.value,
   staleTime: 0,
 })
 
@@ -1183,10 +1218,10 @@ const formatCurrency = (value?: number) =>
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
-const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+const { formatDateTime: _fmtDateTime } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
+  const fmt = (d: string) => formatIsoDateLong(d)
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 

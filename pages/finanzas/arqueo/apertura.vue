@@ -8,34 +8,66 @@
       indicator="matrix"
     />
 
-    <div v-if="openSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
-        <svg class="w-9 h-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-xl font-semibold text-text-primary">Turno abierto</p>
-        <p class="text-sm text-text-secondary mt-1">Fondo registrado: {{ formatCurrency(successOpeningCash) }}</p>
-      </div>
-      <div class="flex flex-wrap gap-3 justify-center">
-        <NuxtLink
-          v-if="closeLink"
-          :to="closeLink"
-          class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center"
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="openSuccess"
+          class="fixed inset-0 z-[80] flex items-center justify-center bg-overlay-backdrop/50 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="open-shift-success-title"
         >
-          {{ closeLinkLabel }}
-        </NuxtLink>
-        <NuxtLink
-          to="/finanzas/arqueo"
-          class="min-h-[44px] px-5 py-2 rounded-lg border-2 border-border text-sm font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center"
-        >
-          Volver al arqueo
-        </NuxtLink>
-      </div>
-    </div>
+          <Transition
+            enter-active-class="transition-all duration-200"
+            enter-from-class="opacity-0 translate-y-2 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition-all duration-150"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 translate-y-2 scale-95"
+          >
+            <div
+              v-if="openSuccess"
+              class="w-full max-w-md rounded-2xl border border-border bg-surface px-6 py-7 text-center shadow-2xl"
+            >
+              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-state-success-bg">
+                <svg class="h-9 w-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
 
-    <template v-else>
+              <div class="mt-5">
+                <p id="open-shift-success-title" class="text-xl font-semibold text-text-primary">Turno abierto</p>
+                <p class="mt-1 text-sm text-text-secondary">Fondo registrado: {{ formatCurrency(successOpeningCash) }}</p>
+              </div>
+
+              <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+                <NuxtLink
+                  to="/finanzas/arqueo"
+                  class="min-h-[44px] flex-1 rounded-lg border-2 border-border px-5 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+                >
+                  Volver al arqueo
+                </NuxtLink>
+                <NuxtLink
+                  v-if="closeLink"
+                  :to="closeLink"
+                  class="min-h-[44px] flex-1 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  {{ closeLinkLabel }}
+                </NuxtLink>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+
       <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4 p-3 sm:p-4">
         <h1 class="text-lg font-semibold text-text-primary">Abrir turno</h1>
         <p class="text-sm text-text-secondary mt-1">
@@ -66,17 +98,36 @@
             :formats="dateOnlyFormats"
             :locale="es"
             auto-apply
-            :max-date="new Date()"
+            :timezone="timezone"
+            :max-date="maxDate"
             :clearable="false"
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
             class="mt-1.5"
           />
+          <p class="mt-2 text-sm font-mono text-text-secondary">
+            {{ dayWindowDisplayLabel }}
+          </p>
         </div>
 
         <div v-else-if="aperturaMode === 'custom'" class="rounded-lg border border-border bg-background px-3 py-2.5">
-          <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Ventana personalizada</p>
-          <p class="text-sm font-mono text-text-primary mt-1">{{ customWindowLabel }}</p>
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Ventana personalizada</label>
+          <VueDatePicker
+            v-model="customDateRangeDates"
+            range
+            :teleport="true"
+            :enable-time-picker="false"
+            :formats="dateOnlyFormats"
+            :locale="es"
+            auto-apply
+            :timezone="timezone"
+            :max-date="maxDate"
+            :clearable="false"
+            menu-class-name="dp-custom-menu"
+            calendar-cell-class-name="dp-custom-cell"
+            class="mt-1.5"
+          />
+          <p class="text-sm font-mono text-text-primary mt-2">{{ customWindowLabel }}</p>
         </div>
 
         <template v-if="aperturaMode === 'template'">
@@ -89,7 +140,8 @@
               :formats="dateOnlyFormats"
               :locale="es"
               auto-apply
-              :max-date="new Date()"
+              :timezone="timezone"
+              :max-date="maxDate"
               :clearable="false"
               menu-class-name="dp-custom-menu"
               calendar-cell-class-name="dp-custom-cell"
@@ -98,7 +150,7 @@
           </div>
 
           <p v-if="isDayShiftSelected" class="text-sm font-mono text-text-secondary">
-            Ventana: {{ formatTemplateDateOnly() }} · día calendario completo (00:00 – 23:59)
+            Ventana: {{ formatTemplateDateOnly() }} · {{ dayWindowDisplayLabel }}
           </p>
           <p v-else-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
             Ventana: {{ formatTemplateDateOnly() }} · {{ templateHoursLabel }}
@@ -219,14 +271,12 @@
           </div>
         </div>
       </div>
-    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { useQueryCache } from '@pinia/colada'
@@ -250,9 +300,14 @@ const route = useRoute()
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const { formatCurrency } = useFormatters()
-const { combineDateAndTimeISO, dateAtNoon, isoFromDate, todayISO } = useTenantTimezone()
+const { combineDateAndTimeISO, dateAtNoon, isoFromDate, timeHHMMFromISO, timezone, todayISO } = useTenantTimezone()
 
 const today = todayISO()
+const maxDate = computed(() => dateAtNoon(todayISO()))
+const formatIsoDateLong = (iso: string) => {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year}`
+}
 const initStart = (route.query.start as string) || today
 const initEnd = (route.query.end as string) || initStart
 const initTemplate = (route.query.template as string) || ''
@@ -272,10 +327,15 @@ const selectedTemplateId = ref(initTemplate || DAY_SHIFT_KEY)
 const isDayShiftSelected = computed(() =>
   aperturaMode.value === 'template' && selectedTemplateId.value === DAY_SHIFT_KEY,
 )
+const usesDayWindow = computed(() => aperturaMode.value === 'day' || isDayShiftSelected.value)
 const effectiveTemplateId = computed(() =>
   isDayShiftSelected.value ? null : (selectedTemplateId.value || null),
 )
 const anchorDate = ref<Date>(dateAtNoon(initStart))
+const customDateRangeDates = ref<Date[]>([
+  dateAtNoon(initStart),
+  dateAtNoon(initEnd),
+])
 const stepError = ref<string | null>(null)
 const submitError = ref<string | null>(null)
 const isSubmitting = ref(false)
@@ -290,11 +350,13 @@ const {
 } = useCashDenominationCount()
 
 const periodStart = computed(() => {
-  if (aperturaMode.value === 'custom') return initStart
+  if (aperturaMode.value === 'custom') return isoFromDate(customDateRangeDates.value[0])
   return isoFromDate(anchorDate.value)
 })
 const periodEnd = computed(() => {
-  if (aperturaMode.value === 'custom') return initEnd
+  if (aperturaMode.value === 'custom') {
+    return isoFromDate(customDateRangeDates.value[1] ?? customDateRangeDates.value[0])
+  }
   return periodStart.value
 })
 
@@ -355,6 +417,19 @@ const { data: rawShiftStatus, refetch: refetchShiftStatus } = useQuery({
 })
 
 const existingShift = computed(() => rawShiftStatus.value?.data ?? null)
+const dayWindowLoading = computed(() => rawShiftStatus.value == null && usesDayWindow.value)
+const resolvedPeriodStart = computed(() =>
+  usesDayWindow.value ? (existingShift.value?.periodStart ?? periodStart.value) : periodStart.value,
+)
+const resolvedPeriodEnd = computed(() =>
+  usesDayWindow.value ? (existingShift.value?.periodEnd ?? periodEnd.value) : periodEnd.value,
+)
+const resolvedPeriodStartTime = computed(() =>
+  usesDayWindow.value ? (existingShift.value?.periodStartTime ?? null) : periodStartTime.value,
+)
+const resolvedPeriodEndTime = computed(() =>
+  usesDayWindow.value ? (existingShift.value?.periodEndTime ?? null) : periodEndTime.value,
+)
 
 const suggestedOpeningCash = computed(() => {
   const data = existingShift.value
@@ -366,16 +441,24 @@ const applySuggestedOpening = () => {
   if (suggestedOpeningCash.value > 0) setFromAmount(suggestedOpeningCash.value)
 }
 
-const formatTemplateDateOnly = () => fnsFormat(anchorDate.value, 'dd/MM/yyyy', { locale: es })
+const formatTemplateDateOnly = () => formatIsoDateLong(isoFromDate(anchorDate.value))
 
 const templateHoursLabel = computed(() => {
   const w = rawTemplateWindow.value?.data
   if (!w?.periodStartTime || !w?.periodEndTime) return null
-  return `${fnsFormat(new Date(w.periodStartTime), 'HH:mm')} – ${fnsFormat(new Date(w.periodEndTime), 'HH:mm')}`
+  return `${timeHHMMFromISO(w.periodStartTime)} – ${timeHHMMFromISO(w.periodEndTime)}`
+})
+
+const dayWindowDisplayLabel = computed(() => {
+  if (dayWindowLoading.value) return 'Resolviendo ventana del día...'
+  if (usesDayWindow.value && resolvedPeriodStartTime.value && resolvedPeriodEndTime.value) {
+    return `Día restante · ${timeHHMMFromISO(resolvedPeriodStartTime.value)} – ${timeHHMMFromISO(resolvedPeriodEndTime.value)}`
+  }
+  return 'Día completo · 00:00 – 23:59'
 })
 
 const customWindowLabel = computed(() => {
-  const fmt = (iso: string) => fnsFormat(dateAtNoon(iso), 'dd/MM/yyyy', { locale: es })
+  const fmt = (iso: string) => formatIsoDateLong(iso)
   const datePart = periodStart.value === periodEnd.value
     ? fmt(periodStart.value)
     : `${fmt(periodStart.value)} – ${fmt(periodEnd.value)}`
@@ -385,7 +468,17 @@ const customWindowLabel = computed(() => {
 
 const closeLink = computed(() => {
   if (aperturaMode.value === 'day' || isDayShiftSelected.value) {
-    return `/finanzas/arqueo/nuevo?start=${periodStart.value}&end=${periodEnd.value}`
+    if (resolvedPeriodStartTime.value && resolvedPeriodEndTime.value) {
+      const q = new URLSearchParams({
+        mode: 'custom',
+        start: resolvedPeriodStart.value,
+        end: resolvedPeriodEnd.value,
+        startTime: timeHHMMFromISO(resolvedPeriodStartTime.value),
+        endTime: timeHHMMFromISO(resolvedPeriodEndTime.value),
+      })
+      return `/finanzas/arqueo/z?${q.toString()}`
+    }
+    return `/finanzas/arqueo/nuevo?start=${resolvedPeriodStart.value}&end=${resolvedPeriodEnd.value}`
   }
   if (aperturaMode.value === 'custom') {
     const q = new URLSearchParams({ mode: 'custom', start: periodStart.value, end: periodEnd.value })
@@ -403,6 +496,7 @@ const closeLinkLabel = computed(() =>
 
 const canProceedToCount = computed(() => {
   if (isShiftOpen(existingShift.value)) return false
+  if (usesDayWindow.value && dayWindowLoading.value) return false
   if (aperturaMode.value === 'template') {
     return selectedTemplateId.value === DAY_SHIFT_KEY || !!effectiveTemplateId.value
   }
@@ -441,18 +535,16 @@ const submitOpening = async () => {
   try {
     const breakdown = toBreakdown()
     const body: Record<string, unknown> = {
-      periodStart: periodStart.value,
-      periodEnd: periodEnd.value,
+      periodStart: resolvedPeriodStart.value,
+      periodEnd: resolvedPeriodEnd.value,
       openingCash: totalCounted.value,
       openingBreakdown: Object.keys(breakdown).length ? breakdown : undefined,
     }
     if (aperturaMode.value === 'template' && effectiveTemplateId.value) {
       body.shiftTemplateId = effectiveTemplateId.value
     }
-    if (aperturaMode.value === 'custom') {
-      if (periodStartTime.value) body.periodStartTime = periodStartTime.value
-      if (periodEndTime.value) body.periodEndTime = periodEndTime.value
-    }
+    if (resolvedPeriodStartTime.value) body.periodStartTime = resolvedPeriodStartTime.value
+    if (resolvedPeriodEndTime.value) body.periodEndTime = resolvedPeriodEndTime.value
     await $fetch('/api/cierre/open-shift', { method: 'POST', body })
     successOpeningCash.value = totalCounted.value
     openSuccess.value = true

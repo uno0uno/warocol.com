@@ -36,7 +36,8 @@
           placeholder="Rango de fechas"
           auto-apply
           :teleport="true"
-          :max-date="new Date()"
+          :timezone="timezone"
+          :max-date="maxDate"
           :format="formatDateRange"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"
@@ -108,7 +109,7 @@
           </summary>
           <div class="px-4 pb-4 pt-1">
             <p class="text-xs text-text-secondary mb-3">Para días pasados u otro turno distinto al abierto.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NuxtLink
                 :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
                 class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
@@ -137,24 +138,10 @@
                   <p class="text-xs text-text-secondary mt-0.5">Turno fijo configurado.</p>
                 </div>
               </NuxtLink>
-              <NuxtLink
-                :to="`/finanzas/arqueo/z?mode=custom&start=${today}&end=${today}`"
-                class="flex items-start gap-3 p-4 rounded-lg border-2 border-state-info-border bg-state-info-bg hover:border-state-info-border/80 hover:bg-state-info-bg/80 transition-colors min-h-[44px]"
-              >
-                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-state-info-bg flex items-center justify-center text-state-info-icon" aria-hidden="true">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm font-semibold text-text-primary">Horario personalizado</p>
-                  <p class="text-xs text-text-secondary mt-0.5">Ventana a mano por horas.</p>
-                </div>
-              </NuxtLink>
             </div>
           </div>
         </details>
-        <div v-if="!hasOpenShift" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div v-if="!hasOpenShift" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <NuxtLink
             :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
             class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
@@ -181,20 +168,6 @@
             <div>
               <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
               <p class="text-xs text-text-secondary mt-0.5">Turno fijo ya configurado (Mañana, Tarde, noche…).</p>
-            </div>
-          </NuxtLink>
-          <NuxtLink
-            :to="`/finanzas/arqueo/z?mode=custom&start=${today}&end=${today}`"
-            class="flex items-start gap-3 p-4 rounded-lg border-2 border-state-info-border bg-state-info-bg hover:border-state-info-border/80 hover:bg-state-info-bg/80 transition-colors min-h-[44px]"
-          >
-            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-state-info-bg flex items-center justify-center text-state-info-icon" aria-hidden="true">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-text-primary">Horario personalizado</p>
-              <p class="text-xs text-text-secondary mt-0.5">Ventana a mano por horas o entre varios días.</p>
             </div>
           </NuxtLink>
         </div>
@@ -406,7 +379,7 @@ useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
-const { todayISO, addDaysISO, dateAtNoon, isoFromDate, monthBounds } = useTenantTimezone()
+const { todayISO, addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone } = useTenantTimezone()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const formatIsoShort = (iso: string) => {
   const [year, month, day] = iso.split('-')
@@ -415,14 +388,15 @@ const formatIsoShort = (iso: string) => {
 
 const today = computed(() => todayISO())
 const todayNoon = computed(() => dateAtNoon(today.value))
+const maxDate = computed(() => dateAtNoon(todayISO()))
 
 const dateRangeDates = ref<Date[] | null>(null)
 
 const presetDates = computed(() => [
-  { label: 'Hoy',           value: [new Date(todayNoon.value), new Date(todayNoon.value)] },
+  { label: 'Hoy',           value: [todayNoon.value, todayNoon.value] },
   { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today.value, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today.value, -7)), new Date(todayNoon.value)] },
-  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today.value, -30)), new Date(todayNoon.value)] },
+  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today.value, -7)), todayNoon.value] },
+  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today.value, -30)), todayNoon.value] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
@@ -512,13 +486,11 @@ const isCurrentMonthActive = computed(() => {
   return activeStart.value === first && activeEnd.value === last
 })
 
-const { formatDateTime: _fmtDateTime } = useFormatters()
+const { formatCalendarDate, formatDateTime: _fmtDateTime } = useFormatters()
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
-const { timezone } = useTenantTimezone()
-
 const formatDay = (d: string) => {
   if (!d) return ''
-  return _fmtDateTime(d + 'T00:00:00')
+  return formatCalendarDate(d)
 }
 
 const formatDate = (iso: string) => {

@@ -11,7 +11,7 @@ export interface CierrePeriodLike {
 }
 
 export function useCierrePeriod() {
-  const { formatDate } = useFormatters()
+  const { formatCalendarDate } = useFormatters()
   const { timezone } = useTenantTimezone()
 
   const timeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
@@ -31,7 +31,7 @@ export function useCierrePeriod() {
     const start = cierre?.periodStart
     const end = cierre?.periodEnd
     if (!start) return ''
-    const fmt = (d: string) => formatDate(d + 'T12:00:00')
+    const fmt = (d: string) => formatCalendarDate(d)
     return !end || start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
   }
 

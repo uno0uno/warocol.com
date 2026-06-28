@@ -8,6 +8,7 @@ useHead({ title: 'Asientos contables - Warocol' })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const { formatCalendarDate } = useFormatters()
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface TenantAccount {
@@ -122,8 +123,7 @@ const formatCurrency = (value: number) =>
 
 const formatDate = (iso: string) => {
   if (!iso) return '—'
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return formatCalendarDate(iso)
 }
 
 const SOURCE_MODULE_LABELS: Record<string, string> = {

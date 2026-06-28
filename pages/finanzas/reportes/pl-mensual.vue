@@ -6,13 +6,16 @@ useHead({ title: 'Estado de Resultados mensual - Warocol' })
 
 // ── Query params (initial values from URL or current date) ────────────────────
 const route = useRoute()
+const { todayISO } = useTenantTimezone()
 
-const now = new Date()
+const tenantToday = computed(() => todayISO())
+const tenantYear = computed(() => Number(tenantToday.value.slice(0, 4)))
+const tenantMonth = computed(() => Number(tenantToday.value.slice(5, 7)))
 const year = ref<number>(
-  route.query.year ? Number(route.query.year) : now.getFullYear()
+  route.query.year ? Number(route.query.year) : tenantYear.value
 )
 const month = ref<number>(
-  route.query.month ? Number(route.query.month) : now.getMonth() + 1
+  route.query.month ? Number(route.query.month) : tenantMonth.value
 )
 
 // ── Navigation helpers ────────────────────────────────────────────────────────
@@ -28,8 +31,7 @@ const periodLabel = computed(() => `${monthName(month.value)} ${year.value}`)
 const pageTitle = computed(() => `Estado de Resultados — ${periodLabel.value}`)
 
 const isCurrentMonth = computed(() => {
-  const n = new Date()
-  return year.value === n.getFullYear() && month.value === n.getMonth() + 1
+  return year.value === tenantYear.value && month.value === tenantMonth.value
 })
 
 const goToPrev = () => {

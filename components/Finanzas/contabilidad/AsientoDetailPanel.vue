@@ -48,7 +48,7 @@ const emit = defineEmits<{
 }>()
 
 const close = () => emit('update:modelValue', false)
-const { formatDateTime } = useFormatters()
+const { formatCalendarDate, formatDateTime } = useFormatters()
 
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -59,11 +59,7 @@ const formatCOP = (v: number) =>
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
-  return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
+  return formatCalendarDate(iso)
 }
 
 const SOURCE_LABELS: Record<string, string> = {

@@ -30,6 +30,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   success: []
 }>()
+const { todayISO } = useTenantTimezone()
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const formatCOP = (v: number) =>
@@ -201,7 +202,7 @@ const submit = async () => {
         { accountId: props.account.id,  debit: 0,     credit: monto, description: 'Ajuste saldo (decremento)' },
       ]
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayISO()
   const description = `Ajuste saldo ${props.account.code} ${props.account.name}: ${sign.value === 'positive' ? 'aumento' : 'disminución'} de ${formatCOP(monto)} — motivo: ${selectedMotivo.value.label}`
 
   submitting.value = true
