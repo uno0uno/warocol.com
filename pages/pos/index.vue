@@ -1885,36 +1885,38 @@ onUnmounted(() => {
 
 
       <!-- Main POS Container -->
-    <div class="flex flex-col lg:flex-row gap-4 md:gap-6 lg:max-h-[calc(100vh-10rem)]">
+    <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
       <!-- Products Panel (Left) -->
-      <div class="flex-1 flex flex-col space-y-4 min-h-0 lg:overflow-hidden">
-        <!-- Search and Filters -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="flex-1">
-            <UiSearchBar
-              v-model="searchQuery"
-              placeholder="Buscar productos..."
-            />
+      <div class="min-w-0 flex flex-col space-y-4">
+        <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-1">
+          <!-- Search and Filters -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1">
+              <UiSearchBar
+                v-model="searchQuery"
+                placeholder="Buscar productos..."
+              />
+            </div>
+          </div>
+
+          <!-- Category Tabs -->
+          <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <button
+              v-for="cat in categories"
+              :key="cat"
+              class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
+              :class="selectedCategory === cat
+                ? 'bg-action-primary-bg text-action-primary-text shadow-md'
+                : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
+              @click="selectedCategory = cat"
+            >
+              {{ cat === 'all' ? 'Todos' : cat }}
+            </button>
           </div>
         </div>
 
-        <!-- Category Tabs -->
-        <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          <button
-            v-for="cat in categories"
-            :key="cat"
-            class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
-            :class="selectedCategory === cat
-              ? 'bg-action-primary-bg text-action-primary-text shadow-md'
-              : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
-            @click="selectedCategory = cat"
-          >
-            {{ cat === 'all' ? 'Todos' : cat }}
-          </button>
-        </div>
-
         <!-- Products Grid — page scroll on mobile; inner scroll on desktop (#1032) -->
-        <div class="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+        <div>
           <!-- Empty State -->
           <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center h-64 text-text-secondary">
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1925,7 +1927,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 md:gap-4 p-1 pb-4">
+          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 p-1 pb-4">
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"
@@ -1940,6 +1942,7 @@ onUnmounted(() => {
       <!-- Cart Panel — desktop sidebar only; mobile uses bottom bar + sheet (#1032) -->
       <PosCartPanel
         class="hidden lg:flex"
+        fit-height
         :items="posStore.cart"
         :total="cartTotal"
         :mesa-mode="isKitchenServiceMode"

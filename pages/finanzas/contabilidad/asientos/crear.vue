@@ -250,9 +250,10 @@ const onCreditInput = (line: EntryLine) => {
         </div>
 
         <!-- Lines list -->
-        <div v-else class="divide-y divide-border">
+        <div v-else class="overflow-x-auto">
+          <div class="min-w-[1080px] divide-y divide-border">
           <!-- Column headers (desktop) -->
-          <div class="hidden sm:grid grid-cols-[2rem_1fr_9rem_9rem_1fr_2.25rem] gap-2 px-4 py-2 bg-surface-secondary">
+          <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary">
             <span class="text-xs font-medium text-text-secondary">#</span>
             <span class="text-xs font-medium text-text-secondary">Cuenta</span>
             <span class="text-xs font-medium text-text-secondary text-right">Débito</span>
@@ -264,7 +265,7 @@ const onCreditInput = (line: EntryLine) => {
           <div
             v-for="(line, idx) in lines"
             :key="line._id"
-            class="grid grid-cols-1 sm:grid-cols-[2rem_1fr_9rem_9rem_1fr_2.25rem] gap-2 px-4 py-2 items-center"
+            class="grid grid-cols-1 sm:grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2.5 items-center"
             :class="idx % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
             <!-- # -->
@@ -275,7 +276,7 @@ const onCreditInput = (line: EntryLine) => {
               <span class="text-xs text-text-secondary sm:hidden">Cuenta</span>
               <select
                 v-model="line.accountId"
-                class="h-8 pl-2 pr-6 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                class="h-10 min-w-0 w-full pl-3 pr-8 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                 :aria-label="`Cuenta de la línea ${idx + 1}`"
               >
                 <option value="">Seleccionar cuenta...</option>
@@ -294,7 +295,7 @@ const onCreditInput = (line: EntryLine) => {
                 min="0"
                 step="1"
                 placeholder="0"
-                class="h-8 px-2 rounded-lg border border-border bg-background text-sm text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 :aria-label="`Débito línea ${idx + 1}`"
                 @input="onDebitInput(line)"
               />
@@ -309,7 +310,7 @@ const onCreditInput = (line: EntryLine) => {
                 min="0"
                 step="1"
                 placeholder="0"
-                class="h-8 px-2 rounded-lg border border-border bg-background text-sm text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 :aria-label="`Crédito línea ${idx + 1}`"
                 @input="onCreditInput(line)"
               />
@@ -322,7 +323,7 @@ const onCreditInput = (line: EntryLine) => {
                 v-model="line.description"
                 type="text"
                 placeholder="Descripción (opcional)"
-                class="h-8 px-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 :aria-label="`Descripción línea ${idx + 1}`"
               />
             </div>
@@ -331,7 +332,7 @@ const onCreditInput = (line: EntryLine) => {
             <button
               type="button"
               :disabled="lines.length <= 2"
-              class="h-8 w-9 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:text-destructive hover:border-destructive transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              class="h-10 w-10 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:text-destructive hover:border-destructive transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               :aria-label="`Eliminar línea ${idx + 1}`"
               @click="removeLine(line._id)"
             >
@@ -342,13 +343,14 @@ const onCreditInput = (line: EntryLine) => {
           </div>
 
           <!-- Totals row -->
-          <div class="hidden sm:grid grid-cols-[2rem_1fr_9rem_9rem_1fr_2.25rem] gap-2 px-4 py-2 bg-surface-secondary border-t-2 border-border">
+          <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary border-t-2 border-border">
             <span />
             <span class="text-xs font-semibold text-text-primary">Total</span>
             <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalDebits) }}</span>
             <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalCredits) }}</span>
             <span />
             <span />
+          </div>
           </div>
         </div>
       </div>
