@@ -201,7 +201,15 @@
               <p v-if="isCierreOpen(item)" class="text-xs text-text-secondary mt-0.5">
                 Abierto {{ formatDate(item.openedAt) }} · Fondo {{ formatCurrency(item.openingCash) }}
               </p>
-              <p v-else class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
+              <p v-else class="text-xs text-text-secondary mt-0.5">
+                Registrado {{ formatDate(item.closedAt) }}
+                <span
+                  v-if="hasReconciliationPending(item)"
+                  class="ml-1 inline-flex rounded bg-state-warning-bg px-1.5 py-0.5 text-[10px] font-semibold text-state-warning-text"
+                >
+                  Conciliar
+                </span>
+              </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <template v-if="isCierreOpen(item)">
@@ -224,6 +232,14 @@
                 <span class="text-xs font-semibold" :class="item.cashDifference >= 0 ? 'text-success' : 'text-destructive'">
                   {{ item.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(item.cashDifference) }}
                 </span>
+                <NuxtLink
+                  v-if="hasReconciliationPending(item)"
+                  :to="`/finanzas/conciliacion?cierreId=${item.id}`"
+                  class="rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                  @click.stop
+                >
+                  Conciliar
+                </NuxtLink>
               </template>
             </div>
           </div>
@@ -286,6 +302,14 @@
               </button>
             </template>
             <template v-else>
+              <NuxtLink
+                v-if="hasReconciliationPending(row)"
+                :to="`/finanzas/conciliacion?cierreId=${row.id}`"
+                class="flex h-8 items-center justify-center rounded-lg px-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                title="Conciliar medios"
+              >
+                Conciliar
+              </NuxtLink>
               <button
                 @click.stop="openPanel(row.id)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
@@ -497,6 +521,12 @@ const formatDate = (iso: string) => {
   if (!iso) return ''
   return _fmtDateTime(iso)
 }
+
+const hasReconciliationPending = (row: any) =>
+  !isCierreOpen(row) && (
+    Number(row.reconciliationPendingCount ?? 0) > 0 ||
+    Number(row.reconciliationDifferenceTotal ?? 0) !== 0
+  )
 
 // ── Panel ─────────────────────────────────────────────────────────────────
 const cache = useQueryCache()

@@ -119,7 +119,7 @@
                       <button
                         type="button"
                         @click="showImageModal = true"
-                        class="min-h-[40px] px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 whitespace-nowrap"
+                        class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring whitespace-nowrap"
                       >
                         {{ form.image_url ? 'Cambiar' : 'Subir foto' }}
                       </button>
@@ -127,7 +127,7 @@
                         v-if="form.image_url"
                         type="button"
                         @click="form.image_url = ''"
-                        class="min-h-[40px] px-3 py-1.5 text-sm border border-destructive/60 text-destructive rounded-lg hover:bg-destructive/5 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
+                        class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
                       >
                         Eliminar
                       </button>
@@ -169,7 +169,7 @@
                           type="button"
                           :disabled="isAssigningInheritedStation"
                           @click="showNewStationModal = true"
-                          class="text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1 flex-shrink-0 disabled:opacity-50"
+                          class="min-h-[32px] px-2 py-1 text-xs font-medium rounded-md bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring flex-shrink-0 disabled:opacity-50"
                         >
                           Crear estación
                         </button>
@@ -359,7 +359,7 @@
                   <button
                     type="button"
                     @click="addRecipeBase"
-                    class="btn-secondary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                    class="min-h-[32px] px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                   >
                     + Agregar
                   </button>
@@ -413,7 +413,7 @@
                     <button
                       type="button"
                       @click="removeRecipeBase(index)"
-                      class="min-h-[44px] min-w-[44px] p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
                       :aria-label="`Eliminar receta base ${index + 1}`"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -489,7 +489,7 @@
                     <button
                       type="button"
                       @click="removeIngredient(index)"
-                      class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
                       :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -501,9 +501,9 @@
 
                 <UiButton
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="default"
-                  class="w-full"
+                  class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                   @click="addIngredient"
                 >
                   <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
@@ -637,7 +637,7 @@
                 type="submit"
                 variant="default"
                 size="lg"
-                class="w-full"
+                class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
                 :disabled="isSubmitting"
               >
                 <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
@@ -647,9 +647,9 @@
 
               <UiButton
                 type="button"
-                variant="outline"
+                variant="default"
                 size="default"
-                class="w-full"
+                class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 :disabled="isSubmitting"
                 @click="router.push('/menu/productos')"
               >

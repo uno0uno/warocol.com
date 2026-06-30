@@ -10,6 +10,7 @@ import {
 export interface PosPaymentMethod {
   id: string
   name: string
+  glAccountCode?: string | null
 }
 
 export interface PosPaymentGroup {
@@ -19,6 +20,7 @@ export interface PosPaymentGroup {
   triggersCartera: boolean
   /** COP prepayment wallet tender (api#369) */
   triggersWallet?: boolean
+  glAccountCode?: string | null
   methods: PosPaymentMethod[]
 }
 

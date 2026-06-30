@@ -120,7 +120,11 @@
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Gastos en efectivo</span>
-              <span class="font-medium">{{ formatCurrency(cierre.gastosEfectivo) }}</span>
+              <span class="font-medium text-destructive">− {{ formatCurrency(cierre.gastosEfectivo) }}</span>
+            </div>
+            <div v-if="(cierre.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Compras directas efectivo</span>
+              <span class="font-medium text-destructive">− {{ formatCurrency(cierre.cashPurchases) }}</span>
             </div>
             <div v-if="(cierre.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Propinas en efectivo</span>
@@ -153,18 +157,35 @@
           <p class="text-sm text-text-primary">{{ cierre.notes }}</p>
         </div>
 
-        <!-- Desglose por método de pago (solo cierres nuevos con breakdown) -->
+        <!-- Movimiento neto por método (solo cierres nuevos con breakdown) -->
         <div v-if="cierre.breakdown?.length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-          <div class="p-3 sm:p-4 border-b border-border">
-            <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Desglose por método de pago</h3>
+          <div class="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-3">
+            <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Movimiento neto por método</h3>
+            <NuxtLink
+              v-if="hasReconcilableBreakdown"
+              :to="`/finanzas/conciliacion?cierreId=${cierre.id}`"
+              class="min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center"
+            >
+              Conciliar
+            </NuxtLink>
           </div>
           <div v-for="group in breakdownByGroup" :key="group.slug" class="border-b border-border last:border-b-0">
             <div class="px-4 py-2 bg-background">
               <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
             </div>
-            <div v-for="method in group.methods" :key="method.key" class="flex justify-between px-4 py-2 text-sm">
+            <div v-for="method in group.methods" :key="method.key" class="grid grid-cols-[1fr_auto] gap-3 px-4 py-2 text-sm sm:grid-cols-[1fr_auto_auto_auto_auto]">
               <span class="text-text-secondary pl-2">{{ method.label }}</span>
-              <span class="font-medium">{{ formatCurrency(method.total) }}</span>
+              <span class="font-medium text-primary tabular-nums">Entr. {{ formatCurrency(method.grossInflowsAmount) }}</span>
+              <span v-if="method.totalOutflows > 0" class="font-medium text-destructive tabular-nums">Sal. − {{ formatCurrency(method.totalOutflows) }}</span>
+              <span class="font-semibold tabular-nums" :class="amountToneClass(method.expectedAmount)">Neto {{ formatCurrency(method.expectedAmount) }}</span>
+              <span v-if="method.reportedAmount != null" class="text-text-secondary tabular-nums">Rep. {{ formatCurrency(method.reportedAmount) }}</span>
+              <span
+                v-if="method.differenceAmount != null"
+                class="font-semibold"
+                :class="method.differenceAmount >= 0 ? 'text-state-success-text' : 'text-destructive'"
+              >
+                {{ method.differenceAmount >= 0 ? '+' : '' }}{{ formatCurrency(method.differenceAmount) }}
+              </span>
             </div>
           </div>
         </div>
@@ -193,6 +214,8 @@ const GROUP_LABELS: Record<string, string> = {
   card:    'Tarjeta',
   digital: 'Digital',
   credit:  'Crédito',
+  customer_wallet: 'Billetera cliente',
+  table_session_advance: 'Anticipos mesa',
 }
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -217,12 +240,34 @@ interface RawBreakdownRow {
   method_name?: string
   methodName?: string
   total?: number | string
+  grossInflowsAmount?: number | string | null
+  gross_inflows_amount?: number | string | null
+  expenseOutflowsAmount?: number | string | null
+  expense_outflows_amount?: number | string | null
+  purchaseOutflowsAmount?: number | string | null
+  purchase_outflows_amount?: number | string | null
+  expectedAmount?: number | string | null
+  expected_amount?: number | string | null
+  reportedAmount?: number | string | null
+  reported_amount?: number | string | null
+  differenceAmount?: number | string | null
+  difference_amount?: number | string | null
+  reconciliationStatus?: string | null
+  reconciliation_status?: string | null
 }
 
 interface BreakdownMethod {
   key: string
   label: string
   total: number
+  grossInflowsAmount: number
+  expenseOutflowsAmount: number
+  purchaseOutflowsAmount: number
+  totalOutflows: number
+  expectedAmount: number
+  reportedAmount: number | null
+  differenceAmount: number | null
+  reconciliationStatus: string | null
 }
 
 interface BreakdownGroup {
@@ -250,14 +295,47 @@ const breakdownByGroup = computed<BreakdownGroup[]>(() => {
         methods: [],
       })
     }
+    const grossInflowsAmount = row.grossInflowsAmount != null || row.gross_inflows_amount != null
+      ? Number(row.grossInflowsAmount ?? row.gross_inflows_amount)
+      : Number(row.total ?? 0)
+    const expenseOutflowsAmount = row.expenseOutflowsAmount != null || row.expense_outflows_amount != null
+      ? Number(row.expenseOutflowsAmount ?? row.expense_outflows_amount)
+      : 0
+    const purchaseOutflowsAmount = row.purchaseOutflowsAmount != null || row.purchase_outflows_amount != null
+      ? Number(row.purchaseOutflowsAmount ?? row.purchase_outflows_amount)
+      : 0
+    const expectedAmount = row.expectedAmount != null || row.expected_amount != null
+      ? Number(row.expectedAmount ?? row.expected_amount)
+      : Number(row.total ?? 0)
     map.get(groupSlug)!.methods.push({
       key: `${groupSlug}__${methodName || 'group'}`,
       label: formatMethodLabel(groupSlug, methodName),
       total: Number(row.total ?? 0),
+      grossInflowsAmount,
+      expenseOutflowsAmount,
+      purchaseOutflowsAmount,
+      totalOutflows: expenseOutflowsAmount + purchaseOutflowsAmount,
+      expectedAmount,
+      reportedAmount: row.reportedAmount != null || row.reported_amount != null
+        ? Number(row.reportedAmount ?? row.reported_amount)
+        : null,
+      differenceAmount: row.differenceAmount != null || row.difference_amount != null
+        ? Number(row.differenceAmount ?? row.difference_amount)
+        : null,
+      reconciliationStatus: row.reconciliationStatus ?? row.reconciliation_status ?? null,
     })
   }
   return Array.from(map.values())
 })
+
+const hasReconcilableBreakdown = computed(() =>
+  breakdownByGroup.value.some(group => !['cash', 'untracked'].includes(group.slug)),
+)
+const amountToneClass = (value: number | null | undefined) => {
+  if ((value ?? 0) < 0) return 'text-destructive'
+  if ((value ?? 0) > 0) return 'text-primary'
+  return 'text-text-secondary'
+}
 const isLoading    = computed(() => status.value === 'pending' && !cierre.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && cierre.value != null)
 

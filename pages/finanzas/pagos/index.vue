@@ -539,7 +539,7 @@ function isSelected(purchaseId: string): boolean {
 // Navigation functions
 function navigateToPayment(purchases: any[]) {
   const ids = purchases.map(p => p.id).join(',')
-  navigateTo(`/pagos/registrar?ids=${ids}`)
+  navigateTo(`/finanzas/pagos/registrar?ids=${ids}`)
 }
 
 // Handle sort

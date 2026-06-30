@@ -8,60 +8,78 @@
       indicator="matrix"
     />
 
-    <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
-    <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
-        <svg class="w-9 h-9 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-xl font-semibold text-text-primary">Arqueo registrado</p>
-        <p class="text-sm text-text-secondary mt-1">{{ formatPeriod(periodStart, periodEnd) }}</p>
-      </div>
-      <div class="w-full max-w-sm bg-surface border border-border rounded-lg divide-y divide-border">
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Total ventas</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalSales) }}</span>
-        </div>
-        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Propinas</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalTips) }}</span>
-        </div>
-        <div v-if="(successData?.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Impuesto propina</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalTipTax) }}</span>
-        </div>
-        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Total cobrado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.totalCharged) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Efectivo esperado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.cashExpected) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Efectivo contado</span>
-          <span class="font-medium">{{ formatCurrency(successData?.cashCounted) }}</span>
-        </div>
-        <div class="flex justify-between px-4 py-2.5 text-sm">
-          <span class="text-text-secondary">Diferencia</span>
-          <span class="font-semibold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
-            {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
-          </span>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <NuxtLink
-          to="/finanzas/arqueo"
-          class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center"
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="cierreSuccess"
+          class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-overlay-backdrop-strong/60 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cierre-success-title"
         >
-          Ver historial
-        </NuxtLink>
-      </div>
-    </div>
+          <div class="my-auto w-full max-w-md rounded-2xl border border-border bg-surface p-5 text-center shadow-2xl">
+            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-state-success-bg">
+              <svg class="h-7 w-7 text-state-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
 
-    <template v-else>
+            <h2 id="cierre-success-title" class="text-xl font-bold leading-tight text-text-primary">
+              Arqueo registrado
+            </h2>
+            <p class="mt-1 text-sm text-text-secondary">
+              {{ formatPeriod(periodStart, periodEnd) }}
+            </p>
+
+            <div class="mt-4 rounded-lg border border-border bg-background p-3 text-left">
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Total ventas</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalSales) }}</span>
+              </div>
+              <div v-if="hasCapturedTips(successData)" class="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Total cobrado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalCharged) }}</span>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span class="text-text-secondary">Efectivo contado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.cashCounted) }}</span>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
+                <span class="text-text-secondary">Diferencia</span>
+                <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
+                  {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+              <NuxtLink
+                to="/finanzas/arqueo"
+                class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary"
+              >
+                Ver historial
+              </NuxtLink>
+              <NuxtLink
+                v-if="successData?.id"
+                :to="`/finanzas/arqueo/${successData.id}`"
+                class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-action-primary-bg px-4 py-2.5 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg"
+              >
+                Ver detalle
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <template v-if="!cierreSuccess">
       <!-- ── Header info card ─────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4">
         <div class="p-3 sm:p-4">
@@ -231,16 +249,36 @@
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
                 <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+                <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Compras directas efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               </div>
             </div>
             <!-- Desglose -->
-            <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Desglose del cierre</h3></div>
-              <div class="divide-y divide-border">
-                <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
-                  <span class="text-text-secondary">{{ row.method_name }}</span>
-                  <span class="font-medium">{{ formatCurrency(row.total) }}</span>
+            <div v-if="(xPreviewData.breakdown ?? []).length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Movimiento neto por método</h3></div>
+              <div class="overflow-x-auto">
+                <div class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
+                  <span class="px-3 py-2 text-right">Neto</span>
+                </div>
+                <div
+                  v-for="(row, index) in (xPreviewData.breakdown ?? [])"
+                  :key="row.group_slug + row.method_name"
+                  class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
+                  :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+                >
+                  <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-semibold text-data-table-cell-text">{{ row.method_name }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ GROUP_LABELS[row.group_slug] ?? row.group_slug }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right text-data-table-cell-text tabular-nums">{{ formatCurrency(rowGrossInflows(row)) }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right tabular-nums" :class="rowOutflows(row) > 0 ? 'text-destructive' : 'text-data-table-cell-muted'">
+                    {{ rowOutflows(row) > 0 ? `− ${formatCurrency(rowOutflows(row))}` : formatCurrency(0) }}
+                  </span>
+                  <span class="px-3 py-2.5 text-right font-semibold tabular-nums" :class="amountToneClass(rowExpectedAmount(row))">
+                    {{ formatCurrency(rowExpectedAmount(row)) }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -337,11 +375,11 @@
               <!-- Monedas -->
               <div
                 class="flex items-center gap-2 px-3 py-2 transition-colors"
-                :class="(parseInt(monedasAmount) || 0) > 0 ? 'bg-primary/5' : ''"
+                :class="parseMoneyInput(monedasAmount) > 0 ? 'bg-primary/5' : ''"
               >
                 <span
                   class="text-sm w-24 text-right flex-shrink-0 transition-colors"
-                  :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-secondary'"
+                  :class="parseMoneyInput(monedasAmount) > 0 ? 'font-semibold text-text-primary' : 'text-text-secondary'"
                 >Monedas</span>
                 <span class="text-transparent text-xs flex-shrink-0">×</span>
                 <input
@@ -349,10 +387,10 @@
                   type="text"
                   inputmode="numeric"
                   pattern="[0-9]*"
-                  @input="monedasAmount = sanitizeIntStr($event)"
+                  @input="monedasAmount = formatMoneyInput($event)"
                   placeholder="0"
                   class="w-14 px-2 py-1 rounded-md border text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
-                  :class="(parseInt(monedasAmount) || 0) > 0
+                  :class="parseMoneyInput(monedasAmount) > 0
                     ? 'border-primary/50 bg-primary/5 font-semibold'
                     : 'border-border bg-surface'"
                   aria-label="Monto total en monedas"
@@ -360,8 +398,8 @@
                 <span class="text-text-tertiary text-xs flex-shrink-0">=</span>
                 <span
                   class="text-sm flex-1 text-right transition-colors"
-                  :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
-                >{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+                  :class="parseMoneyInput(monedasAmount) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                >{{ formatCurrency(parseMoneyInput(monedasAmount)) }}</span>
               </div>
             </div>
           </div>
@@ -388,12 +426,12 @@
                 <div class="flex justify-between px-3 py-1.5">
                   <span
                     class="text-xs"
-                    :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-medium text-text-primary' : 'text-text-tertiary'"
+                    :class="parseMoneyInput(monedasAmount) > 0 ? 'font-medium text-text-primary' : 'text-text-tertiary'"
                   >Monedas</span>
                   <span
                     class="text-xs"
-                    :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
-                  >{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+                    :class="parseMoneyInput(monedasAmount) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                  >{{ formatCurrency(parseMoneyInput(monedasAmount)) }}</span>
                 </div>
               </div>
               <!-- Total row — accent strip -->
@@ -403,8 +441,19 @@
               </div>
             </div>
 
+            <div v-if="previewLoading" class="rounded-lg border border-border bg-background overflow-hidden">
+              <div class="px-3 py-2 bg-surface border-b border-border">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Calculando caja</span>
+              </div>
+              <div class="divide-y divide-border animate-pulse">
+                <div v-for="row in 3" :key="row" class="flex items-center justify-between px-3 py-2.5">
+                  <span class="h-3 w-28 rounded bg-surface-secondary" />
+                  <span class="h-3 w-20 rounded bg-surface-secondary" />
+                </div>
+              </div>
+            </div>
             <!-- Diferencia — card con icono y monto grande -->
-            <div class="rounded-lg border-2 overflow-hidden" :class="diffResultClass">
+            <div v-else class="rounded-lg border-2 overflow-hidden" :class="diffResultClass">
               <div class="px-3 py-2.5 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <svg v-if="cashDiff >= 0" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -430,8 +479,16 @@
           <button @click="currentStep = 1" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
             ← Atrás
           </button>
-          <button @click="currentStep = 3" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-            Continuar →
+          <button
+            @click="currentStep = 3"
+            :disabled="previewBusy"
+            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <svg v-if="previewBusy" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
           </button>
         </div>
       </div>
@@ -441,63 +498,65 @@
         <h3 class="text-sm font-semibold text-text-primary mb-1">Otros métodos de pago</h3>
         <p class="text-xs text-text-secondary mb-3">Ingresa el monto contado para cada método:</p>
 
-        <div v-if="nonCashMethods.length > 0" class="flex flex-col gap-2 mb-3">
-          <div
-            v-for="method in nonCashMethods"
-            :key="method.key"
-            class="bg-background rounded-lg border border-border overflow-hidden transition-colors"
-            :class="(parseInt(methodAmounts[method.key]) || 0) > 0 ? 'border-border' : ''"
-          >
-            <!-- Row header: dot + name + badge + expected -->
+        <div v-if="previewLoading" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
+          <div class="grid min-w-[620px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Contado</span>
+            <span class="px-3 py-2 text-right">Diferencia</span>
+          </div>
+          <div class="animate-pulse">
             <div
-              class="flex items-center gap-3 px-3 py-2.5 transition-colors"
-              :class="(parseInt(methodAmounts[method.key]) || 0) > 0 ? 'bg-surface' : 'bg-background'"
+              v-for="row in 4"
+              :key="row"
+              class="grid min-w-[620px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border last:border-b-0"
+              :class="row % 2 === 0 ? 'bg-data-table-row-alt-bg' : 'bg-data-table-row-bg'"
             >
-              <span
-                class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                :class="GROUP_COLORS[method.groupSlug]?.dot ?? 'bg-primary'"
-              />
-              <div class="flex-1 min-w-0">
-                <span class="text-sm font-semibold text-text-primary capitalize">{{ method.label }}</span>
-                <span
-                  class="ml-2 text-xs font-medium px-1.5 py-0.5 rounded"
-                  :class="GROUP_COLORS[method.groupSlug]?.badge ?? 'bg-primary/10 text-primary'"
-                >{{ method.groupLabel }}</span>
-              </div>
-              <span class="text-xs text-text-secondary flex-shrink-0">
-                Esp. <span class="font-medium text-text-primary">{{ formatCurrency(method.total) }}</span>
-              </span>
+              <span class="border-r border-dashed border-data-table-border/60 px-3 py-3"><span class="block h-3 w-28 rounded bg-surface-secondary" /></span>
+              <span class="border-r border-dashed border-data-table-border/60 px-3 py-3"><span class="block h-3 w-16 rounded bg-surface-secondary" /></span>
+              <span class="border-r border-dashed border-data-table-border/60 px-3 py-3"><span class="ml-auto block h-3 w-20 rounded bg-surface-secondary" /></span>
+              <span class="border-r border-dashed border-data-table-border/60 px-3 py-3"><span class="ml-auto block h-7 w-24 rounded bg-surface-secondary" /></span>
+              <span class="px-3 py-3"><span class="ml-auto block h-3 w-16 rounded bg-surface-secondary" /></span>
             </div>
-
-            <!-- Input row -->
-            <div class="flex items-center gap-3 px-3 py-2 border-t border-border bg-surface/50">
-              <span class="text-xs text-text-secondary flex-shrink-0">Contado</span>
+          </div>
+        </div>
+        <div v-else-if="nonCashMethods.length > 0" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
+          <div class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
+            <span class="px-3 py-2 text-right">Contado</span>
+          </div>
+          <div
+            v-for="(method, index) in nonCashMethods"
+            :key="method.key"
+            class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
+            :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+          >
+            <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-medium text-data-table-cell-text">{{ method.label }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ method.groupLabel }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium text-data-table-cell-text tabular-nums">{{ formatCurrency(method.grossInflowsAmount) }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium tabular-nums" :class="method.expenseOutflowsAmount + method.purchaseOutflowsAmount > 0 ? 'text-destructive' : 'text-data-table-cell-muted'">
+              {{ method.expenseOutflowsAmount + method.purchaseOutflowsAmount > 0 ? `− ${formatCurrency(method.expenseOutflowsAmount + method.purchaseOutflowsAmount)}` : '—' }}
+            </span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-semibold tabular-nums" :class="amountToneClass(method.expectedAmount)">{{ formatCurrency(method.expectedAmount) }}</span>
+            <div class="px-3 py-2 text-right">
               <input
                 v-model="methodAmounts[method.key]"
                 type="text"
                 inputmode="numeric"
-                pattern="[0-9]*"
-                @input="methodAmounts[method.key] = sanitizeIntStr($event)"
+                pattern="-?[0-9]*"
+                @input="methodAmounts[method.key] = formatSignedMoneyInput($event)"
                 placeholder="0"
-                class="w-32 px-3 py-1.5 rounded-md border text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
-                :class="(parseInt(methodAmounts[method.key]) || 0) > 0
-                  ? 'border-primary/50 bg-primary/5 font-semibold'
+                class="ml-auto h-8 w-28 rounded-md border px-2 text-right text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                :class="hasMethodAmount(method)
+                  ? 'border-border bg-surface font-semibold'
                   : 'border-border bg-background'"
                 :aria-label="`Monto contado para ${method.label}`"
               />
-              <!-- Diff — solo cuando se ingresó un valor -->
-              <div v-if="(parseInt(methodAmounts[method.key]) || 0) > 0" class="flex items-center gap-1.5 flex-shrink-0">
-                <span class="text-text-tertiary text-xs">=</span>
-                <span
-                  class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  :class="methodDiff(method) >= 0
-                    ? 'bg-state-success-bg text-state-success-text border border-state-success-border'
-                    : 'bg-destructive/10 text-destructive border border-destructive/20'"
-                >
-                  {{ methodDiff(method) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(method)) }}
-                </span>
-              </div>
-              <span v-else class="text-xs text-text-tertiary italic flex-shrink-0">Sin ingresar</span>
             </div>
           </div>
         </div>
@@ -509,8 +568,16 @@
           <button @click="currentStep = 2" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
             ← Atrás
           </button>
-          <button @click="currentStep = 4" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-            Continuar →
+          <button
+            @click="currentStep = 4"
+            :disabled="previewBusy"
+            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <svg v-if="previewBusy" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
           </button>
         </div>
       </div>
@@ -572,6 +639,10 @@
                 <span class="text-text-secondary">Gastos</span>
                 <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.gastosEfectivo) }}</span>
               </div>
+              <div v-if="(previewData?.cashPurchases ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Compras directas</span>
+                <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.cashPurchases) }}</span>
+              </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">Esperado</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
@@ -606,17 +677,29 @@
             <div class="px-3 py-2 bg-surface border-b border-border">
               <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Otros métodos</span>
             </div>
-            <div class="divide-y divide-border">
-              <div v-for="method in nonCashMethods" :key="method.key" class="flex items-center justify-between px-3 py-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full flex-shrink-0" :class="GROUP_COLORS[method.groupSlug]?.dot ?? 'bg-primary'" />
-                  <span class="text-sm capitalize text-text-primary">{{ method.label }}</span>
-                  <span class="text-xs px-1.5 py-0.5 rounded" :class="GROUP_COLORS[method.groupSlug]?.badge ?? 'bg-primary/10 text-primary'">{{ method.groupLabel }}</span>
-                </div>
-                <span
-                  class="text-sm font-semibold"
-                  :class="(parseInt(methodAmounts[method.key]) || 0) === 0 ? 'text-text-tertiary' : 'text-text-primary'"
-                >{{ formatCurrency(parseInt(methodAmounts[method.key]) || 0) }}</span>
+            <div class="overflow-x-auto">
+              <div class="grid min-w-[760px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Esperado</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Reportado</span>
+                <span class="px-3 py-2 text-right">Diferencia</span>
+              </div>
+              <div
+                v-for="(method, index) in nonCashMethods"
+                :key="method.key"
+                class="grid min-w-[760px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border text-sm last:border-b-0"
+                :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+              >
+                <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-medium text-data-table-cell-text">{{ method.label }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ method.groupLabel }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium text-data-table-cell-text tabular-nums">{{ formatCurrency(method.expectedAmount) }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? 'text-data-table-cell-text' : 'text-text-tertiary'">
+                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : 'Sin ingresar' }}
+                </span>
+                <span class="px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? amountToneClass(methodDiff(method)) : 'text-text-tertiary'">
+                  {{ hasMethodAmount(method) ? `${methodDiff(method) >= 0 ? '+' : ''}${formatCurrency(methodDiff(method))}` : '—' }}
+                </span>
               </div>
             </div>
           </div>
@@ -693,6 +776,67 @@
             <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
             </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+          <div class="bg-background rounded-lg border border-border overflow-hidden">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Detalle de caja</span>
+            </div>
+            <div class="divide-y divide-border">
+              <div v-if="(previewData?.openingCash ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Fondo inicial</span>
+                <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.openingCash) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Efectivo recibido</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Gastos efectivo</span>
+                <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.gastosEfectivo) }}</span>
+              </div>
+              <div v-if="(previewData?.cashPurchases ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Compras directas efectivo</span>
+                <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.cashPurchases) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Esperado en caja</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Contado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(totalCounted) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border overflow-hidden lg:col-span-1">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Detalle de otros métodos</span>
+            </div>
+            <div class="overflow-x-auto">
+              <div class="grid min-w-[620px] grid-cols-[1.15fr_.8fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Esperado</span>
+                <span class="px-3 py-2 text-right">Reportado</span>
+              </div>
+              <div
+                v-for="(method, index) in nonCashMethods"
+                :key="method.key"
+                class="grid min-w-[620px] grid-cols-[1.15fr_.8fr_1fr_1fr] border-b border-data-table-border text-sm last:border-b-0"
+                :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+              >
+                <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-medium text-data-table-cell-text">{{ method.label }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ method.groupLabel }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium text-data-table-cell-text tabular-nums">{{ formatCurrency(method.expectedAmount) }}</span>
+                <span class="px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? 'text-data-table-cell-text' : 'text-text-tertiary'">
+                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : 'Sin ingresar' }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -997,7 +1141,7 @@ const setDenomRef = (el: any, idx: number) => {
 
 const totalCounted = computed(() =>
   denominations.reduce((sum, d) => sum + d * (parseInt(counts.value[d]) || 0), 0)
-  + (parseInt(monedasAmount.value) || 0)
+  + parseMoneyInput(monedasAmount.value)
 )
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
@@ -1020,6 +1164,7 @@ const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus
 const previewData    = computed(() => rawPreview.value?.data ?? null)
 const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
+const previewBusy    = computed(() => previewLoading.value || isRefreshing.value)
 
 registerProgressiveLoading(isRefreshing)
 
@@ -1037,7 +1182,19 @@ const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
   credit:  { dot: 'bg-state-warning-icon',   badge: 'bg-state-warning-bg text-state-warning-text border border-state-warning-border'      },
 }
 
-interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
+interface BreakdownRowRaw {
+  group_slug: string
+  method_name: string
+  total: number
+  grossInflowsAmount?: number
+  gross_inflows_amount?: number
+  expenseOutflowsAmount?: number
+  expense_outflows_amount?: number
+  purchaseOutflowsAmount?: number
+  purchase_outflows_amount?: number
+  expectedAmount?: number
+  expected_amount?: number
+}
 interface BreakdownGroup  { slug: string; label: string; total: number }
 const NON_COUNTABLE_BREAKDOWN_GROUPS = new Set(['untracked'])
 
@@ -1067,6 +1224,10 @@ interface BreakdownMethod {
   label: string
   groupLabel: string
   total: number
+  grossInflowsAmount: number
+  expenseOutflowsAmount: number
+  purchaseOutflowsAmount: number
+  expectedAmount: number
 }
 
 const nonCashMethods = computed<BreakdownMethod[]>(() => {
@@ -1081,6 +1242,10 @@ const nonCashMethods = computed<BreakdownMethod[]>(() => {
         label:      r.method_name,
         groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
         total:      r.total,
+        grossInflowsAmount: r.grossInflowsAmount ?? r.gross_inflows_amount ?? r.total,
+        expenseOutflowsAmount: r.expenseOutflowsAmount ?? r.expense_outflows_amount ?? 0,
+        purchaseOutflowsAmount: r.purchaseOutflowsAmount ?? r.purchase_outflows_amount ?? 0,
+        expectedAmount: r.expectedAmount ?? r.expected_amount ?? r.total,
       }))
   }
   // fallback: group-level totals when no individual methods are configured
@@ -1090,11 +1255,50 @@ const nonCashMethods = computed<BreakdownMethod[]>(() => {
     label:      g.label,
     groupLabel: g.label,
     total:      g.total,
+    grossInflowsAmount: g.total,
+    expenseOutflowsAmount: 0,
+    purchaseOutflowsAmount: 0,
+    expectedAmount: g.total,
   }))
 })
 
 const methodDiff = (method: BreakdownMethod) =>
-  (parseInt(methodAmounts.value[method.key]) || 0) - method.total
+  methodAmountValue(method) - method.expectedAmount
+
+const methodAmountValue = (method: BreakdownMethod) => {
+  const value = parseSignedMoneyInput(methodAmounts.value[method.key] ?? '')
+  return method.expectedAmount < 0 && value > 0 ? -value : value
+}
+
+const hasMethodAmount = (method: BreakdownMethod) =>
+  Object.prototype.hasOwnProperty.call(methodAmounts.value, method.key)
+  && methodAmounts.value[method.key] !== ''
+
+const amountToneClass = (value: number | null | undefined) => {
+  if ((value ?? 0) < 0) return 'text-destructive'
+  if ((value ?? 0) > 0) return 'text-text-primary'
+  return 'text-text-secondary'
+}
+
+const rowExpectedAmount = (row: BreakdownRowRaw) =>
+  Number(row.expectedAmount ?? row.expected_amount ?? row.total ?? 0)
+
+const rowGrossInflows = (row: BreakdownRowRaw) =>
+  Number(row.grossInflowsAmount ?? row.gross_inflows_amount ?? row.total ?? 0)
+
+const rowOutflows = (row: BreakdownRowRaw) =>
+  Number(row.expenseOutflowsAmount ?? row.expense_outflows_amount ?? 0)
+  + Number(row.purchaseOutflowsAmount ?? row.purchase_outflows_amount ?? 0)
+
+const paymentBreakdownReported = computed(() =>
+  nonCashMethods.value
+    .filter(method => Object.prototype.hasOwnProperty.call(methodAmounts.value, method.key) && methodAmounts.value[method.key] !== '')
+    .map(method => ({
+      groupSlug: method.groupSlug,
+      methodName: method.label,
+      reportedAmount: methodAmountValue(method),
+    })),
+)
 
 const diffResultClass = computed(() => {
   if (cashDiff.value >= 0) return 'border-state-success-border bg-state-success-bg text-state-success-text'
@@ -1125,6 +1329,7 @@ const submitCierre = async () => {
       body: {
         ...cierreWindowBody.value,
         cashCounted:  totalCounted.value,
+        paymentBreakdownReported: paymentBreakdownReported.value.length ? paymentBreakdownReported.value : undefined,
         notes:        notes.value || null,
       },
     })
@@ -1150,6 +1355,35 @@ const sanitizeInt = (e: Event): string => {
   return v
 }
 const sanitizeIntStr = (e: Event): string => sanitizeInt(e)
+const parseMoneyInput = (value: string | number | null | undefined): number => {
+  const raw = String(value ?? '').replace(/\D/g, '')
+  return raw ? Number(raw) : 0
+}
+const parseSignedMoneyInput = (value: string | number | null | undefined): number => {
+  const raw = String(value ?? '')
+  const negative = raw.trim().startsWith('-')
+  const numeric = parseMoneyInput(raw)
+  return negative ? -numeric : numeric
+}
+const formatMoneyParts = (value: string, allowNegative = false): string => {
+  const negative = allowNegative && value.trim().startsWith('-')
+  const digits = value.replace(/\D/g, '').replace(/^0+(?=\d)/, '')
+  if (!digits) return negative ? '-' : ''
+  const formatted = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Number(digits))
+  return negative ? `-${formatted}` : formatted
+}
+const formatMoneyInput = (e: Event): string => {
+  const input = e.target as HTMLInputElement
+  const v = formatMoneyParts(input.value)
+  input.value = v
+  return v
+}
+const formatSignedMoneyInput = (e: Event): string => {
+  const input = e.target as HTMLInputElement
+  const v = formatMoneyParts(input.value.replace(/(?!^)-/g, ''), true)
+  input.value = v
+  return v
+}
 
 const focusNext = (idx: number) => {
   nextTick(() => {
@@ -1183,8 +1417,12 @@ const loadFromStorage = (restorePeriod = true) => {
     }
     // Never restore step from storage — always start at step 0 (X preview)
     if (s.counts)         counts.value         = s.counts
-    if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount
-    if (s.methodAmounts)  methodAmounts.value  = s.methodAmounts
+    if (s.monedasAmount)  monedasAmount.value  = formatMoneyParts(String(s.monedasAmount))
+    if (s.methodAmounts) {
+      methodAmounts.value = Object.fromEntries(
+        Object.entries(s.methodAmounts).map(([key, value]) => [key, formatMoneyParts(String(value), true)]),
+      ) as Record<string, string>
+    }
     if (s.notes)          notes.value          = s.notes
   } catch { /* ignore */ }
 }

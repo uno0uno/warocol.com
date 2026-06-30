@@ -352,7 +352,7 @@
             <button
               type="submit"
               :disabled="!isFormValid || isSubmitting"
-              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-success-bg/20"
+              class="w-full py-3 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold"
             >
               <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
               <span v-else>
@@ -363,7 +363,7 @@
 
             <NuxtLink
               :to="cancelRedirectUrl"
-              class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium block text-center"
+              class="w-full py-3 rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium block text-center"
             >
               Cancelar
             </NuxtLink>

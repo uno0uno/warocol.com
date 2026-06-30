@@ -59,8 +59,9 @@
             <template #actions>
               <UiButton
                 type="button"
-                variant="outline"
+                variant="default"
                 size="sm"
+                class="bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 @click="addIngredient"
               >
                 + Agregar
@@ -190,7 +191,7 @@
               type="submit"
               variant="default"
               size="lg"
-              class="w-full"
+              class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
               :disabled="isSubmitting"
             >
               <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
@@ -200,9 +201,9 @@
 
             <UiButton
               type="button"
-              variant="outline"
+              variant="default"
               size="default"
-              class="w-full"
+              class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               :disabled="isSubmitting"
               @click="cancel"
             >
@@ -211,9 +212,9 @@
 
             <UiButton
               type="button"
-              variant="destructive"
+              variant="default"
               size="default"
-              class="w-full"
+              class="w-full bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:ring-destructive/30"
               :disabled="isSubmitting"
               @click="deleteRecipe"
             >

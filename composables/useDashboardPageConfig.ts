@@ -237,24 +237,24 @@ export const useDashboardPageConfig = () => {
           label: 'Volver'
         }
       }
-    } else if (path === '/pagos/registrar') {
+    } else if (path === '/finanzas/pagos/registrar') {
       return {
         pageTitle: 'Registrar Pago',
         pageSubtitle: undefined,
         searchPlaceholder: undefined,
-        activePage: 'pagos' as const,
+        activePage: 'finanzas' as const,
         showBreadcrumb: false,
         breadcrumbPage: undefined,
         backButton: {
           label: 'Volver'
         }
       }
-    } else if (path === '/pagos' || path === '/pagos/') {
+    } else if (path === '/finanzas/pagos' || path === '/finanzas/pagos/') {
       return {
         pageTitle: 'Gestión de Pagos',
         pageSubtitle: undefined,
         searchPlaceholder: 'Buscar pagos...',
-        activePage: 'pagos' as const,
+        activePage: 'finanzas' as const,
         showBreadcrumb: false,
         breadcrumbPage: undefined,
         backButton: undefined

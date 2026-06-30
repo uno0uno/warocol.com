@@ -15,12 +15,12 @@
         <div
           v-if="costIssueCount > 0 && !bannerDismissed && !marginNegativeOnly"
           role="alert"
-          class="flex items-start gap-2 px-3 py-2.5 bg-status-critical-bg border border-border rounded-lg"
+          class="flex items-center gap-2 px-3 py-2 bg-status-critical-bg border border-destructive/20 rounded-lg"
         >
-          <svg class="w-4 h-4 text-status-critical-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-4 h-4 text-status-critical-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <p class="flex-1 min-w-0 text-sm">
+          <p class="flex-1 min-w-0 truncate text-sm leading-5">
             <span class="font-bold text-status-critical-text">{{ costIssueCount }} producto{{ costIssueCount !== 1 ? 's' : '' }}</span>
             <span class="text-text-secondary"> con costo mayor al precio de venta — posibles compras mal registradas. </span>
             <NuxtLink
@@ -29,7 +29,7 @@
             >Ver Calidad de Datos →</NuxtLink>
           </p>
           <button
-            class="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-black/5 transition-colors text-text-tertiary hover:text-text-primary"
+            class="flex-shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg text-status-critical-text hover:bg-destructive/10 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/30"
             aria-label="Cerrar aviso"
             @click="bannerDismissed = true"
           >
@@ -52,10 +52,10 @@
             <div class="flex flex-wrap items-center gap-2 justify-end">
               <button
                 type="button"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-all focus:outline-none focus:ring-2"
                 :class="editMode
-                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
-                  : 'btn-primary text-primary-foreground'"
+                  ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:ring-shell-action-focus-ring'
+                  : 'bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:ring-shell-cta-focus-ring'"
                 @click="onToggleEditMode"
               >
                 <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
@@ -63,7 +63,7 @@
               </button>
               <NuxtLink
                 to="/menu/productos/crear"
-                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
+                class="flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
               >
                 <span class="hidden sm:inline">+ Nuevo producto</span>
                 <span class="sm:hidden">+ Nuevo</span>
@@ -341,7 +341,7 @@
                 </template>
                 <template v-else>
                   <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ toTitleCase(item.name) }}</span>
                     <UiStatusBadge
                       v-if="!isOpenSaleShell(item)"
                       :value="productTipoLabel(item)"
@@ -739,7 +739,7 @@
               <button
                 v-if="isOpenSaleShell(row)"
                 type="button"
-                class="text-primary hover:text-primary/70 transition-colors"
+                class="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg text-primary transition-colors hover:text-primary/70 focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 aria-label="Configurar venta libre en Personalizar"
                 title="Operaciones → Personalizar"
                 @click="goToOpenSaleSettings()"
@@ -752,7 +752,7 @@
               <button
                 v-else-if="!editMode"
                 @click="editProduct(row)"
-                class="text-primary hover:text-primary/70 transition-colors"
+                class="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg text-primary transition-colors hover:text-primary/70 focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 :aria-label="`Editar ${row.name}`"
                 title="Editar producto"
               >
@@ -771,8 +771,8 @@
               @click="previousPage"
               :disabled="!canGoPrevious"
               :class="[
-                'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+                'relative inline-flex min-h-[44px] items-center rounded-md px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                canGoPrevious ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
               ]">
               Anterior
             </button>
@@ -780,8 +780,8 @@
               @click="nextPage"
               :disabled="!canGoNext"
               :class="[
-                'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+                'ml-3 relative inline-flex min-h-[44px] items-center rounded-md px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                canGoNext ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
               ]">
               Siguiente
             </button>
@@ -804,8 +804,8 @@
                   @click="previousPage"
                   :disabled="!canGoPrevious"
                   :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
-                    canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-l-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    canGoPrevious ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
                   ]">
                   <span class="sr-only">Anterior</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -817,10 +817,10 @@
                   :key="page"
                   @click="goToPage(page)"
                   :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
+                    'relative inline-flex min-h-[44px] items-center px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                     page === currentPage
-                      ? 'z-10 bg-primary/10 border-primary text-primary'
-                      : 'bg-white border-titan-300 text-titan-700 hover:bg-titan-50'
+                      ? 'z-10 bg-shell-cta-bg text-shell-cta-text'
+                      : 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg'
                   ]">
                   {{ page }}
                 </button>
@@ -828,8 +828,8 @@
                   @click="nextPage"
                   :disabled="!canGoNext"
                   :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
-                    canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-r-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    canGoNext ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
                   ]">
                   <span class="sr-only">Siguiente</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -864,7 +864,7 @@
           {{ bulkDeleteError }}
         </div>
         <div class="flex gap-3 mt-6">
-          <UiButton type="button" variant="outline" class="flex-1" :disabled="isSubmitting" @click="showBulkDeleteModal = false">
+          <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" :disabled="isSubmitting" @click="showBulkDeleteModal = false">
             Cancelar
           </UiButton>
           <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isSubmitting" @click="confirmBulkDelete">

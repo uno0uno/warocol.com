@@ -135,7 +135,7 @@
               <NuxtLink
                 v-if="currentPurchase.status === 'received' && !shouldShowPaymentReminder"
                 :to="{
-                  path: '/pagos',
+                  path: '/finanzas/pagos',
                   query: {
                     search: currentPurchase.purchase_number,
                     highlight: currentPurchase.id

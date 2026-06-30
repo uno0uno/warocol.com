@@ -10,22 +10,7 @@
 
     <!-- Main Content -->
     <div v-else class="page-layout">
-      <div class="flex flex-col gap-3 md:gap-4">
-        <!-- Page subtitle + CTA -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p class="text-sm text-text-secondary">
-            Agrupa productos del menú y enruta comandas por categoría.
-          </p>
-          <button
-            type="button"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px]"
-            @click="openCreatePanel"
-          >
-            <span class="hidden sm:inline">+ Nueva categoría</span>
-            <span class="sm:hidden">+ Nueva</span>
-          </button>
-        </div>
-
+      <div class="flex flex-col gap-2 md:gap-3">
         <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           :search-fields="[]"
@@ -46,6 +31,16 @@
               <option value="own">Propia</option>
             </select>
           </template>
+          <template #trailing>
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+              @click="openCreatePanel"
+            >
+              <span class="hidden sm:inline">+ Nueva categoría</span>
+              <span class="sm:hidden">+ Nueva</span>
+            </button>
+          </template>
         </UiAdvancedFiltersBar>
 
         <!-- List -->
@@ -55,7 +50,7 @@
           empty-message="No hay categorías"
           empty-sub-message="Crea la primera para organizar tu menú."
           variant="default"
-          row-size="sm"
+          row-size="xs"
         >
           <template #header-tipo>
             <UiTableHeaderFilter
@@ -71,7 +66,7 @@
       <!-- Mobile row (matches /menu/modificadores pattern) -->
       <template #card="{ item, index }">
         <div
-          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+          class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors"
           :class="[
             item.tenant_id !== null ? 'hover:bg-surface-secondary cursor-pointer' : 'cursor-default',
             index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
@@ -79,7 +74,7 @@
           @click="item.tenant_id !== null && openEditPanel(item)"
         >
           <div class="flex-1 min-w-0">
-            <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+            <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
             <p v-if="item.description" class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
           </div>
           <span
@@ -94,7 +89,7 @@
             v-if="item.tenant_id !== null"
             type="button"
             :aria-label="`Eliminar categoría ${item.name}`"
-            class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
+            class="flex-shrink-0 min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
             @click.stop="requestDelete(item)"
           >
             <TrashIcon class="w-4 h-4" />
@@ -128,7 +123,7 @@
             v-if="item.tenant_id !== null"
             type="button"
             :aria-label="`Editar categoría ${item.name}`"
-            class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+            class="min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
             @click="openEditPanel(item)"
           >
             <PencilSquareIcon class="w-4 h-4" />
@@ -137,7 +132,7 @@
             v-if="item.tenant_id !== null"
             type="button"
             :aria-label="`Eliminar categoría ${item.name}`"
-            class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
+            class="min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
             @click="requestDelete(item)"
           >
             <TrashIcon class="w-4 h-4" />

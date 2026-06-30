@@ -83,7 +83,7 @@
                     type="button"
                     :disabled="isScanning || isQuotaExceeded || isScanBlocked"
                     @click="scanFileInput?.click()"
-                    class="px-2.5 py-2 sm:px-3 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0 min-h-[44px]"
+                    class="px-2.5 py-2 sm:px-3 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0 min-h-[44px]"
                     :aria-label="isScanBlocked ? 'Escaneo deshabilitado — suscripción inactiva' : isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer factura con IA'"
                     :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
                   >
@@ -152,10 +152,10 @@
                   <p class="font-medium text-warning mb-1">¿Es este tu proveedor?</p>
                   <p class="text-text-secondary mb-3">Encontramos "<strong>{{ similarSupplier?.name }}</strong>", similar a "<em>{{ ocrSupplierName }}</em>" en la factura.</p>
                   <div class="flex gap-2">
-                    <button type="button" @click="selectSimilarSupplier" class="px-3 py-1.5 bg-action-warning-bg text-action-warning-text rounded-lg text-xs font-medium hover:bg-action-warning-hover-bg transition-colors">
+                    <button type="button" @click="selectSimilarSupplier" class="px-3 py-1.5 bg-shell-icon-bg text-shell-icon-text rounded-lg text-xs font-medium hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring">
                       Sí, usar ese
                     </button>
-                    <button type="button" @click="supplierScanStatus = 'not_found'; similarSupplier = null" class="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-medium hover:bg-background transition-colors">
+                    <button type="button" @click="supplierScanStatus = 'not_found'; similarSupplier = null" class="px-3 py-1.5 bg-shell-icon-bg text-shell-icon-text rounded-lg text-xs font-medium hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring">
                       No, es diferente
                     </button>
                   </div>
@@ -166,7 +166,7 @@
                     type="button"
                     @click="createSupplierFromOcr"
                     :disabled="isCreatingSupplier"
-                    class="px-3 py-1.5 bg-action-primary-bg text-action-primary-text rounded-lg text-xs font-medium hover:bg-action-primary-hover-bg disabled:opacity-50 transition-colors"
+                    class="px-3 py-1.5 bg-shell-icon-bg text-shell-icon-text rounded-lg text-xs font-medium hover:bg-shell-icon-hover-bg disabled:opacity-50 transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                   >
                     {{ isCreatingSupplier ? 'Creando...' : `+ Crear "${ocrSupplierName}"` }}
                   </button>
@@ -228,7 +228,7 @@
                 <button
                   type="button"
                   @click="addItem"
-                  class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm min-h-[44px]"
+                  class="px-4 py-2 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm min-h-[44px] font-medium"
                 >
                   + Agregar ítem
                 </button>
@@ -509,6 +509,25 @@
                 </div>
 
                 <div v-if="hasPaymentSelected">
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Fecha de pago</label>
+                  <ClientOnly>
+                    <VueDatePicker
+                      v-model="form.payment_date"
+                      :enable-time-picker="false"
+                      :locale="es"
+                      auto-apply
+                      :teleport="true"
+                      :max-date="maxPurchaseDate"
+                      :format="formatPurchaseDate"
+                      input-class-name="dp-custom-input"
+                      menu-class-name="dp-custom-menu"
+                      calendar-cell-class-name="dp-custom-cell"
+                      placeholder="Seleccionar fecha..."
+                    />
+                  </ClientOnly>
+                </div>
+
+                <div v-if="hasPaymentSelected">
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Comprobante</label>
                   <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
                 </div>
@@ -546,6 +565,12 @@
                   <div v-if="hasPaymentSelected" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
                     <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
+                  </div>
+                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
+                    <p class="text-xs font-medium text-text-secondary">Fecha pago</p>
+                    <p class="text-xs font-semibold text-text-primary">
+                      {{ form.payment_date ? fnsFormat(form.payment_date, 'dd/MM/yy', { locale: es }) : '-' }}
+                    </p>
                   </div>
                 </div>
 
@@ -597,7 +622,7 @@
                   <button
                     type="submit"
                     :disabled="isSubmitting"
-                    class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-action-success-bg text-action-success-text hover:bg-action-success-hover-bg active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
                     <svg v-if="!isSubmitting" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -607,7 +632,7 @@
                   </button>
                   <NuxtLink
                     to="/abastecimiento/compras-directas"
-                    class="w-full min-h-[44px] rounded-lg text-sm font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary active:scale-[0.99] transition-all flex items-center justify-center"
+                    class="w-full min-h-[44px] rounded-lg text-sm font-medium bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring active:scale-[0.99] transition-all flex items-center justify-center"
                   >
                     Cancelar
                   </NuxtLink>
@@ -686,7 +711,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
@@ -698,12 +723,21 @@ import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
 
-const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+const { todayISO, dateAtNoon } = useTenantTimezone()
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
-const tenantNowISO = () => combineDateAndTimeISO(todayISO(), timeHHMMFromISO(new Date().toISOString())) ?? new Date().toISOString()
-const purchaseDatePayloadISO = (date: Date) => dateAtNoon(isoFromDate(date)).toISOString()
-const maxPurchaseDate = computed(() => dateAtNoon(todayISO()))
+const localDateAtNoon = (iso: string) => {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Date(year, month - 1, day, 12, 0, 0, 0)
+}
+const localISOFromDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+const purchaseDatePayloadISO = (date: Date) => dateAtNoon(localISOFromDate(date)).toISOString()
+const maxPurchaseDate = computed(() => localDateAtNoon(todayISO()))
 
 useHead({
   title: 'Nueva Compra Directa - Abastecimiento'
@@ -748,13 +782,14 @@ const localPurchaseUnits = ref<LocalPurchaseUnit[]>([])
 const form = ref({
   supplier_id: '',
   payment_type: 'contado',
-  purchase_date: dateAtNoon(todayISO()) as Date | null,
+  purchase_date: localDateAtNoon(todayISO()) as Date | null,
   notes: '',
   invoice_number: '',
   invoice_files: [] as File[],
   payment_method: '',
   payment_method_id: null as string | null,
   payment_reference: '',
+  payment_date: localDateAtNoon(todayISO()) as Date | null,
   payment_files: [] as File[],
   items: [createEmptyItem()] as PurchaseItem[]
 })
@@ -783,6 +818,16 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+
+watch(hasPaymentSelected, (selected) => {
+  if (selected) {
+    form.value.payment_date ||= localDateAtNoon(todayISO())
+    return
+  }
+  form.value.payment_reference = ''
+  form.value.payment_date = null
+  form.value.payment_files = []
+})
 
 // Fetch next purchase number
 const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-number', {
@@ -1456,7 +1501,7 @@ const handleScanFileSelect = async (event: Event) => {
       }
       // Pre-fill purchase date from extracted invoice date
       if (data.fecha) {
-        const parsed = new Date(data.fecha + 'T12:00:00')
+        const parsed = localDateAtNoon(data.fecha)
         if (!isNaN(parsed.getTime())) form.value.purchase_date = parsed
       }
       // Pre-fill invoice fields for Step 3
@@ -1603,9 +1648,13 @@ const handleSubmit = async () => {
         payload.payment_method_id = form.value.payment_method_id
       }
       payload.payment_amount = totalAmount.value
-      payload.payment_date = tenantNowISO()
+      if (form.value.payment_date) {
+        payload.payment_date = purchaseDatePayloadISO(form.value.payment_date)
+      }
+      if (form.value.payment_reference) {
+        payload.payment_reference = form.value.payment_reference
+      }
     }
-    if (form.value.payment_reference) payload.payment_reference = form.value.payment_reference
 
     const response = await $fetch('/api/suppliers/purchases/direct', {
       method: 'POST',

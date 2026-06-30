@@ -11,7 +11,7 @@
     <!-- Content -->
     <div v-else class="w-full mx-auto">
       <!-- Form Container -->
-      <PaymentsPaymentForm :purchases="purchases" @cancel="navigateTo('/pagos')" @paid="handlePaid" />
+      <PaymentsPaymentForm :purchases="purchases" @cancel="navigateTo('/finanzas/pagos')" @paid="handlePaid" />
     </div>
   </div>
 </template>
@@ -82,7 +82,7 @@ async function loadPurchases() {
 }
 
 async function handlePaid() {
-  await navigateTo('/pagos?refresh=true')
+  await navigateTo('/finanzas/pagos?refresh=true')
 }
 
 // Inject refresh handler setter from layout

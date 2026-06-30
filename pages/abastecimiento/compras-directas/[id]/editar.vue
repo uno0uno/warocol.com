@@ -776,8 +776,18 @@ const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeIS
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 const tenantNowISO = () => combineDateAndTimeISO(todayISO(), timeHHMMFromISO(new Date().toISOString())) ?? new Date().toISOString()
-const purchaseDatePayloadISO = (date: Date) => dateAtNoon(isoFromDate(date)).toISOString()
-const maxPurchaseDate = computed(() => dateAtNoon(todayISO()))
+const localDateAtNoon = (iso: string) => {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Date(year, month - 1, day, 12, 0, 0, 0)
+}
+const localISOFromDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+const purchaseDatePayloadISO = (date: Date) => dateAtNoon(localISOFromDate(date)).toISOString()
+const maxPurchaseDate = computed(() => localDateAtNoon(todayISO()))
 
 const route = useRoute()
 const purchaseId = route.params.id as string
@@ -844,7 +854,9 @@ const existingPaymentAttachments = computed(() =>
 // Initialize form when purchase loads
 watch(originalPurchase, (purchase) => {
   if (purchase) {
-    form.value.purchase_date = purchase.purchase_date ? new Date(purchase.purchase_date) : dateAtNoon(todayISO())
+    form.value.purchase_date = purchase.purchase_date
+      ? localDateAtNoon(isoFromDate(new Date(purchase.purchase_date)))
+      : localDateAtNoon(todayISO())
     form.value.notes = purchase.notes || ''
     form.value.invoice_number = purchase.invoice_number || ''
     form.value.payment_method = purchase.payment_method || ''

@@ -96,7 +96,7 @@
             <button
               type="button"
               @click="openAgreementModal()"
-              class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm font-medium"
+              class="px-4 py-2 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium"
             >
               + Nuevo Acuerdo
             </button>
@@ -225,10 +225,7 @@
             type="submit" 
             :disabled="isSubmitting"
             :class="[
-              'w-full py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold',
-              isSubmitting
-                ? 'bg-background border border-border text-text-primary shadow-none'
-                : 'bg-action-success-bg text-action-success-text hover:bg-action-success-hover-bg shadow-lg shadow-action-success-bg/20'
+              'w-full py-3 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring'
             ]">
             <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
             <span>{{ isSubmitting ? 'Creando...' : 'Crear Proveedor' }}</span>
@@ -236,7 +233,7 @@
           
           <NuxtLink 
             to="/abastecimiento/proveedores" 
-            class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium block text-center">
+            class="w-full py-3 rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium block text-center">
             Cancelar
           </NuxtLink>
         </div>
@@ -371,14 +368,14 @@
         <div class="flex gap-3 pt-4 border-t border-border">
           <button
             type="submit"
-            class="flex-1 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors font-medium"
+            class="flex-1 py-2 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring font-medium"
           >
             {{ editingIndex !== null ? 'Actualizar' : 'Agregar' }} Acuerdo
           </button>
           <button
             type="button"
             @click="closeAgreementModal"
-            class="flex-1 py-2 border border-border rounded-lg hover:bg-background transition-colors font-medium"
+            class="flex-1 py-2 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium"
           >
             Cancelar
           </button>

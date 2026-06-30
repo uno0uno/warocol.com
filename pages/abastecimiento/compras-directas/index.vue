@@ -131,6 +131,9 @@
               <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.supplier_name || 'Sin proveedor' }} · {{ item.items_count || 0 }} items
               </p>
+              <p class="text-xs text-text-tertiary mt-0.5">
+                Pago: {{ getPaymentDateLabel(item) }}
+              </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <p class="text-sm font-bold text-primary tabular-nums">${{ formatCurrency(item.total_amount) }}</p>
@@ -155,6 +158,12 @@
 
         <template #cell-purchase_date="{ value }">
           <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+        </template>
+
+        <template #cell-payment_date="{ row }">
+          <span class="text-sm" :class="getPaymentDateValue(row) ? 'text-text-secondary' : 'text-text-tertiary'">
+            {{ getPaymentDateLabel(row) }}
+          </span>
         </template>
 
         <template #cell-total_amount="{ value }">
@@ -347,6 +356,7 @@ const tableColumns = [
   { key: 'purchase_number', title: 'Numero', sortable: true },
   { key: 'supplier_name', title: 'Proveedor', sortable: true },
   { key: 'purchase_date', title: 'Fecha', sortable: true },
+  { key: 'payment_date', title: 'Fecha pago', sortable: true },
   { key: 'total_amount', title: 'Total', sortable: true },
   { key: 'items_count', title: 'Items', sortable: false },
   { key: 'status', title: 'Estado', sortable: true },
@@ -363,9 +373,13 @@ const sortedPurchases = computed(() => {
     let aVal = a[sortField.value]
     let bVal = b[sortField.value]
 
-    if (sortField.value === 'purchase_date') {
-      aVal = new Date(aVal).getTime()
-      bVal = new Date(bVal).getTime()
+    if (sortField.value === 'purchase_date' || sortField.value === 'payment_date') {
+      if (sortField.value === 'payment_date') {
+        aVal = getPaymentDateValue(a)
+        bVal = getPaymentDateValue(b)
+      }
+      aVal = aVal ? new Date(aVal).getTime() : 0
+      bVal = bVal ? new Date(bVal).getTime() : 0
     }
 
     if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1
@@ -383,6 +397,17 @@ const endItem = computed(() => Math.min(currentPage.value * itemsPerPage.value, 
 // Methods
 const { formatDate: _fmtDate } = useFormatters()
 const formatDate = (date: string) => _fmtDate(date)
+
+const getPaymentDateValue = (purchase: any) => {
+  if (purchase?.payment_date) return purchase.payment_date
+  if (purchase?.status === 'paid' && purchase?.paid_at) return purchase.paid_at
+  return null
+}
+
+const getPaymentDateLabel = (purchase: any) => {
+  const value = getPaymentDateValue(purchase)
+  return value ? formatDate(value) : 'Sin pago'
+}
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'

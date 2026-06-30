@@ -1,25 +1,49 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+  <form
+    @submit.prevent="handleSubmit"
+    :class="compact ? 'flex min-h-0 flex-1 flex-col' : 'grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8'"
+  >
+    <div
+      v-if="isPaymentMethodsLoading"
+      :class="compact
+        ? 'flex flex-1 items-center justify-center min-h-[400px]'
+        : 'col-span-full flex min-h-[400px] items-center justify-center'"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <CommonsTheCustomLoader size="large" :show-phrase="true" />
+    </div>
+
+    <template v-else>
     <!-- Left Column: Payment Details -->
-    <div class="xl:col-span-2 space-y-6">
-      <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
-        <h3 class="text-lg font-semibold text-text-primary mb-6">Detalles del Pago</h3>
+    <div :class="compact ? 'min-h-0 flex-1 overflow-y-auto px-6 py-5' : 'xl:col-span-2 space-y-6'">
+      <div :class="compact ? 'space-y-4' : 'bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm'">
+        <h3 :class="compact ? 'text-sm font-semibold text-text-primary mb-3' : 'text-lg font-semibold text-text-primary mb-6'">Detalles del pago</h3>
         
-        <div class="space-y-6">
+        <div :class="compact ? 'space-y-4' : 'space-y-6'">
           <!-- Payment Method & Reference -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div :class="compact ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-6'">
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Método de Pago *</label>
-              <select v-model="formData.payment_method" required
+              <select v-model="paymentSelectValue" required
                 class="w-full px-4 py-2.5 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary transition-colors">
                 <option value="">Selecciona un método</option>
-                <option value="transfer">Transferencia Bancaria</option>
-                <option value="check">Cheque</option>
-                <option value="cash">Efectivo</option>
-                <option value="credit_card">Tarjeta de Crédito</option>
-                <option value="debit_card">Tarjeta de Débito</option>
-                <option value="other">Otro</option>
+                <template v-for="group in paymentGroups" :key="group.slug">
+                  <option :value="`${group.slug}:`">{{ formatPaymentOptionLabel(group.name, group.glAccountCode) }}</option>
+                  <optgroup v-if="group.methods.length > 0" :label="group.name">
+                    <option
+                      v-for="method in group.methods"
+                      :key="method.id"
+                      :value="`${group.slug}:${method.id}`"
+                    >
+                      {{ formatPaymentOptionLabel(`${group.name} · ${method.name}`, method.glAccountCode || group.glAccountCode) }}
+                    </option>
+                  </optgroup>
+                </template>
               </select>
+              <p v-if="selectedPaymentPucLabel" class="mt-1.5 text-xs text-text-secondary">
+                PUC: <span class="font-medium text-text-primary">{{ selectedPaymentPucLabel }}</span>
+              </p>
             </div>
 
             <div>
@@ -31,7 +55,7 @@
           </div>
 
           <!-- Amount & Date -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div :class="compact ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-6'">
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto Pagado *</label>
               <div class="relative">
@@ -65,14 +89,14 @@
           <!-- Attachments -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">Comprobantes</label>
-            <PurchasesAttachmentUploader v-model="selectedFiles" />
+            <PurchasesAttachmentUploader v-model="selectedFiles" :embedded="compact" />
           </div>
         </div>
       </div>
     </div>
 
     <!-- Right Column: Summary & Actions -->
-    <div class="xl:col-span-1">
+    <div v-if="!compact" class="xl:col-span-1">
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
         <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen de Pago</h3>
 
@@ -116,10 +140,10 @@
 
           <!-- Actions -->
           <div class="space-y-3">
-            <button type="submit" :disabled="loading"
+            <button type="submit" :disabled="!canSubmitPayment"
               class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-primary/20">
               <CommonsTheCustomLoader v-if="loading" size="small" />
-              <span>{{ loading ? 'Procesando...' : 'Confirmar Pago' }}</span>
+              <span>{{ submitButtonLabel }}</span>
             </button>
             
             <button type="button" @click="$emit('cancel')" :disabled="loading"
@@ -130,14 +154,47 @@
         </div>
       </div>
     </div>
+
+    <div v-else class="flex-shrink-0 border-t border-border bg-surface px-6 py-4">
+      <div class="mb-3 flex items-center justify-between gap-4">
+        <div>
+          <p class="text-xs text-text-secondary">Total a pagar</p>
+          <p class="text-lg font-semibold text-text-primary">{{ formatCurrency(totalAmount) }}</p>
+        </div>
+        <p v-if="purchases[0]?.purchase_number" class="text-right text-xs text-text-secondary">
+          {{ purchases[0].purchase_number }}
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <button
+          type="button"
+          @click="$emit('cancel')"
+          :disabled="loading"
+          class="h-11 flex-1 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          :disabled="!canSubmitPayment"
+          class="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <span>{{ compactSubmitButtonLabel }}</span>
+        </button>
+      </div>
+    </div>
+    </template>
   </form>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
+import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 
 const props = defineProps<{
   purchases: any[]
+  compact?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -148,6 +205,7 @@ const emit = defineEmits<{
 const loading = ref(false)
 const formData = ref({
   payment_method: '',
+  payment_method_id: null as string | null,
   payment_reference: '',
   payment_amount: 0,
   payment_date: '',
@@ -156,6 +214,32 @@ const formData = ref({
 
 const selectedFiles = ref<File[]>([])
 const { todayISO, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+const {
+  data: paymentMethodsData,
+  error: paymentMethodsError,
+} = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
+  '/api/pos/payment-methods',
+  { server: false },
+)
+const isPaymentMethodsLoading = computed(() =>
+  !paymentMethodsData.value && !paymentMethodsError.value,
+)
+const paymentGroups = computed(() =>
+  mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? [])
+    .filter(group => group.slug !== 'credit' && !group.triggersCartera),
+)
+const { paymentSelectValue } = usePaymentSelectValue(formData, paymentGroups)
+const selectedPaymentPucLabel = computed(() => {
+  if (!formData.value.payment_method) return ''
+  const group = paymentGroups.value.find(g => g.slug === formData.value.payment_method)
+  if (!group) return ''
+  if (formData.value.payment_method_id) {
+    const method = group.methods.find(m => m.id === formData.value.payment_method_id)
+    const code = method?.glAccountCode || group.glAccountCode
+    return code ? `${code} · ${method?.name || group.name}` : ''
+  }
+  return group.glAccountCode ? `${group.glAccountCode} · ${group.name}` : ''
+})
 
 // Computed properties
 const isBulkPayment = computed(() => props.purchases.length > 1)
@@ -163,13 +247,26 @@ const isBulkPayment = computed(() => props.purchases.length > 1)
 const totalAmount = computed(() => {
   return props.purchases.reduce((sum, purchase) => sum + getPurchaseAmount(purchase), 0)
 })
+const canSubmitPayment = computed(() =>
+  !loading.value && !isPaymentMethodsLoading.value && Boolean(formData.value.payment_method),
+)
+const submitButtonLabel = computed(() => {
+  if (loading.value) return 'Procesando...'
+  if (isPaymentMethodsLoading.value) return 'Cargando métodos...'
+  return 'Registrar pago'
+})
+const compactSubmitButtonLabel = computed(() => {
+  if (loading.value) return 'Procesando...'
+  if (isPaymentMethodsLoading.value) return 'Cargando...'
+  return 'Registrar pago'
+})
 
 // Helper functions
 function getPurchaseAmount(purchase: any): number {
   const invoiceAmount = purchase.invoice_amount ? parseFloat(purchase.invoice_amount) : null
   const totalAmount = parseFloat(purchase.total_amount || 0)
   const taxAmount = parseFloat(purchase.tax_amount || 0)
-  return invoiceAmount || (totalAmount + taxAmount)
+  return Math.round(invoiceAmount || (totalAmount + taxAmount))
 }
 
 function formatCurrency(value: number): string {
@@ -178,6 +275,10 @@ function formatCurrency(value: number): string {
     currency: 'COP',
     minimumFractionDigits: 0
   }).format(value)
+}
+
+function formatPaymentOptionLabel(label: string, glAccountCode?: string | null): string {
+  return glAccountCode ? `${label} · ${glAccountCode}` : label
 }
 
 const tenantDateTimeLocalNow = () => `${todayISO()}T${timeHHMMFromISO(new Date().toISOString())}`
@@ -191,6 +292,7 @@ const paymentDateToISO = (value: string) => {
 onMounted(() => {
   formData.value = {
     payment_method: '',
+    payment_method_id: null,
     payment_reference: '',
     payment_amount: totalAmount.value,
     payment_date: tenantDateTimeLocalNow(),
@@ -199,6 +301,8 @@ onMounted(() => {
 })
 
 const handleSubmit = async () => {
+  if (!canSubmitPayment.value) return
+
   loading.value = true
   try {
     if (isBulkPayment.value) {
@@ -220,6 +324,9 @@ const handleSubmit = async () => {
         try {
           const formDataPayload = new FormData()
           formDataPayload.append('payment_method', formData.value.payment_method)
+          if (formData.value.payment_method_id) {
+            formDataPayload.append('payment_method_id', formData.value.payment_method_id)
+          }
           formDataPayload.append('payment_reference', formData.value.payment_reference)
 
           // Calculate individual amount
@@ -268,6 +375,9 @@ const handleSubmit = async () => {
       // Single payment
       const formDataPayload = new FormData()
       formDataPayload.append('payment_method', formData.value.payment_method)
+      if (formData.value.payment_method_id) {
+        formDataPayload.append('payment_method_id', formData.value.payment_method_id)
+      }
       formDataPayload.append('payment_reference', formData.value.payment_reference)
       formDataPayload.append('payment_amount', formData.value.payment_amount.toString())
       formDataPayload.append('payment_date', paymentDateToISO(formData.value.payment_date))

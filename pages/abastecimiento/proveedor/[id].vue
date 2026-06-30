@@ -88,7 +88,7 @@
               <button
                 type="button"
                 @click="openAgreementModal()"
-                class="px-4 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors text-sm font-medium"
+                class="px-4 py-2 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium"
               >
                 + Nuevo Acuerdo
               </button>
@@ -216,14 +216,14 @@
             <button 
               type="submit" 
               :disabled="isSubmitting"
-              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-action-success-bg/20">
+              class="w-full py-3 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
               <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
               <span>{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
             </button>
             
             <NuxtLink 
               to="/abastecimiento/proveedores" 
-              class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium block text-center">
+              class="w-full py-3 rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium block text-center">
               Cancelar
             </NuxtLink>
 
@@ -231,7 +231,7 @@
               type="button"
               @click="requestDelete"
               :disabled="isDeleting"
-              class="w-full py-3 bg-destructive text-destructive-foreground rounded-lg hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
+              class="w-full py-3 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30 disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
               <UiLoadingDots v-if="isDeleting" size="9px" color="currentColor" />
               <span>{{ isDeleting ? 'Eliminando...' : 'Eliminar Proveedor' }}</span>
             </button>
@@ -368,14 +368,14 @@
             <button
               type="submit"
               :disabled="isSavingAgreement"
-              class="flex-1 py-2 bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 font-medium"
+              class="flex-1 py-2 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 font-medium"
             >
               {{ isSavingAgreement ? 'Guardando...' : 'Guardar Acuerdo' }}
             </button>
             <button
               type="button"
               @click="closeAgreementModal"
-              class="flex-1 py-2 border border-border rounded-lg hover:bg-background transition-colors font-medium"
+              class="flex-1 py-2 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium"
             >
               Cancelar
             </button>

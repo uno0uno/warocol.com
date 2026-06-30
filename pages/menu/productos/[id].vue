@@ -31,10 +31,10 @@
           <li>Los toggles de domicilios, QR en mesa y receta no aplican aquí.</li>
         </ul>
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-          <UiButton type="button" variant="primary" class="flex-1" @click="goToOpenSaleSettings">
+          <UiButton type="button" variant="default" class="flex-1 bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring" @click="goToOpenSaleSettings">
             Ir a Personalizar
           </UiButton>
-          <UiButton type="button" variant="outline" class="flex-1" @click="router.push('/menu/productos')">
+          <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" @click="router.push('/menu/productos')">
             Volver al catálogo
           </UiButton>
         </div>
@@ -44,11 +44,10 @@
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
-        <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
+        <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
           <!-- Información Básica -->
-          <div>
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-              <h3 class="text-lg font-semibold text-text-primary">Información Básica</h3>
+          <UiFormSection title="Datos del producto">
+            <template #badge>
               <UiStatusBadge
                 v-if="isResaleProduct"
                 value="Reventa"
@@ -57,38 +56,41 @@
                 size="sm"
                 class="flex-shrink-0"
               />
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Nombre del Producto *
-                </label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  required
-                  class="input-base w-full px-4 py-2"
-                  placeholder="Ej: Hamburguesa Clásica"
-                />
-              </div>
+            </template>
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-4 sm:gap-5 items-start">
+                <div class="space-y-4 min-w-0">
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-1">
+                      Nombre *
+                    </label>
+                    <input
+                      v-model="form.name"
+                      type="text"
+                      required
+                      class="input-base w-full px-4 py-2"
+                      placeholder="Ej. hamburguesa clásica"
+                    />
+                  </div>
 
-              <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  v-model="form.description"
-                  rows="3"
-                  class="input-base w-full px-4 py-2"
-                  placeholder="Describe el producto..."
-                ></textarea>
-              </div>
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-1">
+                      Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                    </label>
+                    <textarea
+                      v-model="form.description"
+                      rows="3"
+                      class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem] sm:min-h-[6.5rem]"
+                      placeholder="Breve descripción para el menú"
+                    ></textarea>
+                  </div>
+                </div>
 
-              <!-- Image (issue #465) -->
-              <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">Imagen</label>
-                <div class="flex items-center gap-4">
-                  <div class="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-surface-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                <div class="flex flex-col gap-2 sm:w-[7.5rem] flex-shrink-0">
+                  <label class="text-sm font-medium text-text-primary">
+                    Foto
+                  </label>
+                  <div class="w-[5.5rem] h-[5.5rem] sm:w-full sm:aspect-square rounded-lg border border-dashed border-border/80 bg-surface-secondary/50 overflow-hidden flex items-center justify-center">
                     <img
                       v-if="form.image_url"
                       :src="form.image_url"
@@ -96,23 +98,23 @@
                       class="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    <svg v-else class="w-8 h-8 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg v-else class="w-7 h-7 text-text-tertiary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div class="flex flex-col gap-2">
+                  <div class="flex flex-col gap-1.5">
                     <button
                       type="button"
                       @click="showImageModal = true"
-                      class="min-h-[44px] px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring whitespace-nowrap"
                     >
-                      {{ form.image_url ? 'Cambiar imagen' : 'Subir imagen' }}
+                      {{ form.image_url ? 'Cambiar' : 'Subir foto' }}
                     </button>
                     <button
                       v-if="form.image_url"
                       type="button"
                       @click="form.image_url = ''"
-                      class="text-xs text-destructive hover:underline"
+                      class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
                     >
                       Eliminar
                     </button>
@@ -120,61 +122,62 @@
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Categoría *
-                </label>
-                <UiCategorySearchInput
-                  :allow-create="true"
-                  :initial-value="selectedCategoryName"
-                  placeholder="Buscar o crear categoría..."
-                  @select="onCategorySelected"
-                  @create="onCategoryCreateRequested"
-                />
-              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div :class="businessProfile?.comandas_enabled ? 'sm:col-span-2' : ''">
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Categoría *
+                  </label>
+                  <UiCategorySearchInput
+                    :allow-create="true"
+                    :initial-value="selectedCategoryName"
+                    placeholder="Buscar categoría..."
+                    @select="onCategorySelected"
+                    @create="onCategoryCreateRequested"
+                  />
+                </div>
 
-              <!-- Inherited kitchen station (read-only, comandas only) -->
-              <div v-if="businessProfile?.comandas_enabled">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Cocina heredada
-                </label>
-                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm">
-                  <template v-if="inheritedStation">
-                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
-                    <span class="font-semibold text-text-primary">{{ inheritedStation.name }}</span>
-                    <span class="text-text-tertiary text-xs ml-1">(vía categoría)</span>
-                  </template>
-                  <template v-else>
-                    <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
-                    <button
-                      type="button"
-                      @click="showNewStationModal = true"
-                      class="ml-auto text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1"
-                    >
-                      + Crear estación
-                    </button>
-                  </template>
+                <!-- Inherited kitchen station (read-only, comandas only) -->
+                <div v-if="businessProfile?.comandas_enabled">
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Cocina
+                  </label>
+                  <div class="flex items-center gap-2 min-h-[42px] px-3 py-2 rounded-lg bg-surface-secondary/60 border border-border/60 text-sm">
+                    <template v-if="inheritedStation">
+                      <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
+                      <span class="font-medium text-text-primary truncate">{{ inheritedStation.name }}</span>
+                      <span class="text-text-tertiary text-xs flex-shrink-0">desde categoría</span>
+                    </template>
+                    <template v-else>
+                      <span class="text-text-tertiary text-xs leading-snug flex-1">Sin comanda en categoría</span>
+                      <button
+                        type="button"
+                        @click="showNewStationModal = true"
+                        class="min-h-[32px] px-2 py-1 text-xs font-medium rounded-md bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring flex-shrink-0"
+                      >
+                        Crear estación
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <div v-if="!isResaleProduct">
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Preparación (min)
+                  </label>
+                  <input
+                    v-model.number="form.preparation_time"
+                    type="number"
+                    min="0"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="15"
+                  />
                 </div>
               </div>
-
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tiempo de Preparación (min)
-                </label>
-                <input
-                  v-model.number="form.preparation_time"
-                  type="number"
-                  min="0"
-                  class="input-base w-full px-4 py-2"
-                  placeholder="15"
-                />
-              </div>
             </div>
-          </div>
+          </UiFormSection>
 
           <!-- Precios -->
-          <div class="mt-8">
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Precios y Costos</h3>
+          <UiFormSection title="Precio">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -270,14 +273,10 @@
                 </div>
               </div>
             </div>
-          </div>
+          </UiFormSection>
 
           <!-- Categoría de Impuesto — solo visible cuando el tenant tiene impuestos activos -->
-          <div v-if="hasTaxes" class="mt-8">
-            <h3 class="text-lg font-semibold text-text-primary mb-2">Categoría de Impuesto</h3>
-            <p class="text-sm text-text-secondary mb-4">
-              Define cómo se aplica el impuesto a este producto según la configuración del negocio.
-            </p>
+          <UiFormSection v-if="hasTaxes" title="Impuesto">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Categoría de impuesto">
               <button
                 type="button"
@@ -290,7 +289,7 @@
                 ]"
               >
                 <span class="text-sm font-semibold">Alimento / Bebida</span>
-                <span class="text-xs leading-snug">INC 8% o IVA 19% según configuración del negocio</span>
+                <span class="text-xs leading-snug">INC 8% o IVA 19%</span>
               </button>
               <button
                 type="button"
@@ -303,7 +302,7 @@
                 ]"
               >
                 <span class="text-sm font-semibold">Licor para llevar</span>
-                <span class="text-xs leading-snug">IVA licores 5% — botellas o licores para llevar</span>
+                <span class="text-xs leading-snug">IVA licores 5%</span>
               </button>
               <button
                 type="button"
@@ -316,13 +315,14 @@
                 ]"
               >
                 <span class="text-sm font-semibold">Exento</span>
-                <span class="text-xs leading-snug">Sin impuesto — alimentos básicos sin transformación</span>
+                <span class="text-xs leading-snug">Sin impuesto</span>
               </button>
             </div>
-          </div>
+          </UiFormSection>
 
           <!-- Reventa: equivalencia gr/ml + insumo vinculado (sin receta libre) -->
-          <div v-if="isResaleProduct" class="mt-8 space-y-4">
+          <UiFormSection v-if="isResaleProduct" title="Inventario">
+            <div class="space-y-4">
             <MenuProductResaleCreateForm
               v-model:unit-weight-gr="resaleUnitWeightGr"
               v-model:unit-weight-unit="resaleUnitWeightUnit"
@@ -352,15 +352,17 @@
                 {{ WAREHOUSE_COPY.linkedWarehouseItemNotFoundCatalog }}
               </p>
             </div>
-          </div>
+            </div>
+          </UiFormSection>
 
           <!-- Toggle: ¿Controla inventario? (solo productos de menú con receta) -->
-          <div v-if="!isResaleProduct" class="mt-8">
-            <MenuCatalogInlineCreateBusyOverlay
-              :busy="inlineCatalogBusy"
-              :label="inlineCatalogBusyLabel"
-              :hint="inlineCatalogBusyHint"
-            >
+          <MenuCatalogInlineCreateBusyOverlay
+            v-if="!isResaleProduct"
+            :busy="inlineCatalogBusy"
+            :label="inlineCatalogBusyLabel"
+            :hint="inlineCatalogBusyHint"
+          >
+          <UiFormSection title="Inventario">
           <div class="flex items-start gap-3 p-4 bg-surface-secondary border border-border rounded-lg">
             <button
               type="button"
@@ -404,9 +406,9 @@
             </p>
             <UiButton
               type="button"
-              variant="outline"
+              variant="default"
               size="default"
-              class="mt-3"
+              class="mt-3 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               @click="openConvertResalePanel"
             >
               Activar como venta directa (reventa)
@@ -436,7 +438,7 @@
               <UiButton
                 type="button"
                 variant="default"
-                class="flex-1"
+                class="flex-1 bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
                 :disabled="isConvertingToResale"
                 @click="confirmConvertToResale"
               >
@@ -445,8 +447,8 @@
               </UiButton>
               <UiButton
                 type="button"
-                variant="outline"
-                class="flex-1"
+                variant="default"
+                class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 :disabled="isConvertingToResale"
                 @click="cancelConvertResalePanel"
               >
@@ -454,30 +456,27 @@
               </UiButton>
             </div>
           </div>
+          </UiFormSection>
 
           <!-- Recetas Base (Opcional) -->
           <template v-if="tracksInventory">
-          <div class="mt-8">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-text-primary">Recetas Base (Opcional)</h3>
+          <UiFormSection title="Recetas base">
+            <template #actions>
               <button
                 type="button"
                 @click="addRecipeBase"
-                class="btn-secondary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                class="min-h-[32px] px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
               >
-                + Agregar Receta Base
+                + Agregar
               </button>
-            </div>
-            <p class="text-sm text-text-secondary mb-4">
-              {{ WAREHOUSE_COPY.recipeBaseLinesHelp }}
-            </p>
+            </template>
             <p v-if="duplicateRecipeBaseError" class="text-sm text-destructive flex items-center gap-1 mb-3">
               <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
               {{ duplicateRecipeBaseError }}
             </p>
 
             <!-- Lista de recetas base seleccionadas -->
-            <div v-if="form.recipe_bases.length > 0" class="space-y-3 mb-6">
+            <div v-if="form.recipe_bases.length > 0" class="space-y-3">
               <div
                 v-for="(link, index) in form.recipe_bases"
                 :key="index"
@@ -526,7 +525,7 @@
                 <button
                   type="button"
                   @click="removeRecipeBase(index)"
-                  class="min-h-[44px] min-w-[44px] p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                  class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   :aria-label="`Eliminar receta base ${index + 1}`"
                 >
                   <Icon name="heroicons:trash" class="h-5 w-5" aria-hidden="true" />
@@ -535,26 +534,27 @@
             </div>
 
             <!-- Empty state -->
-            <div v-else class="text-center py-6 text-text-secondary border border-dashed border-border rounded-lg mb-6">
-              <p class="text-sm">No hay recetas base agregadas</p>
-              <p class="text-xs mt-1">Haz clic en "+ Agregar Receta Base" para comenzar</p>
+            <div v-else class="text-center py-5 text-text-secondary border border-dashed border-border/80 rounded-lg">
+              <p class="text-sm">Sin recetas base</p>
+              <p class="text-xs mt-1">Usa + Agregar para vincular una</p>
             </div>
-          </div>
+          </UiFormSection>
 
           <!-- Ingredientes y reventa adicionales -->
-          <div class="mt-8">
-            <MenuIngredientProductHint class="mb-4" />
-            <h3 class="text-lg font-semibold text-text-primary mb-2">{{ WAREHOUSE_COPY.recipeCostLines }}</h3>
-            <p class="text-sm text-text-secondary mb-4">
-              {{ WAREHOUSE_COPY.recipeCostLinesSectionHelp }}
-            </p>
+          <UiFormSection :title="WAREHOUSE_COPY.recipeCostLines">
+            <MenuIngredientProductHint class="mb-3" />
             <p v-if="quantityError" class="text-sm text-destructive flex items-center gap-1 mb-3">
               <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
               {{ quantityError }}
             </p>
 
             <!-- Lista de ingredientes -->
-            <div class="space-y-3 mb-4">
+            <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
+              <p class="text-sm font-medium">Sin líneas adicionales</p>
+              <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
+            </div>
+
+            <div v-else class="space-y-3 mb-4">
               <div
                 v-for="(ingredient, index) in form.ingredients"
                 :key="index"
@@ -607,7 +607,7 @@
                 <button
                   type="button"
                   @click="removeIngredient(index)"
-                  class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                  class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                 >
                   <Icon name="heroicons:trash" class="h-5 w-5" />
@@ -618,22 +618,20 @@
             <!-- Botón agregar ingrediente -->
             <UiButton
               type="button"
-              variant="outline"
+              variant="default"
               size="default"
-              class="w-full"
+              class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               @click="addIngredient"
             >
               <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
               Agregar línea
             </UiButton>
-          </div>
+          </UiFormSection>
           </template>
-            </MenuCatalogInlineCreateBusyOverlay>
-          </div>
+          </MenuCatalogInlineCreateBusyOverlay>
 
           <!-- Configuración -->
-          <div class="mt-8">
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Configuración</h3>
+          <UiFormSection title="Configuración">
             <div class="space-y-4">
               <!-- REMOVED: Controla Stock - ALL products now automatically control inventory -->
 
@@ -689,7 +687,7 @@
               </div>
 
             </div>
-          </div>
+          </UiFormSection>
         </div>
       </div>
 
@@ -748,7 +746,7 @@
               type="submit"
               variant="default"
               size="lg"
-              class="w-full"
+              class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
               :disabled="isSubmitting"
             >
               <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
@@ -758,9 +756,9 @@
 
             <UiButton
               type="button"
-              variant="outline"
+              variant="default"
               size="default"
-              class="w-full"
+              class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               @click="cancel"
               :disabled="isSubmitting"
             >
@@ -769,9 +767,9 @@
 
             <UiButton
               type="button"
-              variant="destructive"
+              variant="default"
               size="default"
-              class="w-full"
+              class="w-full bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:ring-destructive/30"
               @click="deleteProduct"
               :disabled="isSubmitting"
             >
@@ -802,7 +800,7 @@
           {{ deleteError }}
         </div>
         <div class="flex gap-3 mt-6">
-          <UiButton type="button" variant="outline" class="flex-1" @click="showDeleteModal = false" :disabled="isSubmitting">
+          <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" @click="showDeleteModal = false" :disabled="isSubmitting">
             Cancelar
           </UiButton>
           <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" @click="confirmDelete" :disabled="isSubmitting">

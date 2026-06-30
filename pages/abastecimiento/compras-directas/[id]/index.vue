@@ -70,6 +70,25 @@
         </PurchasesPurchaseInfoCard>
       </PurchasesPurchaseOrderHeader>
 
+      <div
+        v-if="canPayPurchase"
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
+      >
+        <div>
+          <p class="text-sm font-semibold text-text-primary">Pago pendiente</p>
+          <p class="text-xs text-text-secondary">
+            Esta compra esta contabilizada como deuda a proveedor hasta registrar el pago.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-shell-cta-bg px-4 text-sm font-semibold text-shell-cta-text transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+          @click="showPaymentPanel = true"
+        >
+          Pagar
+        </button>
+      </div>
+
       <!-- Items Section -->
       <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
         <div class="flex items-center justify-between mb-4 sm:mb-6">
@@ -467,10 +486,16 @@
         <!-- Existing Attachments -->
         <div v-if="purchase.attachments?.length > 0" class="mb-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
+            <component
+              :is="getAttachmentUrl(attachment) ? 'a' : 'div'"
               v-for="attachment in purchase.attachments"
               :key="attachment.id"
-              class="flex items-center gap-3 p-3 border border-border rounded-lg bg-background hover:bg-surface-secondary transition-colors"
+              :href="getAttachmentUrl(attachment) || undefined"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-3 p-3 border border-border rounded-lg bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
+              :class="getAttachmentUrl(attachment) ? 'hover:bg-surface-secondary cursor-pointer' : ''"
+              :aria-label="getAttachmentUrl(attachment) ? `Abrir documento ${attachment.file_name}` : undefined"
             >
               <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -481,18 +506,16 @@
                 <p class="font-medium text-text-primary truncate">{{ attachment.file_name }}</p>
                 <p class="text-xs text-text-secondary">{{ getAttachmentTypeLabel(attachment.attachment_type) }}</p>
               </div>
-              <a
-                v-if="attachment.file_url"
-                :href="attachment.file_url"
-                target="_blank"
-                class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                title="Descargar"
+              <span
+                v-if="getAttachmentUrl(attachment)"
+                class="p-2 text-primary rounded-lg transition-colors"
+                title="Abrir en nueva ventana"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M6 8.25V18h9.75" />
                 </svg>
-              </a>
-            </div>
+              </span>
+            </component>
           </div>
         </div>
 
@@ -559,6 +582,62 @@
       />
     </div>
 
+    <Teleport to="body">
+      <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div
+          v-if="showPaymentPanel && purchase"
+          class="fixed inset-0 z-[80] bg-black/40"
+          @click.self="showPaymentPanel = false"
+        />
+      </Transition>
+
+      <Transition name="panel">
+        <aside
+          v-if="showPaymentPanel && purchase"
+          class="fixed z-[90] flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l md:border-border"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="direct-purchase-payment-title"
+        >
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+          </div>
+          <header class="flex-shrink-0 border-b border-border bg-surface-secondary/40 px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 flex-1 items-center gap-3">
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <h2 id="direct-purchase-payment-title" class="text-base font-bold leading-tight text-text-primary">Registrar pago</h2>
+                  <p class="mt-0.5 truncate text-xs leading-snug text-text-secondary">{{ purchase.purchase_number }} · {{ purchase.supplier_name || 'Sin proveedor' }}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                aria-label="Cerrar"
+                @click="showPaymentPanel = false"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </header>
+          <PaymentsPaymentForm
+            :purchases="[purchase]"
+            compact
+            @cancel="showPaymentPanel = false"
+            @paid="handlePaymentRegistered"
+          />
+        </aside>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -596,6 +675,7 @@ const isUploading = ref(false)
 const isSaving = ref(false)
 const isEditMode = ref(false)
 const showAddItemForm = ref(false)
+const showPaymentPanel = ref(false)
 const invoiceFileInput = ref<HTMLInputElement | null>(null)
 const paymentFileInput = ref<HTMLInputElement | null>(null)
 
@@ -624,6 +704,18 @@ const purchase = computed(() => (purchaseResponse.value as any)?.data || null)
 const isLoading = computed(() => !purchaseResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && purchaseResponse.value != null)
 const refresh = refetch
+const payableStatuses = new Set(['confirmed', 'preparing', 'received', 'invoiced'])
+const canPayPurchase = computed(() => {
+  const current = purchase.value
+  if (!current) return false
+  if (!payableStatuses.has(current.status)) return false
+  return !current.paid_at && !current.payment_amount
+})
+
+async function handlePaymentRegistered() {
+  showPaymentPanel.value = false
+  await refetch()
+}
 
 // Fetch ingredients for add item modal
 const { data: ingredientsData } = useFetch('/api/suppliers/ingredients', {
@@ -982,8 +1074,31 @@ const getAttachmentTypeLabel = (type: string) => {
   return typeMap[type] || type
 }
 
+const getAttachmentUrl = (attachment: any) =>
+  attachment?.file_url || attachment?.s3_url || attachment?.url || ''
+
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refetch) })
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
+
+<style scoped>
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.panel-enter-from,
+.panel-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+</style>

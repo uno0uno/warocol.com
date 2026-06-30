@@ -44,7 +44,7 @@ export default defineNuxtConfig({
     '/ventas': { ssr: false },
     '/ventas/**': { ssr: false },
     '/equipo/**': { ssr: false },
-    '/pagos/**': { ssr: false },
+    '/finanzas/pagos/**': { ssr: false },
     '/financiero/**': { ssr: false },
     '/auth/**': { ssr: false },
     '/analitica/**': { ssr: false },
@@ -262,7 +262,7 @@ export default defineNuxtConfig({
       {
         userAgents: ['*'],
         allow: ['/'],
-        disallow: ['/api/*', '/dashboard/*', '/pos/*', '/menu/*', '/inventario/*', '/abastecimiento/*', '/ventas/*', '/equipo', '/pagos/*', '/financiero/*', '/auth/*']
+        disallow: ['/api/*', '/dashboard/*', '/pos/*', '/menu/*', '/inventario/*', '/abastecimiento/*', '/ventas/*', '/equipo', '/finanzas/*', '/financiero/*', '/auth/*']
       }
     ]
   },

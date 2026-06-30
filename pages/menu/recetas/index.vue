@@ -10,7 +10,7 @@
 
     <!-- Main Content -->
     <div v-else class="page-layout">
-      <div class="flex flex-col gap-3 md:gap-4">
+      <div class="flex flex-col gap-2 md:gap-3">
         <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           :search-fields="[]"
@@ -23,7 +23,7 @@
           <template #trailing>
             <NuxtLink
               to="/menu/recetas/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
             >
               <span class="hidden sm:inline">+ Nueva Receta Base</span>
               <span class="sm:hidden">+ Nueva</span>
@@ -38,7 +38,7 @@
           empty-message="No hay recetas base registradas"
           empty-sub-message="Crea una nueva receta base para comenzar"
           variant="default"
-          row-size="sm"
+          row-size="xs"
         >
           <template #header-is_active>
             <UiTableHeaderFilter
@@ -55,20 +55,20 @@
           <template #cell-producto_name="{ value }">
             <div class="flex items-center">
               <div class="ml-2">
-                <div class="text-sm font-bold text-text-primary">{{ value }}</div>
+                <div class="text-sm font-semibold text-text-primary">{{ value }}</div>
               </div>
             </div>
           </template>
 
           <template #cell-ingredientes_count="{ row }">
             <div class="flex justify-center">
-              <span class="text-sm font-bold text-text-primary">{{ row.ingredientes.length }}</span>
+              <span class="text-sm font-medium text-text-primary">{{ row.ingredientes.length }}</span>
             </div>
           </template>
 
           <template #cell-costo_total="{ row }">
             <div class="flex justify-end">
-              <span class="text-sm font-bold text-primary">{{ formatCurrency(row.costo_total) }}</span>
+              <span class="text-sm font-semibold text-primary">{{ formatCurrency(row.costo_total) }}</span>
             </div>
           </template>
 
@@ -86,7 +86,7 @@
           <template #cell-actions="{ row }">
             <div class="flex justify-center">
               <button
-                class="text-text-secondary hover:text-primary transition-colors"
+                class="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-text-secondary transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 title="Editar receta"
                 @click="$router.push(`/menu/recetas/${row.id}`)"
               >
@@ -98,12 +98,12 @@
           <!-- Mobile Card -->
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
+              class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
               @click="$router.push(`/menu/recetas/${item.id}`)"
             >
               <div class="flex-1 min-w-0">
-                <span class="text-sm font-bold text-text-primary">{{ item.producto_name }}</span>
+                <span class="text-sm font-semibold text-text-primary">{{ item.producto_name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.ingredientes.length }} {{ WAREHOUSE_COPY.recipeLinesCountSuffix }} · {{ formatCurrency(item.costo_total) }}</p>
               </div>
               <UiStatusBadge
@@ -117,14 +117,14 @@
         </UiResponsiveDataView>
 
         <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-          <div class="flex-1 flex justify-between sm:hidden">
+        <div v-if="productsData.total > itemsPerPage" class="flex items-center justify-end px-1 py-2">
+          <div class="flex flex-1 justify-between sm:hidden">
             <button
               @click="previousPage"
               :disabled="!canGoPrevious"
               :class="[
-                'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+                'relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
               Anterior
             </button>
@@ -132,56 +132,33 @@
               @click="nextPage"
               :disabled="!canGoNext"
               :class="[
-                'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+                'ml-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
               Siguiente
             </button>
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-titan-700">
-                Mostrando
-                <span class="font-medium">{{ startItem }}</span>
-                a
-                <span class="font-medium">{{ endItem }}</span>
-                de
-                <span class="font-medium">{{ productsData.total }}</span>
-                recetas
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-end">
+              <nav class="relative z-0 inline-flex items-center gap-1" aria-label="Pagination">
                 <button
                   @click="previousPage"
                   :disabled="!canGoPrevious"
                   :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
-                    canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+                    'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
                   ]">
                   <span class="sr-only">Anterior</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                 </button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    page === currentPage
-                      ? 'z-10 bg-crocus-50 border-crocus-500 text-crocus-600'
-                      : 'bg-white border-titan-300 text-titan-700 hover:bg-titan-50'
-                  ]">
-                  {{ page }}
-                </button>
+                <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
                 <button
                   @click="nextPage"
                   :disabled="!canGoNext"
                   :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
-                    canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+                    'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
                   ]">
                   <span class="sr-only">Siguiente</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -189,7 +166,6 @@
                   </svg>
                 </button>
               </nav>
-            </div>
           </div>
         </div>
 
@@ -398,12 +374,6 @@ const totalPages = computed(() => {
 const canGoPrevious = computed(() => currentPage.value > 1)
 const canGoNext = computed(() => currentPage.value < totalPages.value)
 
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
 const previousPage = () => {
   if (canGoPrevious.value) {
     currentPage.value--
@@ -415,46 +385,6 @@ const nextPage = () => {
     currentPage.value++
   }
 }
-
-const startItem = computed(() => {
-  return (currentPage.value - 1) * itemsPerPage.value + 1
-})
-
-const endItem = computed(() => {
-  return Math.min(currentPage.value * itemsPerPage.value, productsData.value?.total || 0)
-})
-
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const pages = []
-
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i)
-    }
-  } else {
-    if (current <= 4) {
-      for (let i = 1; i <= 5; i++) {
-        pages.push(i)
-      }
-      pages.push(total)
-    } else if (current >= total - 3) {
-      pages.push(1)
-      for (let i = total - 4; i <= total; i++) {
-        pages.push(i)
-      }
-    } else {
-      pages.push(1)
-      for (let i = current - 1; i <= current + 1; i++) {
-        pages.push(i)
-      }
-      pages.push(total)
-    }
-  }
-
-  return pages
-})
 
 // Table columns configuration
 const recetasTableColumns = [
