@@ -5,6 +5,7 @@ import {
   getSafeInternalRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
+import { isSessionAuthError } from '~/composables/useSessionExpiry'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
@@ -100,12 +101,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       throw err
     }
   } catch (err) {
-    console.error('Auth middleware error:', err)
+    if (!isSessionAuthError(err)) {
+      console.error('Auth middleware error:', err)
+    }
     clearInternalState()
     if (isInternalAccessDeniedError(err)) {
       return navigateTo(CUSTOMER_PORTAL_LOGIN)
     }
-    return navigateTo('/auth/login')
+    const redirect = to.fullPath ? `?redirect=${encodeURIComponent(to.fullPath)}` : ''
+    return navigateTo(`/auth/login${redirect}`)
   } finally {
     authStore.setLoading(false)
   }
