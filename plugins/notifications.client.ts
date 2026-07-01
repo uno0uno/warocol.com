@@ -9,10 +9,11 @@ import { watch } from 'vue'
 export default defineNuxtPlugin(() => {
   const authStore = useAuthStore()
   const { init, disconnect } = useNotifications()
+  const owner = 'auth'
 
   // Start the SSE connection as soon as the user has a valid session
   if (authStore.isSessionValid) {
-    init()
+    init(owner)
   }
 
   // React to auth state changes (login / logout / session expiry)
@@ -20,9 +21,9 @@ export default defineNuxtPlugin(() => {
     () => authStore.isSessionValid,
     (isValid, wasValid) => {
       if (isValid && !wasValid) {
-        init()
+        init(owner)
       } else if (!isValid && wasValid) {
-        disconnect()
+        disconnect(owner, { force: true, clearCache: true })
       }
     }
   )
