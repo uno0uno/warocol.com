@@ -49,6 +49,8 @@ const handlePrev = () => {
 }
 
 const handleSubmit = async () => {
+  if (isSubmitting.value || submitted.value) return
+
   paymentError.value = ''
   if (!paymentSelection.value.slug) {
     paymentError.value = 'Selecciona un método de pago.'
