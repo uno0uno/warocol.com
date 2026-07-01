@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { provide, ref, computed, watch, onMounted } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -87,8 +87,8 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 
-// Notifications — init here so SSE starts on all screen sizes (not just when bell mounts)
-const { unreadCount: notificationsUnreadCount, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
+// Notifications SSE is owned by plugins/notifications.client.ts.
+const { unreadCount: notificationsUnreadCount } = useNotifications()
 
 // Billing access status — drives banner and blocked redirect
 const { accessStatus, fetchAccessStatus } = useBilling()
@@ -125,12 +125,7 @@ watch(accessStatus, (status) => {
 }, { immediate: true })
 
 onMounted(() => {
-  if (process.client) initNotifications()
   fetchAccessStatus()
-})
-
-onUnmounted(() => {
-  disconnectNotifications()
 })
 
 // Refresh handler - shared via composable (provide/inject unreliable in Nuxt 3 layout↔page)

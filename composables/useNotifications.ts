@@ -19,8 +19,15 @@ let _queryCache: ReturnType<typeof useQueryCache> | null = null
 const initialized = ref(false)
 const isTenantResetting = ref(false)
 let eventSource: EventSource | null = null
-let connectionRefCount = 0
+const connectionOwners = new Set<string>()
 let tenantWatcherSetup = false
+let intentionalClose = false
+let lastErrorWarningAt = 0
+
+type DisconnectOptions = {
+  force?: boolean
+  clearCache?: boolean
+}
 
 export const useNotifications = () => {
   // Capture query cache for SSE callback — must be called inside setup() context
@@ -42,11 +49,33 @@ export const useNotifications = () => {
   const notifications = computed(() => data.value ?? [])
   const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length)
 
+  const canConnect = () => {
+    const authStore = useAuthStore()
+    return authStore.isSessionValid
+  }
+
+  const closeEventSource = (clearCache = false) => {
+    intentionalClose = true
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+    initialized.value = false
+    if (clearCache) {
+      _queryCache?.setQueryData(['notifications'], [])
+    }
+    queueMicrotask(() => {
+      intentionalClose = false
+    })
+  }
+
   const connect = () => {
     if (!process.client) return
+    if (!canConnect()) return
     if (eventSource) return // Already connected — singleton guard
 
     eventSource = new EventSource('/api/notifications/stream', { withCredentials: true })
+    initialized.value = true
 
     eventSource.onmessage = async (event) => {
       if (!event.data || event.data.startsWith(':')) return // ignore heartbeat comments
@@ -57,38 +86,43 @@ export const useNotifications = () => {
     }
 
     eventSource.onerror = () => {
-      console.warn('[useNotifications] SSE connection error, will auto-reconnect')
+      if (intentionalClose || eventSource?.readyState === EventSource.CLOSED) return
+
+      const now = Date.now()
+      if (now - lastErrorWarningAt > 30000) {
+        lastErrorWarningAt = now
+        console.debug('[useNotifications] SSE reconnecting')
+      }
     }
   }
 
-  const disconnect = () => {
-    connectionRefCount--
-    if (connectionRefCount <= 0 && eventSource) {
-      eventSource.close()
-      eventSource = null
-      connectionRefCount = 0
-      _queryCache?.setQueryData(['notifications'], [])
-      initialized.value = false
+  const disconnect = (owner = 'default', options: DisconnectOptions = {}) => {
+    connectionOwners.delete(owner)
+    if (options.force) {
+      connectionOwners.clear()
+    }
+
+    if (connectionOwners.size === 0) {
+      closeEventSource(options.clearCache ?? true)
     }
   }
 
   // Hard-resets SSE on tenant change — data refresh handled by tenants.ts bulk invalidation
   const resetForTenantChange = () => {
     isTenantResetting.value = true
-    if (eventSource) {
-      eventSource.close()
-      eventSource = null
-    }
-    initialized.value = false
-    connect()
-    isTenantResetting.value = false
+    closeEventSource(false)
+    queueMicrotask(() => {
+      if (connectionOwners.size > 0) {
+        connect()
+      }
+      isTenantResetting.value = false
+    })
   }
 
-  const init = async () => {
+  const init = async (owner = 'default') => {
     if (!process.client) return
-    connectionRefCount++ // always track this caller (fixes ref-count mismatch on re-navigation)
-    if (!initialized.value) {
-      initialized.value = true
+    connectionOwners.add(owner)
+    if (!initialized.value || !eventSource) {
       connect() // open SSE only once
     }
   }
