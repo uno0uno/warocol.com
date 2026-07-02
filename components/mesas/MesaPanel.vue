@@ -146,6 +146,10 @@
             @updated="(data) => emit('qr-updated', data)"
           />
 
+          <p v-if="createBlocked" class="text-sm text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2">
+            {{ createQuotaNotice }}
+          </p>
+
           <!-- Error general -->
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {{ errors.general }}
@@ -163,7 +167,8 @@
           </button>
           <button
             type="button"
-            :disabled="saving"
+            :disabled="saving || createBlocked"
+            :title="createBlocked ? createQuotaNotice : undefined"
             class="flex-1 h-11 rounded-lg bg-action-primary-bg text-sm font-semibold text-action-primary-text transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-action-primary-bg/30"
             @click="submit"
           >
@@ -194,6 +199,8 @@ interface Props {
   members?: Member[]
   waiterAttributionEnabled?: boolean
   tableQrModuleEnabled?: boolean
+  createQuotaBlocked?: boolean
+  createQuotaMessage?: string
 }
 
 interface Emits {
@@ -207,10 +214,16 @@ const props = withDefaults(defineProps<Props>(), {
   members: () => [],
   waiterAttributionEnabled: false,
   tableQrModuleEnabled: false,
+  createQuotaBlocked: false,
+  createQuotaMessage: '',
 })
 const emit = defineEmits<Emits>()
 
 const isEdit = computed(() => !!props.table)
+const createBlocked = computed(() => !isEdit.value && props.createQuotaBlocked)
+const createQuotaNotice = computed(() =>
+  props.createQuotaMessage || 'No tienes cupo disponible para crear otra mesa.',
+)
 const showMeseroField = computed(
   () => props.waiterAttributionEnabled && props.members.length > 0,
 )
@@ -273,6 +286,13 @@ function validate() {
 }
 
 async function submit() {
+  if (createBlocked.value) {
+    errors.value = {
+      general: createQuotaNotice.value,
+    }
+    return
+  }
+
   if (!validate()) return
   saving.value = true
   errors.value = {}
