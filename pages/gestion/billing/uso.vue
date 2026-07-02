@@ -42,8 +42,51 @@ const fallbackUsageMetric = (used = 0, limit = 0): BillingUsageMetric => ({
   period_end: subscription.value?.current_period_end ?? '',
 })
 
-const usagePercentage = (metric: BillingUsageMetric) =>
-  metric.limit > 0 ? Math.min(Math.round((metric.used / metric.limit) * 100), 100) : 0
+type UsageMetricValue = {
+  used?: number
+  limit?: number | null
+  remaining?: number | null
+}
+
+interface UsageDisplayRow {
+  resource: string
+  description: string
+  used: number
+  limit: number | null
+  remaining: number | null
+  percentage: number
+  unit: string
+  emptyMessage: string | null
+  zeroLabel?: string
+}
+
+const hasLimitedQuota = (metric: UsageMetricValue) =>
+  typeof metric.limit === 'number' && metric.limit > 0
+
+const usagePercentage = (metric: UsageMetricValue) =>
+  hasLimitedQuota(metric) ? Math.min(Math.round(((metric.used ?? 0) / metric.limit!) * 100), 100) : 0
+
+const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
+  if (metric.limit === null) return 'Sin límite'
+  if (typeof metric.limit !== 'number') return zeroLabel
+  if (metric.limit <= 0) return zeroLabel
+  return metric.limit.toLocaleString('es-CO')
+}
+
+const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
+  if (metric.limit === null) return 'Sin límite'
+  if (typeof metric.limit !== 'number') return zeroLabel
+  if (metric.limit <= 0) return zeroLabel
+  return (metric.remaining ?? 0).toLocaleString('es-CO')
+}
+
+const metricUsageLabel = (metric: UsageMetricValue, unit: string, zeroLabel = 'No incluido') => {
+  const used = metric.used ?? 0
+  if (metric.limit === null) {
+    return `${used.toLocaleString('es-CO')} ${unit} usados - sin límite`
+  }
+  return `${used.toLocaleString('es-CO')} de ${metricLimitLabel(metric, zeroLabel)} ${unit} usados`
+}
 
 const scanUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.scan_usage ??
@@ -73,30 +116,30 @@ const quotaDisplayConfig: QuotaDisplayConfig[] = [
 
 const quotaUsageRows = computed(() =>
   quotaDisplayConfig
-    .map((config) => {
+    .map((config): UsageDisplayRow | null => {
       const metric = remainingUsage.value?.quota_usage?.[config.key]
       if (!metric) return null
       return {
         resource: config.label,
-        description: metric.limit > 0 ? config.description : config.zeroLabel ?? 'No incluido',
+        description: hasLimitedQuota(metric)
+          ? config.description
+          : metric.limit === null
+            ? 'Sin límite por override'
+            : config.zeroLabel ?? 'No incluido',
         used: metric.used,
         limit: metric.limit,
         remaining: metric.remaining,
         percentage: usagePercentage(metric),
         unit: config.unit,
-        emptyMessage: metric.limit > 0 ? null : '0 disponibles',
+        emptyMessage: hasLimitedQuota(metric)
+          ? null
+          : metric.limit === null
+            ? 'Sin límite'
+            : '0 disponibles',
+        zeroLabel: config.zeroLabel,
       }
     })
-    .filter((row): row is {
-      resource: string
-      description: string
-      used: number
-      limit: number
-      remaining: number
-      percentage: number
-      unit: string
-      emptyMessage: string | null
-    } => row !== null)
+    .filter((row): row is UsageDisplayRow => row !== null)
 )
 
 const columns: Column[] = [
@@ -121,7 +164,7 @@ const tableData = computed(() => {
     },
     {
       resource: 'Facturación electrónica',
-      description: electronicInvoiceUsage.value.limit > 0
+      description: hasLimitedQuota(electronicInvoiceUsage.value)
         ? 'Facturas incluidas en el período actual'
         : 'Sin cupo pagado - 0 restantes',
       used: electronicInvoiceUsage.value.used,
@@ -129,7 +172,8 @@ const tableData = computed(() => {
       remaining: electronicInvoiceUsage.value.remaining,
       percentage: usagePercentage(electronicInvoiceUsage.value),
       unit: 'facturas',
-      emptyMessage: electronicInvoiceUsage.value.limit > 0 ? null : '0 disponibles',
+      emptyMessage: hasLimitedQuota(electronicInvoiceUsage.value) ? null : '0 disponibles',
+      zeroLabel: 'Sin cupo pagado',
     },
     ...quotaRows.filter((row) => row.resource !== 'Facturación electrónica'),
   ]
@@ -178,12 +222,14 @@ const periodLabel = computed(() => {
                 <p class="text-sm font-semibold text-text-primary leading-tight">{{ item.resource }}</p>
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
                 <p class="text-xs text-text-secondary mt-2">
-                  {{ item.used.toLocaleString('es-CO') }} de {{ item.limit.toLocaleString('es-CO') }} {{ item.unit }} usados
+                  {{ metricUsageLabel(item, item.unit, item.zeroLabel) }}
                 </p>
               </div>
               <div class="text-right flex-shrink-0">
-                <p class="text-sm font-bold text-text-primary">{{ item.remaining.toLocaleString('es-CO') }}</p>
-                <p class="text-xs text-text-secondary">restantes</p>
+                <p class="text-sm font-bold text-text-primary">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
+                <p class="text-xs text-text-secondary">
+                  {{ item.remaining === null ? 'sin tope' : 'restantes' }}
+                </p>
               </div>
             </div>
           </template>
@@ -204,14 +250,14 @@ const periodLabel = computed(() => {
 
           <template #cell-limit="{ item }">
             <span class="text-sm text-text-secondary">
-              {{ item.limit.toLocaleString('es-CO') }}
+              {{ metricLimitLabel(item, item.zeroLabel) }}
             </span>
             <span v-if="item.emptyMessage" class="block text-xs text-text-secondary">{{ item.emptyMessage }}</span>
           </template>
 
           <template #cell-remaining="{ item }">
             <span class="text-sm font-semibold text-text-primary">
-              {{ item.remaining.toLocaleString('es-CO') }}
+              {{ metricRemainingLabel(item, item.zeroLabel) }}
             </span>
             <span class="block text-xs text-text-secondary">{{ item.percentage }}% usado</span>
           </template>

@@ -90,10 +90,16 @@ export interface ScanMonthlyEntry {
 
 export interface BillingUsageMetric {
   used: number
-  limit: number
-  remaining: number
+  limit: number | null
+  remaining: number | null
   period_start: string
   period_end: string
+  plan_limit?: number
+  override?: {
+    id: string
+    disabled: boolean
+    reason: string | null
+  } | null
 }
 
 export type BillingQuotaUsage = Partial<Record<BillingQuotaKey, BillingUsageMetric>>
