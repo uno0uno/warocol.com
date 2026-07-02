@@ -112,6 +112,185 @@ export interface BillingRemainingUsage {
   quota_usage?: BillingQuotaUsage
 }
 
+export type OperationalQuotaKey =
+  | 'admin_users'
+  | 'active_kitchens'
+  | 'active_tables_including_bar'
+  | 'active_qr_tables'
+  | 'completed_online_orders_per_month'
+
+export type OperationalQuotaStatus = 'allowed' | 'blocked' | 'unlimited' | 'loading' | 'error' | 'unknown'
+
+export interface BillingQuotaResourceConfig {
+  key: BillingQuotaKey
+  label: string
+  description: string
+  unit: string
+  blockedMessage: string
+  unlimitedMessage: string
+  zeroLabel?: string
+}
+
+export interface OperationalQuotaResult {
+  resource: OperationalQuotaKey
+  status: OperationalQuotaStatus
+  allowed: boolean
+  blocked: boolean
+  unlimited: boolean
+  loading: boolean
+  label: string
+  unit: string
+  message: string
+  metric: BillingUsageMetric | null
+}
+
+export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuotaResourceConfig> = {
+  admin_users: {
+    key: 'admin_users',
+    label: 'Usuarios administrativos',
+    description: 'Miembros internos activos del establecimiento',
+    unit: 'usuarios administrativos',
+    blockedMessage: 'Alcanzaste el límite de usuarios administrativos de tu plan.',
+    unlimitedMessage: 'Puedes invitar usuarios administrativos sin límite por override.',
+  },
+  active_sessions_per_admin_user: {
+    key: 'active_sessions_per_admin_user',
+    label: 'Sesiones activas por usuario administrativo',
+    description: 'Máximo de sesiones simultáneas por usuario interno',
+    unit: 'sesiones',
+    blockedMessage: 'Alcanzaste el límite de sesiones activas por usuario administrativo.',
+    unlimitedMessage: 'Las sesiones activas no tienen límite por override.',
+  },
+  active_kitchens: {
+    key: 'active_kitchens',
+    label: 'Cocinas activas',
+    description: 'Puntos de preparación activos',
+    unit: 'cocinas',
+    blockedMessage: 'Alcanzaste el límite de cocinas activas de tu plan.',
+    unlimitedMessage: 'Puedes activar cocinas sin límite por override.',
+  },
+  active_tables_including_bar: {
+    key: 'active_tables_including_bar',
+    label: 'Mesas activas, incluida barra',
+    description: 'Mesas operativas del establecimiento',
+    unit: 'mesas',
+    blockedMessage: 'Alcanzaste el límite de mesas activas de tu plan.',
+    unlimitedMessage: 'Puedes activar mesas sin límite por override.',
+  },
+  active_qr_tables: {
+    key: 'active_qr_tables',
+    label: 'Mesas con QR activo',
+    description: 'Mesas activas con venta por QR',
+    unit: 'mesas QR',
+    blockedMessage: 'Alcanzaste el límite de mesas con QR activo de tu plan.',
+    unlimitedMessage: 'Puedes activar QR en mesas sin límite por override.',
+  },
+  completed_online_orders_per_month: {
+    key: 'completed_online_orders_per_month',
+    label: 'Pedidos en línea completados/mes',
+    description: 'Pedidos públicos completados en el período actual',
+    unit: 'pedidos',
+    blockedMessage: 'Alcanzaste el límite de pedidos en línea completados de tu plan.',
+    unlimitedMessage: 'Puedes recibir pedidos en línea sin límite por override.',
+  },
+  electronic_invoices_per_period: {
+    key: 'electronic_invoices_per_period',
+    label: 'Facturación electrónica',
+    description: 'Facturas incluidas en el período actual',
+    unit: 'facturas',
+    blockedMessage: 'No tienes cupo disponible de facturación electrónica.',
+    unlimitedMessage: 'La facturación electrónica no tiene límite por override.',
+    zeroLabel: 'No incluido',
+  },
+}
+
+export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
+  'admin_users',
+  'active_kitchens',
+  'active_tables_including_bar',
+  'active_qr_tables',
+  'completed_online_orders_per_month',
+]
+
+const operationalQuotaFallbackMessage = 'No pudimos verificar esta cuota ahora. El sistema validará la acción al guardar.'
+
+export const resolveOperationalQuota = (
+  resource: OperationalQuotaKey,
+  metric?: BillingUsageMetric | null,
+  state: { loading?: boolean; error?: boolean } = {}
+): OperationalQuotaResult => {
+  const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]
+  const base = {
+    resource,
+    label: config.label,
+    unit: config.unit,
+    metric: metric ?? null,
+  }
+
+  if (state.loading) {
+    return {
+      ...base,
+      status: 'loading',
+      allowed: true,
+      blocked: false,
+      unlimited: false,
+      loading: true,
+      message: 'Estamos verificando tu cuota. Si continúas, el sistema validará la acción al guardar.',
+    }
+  }
+
+  if (state.error) {
+    return {
+      ...base,
+      status: 'error',
+      allowed: true,
+      blocked: false,
+      unlimited: false,
+      loading: false,
+      message: operationalQuotaFallbackMessage,
+    }
+  }
+
+  if (!metric) {
+    return {
+      ...base,
+      status: 'unknown',
+      allowed: true,
+      blocked: false,
+      unlimited: false,
+      loading: false,
+      message: operationalQuotaFallbackMessage,
+    }
+  }
+
+  if (metric.limit === null) {
+    return {
+      ...base,
+      status: 'unlimited',
+      allowed: true,
+      blocked: false,
+      unlimited: true,
+      loading: false,
+      message: config.unlimitedMessage,
+    }
+  }
+
+  const remaining = metric.remaining ?? Math.max(metric.limit - metric.used, 0)
+  const isBlocked = metric.limit <= 0 || remaining <= 0
+
+  return {
+    ...base,
+    status: isBlocked ? 'blocked' : 'allowed',
+    allowed: !isBlocked,
+    blocked: isBlocked,
+    unlimited: false,
+    loading: false,
+    message: isBlocked
+      ? config.blockedMessage
+      : `Tienes ${remaining.toLocaleString('es-CO')} ${config.unit} disponibles.`,
+  }
+}
+
 export const useBilling = () => {
   const cache = useQueryCache()
   const { currentTenant } = useTenantReactive()
@@ -193,6 +372,27 @@ export const useBilling = () => {
   const usageHistory = computed<ScanMonthlyEntry[]>(() => usageHistoryData.value ?? [])
   const events = computed<BillingEvent[]>(() => eventsData.value?.events ?? [])
   const eventsTotal = computed<number>(() => eventsData.value?.total ?? 0)
+  const operationalQuotaLoading = computed(() =>
+    remainingUsageAsyncStatus.value === 'loading' && remainingUsage.value == null
+  )
+  const operationalQuotaError = computed(() => remainingUsageStatus.value === 'error')
+  const getOperationalQuota = (resource: OperationalQuotaKey) =>
+    resolveOperationalQuota(
+      resource,
+      remainingUsage.value?.quota_usage?.[resource] ?? null,
+      {
+        loading: operationalQuotaLoading.value,
+        error: operationalQuotaError.value,
+      }
+    )
+  const operationalQuotas = computed<Record<OperationalQuotaKey, OperationalQuotaResult>>(() =>
+    OPERATIONAL_QUOTA_KEYS.reduce((acc, resource) => {
+      acc[resource] = getOperationalQuota(resource)
+      return acc
+    }, {} as Record<OperationalQuotaKey, OperationalQuotaResult>)
+  )
+  const canGrowOperationalResource = (resource: OperationalQuotaKey) =>
+    getOperationalQuota(resource).allowed
 
   const loading = computed(() =>
     subscribeMutation.isLoading.value ||
@@ -279,9 +479,12 @@ export const useBilling = () => {
     usageHistory,
     events,
     eventsTotal,
+    operationalQuotas,
     loading,
     isRefreshing,
     error,
+    getOperationalQuota,
+    canGrowOperationalResource,
     fetchPlans,
     fetchSubscription,
     fetchAccessStatus,

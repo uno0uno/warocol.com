@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { useBilling, type BillingQuotaKey, type BillingUsageMetric } from '~/composables/useBilling'
+import {
+  BILLING_QUOTA_RESOURCE_CONFIG,
+  useBilling,
+  type BillingUsageMetric,
+} from '~/composables/useBilling'
 
 interface Column {
   key: string
@@ -96,22 +100,14 @@ const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
 )
 
-interface QuotaDisplayConfig {
-  key: BillingQuotaKey
-  label: string
-  description: string
-  unit: string
-  zeroLabel?: string
-}
-
-const quotaDisplayConfig: QuotaDisplayConfig[] = [
-  { key: 'admin_users', label: 'Usuarios administrativos', description: 'Miembros internos activos del establecimiento', unit: 'usuarios administrativos' },
-  { key: 'active_sessions_per_admin_user', label: 'Sesiones activas por usuario administrativo', description: 'Máximo de sesiones simultáneas por usuario interno', unit: 'sesiones' },
-  { key: 'active_kitchens', label: 'Cocinas activas', description: 'Puntos de preparación activos', unit: 'cocinas' },
-  { key: 'active_tables_including_bar', label: 'Mesas activas, incluida barra', description: 'Mesas operativas del establecimiento', unit: 'mesas' },
-  { key: 'active_qr_tables', label: 'Mesas con QR activo', description: 'Mesas activas con venta por QR', unit: 'mesas QR' },
-  { key: 'completed_online_orders_per_month', label: 'Pedidos en línea completados/mes', description: 'Pedidos públicos completados en el período actual', unit: 'pedidos' },
-  { key: 'electronic_invoices_per_period', label: 'Facturación electrónica', description: 'Facturas incluidas en el período actual', unit: 'facturas', zeroLabel: 'No incluido' },
+const quotaDisplayConfig = [
+  BILLING_QUOTA_RESOURCE_CONFIG.admin_users,
+  BILLING_QUOTA_RESOURCE_CONFIG.active_sessions_per_admin_user,
+  BILLING_QUOTA_RESOURCE_CONFIG.active_kitchens,
+  BILLING_QUOTA_RESOURCE_CONFIG.active_tables_including_bar,
+  BILLING_QUOTA_RESOURCE_CONFIG.active_qr_tables,
+  BILLING_QUOTA_RESOURCE_CONFIG.completed_online_orders_per_month,
+  BILLING_QUOTA_RESOURCE_CONFIG.electronic_invoices_per_period,
 ]
 
 const quotaUsageRows = computed(() =>
