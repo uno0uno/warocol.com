@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-import { useBilling, type BillingPlan, type BillingUsageMetric } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey, type BillingUsageMetric } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
+
+interface Column {
+  key: string
+  title: string
+  sortable?: boolean
+  format?: string
+  align?: 'left' | 'center' | 'right'
+}
 
 definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
@@ -27,6 +34,23 @@ const isInitialLoading = computed(() =>
     (subscription.value !== null && remainingUsage.value === undefined)
   )
 )
+
+interface QuotaDisplayConfig {
+  key: BillingQuotaKey
+  label: string
+  unit: string
+  zeroLabel?: string
+}
+
+const quotaDisplayConfig: QuotaDisplayConfig[] = [
+  { key: 'admin_users', label: 'Usuarios administrativos', unit: 'usuarios administrativos' },
+  { key: 'active_sessions_per_admin_user', label: 'Sesiones activas por usuario administrativo', unit: 'sesiones' },
+  { key: 'active_kitchens', label: 'Cocinas activas', unit: 'cocinas' },
+  { key: 'active_tables_including_bar', label: 'Mesas activas, incluida barra', unit: 'mesas' },
+  { key: 'active_qr_tables', label: 'Mesas con QR activo', unit: 'mesas QR' },
+  { key: 'completed_online_orders_per_month', label: 'Pedidos en línea completados/mes', unit: 'pedidos/mes' },
+  { key: 'electronic_invoices_per_period', label: 'Facturas electrónicas/periodo', unit: 'facturas/periodo', zeroLabel: 'No incluido' },
+]
 
 // ── Pagination ───────────────────────────────────────────────────
 const PAGE_SIZE = 20
@@ -82,6 +106,28 @@ const scanLabelClass = computed(() => usageLabelClass(scanPercentage.value))
 const electronicInvoiceBarColorClass = computed(() => usageBarColorClass(electronicInvoicePercentage.value))
 const electronicInvoiceLabelClass = computed(() => usageLabelClass(electronicInvoicePercentage.value))
 
+const quotaUsageRows = computed(() =>
+  quotaDisplayConfig
+    .map((config) => {
+      const metric = remainingUsage.value?.quota_usage?.[config.key]
+      if (!metric) return null
+      const percentage = usagePercentage(metric)
+      return {
+        ...config,
+        metric,
+        percentage,
+        labelClass: usageLabelClass(percentage),
+        barClass: usageBarColorClass(percentage),
+      }
+    })
+    .filter((row): row is QuotaDisplayConfig & {
+      metric: BillingUsageMetric
+      percentage: number
+      labelClass: string
+      barClass: string
+    } => row !== null)
+)
+
 // ── Subscribe modal (2-step wizard) ─────────────────────────────
 const showModal       = ref(false)
 const wizardStep      = ref<1 | 2>(1)
@@ -92,6 +138,34 @@ const billingActionError = ref<string | null>(null)
 const plansLoading    = ref(false)
 const payerEmail      = ref('')
 const selectedPlan    = ref<BillingPlan | null>(null)
+
+const featureEntries = (plan: BillingPlan) =>
+  Object.entries(plan.features ?? {})
+    .filter(([key, value]) =>
+      key !== 'quotas' &&
+      key !== 'electronic_invoice_limit' &&
+      value !== null &&
+      value !== undefined &&
+      typeof value === 'string'
+    )
+    .map(([key, value]) => ({ key, value }))
+
+const quotaRowsForPlan = (plan: BillingPlan) =>
+  quotaDisplayConfig
+    .map((config) => {
+      const rawLimit = plan.quotas?.[config.key]
+      if (rawLimit === null || rawLimit === undefined) return null
+      const limit = Number(rawLimit)
+      if (!Number.isFinite(limit)) return null
+      return {
+        ...config,
+        limit,
+        value: limit <= 0
+          ? config.zeroLabel ?? 'No incluido'
+          : `${limit.toLocaleString('es-CO')} ${config.unit}`,
+      }
+    })
+    .filter((row): row is QuotaDisplayConfig & { limit: number; value: string } => row !== null)
 
 interface BillingTermsIntent {
   tenant_id: string
@@ -104,7 +178,7 @@ const BILLING_RETURN_PATH = '/gestion/billing'
 const BILLING_TERMS_PATH = '/terminos-y-condiciones'
 const BILLING_INTENT_TTL_MS = 30 * 60 * 1000
 
-const activePlans = computed(() => plans.value.filter(p => p.is_active))
+const activePlans = computed(() => (plans.value ?? []).filter(p => p.is_active))
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
   currentTenantId.value ? `waro:billing-terms-intent:${currentTenantId.value}` : ''
@@ -115,6 +189,7 @@ const getApiDetail = (err: unknown) => (err as any)?.data?.detail
 const apiErrorMessage = (err: unknown, fallback: string) => {
   const detail = getApiDetail(err)
   if (typeof detail === 'string') return detail
+  if (detail?.tenant_message) return String(detail.tenant_message)
   if (detail?.message) return String(detail.message)
   return (err as any)?.message || fallback
 }
@@ -194,9 +269,9 @@ const ensureTermsAcceptedForCheckout = async () => {
 const restoreBillingIntent = async () => {
   const intent = readBillingIntent()
   if (!intent) return
-  if (plans.value.length === 0) await fetchPlans()
+  if ((plans.value ?? []).length === 0) await fetchPlans()
 
-  const plan = plans.value.find(p => p.id === intent.plan_id)
+  const plan = (plans.value ?? []).find(p => p.id === intent.plan_id)
   clearBillingIntent()
 
   if (!plan) {
@@ -221,7 +296,7 @@ const openModal = async () => {
   wizardStep.value = 1
   showModal.value = true
   clearBillingIntent()
-  if (plans.value.length === 0) {
+  if ((plans.value ?? []).length === 0) {
     plansLoading.value = true
     await fetchPlans()
     plansLoading.value = false
@@ -643,6 +718,51 @@ watch(() => currentTenant.value?.id, async () => {
           </div>
         </div>
 
+        <div v-if="subscription && quotaUsageRows.length > 0" class="border-b border-border">
+          <div class="px-6 py-4 border-b border-border">
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Uso operativo del plan</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+            <div
+              v-for="row in quotaUsageRows"
+              :key="row.key"
+              class="px-6 py-5 border-b border-border last:border-b-0 md:[&:nth-last-child(-n+2)]:border-b-0"
+            >
+              <div class="flex items-center justify-between gap-3 mb-2">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">{{ row.label }}</p>
+                <p :class="['text-xs font-semibold', row.labelClass]">{{ row.percentage.toFixed(0) }}%</p>
+              </div>
+              <div
+                class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
+                role="progressbar"
+                :aria-valuenow="row.metric.used"
+                aria-valuemin="0"
+                :aria-valuemax="row.metric.limit"
+                :aria-label="`${row.metric.used} de ${row.metric.limit} ${row.unit} usados`"
+              >
+                <div
+                  :class="['h-full rounded-full transition-all duration-500', row.barClass]"
+                  :style="{ width: `${Math.min(row.percentage, 100)}%` }"
+                />
+              </div>
+              <p class="mt-2 text-sm text-text-secondary">
+                <span class="font-semibold text-text-primary">{{ row.metric.used.toLocaleString('es-CO') }}</span>
+                de
+                <span class="font-semibold text-text-primary">{{ row.metric.limit.toLocaleString('es-CO') }}</span>
+                usados
+              </p>
+              <p class="mt-1 text-xs text-text-secondary">
+                <template v-if="row.metric.limit > 0">
+                  {{ row.metric.remaining.toLocaleString('es-CO') }} restantes
+                </template>
+                <template v-else>
+                  {{ row.zeroLabel ?? 'No incluido' }}
+                </template>
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- No subscription placeholder -->
         <div v-if="!subscription" class="px-6 py-8 text-center">
           <p class="text-sm text-text-secondary mb-1">No tienes una suscripción activa.</p>
@@ -855,14 +975,27 @@ watch(() => currentTenant.value?.id, async () => {
                     {{ plan.scan_limit.toLocaleString('es-CO') }} escaneos/mes
                   </li>
                   <li
-                    v-for="(value, key) in plan.features"
-                    :key="String(key)"
+                    v-for="feature in featureEntries(plan)"
+                    :key="feature.key"
                     class="flex items-center gap-2 text-sm text-text-secondary"
                   >
                     <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    {{ value }}
+                    {{ feature.value }}
+                  </li>
+                  <li
+                    v-for="quota in quotaRowsForPlan(plan)"
+                    :key="quota.key"
+                    class="flex items-start gap-2 text-sm text-text-secondary"
+                  >
+                    <svg class="w-4 h-4 text-status-success-text shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>
+                      {{ quota.label }}:
+                      <span class="font-semibold text-text-primary">{{ quota.value }}</span>
+                    </span>
                   </li>
                 </ul>
 
@@ -895,7 +1028,7 @@ watch(() => currentTenant.value?.id, async () => {
 
             <!-- Plan summary -->
             <div class="bg-surface-secondary rounded-xl p-4">
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between items-center gap-4">
                 <div>
                   <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · Anual</p>
                   <p class="text-xs text-text-secondary mt-0.5">Pago único · Vigencia 12 meses</p>
@@ -903,6 +1036,16 @@ watch(() => currentTenant.value?.id, async () => {
                 <p class="text-xl font-bold text-text-primary">
                   {{ formatCOP(selectedPlan.price_annual) }}
                 </p>
+              </div>
+              <div v-if="quotaRowsForPlan(selectedPlan).length > 0" class="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                <div
+                  v-for="quota in quotaRowsForPlan(selectedPlan)"
+                  :key="quota.key"
+                  class="text-xs text-text-secondary"
+                >
+                  <span>{{ quota.label }}</span>
+                  <span class="block font-semibold text-text-primary">{{ quota.value }}</span>
+                </div>
               </div>
             </div>
 

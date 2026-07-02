@@ -428,6 +428,14 @@ const checkoutError = ref('')
 const confirmedOrder = ref<ConfirmedOrder | null>(null)
 const showSuccessModal = ref(false)
 
+const checkoutErrorMessage = (error: any) => {
+  const detail = error?.data?.detail
+  if (typeof detail === 'string') return detail
+  if (detail?.customer_message) return String(detail.customer_message)
+  if (detail?.message) return String(detail.message)
+  return error?.message || 'No pudimos confirmar tu pedido. Intenta de nuevo.'
+}
+
 const submitOrder = async () => {
   if (!cartStore.cartId) return
 
@@ -506,7 +514,7 @@ const submitOrder = async () => {
       notifyOrderConfirmed('Tu pedido fue confirmado')
       return
     }
-    checkoutError.value = error.data?.detail || error.message || 'Error placing order. Please try again.'
+    checkoutError.value = checkoutErrorMessage(error)
   }
   finally {
     isSubmitting.value = false
