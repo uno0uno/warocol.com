@@ -145,13 +145,23 @@
           <h3 class="text-base sm:text-lg font-semibold text-text-primary">Estaciones de preparación</h3>
         </div>
         <button
+          type="button"
           @click="openCreateStation"
+          :disabled="isActiveKitchenQuotaBlocked"
+          :title="isActiveKitchenQuotaBlocked ? activeKitchenQuotaMessage : 'Crear estación'"
           class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors min-h-[36px]"
+          :class="isActiveKitchenQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-action-primary-bg' : ''"
         >
           <PlusIcon class="w-3.5 h-3.5" />
           Nueva
         </button>
       </div>
+      <p
+        v-if="isActiveKitchenQuotaBlocked"
+        class="mb-4 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
+      >
+        {{ activeKitchenQuotaMessage }}
+      </p>
 
       <UiResponsiveDataView
         :data="stations"
@@ -530,11 +540,12 @@ useHead({ title: 'Comandas & Cocina | Operaciones' })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
+const { operationalQuotas, fetchBillingOverview } = useBilling()
 
 // ─── Business profile (operaciones audience aggregator — gated under OPERACIONES) ───
 const cache = useQueryCache()
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
-  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id ?? 'none'],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -609,22 +620,34 @@ const saveMinimumConsumptionConfig = async () => {
 
 // ─── Stations & categories ───
 const { data: stationsData, asyncStatus: stationsAsyncStatus, refetch: refetchStations } = useQuery({
-  key: () => ['tenant', 'stations', currentTenant.value?.id],
+  key: () => ['tenant', 'stations', currentTenant.value?.id ?? 'none'],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 const stations = computed(() => stationsData.value?.data ?? [])
+const activeKitchenQuota = computed(() => operationalQuotas.value.active_kitchens)
+const isActiveKitchenQuotaBlocked = computed(() => activeKitchenQuota.value.blocked)
+const activeKitchenQuotaMessage = computed(() => {
+  const quota = activeKitchenQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
 
 const { data: categoryStationsData, asyncStatus: categoryStationsAsyncStatus, refetch: refetchCategoryStations } = useQuery({
-  key: () => ['tenant', 'category-stations', currentTenant.value?.id],
+  key: () => ['tenant', 'category-stations', currentTenant.value?.id ?? 'none'],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
 const { data: categoriesData, asyncStatus: categoriesAsyncStatus, refetch: refetchCategories } = useQuery({
-  key: () => ['tenant', 'menu-categories', currentTenant.value?.id],
+  key: () => ['tenant', 'menu-categories', currentTenant.value?.id ?? 'none'],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/menu/categories'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
@@ -641,7 +664,7 @@ const {
   asyncStatus: kdsTokensAsyncStatus,
   refetch: refetchKdsTokens,
 } = useQuery({
-  key: () => ['tenant', 'kds-tokens', currentTenant.value?.id],
+  key: () => ['tenant', 'kds-tokens', currentTenant.value?.id ?? 'none'],
   query: async () => {
     const list = stationsForTokens.value
     if (list.length === 0) return {} as Record<string, string>
@@ -693,6 +716,12 @@ const refreshAll = async () => {
     refetchCategoryStations(),
     refetchCategories(),
     refetchKdsTokens(),
+  ])
+}
+const refreshStationsAndBilling = async () => {
+  await Promise.all([
+    refetchStations(),
+    fetchBillingOverview(),
   ])
 }
 onMounted(() => setRefreshHandler(refreshAll))
@@ -889,10 +918,55 @@ const deactivateInfo = ref<{ active_comandas_count: number; affected_categories:
 const isLoadingDeactivateInfo = ref(false)
 const isConfirmingDeactivate = ref(false)
 
-const openCreateStation = () => { editingStation.value = null; stationModalOpen.value = true }
 const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
 
+const showActiveKitchenQuotaBlocked = () => {
+  toast.warning(activeKitchenQuotaMessage.value, { title: 'Cupo de cocinas agotado' })
+}
+
+const openCreateStation = () => {
+  if (isActiveKitchenQuotaBlocked.value) {
+    showActiveKitchenQuotaBlocked()
+    return
+  }
+
+  editingStation.value = null
+  stationModalOpen.value = true
+}
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
+const quotaExceededMessageFromError = (err: any) => {
+  const detail = err?.data?.detail ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de cocinas activas de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} cocinas. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return typeof detail === 'string' ? detail : activeKitchenQuotaMessage.value
+}
+
+const stationErrorMessage = (err: any, fallback: string) => {
+  if (isQuotaExceededError(err)) return quotaExceededMessageFromError(err)
+  return err?.data?.detail || err?.data?.message || err?.message || fallback
+}
+
 const handleSaveStation = async (formData: any) => {
+  if (!editingStation.value && isActiveKitchenQuotaBlocked.value) {
+    showActiveKitchenQuotaBlocked()
+    return
+  }
+
   isSavingStation.value = true
   try {
     if (editingStation.value) {
@@ -903,9 +977,13 @@ const handleSaveStation = async (formData: any) => {
       toast.success('Estación creada', { title: 'Creado' })
     }
     stationModalOpen.value = false
-    await refetchStations()
-  } catch {
-    toast.error('Error al guardar la estación', { title: 'Error' })
+    if (editingStation.value) {
+      await refetchStations()
+    } else {
+      await refreshStationsAndBilling()
+    }
+  } catch (e: any) {
+    toast.error(stationErrorMessage(e, 'Error al guardar la estación'), { title: 'Error' })
   } finally {
     isSavingStation.value = false
   }
@@ -914,13 +992,18 @@ const handleSaveStation = async (formData: any) => {
 const handleToggleStation = async (station: any) => {
   if (togglingStationId.value === station.id) return
   if (!station.is_active) {
+    if (isActiveKitchenQuotaBlocked.value) {
+      showActiveKitchenQuotaBlocked()
+      return
+    }
+
     togglingStationId.value = station.id
     try {
       await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: true } })
       toast.success('Estación activada')
-      await refetchStations()
-    } catch {
-      toast.error('Error al activar la estación', { title: 'Error' })
+      await refreshStationsAndBilling()
+    } catch (e: any) {
+      toast.error(stationErrorMessage(e, 'Error al activar la estación'), { title: 'Error' })
     } finally {
       togglingStationId.value = null
     }
@@ -939,7 +1022,7 @@ const handleToggleStation = async (station: any) => {
     }
     await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: false } })
     toast.success('Estación desactivada')
-    await refetchStations()
+    await refreshStationsAndBilling()
   } catch (e: any) {
     toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
   } finally {
@@ -957,7 +1040,7 @@ const confirmDeactivateStation = async () => {
     })
     toast.success('Estación desactivada')
     deactivateModalOpen.value = false
-    await refetchStations()
+    await refreshStationsAndBilling()
   } catch (e: any) {
     toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
   } finally {
