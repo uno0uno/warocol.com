@@ -33,7 +33,12 @@
         </template>
 
         <template #trailing>
-          <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap">
+          <button
+            :disabled="isAdminUsersQuotaBlocked"
+            :title="isAdminUsersQuotaBlocked ? adminUsersQuotaMessage : 'Invitar miembro'"
+            @click="openInviteModal"
+            class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -41,6 +46,18 @@
           </button>
         </template>
       </UiAdvancedFiltersBar>
+
+      <div
+        v-if="isAdminUsersQuotaBlocked"
+        class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      >
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p>{{ adminUsersQuotaMessage }}</p>
+          <NuxtLink to="/gestion/billing/uso" class="font-semibold text-amber-950 underline underline-offset-2">
+            Ver Mi Plan
+          </NuxtLink>
+        </div>
+      </div>
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
@@ -418,7 +435,7 @@
               </button>
               <button
                 type="submit"
-                :disabled="inviteSending"
+                :disabled="inviteSending || isAdminUsersQuotaBlocked"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
               >
                 {{ inviteSending ? 'Enviando...' : 'Enviar invitacion' }}
@@ -642,6 +659,7 @@ useHead({ title: 'Miembros - Equipo' })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const authStore = useAuthStore()
+const { operationalQuotas } = useBilling()
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const roleFilter = ref('')
@@ -857,12 +875,58 @@ const inviteForm = reactive({
   role: 'admin'
 })
 
+const adminUsersQuota = computed(() => operationalQuotas.value.admin_users)
+const isAdminUsersQuotaBlocked = computed(() => adminUsersQuota.value.blocked)
+const adminUsersQuotaMessage = computed(() => {
+  const quota = adminUsersQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
+
+const showAdminUsersQuotaBlocked = () => {
+  const message = adminUsersQuotaMessage.value
+  inviteError.value = message
+  toast.warning(message, { title: 'Cupo de usuarios agotado' })
+}
+
+const quotaExceededMessageFromError = (err: any) => {
+  const detail = err?.data?.detail ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de usuarios administrativos de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} usuarios administrativos. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return adminUsersQuotaMessage.value
+}
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
 // Delete Modal State
 const showDeleteModal = ref(false)
 const memberToDelete = ref(null)
 const deleting = ref(false)
 
 const openInviteModal = () => {
+  if (isAdminUsersQuotaBlocked.value) {
+    showAdminUsersQuotaBlocked()
+    return
+  }
+
   inviteForm.name = ''
   inviteForm.email = ''
   inviteForm.phone = ''
@@ -876,6 +940,11 @@ const closeInviteModal = () => {
 }
 
 const sendInvitation = async () => {
+  if (isAdminUsersQuotaBlocked.value) {
+    showAdminUsersQuotaBlocked()
+    return
+  }
+
   inviteSending.value = true
   inviteError.value = ''
 
@@ -901,7 +970,9 @@ const sendInvitation = async () => {
     }
   } catch (err) {
     console.error('Error sending invitation:', err)
-    inviteError.value = err.data?.message || err.message || 'Error al enviar la invitacion'
+    inviteError.value = isQuotaExceededError(err)
+      ? quotaExceededMessageFromError(err)
+      : err?.data?.message || err?.message || 'Error al enviar la invitacion'
   } finally {
     inviteSending.value = false
   }
