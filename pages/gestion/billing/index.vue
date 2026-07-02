@@ -80,8 +80,35 @@ const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
 )
 
-const usagePercentage = (metric: BillingUsageMetric) =>
-  metric.limit > 0 ? (metric.used / metric.limit) * 100 : 0
+type UsageMetricValue = Pick<BillingUsageMetric, 'used' | 'limit' | 'remaining'>
+
+const hasLimitedQuota = (metric: UsageMetricValue) =>
+  typeof metric.limit === 'number' && metric.limit > 0
+
+const usagePercentage = (metric: UsageMetricValue) =>
+  hasLimitedQuota(metric) ? (metric.used / metric.limit!) * 100 : 0
+
+const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
+  if (metric.limit === null) return 'Sin límite'
+  if (typeof metric.limit !== 'number') return zeroLabel
+  if (metric.limit <= 0) return zeroLabel
+  return metric.limit.toLocaleString('es-CO')
+}
+
+const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
+  if (metric.limit === null) return 'Sin límite'
+  if (typeof metric.limit !== 'number') return zeroLabel
+  if (metric.limit <= 0) return zeroLabel
+  return (metric.remaining ?? 0).toLocaleString('es-CO')
+}
+
+const metricUsageLabel = (metric: UsageMetricValue, unit: string, zeroLabel = 'No incluido') => {
+  const used = metric.used ?? 0
+  if (metric.limit === null) {
+    return `${used.toLocaleString('es-CO')} ${unit} usados - sin límite`
+  }
+  return `${used.toLocaleString('es-CO')} de ${metricLimitLabel(metric, zeroLabel)} ${unit} usados`
+}
 
 const scanPercentage = computed(() => usagePercentage(scanUsage.value))
 const electronicInvoicePercentage = computed(() => usagePercentage(electronicInvoiceUsage.value))
@@ -664,8 +691,8 @@ watch(() => currentTenant.value?.id, async () => {
               role="progressbar"
               :aria-valuenow="scanUsage.used"
               aria-valuemin="0"
-              :aria-valuemax="scanUsage.limit"
-              :aria-label="`${scanUsage.used} de ${scanUsage.limit} escaneos usados`"
+              :aria-valuemax="scanUsage.limit ?? scanUsage.used"
+              :aria-label="metricUsageLabel(scanUsage, 'escaneos')"
             >
               <div
                 :class="['h-full rounded-full transition-all duration-500', scanBarColorClass]"
@@ -675,11 +702,11 @@ watch(() => currentTenant.value?.id, async () => {
             <p class="mt-2 text-sm text-text-secondary">
               <span class="font-semibold text-text-primary">{{ scanUsage.used.toLocaleString('es-CO') }}</span>
               de
-              <span class="font-semibold text-text-primary">{{ scanUsage.limit.toLocaleString('es-CO') }}</span>
+              <span class="font-semibold text-text-primary">{{ metricLimitLabel(scanUsage) }}</span>
               escaneos usados
             </p>
             <p class="mt-1 text-xs text-text-secondary">
-              {{ scanUsage.remaining.toLocaleString('es-CO') }} restantes
+              {{ metricRemainingLabel(scanUsage) }} restantes
             </p>
           </div>
 
@@ -693,8 +720,8 @@ watch(() => currentTenant.value?.id, async () => {
               role="progressbar"
               :aria-valuenow="electronicInvoiceUsage.used"
               aria-valuemin="0"
-              :aria-valuemax="electronicInvoiceUsage.limit"
-              :aria-label="`${electronicInvoiceUsage.used} de ${electronicInvoiceUsage.limit} facturas electronicas usadas`"
+              :aria-valuemax="electronicInvoiceUsage.limit ?? electronicInvoiceUsage.used"
+              :aria-label="metricUsageLabel(electronicInvoiceUsage, 'facturas electrónicas', 'Sin cupo pagado')"
             >
               <div
                 :class="['h-full rounded-full transition-all duration-500', electronicInvoiceBarColorClass]"
@@ -704,12 +731,12 @@ watch(() => currentTenant.value?.id, async () => {
             <p class="mt-2 text-sm text-text-secondary">
               <span class="font-semibold text-text-primary">{{ electronicInvoiceUsage.used.toLocaleString('es-CO') }}</span>
               de
-              <span class="font-semibold text-text-primary">{{ electronicInvoiceUsage.limit.toLocaleString('es-CO') }}</span>
+              <span class="font-semibold text-text-primary">{{ metricLimitLabel(electronicInvoiceUsage, 'Sin cupo pagado') }}</span>
               facturas usadas
             </p>
             <p class="mt-1 text-xs text-text-secondary">
-              <template v-if="electronicInvoiceUsage.limit > 0">
-                {{ electronicInvoiceUsage.remaining.toLocaleString('es-CO') }} restantes
+              <template v-if="hasLimitedQuota(electronicInvoiceUsage)">
+                {{ metricRemainingLabel(electronicInvoiceUsage) }} restantes
               </template>
               <template v-else>
                 Sin cupo pagado - 0 restantes
@@ -737,8 +764,8 @@ watch(() => currentTenant.value?.id, async () => {
                 role="progressbar"
                 :aria-valuenow="row.metric.used"
                 aria-valuemin="0"
-                :aria-valuemax="row.metric.limit"
-                :aria-label="`${row.metric.used} de ${row.metric.limit} ${row.unit} usados`"
+                :aria-valuemax="row.metric.limit ?? row.metric.used"
+                :aria-label="metricUsageLabel(row.metric, row.unit, row.zeroLabel)"
               >
                 <div
                   :class="['h-full rounded-full transition-all duration-500', row.barClass]"
@@ -746,14 +773,14 @@ watch(() => currentTenant.value?.id, async () => {
                 />
               </div>
               <p class="mt-2 text-sm text-text-secondary">
-                <span class="font-semibold text-text-primary">{{ row.metric.used.toLocaleString('es-CO') }}</span>
-                de
-                <span class="font-semibold text-text-primary">{{ row.metric.limit.toLocaleString('es-CO') }}</span>
-                usados
+                {{ metricUsageLabel(row.metric, row.unit, row.zeroLabel) }}
               </p>
               <p class="mt-1 text-xs text-text-secondary">
-                <template v-if="row.metric.limit > 0">
-                  {{ row.metric.remaining.toLocaleString('es-CO') }} restantes
+                <template v-if="hasLimitedQuota(row.metric)">
+                  {{ metricRemainingLabel(row.metric) }} restantes
+                </template>
+                <template v-else-if="row.metric.limit === null">
+                  Sin límite por override
                 </template>
                 <template v-else>
                   {{ row.zeroLabel ?? 'No incluido' }}
