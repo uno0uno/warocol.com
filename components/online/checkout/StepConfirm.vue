@@ -508,12 +508,6 @@ const submitOrder = async () => {
     notifyOrderConfirmed('Tu pedido fue confirmado')
   }
   catch (error: any) {
-    if (error.status === 409) {
-      // Order already placed — treat as success
-      showSuccessModal.value = true
-      notifyOrderConfirmed('Tu pedido fue confirmado')
-      return
-    }
     checkoutError.value = checkoutErrorMessage(error)
   }
   finally {
