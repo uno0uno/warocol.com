@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-import { useBilling, type BillingUsageMetric } from '~/composables/useBilling'
+import { useBilling, type BillingQuotaKey, type BillingUsageMetric } from '~/composables/useBilling'
+
+interface Column {
+  key: string
+  title: string
+  sortable?: boolean
+  format?: string
+  align?: 'left' | 'center' | 'right'
+}
 
 definePageMeta({})
 useHead({ title: 'Uso restante — WaRo Admin' })
@@ -18,9 +25,11 @@ const isInitialLoading = computed(() =>
   )
 )
 
-const loadAll = () => fetchBillingOverview()
+const loadAll = async () => {
+  await fetchBillingOverview()
+}
 
-onMounted(() => { loadAll(); setRefreshHandler(loadAll) })
+onMounted(() => { void loadAll(); setRefreshHandler(loadAll) })
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(loadAll))
 watch(() => currentTenant.value?.id, loadAll)
@@ -44,6 +53,52 @@ const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
 )
 
+interface QuotaDisplayConfig {
+  key: BillingQuotaKey
+  label: string
+  description: string
+  unit: string
+  zeroLabel?: string
+}
+
+const quotaDisplayConfig: QuotaDisplayConfig[] = [
+  { key: 'admin_users', label: 'Usuarios administrativos', description: 'Miembros internos activos del establecimiento', unit: 'usuarios administrativos' },
+  { key: 'active_sessions_per_admin_user', label: 'Sesiones activas por usuario administrativo', description: 'Máximo de sesiones simultáneas por usuario interno', unit: 'sesiones' },
+  { key: 'active_kitchens', label: 'Cocinas activas', description: 'Puntos de preparación activos', unit: 'cocinas' },
+  { key: 'active_tables_including_bar', label: 'Mesas activas, incluida barra', description: 'Mesas operativas del establecimiento', unit: 'mesas' },
+  { key: 'active_qr_tables', label: 'Mesas con QR activo', description: 'Mesas activas con venta por QR', unit: 'mesas QR' },
+  { key: 'completed_online_orders_per_month', label: 'Pedidos en línea completados/mes', description: 'Pedidos públicos completados en el período actual', unit: 'pedidos' },
+  { key: 'electronic_invoices_per_period', label: 'Facturación electrónica', description: 'Facturas incluidas en el período actual', unit: 'facturas', zeroLabel: 'No incluido' },
+]
+
+const quotaUsageRows = computed(() =>
+  quotaDisplayConfig
+    .map((config) => {
+      const metric = remainingUsage.value?.quota_usage?.[config.key]
+      if (!metric) return null
+      return {
+        resource: config.label,
+        description: metric.limit > 0 ? config.description : config.zeroLabel ?? 'No incluido',
+        used: metric.used,
+        limit: metric.limit,
+        remaining: metric.remaining,
+        percentage: usagePercentage(metric),
+        unit: config.unit,
+        emptyMessage: metric.limit > 0 ? null : '0 disponibles',
+      }
+    })
+    .filter((row): row is {
+      resource: string
+      description: string
+      used: number
+      limit: number
+      remaining: number
+      percentage: number
+      unit: string
+      emptyMessage: string | null
+    } => row !== null)
+)
+
 const columns: Column[] = [
   { key: 'resource', title: 'Recurso', sortable: false },
   { key: 'used', title: 'Usado', sortable: false, align: 'right' },
@@ -51,8 +106,9 @@ const columns: Column[] = [
   { key: 'remaining', title: 'Restante', sortable: false, align: 'right' },
 ]
 
-const tableData = computed(() =>
-  [
+const tableData = computed(() => {
+  const quotaRows = quotaUsageRows.value
+  return [
     {
       resource: 'Escaneos',
       description: 'Cupo del período actual',
@@ -75,8 +131,9 @@ const tableData = computed(() =>
       unit: 'facturas',
       emptyMessage: electronicInvoiceUsage.value.limit > 0 ? null : '0 disponibles',
     },
+    ...quotaRows.filter((row) => row.resource !== 'Facturación electrónica'),
   ]
-)
+})
 
 const periodLabel = computed(() => {
   const start = remainingUsage.value?.period_start ?? subscription.value?.current_period_start

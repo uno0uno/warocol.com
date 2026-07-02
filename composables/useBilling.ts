@@ -12,6 +12,17 @@
  * subscriptionFetched removed — all callers updated to use cache.invalidateQueries.
  */
 
+export type BillingQuotaKey =
+  | 'admin_users'
+  | 'active_sessions_per_admin_user'
+  | 'active_kitchens'
+  | 'active_tables_including_bar'
+  | 'active_qr_tables'
+  | 'completed_online_orders_per_month'
+  | 'electronic_invoices_per_period'
+
+export type BillingPlanQuotas = Partial<Record<BillingQuotaKey, number>>
+
 export interface BillingPlan {
   id: string
   name: string
@@ -21,6 +32,7 @@ export interface BillingPlan {
   price_annual: number
   scan_limit: number
   features: Record<string, unknown>
+  quotas?: BillingPlanQuotas
   is_active: boolean
 }
 
@@ -84,11 +96,14 @@ export interface BillingUsageMetric {
   period_end: string
 }
 
+export type BillingQuotaUsage = Partial<Record<BillingQuotaKey, BillingUsageMetric>>
+
 export interface BillingRemainingUsage {
   period_start: string
   period_end: string
   scan_usage: BillingUsageMetric
   electronic_invoice_usage: BillingUsageMetric
+  quota_usage?: BillingQuotaUsage
 }
 
 export const useBilling = () => {
