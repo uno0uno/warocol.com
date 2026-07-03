@@ -11,9 +11,13 @@ const props = withDefaults(defineProps<{
   }
   variant?: 'compact' | 'panel'
   showRegenerate?: boolean
+  qrQuotaBlocked?: boolean
+  qrQuotaMessage?: string
 }>(), {
   variant: 'compact',
   showRegenerate: false,
+  qrQuotaBlocked: false,
+  qrQuotaMessage: '',
 })
 
 const emit = defineEmits<{
@@ -29,11 +33,43 @@ const showRegenerateConfirm = ref(false)
 
 const publicUrl = computed(() => buildTableQrUrl(props.table.qr_public_token))
 const hasToken = computed(() => !!props.table.qr_public_token)
+const isActivationBlocked = computed(() => !props.table.qr_enabled && props.qrQuotaBlocked)
+const quotaMessage = computed(() =>
+  props.qrQuotaMessage || 'No tienes cupo disponible para activar QR en otra mesa.',
+)
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
+const qrErrorMessage = (err: any, fallback: string) => {
+  if (isQuotaExceededError(err)) return quotaMessage.value
+  const detail = err?.data?.detail
+  return typeof detail === 'string'
+    ? detail
+    : err?.data?.message || err?.message || fallback
+}
+
+const showQuotaBlocked = () => {
+  toast.warning(quotaMessage.value, { title: 'Cupo de QR agotado' })
+}
 
 const toggleQr = async () => {
   if (isToggling.value) return
-  isToggling.value = true
   const newEnabled = !props.table.qr_enabled
+
+  if (newEnabled && isActivationBlocked.value) {
+    showQuotaBlocked()
+    return
+  }
+
+  isToggling.value = true
   try {
     const res = await $fetch<{ success: boolean; data: Record<string, unknown> }>(
       `/api/tables/${props.table.id}/qr`,
@@ -45,7 +81,7 @@ const toggleQr = async () => {
       { title: newEnabled ? 'Activado' : 'Desactivado' },
     )
   } catch (err: any) {
-    toast.error(err?.data?.detail || 'Error al cambiar el QR', { title: 'Error' })
+    toast.error(qrErrorMessage(err, 'Error al cambiar el QR'), { title: 'Error' })
   } finally {
     isToggling.value = false
   }
@@ -53,6 +89,11 @@ const toggleQr = async () => {
 
 const regenerateToken = async () => {
   if (isRegenerating.value) return
+  if (isActivationBlocked.value) {
+    showQuotaBlocked()
+    return
+  }
+
   isRegenerating.value = true
   try {
     const res = await $fetch<{ success: boolean; data: Record<string, unknown> }>(
@@ -63,7 +104,7 @@ const regenerateToken = async () => {
     showRegenerateConfirm.value = false
     toast.success('Enlace actualizado — imprime el QR de nuevo', { title: 'Token regenerado' })
   } catch (err: any) {
-    toast.error(err?.data?.detail || 'No se pudo regenerar el enlace', { title: 'Error' })
+    toast.error(qrErrorMessage(err, 'No se pudo regenerar el enlace'), { title: 'Error' })
   } finally {
     isRegenerating.value = false
   }
@@ -84,13 +125,15 @@ const regenerateToken = async () => {
       </div>
       <label
         class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-        :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
+        :class="(isToggling || isActivationBlocked) ? 'opacity-50' : ''"
+        :title="isActivationBlocked ? quotaMessage : undefined"
+        @click="isActivationBlocked && showQuotaBlocked()"
       >
         <input
           type="checkbox"
           class="sr-only peer"
           :checked="!!table.qr_enabled"
-          :disabled="isToggling"
+          :disabled="isToggling || isActivationBlocked"
           @change="toggleQr"
         >
         <div
@@ -98,6 +141,13 @@ const regenerateToken = async () => {
         />
       </label>
     </div>
+
+    <p
+      v-if="isActivationBlocked"
+      class="text-xs text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2"
+    >
+      {{ quotaMessage }}
+    </p>
 
     <div v-if="table.qr_enabled && hasToken" class="space-y-2">
       <label class="text-xs font-medium text-text-secondary">Enlace público</label>
@@ -148,7 +198,8 @@ const regenerateToken = async () => {
           </button>
           <button
             type="button"
-            :disabled="isRegenerating"
+            :disabled="isRegenerating || isActivationBlocked"
+            :title="isActivationBlocked ? quotaMessage : undefined"
             class="h-8 px-3 rounded-lg text-xs font-bold bg-action-warning-bg text-action-primary-text disabled:opacity-50"
             @click="regenerateToken"
           >
@@ -166,14 +217,15 @@ const regenerateToken = async () => {
   <div v-else class="flex flex-wrap items-center gap-1.5">
     <label
       class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-      :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
-      :title="table.qr_enabled ? 'Desactivar QR' : 'Activar QR'"
+      :class="(isToggling || isActivationBlocked) ? 'opacity-50' : ''"
+      :title="isActivationBlocked ? quotaMessage : (table.qr_enabled ? 'Desactivar QR' : 'Activar QR')"
+      @click="isActivationBlocked && showQuotaBlocked()"
     >
       <input
         type="checkbox"
         class="sr-only peer"
         :checked="!!table.qr_enabled"
-        :disabled="isToggling"
+        :disabled="isToggling || isActivationBlocked"
         @change="toggleQr"
       >
       <div

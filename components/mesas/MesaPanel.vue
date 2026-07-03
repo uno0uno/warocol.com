@@ -143,6 +143,8 @@
             :table="table"
             variant="panel"
             show-regenerate
+            :qr-quota-blocked="qrQuotaBlocked"
+            :qr-quota-message="qrQuotaMessage"
             @updated="(data) => emit('qr-updated', data)"
           />
 
@@ -201,6 +203,8 @@ interface Props {
   tableQrModuleEnabled?: boolean
   createQuotaBlocked?: boolean
   createQuotaMessage?: string
+  qrQuotaBlocked?: boolean
+  qrQuotaMessage?: string
 }
 
 interface Emits {
@@ -216,6 +220,8 @@ const props = withDefaults(defineProps<Props>(), {
   tableQrModuleEnabled: false,
   createQuotaBlocked: false,
   createQuotaMessage: '',
+  qrQuotaBlocked: false,
+  qrQuotaMessage: '',
 })
 const emit = defineEmits<Emits>()
 
