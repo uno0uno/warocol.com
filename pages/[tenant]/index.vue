@@ -116,16 +116,19 @@ watch(restaurant, (val: any) => {
 
 const categories = computed(() => (menuData.value as any)?.data?.categories || [])
 const products = computed(() => (menuData.value as any)?.data?.products || [])
-const isLoading = computed(() => !profileData.value && !menuData.value)
+const error = computed(() => profileError.value || menuError.value)
+const isInitialLoading = computed(() =>
+  !isCity.value &&
+  !error.value &&
+  (
+    (profileAsyncStatus.value === 'loading' && !profileData.value) ||
+    (menuAsyncStatus.value === 'loading' && !menuData.value)
+  )
+)
 const isRefreshing = computed(() =>
   (profileAsyncStatus.value === 'loading' && profileData.value != null) ||
   (menuAsyncStatus.value === 'loading' && menuData.value != null)
 )
-const error = computed(() => profileError.value || menuError.value)
-
-onMounted(() => {
-  if (!isCity.value) void refetchProfile()
-})
 
 // Format business hours for schema.org
 function formatOpeningHours(businessHours) {
@@ -343,7 +346,7 @@ const cancelSwitch = () => {
   <NuxtLayout v-else name="public-restaurant">
   <div class="min-h-screen bg-gray-50">
     <!-- Loading State -->
-    <div v-if="isLoading && !restaurant" class="min-h-screen flex items-center justify-center">
+    <div v-if="isInitialLoading" class="min-h-screen flex items-center justify-center">
       <div class="text-center">
         <CommonsTheCustomLoader size="large" />
         <p class="text-gray-600 mt-4">Cargando restaurante...</p>
@@ -379,7 +382,7 @@ const cancelSwitch = () => {
         <PublicMenu
           :categories="categories"
           :products="products"
-          :is-loading="menuStatus === 'pending'"
+          :is-loading="menuStatus === 'pending' && !menuData"
           :restaurant-open="customerOrderingOpen"
           :accepts-online-orders="restaurant.accepts_online_orders ?? false"
           :online-orders-available="onlineOrdersAvailable"
