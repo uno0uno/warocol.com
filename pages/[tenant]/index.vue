@@ -12,14 +12,17 @@ import { useCityCatalog } from '~/composables/useCityCatalog'
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
-const tenantSlug = route.params.tenant as string
+const tenantSlug = computed(() => {
+  const param = route.params.tenant
+  return Array.isArray(param) ? String(param[0] ?? '') : String(param ?? '')
+})
 
 // City vs tenant dispatch (warocol.com#615). The city catalog is prefetched
 // in `plugins/city-catalog.server.ts` so `isCitySlug` is decidable
 // synchronously during SSR — no hydration mismatch. When the slug is a city
 // the tenant queries below stay disabled and `DirectoryView` renders.
 const { isCitySlug } = useCityCatalog()
-const isCity = computed(() => isCitySlug(tenantSlug))
+const isCity = computed(() => isCitySlug(tenantSlug.value))
 
 definePageMeta({
   // City directory uses the default layout (no restaurant header / cart bar);
@@ -54,14 +57,14 @@ const selectedProduct = ref<Record<string, any> | null>(null)
 // SSR data fetching — Pinia Colada + @pinia/colada-nuxt handles server-side prefetch automatically.
 // `enabled` gates the queries off when the slug is a city — avoids a 404 burst on city pages.
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refetchProfile } = useQuery({
-  key: () => ['restaurant', 'public', tenantSlug],
-  query: () => $fetch(`/api/public/restaurant/${tenantSlug}`),
+  key: () => ['restaurant', 'public', tenantSlug.value],
+  query: () => $fetch(`/api/public/restaurant/${tenantSlug.value}`),
   enabled: () => !isCity.value,
 })
 
 const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error: menuError, refetch: refetchMenu } = useQuery({
-  key: () => ['restaurant', 'public', tenantSlug, 'menu'],
-  query: () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
+  key: () => ['restaurant', 'public', tenantSlug.value, 'menu'],
+  query: () => $fetch(`/api/public/restaurant/${tenantSlug.value}/menu`),
   enabled: () => !isCity.value,
 })
 
@@ -185,7 +188,7 @@ const restaurantSchema = computed(() => {
     logo: r.logo_url ? { '@type': 'ImageObject', url: r.logo_url } : undefined,
     telephone: r.phone_number || undefined,
     email: r.email || undefined,
-    url: `${siteUrl}/${tenantSlug}`,
+    url: `${siteUrl}/${tenantSlug.value}`,
     address: r.address ? {
       '@type': 'PostalAddress',
       streetAddress: [r.address, r.neighborhood].filter(Boolean).join(', '),
@@ -221,7 +224,7 @@ useSeoMeta({
   ogTitle: () => restaurant.value?.seo_title || restaurant.value?.display_name || '',
   ogDescription: () => restaurant.value?.seo_description || restaurant.value?.description || '',
   ogImage: () => restaurant.value?.banner_url || restaurant.value?.logo_url || '',
-  ogUrl: () => `${siteUrl}/${tenantSlug}`,
+  ogUrl: () => `${siteUrl}/${tenantSlug.value}`,
   twitterCard: 'summary_large_image',
   twitterSite: '@warocolombia',
   twitterTitle: () => restaurant.value?.seo_title || restaurant.value?.display_name || '',
@@ -230,7 +233,7 @@ useSeoMeta({
 })
 
 useHead({
-  link: [{ rel: 'canonical', href: () => `${siteUrl}/${tenantSlug}` }],
+  link: [{ rel: 'canonical', href: () => `${siteUrl}/${tenantSlug.value}` }],
   script: [{
     type: 'application/ld+json',
     innerHTML: () => restaurantSchema.value ? JSON.stringify(restaurantSchema.value) : '{}',
@@ -278,7 +281,7 @@ const handleCheckout = async () => {
     if (cartStore.isEmpty) return
   }
 
-  router.push(`/${tenantSlug}/checkout`)
+  router.push(`/${tenantSlug.value}/checkout`)
 }
 
 // Handle cart open - refresh profile + purge products no longer available online
@@ -408,7 +411,7 @@ const cancelSwitch = () => {
       <ProductDetailDrawer
         v-model="isProductDrawerOpen"
         :product="selectedProduct"
-        :tenant-slug="String(tenantSlug)"
+        :tenant-slug="tenantSlug"
         @close="isProductDrawerOpen = false"
       />
 

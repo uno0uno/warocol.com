@@ -16,6 +16,7 @@ import { useCityCatalog, type PublicCity } from '~/composables/useCityCatalog'
 
 definePageMeta({
   layout: 'default',
+  publicAccess: true,
 })
 
 const config = useRuntimeConfig()

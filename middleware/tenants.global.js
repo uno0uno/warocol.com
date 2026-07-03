@@ -6,6 +6,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // Skip on auth routes, public routes, and non-operator layouts
   const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
+  const isPublicAccess = to.meta?.publicAccess === true
   const isCustomerPortal = to.meta?.layout === 'customer-portal'
   const isKds = to.meta?.layout === 'kds'
   if (
@@ -17,6 +18,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     to.path.startsWith('/blog') ||
     to.path.startsWith('/docs') ||
     isPublicRestaurant ||
+    isPublicAccess ||
     isCustomerPortal ||
     isKds
   ) return
