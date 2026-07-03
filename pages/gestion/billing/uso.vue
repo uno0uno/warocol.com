@@ -185,12 +185,12 @@ const periodLabel = computed(() => {
     </div>
 
     <template v-else>
-      <div class="border border-border bg-surface">
-        <div class="px-4 py-3 md:px-6 md:py-4 border-b border-border">
-          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Uso restante</p>
-          <p class="mt-1 text-sm text-text-secondary">{{ periodLabel }}</p>
-        </div>
+      <div class="border border-border bg-surface px-4 py-3 md:px-6 md:py-4">
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-widest">Uso restante</p>
+        <p class="mt-1 text-base font-medium leading-6 text-text-primary">{{ periodLabel }}</p>
+      </div>
 
+      <div>
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
