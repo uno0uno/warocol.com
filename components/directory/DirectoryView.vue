@@ -40,6 +40,11 @@ const error = computed(() => (fetchError.value as { message?: string } | null)?.
 const hasRestaurants = computed(() => restaurants.value.length > 0)
 const isEmptyDirectory = computed(() => !pending.value && !error.value && !hasRestaurants.value)
 
+const isOrderable = (restaurant: unknown) => {
+  const row = restaurant as Record<string, unknown>
+  return row.is_currently_open === true && row.online_orders_available !== false
+}
+
 useSeoMeta({
   title: () => `Restaurantes en ${cityName.value} - Waro Colombia`,
   description: () => `Descubre los mejores restaurantes en ${cityName.value}. Explora menús, precios y haz tus pedidos en línea.`,
@@ -157,7 +162,7 @@ useHead(() => ({
             </span>
 
             <span
-              v-if="(restaurant as any).is_currently_open"
+              v-if="isOrderable(restaurant)"
               class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-success/90 text-success-foreground rounded-xl backdrop-blur-sm"
             >
               <span class="w-1.5 h-1.5 bg-success-foreground rounded-full animate-pulse" aria-hidden="true" />
