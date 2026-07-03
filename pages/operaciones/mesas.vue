@@ -13,6 +13,10 @@ const pluralLower = computed(() => plural.value.toLowerCase())
 useHead({ title: computed(() => `${plural.value} | Operaciones`) })
 
 const { currentTenant } = useTenantReactive()
+const {
+  getOperationalQuota,
+  fetchBillingOverview,
+} = useBilling()
 
 // ── Data ───────────────────────────────────────────────────────────────────
 const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, error: tablesError, refetch } = useQuery({
@@ -113,17 +117,26 @@ const showPanel = ref(false)
 const panelTable = ref<any>(null)
 
 const openPanel = (table: any = null) => {
+  if (!table && isActiveTableQuotaBlocked.value) {
+    showActiveTableQuotaBlocked()
+    return
+  }
+
   panelTable.value = table
   showPanel.value = true
 }
 
-const onSaved = () => { refetch() }
+const refreshTablesAndBilling = async () => {
+  await Promise.all([refetch(), fetchBillingOverview()])
+}
 
-const onTableQrUpdated = (data: Record<string, unknown>) => {
+const onSaved = () => { refreshTablesAndBilling() }
+
+const onTableQrUpdated = async (data: Record<string, unknown>) => {
   if (panelTable.value?.id === data.id) {
     panelTable.value = { ...panelTable.value, ...data }
   }
-  refetch()
+  await refreshTablesAndBilling()
 }
 
 // ── Deactivate modal ────────────────────────────────────────────────────────
@@ -145,7 +158,7 @@ const confirmDeactivate = async () => {
   try {
     await $fetch(`/api/tables/${deactivateModalTable.value.id}/deactivate`, { method: 'PATCH' })
     deactivateModalOpen.value = false
-    await refetch()
+    await refreshTablesAndBilling()
   } catch (err: any) {
     const status = err?.response?.status ?? err?.status
     deactivateError.value = status === 409
@@ -161,12 +174,18 @@ const activatingId = ref<string | null>(null)
 
 const activateTable = async (id: string) => {
   if (activatingId.value) return
+  if (isActiveTableQuotaBlocked.value) {
+    showActiveTableQuotaBlocked()
+    return
+  }
+
   activatingId.value = id
   try {
     await $fetch(`/api/tables/${id}/activate`, { method: 'PATCH' })
-    await refetch()
+    await refreshTablesAndBilling()
+    toast.success(`${singular.value} activada`, { title: 'Activado' })
   } catch (err: any) {
-    // silently surface via toast if available
+    toast.error(tableErrorMessage(err, `Error al activar la ${singularLower.value}`), { title: 'Error' })
   } finally {
     activatingId.value = null
   }
@@ -218,10 +237,67 @@ const badgeVariant = (status: string) => {
   return 'secondary'
 }
 
+const activeTableQuota = computed(() => getOperationalQuota('active_tables_including_bar'))
+const isActiveTableQuotaBlocked = computed(() => activeTableQuota.value.blocked)
+const activeTableQuotaMessage = computed(() => {
+  const quota = activeTableQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
+
+const showActiveTableQuotaBlocked = () => {
+  toast.warning(activeTableQuotaMessage.value, { title: 'Cupo de mesas agotado' })
+}
+
+const activeQrQuota = computed(() => getOperationalQuota('active_qr_tables'))
+const isActiveQrQuotaBlocked = computed(() => activeQrQuota.value.blocked)
+const activeQrQuotaMessage = computed(() => {
+  const quota = activeQrQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
+const quotaExceededMessageFromError = (err: any) => {
+  const detail = err?.data?.detail ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de mesas activas de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} mesas. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return typeof detail === 'string' ? detail : activeTableQuotaMessage.value
+}
+
+const tableErrorMessage = (err: any, fallback: string) => {
+  if (isQuotaExceededError(err)) return quotaExceededMessageFromError(err)
+  return err?.data?.detail || err?.data?.message || err?.message || fallback
+}
+
 // Refresh handler — fan out to both queries so the layout's manual refresh
 // button updates the table list AND the tables-enabled toggle in one go.
 const refreshAll = async () => {
-  await Promise.all([refetch(), refreshProfile()])
+  await Promise.all([refetch(), refreshProfile(), fetchBillingOverview()])
 }
 onMounted(() => setRefreshHandler(refreshAll))
 onUnmounted(() => clearRefreshHandler(refreshAll))
@@ -440,7 +516,10 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #trailing>
           <button
             type="button"
+            :disabled="isActiveTableQuotaBlocked"
+            :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Crear ${singularLower}`"
             class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
+            :class="isActiveTableQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-primary' : ''"
             @click="openPanel(null)"
           >
             <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
@@ -448,6 +527,16 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           </button>
         </template>
       </UiAdvancedFiltersBar>
+
+      <div
+        v-if="isActiveTableQuotaBlocked"
+        class="rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
+      >
+        <p>{{ activeTableQuotaMessage }}</p>
+        <NuxtLink to="/gestion/billing/uso" class="mt-1 inline-flex font-semibold underline underline-offset-2">
+          Ver Mi Plan
+        </NuxtLink>
+      </div>
 
       <UiResponsiveDataView
         :columns="tableColumns"
@@ -498,6 +587,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   <MesasTableQrControls
                     :table="item"
                     variant="compact"
+                    :qr-quota-blocked="isActiveQrQuotaBlocked"
+                    :qr-quota-message="activeQrQuotaMessage"
                     @updated="onTableQrUpdated"
                   />
                 </div>
@@ -558,6 +649,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <MesasTableQrControls
               :table="row"
               variant="compact"
+              :qr-quota-blocked="isActiveQrQuotaBlocked"
+              :qr-quota-message="activeQrQuotaMessage"
               @updated="onTableQrUpdated"
             />
           </template>
@@ -607,7 +700,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <span class="text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-full bg-status-chip-bg text-status-chip-text border border-status-chip-border">Inactiva</span>
                 <button
                   :aria-label="`Activar ${item.name}`"
-                  :disabled="activatingId === item.id"
+                  :disabled="activatingId === item.id || isActiveTableQuotaBlocked"
+                  :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Activar ${item.name}`"
                   class="flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors disabled:opacity-50"
                   @click="activateTable(item.id)"
                 >
@@ -644,7 +738,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <div class="flex items-center justify-end gap-2">
               <button
                 :aria-label="`Activar ${row.name}`"
-                :disabled="activatingId === row.id"
+                :disabled="activatingId === row.id || isActiveTableQuotaBlocked"
+                :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Activar ${row.name}`"
                 class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors focus:outline-none focus:ring-2 focus:ring-state-success-border disabled:opacity-50"
                 @click="activateTable(row.id)"
               >
@@ -668,6 +763,10 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       :members="tenantMembers"
       :waiter-attribution-enabled="!!businessProfile?.waiter_attribution_enabled"
       :table-qr-module-enabled="!!businessProfile?.tables_enabled && !!businessProfile?.table_qr_module_enabled"
+      :create-quota-blocked="isActiveTableQuotaBlocked"
+      :create-quota-message="activeTableQuotaMessage"
+      :qr-quota-blocked="isActiveQrQuotaBlocked"
+      :qr-quota-message="activeQrQuotaMessage"
       @saved="onSaved"
       @qr-updated="onTableQrUpdated"
     />
