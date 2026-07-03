@@ -56,6 +56,14 @@
       Este restaurante no recibe pedidos en línea actualmente
     </div>
 
+    <!-- Online orders unavailable notice -->
+    <div v-else-if="showCheckoutButton && !onlineOrdersAvailable" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+      </svg>
+      {{ onlineOrdersUnavailableMessage || 'Este restaurante no puede recibir pedidos en línea actualmente' }}
+    </div>
+
     <!-- Restaurant closed notice -->
     <div v-else-if="showCheckoutButton && !restaurantOpen" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
       <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -76,6 +84,7 @@
       @click="$emit('checkout')"
     >
       <span v-if="!acceptsOnlineOrders">Pedidos en línea no disponibles</span>
+      <span v-else-if="!onlineOrdersAvailable">Pedidos en línea no disponibles</span>
       <span v-else-if="!restaurantOpen">Restaurante cerrado</span>
       <span v-else-if="normalizedMinimumOrder > subtotal">Pedido mínimo no alcanzado</span>
       <span v-else>Continuar a Checkout</span>
@@ -101,6 +110,8 @@ const props = withDefaults(
     showCheckoutButton?: boolean
     restaurantOpen?: boolean
     acceptsOnlineOrders?: boolean
+    onlineOrdersAvailable?: boolean
+    onlineOrdersUnavailableMessage?: string
   }>(),
   {
     orderType: 'delivery',
@@ -110,6 +121,8 @@ const props = withDefaults(
     showCheckoutButton: true,
     restaurantOpen: true,
     acceptsOnlineOrders: true,
+    onlineOrdersAvailable: true,
+    onlineOrdersUnavailableMessage: '',
   }
 )
 
@@ -129,6 +142,7 @@ const total = computed(() => {
 
 const isCheckoutDisabled = computed(() => {
   if (!props.acceptsOnlineOrders) return true
+  if (!props.onlineOrdersAvailable) return true
   if (!props.restaurantOpen) return true
   return normalizedMinimumOrder.value > 0 && props.subtotal < normalizedMinimumOrder.value
 })

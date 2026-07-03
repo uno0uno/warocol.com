@@ -114,6 +114,8 @@
                 :minimum-order="minimumOrder"
                 :restaurant-open="props.restaurantOpen"
                 :accepts-online-orders="props.acceptsOnlineOrders"
+                :online-orders-available="props.onlineOrdersAvailable"
+                :online-orders-unavailable-message="props.onlineOrdersUnavailableMessage"
                 @checkout="handleCheckout"
               />
             </div>
@@ -165,6 +167,8 @@ const props = defineProps<{
   modelValue: boolean
   restaurantOpen?: boolean
   acceptsOnlineOrders?: boolean
+  onlineOrdersAvailable?: boolean
+  onlineOrdersUnavailableMessage?: string
   // Real minimum from tenant_public_profiles.min_order_amount, forwarded
   // by the parent page (warocol.com#632). Decimal-string-safe — the
   // CartSummary boundary normalizes via Number().

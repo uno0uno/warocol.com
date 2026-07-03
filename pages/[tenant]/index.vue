@@ -66,6 +66,12 @@ const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error:
 })
 
 const restaurant = computed(() => (profileData.value as any)?.data || null)
+const onlineOrdersAvailable = computed(() =>
+  restaurant.value?.online_orders_available ?? (restaurant.value?.accepts_online_orders ?? false),
+)
+const onlineOrdersUnavailableMessage = computed(() =>
+  restaurant.value?.online_orders_unavailable_message || 'Este restaurante no puede recibir pedidos en línea actualmente.',
+)
 
 // Declared at setup scope so $fetch Nuxt auto-import is in context.
 const recoverCartSession = async (tenantId: string) => {
@@ -244,6 +250,10 @@ const handleCheckout = async () => {
     toast.error('Este restaurante no recibe pedidos en línea actualmente.')
     return
   }
+  if (!onlineOrdersAvailable.value) {
+    toast.error(onlineOrdersUnavailableMessage.value)
+    return
+  }
   if (!(restaurant.value?.is_currently_open ?? true)) return
 
   // Purge items that are no longer available online (same logic as handleCartOpen)
@@ -362,6 +372,8 @@ const cancelSwitch = () => {
           :is-loading="menuStatus === 'pending'"
           :restaurant-open="restaurant.is_currently_open ?? true"
           :accepts-online-orders="restaurant.accepts_online_orders ?? false"
+          :online-orders-available="onlineOrdersAvailable"
+          :online-orders-unavailable-message="onlineOrdersUnavailableMessage"
           @product-click="handleProductClick"
         />
       </div>
@@ -369,6 +381,7 @@ const cancelSwitch = () => {
       <!-- Cart Bottom Bar -->
       <CartBottomBar
         :accepts-online-orders="restaurant.accepts_online_orders ?? false"
+        :online-orders-available="onlineOrdersAvailable"
         @open-cart="handleCartOpen"
       />
 
@@ -377,6 +390,8 @@ const cancelSwitch = () => {
         v-model="isCartOpen"
         :restaurant-open="restaurant.is_currently_open ?? true"
         :accepts-online-orders="restaurant.accepts_online_orders ?? false"
+        :online-orders-available="onlineOrdersAvailable"
+        :online-orders-unavailable-message="onlineOrdersUnavailableMessage"
         :min-order-amount="restaurant.min_order_amount ?? 0"
         @checkout="handleCheckout"
         @open-product="handleOpenProductFromCart"
