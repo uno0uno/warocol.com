@@ -46,7 +46,7 @@
 
               <!-- Open/Closed Badge -->
               <span
-                v-if="restaurant.is_currently_open"
+                v-if="isOrderable"
                 class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-success/10 text-success"
               >
                 <span class="w-2 h-2 bg-success rounded-full mr-2 animate-pulse" />
@@ -197,6 +197,11 @@ const props = defineProps({
 
 const showHours = ref(false)
 const showContact = ref(false)
+
+const isOrderable = computed(() =>
+  props.restaurant.is_currently_open === true &&
+  props.restaurant.online_orders_available !== false
+)
 
 const hasSocialMedia = computed(() => {
   const social = props.restaurant.social_media

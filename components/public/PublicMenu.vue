@@ -42,6 +42,14 @@
       </div>
     </div>
 
+    <!-- Online ordering unavailable by quota or another public-safe backend reason -->
+    <div v-else-if="!onlineOrdersAvailable" class="max-w-7xl mx-auto px-4 pt-6">
+      <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+        <span>📋</span>
+        <span>{{ onlineOrdersUnavailableMessage || 'Este restaurante no puede recibir pedidos en línea actualmente.' }}</span>
+      </div>
+    </div>
+
     <!-- Closed Banner — only shown when accepting orders but currently closed -->
     <div v-else-if="!restaurantOpen" class="max-w-7xl mx-auto px-4 pt-6">
       <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
@@ -123,6 +131,14 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  onlineOrdersAvailable: {
+    type: Boolean,
+    default: true
+  },
+  onlineOrdersUnavailableMessage: {
+    type: String,
+    default: ''
+  },
   /** When set, overrides acceptsOnlineOrders for add-to-cart gating (Table QR #713). */
   orderingEnabled: {
     type: Boolean,
@@ -143,7 +159,7 @@ const ordersAvailable = computed(() => {
   if (props.orderingEnabled !== undefined) {
     return props.restaurantOpen && props.orderingEnabled
   }
-  return props.restaurantOpen && props.acceptsOnlineOrders
+  return props.restaurantOpen && props.acceptsOnlineOrders && props.onlineOrdersAvailable
 })
 
 // All categories including "Todos"

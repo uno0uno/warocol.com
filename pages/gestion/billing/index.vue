@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey, type BillingUsageMetric } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 
 interface Column {
@@ -14,7 +14,7 @@ definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
 
 const {
-  plans, subscription, accessStatus, remainingUsage, events, eventsTotal, loading, isRefreshing, error,
+  plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
 } = useBilling()
 
@@ -30,8 +30,7 @@ const isInitialLoading = computed(() =>
   (
     plans.value === undefined ||
     subscription.value === undefined ||
-    accessStatus.value === undefined ||
-    (subscription.value !== null && remainingUsage.value === undefined)
+    accessStatus.value === undefined
   )
 )
 
@@ -62,98 +61,6 @@ const goToPage = async (page: number) => {
   currentPage.value = p
   await fetchMyEvents(PAGE_SIZE, (p - 1) * PAGE_SIZE)
 }
-
-// ── Usage bars ───────────────────────────────────────────────────
-const fallbackUsageMetric = (used = 0, limit = 0): BillingUsageMetric => ({
-  used,
-  limit,
-  remaining: Math.max(limit - used, 0),
-  period_start: subscription.value?.current_period_start ?? '',
-  period_end: subscription.value?.current_period_end ?? '',
-})
-
-const scanUsage = computed<BillingUsageMetric>(() =>
-  remainingUsage.value?.scan_usage ??
-  fallbackUsageMetric(subscription.value?.scans_used ?? 0, subscription.value?.scan_limit ?? 0)
-)
-const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
-  remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
-)
-
-type UsageMetricValue = Pick<BillingUsageMetric, 'used' | 'limit' | 'remaining'>
-
-const hasLimitedQuota = (metric: UsageMetricValue) =>
-  typeof metric.limit === 'number' && metric.limit > 0
-
-const usagePercentage = (metric: UsageMetricValue) =>
-  hasLimitedQuota(metric) ? (metric.used / metric.limit!) * 100 : 0
-
-const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
-  if (metric.limit === null) return 'Sin límite'
-  if (typeof metric.limit !== 'number') return zeroLabel
-  if (metric.limit <= 0) return zeroLabel
-  return metric.limit.toLocaleString('es-CO')
-}
-
-const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
-  if (metric.limit === null) return 'Sin límite'
-  if (typeof metric.limit !== 'number') return zeroLabel
-  if (metric.limit <= 0) return zeroLabel
-  return (metric.remaining ?? 0).toLocaleString('es-CO')
-}
-
-const metricUsageLabel = (metric: UsageMetricValue, unit: string, zeroLabel = 'No incluido') => {
-  const used = metric.used ?? 0
-  if (metric.limit === null) {
-    return `${used.toLocaleString('es-CO')} ${unit} usados - sin límite`
-  }
-  return `${used.toLocaleString('es-CO')} de ${metricLimitLabel(metric, zeroLabel)} ${unit} usados`
-}
-
-const scanPercentage = computed(() => usagePercentage(scanUsage.value))
-const electronicInvoicePercentage = computed(() => usagePercentage(electronicInvoiceUsage.value))
-
-const usageBarColorClass = (percentage: number) => {
-  const p = percentage
-  if (p >= 100) return 'bg-status-critical-text'
-  if (p >= 80)  return 'bg-status-warning-text'
-  if (p >= 50)  return 'bg-status-info-text'
-  return 'bg-status-success-text'
-}
-const usageLabelClass = (percentage: number) => {
-  const p = percentage
-  if (p >= 100) return 'text-status-critical-text'
-  if (p >= 80)  return 'text-status-warning-text'
-  if (p >= 50)  return 'text-status-info-text'
-  return 'text-text-secondary'
-}
-
-const scanBarColorClass = computed(() => usageBarColorClass(scanPercentage.value))
-const scanLabelClass = computed(() => usageLabelClass(scanPercentage.value))
-const electronicInvoiceBarColorClass = computed(() => usageBarColorClass(electronicInvoicePercentage.value))
-const electronicInvoiceLabelClass = computed(() => usageLabelClass(electronicInvoicePercentage.value))
-
-const quotaUsageRows = computed(() =>
-  quotaDisplayConfig
-    .map((config) => {
-      const metric = remainingUsage.value?.quota_usage?.[config.key]
-      if (!metric) return null
-      const percentage = usagePercentage(metric)
-      return {
-        ...config,
-        metric,
-        percentage,
-        labelClass: usageLabelClass(percentage),
-        barClass: usageBarColorClass(percentage),
-      }
-    })
-    .filter((row): row is QuotaDisplayConfig & {
-      metric: BillingUsageMetric
-      percentage: number
-      labelClass: string
-      barClass: string
-    } => row !== null)
-)
 
 // ── Subscribe modal (2-step wizard) ─────────────────────────────
 const showModal       = ref(false)
@@ -485,7 +392,6 @@ const eventReference = (item: any): string => {
 const eventAmount = (item: any): string | null => {
   const val = item?.amount ?? item?.metadata?.amount
   if (val) return formatCOP(Number(val))
-  if (item?.event_type === 'gift_granted') return 'Cortesía'
   return null
 }
 
@@ -676,117 +582,6 @@ watch(() => currentTenant.value?.id, async () => {
             <p class="text-base font-semibold text-text-primary">
               {{ subscription.current_period_end ? formatDate(subscription.current_period_end) : '—' }}
             </p>
-          </div>
-        </div>
-
-        <!-- Usage bars (only when subscription exists) -->
-        <div v-if="subscription" class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border">
-          <div class="px-6 py-5">
-            <div class="flex items-center justify-between gap-3 mb-2">
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Escaneos — período actual</p>
-              <p :class="['text-xs font-semibold', scanLabelClass]">{{ scanPercentage.toFixed(0) }}%</p>
-            </div>
-            <div
-              class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
-              role="progressbar"
-              :aria-valuenow="scanUsage.used"
-              aria-valuemin="0"
-              :aria-valuemax="scanUsage.limit ?? scanUsage.used"
-              :aria-label="metricUsageLabel(scanUsage, 'escaneos')"
-            >
-              <div
-                :class="['h-full rounded-full transition-all duration-500', scanBarColorClass]"
-                :style="{ width: `${Math.min(scanPercentage, 100)}%` }"
-              />
-            </div>
-            <p class="mt-2 text-sm text-text-secondary">
-              <span class="font-semibold text-text-primary">{{ scanUsage.used.toLocaleString('es-CO') }}</span>
-              de
-              <span class="font-semibold text-text-primary">{{ metricLimitLabel(scanUsage) }}</span>
-              escaneos usados
-            </p>
-            <p class="mt-1 text-xs text-text-secondary">
-              {{ metricRemainingLabel(scanUsage) }} restantes
-            </p>
-          </div>
-
-          <div class="px-6 py-5">
-            <div class="flex items-center justify-between gap-3 mb-2">
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Facturación electrónica</p>
-              <p :class="['text-xs font-semibold', electronicInvoiceLabelClass]">{{ electronicInvoicePercentage.toFixed(0) }}%</p>
-            </div>
-            <div
-              class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
-              role="progressbar"
-              :aria-valuenow="electronicInvoiceUsage.used"
-              aria-valuemin="0"
-              :aria-valuemax="electronicInvoiceUsage.limit ?? electronicInvoiceUsage.used"
-              :aria-label="metricUsageLabel(electronicInvoiceUsage, 'facturas electrónicas', 'Sin cupo pagado')"
-            >
-              <div
-                :class="['h-full rounded-full transition-all duration-500', electronicInvoiceBarColorClass]"
-                :style="{ width: `${Math.min(electronicInvoicePercentage, 100)}%` }"
-              />
-            </div>
-            <p class="mt-2 text-sm text-text-secondary">
-              <span class="font-semibold text-text-primary">{{ electronicInvoiceUsage.used.toLocaleString('es-CO') }}</span>
-              de
-              <span class="font-semibold text-text-primary">{{ metricLimitLabel(electronicInvoiceUsage, 'Sin cupo pagado') }}</span>
-              facturas usadas
-            </p>
-            <p class="mt-1 text-xs text-text-secondary">
-              <template v-if="hasLimitedQuota(electronicInvoiceUsage)">
-                {{ metricRemainingLabel(electronicInvoiceUsage) }} restantes
-              </template>
-              <template v-else>
-                Sin cupo pagado - 0 restantes
-              </template>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="subscription && quotaUsageRows.length > 0" class="border-b border-border">
-          <div class="px-6 py-4 border-b border-border">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Uso operativo del plan</p>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
-            <div
-              v-for="row in quotaUsageRows"
-              :key="row.key"
-              class="px-6 py-5 border-b border-border last:border-b-0 md:[&:nth-last-child(-n+2)]:border-b-0"
-            >
-              <div class="flex items-center justify-between gap-3 mb-2">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">{{ row.label }}</p>
-                <p :class="['text-xs font-semibold', row.labelClass]">{{ row.percentage.toFixed(0) }}%</p>
-              </div>
-              <div
-                class="w-full h-3 bg-surface-secondary rounded-full overflow-hidden"
-                role="progressbar"
-                :aria-valuenow="row.metric.used"
-                aria-valuemin="0"
-                :aria-valuemax="row.metric.limit ?? row.metric.used"
-                :aria-label="metricUsageLabel(row.metric, row.unit, row.zeroLabel)"
-              >
-                <div
-                  :class="['h-full rounded-full transition-all duration-500', row.barClass]"
-                  :style="{ width: `${Math.min(row.percentage, 100)}%` }"
-                />
-              </div>
-              <p class="mt-2 text-sm text-text-secondary">
-                {{ metricUsageLabel(row.metric, row.unit, row.zeroLabel) }}
-              </p>
-              <p class="mt-1 text-xs text-text-secondary">
-                <template v-if="hasLimitedQuota(row.metric)">
-                  {{ metricRemainingLabel(row.metric) }} restantes
-                </template>
-                <template v-else-if="row.metric.limit === null">
-                  Sin límite por override
-                </template>
-                <template v-else>
-                  {{ row.zeroLabel ?? 'No incluido' }}
-                </template>
-              </p>
-            </div>
           </div>
         </div>
 

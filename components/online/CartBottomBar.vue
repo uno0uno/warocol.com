@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="bar-slide">
-      <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders" class="cart-bottom-bar bg-surface border-t border-border shadow-2xl">
+      <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders && onlineOrdersAvailable" class="cart-bottom-bar bg-surface border-t border-border shadow-2xl">
         <!-- Inner container — aligned with body content
              (max-w-7xl mx-auto px-4 — same shape PublicMenu and
              RestaurantHeader use). Previous `md:px-16 2xl:px-[30rem]`
@@ -78,8 +78,10 @@ import { useOnlineCartStore } from '~/stores/online_cart'
 
 withDefaults(defineProps<{
   acceptsOnlineOrders?: boolean
+  onlineOrdersAvailable?: boolean
 }>(), {
   acceptsOnlineOrders: true,
+  onlineOrdersAvailable: true,
 })
 
 defineEmits<{

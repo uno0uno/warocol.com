@@ -276,7 +276,7 @@ const addressStore = useAddressStore()
 // navigates from the menu page (warocol.com#632). Falls back to one
 // fresh fetch when the user arrives directly at /checkout (bookmark).
 const restaurantSlug = computed(() => String(route.params.tenant ?? ''))
-const { data: tenantProfile } = useQuery({
+const { data: tenantProfile, refetch: refetchTenantProfile } = useQuery({
   key: () => ['restaurant', 'public', restaurantSlug.value],
   query: () => $fetch(`/api/public/restaurant/${restaurantSlug.value}`),
   enabled: () => !!restaurantSlug.value,
@@ -294,6 +294,10 @@ type TipProfile = {
   tip_default_percentages?: number[]
   tip_preselect_index?: number | null
 }
+type OnlineOrderAvailabilityProfile = {
+  online_orders_available?: boolean
+  online_orders_unavailable_message?: string | null
+}
 const tipEnabled = computed(
   () => (tenantProfile.value as { data?: TipProfile } | null)?.data?.tip_enabled === true,
 )
@@ -307,6 +311,14 @@ const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({
   amount: 0,
   source: 'none',
 })
+const onlineOrdersAvailable = computed(
+  () => (tenantProfile.value as { data?: OnlineOrderAvailabilityProfile } | null)
+    ?.data?.online_orders_available !== false,
+)
+const onlineOrdersUnavailableMessage = computed(
+  () => (tenantProfile.value as { data?: OnlineOrderAvailabilityProfile } | null)
+    ?.data?.online_orders_unavailable_message || 'Este restaurante no puede recibir pedidos en línea actualmente.',
+)
 
 // ── Display helpers ───────────────────────────────────────────────────────
 
@@ -439,6 +451,12 @@ const checkoutErrorMessage = (error: any) => {
 const submitOrder = async () => {
   if (!cartStore.cartId) return
 
+  await refetchTenantProfile()
+  if (!onlineOrdersAvailable.value) {
+    checkoutError.value = onlineOrdersUnavailableMessage.value
+    return
+  }
+
   paymentError.value = ''
   if (!paymentSelection.value.slug) {
     paymentError.value = 'Selecciona un método de pago.'
@@ -528,6 +546,7 @@ const goToOrder = () => {
 
 const isValid = computed(() => {
   if (cartStore.isEmpty || !otpAuthStore.isAuthenticated) return false
+  if (!onlineOrdersAvailable.value) return false
   if (!paymentSelection.value.slug) return false
   const grp = paymentGroups.value.find((g) => g.slug === paymentSelection.value.slug)
   if (grp?.methods?.length && !paymentSelection.value.id) return false

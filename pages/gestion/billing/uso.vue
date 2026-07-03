@@ -84,14 +84,6 @@ const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido
   return (metric.remaining ?? 0).toLocaleString('es-CO')
 }
 
-const metricUsageLabel = (metric: UsageMetricValue, unit: string, zeroLabel = 'No incluido') => {
-  const used = metric.used ?? 0
-  if (metric.limit === null) {
-    return `${used.toLocaleString('es-CO')} ${unit} usados - sin límite`
-  }
-  return `${used.toLocaleString('es-CO')} de ${metricLimitLabel(metric, zeroLabel)} ${unit} usados`
-}
-
 const scanUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.scan_usage ??
   fallbackUsageMetric(subscription.value?.scans_used ?? 0, subscription.value?.scan_limit ?? 0)
@@ -143,6 +135,7 @@ const columns: Column[] = [
   { key: 'used', title: 'Usado', sortable: false, align: 'right' },
   { key: 'limit', title: 'Disponible', sortable: false, align: 'right' },
   { key: 'remaining', title: 'Restante', sortable: false, align: 'right' },
+  { key: 'percentage', title: '% usado', sortable: false, align: 'right' },
 ]
 
 const tableData = computed(() => {
@@ -188,19 +181,16 @@ const periodLabel = computed(() => {
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
-      <div class="flex items-center gap-3 text-sm text-text-secondary">
-        <UiLoadingMatrix size="5.5px" color="currentColor" />
-        Cargando uso
-      </div>
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <template v-else>
-      <div class="border border-border bg-surface">
-        <div class="px-4 py-3 md:px-6 md:py-4 border-b border-border">
-          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Uso restante</p>
-          <p class="mt-1 text-sm text-text-secondary">{{ periodLabel }}</p>
-        </div>
+      <div class="rounded-xl border border-border bg-surface px-4 py-3 md:px-6 md:py-4">
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-widest">Uso restante</p>
+        <p class="mt-1 text-base font-medium leading-6 text-text-primary">{{ periodLabel }}</p>
+      </div>
 
+      <div>
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
@@ -211,21 +201,29 @@ const periodLabel = computed(() => {
         >
           <template #card="{ item, index }">
             <div
-              class="flex items-start gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
-              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-data-table-row-hover-bg"
+              :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
             >
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-text-primary leading-tight">{{ item.resource }}</p>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
-                <p class="text-xs text-text-secondary mt-2">
-                  {{ metricUsageLabel(item, item.unit, item.zeroLabel) }}
-                </p>
+                <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.resource }}</p>
               </div>
-              <div class="text-right flex-shrink-0">
-                <p class="text-sm font-bold text-text-primary">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
-                <p class="text-xs text-text-secondary">
-                  {{ item.remaining === null ? 'sin tope' : 'restantes' }}
-                </p>
+              <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
+                <div>
+                  <p class="text-xs text-text-secondary">Usado</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString('es-CO') }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">Disp.</p>
+                  <p class="text-sm text-text-secondary tabular-nums">{{ metricLimitLabel(item, item.zeroLabel) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">Rest.</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">%</p>
+                  <p class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</p>
+                </div>
               </div>
             </div>
           </template>
@@ -233,29 +231,30 @@ const periodLabel = computed(() => {
           <template #cell-resource="{ item }">
             <div>
               <p class="text-sm font-semibold text-text-primary">{{ item.resource }}</p>
-              <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
             </div>
           </template>
 
           <template #cell-used="{ item }">
-            <span class="text-sm font-semibold text-text-primary">
+            <span class="text-sm font-semibold text-text-primary tabular-nums">
               {{ item.used.toLocaleString('es-CO') }}
             </span>
-            <span class="text-xs text-text-secondary"> {{ item.unit }}</span>
           </template>
 
           <template #cell-limit="{ item }">
-            <span class="text-sm text-text-secondary">
+            <span class="text-sm text-text-secondary tabular-nums">
               {{ metricLimitLabel(item, item.zeroLabel) }}
             </span>
             <span v-if="item.emptyMessage" class="block text-xs text-text-secondary">{{ item.emptyMessage }}</span>
           </template>
 
           <template #cell-remaining="{ item }">
-            <span class="text-sm font-semibold text-text-primary">
+            <span class="text-sm font-semibold text-text-primary tabular-nums">
               {{ metricRemainingLabel(item, item.zeroLabel) }}
             </span>
-            <span class="block text-xs text-text-secondary">{{ item.percentage }}% usado</span>
+          </template>
+
+          <template #cell-percentage="{ item }">
+            <span class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</span>
           </template>
         </UiResponsiveDataView>
       </div>
