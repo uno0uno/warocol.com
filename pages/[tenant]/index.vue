@@ -67,10 +67,10 @@ const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error:
 
 const restaurant = computed(() => (profileData.value as any)?.data || null)
 const onlineOrdersAvailable = computed(() =>
-  restaurant.value?.online_orders_available === true,
+  restaurant.value?.public_ordering_status === 'open',
 )
 const customerOrderingOpen = computed(() =>
-  (restaurant.value?.is_currently_open ?? true) && onlineOrdersAvailable.value
+  onlineOrdersAvailable.value
 )
 const onlineOrdersUnavailableMessage = computed(() =>
   restaurant.value?.online_orders_unavailable_message || 'Este restaurante no puede recibir pedidos en línea actualmente.',

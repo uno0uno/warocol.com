@@ -43,7 +43,7 @@ const isEmptyDirectory = computed(() => !pending.value && !error.value && !hasRe
 
 const isOrderable = (restaurant: unknown) => {
   const row = restaurant as Record<string, unknown>
-  return row.is_currently_open === true && row.online_orders_available === true
+  return row.public_ordering_status === 'open'
 }
 
 onMounted(() => {

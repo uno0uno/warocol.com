@@ -199,8 +199,7 @@ const showHours = ref(false)
 const showContact = ref(false)
 
 const isOrderable = computed(() =>
-  props.restaurant.is_currently_open === true &&
-  props.restaurant.online_orders_available === true
+  props.restaurant.public_ordering_status === 'open'
 )
 
 const hasSocialMedia = computed(() => {
