@@ -65,6 +65,14 @@
 
         <!-- Body -->
         <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <p
+            v-if="isActiveKitchenQuotaBlocked"
+            role="alert"
+            class="rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-sm text-state-warning-text"
+          >
+            {{ activeKitchenQuotaMessage }}
+          </p>
+
           <div class="flex flex-col gap-1.5">
             <label for="station-name" class="text-sm font-medium text-text-primary">
               Nombre <span class="text-destructive" aria-hidden="true">*</span>
@@ -220,6 +228,7 @@ const emit = defineEmits<Emits>()
 
 const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
+const { operationalQuotas, fetchBillingOverview } = useBilling()
 
 const name = ref('')
 const color = ref('#6B7280')
@@ -232,7 +241,45 @@ const nameInputRef = ref<HTMLInputElement | null>(null)
 // Backend's CreateStationRequest validates color with regex ^#[0-9A-Fa-f]{6}$.
 // Mirror the rule client-side so we don't ship a request guaranteed to fail.
 const isValidColor = computed(() => /^#[0-9A-Fa-f]{6}$/.test(color.value))
-const canSubmit = computed(() => name.value.trim().length > 0 && isValidColor.value)
+const activeKitchenQuota = computed(() => operationalQuotas.value.active_kitchens)
+const isActiveKitchenQuotaBlocked = computed(() => activeKitchenQuota.value.blocked)
+const activeKitchenQuotaMessage = computed(() => {
+  const quota = activeKitchenQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
+const canSubmit = computed(() => (
+  name.value.trim().length > 0 &&
+  isValidColor.value &&
+  !isActiveKitchenQuotaBlocked.value
+))
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
+const quotaExceededMessageFromError = (err: any) => {
+  const detail = err?.data?.detail ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de cocinas activas de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} cocinas. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return typeof detail === 'string' ? detail : activeKitchenQuotaMessage.value
+}
 
 // Reset state every time the panel opens; auto-focus the name input.
 watch(
@@ -257,6 +304,11 @@ function close() {
 }
 
 async function submit() {
+  if (isActiveKitchenQuotaBlocked.value) {
+    errorMsg.value = activeKitchenQuotaMessage.value
+    return
+  }
+
   const trimmedName = name.value.trim()
   if (!trimmedName) {
     errorMsg.value = 'El nombre es obligatorio'
@@ -283,12 +335,15 @@ async function submit() {
         alert_threshold_2_min: 15,
       },
     })
-    cache.invalidateQueries({ key: ['tenant', 'stations', currentTenant.value?.id] })
+    cache.invalidateQueries({ key: ['tenant', 'stations', currentTenant.value?.id ?? 'none'] })
+    await fetchBillingOverview()
     emit('saved', res.data)
     emit('update:modelValue', false)
   } catch (e: any) {
     if (e?.response?.status === 409 || e?.statusCode === 409) {
       errorMsg.value = 'Ya existe una estación con ese nombre'
+    } else if (isQuotaExceededError(e)) {
+      errorMsg.value = quotaExceededMessageFromError(e)
     } else {
       errorMsg.value = e?.data?.detail || e?.message || 'Error al crear la estación'
     }
