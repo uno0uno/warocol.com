@@ -132,11 +132,11 @@ const refreshTablesAndBilling = async () => {
 
 const onSaved = () => { refreshTablesAndBilling() }
 
-const onTableQrUpdated = (data: Record<string, unknown>) => {
+const onTableQrUpdated = async (data: Record<string, unknown>) => {
   if (panelTable.value?.id === data.id) {
     panelTable.value = { ...panelTable.value, ...data }
   }
-  refetch()
+  await refreshTablesAndBilling()
 }
 
 // ── Deactivate modal ────────────────────────────────────────────────────────
@@ -253,6 +253,19 @@ const activeTableQuotaMessage = computed(() => {
 const showActiveTableQuotaBlocked = () => {
   toast.warning(activeTableQuotaMessage.value, { title: 'Cupo de mesas agotado' })
 }
+
+const activeQrQuota = computed(() => getOperationalQuota('active_qr_tables'))
+const isActiveQrQuotaBlocked = computed(() => activeQrQuota.value.blocked)
+const activeQrQuotaMessage = computed(() => {
+  const quota = activeQrQuota.value
+  const metric = quota.metric
+
+  if (!metric || metric.limit === null) return quota.message
+
+  const used = metric.used.toLocaleString('es-CO')
+  const limit = metric.limit.toLocaleString('es-CO')
+  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+})
 
 const isQuotaExceededError = (err: any) => {
   const detail = err?.data?.detail
@@ -574,6 +587,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   <MesasTableQrControls
                     :table="item"
                     variant="compact"
+                    :qr-quota-blocked="isActiveQrQuotaBlocked"
+                    :qr-quota-message="activeQrQuotaMessage"
                     @updated="onTableQrUpdated"
                   />
                 </div>
@@ -634,6 +649,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <MesasTableQrControls
               :table="row"
               variant="compact"
+              :qr-quota-blocked="isActiveQrQuotaBlocked"
+              :qr-quota-message="activeQrQuotaMessage"
               @updated="onTableQrUpdated"
             />
           </template>
@@ -748,6 +765,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       :table-qr-module-enabled="!!businessProfile?.tables_enabled && !!businessProfile?.table_qr_module_enabled"
       :create-quota-blocked="isActiveTableQuotaBlocked"
       :create-quota-message="activeTableQuotaMessage"
+      :qr-quota-blocked="isActiveQrQuotaBlocked"
+      :qr-quota-message="activeQrQuotaMessage"
       @saved="onSaved"
       @qr-updated="onTableQrUpdated"
     />
