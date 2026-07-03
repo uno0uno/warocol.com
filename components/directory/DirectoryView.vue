@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { MapPinIcon, PhoneIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useCityCatalog } from '~/composables/useCityCatalog'
 
@@ -27,6 +27,7 @@ const {
   data: responseData,
   error: fetchError,
   pending,
+  refresh,
 } = await useAsyncData(
   () => `restaurants-${props.citySlug}`,
   () => $fetch('/api/public/restaurant/list', {
@@ -42,8 +43,12 @@ const isEmptyDirectory = computed(() => !pending.value && !error.value && !hasRe
 
 const isOrderable = (restaurant: unknown) => {
   const row = restaurant as Record<string, unknown>
-  return row.is_currently_open === true && row.online_orders_available !== false
+  return row.is_currently_open === true && row.online_orders_available === true
 }
+
+onMounted(() => {
+  void refresh()
+})
 
 useSeoMeta({
   title: () => `Restaurantes en ${cityName.value} - Waro Colombia`,

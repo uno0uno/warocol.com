@@ -67,7 +67,7 @@ const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error:
 
 const restaurant = computed(() => (profileData.value as any)?.data || null)
 const onlineOrdersAvailable = computed(() =>
-  restaurant.value?.online_orders_available ?? (restaurant.value?.accepts_online_orders ?? false),
+  restaurant.value?.online_orders_available === true,
 )
 const customerOrderingOpen = computed(() =>
   (restaurant.value?.is_currently_open ?? true) && onlineOrdersAvailable.value
@@ -119,6 +119,10 @@ const isRefreshing = computed(() =>
   (menuAsyncStatus.value === 'loading' && menuData.value != null)
 )
 const error = computed(() => profileError.value || menuError.value)
+
+onMounted(() => {
+  if (!isCity.value) void refetchProfile()
+})
 
 // Format business hours for schema.org
 function formatOpeningHours(businessHours) {
