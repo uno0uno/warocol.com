@@ -659,7 +659,7 @@ useHead({ title: 'Miembros - Equipo' })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const authStore = useAuthStore()
-const { operationalQuotas } = useBilling()
+const { operationalQuotas, fetchBillingOverview } = useBilling()
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const roleFilter = ref('')
@@ -964,7 +964,7 @@ const sendInvitation = async () => {
         title: 'Invitacion enviada'
       })
       closeInviteModal()
-      refresh()
+      await Promise.all([refresh(), fetchBillingOverview()])
     } else {
       inviteError.value = response.message || 'Error al enviar la invitacion'
     }
@@ -1140,7 +1140,7 @@ const cancelInvitation = async () => {
     if (response.success) {
       toast.success(`Invitacion para ${invitationToCancel.value.email} cancelada`)
       closeCancelInvitationModal()
-      refresh()
+      await Promise.all([refresh(), fetchBillingOverview()])
     } else {
       toast.error(response.message || 'Error al cancelar invitacion')
     }
