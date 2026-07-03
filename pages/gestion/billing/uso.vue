@@ -181,96 +181,85 @@ const periodLabel = computed(() => {
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
-      <div class="flex items-center gap-3 text-sm text-text-secondary">
-        <UiLoadingMatrix size="5.5px" color="currentColor" />
-        Cargando uso
-      </div>
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <template v-else>
-      <UiResponsiveDataView
-        title="Uso restante"
-        row-size="sm"
-        :columns="columns"
-        :data="tableData"
-        empty-message="No hay cupos disponibles"
-        empty-sub-message="Los cupos aparecerán cuando tengas una suscripción activa"
-        variant="default"
-      >
-        <template #header>
-          <div class="flex flex-col gap-1">
-            <p class="text-xs font-semibold text-data-table-header-text uppercase tracking-wider">Uso restante</p>
-            <p class="text-sm text-data-table-cell-muted">{{ periodLabel }}</p>
-          </div>
-        </template>
+      <div class="border border-border bg-surface">
+        <div class="px-4 py-3 md:px-6 md:py-4 border-b border-border">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Uso restante</p>
+          <p class="mt-1 text-sm text-text-secondary">{{ periodLabel }}</p>
+        </div>
 
-        <template #mobileHeader>
-          <div class="flex flex-col gap-1">
-            <p class="text-xs font-semibold text-data-table-header-text uppercase tracking-wider">Uso restante</p>
-            <p class="text-sm text-data-table-cell-muted">{{ periodLabel }}</p>
-          </div>
-        </template>
-
-        <template #card="{ item, index }">
-          <div
-            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-data-table-row-hover-bg"
-            :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
-          >
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.resource }}</p>
-              <p class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
-            </div>
-            <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
-              <div>
-                <p class="text-xs text-text-secondary">Usado</p>
-                <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString('es-CO') }}</p>
+        <UiResponsiveDataView
+          row-size="sm"
+          :columns="columns"
+          :data="tableData"
+          empty-message="No hay cupos disponibles"
+          empty-sub-message="Los cupos aparecerán cuando tengas una suscripción activa"
+          variant="default"
+        >
+          <template #card="{ item, index }">
+            <div
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-data-table-row-hover-bg"
+              :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+            >
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.resource }}</p>
+                <p class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
               </div>
-              <div>
-                <p class="text-xs text-text-secondary">Disp.</p>
-                <p class="text-sm text-text-secondary tabular-nums">{{ metricLimitLabel(item, item.zeroLabel) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-text-secondary">Rest.</p>
-                <p class="text-sm font-semibold text-text-primary tabular-nums">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-text-secondary">%</p>
-                <p class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</p>
+              <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
+                <div>
+                  <p class="text-xs text-text-secondary">Usado</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString('es-CO') }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">Disp.</p>
+                  <p class="text-sm text-text-secondary tabular-nums">{{ metricLimitLabel(item, item.zeroLabel) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">Rest.</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-text-secondary">%</p>
+                  <p class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</p>
+                </div>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
 
-        <template #cell-resource="{ item }">
-          <div>
-            <p class="text-sm font-semibold text-text-primary">{{ item.resource }}</p>
-            <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
-          </div>
-        </template>
+          <template #cell-resource="{ item }">
+            <div>
+              <p class="text-sm font-semibold text-text-primary">{{ item.resource }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
+            </div>
+          </template>
 
-        <template #cell-used="{ item }">
-          <span class="text-sm font-semibold text-text-primary tabular-nums">
-            {{ item.used.toLocaleString('es-CO') }}
-          </span>
-        </template>
+          <template #cell-used="{ item }">
+            <span class="text-sm font-semibold text-text-primary tabular-nums">
+              {{ item.used.toLocaleString('es-CO') }}
+            </span>
+          </template>
 
-        <template #cell-limit="{ item }">
-          <span class="text-sm text-text-secondary tabular-nums">
-            {{ metricLimitLabel(item, item.zeroLabel) }}
-          </span>
-          <span v-if="item.emptyMessage" class="block text-xs text-text-secondary">{{ item.emptyMessage }}</span>
-        </template>
+          <template #cell-limit="{ item }">
+            <span class="text-sm text-text-secondary tabular-nums">
+              {{ metricLimitLabel(item, item.zeroLabel) }}
+            </span>
+            <span v-if="item.emptyMessage" class="block text-xs text-text-secondary">{{ item.emptyMessage }}</span>
+          </template>
 
-        <template #cell-remaining="{ item }">
-          <span class="text-sm font-semibold text-text-primary tabular-nums">
-            {{ metricRemainingLabel(item, item.zeroLabel) }}
-          </span>
-        </template>
+          <template #cell-remaining="{ item }">
+            <span class="text-sm font-semibold text-text-primary tabular-nums">
+              {{ metricRemainingLabel(item, item.zeroLabel) }}
+            </span>
+          </template>
 
-        <template #cell-percentage="{ item }">
-          <span class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</span>
-        </template>
-      </UiResponsiveDataView>
+          <template #cell-percentage="{ item }">
+            <span class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</span>
+          </template>
+        </UiResponsiveDataView>
+      </div>
     </template>
   </div>
 </template>
