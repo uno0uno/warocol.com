@@ -206,7 +206,6 @@ const periodLabel = computed(() => {
             >
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.resource }}</p>
-                <p class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
               </div>
               <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
                 <div>
@@ -232,7 +231,6 @@ const periodLabel = computed(() => {
           <template #cell-resource="{ item }">
             <div>
               <p class="text-sm font-semibold text-text-primary">{{ item.resource }}</p>
-              <p class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
             </div>
           </template>
 
