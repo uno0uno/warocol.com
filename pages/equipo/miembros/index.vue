@@ -34,6 +34,7 @@
 
         <template #trailing>
           <button
+            v-if="canManageTeam"
             :disabled="isAdminUsersQuotaBlocked"
             :title="isAdminUsersQuotaBlocked ? adminUsersQuotaMessage : 'Invitar miembro'"
             @click="openInviteModal"
@@ -131,7 +132,7 @@
               title="Cambiar rol">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
-            <button v-if="!isCurrentUser(item)" @click="openDeleteModal(item)"
+            <button v-if="canManageTeam && !isCurrentUser(item)" @click="openDeleteModal(item)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               title="Eliminar miembro">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -214,7 +215,7 @@
           </button>
           <!-- Delete Button (not for self) -->
           <button
-            v-if="!isCurrentUser(row)"
+            v-if="canManageTeam && !isCurrentUser(row)"
             @click="openDeleteModal(row)"
             class="text-red-500 hover:text-red-700 transition-colors p-1"
             title="Eliminar miembro"
@@ -270,6 +271,7 @@
               <td class="px-4 py-3 text-sm text-text-secondary">{{ formatExpirationDate(invitation.expiresAt) }}</td>
               <td class="px-4 py-3 text-center">
                 <button
+                  v-if="canManageTeam"
                   @click="openCancelInvitationModal(invitation)"
                   class="text-red-500 hover:text-red-700 transition-colors p-1"
                   title="Cancelar invitacion"
@@ -298,6 +300,7 @@
               </div>
             </div>
             <button
+              v-if="canManageTeam"
               @click="openCancelInvitationModal(invitation)"
               class="text-red-500 hover:text-red-700 transition-colors p-2"
             >
@@ -653,6 +656,9 @@
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 const { formatDate: _fmtDate } = useFormatters()
+
+definePageMeta({ layout: 'dashboard', module: 'equipo' })
+
 useHead({ title: 'Miembros - Equipo' })
 
 // Tenant reactivity
@@ -660,6 +666,8 @@ const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const authStore = useAuthStore()
 const { operationalQuotas, fetchBillingOverview } = useBilling()
+const { can } = useModuleAccess()
+const canManageTeam = can('equipo')
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const roleFilter = ref('')
@@ -802,8 +810,8 @@ const currentUserEmail = computed(() => {
 
 // Current user role in this tenant
 const currentUserRole = computed(() => {
-  if (!currentUserEmail.value || !teamMembers.value.length) return null
-  const currentMember = teamMembers.value.find(m =>
+  if (!currentUserEmail.value || !membersData.value.members.length) return null
+  const currentMember = membersData.value.members.find(m =>
     m.email?.toLowerCase() === currentUserEmail.value?.toLowerCase()
   )
   return currentMember?.role || null
@@ -922,6 +930,8 @@ const memberToDelete = ref(null)
 const deleting = ref(false)
 
 const openInviteModal = () => {
+  if (!canManageTeam.value) return
+
   if (isAdminUsersQuotaBlocked.value) {
     showAdminUsersQuotaBlocked()
     return
@@ -940,6 +950,8 @@ const closeInviteModal = () => {
 }
 
 const sendInvitation = async () => {
+  if (!canManageTeam.value) return
+
   if (isAdminUsersQuotaBlocked.value) {
     showAdminUsersQuotaBlocked()
     return
@@ -980,6 +992,8 @@ const sendInvitation = async () => {
 
 // Delete member functions
 const openDeleteModal = (member) => {
+  if (!canManageTeam.value) return
+
   memberToDelete.value = member
   showDeleteModal.value = true
 }
@@ -990,7 +1004,7 @@ const closeDeleteModal = () => {
 }
 
 const deleteMember = async () => {
-  if (!memberToDelete.value) return
+  if (!memberToDelete.value || !canManageTeam.value) return
 
   deleting.value = true
   try {
@@ -1119,6 +1133,8 @@ const invitationToCancel = ref(null)
 const cancelingInvitation = ref(false)
 
 const openCancelInvitationModal = (invitation) => {
+  if (!canManageTeam.value) return
+
   invitationToCancel.value = invitation
   showCancelInvitationModal.value = true
 }
@@ -1129,7 +1145,7 @@ const closeCancelInvitationModal = () => {
 }
 
 const cancelInvitation = async () => {
-  if (!invitationToCancel.value) return
+  if (!invitationToCancel.value || !canManageTeam.value) return
 
   cancelingInvitation.value = true
   try {
