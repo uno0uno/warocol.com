@@ -16,6 +16,8 @@ import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/utils/promoProductMatch'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
+import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import { mapComandasForPrint, printComandaTickets } from '~/composables/useComandaPrint'
 
 interface TopProduct {
   name: string
@@ -227,7 +229,7 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 // Accordions start closed; the user opens them on demand. Previous behavior
 // auto-opened "summary" / "insights" on customer change — too noisy.
-const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
+const activeAccordion = ref<'order' | 'comandas' | 'insights' | 'summary' | 'waros' | null>(null)
 
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
@@ -729,6 +731,167 @@ const {
   enabled: () => isKitchenServiceMode.value && !!posStore.activeTableSession?.tableId,
   staleTime: 5_000,  // short — running_total changes when items are added
 })
+
+const {
+  data: checkoutComandasData,
+  asyncStatus: checkoutComandasAsyncStatus,
+} = useQuery({
+  key: () => ['tables', posStore.activeTableSession?.tableId ?? null, posStore.activeTableSession?.sessionId ?? null, 'comandas'],
+  query: () => $fetch<{ success: boolean; data?: { comandas?: unknown[] } }>(
+    `/api/tables/${posStore.activeTableSession!.tableId}/comandas`
+  ),
+  enabled: () => comandasEnabled.value && isKitchenServiceMode.value && !!posStore.activeTableSession?.tableId,
+  staleTime: 5_000,
+})
+
+const persistedComandasRaw = ref<unknown[]>([])
+const comandasForPrint = ref<ComandaPrintPayload[]>([])
+const selectedComandaIds = ref<string[]>([])
+const comandaSelectionInitialized = ref(false)
+const comandaPrintSessionKey = ref<string | null>(null)
+const posBusinessName = computed(
+  () => settingsData.value?.data?.business_name
+    ?? settingsData.value?.data?.display_name
+    ?? 'WARO',
+)
+
+const currentComandaPrintSessionKey = () => {
+  const session = posStore.activeTableSession
+  return session ? `${session.tableId}:${session.sessionId ?? ''}` : null
+}
+
+function resetComandaPrintState() {
+  persistedComandasRaw.value = []
+  comandasForPrint.value = []
+  selectedComandaIds.value = []
+  comandaSelectionInitialized.value = false
+  comandaPrintSessionKey.value = null
+}
+
+const canPrintComandas = computed(
+  () =>
+    comandasForPrint.value.length > 0
+    && comandaPrintSessionKey.value === currentComandaPrintSessionKey(),
+)
+
+function rawComandaId(raw: unknown, index: number): string {
+  const c = raw as Record<string, unknown>
+  return String(c.id ?? `${c.comanda_number ?? index}:${c.station_name ?? ''}:${c.fired_at ?? ''}`)
+}
+
+const comandasForPrintDisplay = computed(() => {
+  if (!canPrintComandas.value) return []
+  const sel = selectedComandaIds.value
+  if (sel.length === 0) return []
+  const selSet = new Set(sel)
+  const filteredRaw = (persistedComandasRaw.value as Record<string, unknown>[])
+    .filter((c, index) => selSet.has(rawComandaId(c, index)))
+  return mapComandasForPrint(filteredRaw)
+})
+
+const sentComandasForCheckout = computed(() => (
+  (persistedComandasRaw.value as Record<string, unknown>[]).map((c, index) => {
+    const items = ((c.items as Record<string, unknown>[]) ?? [])
+    return {
+      id: rawComandaId(c, index),
+      comandaNumber: String(c.comanda_number ?? '—'),
+      stationName: (c.station_name as string) ?? 'Sin cocina asignada',
+      status: String(c.status ?? ''),
+      firedAt: c.fired_at != null ? String(c.fired_at) : null,
+      itemCount: items.length,
+      itemPreview: items
+        .slice(0, 2)
+        .map(i => `${Number(i.quantity ?? 1)}x ${String(i.kitchen_name ?? '')}`.trim())
+        .filter(Boolean)
+        .join(', '),
+    }
+  })
+))
+
+const selectedComandaCount = computed(() => selectedComandaIds.value.length)
+const checkoutComandasLoading = computed(() =>
+  checkoutComandasAsyncStatus.value === 'loading' && !checkoutComandasData.value
+)
+const showCheckoutComandas = computed(() => comandasEnabled.value && isKitchenServiceMode.value)
+const checkoutComandasPrintLabel = computed(() => {
+  const n = selectedComandaCount.value
+  if (n > 0 && n < sentComandasForCheckout.value.length) return `Reimprimir seleccionadas (${n})`
+  return 'Reimprimir comandas'
+})
+
+function applyPersistedComandas(rawComandas: unknown[], preserveSelection = true) {
+  const printableRaw = (rawComandas as Record<string, unknown>[])
+    .filter(c => (((c.items as unknown[]) ?? []).length > 0))
+  const ids = printableRaw.map((c, index) => rawComandaId(c, index))
+  const hadComandas = persistedComandasRaw.value.length > 0
+  persistedComandasRaw.value = printableRaw
+  comandasForPrint.value = mapComandasForPrint(printableRaw)
+  comandaPrintSessionKey.value = currentComandaPrintSessionKey()
+
+  if (preserveSelection && comandaSelectionInitialized.value && hadComandas) {
+    const available = new Set(ids)
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => available.has(id))
+  } else {
+    selectedComandaIds.value = ids
+    comandaSelectionInitialized.value = ids.length > 0
+  }
+}
+
+watch(
+  () => checkoutComandasData.value?.data?.comandas,
+  (rows) => applyPersistedComandas(Array.isArray(rows) ? rows : []),
+  { immediate: true },
+)
+
+watch(
+  [showCheckoutComandas, () => posStore.activeTableSession?.tableId, () => posStore.activeTableSession?.sessionId],
+  ([enabled, tableId, sessionId], previous) => {
+    if (!enabled) {
+      resetComandaPrintState()
+      return
+    }
+    if (!previous) return
+    const [, previousTableId, previousSessionId] = previous
+    if (tableId !== previousTableId || sessionId !== previousSessionId) {
+      resetComandaPrintState()
+    }
+  },
+)
+
+function toggleComandaSelection(comandaId: string) {
+  comandaSelectionInitialized.value = true
+  const idx = selectedComandaIds.value.indexOf(comandaId)
+  if (idx >= 0) {
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => id !== comandaId)
+  } else {
+    selectedComandaIds.value = [...selectedComandaIds.value, comandaId]
+  }
+}
+
+function formatComandaTime(value?: string | null): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d)
+}
+
+function statusLabel(status?: string): string | null {
+  const labels: Record<string, string> = {
+    pending: 'Pendiente',
+    preparing: 'Preparando',
+    ready: 'Lista',
+    delivered: 'Entregada',
+  }
+  return status ? labels[status] ?? status : null
+}
+
+function handlePrintComandas() {
+  if (!comandasForPrintDisplay.value.length) return
+  printComandaTickets()
+}
 
 // POS tax preview — manual + WaRo discounts are folded into discount_amount (#1063).
 const { data: posTaxPreviewData } = useQuery({
@@ -2786,6 +2949,9 @@ const refreshAll = async () => {
     isKitchenServiceMode.value
       ? cache.invalidateQueries({ key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'] })
       : cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] }),
+    showCheckoutComandas.value
+      ? cache.invalidateQueries({ key: ['tables', posStore.activeTableSession?.tableId ?? null, posStore.activeTableSession?.sessionId ?? null, 'comandas'] })
+      : Promise.resolve(),
   ])
 }
 registerProgressiveLoading(isRefreshing, 'Actualizando pagos')
@@ -2976,19 +3142,31 @@ onUnmounted(() => {
       <!-- LEFT COLUMN: Order Items & Payment Method -->
       <div class="lg:col-span-8 space-y-6">
 
-        <!-- Section: Order Items -->
+        <!-- ACCORDION: Orden -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
-          <div class="px-4 py-3 border-b border-border flex justify-between items-center bg-surface-secondary/50">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-              Items de la Orden
+          <button
+            type="button"
+            @click="activeAccordion = activeAccordion === 'order' ? null : 'order'"
+            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-left hover:bg-surface-secondary/70 transition-colors"
+          >
+            <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+                <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              Orden
               <span class="text-text-tertiary font-normal text-xs ml-1">({{ cartItems.length }})</span>
-            </h2>
-          </div>
+            </span>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'order' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
 
-          <div class="divide-y divide-border">
+          <div v-show="activeAccordion === 'order'" class="divide-y divide-border border-t border-border">
             <!-- Cart Items -->
             <div
               v-for="(item, index) in cartItems"
@@ -3777,6 +3955,91 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- ACCORDION: Comandas -->
+        <div
+          v-if="showCheckoutComandas"
+          class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+        >
+          <button
+            type="button"
+            @click="activeAccordion = activeAccordion === 'comandas' ? null : 'comandas'"
+            class="w-full px-5 py-4 flex items-center justify-between gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+          >
+            <span class="font-bold text-text-primary flex items-center gap-2">
+              <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v14.25l-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5V6a2.25 2.25 0 0 1 2.25-2.25Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5" />
+              </svg>
+              Comandas
+            </span>
+            <span class="ml-auto text-xs font-semibold text-text-secondary">
+              {{ selectedComandaCount }}/{{ sentComandasForCheckout.length }}
+            </span>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'comandas' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
+
+          <div v-show="activeAccordion === 'comandas'" class="border-t border-border px-5 py-4 space-y-3">
+            <div v-if="checkoutComandasLoading" class="space-y-2">
+              <div v-for="i in 2" :key="i" class="h-14 rounded-lg bg-surface-secondary animate-pulse" />
+            </div>
+            <div
+              v-else-if="sentComandasForCheckout.length === 0"
+              class="rounded-lg border border-border bg-surface-secondary/50 px-3 py-3 text-sm text-text-secondary"
+            >
+              No hay comandas enviadas para esta sesión.
+            </div>
+            <div v-else class="space-y-1.5">
+              <label
+                v-for="comanda in sentComandasForCheckout"
+                :key="comanda.id"
+                class="flex items-start gap-2 rounded-lg border border-border bg-surface px-2.5 py-2 cursor-pointer hover:bg-surface-secondary transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  class="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
+                  :checked="selectedComandaIds.includes(comanda.id)"
+                  :aria-label="`Seleccionar comanda ${comanda.comandaNumber}`"
+                  @change="toggleComandaSelection(comanda.id)"
+                />
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-text-primary truncate">
+                      #{{ comanda.comandaNumber }} · {{ comanda.stationName }}
+                    </span>
+                    <span class="text-[10px] font-semibold text-text-tertiary whitespace-nowrap">
+                      {{ formatComandaTime(comanda.firedAt) }}
+                    </span>
+                  </span>
+                  <span class="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-secondary min-w-0">
+                    <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? 'ítem' : 'ítems' }}</span>
+                    <span v-if="statusLabel(comanda.status)" class="text-text-tertiary">· {{ statusLabel(comanda.status) }}</span>
+                    <span v-if="comanda.itemPreview" class="truncate">· {{ comanda.itemPreview }}</span>
+                  </span>
+                </span>
+              </label>
+            </div>
+            <button
+              type="button"
+              :disabled="!canPrintComandas || selectedComandaCount === 0"
+              class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              :aria-label="checkoutComandasPrintLabel"
+              @click="handlePrintComandas"
+            >
+              <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
+              </svg>
+              {{ checkoutComandasPrintLabel }}
+            </button>
+          </div>
+        </div>
+
         <!-- WAROS CARD (desktop) — accordion -->
         <div
           v-if="warosPanelVisible"
@@ -4289,6 +4552,91 @@ onUnmounted(() => {
             </div>
             <p class="text-right text-xs text-text-tertiary">COP</p>
           </div>
+        </div>
+      </div>
+
+      <!-- ACCORDION: Comandas -->
+      <div
+        v-if="showCheckoutComandas"
+        class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+      >
+        <button
+          type="button"
+          @click="activeAccordion = activeAccordion === 'comandas' ? null : 'comandas'"
+          class="w-full px-5 py-4 flex items-center justify-between gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+        >
+          <span class="font-bold text-text-primary flex items-center gap-2">
+            <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v14.25l-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5V6a2.25 2.25 0 0 1 2.25-2.25Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5" />
+            </svg>
+            Comandas
+          </span>
+          <span class="ml-auto text-xs font-semibold text-text-secondary">
+            {{ selectedComandaCount }}/{{ sentComandasForCheckout.length }}
+          </span>
+          <svg
+            class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+            :class="activeAccordion === 'comandas' ? 'rotate-0' : 'rotate-180'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+
+        <div v-show="activeAccordion === 'comandas'" class="border-t border-border px-5 py-4 space-y-3">
+          <div v-if="checkoutComandasLoading" class="space-y-2">
+            <div v-for="i in 2" :key="i" class="h-14 rounded-lg bg-surface-secondary animate-pulse" />
+          </div>
+          <div
+            v-else-if="sentComandasForCheckout.length === 0"
+            class="rounded-lg border border-border bg-surface-secondary/50 px-3 py-3 text-sm text-text-secondary"
+          >
+            No hay comandas enviadas para esta sesión.
+          </div>
+          <div v-else class="space-y-1.5">
+            <label
+              v-for="comanda in sentComandasForCheckout"
+              :key="comanda.id"
+              class="flex items-start gap-2 rounded-lg border border-border bg-surface px-2.5 py-2 cursor-pointer hover:bg-surface-secondary transition-colors"
+            >
+              <input
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
+                :checked="selectedComandaIds.includes(comanda.id)"
+                :aria-label="`Seleccionar comanda ${comanda.comandaNumber}`"
+                @change="toggleComandaSelection(comanda.id)"
+              />
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-text-primary truncate">
+                    #{{ comanda.comandaNumber }} · {{ comanda.stationName }}
+                  </span>
+                  <span class="text-[10px] font-semibold text-text-tertiary whitespace-nowrap">
+                    {{ formatComandaTime(comanda.firedAt) }}
+                  </span>
+                </span>
+                <span class="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-secondary min-w-0">
+                  <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? 'ítem' : 'ítems' }}</span>
+                  <span v-if="statusLabel(comanda.status)" class="text-text-tertiary">· {{ statusLabel(comanda.status) }}</span>
+                  <span v-if="comanda.itemPreview" class="truncate">· {{ comanda.itemPreview }}</span>
+                </span>
+              </span>
+            </label>
+          </div>
+          <button
+            type="button"
+            :disabled="!canPrintComandas || selectedComandaCount === 0"
+            class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            :aria-label="checkoutComandasPrintLabel"
+            @click="handlePrintComandas"
+          >
+            <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
+            </svg>
+            {{ checkoutComandasPrintLabel }}
+          </button>
         </div>
       </div>
 
@@ -5188,6 +5536,12 @@ onUnmounted(() => {
     v-model="showExpediterPanel"
     :table-session-id="posStore.activeTableSession?.tableId ?? null"
     :table-display-name="posStore.activeTableSession?.tableName ?? null"
+  />
+
+  <PosComandaPrintTickets
+    v-if="comandasEnabled"
+    :comandas="comandasForPrintDisplay"
+    :business-name="posBusinessName"
   />
   </div>
 </template>
