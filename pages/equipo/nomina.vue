@@ -5,6 +5,8 @@ import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+
 useHead({ title: 'Nómina — Equipo' })
 
 const { currentTenant } = useTenantReactive()
