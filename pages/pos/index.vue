@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useQueryCache } from '@pinia/colada'
 import { $fetch } from 'ofetch'
@@ -353,10 +353,14 @@ const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
 
 // #753 — kitchen ticket print after fire
+const LAST_FIRED_COMANDAS_TTL_MS = 12 * 60 * 60 * 1000
+const persistedComandasRaw = ref<unknown[]>([])
 const lastFiredComandasRaw = ref<unknown[]>([])
-const comandasForPrint = ref<ComandaPrintPayload[]>([])
-const selectedTabItemIds = ref<string[]>([])
-const comandaPrintSessionKey = ref<string | null>(null)
+const printQueueComandas = ref<ComandaPrintPayload[]>([])
+const selectedComandaIds = ref<string[]>([])
+const lastFiredComandaSessionKey = ref<string | null>(null)
+const persistedComandasLoading = ref(false)
+const showComandasReprintPanel = ref(false)
 const posBusinessName = computed(
   () => settingsData.value?.data?.business_name
     ?? settingsData.value?.data?.display_name
@@ -369,66 +373,144 @@ const currentComandaPrintSessionKey = () => {
 }
 
 function resetComandaPrintState() {
-  lastFiredComandasRaw.value = []
-  comandasForPrint.value = []
-  selectedTabItemIds.value = []
-  comandaPrintSessionKey.value = null
+  persistedComandasRaw.value = []
+  selectedComandaIds.value = []
+  printQueueComandas.value = []
 }
 
-const canPrintComandas = computed(
+function clearLastFiredComandasState() {
+  lastFiredComandasRaw.value = []
+  lastFiredComandaSessionKey.value = null
+}
+
+const canPrintLatestComanda = computed(
   () =>
-    comandasForPrint.value.length > 0
-    && comandaPrintSessionKey.value === currentComandaPrintSessionKey(),
+    mapComandasForPrint(lastFiredComandasRaw.value).length > 0
+    && lastFiredComandaSessionKey.value === currentComandaPrintSessionKey(),
 )
 
-/** Tab lines from the last fire batch — checkboxes select tickets to re-print (#812). */
-const printableOrderItemIds = computed(
-  () => orderItemIdsFromComandas(lastFiredComandasRaw.value),
-)
+const lastFiredComandasStorageKey = () => {
+  const tenantId = currentTenant.value?.id
+  const session = posStore.activeTableSession
+  if (!tenantId || !session?.tableId || !session?.sessionId) return null
+  return `waro:pos:last-fired-comandas:${tenantId}:${session.tableId}:${session.sessionId}`
+}
 
-const showPrintItemSelection = computed(
-  () =>
-    comandasEnabled.value
-    && isKitchenServiceMode.value
-    && canPrintComandas.value
-    && printableOrderItemIds.value.size > 0,
-)
+function rawComandaId(raw: unknown, index: number): string {
+  const c = raw as Record<string, unknown>
+  return String(c.id ?? `${c.comanda_number ?? index}:${c.station_name ?? ''}:${c.fired_at ?? ''}`)
+}
 
-const comandasForPrintDisplay = computed(() => {
-  if (!canPrintComandas.value) return []
-  const sel = selectedTabItemIds.value
-  const raw = lastFiredComandasRaw.value
-  if (!Array.isArray(raw) || sel.length === 0) {
-    return comandasForPrint.value
-  }
+const persistedComandasForPrintDisplay = computed(() => {
+  const sel = selectedComandaIds.value
+  if (sel.length === 0) return []
+  const raw = persistedComandasRaw.value
   const selSet = new Set(sel)
   const filteredRaw = (raw as Record<string, unknown>[])
-    .map((c) => {
-      const items = ((c.items as Record<string, unknown>[]) ?? []).filter(
-        (i) => i.order_item_id != null && selSet.has(String(i.order_item_id)),
-      )
-      return { ...c, items }
-    })
-    .filter((c) => ((c.items as unknown[]) ?? []).length > 0)
+    .filter((c, index) => selSet.has(rawComandaId(c, index)))
   return mapComandasForPrint(filteredRaw)
 })
 
-function toggleTabItemSelection(orderItemId: string) {
-  const idx = selectedTabItemIds.value.indexOf(orderItemId)
-  if (idx >= 0) {
-    selectedTabItemIds.value = selectedTabItemIds.value.filter(id => id !== orderItemId)
+const sentComandasForPanel = computed(() => (
+  (persistedComandasRaw.value as Record<string, unknown>[]).map((c, index) => {
+    const items = ((c.items as Record<string, unknown>[]) ?? [])
+    return {
+      id: rawComandaId(c, index),
+      comandaNumber: String(c.comanda_number ?? '—'),
+      stationName: (c.station_name as string) ?? 'Sin cocina asignada',
+      status: String(c.status ?? ''),
+      firedAt: c.fired_at != null ? String(c.fired_at) : null,
+      itemCount: items.length,
+      itemPreview: items
+        .slice(0, 2)
+        .map(i => `${Number(i.quantity ?? 1)}x ${String(i.kitchen_name ?? '')}`.trim())
+        .filter(Boolean)
+        .join(', '),
+    }
+  })
+))
+
+function applyPersistedComandas(rawComandas: unknown[], preserveSelection = true) {
+  const printableRaw = (rawComandas as Record<string, unknown>[])
+    .filter(c => (((c.items as unknown[]) ?? []).length > 0))
+  const ids = printableRaw.map((c, index) => rawComandaId(c, index))
+  persistedComandasRaw.value = printableRaw
+
+  if (preserveSelection) {
+    const available = new Set(ids)
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => available.has(id))
   } else {
-    selectedTabItemIds.value = [...selectedTabItemIds.value, orderItemId]
+    selectedComandaIds.value = []
+  }
+}
+
+async function refreshPersistedComandas(tableId?: string, fetchGen = tableSessionFetchGen, preserveSelection = true) {
+  const activeTableId = tableId ?? posStore.activeTableSession?.tableId
+  if (!activeTableId || !comandasEnabled.value || !isKitchenServiceMode.value) {
+    resetComandaPrintState()
+    return
+  }
+  persistedComandasLoading.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data?: { comandas?: unknown[] } }>(`/api/tables/${activeTableId}/comandas`)
+    if (fetchGen !== tableSessionFetchGen) return
+    applyPersistedComandas(Array.isArray(res?.data?.comandas) ? res.data.comandas : [], preserveSelection)
+  } catch (e: unknown) {
+    if (isNoOpenSessionError(e)) resetComandaPrintState()
+  } finally {
+    if (fetchGen === tableSessionFetchGen) persistedComandasLoading.value = false
+  }
+}
+
+function toggleComandaSelection(comandaId: string) {
+  const idx = selectedComandaIds.value.indexOf(comandaId)
+  if (idx >= 0) {
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => id !== comandaId)
+  } else {
+    selectedComandaIds.value = [...selectedComandaIds.value, comandaId]
+  }
+}
+
+function selectAllPersistedComandas() {
+  selectedComandaIds.value = sentComandasForPanel.value.map(c => c.id)
+}
+
+function clearPersistedComandaSelection() {
+  selectedComandaIds.value = []
+}
+
+function persistLastFiredComandas(rawComandas: unknown[]) {
+  if (typeof window === 'undefined') return
+  const key = lastFiredComandasStorageKey()
+  if (!key) return
+  localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), comandas: rawComandas }))
+}
+
+function hydrateLastFiredComandas() {
+  if (typeof window === 'undefined') return
+  const key = lastFiredComandasStorageKey()
+  clearLastFiredComandasState()
+  if (!key) return
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) ?? 'null') as { savedAt?: number; comandas?: unknown[] } | null
+    if (!parsed || !Array.isArray(parsed.comandas) || !parsed.savedAt) return
+    if (Date.now() - parsed.savedAt > LAST_FIRED_COMANDAS_TTL_MS) {
+      localStorage.removeItem(key)
+      return
+    }
+    if (mapComandasForPrint(parsed.comandas).length === 0) return
+    lastFiredComandasRaw.value = parsed.comandas
+    lastFiredComandaSessionKey.value = currentComandaPrintSessionKey()
+  } catch {
+    localStorage.removeItem(key)
   }
 }
 
 function applyFireResult(rawComandas: unknown[], firedCount: number) {
   if (rawComandas.length > 0) {
     lastFiredComandasRaw.value = rawComandas
-    comandasForPrint.value = mapComandasForPrint(rawComandas)
-    comandaPrintSessionKey.value = currentComandaPrintSessionKey()
-  } else {
-    resetComandaPrintState()
+    lastFiredComandaSessionKey.value = currentComandaPrintSessionKey()
+    persistLastFiredComandas(rawComandas)
   }
   const firedIds = orderItemIdsFromComandas(rawComandas)
   if (firedCount > 0 && posStore.activeTableSession) {
@@ -442,7 +524,6 @@ function applyFireResult(rawComandas: unknown[], firedCount: number) {
           : item
       }),
     )
-    selectedTabItemIds.value = []
   }
 }
 
@@ -451,6 +532,7 @@ async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
   if (!comandasEnabled.value || addedCount <= 0) return
   const { comandas, fired_items_count } = parseFireTableResponse(addRes as FireTableResponse)
   applyFireResult(comandas, fired_items_count)
+  await refreshPersistedComandas(undefined, tableSessionFetchGen, false)
   if (fired_items_count > 0) {
     tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
     setTimeout(() => { tabSuccess.value = null }, 3000)
@@ -460,8 +542,25 @@ async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
   }
 }
 
-function handlePrintComandas() {
-  if (!comandasForPrintDisplay.value.length) return
+async function openComandasReprintPanel() {
+  selectedComandaIds.value = []
+  showComandasReprintPanel.value = true
+  await refreshPersistedComandas(undefined, tableSessionFetchGen, false)
+}
+
+async function printLatestComanda() {
+  if (!canPrintLatestComanda.value) return
+  const queue = mapComandasForPrint(lastFiredComandasRaw.value)
+  if (!queue.length) return
+  printQueueComandas.value = queue
+  await nextTick()
+  printComandaTickets()
+}
+
+async function printSelectedPersistedComandas() {
+  if (!persistedComandasForPrintDisplay.value.length) return
+  printQueueComandas.value = persistedComandasForPrintDisplay.value
+  await nextTick()
   printComandaTickets()
 }
 
@@ -538,6 +637,7 @@ const applyTableSessionFromApi = (
     minimumConsumption: mapMinimumConsumptionFromApi(s.minimum_consumption),
   })
   posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
+  hydrateLastFiredComandas()
 }
 
 const httpStatus = (e: unknown) => {
@@ -569,6 +669,7 @@ const loadCurrentTableSession = async (
     if (!session?.data?.session?.id) return false
     applyTableSessionFromApi(session.data, fetchGen, tableCtx)
     tableSessionBackendReady.value = true
+    await refreshPersistedComandas(tableId, fetchGen)
     return true
   } catch (e: unknown) {
     if (isNoOpenSessionError(e)) return false
@@ -581,6 +682,7 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
   isEnteringTable.value = true
   tableSessionBackendReady.value = false
   resetComandaPrintState()
+  clearLastFiredComandasState()
   posStore.clearAll()
   bumpTableSessionFetchGen()
   isLoadingTabItems.value = true
@@ -706,11 +808,17 @@ const showTableAdvancePanel = ref(false)
 const canPayTableAdvance = computed(() =>
   !!posStore.activeTableSession && !posStore.activeTableSession.isBar && showActiveMinimumConsumption.value,
 )
-const activeMinimumRemainingLabel = computed(() => {
+const activeMinimumStatusLabel = computed(() => {
   const state = activeMinimumConsumption.value
-  if (!state) return ''
+  if (!state || !state.enabled || state.amount <= 0) return ''
   if (state.covered || state.remaining <= 0) return 'Mínimo cubierto'
   return `${formatCurrencyPOS(state.remaining)} faltante`
+})
+const activeMinimumStatusClass = computed(() => {
+  const state = activeMinimumConsumption.value
+  return state?.covered || (state?.remaining ?? 0) <= 0
+    ? 'bg-state-success-bg text-state-success-text border-state-success-border'
+    : 'bg-state-warning-bg text-state-warning-text border-state-warning-border'
 })
 
 // Issue #956 — unified destructive-action confirmation with required motivo
@@ -1375,11 +1483,13 @@ const duplicateCartItem = async (index: number) => {
 
 const leaveActiveTableSession = () => {
   resetComandaPrintState()
+  clearLastFiredComandasState()
   posStore.clearAll()
 }
 
 const exitActiveTableSession = () => {
   resetComandaPrintState()
+  clearLastFiredComandasState()
   posStore.exitSession()
 }
 
@@ -1399,6 +1509,7 @@ const executeClearCart = async (reason: string) => {
         body: { reason: reason.trim() || null },
       })
       resetComandaPrintState()
+      clearLastFiredComandasState()
       posStore.setTabItems([])
       if (posStore.activeTableSession) {
         posStore.setTableSession({
@@ -1473,7 +1584,11 @@ watch(
   (session, previousSession) => {
     const nextKey = session ? `${session.tableId}:${session.sessionId}` : null
     const previousKey = previousSession ? `${previousSession.tableId}:${previousSession.sessionId}` : null
-    if (nextKey !== previousKey) resetComandaPrintState()
+    if (nextKey !== previousKey) {
+      resetComandaPrintState()
+      clearLastFiredComandasState()
+      if (session) hydrateLastFiredComandas()
+    }
     if (!session) tableSessionBackendReady.value = false
   },
 )
@@ -1617,11 +1732,16 @@ onUnmounted(() => {
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
+      <!-- Main POS Container -->
+      <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <!-- Products Panel (Left) -->
+        <div class="min-w-0 flex flex-col space-y-4">
+          <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-2">
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
         role="status"
-        class="flex items-center gap-3 min-h-[44px] px-4 py-3 mb-4 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
           <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1634,22 +1754,22 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner skeleton while loading tab items -->
-      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm animate-pulse">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-surface-secondary flex-shrink-0" />
-          <div class="flex-1 flex items-center gap-3">
+      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm animate-pulse">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-surface-secondary flex-shrink-0" />
+          <div class="flex-1 flex items-center gap-2.5">
             <div class="h-2.5 w-20 bg-surface-secondary rounded" />
             <div class="h-2.5 w-16 bg-surface-secondary rounded" />
             <div class="h-2.5 w-32 bg-surface-secondary rounded" />
           </div>
-          <div class="h-7 w-16 bg-surface-secondary rounded-lg flex-shrink-0" />
+          <div class="h-7 w-14 bg-surface-secondary rounded-lg flex-shrink-0" />
         </div>
       </div>
 
       <!-- Barra Banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-2xl mb-4 p-3.5 shadow-sm">
-        <div class="flex items-center gap-3">
-          <div class="bg-state-warning-bg p-2.5 rounded-xl flex-shrink-0">
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-2.5 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="bg-state-warning-bg p-2 rounded-lg flex-shrink-0">
             <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
             </svg>
@@ -1678,52 +1798,57 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner (when arriving from a table session) -->
-      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div class="flex items-start gap-3 min-w-0 flex-1">
-            <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
+      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <div class="bg-status-success-bg p-2 rounded-lg flex-shrink-0">
               <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
               </svg>
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} Activa</span>
+                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} activa</span>
                 <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
                 <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
+                <span
+                  v-if="activeMinimumStatusLabel"
+                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none whitespace-nowrap"
+                  :class="activeMinimumStatusClass"
+                >
+                  {{ activeMinimumStatusLabel }}
+                </span>
               </div>
-              <p class="text-xs text-text-secondary tabular-nums mt-1">
-                {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}
-              </p>
-              <p
-                v-if="showActiveMinimumConsumption && activeMinimumConsumption"
-                class="text-xs text-text-secondary tabular-nums mt-1"
-              >
-                Mínimo {{ formatCurrencyPOS(activeMinimumConsumption.amount) }} ·
-                Consumido {{ formatCurrencyPOS(activeMinimumConsumption.consumed) }} ·
-                {{ activeMinimumRemainingLabel }}
-              </p>
+              <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-secondary tabular-nums leading-snug">
+                <span>{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado</span>
+                <span class="text-text-tertiary" aria-hidden="true">·</span>
+                <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
+                <template v-if="showActiveMinimumConsumption && activeMinimumConsumption">
+                  <span class="text-text-tertiary" aria-hidden="true">·</span>
+                  <span>Mín. {{ formatCurrencyPOS(activeMinimumConsumption.amount) }}</span>
+                </template>
+              </div>
             </div>
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
-          <div class="flex flex-wrap items-center gap-2 lg:flex-shrink-0 lg:justify-end">
+          <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-shrink-0 xl:justify-end">
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->
             <div
               v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-              class="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
               aria-live="polite"
             >
               <UiLoadingDots size="7px" color="currentColor" />
               <span>{{ waiterChipLoadingPhrase }}</span>
             </div>
             <!-- Issue #574 — Idle waiter chip with auto-handoff dropdown -->
-            <div v-else-if="waiterAttributionEnabled" class="relative">
+            <div v-else-if="waiterAttributionEnabled" class="relative min-w-0 sm:min-w-[11rem]">
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-8 w-full inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -1759,7 +1884,7 @@ onUnmounted(() => {
               v-if="canPayTableAdvance"
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Pagar anticipo de la ${tableSingularLower}`"
               @click="showTableAdvancePanel = true"
             >
@@ -1772,7 +1897,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
               @click="leaveActiveTableSession"
             >
@@ -1785,7 +1910,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Liberar la ${tableSingularLower}`"
               @click="handleReleaseMesa"
             >
@@ -1801,17 +1926,17 @@ onUnmounted(() => {
         </div>
 
         <!-- Tab error -->
-        <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">
+        <p v-if="tabError" class="mt-1.5 text-xs text-destructive bg-destructive/10 rounded-lg px-2.5 py-1">
           {{ tabError }}
         </p>
         <!-- Tab success (fire to kitchen) -->
-        <p v-if="tabSuccess" class="mt-2 text-xs text-state-success-text bg-state-success-bg rounded-lg px-3 py-1.5 border border-state-success-border">
+        <p v-if="tabSuccess" class="mt-1.5 text-xs text-state-success-text bg-state-success-bg rounded-lg px-2.5 py-1 border border-state-success-border">
           {{ tabSuccess }}
         </p>
       </div>
 
       <!-- Customer Header (when customer is identified and no mesa mode) -->
-      <div v-else-if="posStore.currentCustomer" class="bg-badge-primary-bg border border-badge-primary-border rounded-xl mb-4 p-4">
+      <div v-else-if="posStore.currentCustomer" class="bg-badge-primary-bg border border-badge-primary-border rounded-xl p-4">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="bg-badge-primary-bg p-3 rounded-xl border border-badge-primary-border flex-shrink-0">
@@ -1870,7 +1995,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Identify customer CTA (counter/bar, no table session) -->
-      <div v-else class="mb-4">
+      <div v-else>
         <button
           type="button"
           class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-badge-primary-border text-badge-primary-text font-semibold text-sm hover:bg-badge-primary-bg transition-colors"
@@ -1883,12 +2008,6 @@ onUnmounted(() => {
         </button>
       </div>
 
-
-      <!-- Main POS Container -->
-    <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-      <!-- Products Panel (Left) -->
-      <div class="min-w-0 flex flex-col space-y-4">
-        <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-1">
           <!-- Search and Filters -->
           <div class="flex flex-col sm:flex-row gap-3">
             <div class="flex-1">
@@ -1941,7 +2060,7 @@ onUnmounted(() => {
 
       <!-- Cart Panel — desktop sidebar only; mobile uses bottom bar + sheet (#1032) -->
       <PosCartPanel
-        class="hidden lg:flex"
+        class="hidden lg:flex lg:sticky lg:top-0"
         fit-height
         :items="posStore.cart"
         :total="cartTotal"
@@ -1959,10 +2078,8 @@ onUnmounted(() => {
         :tab-items-loading="tabItemsLoading"
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
-        :show-print-item-selection="showPrintItemSelection"
-        :printable-order-item-ids="[...printableOrderItemIds]"
-        :can-print-comandas="canPrintComandas"
-        :selected-tab-item-ids="selectedTabItemIds"
+        :can-print-latest-comanda="canPrintLatestComanda"
+        :persisted-comandas-count="sentComandasForPanel.length"
         :pending-remove-item-id="pendingRemoveItemId"
         :show-served-by-chip="showServedByChip"
         :served-by-member-id="posStore.cartServedByMemberId"
@@ -1981,8 +2098,8 @@ onUnmounted(() => {
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
-        @print-comandas="handlePrintComandas"
-        @toggle-tab-selection="toggleTabItemSelection"
+        @print-latest-comanda="printLatestComanda"
+        @open-comandas-reprint="openComandasReprintPanel"
         @update:served-by="(id) => posStore.setCartServedBy(id)"
       />
       </div>
@@ -2073,8 +2190,22 @@ onUnmounted(() => {
 
   <PosComandaPrintTickets
     v-if="comandasEnabled"
-    :comandas="comandasForPrintDisplay"
+    :comandas="printQueueComandas"
     :business-name="posBusinessName"
+  />
+
+  <PosComandasReprintPanel
+    v-if="comandasEnabled"
+    v-model="showComandasReprintPanel"
+    :comandas="sentComandasForPanel"
+    :selected-ids="selectedComandaIds"
+    :loading="persistedComandasLoading"
+    :table-display-name="posStore.activeTableSession?.tableName ?? null"
+    @toggle-comanda="toggleComandaSelection"
+    @select-all="selectAllPersistedComandas"
+    @clear-selection="clearPersistedComandaSelection"
+    @print-selected="printSelectedPersistedComandas"
+    @refresh="refreshPersistedComandas(undefined, tableSessionFetchGen, true)"
   />
 
   <!-- warocol.com#1032 — mobile/tablet cart sheet (bar lives in dashboard layout) -->
@@ -2097,10 +2228,8 @@ onUnmounted(() => {
       :tab-items-loading="tabItemsLoading"
       :comandas-enabled="comandasEnabled"
       :unfired-count="unfiredCount"
-      :show-print-item-selection="showPrintItemSelection"
-      :printable-order-item-ids="[...printableOrderItemIds]"
-      :can-print-comandas="canPrintComandas"
-      :selected-tab-item-ids="selectedTabItemIds"
+      :can-print-latest-comanda="canPrintLatestComanda"
+      :persisted-comandas-count="sentComandasForPanel.length"
       :pending-remove-item-id="pendingRemoveItemId"
       :show-served-by-chip="showServedByChip"
       :served-by-member-id="posStore.cartServedByMemberId"
@@ -2119,8 +2248,8 @@ onUnmounted(() => {
       @remove-tab-item="removeTabItem"
       @increment-tab-item="incrementTabItem"
       @decrement-tab-item="decrementTabItem"
-      @print-comandas="handlePrintComandas"
-      @toggle-tab-selection="toggleTabItemSelection"
+      @print-latest-comanda="printLatestComanda"
+      @open-comandas-reprint="openComandasReprintPanel"
       @update:served-by="(id) => posStore.setCartServedBy(id)"
     />
   </UiBottomSheetModal>

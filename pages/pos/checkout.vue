@@ -227,7 +227,7 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 // Accordions start closed; the user opens them on demand. Previous behavior
 // auto-opened "summary" / "insights" on customer change — too noisy.
-const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
+const activeAccordion = ref<'order' | 'insights' | 'summary' | 'waros' | null>(null)
 
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
@@ -309,9 +309,6 @@ const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
 )
 
-// Issue #537 — expediter mode (waiter advances comanda state from POS)
-const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
-const showExpediterPanel = ref(false)
 const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_online_orders === true)
 
 // warocol.com#639 — tipping config (gated by tenant; defaults keep selector hidden)
@@ -2858,13 +2855,13 @@ watch(showEmptyCheckout, (empty, wasEmpty) => {
 
 watch(
   () => [isKitchenServiceMode.value, comandasEnabled.value, storeTabItems.value.length] as const,
-  ([kitchen, comandas, tabCount], prev) => {
+  ([kitchen, kitchenFlag, tabCount], prev) => {
     if (!prev) return
-    const [prevKitchen, prevComandas, prevTabCount] = prev
-    if (kitchen === prevKitchen && comandas === prevComandas && tabCount === prevTabCount) return
+    const [prevKitchen, prevKitchenFlag, prevTabCount] = prev
+    if (kitchen === prevKitchen && kitchenFlag === prevKitchenFlag && tabCount === prevTabCount) return
     posDebugLog('checkout', 'mode:changed', {
-      from: { kitchen: prevKitchen, comandas: prevComandas, tabCount: prevTabCount },
-      to: { kitchen, comandas, tabCount },
+      from: { kitchen: prevKitchen, kitchenFlag: prevKitchenFlag, tabCount: prevTabCount },
+      to: { kitchen, kitchenFlag, tabCount },
       ...checkoutDebugSnapshot(),
     })
   },
@@ -2976,19 +2973,31 @@ onUnmounted(() => {
       <!-- LEFT COLUMN: Order Items & Payment Method -->
       <div class="lg:col-span-8 space-y-6">
 
-        <!-- Section: Order Items -->
+        <!-- ACCORDION: Orden -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
-          <div class="px-4 py-3 border-b border-border flex justify-between items-center bg-surface-secondary/50">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-              Items de la Orden
+          <button
+            type="button"
+            @click="activeAccordion = activeAccordion === 'order' ? null : 'order'"
+            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-left hover:bg-surface-secondary/70 transition-colors"
+          >
+            <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+                <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              Orden
               <span class="text-text-tertiary font-normal text-xs ml-1">({{ cartItems.length }})</span>
-            </h2>
-          </div>
+            </span>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'order' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
 
-          <div class="divide-y divide-border">
+          <div v-show="activeAccordion === 'order'" class="divide-y divide-border border-t border-border">
             <!-- Cart Items -->
             <div
               v-for="(item, index) in cartItems"
@@ -4105,20 +4114,6 @@ onUnmounted(() => {
             <span>Imprimir prefactura</span>
           </button>
 
-          <!-- Issue #537 — Estado de comandas (expediter) -->
-          <button
-            v-if="expediterEnabled && comandasEnabled && (isMesaMode || posStore.activeTableSession)"
-            type="button"
-            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
-            aria-label="Ver estado de comandas"
-            @click="showExpediterPanel = true"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Estado de comandas</span>
-          </button>
-
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -5182,13 +5177,6 @@ onUnmounted(() => {
     </template>
   </div>
 
-  <!-- Issue #537 — Estado de comandas (expediter) slide-over -->
-  <PosComandasEstadoPanel
-    v-if="expediterEnabled && comandasEnabled"
-    v-model="showExpediterPanel"
-    :table-session-id="posStore.activeTableSession?.tableId ?? null"
-    :table-display-name="posStore.activeTableSession?.tableName ?? null"
-  />
   </div>
 </template>
 
