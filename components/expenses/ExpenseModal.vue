@@ -93,7 +93,7 @@
                     v-model.number="form.amount" 
                     required 
                     min="0" 
-                    step="100" 
+                    step="1"
                     class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" 
                     placeholder="0"
                   />

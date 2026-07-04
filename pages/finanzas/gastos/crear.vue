@@ -69,7 +69,7 @@
                     type="number"
                     required
                     min="0"
-                    step="100"
+                    step="1"
                     class="input-base w-full pl-8 pr-4 py-2"
                     placeholder="0"
                   />
