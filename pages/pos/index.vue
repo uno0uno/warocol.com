@@ -808,11 +808,17 @@ const showTableAdvancePanel = ref(false)
 const canPayTableAdvance = computed(() =>
   !!posStore.activeTableSession && !posStore.activeTableSession.isBar && showActiveMinimumConsumption.value,
 )
-const activeMinimumRemainingLabel = computed(() => {
+const activeMinimumStatusLabel = computed(() => {
   const state = activeMinimumConsumption.value
-  if (!state) return ''
+  if (!state || !state.enabled || state.amount <= 0) return ''
   if (state.covered || state.remaining <= 0) return 'Mínimo cubierto'
   return `${formatCurrencyPOS(state.remaining)} faltante`
+})
+const activeMinimumStatusClass = computed(() => {
+  const state = activeMinimumConsumption.value
+  return state?.covered || (state?.remaining ?? 0) <= 0
+    ? 'bg-state-success-bg text-state-success-text border-state-success-border'
+    : 'bg-state-warning-bg text-state-warning-text border-state-warning-border'
 })
 
 // Issue #956 — unified destructive-action confirmation with required motivo
@@ -1802,21 +1808,26 @@ onUnmounted(() => {
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} Activa</span>
+                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} activa</span>
                 <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
                 <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
+                <span
+                  v-if="activeMinimumStatusLabel"
+                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none whitespace-nowrap"
+                  :class="activeMinimumStatusClass"
+                >
+                  {{ activeMinimumStatusLabel }}
+                </span>
               </div>
-              <p class="text-[11px] text-text-secondary tabular-nums mt-0.5 leading-snug">
-                {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}
-              </p>
-              <p
-                v-if="showActiveMinimumConsumption && activeMinimumConsumption"
-                class="text-[11px] text-text-secondary tabular-nums mt-0.5 leading-snug"
-              >
-                Mínimo {{ formatCurrencyPOS(activeMinimumConsumption.amount) }} ·
-                Consumido {{ formatCurrencyPOS(activeMinimumConsumption.consumed) }} ·
-                {{ activeMinimumRemainingLabel }}
-              </p>
+              <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-secondary tabular-nums leading-snug">
+                <span>{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado</span>
+                <span class="text-text-tertiary" aria-hidden="true">·</span>
+                <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
+                <template v-if="showActiveMinimumConsumption && activeMinimumConsumption">
+                  <span class="text-text-tertiary" aria-hidden="true">·</span>
+                  <span>Mín. {{ formatCurrencyPOS(activeMinimumConsumption.amount) }}</span>
+                </template>
+              </div>
             </div>
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
