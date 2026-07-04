@@ -1,0 +1,180 @@
+# RBAC enforcement validation runbook
+
+Issue: #1524
+Parent epic: #1519
+
+This runbook validates, tenant by tenant, that module gating behaves correctly
+with `permissions_enforcement_mode = disabled`, `shadow`, and `enforce`.
+Use it only against a seeded QA/staging tenant or a tenant explicitly approved
+for validation.
+
+## Safety rules
+
+- Never flip `enforce` globally.
+- Capture the tenant's current mode before every test.
+- Keep a SQL rollback open while testing.
+- Reload the app after each mode flip so `/api/me/access` refreshes the current
+  `enforcement_mode`.
+- Wait up to 60 seconds for the enforcement mode cache to expire if the runtime
+  is not restarted or `invalidate_enforcement_mode()` is not invoked.
+- Wait up to 300 seconds for role-module override cache changes if the runtime
+  is not restarted or `invalidate_role_modules()` is not invoked.
+- Public, token, and synthetic flows must stay usable: auth, public restaurant,
+  supplier portal, customer portal, table QR, KDS token flows, invitation accept,
+  billing callbacks, scheduled billing jobs, and `/api/me/access`.
+
+## References
+
+| Area | Reference |
+| --- | --- |
+| Front route gate | `front_nuxt/middleware/module-access.global.ts` |
+| Front access source | `front_nuxt/stores/access.ts` |
+| Backend gate | `api_warocol.com/app/core/permissions.py` |
+| Tenant mode column | `api_warocol.com/dbdoc/public.tenants.md` |
+| Route/API audit | `front_nuxt/docs/engineering/rbac-gating-audit-1520.md` |
+
+Expected mode behavior:
+
+| Mode | Route behavior | API behavior | Signal |
+| --- | --- | --- | --- |
+| `disabled` | Existing access is unchanged. | Existing calls are not blocked by module gates. | No RBAC denial expected. |
+| `shadow` | Existing access is unchanged. | Calls are allowed. | Unauthorized attempts emit `permissions.shadow` `would_deny`. |
+| `enforce` | Unauthorized pages redirect to `/403`. | Unauthorized calls return HTTP 403 with the module in the detail. | Denial is user-visible. |
+
+## SQL setup
+
+Replace `:tenant_slug`, `:tenant_id`, `:role`, and `:module` before running.
+Keep the rollback statements ready in the same session.
+
+```sql
+-- 1) Identify and capture the current mode.
+SELECT id, slug, permissions_enforcement_mode
+FROM tenants
+WHERE slug = :tenant_slug;
+
+-- Store this result outside the transaction/runbook notes:
+-- original_mode = <permissions_enforcement_mode>
+
+-- 2) Switch modes during validation.
+UPDATE tenants
+SET permissions_enforcement_mode = 'disabled'
+WHERE id = :tenant_id;
+
+UPDATE tenants
+SET permissions_enforcement_mode = 'shadow'
+WHERE id = :tenant_id;
+
+UPDATE tenants
+SET permissions_enforcement_mode = 'enforce'
+WHERE id = :tenant_id;
+
+-- 3) Fast rollback. Use the captured original mode when it was not disabled.
+UPDATE tenants
+SET permissions_enforcement_mode = 'disabled'
+WHERE id = :tenant_id;
+```
+
+Optional override setup for a known test role:
+
+```sql
+-- Deny one module to a role that normally has it.
+INSERT INTO tenant_role_module_overrides (tenant_id, role, module, granted)
+VALUES (:tenant_id, :role, :module, false)
+ON CONFLICT (tenant_id, role, module)
+DO UPDATE SET granted = EXCLUDED.granted;
+
+-- Grant one module to a role that normally lacks it.
+INSERT INTO tenant_role_module_overrides (tenant_id, role, module, granted)
+VALUES (:tenant_id, :role, :module, true)
+ON CONFLICT (tenant_id, role, module)
+DO UPDATE SET granted = EXCLUDED.granted;
+
+-- Cleanup all temporary overrides for the test role.
+DELETE FROM tenant_role_module_overrides
+WHERE tenant_id = :tenant_id
+  AND role = :role;
+```
+
+Use the owner role as the positive control. Use a restricted role such as
+`cashier`, `kitchen`, or a temporary override as the negative control.
+
+## Manual validation matrix
+
+For each row, test three passes: `disabled`, `shadow`, then `enforce`.
+In `disabled` and `shadow`, confirm the route and API call do not fail only
+because of module RBAC. In `enforce`, confirm unauthorized access denies and
+authorized access still works.
+
+| Surface | Route check | API check | Authorized control | Denied control |
+| --- | --- | --- | --- | --- |
+| POS | `/pos` and checkout/product flows | POS cart or payment method POS endpoint | `owner` or `cashier` | role without `pos` via override |
+| Ventas | `/ventas`, `/ventas/crear`, `/ventas/:id` | orders/sales endpoint used by the route | `owner` or `cashier` | `kitchen` or role without `ventas` |
+| Despacho | `/despacho/comandas`, `/despacho/domicilios`, `/despacho/en-mesa` | dispatch/comandas endpoint used by the route | `owner` or `kitchen` | `cashier` without `despacho` |
+| Finanzas | `/finanzas`, gastos, pagos, contabilidad, arqueo | expenses/payment/accounting endpoint | `owner` or role with `finanzas` | `cashier` |
+| Equipo | `/equipo`, `/equipo/miembros`, member detail | members/invitations endpoint | `owner` | `admin`, `cashier`, or role without `equipo` |
+| Mi Negocio | `/negocio` and fiscal/business identity pages | tenant fiscal/business endpoint | `owner` | non-owner role without `mi_negocio` |
+| Integraciones | `/integraciones` | session integration endpoint | `owner` or role with `integraciones` | `cashier` |
+
+Payroll pages under `/equipo/salarios/**` are expected to validate as
+`finanzas`, not `equipo`, because payroll is a financial risk surface.
+
+## Mode-specific steps
+
+### Disabled
+
+1. Set the tenant to `disabled`.
+2. Reload the frontend session or sign out and in.
+3. Confirm `/api/me/access` reports `"enforcement_mode": "disabled"`.
+4. Visit each route in the matrix with both positive and negative controls.
+5. Call the matching API endpoints.
+6. Expected result: no route redirect or API 403 caused by module RBAC.
+
+### Shadow
+
+1. Set the tenant to `shadow`.
+2. Reload the frontend session or sign out and in.
+3. Confirm `/api/me/access` reports `"enforcement_mode": "shadow"`.
+4. Repeat the route and API checks with positive and negative controls.
+5. Inspect application logs for `permissions.shadow` records.
+6. Expected result: access is allowed, but denied controls produce
+   `would_deny` records with `tenant_id`, `user_id`, `role`, `module`,
+   `reason`, and `path`.
+
+### Enforce
+
+1. Set the tenant to `enforce`.
+2. Reload the frontend session or sign out and in.
+3. Confirm `/api/me/access` reports `"enforcement_mode": "enforce"`.
+4. Visit each route in the matrix with the positive control.
+5. Visit each route with the denied control.
+6. Call the matching API endpoints with both controls.
+7. Expected result: authorized access works; unauthorized routes redirect to
+   `/403`; unauthorized APIs return HTTP 403 and mention the denied module.
+
+## Rollback
+
+Run rollback immediately after validation or after the first unexpected denial:
+
+```sql
+UPDATE tenants
+SET permissions_enforcement_mode = 'disabled'
+WHERE id = :tenant_id;
+
+DELETE FROM tenant_role_module_overrides
+WHERE tenant_id = :tenant_id
+  AND role = :role;
+```
+
+Then reload the frontend session and confirm `/api/me/access` reports
+`"enforcement_mode": "disabled"`. If the runtime keeps returning the old mode,
+wait up to 60 seconds or restart the relevant API worker.
+
+## Regression command
+
+Run the targeted backend permission suite after documentation or verification
+changes:
+
+```bash
+cd api_warocol.com
+python -m pytest tests/test_permissions_dependency.py tests/test_me_access.py tests/test_pos_permissions.py tests/test_ventas_permissions.py tests/test_finanzas_permissions.py tests/test_equipo_permissions.py tests/test_mi_negocio_permissions.py tests/test_integraciones_permissions.py
+```
