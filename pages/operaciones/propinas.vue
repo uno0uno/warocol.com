@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
   layout: 'dashboard',
+
+  module: 'finanzas',
 })
 
 useHead({ title: 'Propinas | Ventas' })

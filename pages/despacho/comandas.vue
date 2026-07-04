@@ -4,7 +4,7 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
 useHead({ title: 'Comandas — WARO' })
 

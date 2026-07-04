@@ -374,9 +374,7 @@ import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const toast = useToast()

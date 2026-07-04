@@ -179,6 +179,7 @@ import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 definePageMeta({
   // layout: 'dashboard' — inherited from parent menu.vue
   // module gating: inherited as 'menu' from parent menu.vue
+  module: 'menu',
 })
 
 useHead({ title: 'Categorías' })

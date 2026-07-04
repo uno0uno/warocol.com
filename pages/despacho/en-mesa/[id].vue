@@ -8,7 +8,7 @@ import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composab
 import { useNotifications } from '~/composables/useNotifications'
 import { normalizeTimezone } from '~/utils/bogotaDate'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
 useHead({ title: 'Pedido en mesa — WARO' })
 

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Nuevo asiento contable - Warocol' })
 
 const { currentTenant } = useTenantReactive()

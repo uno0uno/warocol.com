@@ -115,7 +115,7 @@
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Métodos de pago - Warocol' })
 
 const { currentTenant } = useTenantReactive()

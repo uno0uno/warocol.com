@@ -873,7 +873,8 @@ definePageMeta({
       label: 'Volver a Productos',
       action: () => navigateTo('/menu/productos')
     }
-  })
+  }),
+  module: 'menu',
 })
 
 const route = useRoute()

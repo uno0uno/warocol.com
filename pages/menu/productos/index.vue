@@ -891,6 +891,7 @@ import { useToast } from '@/composables/useToast'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
+  module: 'menu',
 })
 
 const route = useRoute()
