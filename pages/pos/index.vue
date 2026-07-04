@@ -1748,22 +1748,22 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner skeleton while loading tab items -->
-      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-2xl p-3.5 shadow-sm animate-pulse">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-surface-secondary flex-shrink-0" />
-          <div class="flex-1 flex items-center gap-3">
+      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm animate-pulse">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-surface-secondary flex-shrink-0" />
+          <div class="flex-1 flex items-center gap-2.5">
             <div class="h-2.5 w-20 bg-surface-secondary rounded" />
             <div class="h-2.5 w-16 bg-surface-secondary rounded" />
             <div class="h-2.5 w-32 bg-surface-secondary rounded" />
           </div>
-          <div class="h-7 w-16 bg-surface-secondary rounded-lg flex-shrink-0" />
+          <div class="h-7 w-14 bg-surface-secondary rounded-lg flex-shrink-0" />
         </div>
       </div>
 
       <!-- Barra Banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-2xl p-3.5 shadow-sm">
-        <div class="flex items-center gap-3">
-          <div class="bg-state-warning-bg p-2.5 rounded-xl flex-shrink-0">
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-2.5 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="bg-state-warning-bg p-2 rounded-lg flex-shrink-0">
             <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
             </svg>
@@ -1792,10 +1792,10 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner (when arriving from a table session) -->
-      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl p-3.5 shadow-sm">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div class="flex items-start gap-3 min-w-0 flex-1">
-            <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
+      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <div class="bg-status-success-bg p-2 rounded-lg flex-shrink-0">
               <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
               </svg>
@@ -1806,12 +1806,12 @@ onUnmounted(() => {
                 <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
                 <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
               </div>
-              <p class="text-xs text-text-secondary tabular-nums mt-1">
+              <p class="text-[11px] text-text-secondary tabular-nums mt-0.5 leading-snug">
                 {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}
               </p>
               <p
                 v-if="showActiveMinimumConsumption && activeMinimumConsumption"
-                class="text-xs text-text-secondary tabular-nums mt-1"
+                class="text-[11px] text-text-secondary tabular-nums mt-0.5 leading-snug"
               >
                 Mínimo {{ formatCurrencyPOS(activeMinimumConsumption.amount) }} ·
                 Consumido {{ formatCurrencyPOS(activeMinimumConsumption.consumed) }} ·
@@ -1820,13 +1820,13 @@ onUnmounted(() => {
             </div>
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
-          <div class="flex flex-wrap items-center gap-2 lg:flex-shrink-0 lg:justify-end">
+          <div class="flex flex-wrap items-center gap-1.5 lg:flex-shrink-0 lg:justify-end">
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->
             <div
               v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-              class="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              class="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
               aria-live="polite"
             >
               <UiLoadingDots size="7px" color="currentColor" />
@@ -1837,7 +1837,7 @@ onUnmounted(() => {
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-8 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -1873,7 +1873,7 @@ onUnmounted(() => {
               v-if="canPayTableAdvance"
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Pagar anticipo de la ${tableSingularLower}`"
               @click="showTableAdvancePanel = true"
             >
@@ -1886,7 +1886,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
               @click="leaveActiveTableSession"
             >
@@ -1899,7 +1899,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Liberar la ${tableSingularLower}`"
               @click="handleReleaseMesa"
             >
@@ -1915,11 +1915,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Tab error -->
-        <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">
+        <p v-if="tabError" class="mt-1.5 text-xs text-destructive bg-destructive/10 rounded-lg px-2.5 py-1">
           {{ tabError }}
         </p>
         <!-- Tab success (fire to kitchen) -->
-        <p v-if="tabSuccess" class="mt-2 text-xs text-state-success-text bg-state-success-bg rounded-lg px-3 py-1.5 border border-state-success-border">
+        <p v-if="tabSuccess" class="mt-1.5 text-xs text-state-success-text bg-state-success-bg rounded-lg px-2.5 py-1 border border-state-success-border">
           {{ tabSuccess }}
         </p>
       </div>
