@@ -263,7 +263,10 @@
         <button
           type="button"
           :disabled="items.length === 0 || isDeleting || isAddingToTab"
-          class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          class="w-full min-h-[44px] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          :class="comandasEnabled
+            ? 'bg-action-success-bg text-action-success-text focus-visible:ring-action-success-focus-ring'
+            : 'bg-action-primary-bg text-action-primary-text focus-visible:ring-primary'"
           :aria-label="`Agregar items a la ${tableSingularLower}`"
           @click="$emit('add-to-tab')"
         >

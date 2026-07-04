@@ -1799,7 +1799,7 @@ onUnmounted(() => {
 
       <!-- Mesa Banner (when arriving from a table session) -->
       <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
           <div class="flex items-center gap-2.5 min-w-0 flex-1">
             <div class="bg-status-success-bg p-2 rounded-lg flex-shrink-0">
               <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1831,24 +1831,24 @@ onUnmounted(() => {
             </div>
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
-          <div class="flex flex-wrap items-center gap-1.5 lg:flex-shrink-0 lg:justify-end">
+          <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-shrink-0 xl:justify-end">
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->
             <div
               v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-              class="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
               aria-live="polite"
             >
               <UiLoadingDots size="7px" color="currentColor" />
               <span>{{ waiterChipLoadingPhrase }}</span>
             </div>
             <!-- Issue #574 — Idle waiter chip with auto-handoff dropdown -->
-            <div v-else-if="waiterAttributionEnabled" class="relative">
+            <div v-else-if="waiterAttributionEnabled" class="relative min-w-0 sm:min-w-[11rem]">
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-8 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-8 w-full inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -1884,7 +1884,7 @@ onUnmounted(() => {
               v-if="canPayTableAdvance"
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Pagar anticipo de la ${tableSingularLower}`"
               @click="showTableAdvancePanel = true"
             >
@@ -1897,7 +1897,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
               @click="leaveActiveTableSession"
             >
@@ -1910,7 +1910,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               :aria-label="`Liberar la ${tableSingularLower}`"
               @click="handleReleaseMesa"
             >
