@@ -80,6 +80,8 @@
 </template>
 
 <script setup lang="ts">
+// Billing confirmation must stay ungated so payment return/callback flows
+// can complete even before module access is available.
 definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()
