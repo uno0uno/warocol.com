@@ -353,9 +353,10 @@ const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
 
 // #753 — kitchen ticket print after fire
-const lastFiredComandasRaw = ref<unknown[]>([])
+const persistedComandasRaw = ref<unknown[]>([])
 const comandasForPrint = ref<ComandaPrintPayload[]>([])
-const selectedTabItemIds = ref<string[]>([])
+const selectedComandaIds = ref<string[]>([])
+const comandaSelectionInitialized = ref(false)
 const comandaPrintSessionKey = ref<string | null>(null)
 const posBusinessName = computed(
   () => settingsData.value?.data?.business_name
@@ -369,9 +370,10 @@ const currentComandaPrintSessionKey = () => {
 }
 
 function resetComandaPrintState() {
-  lastFiredComandasRaw.value = []
+  persistedComandasRaw.value = []
   comandasForPrint.value = []
-  selectedTabItemIds.value = []
+  selectedComandaIds.value = []
+  comandaSelectionInitialized.value = false
   comandaPrintSessionKey.value = null
 }
 
@@ -381,52 +383,87 @@ const canPrintComandas = computed(
     && comandaPrintSessionKey.value === currentComandaPrintSessionKey(),
 )
 
-/** Tab lines from the last fire batch — checkboxes select tickets to re-print (#812). */
-const printableOrderItemIds = computed(
-  () => orderItemIdsFromComandas(lastFiredComandasRaw.value),
-)
-
-const showPrintItemSelection = computed(
-  () =>
-    comandasEnabled.value
-    && isKitchenServiceMode.value
-    && canPrintComandas.value
-    && printableOrderItemIds.value.size > 0,
-)
+function rawComandaId(raw: unknown, index: number): string {
+  const c = raw as Record<string, unknown>
+  return String(c.id ?? `${c.comanda_number ?? index}:${c.station_name ?? ''}:${c.fired_at ?? ''}`)
+}
 
 const comandasForPrintDisplay = computed(() => {
   if (!canPrintComandas.value) return []
-  const sel = selectedTabItemIds.value
-  const raw = lastFiredComandasRaw.value
-  if (!Array.isArray(raw) || sel.length === 0) {
-    return comandasForPrint.value
-  }
+  const sel = selectedComandaIds.value
+  if (sel.length === 0) return []
+  const raw = persistedComandasRaw.value
   const selSet = new Set(sel)
   const filteredRaw = (raw as Record<string, unknown>[])
-    .map((c) => {
-      const items = ((c.items as Record<string, unknown>[]) ?? []).filter(
-        (i) => i.order_item_id != null && selSet.has(String(i.order_item_id)),
-      )
-      return { ...c, items }
-    })
-    .filter((c) => ((c.items as unknown[]) ?? []).length > 0)
+    .filter((c, index) => selSet.has(rawComandaId(c, index)))
   return mapComandasForPrint(filteredRaw)
 })
 
-function toggleTabItemSelection(orderItemId: string) {
-  const idx = selectedTabItemIds.value.indexOf(orderItemId)
-  if (idx >= 0) {
-    selectedTabItemIds.value = selectedTabItemIds.value.filter(id => id !== orderItemId)
+const sentComandasForPanel = computed(() => (
+  (persistedComandasRaw.value as Record<string, unknown>[]).map((c, index) => {
+    const items = ((c.items as Record<string, unknown>[]) ?? [])
+    return {
+      id: rawComandaId(c, index),
+      comandaNumber: String(c.comanda_number ?? '—'),
+      stationName: (c.station_name as string) ?? 'Sin cocina asignada',
+      status: String(c.status ?? ''),
+      firedAt: c.fired_at != null ? String(c.fired_at) : null,
+      itemCount: items.length,
+      itemPreview: items
+        .slice(0, 2)
+        .map(i => `${Number(i.quantity ?? 1)}x ${String(i.kitchen_name ?? '')}`.trim())
+        .filter(Boolean)
+        .join(', '),
+    }
+  })
+))
+
+function applyPersistedComandas(rawComandas: unknown[], preserveSelection = true) {
+  const printableRaw = (rawComandas as Record<string, unknown>[])
+    .filter(c => (((c.items as unknown[]) ?? []).length > 0))
+  const ids = printableRaw.map((c, index) => rawComandaId(c, index))
+  const hadComandas = persistedComandasRaw.value.length > 0
+  persistedComandasRaw.value = printableRaw
+  comandasForPrint.value = mapComandasForPrint(printableRaw)
+  comandaPrintSessionKey.value = currentComandaPrintSessionKey()
+
+  if (preserveSelection && comandaSelectionInitialized.value && hadComandas) {
+    const available = new Set(ids)
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => available.has(id))
   } else {
-    selectedTabItemIds.value = [...selectedTabItemIds.value, orderItemId]
+    selectedComandaIds.value = ids
+    comandaSelectionInitialized.value = true
+  }
+}
+
+async function refreshPersistedComandas(tableId?: string, fetchGen = tableSessionFetchGen, preserveSelection = true) {
+  const activeTableId = tableId ?? posStore.activeTableSession?.tableId
+  if (!activeTableId || !comandasEnabled.value || !isKitchenServiceMode.value) {
+    resetComandaPrintState()
+    return
+  }
+  try {
+    const res = await $fetch<{ success: boolean; data?: { comandas?: unknown[] } }>(`/api/tables/${activeTableId}/comandas`)
+    if (fetchGen !== tableSessionFetchGen) return
+    applyPersistedComandas(Array.isArray(res?.data?.comandas) ? res.data.comandas : [], preserveSelection)
+  } catch (e: unknown) {
+    if (isNoOpenSessionError(e)) resetComandaPrintState()
+  }
+}
+
+function toggleComandaSelection(comandaId: string) {
+  comandaSelectionInitialized.value = true
+  const idx = selectedComandaIds.value.indexOf(comandaId)
+  if (idx >= 0) {
+    selectedComandaIds.value = selectedComandaIds.value.filter(id => id !== comandaId)
+  } else {
+    selectedComandaIds.value = [...selectedComandaIds.value, comandaId]
   }
 }
 
 function applyFireResult(rawComandas: unknown[], firedCount: number) {
   if (rawComandas.length > 0) {
-    lastFiredComandasRaw.value = rawComandas
-    comandasForPrint.value = mapComandasForPrint(rawComandas)
-    comandaPrintSessionKey.value = currentComandaPrintSessionKey()
+    applyPersistedComandas(rawComandas, false)
   } else {
     resetComandaPrintState()
   }
@@ -442,7 +479,6 @@ function applyFireResult(rawComandas: unknown[], firedCount: number) {
           : item
       }),
     )
-    selectedTabItemIds.value = []
   }
 }
 
@@ -451,6 +487,7 @@ async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
   if (!comandasEnabled.value || addedCount <= 0) return
   const { comandas, fired_items_count } = parseFireTableResponse(addRes as FireTableResponse)
   applyFireResult(comandas, fired_items_count)
+  await refreshPersistedComandas(undefined, tableSessionFetchGen, false)
   if (fired_items_count > 0) {
     tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
     setTimeout(() => { tabSuccess.value = null }, 3000)
@@ -569,6 +606,7 @@ const loadCurrentTableSession = async (
     if (!session?.data?.session?.id) return false
     applyTableSessionFromApi(session.data, fetchGen, tableCtx)
     tableSessionBackendReady.value = true
+    await refreshPersistedComandas(tableId, fetchGen)
     return true
   } catch (e: unknown) {
     if (isNoOpenSessionError(e)) return false
@@ -1959,10 +1997,9 @@ onUnmounted(() => {
         :tab-items-loading="tabItemsLoading"
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
-        :show-print-item-selection="showPrintItemSelection"
-        :printable-order-item-ids="[...printableOrderItemIds]"
+        :sent-comandas="sentComandasForPanel"
         :can-print-comandas="canPrintComandas"
-        :selected-tab-item-ids="selectedTabItemIds"
+        :selected-comanda-ids="selectedComandaIds"
         :pending-remove-item-id="pendingRemoveItemId"
         :show-served-by-chip="showServedByChip"
         :served-by-member-id="posStore.cartServedByMemberId"
@@ -1982,7 +2019,7 @@ onUnmounted(() => {
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
         @print-comandas="handlePrintComandas"
-        @toggle-tab-selection="toggleTabItemSelection"
+        @toggle-comanda-selection="toggleComandaSelection"
         @update:served-by="(id) => posStore.setCartServedBy(id)"
       />
       </div>
@@ -2097,10 +2134,9 @@ onUnmounted(() => {
       :tab-items-loading="tabItemsLoading"
       :comandas-enabled="comandasEnabled"
       :unfired-count="unfiredCount"
-      :show-print-item-selection="showPrintItemSelection"
-      :printable-order-item-ids="[...printableOrderItemIds]"
+      :sent-comandas="sentComandasForPanel"
       :can-print-comandas="canPrintComandas"
-      :selected-tab-item-ids="selectedTabItemIds"
+      :selected-comanda-ids="selectedComandaIds"
       :pending-remove-item-id="pendingRemoveItemId"
       :show-served-by-chip="showServedByChip"
       :served-by-member-id="posStore.cartServedByMemberId"
@@ -2120,7 +2156,7 @@ onUnmounted(() => {
       @increment-tab-item="incrementTabItem"
       @decrement-tab-item="decrementTabItem"
       @print-comandas="handlePrintComandas"
-      @toggle-tab-selection="toggleTabItemSelection"
+      @toggle-comanda-selection="toggleComandaSelection"
       @update:served-by="(id) => posStore.setCartServedBy(id)"
     />
   </UiBottomSheetModal>

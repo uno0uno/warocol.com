@@ -88,18 +88,6 @@
         :key="item.orderItemId"
         class="relative"
       >
-        <label
-          v-if="showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId)"
-          class="absolute top-2 left-2 z-10 flex items-center"
-        >
-          <input
-            type="checkbox"
-            class="h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
-            :checked="selectedTabItemIds.includes(item.orderItemId)"
-            :aria-label="`Seleccionar ${item.productName} para reimprimir comanda`"
-            @change="$emit('toggle-tab-selection', item.orderItemId)"
-          />
-        </label>
         <PosCartItem
           :item="{
             product: { id: item.productId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
@@ -120,9 +108,6 @@
           :lock-increment="isTabLineFired(item)"
           :hide-line-controls="isTabLineTerminal(item)"
           @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"
-          :class="[
-            showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
-          ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
           @remove="$emit('remove-tab-item', item.orderItemId)"
@@ -171,8 +156,48 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
         </svg>
         <p class="text-text-secondary">{{ mesaMode ? `${tableSingular} sin pedidos` : 'Carrito vacío' }}</p>
-        <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
-      </div>
+          <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
+        </div>
+
+        <section
+          v-if="showSentComandas"
+          class="mt-3 rounded-xl border border-border bg-surface-secondary/45 p-3 space-y-2"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-[11px] font-bold uppercase tracking-widest text-text-tertiary">Comandas enviadas</h3>
+            <span class="text-[11px] font-semibold text-text-secondary">{{ selectedComandaCount }}/{{ sentComandas.length }}</span>
+          </div>
+          <div class="space-y-1.5">
+            <label
+              v-for="comanda in sentComandas"
+              :key="comanda.id"
+              class="flex items-start gap-2 rounded-lg border border-border bg-surface px-2.5 py-2 cursor-pointer hover:bg-surface-secondary transition-colors"
+            >
+              <input
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
+                :checked="selectedComandaIds.includes(comanda.id)"
+                :aria-label="`Seleccionar comanda ${comanda.comandaNumber}`"
+                @change="$emit('toggle-comanda-selection', comanda.id)"
+              />
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-text-primary truncate">
+                    #{{ comanda.comandaNumber }} · {{ comanda.stationName }}
+                  </span>
+                  <span class="text-[10px] font-semibold text-text-tertiary whitespace-nowrap">
+                    {{ formatComandaTime(comanda.firedAt) }}
+                  </span>
+                </span>
+                <span class="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-secondary min-w-0">
+                  <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? 'ítem' : 'ítems' }}</span>
+                  <span v-if="statusLabel(comanda.status)" class="text-text-tertiary">· {{ statusLabel(comanda.status) }}</span>
+                  <span v-if="comanda.itemPreview" class="truncate">· {{ comanda.itemPreview }}</span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </section>
       </template>
     </div>
 
@@ -347,7 +372,9 @@
         <button
           v-if="comandasEnabled && canPrintComandas"
           type="button"
+          :disabled="selectedComandaCount === 0"
           class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          :class="selectedComandaCount === 0 ? 'opacity-40 cursor-not-allowed' : ''"
           :aria-label="printComandaLabel"
           @click="$emit('print-comandas')"
         >
@@ -421,6 +448,16 @@ interface TabItem {
   sentAt?: string | null
 }
 
+interface SentComanda {
+  id: string
+  comandaNumber: string
+  stationName: string
+  status?: string
+  firedAt?: string | null
+  itemCount: number
+  itemPreview?: string
+}
+
 interface Props {
   items: CartItem[]
   total: number
@@ -433,10 +470,9 @@ interface Props {
   tabItemsLoading?: Set<string>
   comandasEnabled?: boolean
   unfiredCount?: number
-  showPrintItemSelection?: boolean
-  printableOrderItemIds?: string[]
+  sentComandas?: SentComanda[]
   canPrintComandas?: boolean
-  selectedTabItemIds?: string[]
+  selectedComandaIds?: string[]
   pendingRemoveItemId?: string | null
   // Issue #575 — per-order waiter attribution (bar + counter)
   showServedByChip?: boolean
@@ -467,7 +503,7 @@ interface Emits {
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
   (e: 'print-comandas'): void
-  (e: 'toggle-tab-selection', orderItemId: string): void
+  (e: 'toggle-comanda-selection', comandaId: string): void
   // Issue #575
   (e: 'update:served-by', memberId: string | null): void
 }
@@ -482,10 +518,9 @@ const props = withDefaults(defineProps<Props>(), {
   tabItemsLoading: () => new Set(),
   comandasEnabled: false,
   unfiredCount: 0,
-  showPrintItemSelection: false,
-  printableOrderItemIds: () => [],
+  sentComandas: () => [],
   canPrintComandas: false,
-  selectedTabItemIds: () => [],
+  selectedComandaIds: () => [],
   pendingRemoveItemId: null,
   showServedByChip: false,
   servedByMemberId: null,
@@ -510,9 +545,9 @@ const openSaleButtonClass = computed(() => [
 ])
 
 const printComandaLabel = computed(() => {
-  const n = props.selectedTabItemIds?.length ?? 0
-  if (n > 0) return `Reimprimir seleccionados (${n})`
-  return 'Reimprimir última comanda'
+  const n = selectedComandaCount.value
+  if (n > 0 && n < props.sentComandas.length) return `Reimprimir seleccionadas (${n})`
+  return 'Reimprimir comandas'
 })
 const emit = defineEmits<Emits>()
 
@@ -578,6 +613,37 @@ function cartLinePromoTitle(item: CartItem): string | null {
 const displayItemCount = computed(() =>
   props.mesaMode ? props.tabItems.length + props.items.length : props.items.length
 )
+
+const showSentComandas = computed(() =>
+  props.mesaMode
+  && props.comandasEnabled
+  && !props.isLoadingTabItems
+  && !props.isAddingToTab
+  && !props.isClearingTab
+  && props.sentComandas.length > 0
+)
+
+const selectedComandaCount = computed(() => props.selectedComandaIds.length)
+
+function formatComandaTime(value?: string | null): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d)
+}
+
+function statusLabel(status?: string): string | null {
+  const labels: Record<string, string> = {
+    pending: 'Pendiente',
+    preparing: 'Preparando',
+    ready: 'Lista',
+    delivered: 'Entregada',
+  }
+  return status ? labels[status] ?? status : null
+}
 
 // Issue #575 — handler for the served_by select
 const onServedByChange = (event: Event) => {
