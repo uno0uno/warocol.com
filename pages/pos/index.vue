@@ -1726,11 +1726,16 @@ onUnmounted(() => {
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
+      <!-- Main POS Container -->
+      <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <!-- Products Panel (Left) -->
+        <div class="min-w-0 flex flex-col space-y-4">
+          <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-2">
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
         role="status"
-        class="flex items-center gap-3 min-h-[44px] px-4 py-3 mb-4 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
           <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1743,7 +1748,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner skeleton while loading tab items -->
-      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm animate-pulse">
+      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-2xl p-3.5 shadow-sm animate-pulse">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-surface-secondary flex-shrink-0" />
           <div class="flex-1 flex items-center gap-3">
@@ -1756,7 +1761,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Barra Banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-2xl mb-4 p-3.5 shadow-sm">
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-2xl p-3.5 shadow-sm">
         <div class="flex items-center gap-3">
           <div class="bg-state-warning-bg p-2.5 rounded-xl flex-shrink-0">
             <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1787,7 +1792,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner (when arriving from a table session) -->
-      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm">
+      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl p-3.5 shadow-sm">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div class="flex items-start gap-3 min-w-0 flex-1">
             <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
@@ -1920,7 +1925,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Customer Header (when customer is identified and no mesa mode) -->
-      <div v-else-if="posStore.currentCustomer" class="bg-badge-primary-bg border border-badge-primary-border rounded-xl mb-4 p-4">
+      <div v-else-if="posStore.currentCustomer" class="bg-badge-primary-bg border border-badge-primary-border rounded-xl p-4">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="bg-badge-primary-bg p-3 rounded-xl border border-badge-primary-border flex-shrink-0">
@@ -1979,7 +1984,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Identify customer CTA (counter/bar, no table session) -->
-      <div v-else class="mb-4">
+      <div v-else>
         <button
           type="button"
           class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-badge-primary-border text-badge-primary-text font-semibold text-sm hover:bg-badge-primary-bg transition-colors"
@@ -1992,12 +1997,6 @@ onUnmounted(() => {
         </button>
       </div>
 
-
-      <!-- Main POS Container -->
-    <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-      <!-- Products Panel (Left) -->
-      <div class="min-w-0 flex flex-col space-y-4">
-        <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-1">
           <!-- Search and Filters -->
           <div class="flex flex-col sm:flex-row gap-3">
             <div class="flex-1">
@@ -2050,7 +2049,7 @@ onUnmounted(() => {
 
       <!-- Cart Panel — desktop sidebar only; mobile uses bottom bar + sheet (#1032) -->
       <PosCartPanel
-        class="hidden lg:flex"
+        class="hidden lg:flex lg:sticky lg:top-0"
         fit-height
         :items="posStore.cart"
         :total="cartTotal"

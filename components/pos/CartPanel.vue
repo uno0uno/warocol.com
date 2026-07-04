@@ -1,7 +1,7 @@
 <template>
   <div
     class="flex flex-col min-h-0 lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm"
-    :class="fitHeight ? 'h-fit' : 'h-full'"
+    :class="fitHeight ? 'h-fit lg:h-[calc(100dvh-7rem)] lg:max-h-[calc(100dvh-7rem)]' : 'h-full'"
   >
     <!-- Cart Header -->
     <div class="px-4 py-3.5 border-b border-border bg-surface">
@@ -58,112 +58,8 @@
       </div>
     </div>
 
-    <!-- Items list: tab items (committed) + current cart items -->
-    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 space-y-2.5">
-
-      <!-- Skeleton while loading tab items, adding to tab, or clearing -->
-      <template v-if="isLoadingTabItems || isAddingToTab || isClearingTab">
-        <div v-for="n in 3" :key="n" class="rounded-xl border border-border bg-surface-secondary/40 p-3 animate-pulse">
-          <div class="flex items-start gap-2">
-            <div class="h-7 w-7 shrink-0 rounded-full bg-surface-secondary" />
-            <div class="flex-1 space-y-1.5">
-              <div class="h-3.5 bg-surface-secondary rounded w-3/4" />
-              <div class="h-2.5 bg-surface-secondary rounded w-1/3" />
-            </div>
-            <div class="h-3.5 bg-surface-secondary rounded w-12 shrink-0" />
-          </div>
-          <div class="mt-2.5 pl-9 flex items-center gap-1.5">
-            <div class="h-9 w-20 bg-surface-secondary rounded-lg" />
-            <div class="flex-1" />
-            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
-            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
-          </div>
-        </div>
-      </template>
-
-      <!-- Tab items already on the mesa (only when not loading/adding/clearing) -->
-      <template v-else-if="!isLoadingTabItems && !isAddingToTab && !isClearingTab">
-      <div
-        v-for="(item, idx) in tabItems"
-        :key="item.orderItemId"
-        class="relative"
-      >
-        <PosCartItem
-          :item="{
-            product: { id: item.productId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
-            modifiers: item.modifiers ?? [],
-            quantity: item.quantity,
-            notes: item.notes ?? undefined,
-            fulfillmentStatus: item.fulfillmentStatus,
-            sentAt: item.sentAt
-          }"
-          :order-number="idx + 1"
-          :show-fulfillment-status="comandasEnabled"
-          :promo-label="tabLinePromoLabel(item)"
-          :promo-title="tabLinePromoTitle(item)"
-          :promo-savings="tabLinePromoSavings(item)"
-          :gross-total="item.subtotal"
-          :hide-duplicate="true"
-          :hide-edit="isTabLineFired(item)"
-          :lock-increment="isTabLineFired(item)"
-          :hide-line-controls="isTabLineTerminal(item)"
-          @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"
-          @increment="$emit('increment-tab-item', item.orderItemId)"
-          @decrement="$emit('decrement-tab-item', item.orderItemId)"
-          @remove="$emit('remove-tab-item', item.orderItemId)"
-          @duplicate="() => {}"
-        />
-
-        <!-- Loading overlay — only while that line is mutating -->
-        <div
-          v-if="tabItemsLoading.has(item.orderItemId)"
-          class="absolute inset-0 z-20 rounded-xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px] pointer-events-auto"
-          aria-hidden="true"
-        >
-          <UiLoadingDots size="9px" />
-        </div>
-      </div>
-
-      <!-- Divider when there are both tab items and new cart items -->
-      <div v-if="mesaMode && tabItems.length > 0 && items.length > 0" class="flex items-center gap-2 py-1">
-        <div class="flex-1 h-px bg-border" />
-        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex-shrink-0">Por agregar</span>
-        <div class="flex-1 h-px bg-border" />
-      </div>
-
-      <!-- Current cart items -->
-      <PosCartItem
-        v-for="(item, index) in items"
-        :key="index"
-        :item="item"
-        :order-number="tabItems.length + index + 1"
-        :promo-label="cartLinePromoLabel(item)"
-        :promo-title="cartLinePromoTitle(item)"
-        :promo-savings="cartLinePromoSavings(item)"
-        @edit="$emit('edit-item', index, item.product.id)"
-        @remove="$emit('remove-item', index)"
-        @increment="$emit('increment-item', index)"
-        @decrement="$emit('decrement-item', index)"
-        @duplicate="$emit('duplicate-item', index)"
-      />
-
-      <!-- Empty state: nothing at all -->
-      <div
-        v-if="tabItems.length === 0 && items.length === 0 && !isLoadingTabItems"
-        class="text-center py-12"
-      >
-        <svg class="h-16 w-16 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-        </svg>
-        <p class="text-text-secondary">{{ mesaMode ? `${tableSingular} sin pedidos` : 'Carrito vacío' }}</p>
-          <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
-        </div>
-
-      </template>
-    </div>
-
-    <!-- Cart Footer -->
-    <div class="flex-shrink-0 px-4 py-4 border-t border-border space-y-3 bg-surface-secondary/40">
+    <!-- Cart summary/actions: sticky at the top of the order panel -->
+    <div class="flex-shrink-0 px-4 py-4 border-b border-border space-y-3 bg-surface-secondary/40">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"
@@ -379,6 +275,110 @@
         </button>
         </template>
       </div>
+    </div>
+
+    <!-- Items list: tab items (committed) + current cart items -->
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 space-y-2.5">
+
+      <!-- Skeleton while loading tab items, adding to tab, or clearing -->
+      <template v-if="isLoadingTabItems || isAddingToTab || isClearingTab">
+        <div v-for="n in 3" :key="n" class="rounded-xl border border-border bg-surface-secondary/40 p-3 animate-pulse">
+          <div class="flex items-start gap-2">
+            <div class="h-7 w-7 shrink-0 rounded-full bg-surface-secondary" />
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3.5 bg-surface-secondary rounded w-3/4" />
+              <div class="h-2.5 bg-surface-secondary rounded w-1/3" />
+            </div>
+            <div class="h-3.5 bg-surface-secondary rounded w-12 shrink-0" />
+          </div>
+          <div class="mt-2.5 pl-9 flex items-center gap-1.5">
+            <div class="h-9 w-20 bg-surface-secondary rounded-lg" />
+            <div class="flex-1" />
+            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
+            <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
+          </div>
+        </div>
+      </template>
+
+      <!-- Tab items already on the mesa (only when not loading/adding/clearing) -->
+      <template v-else-if="!isLoadingTabItems && !isAddingToTab && !isClearingTab">
+      <div
+        v-for="(item, idx) in tabItems"
+        :key="item.orderItemId"
+        class="relative"
+      >
+        <PosCartItem
+          :item="{
+            product: { id: item.productId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
+            modifiers: item.modifiers ?? [],
+            quantity: item.quantity,
+            notes: item.notes ?? undefined,
+            fulfillmentStatus: item.fulfillmentStatus,
+            sentAt: item.sentAt
+          }"
+          :order-number="idx + 1"
+          :show-fulfillment-status="comandasEnabled"
+          :promo-label="tabLinePromoLabel(item)"
+          :promo-title="tabLinePromoTitle(item)"
+          :promo-savings="tabLinePromoSavings(item)"
+          :gross-total="item.subtotal"
+          :hide-duplicate="true"
+          :hide-edit="isTabLineFired(item)"
+          :lock-increment="isTabLineFired(item)"
+          :hide-line-controls="isTabLineTerminal(item)"
+          @edit="$emit('edit-tab-item', item.orderItemId, item.productId)"
+          @increment="$emit('increment-tab-item', item.orderItemId)"
+          @decrement="$emit('decrement-tab-item', item.orderItemId)"
+          @remove="$emit('remove-tab-item', item.orderItemId)"
+          @duplicate="() => {}"
+        />
+
+        <!-- Loading overlay — only while that line is mutating -->
+        <div
+          v-if="tabItemsLoading.has(item.orderItemId)"
+          class="absolute inset-0 z-20 rounded-xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px] pointer-events-auto"
+          aria-hidden="true"
+        >
+          <UiLoadingDots size="9px" />
+        </div>
+      </div>
+
+      <!-- Divider when there are both tab items and new cart items -->
+      <div v-if="mesaMode && tabItems.length > 0 && items.length > 0" class="flex items-center gap-2 py-1">
+        <div class="flex-1 h-px bg-border" />
+        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex-shrink-0">Por agregar</span>
+        <div class="flex-1 h-px bg-border" />
+      </div>
+
+      <!-- Current cart items -->
+      <PosCartItem
+        v-for="(item, index) in items"
+        :key="index"
+        :item="item"
+        :order-number="tabItems.length + index + 1"
+        :promo-label="cartLinePromoLabel(item)"
+        :promo-title="cartLinePromoTitle(item)"
+        :promo-savings="cartLinePromoSavings(item)"
+        @edit="$emit('edit-item', index, item.product.id)"
+        @remove="$emit('remove-item', index)"
+        @increment="$emit('increment-item', index)"
+        @decrement="$emit('decrement-item', index)"
+        @duplicate="$emit('duplicate-item', index)"
+      />
+
+      <!-- Empty state: nothing at all -->
+      <div
+        v-if="tabItems.length === 0 && items.length === 0 && !isLoadingTabItems"
+        class="text-center py-12"
+      >
+        <svg class="h-16 w-16 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+        </svg>
+        <p class="text-text-secondary">{{ mesaMode ? `${tableSingular} sin pedidos` : 'Carrito vacío' }}</p>
+          <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
+        </div>
+
+      </template>
     </div>
   </div>
 </template>
