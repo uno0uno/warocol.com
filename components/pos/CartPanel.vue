@@ -59,7 +59,7 @@
     </div>
 
     <!-- Cart summary/actions: sticky at the top of the order panel -->
-    <div class="flex-shrink-0 px-3 py-3 border-b border-border space-y-2 bg-surface-secondary/40">
+    <div class="flex-shrink-0 px-3.5 py-3 border-b border-border space-y-2.5 bg-surface-secondary/40">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"
@@ -82,18 +82,18 @@
             v-if="orderPromoSavings > 0"
             class="text-xs text-text-tertiary line-through tabular-nums"
           >{{ formatCurrency(grossOrderTotal) }}</span>
-          <span class="text-2xl font-black text-text-primary tabular-nums leading-none">{{ formatCurrency(netOrderTotal) }}</span>
+          <span class="text-[1.75rem] font-black text-text-primary tabular-nums leading-none">{{ formatCurrency(netOrderTotal) }}</span>
         </div>
       </div>
 
       <!-- Actions — Mostrador / barra sin comandas -->
-      <div v-if="!mesaMode" class="space-y-1.5">
+      <div v-if="!mesaMode" class="space-y-2">
         <template v-if="openSalePrimaryIdle && showOpenSale">
           <button
             type="button"
             :aria-disabled="!openSaleEnabled"
             :title="openSaleTooltip ?? undefined"
-            class="w-full h-10 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
             @click="$emit('open-sale')"
           >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -121,7 +121,7 @@
             v-if="hasCartItems && !hideProcessOrder"
             type="button"
             :disabled="isDeleting"
-            class="w-full h-10 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
             @click="$emit('process-order')"
           >
             <svg v-if="isDeleting" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@
             v-if="hasCartItems"
             type="button"
             :disabled="isDeleting"
-            class="w-full min-h-9 rounded-lg border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="w-full min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="$emit('clear-cart')"
           >
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -149,13 +149,13 @@
       </div>
 
       <!-- Actions — Mesa / barra con comandas -->
-      <div v-else class="space-y-1.5">
+      <div v-else class="space-y-2">
         <template v-if="openSalePrimaryIdle && showOpenSale">
           <button
             type="button"
             :aria-disabled="!openSaleEnabled"
             :title="openSaleTooltip ?? undefined"
-            class="w-full h-10 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
             @click="$emit('open-sale')"
           >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -184,7 +184,7 @@
           v-if="showBarProcessOrder"
           type="button"
           :disabled="items.length === 0 || isDeleting"
-          class="w-full h-10 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           @click="$emit('process-order')"
         >
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -193,25 +193,25 @@
           Procesar Orden
         </button>
         <!-- 2-col grid: secondary actions (Liberar moved to the active-mesa banner) -->
-        <div class="grid grid-cols-2 gap-1.5">
+        <div class="grid grid-cols-2 gap-2">
           <!-- Pedir cuenta -->
           <button
             type="button"
             :disabled="tabItems.length === 0"
-            class="min-h-9 rounded-lg border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Pedir la cuenta"
             @click="$emit('request-bill')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185Z" />
             </svg>
-            Pedir cuenta
+            Cuenta
           </button>
           <!-- Limpiar -->
           <button
             type="button"
             :disabled="(items.length === 0 && tabItems.length === 0) || isDeleting || isClearingTab"
-            class="min-h-9 rounded-lg border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="$emit('clear-cart')"
           >
             <UiLoadingDots v-if="isClearingTab" size="7px" />
@@ -226,22 +226,22 @@
 
 
         <!-- #753 / #812 — Kitchen ticket reprint actions stay compact; history lives in a panel. -->
-        <div v-if="comandasEnabled" class="grid grid-cols-2 gap-1.5">
+        <div v-if="comandasEnabled" class="grid grid-cols-2 gap-2">
           <button
             type="button"
             :disabled="!canPrintLatestComanda"
-            class="min-h-9 rounded-lg border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Reimprimir última comanda enviada"
             @click="$emit('print-latest-comanda')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
             </svg>
-            Reimprimir última
+            Última
           </button>
           <button
             type="button"
-            class="min-h-9 rounded-lg border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             aria-label="Abrir comandas para reimprimir"
             @click="$emit('open-comandas-reprint')"
           >
@@ -263,7 +263,7 @@
         <button
           type="button"
           :disabled="items.length === 0 || isDeleting || isAddingToTab"
-          class="w-full h-10 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          class="w-full min-h-[44px] rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           :aria-label="`Agregar items a la ${tableSingularLower}`"
           @click="$emit('add-to-tab')"
         >
@@ -271,7 +271,7 @@
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Agregar y enviar a cocina' : `Agregar a la ${tableSingularLower}`) }}
+          {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Enviar a cocina' : `Agregar a la ${tableSingularLower}`) }}
         </button>
         </template>
       </div>
@@ -505,7 +505,7 @@ const hasCartItems = computed(() => props.items.length > 0)
 const hasTabItems = computed(() => (props.tabItems?.length ?? 0) > 0)
 
 const openSaleButtonClass = computed(() => [
-  'min-h-9 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer',
+  'min-h-[44px] rounded-lg border text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer',
   props.openSaleEnabled
     ? 'border-dashed border-primary/50 text-primary hover:bg-primary/5'
     : 'border-dashed border-border text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary',
