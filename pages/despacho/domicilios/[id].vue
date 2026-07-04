@@ -4,7 +4,7 @@ import { Printer } from 'lucide-vue-next'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { printComandaTickets } from '~/composables/useComandaPrint'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'despacho' })
 useHead({ title: 'Detalle Pedido — WARO' })
 
 const route = useRoute()

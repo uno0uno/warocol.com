@@ -2,9 +2,7 @@
 import { ref, reactive, computed, watch, inject, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const router = useRouter()

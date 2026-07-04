@@ -258,9 +258,7 @@
 
 <script setup lang="ts">
 import { useFormatters } from '~/composables/useFormatters'
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const router = useRouter()

@@ -6,6 +6,8 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
   layout: 'dashboard',
+
+  module: 'finanzas',
 })
 
 useHead({ title: 'Historial de propinas — Ventas' })

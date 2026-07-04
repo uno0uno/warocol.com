@@ -11,7 +11,7 @@ import {
   type ApiPaymentGroup,
 } from '~/utils/paymentDefaults';
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'analitica' })
 
 const route = useRoute()
 const router = useRouter()

@@ -675,9 +675,7 @@ import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { useFormatters } from '~/composables/useFormatters'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const expenseId = route.params.id as string

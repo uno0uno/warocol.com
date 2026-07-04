@@ -257,6 +257,7 @@ import {
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
+  module: 'menu',
 })
 
 useHead({ title: 'Crear Modificador' })

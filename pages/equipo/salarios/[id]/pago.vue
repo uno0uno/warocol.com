@@ -396,6 +396,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+
 import { computed, reactive, ref, watch } from 'vue'
 const route = useRoute()
 const toast = useToast()

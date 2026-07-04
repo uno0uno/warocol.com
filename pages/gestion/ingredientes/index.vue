@@ -458,6 +458,8 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 definePageMeta({
   layout: 'dashboard',
+
+  module: 'abastecimiento',
 })
 
 useHead({ title: WAREHOUSE_COPY.waroTemplatesSubPageTitle })

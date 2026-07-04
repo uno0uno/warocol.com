@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Estado de Resultados mensual - Warocol' })
 
 // ── Query params (initial values from URL or current date) ────────────────────

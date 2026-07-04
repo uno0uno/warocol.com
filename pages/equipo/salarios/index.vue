@@ -2,9 +2,7 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 useHead({ title: 'Salarios' })
 

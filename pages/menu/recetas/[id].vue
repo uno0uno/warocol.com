@@ -254,7 +254,8 @@ definePageMeta({
     backButton.value = {
       label: 'Volver a Recetas'
     }
-  })
+  }),
+  module: 'menu',
 })
 
 useHead({ title: 'Editar Receta' })

@@ -135,6 +135,8 @@ import {
 import { extractApiError } from '~/composables/useQueryError'
 import type { LegalTermsDocument } from '~/composables/useLegalTerms'
 
+// Global-auth legal exception: users must be able to review and accept terms
+// before module-gated dashboard workflows are available.
 definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()

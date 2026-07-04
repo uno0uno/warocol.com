@@ -5,7 +5,7 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { normalizeTimezone } from '~/utils/bogotaDate'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
 useHead({ title: 'Pedidos en mesa (QR) — WARO' })
 

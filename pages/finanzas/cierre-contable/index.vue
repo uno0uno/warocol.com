@@ -157,7 +157,7 @@
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Cierre contable - Warocol' })
 
 const { formatDateTime } = useFormatters()

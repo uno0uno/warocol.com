@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
 useHead({ title: 'Personalizar | Operaciones' })
 

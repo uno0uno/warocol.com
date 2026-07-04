@@ -353,7 +353,7 @@
 import { ref, computed, nextTick } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

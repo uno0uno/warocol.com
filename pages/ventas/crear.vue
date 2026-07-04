@@ -1,7 +1,5 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
 useHead({ title: 'Nueva Venta' })
 

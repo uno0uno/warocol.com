@@ -262,6 +262,7 @@ import { formatDomainQuantity, normalizeDomainNumber } from '~/utils/domainNumbe
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
+  module: 'menu',
 })
 
 useHead({ title: 'Recetas' })

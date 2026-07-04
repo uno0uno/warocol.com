@@ -535,7 +535,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import QRCode from 'qrcode'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 useHead({ title: 'Comandas & Cocina | Operaciones' })
 
 const { currentTenant } = useTenantReactive()

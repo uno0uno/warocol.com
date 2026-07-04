@@ -206,9 +206,7 @@
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'analitica' })
 
 useHead({
   title: 'Analítica de Cocina | WARO'

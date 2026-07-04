@@ -1,5 +1,5 @@
 <script setup>
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const employeeId = route.params.id

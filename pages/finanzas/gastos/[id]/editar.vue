@@ -158,9 +158,7 @@
 <script setup lang="ts">
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const expenseId = route.params.id as string

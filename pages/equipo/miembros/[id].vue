@@ -7,6 +7,8 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
   layout: 'dashboard',
+
+  module: 'equipo',
 })
 
 useHead({ title: 'Perfil de mesero — Equipo' })

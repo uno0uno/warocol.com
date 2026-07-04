@@ -22,7 +22,8 @@ import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
   layout: 'dashboard',
-  title: 'Registrar Pago'
+  title: 'Registrar Pago',
+  module: 'finanzas',
 })
 
 useHead({ title: 'Registrar Pago' })

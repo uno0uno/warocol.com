@@ -4,9 +4,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 useHead({ title: 'Gastos' })
 

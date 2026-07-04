@@ -2,9 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
 const { singular, plural } = useTableLabel()
 const singularLower = computed(() => singular.value.toLowerCase())

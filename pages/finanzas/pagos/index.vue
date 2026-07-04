@@ -216,7 +216,8 @@ import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard',
-  title: 'Gestión de Pagos'
+  title: 'Gestión de Pagos',
+  module: 'finanzas',
 })
 
 useHead({
