@@ -159,45 +159,6 @@
           <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
         </div>
 
-        <section
-          v-if="showSentComandas"
-          class="mt-3 rounded-xl border border-border bg-surface-secondary/45 p-3 space-y-2"
-        >
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="text-[11px] font-bold uppercase tracking-widest text-text-tertiary">Comandas enviadas</h3>
-            <span class="text-[11px] font-semibold text-text-secondary">{{ selectedComandaCount }}/{{ sentComandas.length }}</span>
-          </div>
-          <div class="space-y-1.5">
-            <label
-              v-for="comanda in sentComandas"
-              :key="comanda.id"
-              class="flex items-start gap-2 rounded-lg border border-border bg-surface px-2.5 py-2 cursor-pointer hover:bg-surface-secondary transition-colors"
-            >
-              <input
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
-                :checked="selectedComandaIds.includes(comanda.id)"
-                :aria-label="`Seleccionar comanda ${comanda.comandaNumber}`"
-                @change="$emit('toggle-comanda-selection', comanda.id)"
-              />
-              <span class="min-w-0 flex-1">
-                <span class="flex items-center justify-between gap-2">
-                  <span class="text-xs font-bold text-text-primary truncate">
-                    #{{ comanda.comandaNumber }} · {{ comanda.stationName }}
-                  </span>
-                  <span class="text-[10px] font-semibold text-text-tertiary whitespace-nowrap">
-                    {{ formatComandaTime(comanda.firedAt) }}
-                  </span>
-                </span>
-                <span class="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-secondary min-w-0">
-                  <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? 'ítem' : 'ítems' }}</span>
-                  <span v-if="statusLabel(comanda.status)" class="text-text-tertiary">· {{ statusLabel(comanda.status) }}</span>
-                  <span v-if="comanda.itemPreview" class="truncate">· {{ comanda.itemPreview }}</span>
-                </span>
-              </span>
-            </label>
-          </div>
-        </section>
       </template>
     </div>
 
@@ -368,21 +329,39 @@
         </div>
 
 
-        <!-- #753 / #812 — Re-print kitchen tickets (fire is via Agregar y enviar only) -->
-        <button
-          v-if="comandasEnabled && canPrintComandas"
-          type="button"
-          :disabled="selectedComandaCount === 0"
-          class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-          :class="selectedComandaCount === 0 ? 'opacity-40 cursor-not-allowed' : ''"
-          :aria-label="printComandaLabel"
-          @click="$emit('print-comandas')"
-        >
-          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
-          </svg>
-          {{ printComandaLabel }}
-        </button>
+        <!-- #753 / #812 — Kitchen ticket reprint actions stay compact; history lives in a panel. -->
+        <div v-if="comandasEnabled" class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            :disabled="!canPrintLatestComanda"
+            class="min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Reimprimir última comanda enviada"
+            @click="$emit('print-latest-comanda')"
+          >
+            <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
+            </svg>
+            Reimprimir última
+          </button>
+          <button
+            type="button"
+            class="min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            aria-label="Abrir comandas para reimprimir"
+            @click="$emit('open-comandas-reprint')"
+          >
+            <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v14.25l-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5V6a2.25 2.25 0 0 1 2.25-2.25Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5" />
+            </svg>
+            <span>Comandas</span>
+            <span
+              v-if="persistedComandasCount > 0"
+              class="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-surface-secondary text-[10px] font-bold text-text-secondary tabular-nums inline-flex items-center justify-center"
+            >
+              {{ persistedComandasCount > 99 ? '99+' : persistedComandasCount }}
+            </span>
+          </button>
+        </div>
 
         <!-- Primary: Add to tab — full width -->
         <button
@@ -448,16 +427,6 @@ interface TabItem {
   sentAt?: string | null
 }
 
-interface SentComanda {
-  id: string
-  comandaNumber: string
-  stationName: string
-  status?: string
-  firedAt?: string | null
-  itemCount: number
-  itemPreview?: string
-}
-
 interface Props {
   items: CartItem[]
   total: number
@@ -470,9 +439,8 @@ interface Props {
   tabItemsLoading?: Set<string>
   comandasEnabled?: boolean
   unfiredCount?: number
-  sentComandas?: SentComanda[]
-  canPrintComandas?: boolean
-  selectedComandaIds?: string[]
+  canPrintLatestComanda?: boolean
+  persistedComandasCount?: number
   pendingRemoveItemId?: string | null
   // Issue #575 — per-order waiter attribution (bar + counter)
   showServedByChip?: boolean
@@ -502,8 +470,8 @@ interface Emits {
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
-  (e: 'print-comandas'): void
-  (e: 'toggle-comanda-selection', comandaId: string): void
+  (e: 'print-latest-comanda'): void
+  (e: 'open-comandas-reprint'): void
   // Issue #575
   (e: 'update:served-by', memberId: string | null): void
 }
@@ -518,9 +486,8 @@ const props = withDefaults(defineProps<Props>(), {
   tabItemsLoading: () => new Set(),
   comandasEnabled: false,
   unfiredCount: 0,
-  sentComandas: () => [],
-  canPrintComandas: false,
-  selectedComandaIds: () => [],
+  canPrintLatestComanda: false,
+  persistedComandasCount: 0,
   pendingRemoveItemId: null,
   showServedByChip: false,
   servedByMemberId: null,
@@ -544,11 +511,6 @@ const openSaleButtonClass = computed(() => [
     : 'border-dashed border-border text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary',
 ])
 
-const printComandaLabel = computed(() => {
-  const n = selectedComandaCount.value
-  if (n > 0 && n < props.sentComandas.length) return `Reimprimir seleccionadas (${n})`
-  return 'Reimprimir comandas'
-})
 const emit = defineEmits<Emits>()
 
 const posStore = usePOSStore()
@@ -613,37 +575,6 @@ function cartLinePromoTitle(item: CartItem): string | null {
 const displayItemCount = computed(() =>
   props.mesaMode ? props.tabItems.length + props.items.length : props.items.length
 )
-
-const showSentComandas = computed(() =>
-  props.mesaMode
-  && props.comandasEnabled
-  && !props.isLoadingTabItems
-  && !props.isAddingToTab
-  && !props.isClearingTab
-  && props.sentComandas.length > 0
-)
-
-const selectedComandaCount = computed(() => props.selectedComandaIds.length)
-
-function formatComandaTime(value?: string | null): string {
-  if (!value) return ''
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return ''
-  return new Intl.DateTimeFormat('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(d)
-}
-
-function statusLabel(status?: string): string | null {
-  const labels: Record<string, string> = {
-    pending: 'Pendiente',
-    preparing: 'Preparando',
-    ready: 'Lista',
-    delivered: 'Entregada',
-  }
-  return status ? labels[status] ?? status : null
-}
 
 // Issue #575 — handler for the served_by select
 const onServedByChange = (event: Event) => {
