@@ -1224,7 +1224,7 @@ const selectedCategory = ref('all')
 // Load products from API
 const { data: productsData, status: productsStatus, asyncStatus: productsAsyncStatus, error: productsError, refetch } = useQuery({
   key: () => ['pos', 'products', currentTenant.value?.id],
-  query: () => $fetch('/api/menu/products', {
+  query: () => $fetch('/api/pos/products', {
     params: {
       is_available: true,
       limit: 250,
