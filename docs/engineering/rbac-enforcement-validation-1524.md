@@ -1,12 +1,18 @@
 # RBAC enforcement validation runbook
 
 Issue: #1524
+Related validation: #1536
 Parent epic: #1519
 
 This runbook validates, tenant by tenant, that module gating behaves correctly
 with `permissions_enforcement_mode = disabled`, `shadow`, and `enforce`.
 Use it only against a seeded QA/staging tenant or a tenant explicitly approved
 for validation.
+
+This runbook also covers the cashier-only POS rollout from #1536: canonical
+`cashier` users and legacy `employee` users default to POS access only. They can
+operate POS, but they do not get Menú or Ventas unless a tenant override grants
+those modules explicitly.
 
 ## Safety rules
 
@@ -108,7 +114,7 @@ authorized access still works.
 | Surface | Route check | API check | Authorized control | Denied control |
 | --- | --- | --- | --- | --- |
 | POS | `/pos` and checkout/product flows | POS cart or payment method POS endpoint | `owner` or `cashier` | role without `pos` via override |
-| Ventas | `/ventas`, `/ventas/crear`, `/ventas/:id` | orders/sales endpoint used by the route | `owner` or `cashier` | `kitchen` or role without `ventas` |
+| Ventas | `/ventas`, `/ventas/crear`, `/ventas/:id` | orders/sales endpoint used by the route | `owner`, `admin`, or `supervisor` | `cashier` or `kitchen` |
 | Despacho | `/despacho/comandas`, `/despacho/domicilios`, `/despacho/en-mesa` | dispatch/comandas endpoint used by the route | `owner` or `kitchen` | `cashier` without `despacho` |
 | Finanzas | `/finanzas`, gastos, pagos, contabilidad, arqueo | expenses/payment/accounting endpoint | `owner` or role with `finanzas` | `cashier` |
 | Equipo | `/equipo`, `/equipo/miembros`, member detail | members/invitations endpoint | `owner` | `admin`, `cashier`, or role without `equipo` |
@@ -117,6 +123,78 @@ authorized access still works.
 
 Payroll pages under `/equipo/salarios/**` are expected to validate as
 `finanzas`, not `equipo`, because payroll is a financial risk surface.
+
+## Cashier-only POS validation
+
+Run this section with both a canonical `cashier` user and a legacy `employee`
+user. The expected default access payload from `/api/me/access` is:
+
+```json
+{
+  "modules": ["pos"]
+}
+```
+
+Check the full response also reports the current `enforcement_mode` after each
+mode flip.
+
+### Default access
+
+1. Sign in as `cashier`.
+2. Confirm `/api/me/access` includes `pos` and does not include `menu`,
+   `ventas`, `equipo`, `finanzas`, `mi_negocio`, or `integraciones`.
+3. Repeat with a legacy `employee` user.
+
+### Disabled mode
+
+1. Set the tenant to `disabled`.
+2. Reload the app.
+3. Confirm `/pos` loads products through the POS catalog and checkout flows
+   stay usable.
+4. Visit `/menu`, `/ventas`, `/equipo`, `/finanzas`, `/negocio`, and
+   `/integraciones`.
+5. Expected result: module RBAC does not block these routes or APIs while the
+   tenant is disabled. Other non-RBAC business checks may still apply.
+
+### Shadow mode
+
+1. Set the tenant to `shadow`.
+2. Reload the app.
+3. Confirm `/pos` and its POS API calls still work.
+4. Visit `/menu` and `/ventas`; also sample `/equipo`, `/finanzas`, `/negocio`,
+   and `/integraciones`.
+5. Expected result: access is allowed, but denied modules emit
+   `permissions.shadow` records with `would_deny`. At minimum, Menú and Ventas
+   attempts for `cashier`/`employee` should produce shadow signals.
+
+### Enforce mode
+
+1. Set the tenant to `enforce`.
+2. Reload the app.
+3. Confirm `/pos` works and the product catalog loads from `/api/pos/products`.
+4. Visit `/menu` and `/ventas`.
+5. Sample `/equipo`, `/finanzas`, `/negocio`, and `/integraciones`.
+6. Expected result: `/pos` remains usable; unauthorized routes redirect to
+   `/403`; unauthorized APIs return HTTP 403 and mention the denied module.
+
+### Explicit tenant overrides
+
+Use overrides only when a tenant intentionally needs broader cashier access.
+For example, grant Menú or Ventas temporarily to validate the exception path:
+
+```sql
+INSERT INTO tenant_role_module_overrides (tenant_id, role, module, granted)
+VALUES (:tenant_id, 'cashier', 'menu', true),
+       (:tenant_id, 'cashier', 'ventas', true)
+ON CONFLICT (tenant_id, role, module)
+DO UPDATE SET granted = EXCLUDED.granted;
+```
+
+After the cache expires or the API worker is restarted, `/api/me/access` should
+include the granted modules and `enforce` should allow the matching routes.
+Remove these temporary overrides before finishing validation. Legacy `employee`
+sessions normalize to `cashier`, so override rows for this validation should use
+`role = 'cashier'`.
 
 ## Mode-specific steps
 
@@ -162,12 +240,14 @@ WHERE id = :tenant_id;
 
 DELETE FROM tenant_role_module_overrides
 WHERE tenant_id = :tenant_id
-  AND role = :role;
+  AND role = 'cashier';
 ```
 
 Then reload the frontend session and confirm `/api/me/access` reports
 `"enforcement_mode": "disabled"`. If the runtime keeps returning the old mode,
-wait up to 60 seconds or restart the relevant API worker.
+wait up to 60 seconds or restart the relevant API worker. If role-module
+overrides were changed, wait up to 300 seconds or restart the API worker so the
+role-module cache is refreshed.
 
 ## Regression command
 
