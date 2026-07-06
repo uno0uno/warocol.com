@@ -103,15 +103,9 @@
           <!-- Role badge -->
           <span
             class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
-            :class="{
-              'bg-amber-100 text-amber-800': item.role === 'superuser',
-              'bg-blue-100 text-blue-800': item.role === 'admin',
-              'bg-slate-100 text-slate-700': item.role === 'employee',
-              'bg-purple-100 text-purple-800': item.role === 'promotor',
-              'bg-green-100 text-green-800': !['superuser','admin','employee','promotor'].includes(item.role)
-            }"
+            :class="getRoleBadgeClass(item.role)"
           >
-            {{ item.role === 'superuser' ? 'Super' : item.role === 'admin' ? 'Admin' : item.role === 'employee' ? 'Empleado' : item.role === 'promotor' ? 'Promotor' : 'Miembro' }}
+            {{ getRoleShortLabel(item.role) }}
           </span>
 
           <!-- Actions -->
@@ -164,18 +158,9 @@
       <template #cell-role="{ value }">
         <span
           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-          :class="{
-            'bg-amber-100 text-amber-800': value === 'superuser',
-            'bg-blue-100 text-blue-800': value === 'admin',
-            'bg-gray-100 text-gray-800': value === 'employee',
-            'bg-purple-100 text-purple-800': value === 'promotor',
-            'bg-green-100 text-green-800': !['superuser', 'admin', 'employee', 'promotor'].includes(value)
-          }"
+          :class="getRoleBadgeClass(value)"
         >
-          {{ value === 'superuser' ? 'Super Usuario' :
-             value === 'admin' ? 'Administrador' :
-             value === 'employee' ? 'Empleado' :
-             value === 'promotor' ? 'Promotor' : 'Miembro' }}
+          {{ getRoleLabel(value) }}
         </span>
       </template>
 
@@ -417,9 +402,13 @@
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="admin">Administrador</option>
-                <option value="superuser">Super Usuario</option>
+                <option v-for="option in inviteRoleOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
               </select>
+              <p class="mt-1 text-xs text-text-secondary">
+                {{ getRoleDescription(inviteForm.role) }}
+              </p>
             </div>
 
             <!-- Error message -->
@@ -615,12 +604,13 @@
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="superuser">Super Usuario</option>
-                <option value="admin">Administrador</option>
-                <option value="employee">Empleado</option>
-                <option value="member">Miembro</option>
-                <option value="promotor">Promotor</option>
+                <option v-for="option in roleSelectOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
               </select>
+              <p class="mt-1 text-xs text-text-secondary">
+                {{ getRoleDescription(editRoleForm.role) }}
+              </p>
             </div>
 
             <!-- Error message -->
@@ -671,13 +661,44 @@ const canManageTeam = can('equipo')
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const roleFilter = ref('')
-const roleFilterOptions = [
-  { label: 'Superusuario', value: 'superuser' },
-  { label: 'Administrador', value: 'admin' },
-  { label: 'Empleado', value: 'employee' },
-  { label: 'Miembro', value: 'member' },
-  { label: 'Promotor', value: 'promotor' },
-]
+const roleDefinitions = {
+  superuser: {
+    label: 'Propietario',
+    shortLabel: 'Dueño',
+    description: 'Acceso total al negocio, equipo, permisos, finanzas y configuración.',
+    badgeClass: 'bg-amber-100 text-amber-800',
+  },
+  admin: {
+    label: 'Administrador',
+    shortLabel: 'Admin',
+    description: 'Gestiona la operación diaria, ventas, menú, reportes y configuración operativa.',
+    badgeClass: 'bg-blue-100 text-blue-800',
+  },
+  employee: {
+    label: 'Cajero / Operador',
+    shortLabel: 'Cajero',
+    description: 'Puede operar POS, registrar ventas y usar funciones básicas del turno.',
+    badgeClass: 'bg-slate-100 text-slate-700',
+  },
+  member: {
+    label: 'Operador de equipo',
+    shortLabel: 'Operador',
+    description: 'Rol operativo básico para miembros del equipo con acceso limitado.',
+    badgeClass: 'bg-green-100 text-green-800',
+  },
+  promotor: {
+    label: 'Promotor comercial',
+    shortLabel: 'Promotor',
+    description: 'Rol comercial para promoción y apoyo de ventas con acceso limitado.',
+    badgeClass: 'bg-purple-100 text-purple-800',
+  },
+}
+const roleSelectOptions = Object.entries(roleDefinitions).map(([value, meta]) => ({
+  value,
+  label: meta.label,
+}))
+const inviteRoleOptions = roleSelectOptions.filter(option => ['admin', 'superuser'].includes(option.value))
+const roleFilterOptions = roleSelectOptions
 
 const performSearch = () => applySearch()
 
@@ -724,10 +745,7 @@ const normalizeMembersResponse = (response: any) => {
         id: member.id,
         name: displayName,
         email: member.profile.email,
-        position: member.role === 'superuser' ? 'Super Usuario' :
-                 member.role === 'admin' ? 'Administrador' :
-                 member.role === 'employee' ? 'Empleado' :
-                 member.role === 'promotor' ? 'Promotor' : 'Miembro',
+        position: getRoleLabel(member.role),
         role: member.role,
         active: true,
         initials: getInitials(member.profile.name, member.profile.user_name),
@@ -828,16 +846,20 @@ const isCurrentUser = (member) => {
   return member.email?.toLowerCase() === currentUserEmail.value?.toLowerCase()
 }
 
-// Get role label helper
 const getRoleLabel = (role) => {
-  const labels = {
-    'superuser': 'Super Usuario',
-    'admin': 'Administrador',
-    'employee': 'Empleado',
-    'member': 'Miembro',
-    'promotor': 'Promotor'
-  }
-  return labels[role] || role
+  return roleDefinitions[role]?.label || role || 'Sin rol'
+}
+
+const getRoleShortLabel = (role) => {
+  return roleDefinitions[role]?.shortLabel || getRoleLabel(role)
+}
+
+const getRoleDescription = (role) => {
+  return roleDefinitions[role]?.description || 'Rol personalizado del equipo.'
+}
+
+const getRoleBadgeClass = (role) => {
+  return roleDefinitions[role]?.badgeClass || 'bg-green-100 text-green-800'
 }
 
 // Table columns configuration

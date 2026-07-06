@@ -160,8 +160,8 @@
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
+  getAccessAwareRedirect,
   getInternalAccessDeniedMessage,
-  getSafeInternalRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 
@@ -174,6 +174,8 @@ const verificationCode = ref('')
 const verifyingCode = ref(false)
 const showCustomerPortalLink = ref(false)
 const toast = useToast()
+const router = useRouter()
+const accessStore = useAccessStore()
 
 
 // ========================================
@@ -240,10 +242,7 @@ let resizeObserver = null
 // Obtener configuración de runtime
 const {
   public: {
-    baseUrl,
-    warolabsApiUrl,
-    organizationName,
-    defaultRedirectUrl
+    baseUrl
   }
 } = useRuntimeConfig()
 
@@ -277,9 +276,9 @@ onMounted(async () => {
       const expectedTenantName = config.siteName || 'Waro Colombia'
       if (session.user.tenant_name === expectedTenantName) {
 
-        // Redirigir al perfil de warocol
         const route = useRoute()
-        const redirectUrl = getSafeInternalRedirect(route.query.redirect)
+        await accessStore.load()
+        const redirectUrl = getAccessAwareRedirect(route.query.redirect, accessStore, router)
         await navigateTo(redirectUrl)
         return
       } else {
@@ -363,7 +362,8 @@ async function verifyCode() {
 
     // Redirigir con recarga completa para asegurar que la cookie se incluya
     const route = useRoute()
-    const redirectUrl = getSafeInternalRedirect(route.query.redirect)
+    await accessStore.load()
+    const redirectUrl = getAccessAwareRedirect(route.query.redirect, accessStore, router)
 
     // Agregar delay antes de redirección
     setTimeout(() => {

@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import {
   CUSTOMER_PORTAL_LOGIN,
+  getAccessAwareRedirect,
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
@@ -98,6 +99,8 @@ definePageMeta({
 useHead({ title: 'Aceptar Invitación' })
 
 const route = useRoute()
+const router = useRouter()
+const accessStore = useAccessStore()
 
 // Estados reactivos
 const verifying = ref(true)
@@ -193,6 +196,8 @@ const acceptInvitation = async () => {
 
     // Guardar nombre del usuario para mostrar en mensaje de bienvenida
     userName.value = response.user?.name || 'Usuario'
+    await accessStore.load()
+    const redirectUrl = getAccessAwareRedirect(undefined, accessStore, router)
 
     // Marcar como exitoso
     verifying.value = false
@@ -206,7 +211,7 @@ const acceptInvitation = async () => {
 
         // Redirigir al dashboard después de completar la animación
         setTimeout(() => {
-          navigateTo('/ventas')
+          navigateTo(redirectUrl)
         }, 500)
       }
     }, 200)

@@ -12,7 +12,7 @@
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
-  getSafeInternalRedirect,
+  getAccessAwareRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 
@@ -24,12 +24,14 @@ definePageMeta({
 useHead({ title: 'Iniciar Sesión' })
 
 const checking = ref(true)
+const router = useRouter()
 
 onMounted(async () => {
   try {
     const sessionData = await $fetch('/api/auth/session')
     if (canUseInternalSession(sessionData)) {
       const authStore = useAuthStore()
+      const accessStore = useAccessStore()
       authStore.initializeFromMiddleware({
         session: sessionData,
         profileData: null,
@@ -38,7 +40,8 @@ onMounted(async () => {
           email: sessionData.user.email,
         }
       })
-      return navigateTo(getSafeInternalRedirect(useRoute().query.redirect))
+      await accessStore.load()
+      return navigateTo(getAccessAwareRedirect(useRoute().query.redirect, accessStore, router))
     }
     if (sessionData?.user) {
       return navigateTo(CUSTOMER_PORTAL_LOGIN)

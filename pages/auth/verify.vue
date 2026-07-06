@@ -82,8 +82,8 @@
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
+  getAccessAwareRedirect,
   getInternalAccessDeniedMessage,
-  getSafeInternalRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 
@@ -95,8 +95,7 @@ definePageMeta({
 useHead({ title: 'Verificando Acceso' })
 
 const route = useRoute()
-const toast = useToast()
-const { public: { defaultRedirectUrl } } = useRuntimeConfig()
+const router = useRouter()
 
 // Estados reactivos
 const verifying = ref(true)
@@ -110,7 +109,8 @@ const redirectProgress = ref(0)
 // Obtener parámetros de la URL
 const token = route.query.token
 const email = route.query.email
-const redirectUrl = getSafeInternalRedirect(route.query.redirect)
+const accessStore = useAccessStore()
+const redirectUrl = ref<string | null>(null)
 
 // ========================================
 // LÓGICA PARA EMOJIS DE COMIDA
@@ -192,6 +192,9 @@ const verifyToken = async () => {
       throw response
     }
 
+    await accessStore.load()
+    redirectUrl.value = getAccessAwareRedirect(route.query.redirect, accessStore, router)
+
     // Marcar como exitoso
     verifying.value = false
     success.value = true
@@ -204,7 +207,7 @@ const verifyToken = async () => {
 
         // Redirigir después de completar la animación
         setTimeout(() => {
-          navigateTo(redirectUrl)
+          navigateTo(redirectUrl.value || getAccessAwareRedirect(undefined, accessStore, router))
         }, 500)
       }
     }, 200)

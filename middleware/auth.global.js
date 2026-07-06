@@ -1,8 +1,7 @@
 import {
   CUSTOMER_PORTAL_LOGIN,
-  INTERNAL_APP_HOME,
   canUseInternalSession,
-  getSafeInternalRedirect,
+  getAccessAwareRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
@@ -37,7 +36,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         credentials: 'include',
       })
       if (canUseInternalSession(sessionResponse)) {
-        return navigateTo(getSafeInternalRedirect(to.query.redirect) || INTERNAL_APP_HOME)
+        await accessStore.load()
+        return navigateTo(getAccessAwareRedirect(to.query.redirect, accessStore, useRouter()))
       }
       if (sessionResponse?.user) {
         clearInternalState()

@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ShieldExclamationIcon } from '@heroicons/vue/24/outline'
+import { getFirstAccessibleHome } from '~/utils/internalAccess'
 
 /**
  * /403 — Epic 4 (warocol.com#489) sub-task #561.
@@ -98,50 +99,5 @@ const roleLabel = computed(() =>
     : 'Sin rol asignado'
 )
 
-// Module → landing-page URL. Mirrors DashboardSidebar.vue's item paths so
-// "Ir al inicio" lands on the same page the user would hit from the sidebar.
-const MODULE_HOMES: Record<string, string> = {
-  pos: '/pos',
-  ventas: '/ventas',
-  despacho: '/despacho/domicilios',
-  analitica: '/analitica',
-  finanzas: '/finanzas/arqueo',
-  facturacion: '/facturacion',
-  menu: '/menu/productos',
-  operaciones: '/operaciones/comandas',
-  abastecimiento: '/abastecimiento/compras-directas',
-  equipo: '/equipo/miembros',
-  integraciones: '/integraciones',
-  mi_negocio: '/negocio',
-  mi_plan: '/gestion/billing',
-}
-
-// Priority order: operational pages first, admin last. Cashier lands on POS,
-// kitchen on Despacho, owner on POS — everyone at their highest-frequency
-// page rather than the alphabetically-first module.
-const HOME_PRIORITY = [
-  'pos',
-  'ventas',
-  'despacho',
-  'analitica',
-  'finanzas',
-  'menu',
-  'operaciones',
-  'abastecimiento',
-  'facturacion',
-  'equipo',
-  'integraciones',
-  'mi_negocio',
-  'mi_plan',
-] as const
-
-const firstAccessibleHome = computed(() => {
-  const mods = new Set(accessStore.modules)
-  for (const m of HOME_PRIORITY) {
-    if (mods.has(m)) return MODULE_HOMES[m]
-  }
-  // Fallback for sessions with no modules (KDS-token, fresh-tenant owner
-  // pre-membership). /  is the public homepage.
-  return '/'
-})
+const firstAccessibleHome = computed(() => getFirstAccessibleHome(accessStore.modules))
 </script>

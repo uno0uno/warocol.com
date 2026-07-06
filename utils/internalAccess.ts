@@ -37,8 +37,68 @@ const CUSTOMER_ONLY_TEXT = [
   'requiere pertenecer al equipo',
 ]
 
-export const INTERNAL_APP_HOME = '/ventas'
+export const INTERNAL_APP_HOME = '/pos'
 export const CUSTOMER_PORTAL_LOGIN = '/auth/customer-verify?redirect=/mis-pedidos'
+
+export const MODULE_HOMES: Record<string, string> = {
+  pos: '/pos',
+  ventas: '/ventas',
+  despacho: '/despacho/domicilios',
+  analitica: '/analitica',
+  finanzas: '/finanzas/arqueo',
+  facturacion: '/facturacion',
+  menu: '/menu/productos',
+  operaciones: '/operaciones/comandas',
+  abastecimiento: '/abastecimiento/compras-directas',
+  equipo: '/equipo/miembros',
+  integraciones: '/integraciones',
+  mi_negocio: '/negocio',
+  mi_plan: '/gestion/billing',
+}
+
+export const HOME_PRIORITY = [
+  'pos',
+  'ventas',
+  'despacho',
+  'analitica',
+  'finanzas',
+  'menu',
+  'operaciones',
+  'abastecimiento',
+  'facturacion',
+  'equipo',
+  'integraciones',
+  'mi_negocio',
+  'mi_plan',
+] as const
+
+type AccessAwareStore = {
+  modules?: readonly string[]
+  can?: (module: any) => boolean
+}
+
+type RouteResolver = {
+  resolve: (target: string) => {
+    matched?: Array<{ meta?: Record<string, any> }>
+    meta?: Record<string, any>
+  }
+}
+
+const MODULE_PATH_PREFIXES: Array<[string, string]> = [
+  ['/gestion/billing', 'mi_plan'],
+  ['/pos', 'pos'],
+  ['/ventas', 'ventas'],
+  ['/despacho', 'despacho'],
+  ['/analitica', 'analitica'],
+  ['/finanzas', 'finanzas'],
+  ['/facturacion', 'facturacion'],
+  ['/menu', 'menu'],
+  ['/operaciones', 'operaciones'],
+  ['/abastecimiento', 'abastecimiento'],
+  ['/equipo', 'equipo'],
+  ['/integraciones', 'integraciones'],
+  ['/negocio', 'mi_negocio'],
+]
 
 const normalizeRole = (role: unknown) =>
   typeof role === 'string' ? role.trim().toLowerCase() : null
@@ -134,4 +194,60 @@ export const getSafeInternalRedirect = (redirect: unknown) => {
   if (!target.startsWith('/') || target.startsWith('//')) return INTERNAL_APP_HOME
   if (target.startsWith('/auth/customer-verify')) return INTERNAL_APP_HOME
   return target
+}
+
+export const getFirstAccessibleHome = (modules: readonly string[] | undefined | null) => {
+  const mods = new Set(modules ?? [])
+  for (const module of HOME_PRIORITY) {
+    if (mods.has(module)) return MODULE_HOMES[module]
+  }
+  return '/'
+}
+
+const getSafeRedirectTarget = (redirect: unknown) => {
+  const target = Array.isArray(redirect) ? redirect[0] : redirect
+  if (typeof target !== 'string') return null
+  if (!target.startsWith('/') || target.startsWith('//')) return null
+  if (target.startsWith('/auth/customer-verify')) return null
+  return target
+}
+
+const resolvePathModule = (target: string) => {
+  const path = target.split(/[?#]/, 1)[0] || '/'
+  const match = MODULE_PATH_PREFIXES.find(([prefix]) =>
+    path === prefix || path.startsWith(`${prefix}/`)
+  )
+  return match?.[1] ?? null
+}
+
+const resolveRouteModule = (router: RouteResolver, target: string) => {
+  const pathModule = resolvePathModule(target)
+  if (pathModule) return pathModule
+
+  const resolved = router.resolve(target)
+  const matched = resolved.matched ?? []
+  for (let i = matched.length - 1; i >= 0; i -= 1) {
+    const module = matched[i]?.meta?.module
+    if (typeof module === 'string') return module
+  }
+
+  const module = resolved.meta?.module
+  return typeof module === 'string' ? module : null
+}
+
+export const getAccessAwareRedirect = (
+  redirect: unknown,
+  accessStore: AccessAwareStore,
+  router: RouteResolver,
+) => {
+  const fallback = getFirstAccessibleHome(accessStore.modules)
+  const safeTarget = getSafeRedirectTarget(redirect)
+
+  if (!safeTarget) return fallback
+
+  const module = resolveRouteModule(router, safeTarget)
+  if (!module) return safeTarget
+
+  if (accessStore.can?.(module) === false) return fallback
+  return safeTarget
 }

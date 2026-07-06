@@ -40,20 +40,34 @@ const member = computed(() => {
   }
 })
 
+const roleDefinitions: Record<string, { label: string; badgeClass: string }> = {
+  superuser: {
+    label: 'Propietario',
+    badgeClass: 'bg-amber-100 text-amber-800',
+  },
+  admin: {
+    label: 'Administrador',
+    badgeClass: 'bg-blue-100 text-blue-800',
+  },
+  employee: {
+    label: 'Cajero / Operador',
+    badgeClass: 'bg-slate-100 text-slate-700',
+  },
+  member: {
+    label: 'Operador de equipo',
+    badgeClass: 'bg-green-100 text-green-800',
+  },
+  promotor: {
+    label: 'Promotor comercial',
+    badgeClass: 'bg-purple-100 text-purple-800',
+  },
+}
+
 const roleLabel = (role: string | null) =>
-  role === 'superuser' ? 'Super Usuario'
-  : role === 'admin' ? 'Administrador'
-  : role === 'employee' ? 'Empleado'
-  : role === 'member' ? 'Miembro'
-  : role === 'promotor' ? 'Promotor'
-  : (role ?? '—')
+  role ? roleDefinitions[role]?.label || role : '—'
 
 const memberRoleClass = (role: string | null) => ({
-  'bg-amber-100 text-amber-800': role === 'superuser',
-  'bg-blue-100 text-blue-800': role === 'admin',
-  'bg-slate-100 text-slate-700': role === 'employee',
-  'bg-green-100 text-green-800': role === 'member',
-  'bg-purple-100 text-purple-800': role === 'promotor',
+  [roleDefinitions[role || '']?.badgeClass || 'bg-green-100 text-green-800']: true,
 })
 
 // Tenant context for tip_enabled gate (cache-shared)

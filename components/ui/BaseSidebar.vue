@@ -133,28 +133,15 @@ const logoClass = computed(() => [
 
 watch(isExpanded, (isOpen) => {
   emit('expanded-change', isOpen)
-  if (props.toggle || props.overlay) {
-    console.log('[DashboardSidebar] state changed', { isOpen })
-  }
 })
 
 function toggleSidebar() {
   if (props.overlay) {
-    const nextOpen = !isOverlayOpen.value
-    console.log('[DashboardSidebar] hamburger clicked', {
-      currentOpen: isOverlayOpen.value,
-      nextOpen,
-    })
-    isOverlayOpen.value = nextOpen
+    isOverlayOpen.value = !isOverlayOpen.value
     return
   }
 
-  const nextOpen = !isToggleOpen.value
-  console.log('[DashboardSidebar] hamburger clicked', {
-    currentOpen: isToggleOpen.value,
-    nextOpen,
-  })
-  isToggleOpen.value = nextOpen
+  isToggleOpen.value = !isToggleOpen.value
 }
 
 function expandedSlotClass(maxClass: string) {
@@ -173,9 +160,6 @@ function onMouseLeave() {
 }
 
 function closeOverlay() {
-  if (props.overlay && isOverlayOpen.value) {
-    console.log('[DashboardSidebar] close requested')
-  }
   if (props.overlay) isOverlayOpen.value = false
 }
 </script>
