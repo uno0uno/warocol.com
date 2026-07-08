@@ -385,10 +385,19 @@ const saleReceiptItems = computed(() =>
     const total = itemReceiptTotal(item)
     return {
       id: item.id,
+      productId: item.product?.id ?? item.product_id ?? null,
       name: item.product?.name || item.name || 'Producto',
       quantity,
       unitPrice: total / quantity,
       total,
+      notes: item.notes ?? null,
+      promotionName: item.promotion_name ?? item.promotionName ?? null,
+      promoType: item.promotion_type ?? item.promoType ?? null,
+      promoSavings: item.promo_savings_allocated ?? item.promoSavings ?? null,
+      promoOptOut: item.promo_opt_out ?? item.promoOptOut ?? null,
+      discountAllocated: item.discount_allocated ?? null,
+      netTotal: item.net_total ?? null,
+      taxCategory: item.tax_category ?? null,
       modifiers: (item.modifiers ?? []).map((modifier: any) => ({
         id: modifier.id,
         name: modifier.name || 'Adicion',
