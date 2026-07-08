@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+
 interface ReceiptItemModifier {
   id?: string | number | null
   name: string
@@ -9,11 +11,20 @@ interface ReceiptItemModifier {
 
 interface ReceiptItem {
   id?: string | number | null
+  productId?: string | number | null
   name: string
   quantity: number | string
   unitPrice: number
   total: number
+  notes?: string | null
   modifiers?: ReceiptItemModifier[]
+  promotionName?: string | null
+  promoType?: string | null
+  promoSavings?: number | string | null
+  promoOptOut?: boolean | null
+  discountAllocated?: number | string | null
+  netTotal?: number | string | null
+  taxCategory?: string | null
 }
 
 interface ReceiptPaymentLine {
@@ -113,6 +124,32 @@ const hasSettlementBreakdown = computed(() =>
 const finalTotal = computed(() =>
   props.chargedTotal != null ? Number(props.chargedTotal) : Number(props.orderTotal) || 0,
 )
+
+const printableItems = computed(() =>
+  consolidateReceiptPrintLines(props.items, {
+    productKey: item => item.productId ?? item.name,
+    displayName: item => item.name,
+    quantity: item => item.quantity,
+    unitPrice: item => item.unitPrice,
+    total: item => item.total,
+    modifiers: item => item.modifiers,
+    notes: item => item.notes,
+    guards: item => [
+      item.promotionName,
+      item.promoType,
+      item.promoSavings,
+      item.promoOptOut,
+      item.discountAllocated,
+      item.netTotal,
+      item.taxCategory,
+    ],
+    merge: (item, aggregate) => ({
+      ...item,
+      quantity: aggregate.quantity,
+      total: aggregate.total,
+    }),
+  })
+)
 </script>
 
 <template>
@@ -149,7 +186,7 @@ const finalTotal = computed(() =>
       <span class="receipt-col-total">Total</span>
     </div>
 
-    <template v-for="item in items" :key="item.id ?? item.name">
+    <template v-for="item in printableItems" :key="item.id ?? item.name">
       <div class="receipt-grid-row receipt-small">
         <span class="receipt-col-desc">{{ item.name }}</span>
         <span class="receipt-col-qty">{{ item.quantity }}</span>

@@ -1,0 +1,131 @@
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { consolidateReceiptPrintLines } from './receiptPrintLines.ts'
+
+type TestLine = {
+  productId: string
+  name: string
+  quantity: number
+  unitPrice: number
+  total: number
+  notes?: string | null
+  modifiers?: Array<{ id?: string; name: string; price: number; quantity?: number }>
+}
+
+const group = (items: TestLine[]) =>
+  consolidateReceiptPrintLines(items, {
+    productKey: item => item.productId,
+    displayName: item => item.name,
+    quantity: item => item.quantity,
+    unitPrice: item => item.unitPrice,
+    total: item => item.total,
+    modifiers: item => item.modifiers,
+    notes: item => item.notes,
+    merge: (item, aggregate) => ({
+      ...item,
+      quantity: aggregate.quantity,
+      total: aggregate.total,
+    }),
+  })
+
+const groupWithPromoGuard = (items: Array<TestLine & { promo?: string | null }>) =>
+  consolidateReceiptPrintLines(items, {
+    productKey: item => item.productId,
+    displayName: item => item.name,
+    quantity: item => item.quantity,
+    unitPrice: item => item.unitPrice,
+    total: item => item.total,
+    modifiers: item => item.modifiers,
+    notes: item => item.notes,
+    guards: item => [item.promo],
+    merge: (item, aggregate) => ({
+      ...item,
+      quantity: aggregate.quantity,
+      total: aggregate.total,
+    }),
+  })
+
+describe('consolidateReceiptPrintLines', () => {
+  it('groups plain duplicate products for receipt printing', () => {
+    const lines = group([
+      { productId: 'burger', name: 'Burger', quantity: 1, unitPrice: 12000, total: 12000 },
+      { productId: 'burger', name: 'Burger', quantity: 2, unitPrice: 12000, total: 24000 },
+    ])
+
+    assert.equal(lines.length, 1)
+    assert.equal(lines[0].quantity, 3)
+    assert.equal(lines[0].total, 36000)
+  })
+
+  it('groups products with the same modifiers regardless of modifier order', () => {
+    const lines = group([
+      {
+        productId: 'pizza',
+        name: 'Pizza',
+        quantity: 1,
+        unitPrice: 20000,
+        total: 20000,
+        modifiers: [
+          { id: 'cheese', name: 'Queso', price: 2000, quantity: 1 },
+          { id: 'pepperoni', name: 'Pepperoni', price: 3000, quantity: 2 },
+        ],
+      },
+      {
+        productId: 'pizza',
+        name: 'Pizza',
+        quantity: 1,
+        unitPrice: 20000,
+        total: 20000,
+        modifiers: [
+          { id: 'pepperoni', name: 'Pepperoni', price: 3000, quantity: 2 },
+          { id: 'cheese', name: 'Queso', price: 2000, quantity: 1 },
+        ],
+      },
+    ])
+
+    assert.equal(lines.length, 1)
+    assert.equal(lines[0].quantity, 2)
+    assert.equal(lines[0].total, 40000)
+  })
+
+  it('keeps products with different modifiers separated', () => {
+    const lines = group([
+      {
+        productId: 'pizza',
+        name: 'Pizza',
+        quantity: 1,
+        unitPrice: 20000,
+        total: 20000,
+        modifiers: [{ id: 'cheese', name: 'Queso', price: 2000 }],
+      },
+      {
+        productId: 'pizza',
+        name: 'Pizza',
+        quantity: 1,
+        unitPrice: 20000,
+        total: 20000,
+        modifiers: [{ id: 'bacon', name: 'Tocineta', price: 4000 }],
+      },
+    ])
+
+    assert.equal(lines.length, 2)
+  })
+
+  it('keeps products with different notes separated', () => {
+    const lines = group([
+      { productId: 'juice', name: 'Jugo', quantity: 1, unitPrice: 8000, total: 8000, notes: 'sin hielo' },
+      { productId: 'juice', name: 'Jugo', quantity: 1, unitPrice: 8000, total: 8000, notes: 'con hielo' },
+    ])
+
+    assert.equal(lines.length, 2)
+  })
+
+  it('keeps products with different promo guards separated', () => {
+    const lines = groupWithPromoGuard([
+      { productId: 'burger', name: 'Burger', quantity: 1, unitPrice: 12000, total: 12000, promo: 'happy-hour' },
+      { productId: 'burger', name: 'Burger', quantity: 1, unitPrice: 12000, total: 12000, promo: null },
+    ])
+
+    assert.equal(lines.length, 2)
+  })
+})

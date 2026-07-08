@@ -16,6 +16,7 @@ import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/utils/promoProductMatch'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
+import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 
 interface TopProduct {
   name: string
@@ -1682,6 +1683,42 @@ const formatModifierPrintDesc = (mod: PrintModifier) => {
   const qty = Number(mod.quantity) || 1
   return qty > 1 ? `+ ${mod.name} ×${qty}` : `+ ${mod.name}`
 }
+
+const receiptPrintLineGuards = (item: any) => [
+  item.promo_opt_out,
+  item.promoOptOut,
+  item.promotionName,
+  item.promoType,
+  item.promoSavings,
+  item.applied_promotion_id,
+  item.discount_allocated,
+  item.net_total,
+  item.tax_category,
+]
+
+const consolidateCheckoutPrintItems = (items: any[]) =>
+  consolidateReceiptPrintLines(items, {
+    productKey: item => item.product?.id ?? item.productId ?? item.product_id ?? item.id,
+    displayName: item => item.product?.name ?? item.productName ?? item.name,
+    quantity: item => item.quantity,
+    unitPrice: item => getItemUnitPrice(item),
+    total: item => getItemTotal(item),
+    modifiers: item => item.modifiers ?? [],
+    notes: item => item.notes,
+    guards: receiptPrintLineGuards,
+    merge: (item, aggregate) => ({
+      ...item,
+      quantity: aggregate.quantity,
+    }),
+  })
+
+const printablePrefacturaItems = computed(() =>
+  consolidateCheckoutPrintItems(cartItems.value)
+)
+
+const printableReceiptItems = computed(() =>
+  consolidateCheckoutPrintItems(cartItemsSnapshot.value)
+)
 
 function checkoutErrorMessage(error: any, fallback: string) {
   const detail = error?.data?.detail
@@ -4903,7 +4940,7 @@ onUnmounted(() => {
       <span class="receipt-col-price">Precio</span>
       <span class="receipt-col-total">Total</span>
     </div>
-    <template v-for="item in cartItems" :key="item.id ?? item.orderItemId">
+    <template v-for="item in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
       <div class="receipt-grid-row receipt-small">
         <span class="receipt-col-desc">
           {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
@@ -5046,7 +5083,7 @@ onUnmounted(() => {
       <span class="receipt-col-price">Precio</span>
       <span class="receipt-col-total">Total</span>
     </div>
-    <template v-for="item in cartItemsSnapshot" :key="item.id ?? item.orderItemId">
+    <template v-for="item in printableReceiptItems" :key="item.id ?? item.orderItemId">
       <div class="receipt-grid-row receipt-small">
         <span class="receipt-col-desc">{{ item.product?.name || item.name }}</span>
         <span class="receipt-col-qty">{{ item.quantity }}</span>
