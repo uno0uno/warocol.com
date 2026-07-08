@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
+import {
+  areTableOrdersEqual,
+  canMoveTableOrderItem,
+  getTableOrderIds,
+  moveTableOrderItem,
+} from '~/composables/useTableOrderDraft'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
@@ -73,9 +79,11 @@ const clearTableFilters = () => {
   statusFilter.value = ''
 }
 
+const activeRegularTables = computed(() => tables.value.filter((t: any) => !t.is_bar && t.is_active))
+
 // Active tables: is_active true, not bar
 const activeTables = computed(() => {
-  let result = tables.value.filter((t: any) => !t.is_bar && t.is_active)
+  let result = activeRegularTables.value
   const q = searchTerm.value.trim().toLowerCase()
   if (q) result = result.filter((t: any) => t.name.toLowerCase().includes(q))
   if (statusFilter.value) result = result.filter((t: any) => t.status === statusFilter.value)
@@ -136,6 +144,66 @@ const onTableQrUpdated = async (data: Record<string, unknown>) => {
   }
   await refreshTablesAndBilling()
 }
+
+// ── Manual order mode ────────────────────────────────────────────────────────
+const isTableOrderMode = ref(false)
+const tableOrderDraft = ref<any[]>([])
+const isSavingTableOrder = ref(false)
+const tableOrderError = ref('')
+
+const resetTableOrderDraft = () => {
+  tableOrderDraft.value = [...activeRegularTables.value]
+  tableOrderError.value = ''
+}
+
+const isTableOrderDirty = computed(() =>
+  !areTableOrdersEqual(tableOrderDraft.value, activeRegularTables.value)
+)
+
+const canMoveDraftTable = (tableId: string, direction: -1 | 1) =>
+  canMoveTableOrderItem(tableOrderDraft.value, tableId, direction)
+
+const moveDraftTable = (tableId: string, direction: -1 | 1) => {
+  tableOrderDraft.value = moveTableOrderItem(tableOrderDraft.value, tableId, direction)
+}
+
+const openTableOrderMode = () => {
+  clearTableFilters()
+  resetTableOrderDraft()
+  isTableOrderMode.value = true
+}
+
+const closeTableOrderMode = () => {
+  isTableOrderMode.value = false
+  resetTableOrderDraft()
+}
+
+const saveTableOrder = async () => {
+  if (isSavingTableOrder.value || !isTableOrderDirty.value) return
+  isSavingTableOrder.value = true
+  tableOrderError.value = ''
+  try {
+    await $fetch('/api/tables/reorder', {
+      method: 'PATCH',
+      body: { table_ids: getTableOrderIds(tableOrderDraft.value) },
+    })
+    await cache.invalidateQueries({ key: ['tables'] })
+    await refetch()
+    isTableOrderMode.value = false
+    toast.success(`Orden de ${pluralLower.value} guardado para el POS`, { title: 'Orden actualizado' })
+  } catch (err: any) {
+    tableOrderError.value = tableErrorMessage(err, `Error al guardar el orden de ${pluralLower.value}`)
+    toast.error(tableOrderError.value, { title: 'No se pudo guardar' })
+  } finally {
+    isSavingTableOrder.value = false
+  }
+}
+
+watch(activeRegularTables, () => {
+  if (!isTableOrderMode.value || !isTableOrderDirty.value) {
+    resetTableOrderDraft()
+  }
+}, { immediate: true })
 
 // ── Deactivate modal ────────────────────────────────────────────────────────
 const deactivateModalOpen = ref(false)
@@ -513,6 +581,16 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         </template>
         <template #trailing>
           <button
+            v-if="!isTableOrderMode"
+            type="button"
+            :disabled="activeRegularTables.length < 2"
+            :title="activeRegularTables.length < 2 ? `Necesitas al menos 2 ${pluralLower} activas` : `Ordenar ${pluralLower} en POS`"
+            class="h-9 px-3 rounded-lg border border-border bg-surface text-sm font-semibold text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="openTableOrderMode"
+          >
+            Ordenar
+          </button>
+          <button
             type="button"
             :disabled="isActiveTableQuotaBlocked"
             :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Crear ${singularLower}`"
@@ -537,6 +615,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       </div>
 
       <UiResponsiveDataView
+        v-if="!isTableOrderMode"
         :columns="tableColumns"
         :data="activeTables"
         :empty-message="`No hay ${pluralLower} configuradas`"
@@ -676,8 +755,101 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           </template>
       </UiResponsiveDataView>
 
+      <section
+        v-else
+        class="rounded-xl border border-border bg-surface overflow-hidden"
+        aria-labelledby="table-order-title"
+      >
+        <div class="flex flex-col gap-3 border-b border-border px-4 py-3 md:flex-row md:items-center md:justify-between">
+          <div class="min-w-0">
+            <h2 id="table-order-title" class="text-sm font-bold text-text-primary">
+              Ordenar {{ pluralLower }} en POS
+            </h2>
+            <p class="mt-0.5 text-xs text-text-secondary leading-snug">
+              La barra queda fija y estas {{ pluralLower }} se verán de izquierda a derecha en el punto de venta.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              :disabled="isSavingTableOrder || !isTableOrderDirty"
+              class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="resetTableOrderDraft"
+            >
+              Restablecer
+            </button>
+            <button
+              type="button"
+              :disabled="isSavingTableOrder"
+              class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="closeTableOrderMode"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              :disabled="isSavingTableOrder || !isTableOrderDirty"
+              class="h-9 px-4 rounded-lg bg-primary text-xs font-bold text-primary-foreground hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+              @click="saveTableOrder"
+            >
+              <UiLoadingDots v-if="isSavingTableOrder" size="6px" color="currentColor" />
+              <template v-else>Guardar orden</template>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="tableOrderError" class="border-b border-destructive/20 bg-destructive/8 px-4 py-3">
+          <p class="text-sm font-medium text-destructive">{{ tableOrderError }}</p>
+        </div>
+
+        <ol class="divide-y divide-border" aria-label="Orden de mesas activas">
+          <li
+            v-for="(table, index) in tableOrderDraft"
+            :key="table.id"
+            class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3"
+          >
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-secondary text-xs font-black text-text-secondary tabular-nums">
+              {{ index + 1 }}
+            </span>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="truncate text-sm font-bold text-text-primary">{{ table.name }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary tabular-nums">
+                  {{ displayTableCode(table) }}
+                </span>
+              </div>
+              <p class="mt-0.5 text-xs text-text-secondary">
+                {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
+              </p>
+            </div>
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                :aria-label="`Subir ${table.name}`"
+                title="Subir"
+                :disabled="!canMoveDraftTable(table.id, -1) || isSavingTableOrder"
+                class="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                @click="moveDraftTable(table.id, -1)"
+              >
+                <Icon name="heroicons:arrow-up" class="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                :aria-label="`Bajar ${table.name}`"
+                title="Bajar"
+                :disabled="!canMoveDraftTable(table.id, 1) || isSavingTableOrder"
+                class="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                @click="moveDraftTable(table.id, 1)"
+              >
+                <Icon name="heroicons:arrow-down" class="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          </li>
+        </ol>
+      </section>
+
       <!-- ══════ INACTIVE TABLES ══════ -->
-      <template v-if="inactiveTables.length > 0">
+      <template v-if="!isTableOrderMode && inactiveTables.length > 0">
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="inactiveTables"
