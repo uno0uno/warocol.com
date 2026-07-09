@@ -444,9 +444,13 @@ const extractErrorMessage = (error: any) => {
   if (error?.data?.detail) {
     if (typeof error.data.detail === 'string') return error.data.detail
     if (Array.isArray(error.data.detail)) {
-      return error.data.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ')
+      return error.data.detail.map((e: any) => e.msg || e.message || 'Revisa los datos del gasto.').join(', ')
     }
-    return JSON.stringify(error.data.detail)
+    return error.data.detail.message
+      || error.data.detail.msg
+      || error.data.detail.error
+      || error.data.detail.detail
+      || 'No se pudo guardar el gasto. Revisa los datos e intenta nuevamente.'
   }
   return error?.message || 'Error al guardar el gasto. Por favor intenta nuevamente.'
 }
