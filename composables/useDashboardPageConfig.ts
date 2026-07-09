@@ -351,7 +351,7 @@ export const useDashboardPageConfig = () => {
       }
     } else if (path.includes('/analytics') || path.includes('/analitica')) {
       return {
-        pageTitle: 'Mis Ventas',
+        pageTitle: 'Analítica',
         pageSubtitle: undefined,
         searchPlaceholder: 'Buscar métricas...',
         activePage: 'analytics' as const,

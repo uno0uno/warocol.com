@@ -45,7 +45,7 @@ export const dashboardPrimaryItems: DashboardNavItem[] = [
 ]
 
 export const dashboardSecondaryItems: DashboardNavItem[] = [
-  { to: '/analitica', page: 'analytics', label: 'Analítica Ventas', icon: ChartBarIcon, module: 'analitica' },
+  { to: '/analitica', page: 'analytics', label: 'Analítica', icon: ChartBarIcon, module: 'analitica' },
   { to: '/asistente/kali', page: 'asistente', label: 'Kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/arqueo', page: 'finanzas', label: 'Finanzas', icon: BanknotesIcon, module: 'finanzas' },
   { to: '/facturacion', page: 'facturacion', label: 'Facturación', icon: DocumentTextIcon, module: 'facturacion' },

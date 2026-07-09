@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
-useHead({ title: 'Productos - Ventas' })
+useHead({ title: 'Productos vendidos - Ventas' })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -130,6 +130,12 @@ const API_SORT_TO_TABLE: Record<'qty_desc' | 'revenue_desc' | 'name_asc', { fiel
 
 const tableSortField = computed(() => API_SORT_TO_TABLE[sortFilter.value].field)
 const tableSortDirection = computed(() => API_SORT_TO_TABLE[sortFilter.value].direction)
+const ingredientAnalyticsLink = computed(() => ({
+  path: '/analitica/ingredientes',
+  query: dateRange.value.from && dateRange.value.to
+    ? { date_from: dateRange.value.from, date_to: dateRange.value.to }
+    : {},
+}))
 
 function handleTableSort(field: string) {
   const nextSort = TABLE_SORT_TO_API[field]
@@ -198,6 +204,18 @@ onUnmounted(() => {
           variant="primary"
         />
       </div>
+
+      <NuxtLink
+        :to="ingredientAnalyticsLink"
+        class="flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm transition-colors hover:border-primary hover:bg-surface-secondary sm:flex-row sm:items-center sm:justify-between"
+        aria-label="Ver consumo y costo por ingrediente"
+      >
+        <span>
+          <span class="font-semibold text-text-primary">Productos vendidos</span>
+          <span class="text-text-secondary"> muestran mix e ingresos; ingredientes muestra consumo y costo.</span>
+        </span>
+        <span class="font-semibold text-primary whitespace-nowrap">Ver ingredientes</span>
+      </NuxtLink>
 
       <!-- Filters bar -->
       <UiAdvancedFiltersBar
