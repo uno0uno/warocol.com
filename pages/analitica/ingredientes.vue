@@ -97,11 +97,14 @@
         empty-message="No hay consumo de ingredientes"
         empty-sub-message="No se encontraron movimientos de consumo o compras para el periodo seleccionado"
         variant="default"
+        @row-click="openIngredientDetail"
       >
         <template #card="{ item, index }">
-          <div
-            class="flex items-start gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+          <button
+            type="button"
+            class="w-full flex items-start gap-3 py-3 px-3 border-b border-border text-left transition-colors hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-ring"
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+            @click="openIngredientDetail(item)"
           >
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
@@ -121,8 +124,9 @@
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
               <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.estimated_consumed_cost) }}</span>
               <span class="text-xs text-text-secondary">{{ formatUnitCost(item.weighted_avg_cost_per_unit, item.unit) }}</span>
+              <span class="text-xs font-semibold text-primary">Ver detalle</span>
             </div>
-          </div>
+          </button>
         </template>
 
         <template #cell-ingredient_name="{ item }">
@@ -176,6 +180,146 @@
           />
         </template>
       </UiResponsiveDataView>
+
+      <Teleport to="body">
+        <div
+          v-if="detailOpen"
+          class="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-overlay-backdrop/50 p-0 md:p-4"
+          @click.self="closeIngredientDetail"
+        >
+          <section class="w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-t-lg md:rounded-lg bg-surface shadow-xl border border-border">
+            <header class="flex items-start justify-between gap-3 border-b border-border px-4 py-3 md:px-5">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase text-text-secondary">Detalle de ingrediente</p>
+                <h2 class="text-lg font-bold text-text-primary truncate">
+                  {{ selectedIngredient?.ingredient_name || detailIngredient?.name || 'Ingrediente' }}
+                </h2>
+                <p class="text-xs text-text-secondary">
+                  {{ selectedIngredient?.category || detailIngredient?.category || 'Sin categoria' }} ·
+                  {{ detailPeriodLabel }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="min-h-[40px] min-w-[40px] rounded-md border border-border text-text-secondary hover:bg-surface-secondary"
+                aria-label="Cerrar detalle"
+                @click="closeIngredientDetail"
+              >
+                x
+              </button>
+            </header>
+
+            <div class="max-h-[calc(92vh-76px)] overflow-y-auto p-4 md:p-5">
+              <div v-if="detailLoading" class="flex items-center justify-center py-12">
+                <CommonsTheCustomLoader size="medium" />
+              </div>
+
+              <div v-else-if="detailError" class="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                No se pudo cargar el detalle del ingrediente.
+              </div>
+
+              <div v-else class="space-y-4">
+                <section class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <div class="rounded-md border border-border bg-surface-secondary/40 p-3">
+                    <p class="text-xs text-text-secondary">Stock actual</p>
+                    <p class="mt-1 text-base font-bold text-text-primary">
+                      {{ formatQuantity(detailStock?.current_stock) }} {{ detailIngredientUnit }}
+                    </p>
+                  </div>
+                  <div class="rounded-md border border-border bg-surface-secondary/40 p-3">
+                    <p class="text-xs text-text-secondary">Minimo</p>
+                    <p class="mt-1 text-base font-bold text-text-primary">
+                      {{ formatQuantity(detailStock?.minimum_stock) }} {{ detailIngredientUnit }}
+                    </p>
+                  </div>
+                  <div class="rounded-md border border-border bg-surface-secondary/40 p-3">
+                    <p class="text-xs text-text-secondary">Ultimo costo</p>
+                    <p class="mt-1 text-base font-bold text-text-primary">
+                      {{ formatUnitCost(selectedIngredient?.latest_cost_per_unit ?? null, detailIngredientUnit) }}
+                    </p>
+                  </div>
+                  <div class="rounded-md border border-border bg-surface-secondary/40 p-3">
+                    <p class="text-xs text-text-secondary">Ubicacion</p>
+                    <p class="mt-1 text-base font-bold text-text-primary truncate">
+                      {{ detailStock?.location || '-' }}
+                    </p>
+                  </div>
+                </section>
+
+                <section class="rounded-md border border-border">
+                  <div class="border-b border-border px-3 py-2">
+                    <h3 class="text-sm font-bold text-text-primary">Historial de compras</h3>
+                  </div>
+                  <div v-if="detailPurchases.length" class="divide-y divide-border">
+                    <div v-for="purchase in detailPurchases" :key="purchase.purchase_item_id" class="grid gap-2 px-3 py-3 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
+                      <div class="min-w-0">
+                        <p class="text-sm font-semibold text-text-primary truncate">{{ purchase.purchase_number || 'Compra' }}</p>
+                        <p class="text-xs text-text-secondary">{{ formatDateTime(purchase.received_at || purchase.purchase_date) }}</p>
+                      </div>
+                      <p class="text-sm text-text-secondary">
+                        {{ formatQuantity(purchase.purchase_quantity ?? purchase.base_quantity) }}
+                        {{ purchase.purchase_unit || purchase.base_unit || detailIngredientUnit }}
+                      </p>
+                      <p class="text-sm font-semibold text-text-primary">
+                        {{ formatUnitCost(purchase.unit_cost, purchase.base_unit || detailIngredientUnit) }}
+                      </p>
+                      <p class="text-sm font-semibold text-text-primary md:text-right">
+                        {{ formatCurrency(purchase.total_cost ?? 0) }}
+                      </p>
+                    </div>
+                  </div>
+                  <p v-else class="px-3 py-4 text-sm text-text-secondary">No hay compras registradas en el periodo.</p>
+                </section>
+
+                <section class="rounded-md border border-border">
+                  <div class="border-b border-border px-3 py-2">
+                    <h3 class="text-sm font-bold text-text-primary">Movimientos de stock</h3>
+                  </div>
+                  <div v-if="detailStockMovements.length" class="divide-y divide-border">
+                    <div v-for="movement in detailStockMovements" :key="movement.id" class="grid gap-2 px-3 py-3 md:grid-cols-[1fr_1fr_1fr_1.4fr]">
+                      <div>
+                        <p class="text-sm font-semibold text-text-primary">{{ movementTypeLabel(movement.movement_type) }}</p>
+                        <p class="text-xs text-text-secondary">{{ formatDateTime(movement.created_at) }}</p>
+                      </div>
+                      <p class="text-sm font-semibold" :class="Number(movement.quantity_change) < 0 ? 'text-destructive' : 'text-success'">
+                        {{ signedQuantity(movement.quantity_change, movement.unit || detailIngredientUnit) }}
+                      </p>
+                      <p class="text-sm text-text-secondary">
+                        {{ formatQuantity(movement.previous_stock) }} -> {{ formatQuantity(movement.new_stock) }}
+                      </p>
+                      <p class="text-sm text-text-secondary">
+                        {{ movement.reason || movement.notes || movement.reference_table || '-' }}
+                      </p>
+                    </div>
+                  </div>
+                  <p v-else class="px-3 py-4 text-sm text-text-secondary">No hay movimientos registrados en el periodo.</p>
+                </section>
+
+                <section class="rounded-md border border-border">
+                  <div class="border-b border-border px-3 py-2">
+                    <h3 class="text-sm font-bold text-text-primary">Productos y recetas relacionadas</h3>
+                  </div>
+                  <div v-if="detailRelatedProducts.length" class="divide-y divide-border">
+                    <div v-for="product in detailRelatedProducts" :key="`${product.product_id}-${product.relation_type}-${product.quantity}`" class="grid gap-2 px-3 py-3 md:grid-cols-[1.4fr_1fr_1fr]">
+                      <div class="min-w-0">
+                        <p class="text-sm font-semibold text-text-primary truncate">{{ product.product_name }}</p>
+                        <p class="text-xs text-text-secondary">{{ relationLabel(product.relation_type) }}</p>
+                      </div>
+                      <p class="text-sm text-text-secondary">
+                        {{ formatQuantity(product.quantity) }} {{ product.unit || detailIngredientUnit }}
+                      </p>
+                      <p class="text-sm font-semibold text-text-primary md:text-right">
+                        {{ formatContribution(product.quantity) }}
+                      </p>
+                    </div>
+                  </div>
+                  <p v-else class="px-3 py-4 text-sm text-text-secondary">No hay productos o recetas asociados.</p>
+                </section>
+              </div>
+            </div>
+          </section>
+        </div>
+      </Teleport>
     </template>
   </div>
 </template>
@@ -209,9 +353,46 @@ type DisplayRow = IngredientAnalyticsRow & {
   cost_trend_pct: number | null
 }
 
+type IngredientHistoryPurchase = {
+  purchase_item_id: string
+  purchase_id: string
+  purchase_number?: string | null
+  purchase_date?: string | null
+  base_quantity: number
+  base_unit?: string | null
+  purchase_quantity?: number | null
+  purchase_unit?: string | null
+  unit_cost?: number | null
+  total_cost?: number | null
+  received_at?: string | null
+}
+
+type IngredientStockMovement = {
+  id: string
+  movement_type: string
+  quantity_change: number
+  consumed_quantity?: number
+  unit?: string | null
+  previous_stock?: number | null
+  new_stock?: number | null
+  cost_per_unit?: number | null
+  reference_table?: string | null
+  reason?: string | null
+  notes?: string | null
+  created_at?: string | null
+}
+
+type RelatedProduct = {
+  product_id: string
+  product_name: string
+  relation_type: string
+  quantity?: number | null
+  unit?: string | null
+}
+
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
-const { formatCurrency } = useFormatters()
+const { formatCurrency, formatDateTime } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
@@ -221,6 +402,8 @@ const ingredientFilter = ref('')
 const categoryFilter = ref('')
 const sortOption = ref('estimated_consumed_cost_desc')
 const lastUpdate = ref<Date>(new Date())
+const detailOpen = ref(false)
+const selectedIngredient = ref<DisplayRow | null>(null)
 
 const sortOptions = [
   { value: 'estimated_consumed_cost_desc', label: 'Mayor costo estimado' },
@@ -289,11 +472,48 @@ const { data: analyticsData, error: fetchError, status: queryStatus, asyncStatus
   staleTime: 30_000,
 })
 
+const selectedIngredientId = computed(() => selectedIngredient.value?.ingredient_id || null)
+
+const {
+  data: ingredientDetailData,
+  error: detailError,
+  status: detailStatus,
+} = useQuery({
+  key: () => ['analytics', 'ingredient-history', currentTenant.value?.id, selectedIngredientId.value, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+  }],
+  query: () => $fetch(`/api/analytics/ingredients/${selectedIngredientId.value}/history`, {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      limit: 100,
+    },
+  }),
+  enabled: () => !!currentTenant.value && detailOpen.value && !!selectedIngredientId.value,
+  staleTime: 30_000,
+})
+
 const rows = computed<IngredientAnalyticsRow[]>(() => ((analyticsData.value as any)?.data?.items ?? []))
 const period = computed(() => (analyticsData.value as any)?.data?.period ?? null)
 const isLoading = computed(() => queryStatus.value === 'pending' && !analyticsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && analyticsData.value != null)
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const detailData = computed(() => (ingredientDetailData.value as any)?.data ?? null)
+const detailLoading = computed(() => detailStatus.value === 'pending' && detailOpen.value)
+const detailIngredient = computed(() => detailData.value?.ingredient ?? null)
+const detailStock = computed(() => detailData.value?.stock ?? null)
+const detailPurchases = computed<IngredientHistoryPurchase[]>(() => detailData.value?.purchases ?? [])
+const detailStockMovements = computed<IngredientStockMovement[]>(() => {
+  return detailData.value?.stock_movements ?? detailData.value?.consumption_movements ?? []
+})
+const detailRelatedProducts = computed<RelatedProduct[]>(() => detailData.value?.related_products ?? [])
+const detailIngredientUnit = computed(() => selectedIngredient.value?.unit || detailIngredient.value?.unit || 'und')
+const detailPeriodLabel = computed(() => {
+  const detailPeriod = detailData.value?.period
+  if (detailPeriod?.from && detailPeriod?.to) return `${detailPeriod.from} a ${detailPeriod.to}`
+  return summary.value.periodLabel
+})
 
 const displayRows = computed<DisplayRow[]>(() => {
   const q = appliedSearch.value.trim().toLowerCase()
@@ -363,6 +583,15 @@ const clearFilters = () => {
   sortOption.value = 'estimated_consumed_cost_desc'
 }
 
+const openIngredientDetail = (row: DisplayRow) => {
+  selectedIngredient.value = row
+  detailOpen.value = true
+}
+
+const closeIngredientDetail = () => {
+  detailOpen.value = false
+}
+
 const ingredientTableColumns = [
   { key: 'ingredient_name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' },
   { key: 'consumed_quantity', title: 'Consumo', sortable: false, format: 'text', align: 'right' },
@@ -388,6 +617,38 @@ function formatQuantity(value: number | string | null | undefined, maxFractionDi
 function formatUnitCost(value: number | null | undefined, unit: string | null | undefined): string {
   if (value === null || value === undefined) return '-'
   return `${formatCurrency(value)}/${unit || 'und'}`
+}
+
+function signedQuantity(value: number | string | null | undefined, unit: string | null | undefined): string {
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue)) return `0 ${unit || 'und'}`
+  const sign = numericValue > 0 ? '+' : ''
+  return `${sign}${formatQuantity(numericValue)} ${unit || 'und'}`
+}
+
+function movementTypeLabel(value: string): string {
+  const labels: Record<string, string> = {
+    purchase: 'Compra',
+    consumption: 'Consumo',
+    adjustment: 'Ajuste',
+    loss: 'Perdida',
+    transfer: 'Transferencia',
+    return: 'Devolucion',
+  }
+  return labels[value] || value || 'Movimiento'
+}
+
+function relationLabel(value: string): string {
+  if (value === 'direct_recipe') return 'Receta directa'
+  if (value === 'base_recipe') return 'Receta base'
+  return value || 'Relacion'
+}
+
+function formatContribution(quantity: number | null | undefined): string {
+  const qty = Number(quantity)
+  const unitCost = Number(selectedIngredient.value?.weighted_avg_cost_per_unit ?? selectedIngredient.value?.latest_cost_per_unit)
+  if (!Number.isFinite(qty) || !Number.isFinite(unitCost) || unitCost <= 0) return '-'
+  return formatCurrency(qty * unitCost)
 }
 
 function formatCostTrend(value: number | null): string {
