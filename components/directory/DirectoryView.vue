@@ -22,6 +22,7 @@ const siteUrl = (config.public as Record<string, unknown>).siteUrl as string || 
 const { findCity } = useCityCatalog()
 const catalogEntry = computed(() => findCity(props.citySlug))
 const cityName = computed(() => catalogEntry.value?.city ?? props.citySlug)
+const heroImageSrc = '/hero_bogota_waro_colombia.png'
 
 const {
   data: responseData,
@@ -73,7 +74,7 @@ useHead(() => ({
     <!-- Hero Section -->
     <div class="relative overflow-hidden min-h-[280px] md:min-h-[380px] flex items-center">
       <img
-        src="/hero_bogota_waro_colombia.png"
+        :src="heroImageSrc"
         alt=""
         aria-hidden="true"
         class="absolute inset-0 w-full h-full object-cover"
