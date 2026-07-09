@@ -229,9 +229,7 @@ onUnmounted(() => {
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Cliente</p>
           <p class="text-lg font-bold text-text-primary truncate">{{ order.verified_email ?? '—' }}</p>
-          <UiStatusBadge variant="info" format="text" class="mt-1 border-0" size="sm">
-            {{ ORDER_TYPE_LABELS[order.order_type] ?? order.order_type }}
-          </UiStatusBadge>
+          <p class="text-sm text-text-secondary mt-1 truncate">{{ order.customer_phone || 'Sin teléfono' }}</p>
         </div>
 
         <!-- Card 2: Pedido -->

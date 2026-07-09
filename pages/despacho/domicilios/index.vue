@@ -94,7 +94,8 @@ const displayOrders = computed(() => {
     if (!q) return true
     const num = String(order.order_number ?? '')
     const email = String(order.verified_email ?? '').toLowerCase()
-    return num.includes(q) || email.includes(q)
+    const phone = String(order.customer_phone ?? '').toLowerCase()
+    return num.includes(q) || email.includes(q) || phone.includes(q)
   })
 })
 
@@ -219,7 +220,7 @@ const viewOrder = (order: any) => {
                   <span class="text-text-secondary font-normal"> · {{ item.verified_email ?? '—' }}</span>
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }} · {{ formatDateTime(item.order_date) }}
+                  {{ item.customer_phone || 'Sin teléfono' }} · {{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }} · {{ formatDateTime(item.order_date) }}
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -253,8 +254,11 @@ const viewOrder = (order: any) => {
           <template #cell-total_amount="{ value }">
             <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
           </template>
-          <template #cell-verified_email="{ value }">
-            <span class="text-sm text-text-secondary">{{ value ?? '—' }}</span>
+          <template #cell-verified_email="{ value, row }">
+            <div class="min-w-0">
+              <p class="text-sm text-text-secondary truncate">{{ value ?? '—' }}</p>
+              <p class="text-xs text-text-tertiary truncate">{{ row.customer_phone || 'Sin teléfono' }}</p>
+            </div>
           </template>
         </UiResponsiveDataView>
     </div>
