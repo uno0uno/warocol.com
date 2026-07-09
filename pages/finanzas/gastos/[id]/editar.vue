@@ -278,9 +278,13 @@ const handleSubmit = async () => {
       if (typeof error.data.detail === 'string') {
         errorMessage = error.data.detail
       } else if (Array.isArray(error.data.detail)) {
-        errorMessage = error.data.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ')
+        errorMessage = error.data.detail.map((e: any) => e.msg || e.message || 'Revisa los datos del gasto.').join(', ')
       } else {
-        errorMessage = JSON.stringify(error.data.detail)
+        errorMessage = error.data.detail.message
+          || error.data.detail.msg
+          || error.data.detail.error
+          || error.data.detail.detail
+          || 'No se pudo actualizar el gasto. Revisa los datos e intenta nuevamente.'
       }
     } else if (error?.message) {
       errorMessage = error.message
