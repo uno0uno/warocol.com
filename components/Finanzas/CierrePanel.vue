@@ -80,6 +80,18 @@
                   <span class="text-text-secondary">Total ventas</span>
                   <span class="font-bold text-text-primary">{{ formatCurrency(detail.totalSales) }}</span>
                 </div>
+                <div v-if="hasCapturedTips(detail)" class="flex justify-between px-6 py-2.5 text-sm">
+                  <span class="text-text-secondary">Propinas</span>
+                  <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalTips) }}</span>
+                </div>
+                <div v-if="(detail.totalTipTax ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
+                  <span class="text-text-secondary">Impuesto propina</span>
+                  <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalTipTax) }}</span>
+                </div>
+                <div v-if="hasCapturedTips(detail)" class="flex justify-between px-6 py-2.5 text-sm font-semibold">
+                  <span class="text-text-primary">Total cobrado</span>
+                  <span class="text-text-primary">{{ formatCurrency(detail.totalCharged) }}</span>
+                </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
                   <span class="text-text-secondary">Órdenes</span>
                   <span class="font-medium text-text-primary">{{ detail.itemsSold }}</span>
@@ -244,6 +256,9 @@ const handleDelete = async () => {
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+
+const hasCapturedTips = (data?: Record<string, any> | null) =>
+  Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 const { timezone } = useTenantTimezone()
