@@ -7,6 +7,38 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <template v-else>
+      <section class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 mb-6">
+        <MetricCard
+          title="Ingredientes"
+          :value="summary.totalIngredients"
+          format="number"
+          variant="primary"
+          :subtitle="summary.periodLabel"
+        />
+        <MetricCard
+          title="Costo estimado"
+          :value="summary.estimatedCostLabel"
+          format="text"
+          variant="primary"
+          :subtitle="`${summary.movementCount} movimientos`"
+        />
+        <MetricCard
+          title="Con consumo"
+          :value="summary.recordedRows"
+          format="number"
+          variant="primary"
+          :subtitle="`${summary.coveragePct}% con movimientos`"
+        />
+        <MetricCard
+          title="Variación costo"
+          :value="summary.avgCostVariationPct"
+          format="percentage"
+          :precision="1"
+          variant="primary"
+          subtitle="Último vs promedio base"
+        />
+      </section>
+
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
@@ -21,7 +53,7 @@
         <template #additional-filters>
           <select
             v-model="ingredientFilter"
-            :class="filterSelectClassFor(ingredientFilter)"
+            :class="[filterSelectClass, 'w-full sm:w-52 md:hidden']"
             aria-label="Filtrar por ingrediente"
           >
             <option value="">Ingrediente</option>
@@ -32,7 +64,7 @@
 
           <select
             v-model="categoryFilter"
-            :class="filterSelectClassFor(categoryFilter)"
+            :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
             aria-label="Filtrar por categoría"
           >
             <option value="">Categoría</option>
@@ -43,7 +75,7 @@
 
           <select
             v-model="sortOption"
-            :class="filterSelectClassFor(sortOption, { active: true })"
+            :class="[filterSelectClass, 'w-full sm:w-56 md:hidden']"
             aria-label="Ordenar ingredientes"
           >
             <option v-for="option in sortOptions" :key="option.value" :value="option.value">
@@ -53,42 +85,6 @@
         </template>
       </UiAdvancedFiltersBar>
 
-      <section class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <MetricCard
-          title="Ingredientes"
-          :value="summary.totalIngredients"
-          format="number"
-          variant="primary"
-          size="sm"
-          :subtitle="summary.periodLabel"
-        />
-        <MetricCard
-          title="Costo estimado"
-          :value="summary.estimatedCostLabel"
-          format="text"
-          variant="warning"
-          size="sm"
-          :subtitle="`${summary.movementCount} movimientos`"
-        />
-        <MetricCard
-          title="Con consumo"
-          :value="summary.recordedRows"
-          format="number"
-          variant="success"
-          size="sm"
-          :subtitle="`${summary.coveragePct}% con movimientos`"
-        />
-        <MetricCard
-          title="Variación costo"
-          :value="summary.avgCostVariationPct"
-          format="percentage"
-          :precision="1"
-          :variant="summary.avgCostVariationPct > 10 ? 'warning' : 'info'"
-          size="sm"
-          subtitle="Último vs promedio base"
-        />
-      </section>
-
       <UiResponsiveDataView
         row-size="sm"
         :columns="ingredientTableColumns"
@@ -96,7 +92,11 @@
         item-key="ingredient_id"
         empty-message="No hay consumo de ingredientes"
         empty-sub-message="No se encontraron movimientos de consumo o compras para el periodo seleccionado"
+        :sort-field="tableSortField"
+        :sort-direction="tableSortDirection"
         variant="default"
+        @sort="handleTableSort"
+        @row-click="openIngredientMovements"
       >
         <template #card="{ item, index }">
           <div
@@ -121,15 +121,78 @@
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
               <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.estimated_consumed_cost) }}</span>
               <span class="text-xs text-text-secondary">{{ formatUnitCost(item.weighted_avg_cost_per_unit, item.unit) }}</span>
+              <NuxtLink
+                :to="ingredientMovementsPath(item.ingredient_id)"
+                class="mt-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                aria-label="Ver movimientos del ingrediente"
+              >
+                Ver movimientos
+              </NuxtLink>
             </div>
           </div>
+        </template>
+
+        <template #header-ingredient_name>
+          <UiTableHeaderFilter
+            v-model="ingredientFilter"
+            title="Ingrediente"
+            column-key="ingredient_name"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="select"
+            :options="ingredientHeaderOptions"
+            all-label="Ingrediente"
+            align="left"
+            @sort="handleTableSort"
+          />
+        </template>
+
+        <template #header-category>
+          <UiTableHeaderFilter
+            v-model="categoryFilter"
+            title="Categoría"
+            filter-type="select"
+            :options="categoryHeaderOptions"
+            all-label="Categoría"
+            align="left"
+          />
+        </template>
+
+        <template #header-consumed_quantity>
+          <UiTableHeaderFilter
+            title="Consumo"
+            column-key="consumed_quantity"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="none"
+            align="right"
+            @sort="handleTableSort"
+          />
+        </template>
+
+        <template #header-estimated_consumed_cost>
+          <UiTableHeaderFilter
+            title="Costo estimado"
+            column-key="estimated_consumed_cost"
+            sortable
+            :sort-field="tableSortField"
+            :sort-direction="tableSortDirection"
+            filter-type="none"
+            align="right"
+            @sort="handleTableSort"
+          />
         </template>
 
         <template #cell-ingredient_name="{ item }">
           <div class="min-w-0">
             <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
-            <p class="text-xs text-text-secondary">{{ item.category || 'Sin categoría' }}</p>
           </div>
+        </template>
+
+        <template #cell-category="{ value }">
+          <span class="text-sm text-text-secondary">{{ value || 'Sin categoría' }}</span>
         </template>
 
         <template #cell-consumed_quantity="{ item }">
@@ -175,6 +238,22 @@
             size="sm"
           />
         </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center">
+            <NuxtLink
+              :to="ingredientMovementsPath(row.ingredient_id)"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              title="Ver movimientos"
+              aria-label="Ver movimientos del ingrediente"
+              @click.stop
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 9h6M9 13h6m-8 6h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </NuxtLink>
+          </div>
+        </template>
       </UiResponsiveDataView>
     </template>
   </div>
@@ -186,7 +265,7 @@ import { es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
-import { filterSelectClassFor } from '~/composables/useFilterSelectClass'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
@@ -230,6 +309,23 @@ const sortOptions = [
   { value: 'ingredient_name_asc', label: 'Ingrediente A-Z' },
 ]
 
+const SORT_TO_TABLE: Record<string, { field: string; direction: 'asc' | 'desc' }> = {
+  estimated_consumed_cost_desc: { field: 'estimated_consumed_cost', direction: 'desc' },
+  estimated_consumed_cost_asc: { field: 'estimated_consumed_cost', direction: 'asc' },
+  consumed_quantity_desc: { field: 'consumed_quantity', direction: 'desc' },
+  consumed_quantity_asc: { field: 'consumed_quantity', direction: 'asc' },
+  ingredient_name_asc: { field: 'ingredient_name', direction: 'asc' },
+  ingredient_name_desc: { field: 'ingredient_name', direction: 'desc' },
+  latest_cost_per_unit_desc: { field: 'latest_cost_per_unit', direction: 'desc' },
+  weighted_avg_cost_per_unit_desc: { field: 'weighted_avg_cost_per_unit', direction: 'desc' },
+}
+
+const TABLE_SORT_TO_API: Record<string, { asc: string; desc: string }> = {
+  ingredient_name: { asc: 'ingredient_name_asc', desc: 'ingredient_name_desc' },
+  consumed_quantity: { asc: 'consumed_quantity_asc', desc: 'consumed_quantity_desc' },
+  estimated_consumed_cost: { asc: 'estimated_consumed_cost_asc', desc: 'estimated_consumed_cost_desc' },
+}
+
 const hasActiveFilters = computed(
   () =>
     !!localSearchTerm.value
@@ -241,6 +337,21 @@ const hasActiveFilters = computed(
 )
 
 const performSearch = () => applySearch()
+
+function handleTableSort(event: string | { field: string; direction?: 'asc' | 'desc' }) {
+  const field = typeof event === 'string' ? event : event.field
+  const supportedSort = TABLE_SORT_TO_API[field]
+  if (!supportedSort) return
+
+  const direction =
+    typeof event === 'object' && event.direction
+      ? event.direction
+      : tableSortField.value === field && tableSortDirection.value === 'asc'
+        ? 'desc'
+        : 'asc'
+
+  sortOption.value = supportedSort[direction]
+}
 
 const { data: ingredientsData } = useQuery({
   key: () => ['analytics', 'ingredients-lookup', currentTenant.value?.id],
@@ -266,6 +377,12 @@ const categories = computed(() => {
   })
   return Array.from(values).sort()
 })
+const ingredientHeaderOptions = computed(() =>
+  ingredients.value.map((ingredient: any) => ({ label: ingredient.name, value: ingredient.id })),
+)
+const categoryHeaderOptions = computed(() =>
+  categories.value.map((category) => ({ label: category, value: category })),
+)
 
 const { data: analyticsData, error: fetchError, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['analytics', 'ingredients-summary', currentTenant.value?.id, {
@@ -294,6 +411,9 @@ const period = computed(() => (analyticsData.value as any)?.data?.period ?? null
 const isLoading = computed(() => queryStatus.value === 'pending' && !analyticsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && analyticsData.value != null)
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const tableSortState = computed(() => SORT_TO_TABLE[sortOption.value] ?? SORT_TO_TABLE.consumed_quantity_desc)
+const tableSortField = computed(() => tableSortState.value.field)
+const tableSortDirection = computed(() => tableSortState.value.direction)
 
 const displayRows = computed<DisplayRow[]>(() => {
   const q = appliedSearch.value.trim().toLowerCase()
@@ -365,6 +485,7 @@ const clearFilters = () => {
 
 const ingredientTableColumns = [
   { key: 'ingredient_name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' },
+  { key: 'category', title: 'Categoría', sortable: false, format: 'text', align: 'left' },
   { key: 'consumed_quantity', title: 'Consumo', sortable: false, format: 'text', align: 'right' },
   { key: 'estimated_consumed_cost', title: 'Costo estimado', sortable: false, format: 'text', align: 'right' },
   { key: 'weighted_avg_cost_per_unit', title: 'Costo prom.', sortable: false, format: 'text', align: 'right' },
@@ -372,7 +493,16 @@ const ingredientTableColumns = [
   { key: 'cost_trend', title: 'Tendencia', sortable: false, format: 'text', align: 'right' },
   { key: 'movement_count', title: 'Mov.', sortable: false, format: 'text', align: 'right' },
   { key: 'data_coverage', title: 'Cobertura', sortable: false, format: 'text', align: 'center' },
+  { key: 'actions', title: '', sortable: false, format: 'text', align: 'center' },
 ] as const
+
+function ingredientMovementsPath(ingredientId: string): string {
+  return `/abastecimiento/movimientos?ingredient_id=${encodeURIComponent(ingredientId)}`
+}
+
+function openIngredientMovements(row: DisplayRow): void {
+  navigateTo(ingredientMovementsPath(row.ingredient_id))
+}
 
 function costTrendPct(item: IngredientAnalyticsRow): number | null {
   const latest = Number(item.latest_cost_per_unit)

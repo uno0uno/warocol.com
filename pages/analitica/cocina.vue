@@ -11,29 +11,6 @@
           Métricas de desempeño y eficiencia de las estaciones de preparación.
         </p>
       </div>
-
-      <div class="flex items-center gap-3">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :enable-time-picker="false"
-          :preset-dates="presetDates"
-          auto-apply
-          :timezone="timezone"
-          :max-date="maxDate"
-          :format="formatDateRange"
-          placeholder="Seleccionar periodo"
-          class="min-w-[280px]"
-          @update:model-value="fetchMetrics"
-        />
-        <button 
-          @click="fetchMetrics" 
-          class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-          :class="{ 'animate-spin': loading }"
-        >
-          <Icon name="lucide:refresh-cw" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
-      </div>
     </div>
 
     <div v-if="loading && !metrics" class="flex items-center justify-center py-20">
@@ -78,6 +55,29 @@
           <div class="text-3xl font-bold text-green-500">{{ 100 - metrics.summary.late_pct }}%</div>
           <div class="text-xs text-gray-500 mt-1">Basado en umbrales de alerta</div>
         </div>
+      </div>
+
+      <div class="flex items-center gap-3 w-full overflow-x-auto">
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :enable-time-picker="false"
+          :preset-dates="presetDates"
+          auto-apply
+          :timezone="timezone"
+          :max-date="maxDate"
+          :format="formatDateRange"
+          placeholder="Seleccionar periodo"
+          class="min-w-[280px]"
+          @update:model-value="fetchMetrics"
+        />
+        <button
+          @click="fetchMetrics"
+          class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors flex-shrink-0"
+          :class="{ 'animate-spin': loading }"
+        >
+          <Icon name="lucide:refresh-cw" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        </button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
