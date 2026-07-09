@@ -97,6 +97,15 @@ export function dateAtNoon(iso: string, timezone = DEFAULT_TENANT_TIMEZONE): Dat
   return zonedWallTimeToDate(iso, '12:00', timezone) ?? new Date(`${iso}T12:00:00-05:00`)
 }
 
+export function dateAtEndOfDay(iso: string, timezone = DEFAULT_TENANT_TIMEZONE): Date {
+  const end = zonedWallTimeToDate(iso, '23:59', timezone)
+  if (end) {
+    end.setSeconds(59, 999)
+    return end
+  }
+  return new Date(`${iso}T23:59:59.999-05:00`)
+}
+
 export function combineDateAndTimeISO(
   iso: string,
   hhmm: string,
@@ -128,6 +137,7 @@ export function monthBounds(iso?: string, timezone = DEFAULT_TENANT_TIMEZONE): {
 export const todayBogotaISO = () => todayISO(BOGOTA_TZ)
 export const bogotaISOFromDate = (date: Date) => isoFromDate(date, BOGOTA_TZ)
 export const bogotaDateAtNoon = (iso: string) => dateAtNoon(iso, BOGOTA_TZ)
+export const bogotaDateAtEndOfDay = (iso: string) => dateAtEndOfDay(iso, BOGOTA_TZ)
 
 export function combineBogotaDateAndTimeISO(iso: string, hhmm: string): string | null {
   if (!hhmm || hhmm.length < 5) return null

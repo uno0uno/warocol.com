@@ -7,15 +7,8 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <template v-else>
-      <section class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <section>
         <div class="min-w-0">
-          <NuxtLink
-            to="/analitica/ingredientes"
-            class="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-          >
-            <ArrowLeft class="h-4 w-4" aria-hidden="true" />
-            Volver a ingredientes
-          </NuxtLink>
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="truncate text-xl font-bold text-text-primary md:text-2xl">
               {{ ingredientName }}
@@ -31,61 +24,62 @@
             {{ ingredientCategory }} · {{ ingredientUnit }} · {{ periodLabel }}
           </p>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2 text-xs text-text-secondary md:justify-end">
-          <span class="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-2">
-            <CalendarDays class="h-4 w-4" aria-hidden="true" />
-            {{ reportPeriod?.timezone || timezone }}
-          </span>
-          <span class="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-2">
-            <PackageCheck class="h-4 w-4" aria-hidden="true" />
-            {{ relatedProducts.length }} productos
-          </span>
-        </div>
       </section>
 
-      <section class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <MetricCard
           title="Consumo"
           :value="formatQuantity(metrics.consumed_quantity)"
           format="text"
           variant="primary"
+          size="sm"
           :subtitle="ingredientUnit"
+          class="min-w-0 overflow-hidden"
         />
         <MetricCard
           title="Costo estimado"
           :value="formatCurrency(metrics.estimated_consumed_cost)"
           format="text"
           variant="primary"
+          size="sm"
           :subtitle="costBasisLabel"
+          class="min-w-0 overflow-hidden"
         />
         <MetricCard
           title="Costo promedio"
           :value="formatUnitCost(metrics.weighted_avg_cost_per_unit)"
           format="text"
           variant="primary"
+          size="sm"
           subtitle="Compra ponderada"
+          class="min-w-0 overflow-hidden"
         />
         <MetricCard
           title="Último costo"
           :value="formatUnitCost(metrics.latest_cost_per_unit)"
           format="text"
           variant="primary"
+          size="sm"
           :subtitle="latestCostLabel"
+          class="min-w-0 overflow-hidden"
         />
         <MetricCard
           title="Variación"
           :value="formatCostVariation(metrics.cost_variation_pct)"
           format="text"
           variant="primary"
+          size="sm"
           subtitle="Primera vs última compra"
+          class="min-w-0 overflow-hidden"
         />
         <MetricCard
           title="Movimientos"
           :value="metrics.movement_count"
           format="number"
           variant="primary"
+          size="sm"
           :subtitle="coverageLabel(metrics.data_coverage)"
+          class="min-w-0 overflow-hidden"
         />
       </section>
 
@@ -166,7 +160,7 @@
         </div>
       </section>
 
-      <section class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <section>
         <div class="min-w-0">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -241,49 +235,6 @@
             </template>
           </UiResponsiveDataView>
         </div>
-
-        <aside class="flex flex-col gap-4">
-          <div class="rounded-lg border border-border bg-background p-4">
-            <h2 class="text-base font-bold text-text-primary">Stock</h2>
-            <dl class="mt-3 space-y-3 text-sm">
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-text-secondary">Actual</dt>
-                <dd class="font-semibold tabular-nums text-text-primary">{{ stockQuantityLabel(stock.current_stock) }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-text-secondary">Mínimo</dt>
-                <dd class="tabular-nums text-text-primary">{{ stockQuantityLabel(stock.minimum_stock) }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-text-secondary">Máximo</dt>
-                <dd class="tabular-nums text-text-primary">{{ stockQuantityLabel(stock.maximum_stock) }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-text-secondary">Ubicación</dt>
-                <dd class="truncate text-text-primary">{{ stock.location || 'No especificada' }}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div class="rounded-lg border border-border bg-background p-4">
-            <h2 class="text-base font-bold text-text-primary">Productos relacionados</h2>
-            <div v-if="relatedProducts.length === 0" class="mt-3 text-sm text-text-secondary">
-              No hay productos relacionados en el reporte.
-            </div>
-            <ul v-else class="mt-3 space-y-3">
-              <li
-                v-for="product in relatedProducts"
-                :key="product.product_id"
-                class="border-b border-border pb-3 last:border-b-0 last:pb-0"
-              >
-                <p class="truncate text-sm font-semibold text-text-primary">{{ product.product_name }}</p>
-                <p class="mt-0.5 text-xs text-text-secondary">
-                  {{ relationLabel(product.relation_type) }} · {{ formatQuantity(product.quantity) }} {{ product.unit || ingredientUnit }}
-                </p>
-              </li>
-            </ul>
-          </div>
-        </aside>
       </section>
     </template>
   </div>
@@ -293,7 +244,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ArrowLeft, BarChart3, CalendarDays, LineChart, PackageCheck } from 'lucide-vue-next'
+import { BarChart3, LineChart } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
@@ -336,8 +287,6 @@ type IngredientReport = {
   purchases?: PurchaseRow[]
   stock_movements?: MovementRow[]
   consumption_movements?: MovementRow[]
-  stock?: StockContext
-  related_products?: RelatedProduct[]
   data_coverage?: Coverage
 }
 
@@ -379,22 +328,6 @@ type MovementRow = {
   created_at?: string | null
 }
 
-type StockContext = {
-  current_stock?: number | null
-  minimum_stock?: number | null
-  maximum_stock?: number | null
-  last_updated?: string | null
-  location?: string | null
-}
-
-type RelatedProduct = {
-  product_id: string
-  product_name: string
-  relation_type?: string | null
-  quantity?: number | null
-  unit?: string | null
-}
-
 type HistoryRow = {
   id: string
   timestamp: string
@@ -415,7 +348,6 @@ const route = useRoute()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { formatCalendarDate, formatCurrency, formatDateTime } = useFormatters()
-const { timezone } = useTenantTimezone()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
@@ -460,8 +392,6 @@ const metrics = computed(() => ({
   data_coverage: report.value.metrics?.data_coverage ?? report.value.data_coverage ?? 'no_recorded_consumption',
 }))
 
-const stock = computed<StockContext>(() => report.value.stock ?? {})
-const relatedProducts = computed<RelatedProduct[]>(() => report.value.related_products ?? [])
 const selectedSeries = computed<SeriesPoint[]>(() => report.value.series?.[granularity.value] ?? [])
 const isLoading = computed(() => queryStatus.value === 'pending' && !reportData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && reportData.value != null)
@@ -549,6 +479,11 @@ useHead(() => ({
 
 watch([dateRangeDates, granularity], () => {
   lastUpdate.value = new Date()
+})
+
+watch(dateRange, async () => {
+  if (!currentTenant.value || !ingredientId.value || queryStatus.value === 'pending') return
+  await refetch()
 })
 
 watch(lastUpdate, () => {
@@ -644,12 +579,6 @@ function movementKindLabel(value: string): string {
   return labels[value] ?? 'Movimiento'
 }
 
-function relationLabel(value?: string | null): string {
-  if (value === 'direct_recipe') return 'Receta directa'
-  if (value === 'base_recipe') return 'Receta base'
-  return 'Relacionado'
-}
-
 function coverageLabel(value: Coverage): string {
   return value === 'recorded_movements' ? 'Registrado' : 'Sin consumo'
 }
@@ -672,10 +601,6 @@ function formatCostVariation(value: number | null): string {
   const percent = value * 100
   const sign = percent > 0 ? '+' : ''
   return `${sign}${percent.toFixed(1)}%`
-}
-
-function stockQuantityLabel(value: number | null | undefined): string {
-  return `${formatQuantity(value)} ${ingredientUnit.value}`
 }
 
 function formatHistoryDate(value?: string | null): string {
