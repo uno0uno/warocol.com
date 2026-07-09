@@ -16,6 +16,7 @@ definePageMeta({
 const navigationItems = [
   { to: '/analitica/ventas', label: 'Ventas' },
   { to: '/analitica/rentabilidad', label: 'Rentabilidad' },
+  { to: '/analitica/ingredientes', label: 'Ingredientes' },
   { to: '/analitica/clientes', label: 'Clientes' },
   { to: '/analitica/puntos', label: 'Puntos' },
 ]

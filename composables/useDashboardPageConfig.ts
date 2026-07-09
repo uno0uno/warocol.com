@@ -319,6 +319,16 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
+    } else if (path.includes('/analitica/ingredientes')) {
+      return {
+        pageTitle: 'Ingredientes',
+        pageSubtitle: undefined,
+        searchPlaceholder: 'Buscar ingredientes...',
+        activePage: 'analytics' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined
+      }
     } else if (path.includes('/analitica/clientes')) {
       return {
         pageTitle: 'Clientes',
