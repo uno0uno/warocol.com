@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import Draggable from 'vuedraggable'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import {
   areTableOrdersEqual,
-  canMoveTableOrderItem,
   getTableOrderIds,
-  moveTableOrderItem,
 } from '~/composables/useTableOrderDraft'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
@@ -80,10 +79,15 @@ const clearTableFilters = () => {
 }
 
 const activeRegularTables = computed(() => tables.value.filter((t: any) => !t.is_bar && t.is_active))
+const tableOrderDraft = ref<any[]>([])
+const lastConfirmedTableOrder = ref<any[]>([])
+const orderedActiveTables = computed(() =>
+  tableOrderDraft.value.length > 0 ? tableOrderDraft.value : activeRegularTables.value
+)
 
 // Active tables: is_active true, not bar
 const activeTables = computed(() => {
-  let result = activeRegularTables.value
+  let result = orderedActiveTables.value
   const q = searchTerm.value.trim().toLowerCase()
   if (q) result = result.filter((t: any) => t.name.toLowerCase().includes(q))
   if (statusFilter.value) result = result.filter((t: any) => t.status === statusFilter.value)
@@ -145,53 +149,54 @@ const onTableQrUpdated = async (data: Record<string, unknown>) => {
   await refreshTablesAndBilling()
 }
 
-// ── Manual order mode ────────────────────────────────────────────────────────
-const isTableOrderMode = ref(false)
-const tableOrderDraft = ref<any[]>([])
+// ── Manual order ────────────────────────────────────────────────────────────
+const isDraggingTableOrder = ref(false)
 const isSavingTableOrder = ref(false)
 const tableOrderError = ref('')
 
-const resetTableOrderDraft = () => {
+const syncConfirmedTableOrder = () => {
+  lastConfirmedTableOrder.value = [...activeRegularTables.value]
   tableOrderDraft.value = [...activeRegularTables.value]
   tableOrderError.value = ''
 }
 
 const isTableOrderDirty = computed(() =>
-  !areTableOrdersEqual(tableOrderDraft.value, activeRegularTables.value)
+  !areTableOrdersEqual(tableOrderDraft.value, lastConfirmedTableOrder.value)
 )
 
-const canMoveDraftTable = (tableId: string, direction: -1 | 1) =>
-  canMoveTableOrderItem(tableOrderDraft.value, tableId, direction)
+const isTableDragDisabled = computed(() =>
+  hasActiveTableFilters.value ||
+  activeRegularTables.value.length < 2 ||
+  isSavingTableOrder.value
+)
 
-const moveDraftTable = (tableId: string, direction: -1 | 1) => {
-  tableOrderDraft.value = moveTableOrderItem(tableOrderDraft.value, tableId, direction)
-}
+const tableDragDisabledReason = computed(() => {
+  if (hasActiveTableFilters.value) return 'Limpia la búsqueda o el filtro para reordenar'
+  if (activeRegularTables.value.length < 2) return `Necesitas al menos 2 ${pluralLower.value} activas`
+  if (isSavingTableOrder.value) return 'Guardando orden...'
+  return `Arrastra para ordenar ${pluralLower.value} en POS`
+})
 
-const openTableOrderMode = () => {
-  clearTableFilters()
-  resetTableOrderDraft()
-  isTableOrderMode.value = true
-}
-
-const closeTableOrderMode = () => {
-  isTableOrderMode.value = false
-  resetTableOrderDraft()
-}
+const activeTableRowClass = (index: number) =>
+  index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'
 
 const saveTableOrder = async () => {
-  if (isSavingTableOrder.value || !isTableOrderDirty.value) return
+  if (isSavingTableOrder.value || hasActiveTableFilters.value || !isTableOrderDirty.value) return
+  const nextOrder = [...tableOrderDraft.value]
   isSavingTableOrder.value = true
   tableOrderError.value = ''
   try {
-    await $fetch('/api/tables/reorder', {
+    const response = await $fetch<{ message?: string; data?: { message?: string } }>('/api/tables/reorder', {
       method: 'PATCH',
-      body: { table_ids: getTableOrderIds(tableOrderDraft.value) },
+      body: { table_ids: getTableOrderIds(nextOrder) },
     })
-    await cache.invalidateQueries({ key: ['tables'] })
-    await refetch()
-    isTableOrderMode.value = false
-    toast.success(`Orden de ${pluralLower.value} guardado para el POS`, { title: 'Orden actualizado' })
+    lastConfirmedTableOrder.value = [...nextOrder]
+    toast.success(
+      response?.message || response?.data?.message || `Orden de ${pluralLower.value} guardado para el POS`,
+      { title: 'Orden actualizado' },
+    )
   } catch (err: any) {
+    tableOrderDraft.value = [...lastConfirmedTableOrder.value]
     tableOrderError.value = tableErrorMessage(err, `Error al guardar el orden de ${pluralLower.value}`)
     toast.error(tableOrderError.value, { title: 'No se pudo guardar' })
   } finally {
@@ -199,9 +204,19 @@ const saveTableOrder = async () => {
   }
 }
 
+const onTableOrderDragStart = () => {
+  isDraggingTableOrder.value = true
+  tableOrderError.value = ''
+}
+
+const onTableOrderDragEnd = async () => {
+  isDraggingTableOrder.value = false
+  await saveTableOrder()
+}
+
 watch(activeRegularTables, () => {
-  if (!isTableOrderMode.value || !isTableOrderDirty.value) {
-    resetTableOrderDraft()
+  if (!isDraggingTableOrder.value && !isSavingTableOrder.value) {
+    syncConfirmedTableOrder()
   }
 }, { immediate: true })
 
@@ -573,23 +588,12 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #additional-filters>
           <UiFilterSelect
             v-model="statusFilter"
-            class="md:hidden"
             placeholder="Todos los estados"
             :options="statusOptions"
             aria-label="Estado"
           />
         </template>
         <template #trailing>
-          <button
-            v-if="!isTableOrderMode"
-            type="button"
-            :disabled="activeRegularTables.length < 2"
-            :title="activeRegularTables.length < 2 ? `Necesitas al menos 2 ${pluralLower} activas` : `Ordenar ${pluralLower} en POS`"
-            class="h-9 px-3 rounded-lg border border-border bg-surface text-sm font-semibold text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="openTableOrderMode"
-          >
-            Ordenar
-          </button>
           <button
             type="button"
             :disabled="isActiveTableQuotaBlocked"
@@ -614,55 +618,106 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         </NuxtLink>
       </div>
 
-      <UiResponsiveDataView
-        v-if="!isTableOrderMode"
-        :columns="tableColumns"
-        :data="activeTables"
-        :empty-message="`No hay ${pluralLower} configuradas`"
-        :empty-sub-message="`Crea tu primera ${singularLower} para empezar a gestionar el salón`"
-        variant="default"
-        row-size="sm"
+      <section
+        class="rounded-xl border border-data-table-border bg-data-table-container-bg shadow-sm overflow-hidden"
+        aria-labelledby="active-tables-title"
       >
-          <template #header-status>
-            <UiTableHeaderFilter
-              v-model="statusFilter"
-              title="Estado"
-              filter-type="select"
-              :options="statusOptions"
-              all-label="Todos"
-              align="center"
-            />
-          </template>
+        <div class="flex flex-col gap-2 border-b border-data-table-border bg-data-table-header-bg px-4 py-3 md:flex-row md:items-center md:justify-between">
+          <div class="min-w-0">
+            <h2 id="active-tables-title" class="text-sm font-bold text-text-primary">
+              {{ plural }}
+            </h2>
+            <p class="mt-0.5 text-xs text-text-secondary leading-snug">
+              Arrastra el asa para ordenar cómo se verán en el POS.
+            </p>
+          </div>
+          <p class="text-xs font-semibold text-text-tertiary">
+            <span
+              v-if="isSavingTableOrder"
+              class="inline-flex min-h-7 items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-primary"
+            >
+              <span>Guardando orden</span>
+              <UiLoadingDots size="7px" color="currentColor" aria-hidden="true" />
+            </span>
+            <span
+              v-else-if="hasActiveTableFilters"
+              class="inline-flex min-h-7 items-center rounded-full border border-state-warning-border bg-state-warning-bg px-2.5 py-1 text-state-warning-text"
+            >
+              Limpia filtros para reordenar
+            </span>
+            <span
+              v-else
+              class="inline-flex min-h-7 items-center rounded-full border border-status-chip-border bg-status-chip-bg px-2.5 py-1 text-status-chip-text"
+            >
+              Orden guardado automáticamente
+            </span>
+          </p>
+        </div>
 
-          <!-- Mobile card -->
-          <template #card="{ item }">
-            <div class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                  <span
-                    v-if="!item.is_bar"
-                    class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary tabular-nums"
-                  >
-                    {{ displayTableCode(item) }}
+        <div v-if="tableOrderError" class="border-b border-destructive/20 bg-destructive/8 px-4 py-3">
+          <p class="text-sm font-medium text-destructive">{{ tableOrderError }}</p>
+        </div>
+
+        <div v-if="activeTables.length === 0" class="px-4 py-8 text-center">
+          <p class="text-sm font-semibold text-text-primary">{{ `No hay ${pluralLower} configuradas` }}</p>
+          <p class="mt-1 text-xs text-text-secondary">{{ `Crea tu primera ${singularLower} para empezar a gestionar el salón` }}</p>
+        </div>
+
+        <Draggable
+          v-else-if="!hasActiveTableFilters"
+          v-model="tableOrderDraft"
+          item-key="id"
+          tag="ol"
+          handle=".table-order-handle"
+          :disabled="isTableDragDisabled"
+          ghost-class="opacity-50"
+          chosen-class="bg-data-table-row-hover-bg"
+          drag-class="shadow-lg"
+          class="divide-y divide-data-table-border"
+          aria-label="Mesas activas"
+          @start="onTableOrderDragStart"
+          @end="onTableOrderDragEnd"
+        >
+          <template #item="{ element: table, index }">
+            <li
+              class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition-colors duration-200 hover:bg-data-table-row-hover-bg md:grid-cols-[auto_2fr_.8fr_1fr_1fr_auto]"
+              :class="activeTableRowClass(index)"
+            >
+              <button
+                type="button"
+                class="table-order-handle flex h-10 w-10 items-center justify-center rounded-lg border border-border text-text-tertiary transition-colors"
+                :class="isTableDragDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-grab hover:bg-surface-secondary hover:text-text-primary active:cursor-grabbing'"
+                :title="tableDragDisabledReason"
+                :aria-label="`Arrastrar ${table.name}`"
+                :disabled="isTableDragDisabled"
+              >
+                <span class="text-lg font-black leading-none tracking-tight" aria-hidden="true">⋮⋮</span>
+              </button>
+
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-black text-text-tertiary tabular-nums">{{ index + 1 }}</span>
+                  <span class="truncate text-sm font-bold text-text-primary">{{ table.name }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary tabular-nums">
+                    {{ displayTableCode(table) }}
                   </span>
                 </div>
-                <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.capacity ? `${item.capacity} persona${item.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
+                <p class="mt-0.5 text-xs text-text-secondary md:hidden">
+                  {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
                 </p>
                 <p
                   v-if="businessProfile?.waiter_attribution_enabled"
-                  class="text-[11px] mt-0.5 font-medium truncate"
-                  :class="item.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
+                  class="text-[11px] mt-0.5 font-medium truncate md:hidden"
+                  :class="table.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
                 >
-                  Mesero: {{ item.assigned_member_name || 'sin asignar' }}
+                  Mesero: {{ table.assigned_member_name || 'sin asignar' }}
                 </p>
                 <div
                   v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled"
-                  class="mt-2"
+                  class="mt-2 md:hidden"
                 >
                   <MesasTableQrControls
-                    :table="item"
+                    :table="table"
                     variant="compact"
                     :qr-quota-blocked="isActiveQrQuotaBlocked"
                     :qr-quota-message="activeQrQuotaMessage"
@@ -670,178 +725,123 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   />
                 </div>
               </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <UiStatusBadge :variant="badgeVariant(item.status)" size="sm">
-                  {{ statusLabel(item.status) }}
+
+              <span class="hidden text-sm text-text-secondary md:block">
+                {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : '—' }}
+              </span>
+              <span
+                v-if="businessProfile?.waiter_attribution_enabled"
+                class="hidden min-w-0 md:block"
+              >
+                <span
+                  v-if="table.assigned_member_name"
+                  class="inline-flex max-w-full items-center gap-1.5 truncate rounded-md border border-status-chip-border bg-status-chip-bg px-2 py-0.5 text-[11px] font-semibold text-status-chip-text"
+                >
+                  {{ table.assigned_member_name }}
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center rounded-md border border-border bg-surface-secondary px-2 py-0.5 text-[11px] font-semibold text-text-tertiary"
+                >
+                  Sin asignar
+                </span>
+              </span>
+              <div
+                v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled"
+                class="hidden md:block"
+              >
+                <MesasTableQrControls
+                  :table="table"
+                  variant="compact"
+                  :qr-quota-blocked="isActiveQrQuotaBlocked"
+                  :qr-quota-message="activeQrQuotaMessage"
+                  @updated="onTableQrUpdated"
+                />
+              </div>
+
+              <div class="flex items-center justify-end gap-1">
+                <UiStatusBadge :variant="badgeVariant(table.status)" size="sm">
+                  {{ statusLabel(table.status) }}
                 </UiStatusBadge>
-                <button :aria-label="`Editar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors" @click="openPanel(item)">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                <button :aria-label="`Editar ${table.name}`" title="Editar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30" @click="openPanel(table)">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
-                <button :aria-label="`Desactivar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors" @click="openDeactivateModal(item)">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                <button :aria-label="`Desactivar ${table.name}`" title="Desactivar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-state-warning-bg hover:text-state-warning-text focus:outline-none focus:ring-2 focus:ring-state-warning-border" @click="openDeactivateModal(table)">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                 </button>
-                <button :aria-label="`Eliminar ${item.name}`" class="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors" @click="openDeleteModal(item)">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <button :aria-label="`Eliminar ${table.name}`" title="Eliminar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30" @click="openDeleteModal(table)">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
               </div>
-            </div>
+            </li>
           </template>
+        </Draggable>
 
-          <!-- Desktop: name -->
-          <template #cell-name="{ value }">
-            <span class="text-sm font-medium text-text-primary">{{ value }}</span>
-          </template>
-
-          <!-- Desktop: POS code -->
-          <template #cell-code="{ row }">
-            <span v-if="row.is_bar" class="text-xs text-text-tertiary">—</span>
-            <span v-else class="text-sm font-semibold text-text-secondary tabular-nums">{{ displayTableCode(row) }}</span>
-          </template>
-
-          <!-- Desktop: capacity -->
-          <template #cell-capacity="{ value }">
-            <span class="text-sm text-text-secondary">
-              {{ value ? `${value} persona${value !== 1 ? 's' : ''}` : '—' }}
-            </span>
-          </template>
-
-          <!-- Desktop: mesero (only present when waiter-attribution is enabled) -->
-          <template #cell-mesero="{ row }">
-            <span
-              v-if="row.assigned_member_name"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-status-chip-bg text-status-chip-text border border-status-chip-border"
-            >
-              {{ row.assigned_member_name }}
-            </span>
-            <span
-              v-else
-              class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-secondary text-text-tertiary border border-border"
-            >
-              Sin asignar
-            </span>
-          </template>
-
-          <!-- Desktop: QR -->
-          <template #cell-qr="{ row }">
-            <MesasTableQrControls
-              :table="row"
-              variant="compact"
-              :qr-quota-blocked="isActiveQrQuotaBlocked"
-              :qr-quota-message="activeQrQuotaMessage"
-              @updated="onTableQrUpdated"
-            />
-          </template>
-
-          <!-- Desktop: status -->
-          <template #cell-status="{ value }">
-            <UiStatusBadge :variant="badgeVariant(value)" size="sm">
-              {{ statusLabel(value) }}
-            </UiStatusBadge>
-          </template>
-
-          <!-- Desktop: actions -->
-          <template #cell-actions="{ row }">
-            <div class="flex items-center justify-end gap-1">
-              <button :aria-label="`Editar ${row.name}`" title="Editar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30" @click="openPanel(row)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-              </button>
-              <button :aria-label="`Desactivar ${row.name}`" title="Desactivar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors focus:outline-none focus:ring-2 focus:ring-state-warning-border" @click="openDeactivateModal(row)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-              </button>
-              <button :aria-label="`Eliminar ${row.name}`" title="Eliminar" class="flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/30" @click="openDeleteModal(row)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            </div>
-          </template>
-      </UiResponsiveDataView>
-
-      <section
-        v-else
-        class="rounded-xl border border-border bg-surface overflow-hidden"
-        aria-labelledby="table-order-title"
-      >
-        <div class="flex flex-col gap-3 border-b border-border px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <div class="min-w-0">
-            <h2 id="table-order-title" class="text-sm font-bold text-text-primary">
-              Ordenar {{ pluralLower }} en POS
-            </h2>
-            <p class="mt-0.5 text-xs text-text-secondary leading-snug">
-              La barra queda fija y estas {{ pluralLower }} se verán de izquierda a derecha en el punto de venta.
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              :disabled="isSavingTableOrder || !isTableOrderDirty"
-              class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="resetTableOrderDraft"
-            >
-              Restablecer
-            </button>
-            <button
-              type="button"
-              :disabled="isSavingTableOrder"
-              class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="closeTableOrderMode"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="isSavingTableOrder || !isTableOrderDirty"
-              class="h-9 px-4 rounded-lg bg-primary text-xs font-bold text-primary-foreground hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-              @click="saveTableOrder"
-            >
-              <UiLoadingDots v-if="isSavingTableOrder" size="6px" color="currentColor" />
-              <template v-else>Guardar orden</template>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="tableOrderError" class="border-b border-destructive/20 bg-destructive/8 px-4 py-3">
-          <p class="text-sm font-medium text-destructive">{{ tableOrderError }}</p>
-        </div>
-
-        <ol class="divide-y divide-border" aria-label="Orden de mesas activas">
+        <ol
+          v-else
+          class="divide-y divide-data-table-border"
+          aria-label="Mesas activas filtradas"
+        >
           <li
-            v-for="(table, index) in tableOrderDraft"
+            v-for="(table, index) in activeTables"
             :key="table.id"
-            class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3"
+            class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition-colors duration-200 hover:bg-data-table-row-hover-bg md:grid-cols-[auto_2fr_.8fr_1fr_1fr_auto]"
+            :class="activeTableRowClass(index)"
           >
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-secondary text-xs font-black text-text-secondary tabular-nums">
-              {{ index + 1 }}
-            </span>
+            <button
+              type="button"
+              class="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-lg border border-border text-text-tertiary opacity-50"
+              :title="tableDragDisabledReason"
+              :aria-label="`Arrastrar ${table.name}`"
+              disabled
+            >
+              <span class="text-lg font-black leading-none tracking-tight" aria-hidden="true">⋮⋮</span>
+            </button>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-black text-text-tertiary tabular-nums">{{ index + 1 }}</span>
                 <span class="truncate text-sm font-bold text-text-primary">{{ table.name }}</span>
                 <span class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary tabular-nums">
                   {{ displayTableCode(table) }}
                 </span>
               </div>
-              <p class="mt-0.5 text-xs text-text-secondary">
+              <p class="mt-0.5 text-xs text-text-secondary md:hidden">
                 {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
               </p>
+              <p
+                v-if="businessProfile?.waiter_attribution_enabled"
+                class="text-[11px] mt-0.5 font-medium truncate md:hidden"
+                :class="table.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
+              >
+                Mesero: {{ table.assigned_member_name || 'sin asignar' }}
+              </p>
             </div>
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                :aria-label="`Subir ${table.name}`"
-                title="Subir"
-                :disabled="!canMoveDraftTable(table.id, -1) || isSavingTableOrder"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                @click="moveDraftTable(table.id, -1)"
-              >
-                <Icon name="heroicons:arrow-up" class="h-4 w-4" aria-hidden="true" />
+            <span class="hidden text-sm text-text-secondary md:block">
+              {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : '—' }}
+            </span>
+            <span v-if="businessProfile?.waiter_attribution_enabled" class="hidden min-w-0 md:block">
+              <span v-if="table.assigned_member_name" class="inline-flex max-w-full items-center gap-1.5 truncate rounded-md border border-status-chip-border bg-status-chip-bg px-2 py-0.5 text-[11px] font-semibold text-status-chip-text">{{ table.assigned_member_name }}</span>
+              <span v-else class="inline-flex items-center rounded-md border border-border bg-surface-secondary px-2 py-0.5 text-[11px] font-semibold text-text-tertiary">Sin asignar</span>
+            </span>
+            <div v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled" class="hidden md:block">
+              <MesasTableQrControls
+                :table="table"
+                variant="compact"
+                :qr-quota-blocked="isActiveQrQuotaBlocked"
+                :qr-quota-message="activeQrQuotaMessage"
+                @updated="onTableQrUpdated"
+              />
+            </div>
+            <div class="flex items-center justify-end gap-1">
+              <UiStatusBadge :variant="badgeVariant(table.status)" size="sm">{{ statusLabel(table.status) }}</UiStatusBadge>
+              <button :aria-label="`Editar ${table.name}`" title="Editar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30" @click="openPanel(table)">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
               </button>
-              <button
-                type="button"
-                :aria-label="`Bajar ${table.name}`"
-                title="Bajar"
-                :disabled="!canMoveDraftTable(table.id, 1) || isSavingTableOrder"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                @click="moveDraftTable(table.id, 1)"
-              >
-                <Icon name="heroicons:arrow-down" class="h-4 w-4" aria-hidden="true" />
+              <button :aria-label="`Desactivar ${table.name}`" title="Desactivar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-state-warning-bg hover:text-state-warning-text focus:outline-none focus:ring-2 focus:ring-state-warning-border" @click="openDeactivateModal(table)">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+              </button>
+              <button :aria-label="`Eliminar ${table.name}`" title="Eliminar" class="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30" @click="openDeleteModal(table)">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </div>
           </li>
@@ -849,7 +849,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       </section>
 
       <!-- ══════ INACTIVE TABLES ══════ -->
-      <template v-if="!isTableOrderMode && inactiveTables.length > 0">
+      <template v-if="inactiveTables.length > 0">
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="inactiveTables"

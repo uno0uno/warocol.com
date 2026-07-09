@@ -42,7 +42,9 @@
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "ufo": "1.6.3",
-    "vue3-apexcharts": "^1.10.0"
+    "unstorage": "^1.16.0",
+    "vue3-apexcharts": "^1.10.0",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
