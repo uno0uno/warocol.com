@@ -96,7 +96,7 @@
         :sort-direction="tableSortDirection"
         variant="default"
         @sort="handleTableSort"
-        @row-click="openIngredientMovements"
+        @row-click="openIngredientReport"
       >
         <template #card="{ item, index }">
           <div
@@ -122,11 +122,13 @@
               <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.estimated_consumed_cost) }}</span>
               <span class="text-xs text-text-secondary">{{ formatUnitCost(item.weighted_avg_cost_per_unit, item.unit) }}</span>
               <NuxtLink
-                :to="ingredientMovementsPath(item.ingredient_id)"
-                class="mt-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                aria-label="Ver movimientos del ingrediente"
+                :to="ingredientReportPath(item.ingredient_id)"
+                class="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                :title="`Abrir analítica de ${item.ingredient_name}`"
+                :aria-label="`Abrir analítica de ${item.ingredient_name}`"
+                @click.stop
               >
-                Ver movimientos
+                <FileText class="h-4 w-4" aria-hidden="true" />
               </NuxtLink>
             </div>
           </div>
@@ -242,15 +244,13 @@
         <template #cell-actions="{ row }">
           <div class="flex justify-center">
             <NuxtLink
-              :to="ingredientMovementsPath(row.ingredient_id)"
+              :to="ingredientReportPath(row.ingredient_id)"
               class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              title="Ver movimientos"
-              aria-label="Ver movimientos del ingrediente"
+              :title="`Abrir analítica de ${row.ingredient_name}`"
+              :aria-label="`Abrir analítica de ${row.ingredient_name}`"
               @click.stop
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 9h6M9 13h6m-8 6h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <FileText class="h-4 w-4" aria-hidden="true" />
             </NuxtLink>
           </div>
         </template>
@@ -263,6 +263,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'
+import { FileText } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
@@ -496,12 +497,12 @@ const ingredientTableColumns = [
   { key: 'actions', title: '', sortable: false, format: 'text', align: 'center' },
 ] as const
 
-function ingredientMovementsPath(ingredientId: string): string {
-  return `/abastecimiento/movimientos?ingredient_id=${encodeURIComponent(ingredientId)}`
+function ingredientReportPath(ingredientId: string): string {
+  return `/analitica/ingredientes/${encodeURIComponent(ingredientId)}`
 }
 
-function openIngredientMovements(row: DisplayRow): void {
-  navigateTo(ingredientMovementsPath(row.ingredient_id))
+function openIngredientReport(row: DisplayRow): void {
+  navigateTo(ingredientReportPath(row.ingredient_id))
 }
 
 function costTrendPct(item: IngredientAnalyticsRow): number | null {
