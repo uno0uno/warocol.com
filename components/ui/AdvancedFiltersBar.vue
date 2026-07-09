@@ -58,7 +58,7 @@
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"
           calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="emit('update:dateRange', $event)"
+          @update:model-value="handleDateRangeUpdate"
         />
       </div>
 
@@ -125,17 +125,23 @@ const props = withDefaults(defineProps<Props>(), {
   showClear: false,
 })
 
-const { timezone: tenantTimezone, todayISO, dateAtNoon } = useTenantTimezone()
+const { timezone: tenantTimezone, todayISO, dateAtEndOfDay } = useTenantTimezone()
 const effectiveTimezone = computed(() => props.timezone ?? tenantTimezone.value)
-const effectiveMaxDate = computed(() => props.maxDate ?? dateAtNoon(todayISO()))
+const effectiveMaxDate = computed(() => props.maxDate ?? dateAtEndOfDay(todayISO()))
 
 const emit = defineEmits<{
   'update:search': [value: string]
   'update:searchField': [value: string]
   'update:dateRange': [value: Date[] | null]
+  'update:date-range': [value: Date[] | null]
   search: []
   clear: []
 }>()
+
+function handleDateRangeUpdate(value: Date[] | null) {
+  emit('update:dateRange', value)
+  emit('update:date-range', value)
+}
 </script>
 
 <style scoped>

@@ -10,7 +10,7 @@
       </div>
 
       <!-- Value and Icon row -->
-      <div class="flex items-end justify-between mb-2">
+      <div class="flex min-w-0 items-end justify-between mb-2">
         <div :class="valueVariants({ variant, size })">
           {{ formattedValue }}
         </div>
@@ -95,7 +95,7 @@ const metricCardVariants = cva(
 )
 
 const valueVariants = cva(
-  'font-bold leading-none',
+  'font-bold leading-none min-w-0 max-w-full [overflow-wrap:anywhere]',
   {
     variants: {
       variant: {

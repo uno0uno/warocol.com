@@ -14,11 +14,11 @@ export function useDateRangePresets(
 ) {
   const modelType = options.modelType ?? 'date'
   const dateRangeDates = existing ?? ref<DateRangeModel | null>(null)
-  const { todayISO, addDaysISO, dateAtNoon, isoFromDate } = useTenantTimezone()
+  const { todayISO, addDaysISO, dateAtNoon, dateAtEndOfDay, isoFromDate } = useTenantTimezone()
 
   const presetValue = (iso: string) => modelType === 'iso' ? iso : dateAtNoon(iso)
   const presetRange = (fromIso: string, toIso = todayISO()) => [presetValue(fromIso), presetValue(toIso)]
-  const maxDate = computed(() => presetValue(todayISO()))
+  const maxDate = computed(() => modelType === 'iso' ? todayISO() : dateAtEndOfDay(todayISO()))
 
   const presetDates = computed(() => [
     { label: 'Hoy', value: presetRange(todayISO()) },
