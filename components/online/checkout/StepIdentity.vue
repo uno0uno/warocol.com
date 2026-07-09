@@ -282,7 +282,12 @@ const verifyAndDetect = async () => {
   checkoutError.value = ''
 
   try {
-    await otpAuthStore.verifyOTP(otpAuthStore.email, cartStore.cartId, otpCode.value)
+    await otpAuthStore.verifyOTP(
+      otpAuthStore.email,
+      cartStore.cartId,
+      otpCode.value,
+      otpAuthStore.phoneNumber || phone.value,
+    )
 
     await applyDeliveryAddress()
 

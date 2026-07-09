@@ -49,11 +49,21 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
   })
 
   const verifyMutation = useMutation({
-    mutation: (vars: { email: string; cartId: string | null; code: string }) =>
-      $fetch<{ success: boolean; customer_id: string; is_verified: boolean; pickup_pin: string | null; message: string }>(
+    mutation: (vars: { email: string; cartId: string | null; code: string; phoneNumber?: string | null }) => {
+      const normalizedPhone = vars.phoneNumber?.trim()
+      return $fetch<{ success: boolean; customer_id: string; is_verified: boolean; pickup_pin: string | null; message: string }>(
         '/api/online/otp/verify',
-        { method: 'POST', body: { email: vars.email, cart_id: vars.cartId, otp_code: vars.code } }
-      ),
+        {
+          method: 'POST',
+          body: {
+            email: vars.email,
+            cart_id: vars.cartId,
+            otp_code: vars.code,
+            ...(normalizedPhone ? { phone_number: normalizedPhone } : {}),
+          },
+        }
+      )
+    },
     onSuccess(data) {
       customerId.value = data.customer_id
       isVerified.value = data.is_verified
@@ -120,8 +130,8 @@ export const useOtpAuthStore = defineStore('otpAuth', () => {
   /**
    * Verify OTP code (checkout flow)
    */
-  const verifyOTP = (emailVal: string, cartId: string, code: string) =>
-    verifyMutation.mutateAsync({ email: emailVal.trim().toLowerCase(), cartId, code })
+  const verifyOTP = (emailVal: string, cartId: string, code: string, phone?: string | null) =>
+    verifyMutation.mutateAsync({ email: emailVal.trim().toLowerCase(), cartId, code, phoneNumber: phone })
       .catch((e: any) => { throw new Error(e.data?.detail || 'Código incorrecto') })
 
   /**
