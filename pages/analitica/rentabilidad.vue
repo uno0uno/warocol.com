@@ -147,38 +147,6 @@ onUnmounted(() => {
 
     <!-- Content -->
     <template v-else>
-      <!-- Date Filter -->
-      <ClientOnly>
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :timezone="timezone"
-          :max-date="maxDate"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-        />
-        <button
-          v-if="dateRangeDates"
-          @click="dateRangeDates = null"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          title="Limpiar filtro"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      </ClientOnly>
-
       <section>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', hasOperativeFoodCost ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard
@@ -221,6 +189,38 @@ onUnmounted(() => {
             :subtitle="dogsSubtitle"
           />
         </div>
+
+        <!-- Date Filter -->
+        <ClientOnly>
+          <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-6">
+            <VueDatePicker
+              v-model="dateRangeDates"
+              range
+              :preset-dates="presetDates"
+              :enable-time-picker="false"
+              :locale="es"
+              placeholder="Rango de fechas"
+              auto-apply
+              :teleport="true"
+              :timezone="timezone"
+              :max-date="maxDate"
+              :format="formatDateRange"
+              input-class-name="dp-custom-input"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+            />
+            <button
+              v-if="dateRangeDates"
+              @click="dateRangeDates = null"
+              class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
+              title="Limpiar filtro"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </ClientOnly>
 
         <!-- Rentabilidad Real -->
         <HealthSemaphore

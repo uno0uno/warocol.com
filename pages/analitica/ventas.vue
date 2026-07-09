@@ -288,40 +288,6 @@ const formatCurrency = (value: number) =>
 
     <!-- Main Content -->
     <div v-else class="space-y-8 pb-20">
-      <!-- Filters Bar -->
-      <ClientOnly>
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :timezone="timezone"
-          :max-date="maxDate"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-        />
-        <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
-          <option :value="null">Método pago</option>
-          <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
-        </select>
-        <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
-          <option :value="null">Estado</option>
-          <option value="completed">Completadas</option>
-          <option value="cancelled">Canceladas</option>
-          <option value="pending">Pendientes</option>
-        </select>
-        <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-      </ClientOnly>
       <section>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', tipEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
@@ -347,6 +313,41 @@ const formatCurrency = (value: number) =>
           <MetricCard :title="metrics.standard_tax_label || 'INC 8%'" :value="metrics.total_standard_tax" format="currency" variant="primary" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
         </div>
+
+        <!-- Filters Bar -->
+        <ClientOnly>
+        <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-6">
+          <VueDatePicker
+            v-model="dateRangeDates"
+            range
+            :preset-dates="presetDates"
+            :enable-time-picker="false"
+            :locale="es"
+            placeholder="Rango de fechas"
+            auto-apply
+            :teleport="true"
+            :timezone="timezone"
+            :max-date="maxDate"
+            :format="formatDateRange"
+            input-class-name="dp-custom-input"
+            menu-class-name="dp-custom-menu"
+            calendar-cell-class-name="dp-custom-cell"
+          />
+          <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
+            <option :value="null">Método pago</option>
+            <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+          </select>
+          <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
+            <option :value="null">Estado</option>
+            <option value="completed">Completadas</option>
+            <option value="cancelled">Canceladas</option>
+            <option value="pending">Pendientes</option>
+          </select>
+          <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        </ClientOnly>
 
         <!-- Rentabilidad Teaser Banner -->
         <NuxtLink

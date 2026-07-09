@@ -196,54 +196,6 @@ onUnmounted(() => {
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
 
-    <!-- Filters Bar — always visible -->
-    <ClientOnly>
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <div class="flex-1 min-w-0">
-          <VueDatePicker
-            v-model="dateRangeDates"
-            range
-            :preset-dates="presetDates"
-            :enable-time-picker="false"
-            :locale="es"
-            placeholder="Rango de fechas"
-            auto-apply
-            :teleport="true"
-            :timezone="timezone"
-            :max-date="maxDate"
-            :format="formatDateRange"
-            input-class-name="dp-custom-input"
-            menu-class-name="dp-custom-menu"
-            calendar-cell-class-name="dp-custom-cell"
-          />
-        </div>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Buscar cliente..."
-          aria-label="Buscar cliente por nombre o teléfono"
-          class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-        />
-        <button
-          v-if="hasFilters"
-          @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          title="Limpiar filtros"
-          aria-label="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-        <button
-          type="button"
-          @click="showCreateModal = true"
-          class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0 whitespace-nowrap"
-          aria-label="Crear nuevo cliente"
-        >
-          + Nuevo cliente
-        </button>
-      </div>
-    </ClientOnly>
-
     <AnaliticaCreateCustomerModal
       v-model="showCreateModal"
       @created="onCustomerCreated"
@@ -265,6 +217,54 @@ onUnmounted(() => {
         <MetricCard title="Total comprado" :value="totalRevenue" format="currency" variant="primary" />
         <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
       </div>
+
+      <!-- Filters Bar -->
+      <ClientOnly>
+        <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+          <div class="flex-1 min-w-0">
+            <VueDatePicker
+              v-model="dateRangeDates"
+              range
+              :preset-dates="presetDates"
+              :enable-time-picker="false"
+              :locale="es"
+              placeholder="Rango de fechas"
+              auto-apply
+              :teleport="true"
+              :timezone="timezone"
+              :max-date="maxDate"
+              :format="formatDateRange"
+              input-class-name="dp-custom-input"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+            />
+          </div>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar cliente..."
+            aria-label="Buscar cliente por nombre o teléfono"
+            class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+          />
+          <button
+            v-if="hasFilters"
+            @click="clearFilters"
+            class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
+            title="Limpiar filtros"
+            aria-label="Limpiar filtros"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <button
+            type="button"
+            @click="showCreateModal = true"
+            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0 whitespace-nowrap"
+            aria-label="Crear nuevo cliente"
+          >
+            + Nuevo cliente
+          </button>
+        </div>
+      </ClientOnly>
 
       <!-- Table loading (filter change, no cached data yet) -->
       <div v-if="isRefreshing && customers.length === 0" class="flex items-center justify-center min-h-[200px]">
