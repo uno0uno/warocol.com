@@ -33,9 +33,9 @@
           <select
             v-model="categoryFilter"
             :class="filterSelectClassFor(categoryFilter)"
-            aria-label="Filtrar por categoria"
+            aria-label="Filtrar por categoría"
           >
-            <option value="">Categoria</option>
+            <option value="">Categoría</option>
             <option v-for="category in categories" :key="category" :value="category">
               {{ category }}
             </option>
@@ -79,13 +79,13 @@
           :subtitle="`${summary.coveragePct}% con movimientos`"
         />
         <MetricCard
-          title="Variacion costo"
+          title="Variación costo"
           :value="summary.avgCostVariationPct"
           format="percentage"
           :precision="1"
           :variant="summary.avgCostVariationPct > 10 ? 'warning' : 'info'"
           size="sm"
-          subtitle="Ultimo vs promedio base"
+          subtitle="Último vs promedio base"
         />
       </section>
 
@@ -115,7 +115,7 @@
                 />
               </div>
               <p class="text-xs text-text-secondary mt-1">
-                {{ item.category || 'Sin categoria' }} · {{ formatQuantity(item.consumed_quantity) }} {{ item.unit || 'und' }}
+                {{ item.category || 'Sin categoría' }} · {{ formatQuantity(item.consumed_quantity) }} {{ item.unit || 'und' }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -128,7 +128,7 @@
         <template #cell-ingredient_name="{ item }">
           <div class="min-w-0">
             <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
-            <p class="text-xs text-text-secondary">{{ item.category || 'Sin categoria' }}</p>
+            <p class="text-xs text-text-secondary">{{ item.category || 'Sin categoría' }}</p>
           </div>
         </template>
 
@@ -215,7 +215,7 @@ const { formatCurrency } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
-useHead({ title: 'Analitica de Ingredientes' })
+useHead({ title: 'Analítica de Ingredientes' })
 
 const ingredientFilter = ref('')
 const categoryFilter = ref('')
@@ -317,7 +317,7 @@ const summary = computed(() => {
 
   const periodLabel = period.value?.from && period.value?.to
     ? `${period.value.from} a ${period.value.to}`
-    : 'Periodo actual'
+    : 'Período actual'
 
   return {
     totalIngredients,
@@ -368,7 +368,7 @@ const ingredientTableColumns = [
   { key: 'consumed_quantity', title: 'Consumo', sortable: false, format: 'text', align: 'right' },
   { key: 'estimated_consumed_cost', title: 'Costo estimado', sortable: false, format: 'text', align: 'right' },
   { key: 'weighted_avg_cost_per_unit', title: 'Costo prom.', sortable: false, format: 'text', align: 'right' },
-  { key: 'latest_cost_per_unit', title: 'Ultimo costo', sortable: false, format: 'text', align: 'right' },
+  { key: 'latest_cost_per_unit', title: 'Último costo', sortable: false, format: 'text', align: 'right' },
   { key: 'cost_trend', title: 'Tendencia', sortable: false, format: 'text', align: 'right' },
   { key: 'movement_count', title: 'Mov.', sortable: false, format: 'text', align: 'right' },
   { key: 'data_coverage', title: 'Cobertura', sortable: false, format: 'text', align: 'center' },
