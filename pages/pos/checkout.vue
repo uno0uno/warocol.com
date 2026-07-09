@@ -15,6 +15,7 @@ import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.v
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/utils/promoProductMatch'
+import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 
@@ -219,7 +220,7 @@ const fiscalWizardForm = ref({
 })
 const fiscalWizardCanSubmit = computed(() => Boolean(
   fiscalWizardForm.value.fiscal_id_type
-    && fiscalWizardForm.value.fiscal_id.trim()
+    && normalizeFiscalDocumentId(fiscalWizardForm.value.fiscal_id)
     && fiscalWizardForm.value.fiscal_business_name.trim(),
 ))
 
@@ -2669,7 +2670,7 @@ const submitFiscalAndInvoice = async () => {
         method: 'PATCH',
         body: {
           fiscal_id_type: fiscalWizardForm.value.fiscal_id_type || null,
-          fiscal_id: fiscalWizardForm.value.fiscal_id.trim() || null,
+          fiscal_id: normalizeFiscalDocumentId(fiscalWizardForm.value.fiscal_id) || null,
           fiscal_business_name: fiscalWizardForm.value.fiscal_business_name.trim() || null,
         },
       },
@@ -4730,6 +4731,7 @@ onUnmounted(() => {
                 <input
                   v-model="fiscalWizardForm.fiscal_id"
                   type="text"
+                  @input="fiscalWizardForm.fiscal_id = normalizeFiscalDocumentId(fiscalWizardForm.fiscal_id)"
                   :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
                   :disabled="fiscalWizardSaving"
                   class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"

@@ -275,6 +275,7 @@
                       id="new-fiscal-id"
                       v-model="createForm.fiscal_id"
                       type="text"
+                      @input="createForm.fiscal_id = normalizeFiscalDocumentId(createForm.fiscal_id)"
                       :placeholder="createForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
                       :disabled="isCreating"
                       class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
@@ -371,6 +372,7 @@
                   id="edit-fiscal-id"
                   v-model="fiscalForm.fiscal_id"
                   type="text"
+                  @input="fiscalForm.fiscal_id = normalizeFiscalDocumentId(fiscalForm.fiscal_id)"
                   :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
                   :disabled="isCreating"
                   class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
@@ -436,6 +438,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'
+import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI' | ''
@@ -709,7 +712,7 @@ const handleCreate = async () => {
   try {
     const fiscalPayload = wantsInvoice.value ? {
       fiscal_id_type: createForm.value.fiscal_id_type || null,
-      fiscal_id: createForm.value.fiscal_id?.trim() || null,
+      fiscal_id: normalizeFiscalDocumentId(createForm.value.fiscal_id) || null,
       fiscal_business_name: createForm.value.fiscal_business_name?.trim() || null,
       fiscal_email: createForm.value.email?.trim() || null,
     } : {}
@@ -755,7 +758,7 @@ const handleSaveFiscal = async () => {
         method: 'PATCH',
         body: {
           fiscal_id_type: fiscalForm.value.fiscal_id_type || null,
-          fiscal_id: fiscalForm.value.fiscal_id?.trim() || null,
+          fiscal_id: normalizeFiscalDocumentId(fiscalForm.value.fiscal_id) || null,
           fiscal_business_name: fiscalForm.value.fiscal_business_name?.trim() || null,
         },
       },
