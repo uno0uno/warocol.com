@@ -102,6 +102,44 @@ describe('formatLocaleNumber', () => {
     assert.equal(formatLocaleNumber(1234.56, 'en', { maximumFractionDigits: 2 }), '1,234.56')
     assert.equal(formatLocaleNumber(1.5, 'en', { maximumFractionDigits: 2 }), '1.5')
   })
+
+  it('supports useGrouping false for editable inputs', () => {
+    assert.equal(
+      formatLocaleNumber(5000, 'es', { maximumFractionDigits: 2, useGrouping: false }),
+      '5000',
+    )
+    assert.equal(
+      formatLocaleNumber(1234.56, 'es', { maximumFractionDigits: 2, useGrouping: false }),
+      '1234,56',
+    )
+    assert.equal(
+      formatLocaleNumber(1234.56, 'en', { maximumFractionDigits: 2, useGrouping: false }),
+      '1234.56',
+    )
+  })
+
+  it('round-trips format→parse for input-style (no grouping) es/en', () => {
+    const cases: Array<{ n: number; locale: 'es' | 'en' }> = [
+      { n: 1.5, locale: 'es' },
+      { n: 1234.56, locale: 'es' },
+      { n: 5000, locale: 'es' },
+      { n: 1234567, locale: 'es' },
+      { n: 1.5, locale: 'en' },
+      { n: 1234.56, locale: 'en' },
+      { n: 5000, locale: 'en' },
+    ]
+    for (const { n, locale } of cases) {
+      const formatted = formatLocaleNumber(n, locale, {
+        maximumFractionDigits: 2,
+        useGrouping: false,
+      })
+      assert.equal(
+        parseLocaleDecimal(formatted, locale),
+        n,
+        `round-trip ${locale} ${n} via "${formatted}"`,
+      )
+    }
+  })
 })
 
 describe('integer money helpers', () => {
@@ -119,6 +157,18 @@ describe('integer money helpers', () => {
     assert.equal(formatIntegerMoney(1234, 'es'), '1.234')
     assert.equal(formatIntegerMoney(1234, 'en'), '1,234')
     assert.equal(formatIntegerMoney(0, 'es'), '')
+  })
+
+  it('round-trips integer money format→parse for es/en', () => {
+    for (const locale of ['es', 'en'] as const) {
+      for (const n of [1, 1234, 5000, 1234567]) {
+        assert.equal(
+          parseIntegerMoney(formatIntegerMoney(n, locale), locale),
+          n,
+          `integer money round-trip ${locale} ${n}`,
+        )
+      }
+    }
   })
 })
 

@@ -54,9 +54,11 @@ const resolvedLocale = computed<UiLocale>(() => {
 
 function formatModelForDisplay(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return ''
+  // No thousands grouping: es-CO "5.000" would parse as 5 under only-dot decimal rules.
   return formatLocaleNumber(value, resolvedLocale.value, {
     minimumFractionDigits: 0,
     maximumFractionDigits: props.precision,
+    useGrouping: false,
   })
 }
 

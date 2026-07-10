@@ -140,6 +140,9 @@ export function parseLocaleDecimal(
 /**
  * Format a number for display with locale punctuation.
  * Defaults preserve es-CO separators.
+ *
+ * Editable inputs should pass `useGrouping: false` so format→parse round-trips
+ * safely under es (grouped `"5.000"` is ambiguous with decimal-only-dot parse).
  */
 export function formatLocaleNumber(
   value: number | null | undefined,
@@ -147,6 +150,8 @@ export function formatLocaleNumber(
   options?: {
     minimumFractionDigits?: number
     maximumFractionDigits?: number
+    /** Default true for read-only display; false for editable inputs. */
+    useGrouping?: boolean
   },
 ): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return ''
@@ -154,6 +159,7 @@ export function formatLocaleNumber(
   return new Intl.NumberFormat(toNumberLocaleTag(locale), {
     minimumFractionDigits: options?.minimumFractionDigits ?? 0,
     maximumFractionDigits: options?.maximumFractionDigits ?? 20,
+    useGrouping: options?.useGrouping ?? true,
   }).format(normalized)
 }
 
