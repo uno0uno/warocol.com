@@ -245,47 +245,45 @@
           <UiResponsiveDataView
             v-else
             row-size="sm"
+            variant="default"
             :columns="historyColumns"
             :data="filteredHistoryRows"
             item-key="id"
             empty-message="Sin historial para este periodo"
             empty-sub-message="No hay compras ni movimientos analíticos con los filtros actuales"
           >
-            <template #card="{ item }">
-              <div class="rounded-lg border border-border bg-background p-3">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
+            <template #card="{ item, index }">
+              <div
+                v-if="item"
+                class="flex items-center gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-data-table-row-hover-bg"
+                :class="historyMobileRowClass(index)"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-xs text-text-secondary">{{ item.dateLabel }}</span>
                     <NuxtLink
                       v-if="item.recordHref"
                       :to="item.recordHref"
-                      class="font-semibold text-primary hover:text-primary/80"
+                      class="truncate text-sm font-semibold text-primary hover:text-primary/80"
                       @click.stop
                     >
                       {{ item.recordLabel }}
                     </NuxtLink>
-                    <p v-else class="font-semibold text-text-primary">{{ item.recordLabel }}</p>
+                    <span v-else class="truncate text-sm font-semibold text-text-primary">{{ item.recordLabel }}</span>
                   </div>
+                  <p class="mt-0.5 truncate text-xs text-text-secondary">
+                    {{ item.quantityLabel }} {{ item.unitLabel }} · {{ item.costLabel }}
+                  </p>
+                </div>
+
+                <div class="flex flex-shrink-0 flex-col items-end gap-1.5">
+                  <span class="text-sm font-bold tabular-nums text-primary">{{ item.costLabel }}</span>
                   <UiStatusBadge
                     :value="item.kindLabel"
                     format="text"
                     :variant="item.kindVariant"
                     size="sm"
-                    class="flex-shrink-0"
                   />
-                </div>
-                <div class="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <p class="text-xs text-text-secondary">Cantidad</p>
-                    <p class="font-semibold tabular-nums text-text-primary">{{ item.quantityLabel }}</p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-text-secondary">Unidad</p>
-                    <p class="font-semibold text-text-primary">{{ item.unitLabel }}</p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-text-secondary">Costo</p>
-                    <p class="font-semibold tabular-nums text-text-primary">{{ item.costLabel }}</p>
-                  </div>
                 </div>
               </div>
             </template>
@@ -816,6 +814,10 @@ const historyColumns = [
   { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'center' },
   { key: 'cost', title: 'Costo', sortable: false, format: 'text', align: 'right' },
 ] as const
+
+function historyMobileRowClass(index: number) {
+  return index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'
+}
 
 useHead(() => ({
   title: `${ingredientName.value} | Analítica de Ingredientes`,
