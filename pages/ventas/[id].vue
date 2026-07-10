@@ -41,6 +41,7 @@ const isEditMode = ref(false)
 const isSaving = ref(false)
 const itemsToDelete = ref<Set<string>>(new Set())
 const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
+const productFilter = ref('')
 
 // Status update (mesa orders)
 const isUpdatingStatus = ref(false)
@@ -303,16 +304,35 @@ const items = computed(() => itemsData.value || [])
 const modifierLineTotal = (mod: { price: number; quantity?: number }) =>
   Number(mod.price) * (Number(mod.quantity) || 1)
 
-// Filtered items (excluding deleted ones in edit mode)
-const visibleItems = computed(() => {
+const editableItems = computed(() => {
   if (!isEditMode.value) return items.value
   return items.value.filter((item: any) => !itemsToDelete.value.has(item.id))
+})
+
+const productHeaderOptions = computed(() => {
+  const products = new Map<string, string>()
+  items.value.forEach((item: any) => {
+    const id = String(item.product?.id || item.product_id || item.id || '')
+    const name = item.product?.name || item.name || 'Producto'
+    if (id && !products.has(id)) products.set(id, name)
+  })
+  return Array.from(products.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+})
+
+const visibleItems = computed(() => {
+  const product = productFilter.value
+  if (!product) return editableItems.value
+  return editableItems.value.filter((item: any) =>
+    String(item.product?.id || item.product_id || item.id || '') === product
+  )
 })
 
 // Calculate adjusted total
 const adjustedTotal = computed(() => {
   let total = 0
-  for (const item of visibleItems.value) {
+  for (const item of editableItems.value) {
     let itemTotal = Number(item.price_at_purchase) * Number(item.quantity)
 
     // Add modifiers that aren't deleted
@@ -1337,19 +1357,41 @@ onUnmounted(() => {
         </div>
 
         <!-- Items Table with Expandable Modifiers -->
-        <div v-else-if="visibleItems.length > 0" class="overflow-x-auto">
+        <div v-else-if="editableItems.length > 0" class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-surface-secondary">
               <tr>
                 <th v-if="isEditMode" class="px-4 py-3 w-12"></th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
-                  Producto</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.
+                <th class="px-6 py-3 text-left">
+                  <UiTableHeaderFilter
+                    v-model="productFilter"
+                    title="Producto"
+                    filter-type="select"
+                    :options="productHeaderOptions"
+                    all-label="Producto"
+                    align="left"
+                  />
                 </th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio
+                <th class="px-6 py-3 text-center">
+                  <UiTableHeaderFilter
+                    title="Cant."
+                    filter-type="none"
+                    align="center"
+                  />
                 </th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">
-                  Subtotal
+                <th class="px-6 py-3 text-right">
+                  <UiTableHeaderFilter
+                    title="Precio"
+                    filter-type="none"
+                    align="right"
+                  />
+                </th>
+                <th class="px-6 py-3 text-right">
+                  <UiTableHeaderFilter
+                    title="Subtotal"
+                    filter-type="none"
+                    align="right"
+                  />
                 </th>
               </tr>
             </thead>
@@ -1425,6 +1467,14 @@ onUnmounted(() => {
                   </tr>
                 </template>
               </template>
+              <tr v-if="visibleItems.length === 0">
+                <td
+                  :colspan="isEditMode ? 5 : 4"
+                  class="px-6 py-12 text-center text-sm text-text-secondary"
+                >
+                  No hay productos con el filtro seleccionado
+                </td>
+              </tr>
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>

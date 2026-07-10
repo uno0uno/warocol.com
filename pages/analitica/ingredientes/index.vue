@@ -74,6 +74,39 @@
           </select>
 
           <select
+            v-model="unitFilter"
+            :class="[filterSelectClass, 'w-full sm:w-32 md:hidden']"
+            aria-label="Filtrar por unidad"
+          >
+            <option value="">Unidad</option>
+            <option v-for="unit in units" :key="unit" :value="unit">
+              {{ formatUnitLabel(unit) }}
+            </option>
+          </select>
+
+          <input
+            v-model="quantityMinFilter"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
+            placeholder="Mín."
+            aria-label="Cantidad mínima"
+          />
+
+          <input
+            v-model="quantityMaxFilter"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
+            placeholder="Máx."
+            aria-label="Cantidad máxima"
+          />
+
+          <select
             v-model="sortOption"
             :class="[filterSelectClass, 'w-full sm:w-56 md:hidden']"
             aria-label="Ordenar ingredientes"
@@ -115,7 +148,7 @@
                 />
               </div>
               <p class="text-xs text-text-secondary mt-1">
-                {{ item.category || 'Sin categoría' }} · {{ formatQuantity(item.consumed_quantity) }} {{ item.unit || 'und' }}
+                {{ item.category || 'Sin categoría' }} · {{ formatQuantity(item.consumed_quantity) }} {{ formatUnitLabel(item.unit) }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -168,9 +201,24 @@
             sortable
             :sort-field="tableSortField"
             :sort-direction="tableSortDirection"
-            filter-type="none"
+            filter-type="number-range"
+            :min-value="quantityMinFilter"
+            :max-value="quantityMaxFilter"
             align="right"
             @sort="handleTableSort"
+            @update:min-value="quantityMinFilter = $event"
+            @update:max-value="quantityMaxFilter = $event"
+          />
+        </template>
+
+        <template #header-unit>
+          <UiTableHeaderFilter
+            v-model="unitFilter"
+            title="Unidad"
+            filter-type="select"
+            :options="unitHeaderOptions"
+            all-label="Unidad"
+            align="center"
           />
         </template>
 
@@ -199,8 +247,12 @@
 
         <template #cell-consumed_quantity="{ item }">
           <span class="text-sm font-bold tabular-nums text-text-primary">
-            {{ formatQuantity(item.consumed_quantity) }} {{ item.unit || '' }}
+            {{ formatQuantity(item.consumed_quantity) }}
           </span>
+        </template>
+
+        <template #cell-unit="{ item }">
+          <span class="text-sm font-semibold text-text-secondary">{{ formatUnitLabel(item.unit) }}</span>
         </template>
 
         <template #cell-estimated_consumed_cost="{ value }">
@@ -299,6 +351,9 @@ useHead({ title: 'Analítica de Ingredientes' })
 
 const ingredientFilter = ref('')
 const categoryFilter = ref('')
+const unitFilter = ref('')
+const quantityMinFilter = ref('')
+const quantityMaxFilter = ref('')
 const sortOption = ref('estimated_consumed_cost_desc')
 const lastUpdate = ref<Date>(new Date())
 
@@ -334,6 +389,9 @@ const hasActiveFilters = computed(
     || !!dateRangeDates.value
     || !!ingredientFilter.value
     || !!categoryFilter.value
+    || !!unitFilter.value
+    || !!quantityMinFilter.value
+    || !!quantityMaxFilter.value
     || sortOption.value !== 'estimated_consumed_cost_desc',
 )
 
@@ -364,7 +422,7 @@ const { data: ingredientsData } = useQuery({
 const ingredients = computed(() => {
   const rows = (ingredientsData.value as any)?.data ?? []
   return rows
-    .map((item: any) => ({ id: item.id, name: item.name, category: item.category }))
+    .map((item: any) => ({ id: item.id, name: item.name, category: item.category, unit: item.unit }))
     .sort((a: any, b: any) => a.name.localeCompare(b.name))
 })
 
@@ -378,11 +436,24 @@ const categories = computed(() => {
   })
   return Array.from(values).sort()
 })
+const units = computed(() => {
+  const values = new Set<string>()
+  ingredients.value.forEach((ingredient: any) => {
+    if (ingredient.unit) values.add(ingredient.unit)
+  })
+  rows.value.forEach((item) => {
+    if (item.unit) values.add(item.unit)
+  })
+  return Array.from(values).sort()
+})
 const ingredientHeaderOptions = computed(() =>
   ingredients.value.map((ingredient: any) => ({ label: ingredient.name, value: ingredient.id })),
 )
 const categoryHeaderOptions = computed(() =>
   categories.value.map((category) => ({ label: category, value: category })),
+)
+const unitHeaderOptions = computed(() =>
+  units.value.map((unit) => ({ label: formatUnitLabel(unit), value: unit })),
 )
 
 const { data: analyticsData, error: fetchError, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
@@ -391,6 +462,9 @@ const { data: analyticsData, error: fetchError, status: queryStatus, asyncStatus
     to: dateRange.value.to,
     ingredient: ingredientFilter.value || null,
     category: categoryFilter.value || null,
+    unit: unitFilter.value || null,
+    quantityMin: quantityMinFilter.value || null,
+    quantityMax: quantityMaxFilter.value || null,
     sort: sortOption.value,
   }],
   query: () => $fetch('/api/analytics/ingredients/summary', {
@@ -399,6 +473,9 @@ const { data: analyticsData, error: fetchError, status: queryStatus, asyncStatus
       date_to: dateRange.value.to || undefined,
       ingredient_id: ingredientFilter.value || undefined,
       category: categoryFilter.value || undefined,
+      unit: unitFilter.value || undefined,
+      quantity_min: quantityMinFilter.value || undefined,
+      quantity_max: quantityMaxFilter.value || undefined,
       limit: 200,
       sort: sortOption.value,
     },
@@ -453,7 +530,7 @@ const summary = computed(() => {
   }
 })
 
-watch([dateRangeDates, ingredientFilter, categoryFilter, sortOption], () => {
+watch([dateRangeDates, ingredientFilter, categoryFilter, unitFilter, quantityMinFilter, quantityMaxFilter, sortOption], () => {
   lastUpdate.value = new Date()
 })
 
@@ -481,6 +558,9 @@ const clearFilters = () => {
   clearDateRange()
   ingredientFilter.value = ''
   categoryFilter.value = ''
+  unitFilter.value = ''
+  quantityMinFilter.value = ''
+  quantityMaxFilter.value = ''
   sortOption.value = 'estimated_consumed_cost_desc'
 }
 
@@ -488,6 +568,7 @@ const ingredientTableColumns = [
   { key: 'ingredient_name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' },
   { key: 'category', title: 'Categoría', sortable: false, format: 'text', align: 'left' },
   { key: 'consumed_quantity', title: 'Consumo', sortable: false, format: 'text', align: 'right' },
+  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'center' },
   { key: 'estimated_consumed_cost', title: 'Costo estimado', sortable: false, format: 'text', align: 'right' },
   { key: 'weighted_avg_cost_per_unit', title: 'Costo prom.', sortable: false, format: 'text', align: 'right' },
   { key: 'latest_cost_per_unit', title: 'Último costo', sortable: false, format: 'text', align: 'right' },
@@ -498,7 +579,17 @@ const ingredientTableColumns = [
 ] as const
 
 function ingredientReportPath(ingredientId: string): string {
-  return `/analitica/ingredientes/${encodeURIComponent(ingredientId)}`
+  const path = `/analitica/ingredientes/${encodeURIComponent(ingredientId)}`
+  const params = new URLSearchParams()
+  if (dateRange.value.from && dateRange.value.to) {
+    params.set('date_from', dateRange.value.from)
+    params.set('date_to', dateRange.value.to)
+  }
+  if (unitFilter.value) params.set('unit', unitFilter.value)
+  if (quantityMinFilter.value) params.set('quantity_min', quantityMinFilter.value)
+  if (quantityMaxFilter.value) params.set('quantity_max', quantityMaxFilter.value)
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
 }
 
 function openIngredientReport(row: DisplayRow): void {
@@ -518,7 +609,35 @@ function formatQuantity(value: number | string | null | undefined, maxFractionDi
 
 function formatUnitCost(value: number | null | undefined, unit: string | null | undefined): string {
   if (value === null || value === undefined) return '-'
-  return `${formatCurrency(value)}/${unit || 'und'}`
+  return `${formatCurrency(value)}/${formatUnitLabel(unit)}`
+}
+
+function formatUnitLabel(value: string | null | undefined): string {
+  const normalized = String(value || 'und').trim()
+  const key = normalized.toLowerCase()
+  const labels: Record<string, string> = {
+    gramo: 'gr',
+    gramos: 'gr',
+    gram: 'gr',
+    grams: 'gr',
+    kilogramo: 'kg',
+    kilogramos: 'kg',
+    kilogram: 'kg',
+    kilograms: 'kg',
+    mililitro: 'ml',
+    mililitros: 'ml',
+    milliliter: 'ml',
+    milliliters: 'ml',
+    litro: 'lt',
+    litros: 'lt',
+    liter: 'lt',
+    liters: 'lt',
+    unidad: 'und',
+    unidades: 'und',
+    unit: 'und',
+    units: 'und',
+  }
+  return labels[key] || normalized
 }
 
 function formatCostTrend(value: number | null): string {
