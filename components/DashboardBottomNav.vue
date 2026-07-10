@@ -12,7 +12,7 @@
         </div>
         <div class="flex flex-col">
           <span class="text-sm font-semibold text-text-primary leading-tight">{{ userName }}</span>
-          <span class="text-xs text-text-tertiary leading-tight">{{ selectedTenant?.name || 'Sin tenant' }}</span>
+          <span class="text-xs text-text-tertiary leading-tight">{{ selectedTenant?.name || t('shell.noTenant') }}</span>
         </div>
       </div>
 
@@ -22,7 +22,7 @@
         <button
           @click="handleRefresh"
           :disabled="isLoading"
-          aria-label="Actualizar página"
+          :aria-label="t('shell.refreshPage')"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingMatrix v-if="isLoading" size="5.5px" />
@@ -36,7 +36,7 @@
         <!-- Notificaciones -->
         <button
           @click="openNotificationsModal"
-          aria-label="Ver notificaciones"
+          :aria-label="t('shell.viewNotifications')"
           class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
           <BellAlertIcon v-if="notificationsCount > 0" class="w-5 h-5 text-primary" aria-hidden="true" />
@@ -53,7 +53,7 @@
         <!-- Menú (all navigation) -->
         <button
           @click="showMenuModal = true"
-          aria-label="Abrir navegación"
+          :aria-label="t('shell.openNavigation')"
           class="w-10 h-10 flex md:hidden items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
           <Bars3Icon class="w-5 h-5 text-icon-button-neutral-text" />
@@ -62,7 +62,7 @@
         <!-- Configuración/Tenant -->
         <button
           @click="showTenantModal = true"
-          aria-label="Configuración"
+          :aria-label="t('shell.settings')"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
         >
           <Cog6ToothIcon class="w-5 h-5 text-icon-button-neutral-text" />
@@ -71,7 +71,7 @@
     </div>
 
     <!-- Menu Modal (grid of icons) -->
-    <UiBottomSheetModal v-model="showMenuModal" title="Navegación" max-height="sm">
+    <UiBottomSheetModal v-model="showMenuModal" :title="t('nav.navigation')" max-height="sm">
       <div class="p-4">
         <!-- Module-gated grid (#560). Fail-open when enforcement is disabled. -->
         <div v-if="visibleGridItems.length > 0" class="grid grid-cols-4 gap-4">
@@ -102,10 +102,10 @@
               <span
                 v-if="item.showCriticalDot && hasCriticalAlerts"
                 class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive border-2 border-shell-mobile-bg rounded-full"
-                :aria-label="`Alertas críticas en ${item.label.toLowerCase()}`"
+                :aria-label="t('nav.criticalAlerts', { module: t(item.labelKey).toLowerCase() })"
               />
             </div>
-            <span class="text-[10px] text-badge-neutral-text">{{ item.label }}</span>
+            <span class="text-[10px] text-badge-neutral-text">{{ t(item.labelKey) }}</span>
           </NuxtLink>
         </div>
 
@@ -119,20 +119,20 @@
             <div class="w-12 h-12 rounded-full flex items-center justify-center bg-icon-button-primary-bg">
               <CreditCardIcon class="w-6 h-6 text-icon-button-primary-text" />
             </div>
-            <span class="text-[10px] text-badge-neutral-text">Mi Plan</span>
+            <span class="text-[10px] text-badge-neutral-text">{{ t('nav.miPlan') }}</span>
           </NuxtLink>
         </div>
       </div>
     </UiBottomSheetModal>
 
     <!-- Notifications Modal -->
-    <UiBottomSheetModal v-model="showNotificationsModal" title="Notificaciones" max-height="lg">
+    <UiBottomSheetModal v-model="showNotificationsModal" :title="t('shell.notifications')" max-height="lg">
       <div class="flex items-center justify-between px-4 py-2 border-b border-sheet-border">
-        <span class="text-xs text-text-secondary">Sonido de alertas</span>
+        <span class="text-xs text-text-secondary">{{ t('shell.alertSound') }}</span>
         <button
           type="button"
           @click="handleToggleDespachoSound"
-          :aria-label="despachoSoundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
+          :aria-label="despachoSoundEnabled ? t('shell.muteAlerts') : t('shell.enableAlerts')"
           class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring transition-colors"
           :class="despachoSoundEnabled ? 'text-text-primary' : 'text-icon-button-neutral-text'"
         >
@@ -143,7 +143,7 @@
       <!-- Empty state -->
       <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-10 px-4 gap-2">
         <BellIcon class="w-8 h-8 text-muted-foreground/40" aria-hidden="true" />
-        <p class="text-sm text-muted-foreground text-center">Sin notificaciones nuevas</p>
+        <p class="text-sm text-muted-foreground text-center">{{ t('shell.noNotifications') }}</p>
       </div>
       <!-- List -->
       <ul v-else class="divide-y divide-sheet-border">
@@ -175,17 +175,44 @@
     </UiBottomSheetModal>
 
     <!-- Tenant Selector Modal -->
-    <UiBottomSheetModal v-model="showTenantModal" title="Configuración" max-height="lg">
+    <UiBottomSheetModal v-model="showTenantModal" :title="t('shell.settings')" max-height="lg">
       <div class="p-4 space-y-6">
+        <!-- Language (shell i18n #1602) -->
+        <div>
+          <label class="text-sm text-text-secondary font-medium mb-2 block">{{ t('shell.language') }}</label>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
+              :class="locale === 'es'
+                ? 'border-primary bg-icon-button-primary-bg text-text-primary'
+                : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
+              @click="setUserLocale('es')"
+            >
+              {{ t('shell.localeEs') }}
+            </button>
+            <button
+              type="button"
+              class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
+              :class="locale === 'en'
+                ? 'border-primary bg-icon-button-primary-bg text-text-primary'
+                : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
+              @click="setUserLocale('en')"
+            >
+              {{ t('shell.localeEn') }}
+            </button>
+          </div>
+        </div>
+
         <!-- Tenant Selector -->
         <div>
-          <label class="text-sm text-text-secondary font-medium mb-2 block">Seleccionar Tenant</label>
+          <label class="text-sm text-text-secondary font-medium mb-2 block">{{ t('shell.selectTenant') }}</label>
           <div class="space-y-2">
             <div v-if="isLoadingTenants" class="text-sm text-text-secondary py-2">
-              Cargando tenants...
+              {{ t('shell.loadingTenants') }}
             </div>
             <div v-else-if="tenants.length === 0" class="text-sm text-text-secondary py-2">
-              No hay tenants disponibles
+              {{ t('shell.noTenants') }}
             </div>
             <button
               v-else
@@ -264,6 +291,8 @@ const props = withDefaults(defineProps<Props>(), {
   notificationsCount: 0,
 })
 
+const { t } = useI18n()
+const { locale, setUserLocale } = useAppLocale()
 const { can } = useModuleAccess()
 const { hasFeature } = useFeatureAccess()
 const canSeeNavItem = (item: DashboardNavItem) =>
@@ -327,12 +356,12 @@ const handleToggleDespachoSound = () => {
 const formatRelativeTime = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime()
   const minutes = Math.floor(diff / 60_000)
-  if (minutes < 1) return 'Ahora'
-  if (minutes < 60) return `Hace ${minutes} min`
+  if (minutes < 1) return t('shell.now')
+  if (minutes < 60) return t('shell.minutesAgo', { n: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `Hace ${hours} h`
+  if (hours < 24) return t('shell.hoursAgo', { n: hours })
   const days = Math.floor(hours / 24)
-  return `Hace ${days} d`
+  return t('shell.daysAgo', { n: days })
 }
 
 // Use tenants store

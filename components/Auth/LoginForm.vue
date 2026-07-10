@@ -26,21 +26,21 @@
           <div v-if="checkingSession" class="text-center space-y-4">
             <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
               style="border-color: hsl(250, 30%, 16%); border-top-color: transparent;"></div>
-            <p class="text-sm" style="color: hsl(220, 13%, 28%);">Verificando sesión...</p>
+            <p class="text-sm" style="color: hsl(220, 13%, 28%);">{{ t('auth.checkingSession') }}</p>
           </div>
 
           <!-- Formulario de login -->
           <div v-else-if="!emailSent" class="text-center">
-            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Iniciar sesión</h1>
+            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">{{ t('auth.signIn') }}</h1>
             <p class="text-base mb-10" style="color: hsl(220, 13%, 28%);">
-              Ingresa tu email para recibir un código de acceso seguro.
+              {{ t('auth.emailPrompt') }}
             </p>
 
             <!-- Email Form -->
             <form @submit.prevent="handleSubmit">
               <div class="mb-6 text-left">
                 <label for="email" class="block text-xs font-semibold mb-2" style="color: hsl(250, 30%, 16%);">
-                  Dirección de Email
+                  {{ t('auth.emailLabel') }}
                 </label>
                 <input id="email" v-model="email" type="email" required :disabled="loading"
                   class="w-full px-4 py-3 rounded-md text-base border-2 transition-all"
@@ -58,18 +58,18 @@
                 @mouseleave="email && !loading && ($event.target.style.backgroundColor = 'hsl(250, 30%, 16%)')">
                 <span v-if="loading" class="flex items-center justify-center gap-2">
                   <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  Enviando...
+                  {{ t('auth.sending') }}
                 </span>
-                <span v-else>Siguiente</span>
+                <span v-else>{{ t('auth.next') }}</span>
               </button>
             </form>
           </div>
 
           <!-- Código de Verificación -->
           <div v-else-if="emailSent" class="text-center">
-            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Revisa tu correo</h1>
+            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">{{ t('auth.checkEmail') }}</h1>
             <p class="text-base mb-2" style="color: hsl(220, 13%, 28%);">
-              Hemos enviado un enlace de acceso a:
+              {{ t('auth.linkSentTo') }}
             </p>
             <p class="text-base font-medium mb-6" style="color: hsl(250, 30%, 16%);">
               {{ email }}
@@ -77,7 +77,7 @@
 
             <div class="rounded-lg p-4 mb-6" style="background-color: hsl(220, 14%, 95%); border: 1px solid hsl(220, 14%, 90%);">
               <p class="text-sm" style="color: hsl(220, 13%, 28%);">
-                Abre el email y haz clic en el enlace para iniciar sesión. El enlace es válido por 15 minutos.
+                {{ t('auth.openEmailHint') }}
               </p>
             </div>
 
@@ -87,7 +87,7 @@
                 <div class="w-full border-t" style="border-color: hsl(220, 14%, 90%);"></div>
               </div>
               <div class="relative flex justify-center text-sm">
-                <span class="px-4 bg-white" style="color: hsl(220, 13%, 28%);">O usa el código de verificación</span>
+                <span class="px-4 bg-white" style="color: hsl(220, 13%, 28%);">{{ t('auth.orUseCode') }}</span>
               </div>
             </div>
 
@@ -108,18 +108,18 @@
                 @mouseleave="!verifyingCode && ($event.target.style.backgroundColor = 'hsl(250, 30%, 16%)')">
                 <span v-if="verifyingCode" class="flex items-center justify-center gap-2">
                   <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  Verificando...
+                  {{ t('auth.verifying') }}
                 </span>
-                <span v-else>Verificar Código</span>
+                <span v-else>{{ t('auth.verifyCode') }}</span>
               </button>
             </div>
 
             <div class="text-center mt-8">
               <p class="text-sm" style="color: hsl(220, 13%, 28%);">
-                ¿No recibiste el email?
+                {{ t('auth.noEmail') }}
                 <button @click="emailSent = false; verificationCode = ''" type="button"
                   class="font-medium ml-1 hover:underline" style="color: hsl(250, 30%, 16%);">
-                  Reenviar
+                  {{ t('auth.resend') }}
                 </button>
               </p>
             </div>
@@ -137,7 +137,7 @@
                 </svg>
               </div>
               <div class="ml-3">
-                <p class="text-sm font-medium" style="color: hsl(var(--destructive));">Error de autenticación</p>
+                <p class="text-sm font-medium" style="color: hsl(var(--destructive));">{{ t('auth.authError') }}</p>
                 <p class="text-sm mt-1" style="color: hsl(var(--destructive));">{{ error }}</p>
                 <NuxtLink
                   v-if="showCustomerPortalLink"
@@ -145,7 +145,7 @@
                   class="inline-flex mt-3 text-sm font-semibold underline"
                   style="color: hsl(var(--destructive));"
                 >
-                  Ir al portal de clientes
+                  {{ t('auth.customerPortal') }}
                 </NuxtLink>
               </div>
             </div>
@@ -165,6 +165,7 @@ import {
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 
+const { t } = useI18n()
 const email = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -320,7 +321,7 @@ async function handleSubmit() {
     })
 
     // Mostrar toast de éxito y activar UI de código
-    toast.success('Código enviado a tu email')
+    toast.success(t('auth.codeSentToast'))
     emailSent.value = true
   } catch (err) {
     console.error('❌ Error al enviar magic link:', err)
@@ -332,7 +333,7 @@ async function handleSubmit() {
       showCustomerPortalLink.value = true
       error.value = getInternalAccessDeniedMessage()
     } else {
-      error.value = err?.data?.message || err?.message || 'Error al enviar el magic link. Intenta nuevamente.'
+      error.value = err?.data?.message || err?.message || t('auth.magicLinkError')
     }
   } finally {
     loading.value = false
@@ -341,7 +342,7 @@ async function handleSubmit() {
 
 async function verifyCode() {
   if (!verificationCode.value || verificationCode.value.length !== 6) {
-    error.value = 'Ingresa un código de 6 dígitos'
+    error.value = t('auth.codeRequired')
     return
   }
 
@@ -358,7 +359,7 @@ async function verifyCode() {
       credentials: 'include'
     })
 
-    toast.success('¡Acceso autorizado! Redirigiendo...')
+    toast.success(t('auth.accessGranted'))
 
     // Redirigir con recarga completa para asegurar que la cookie se incluya
     const route = useRoute()
@@ -378,7 +379,7 @@ async function verifyCode() {
       error.value = getInternalAccessDeniedMessage()
       return
     }
-    error.value = err.message || 'Código inválido o expirado'
+    error.value = err.message || t('auth.invalidCode')
   } finally {
     verifyingCode.value = false
   }

@@ -1,16 +1,29 @@
 import { formatMoney, normalizeCurrencyCode } from '~/utils/currencyDisplay'
+import {
+  DEFAULT_UI_LOCALE,
+  formatLocaleNumber,
+  normalizeUiLocale,
+  toNumberLocaleTag,
+  type UiLocale,
+} from '~/utils/parseLocaleDecimal'
 
 export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
   const tenantsStore = useTenantsStore()
 
-  /** Display currency from tenant prefs (B1); missing → COP. */
+  /** Display currency from tenant prefs (B1/B5); missing → COP. */
   const currencyCode = computed(() =>
     normalizeCurrencyCode(tenantsStore.businessProfile?.currency_code),
   )
-  /** Number-format locale pref when present; formatMoney defaults es-CO. */
-  const currencyLocale = computed(() => tenantsStore.businessProfile?.locale ?? null)
 
+  /** Tenant UI locale for number punctuation (B1 surface when present; default es). */
+  const uiLocale = computed<UiLocale>(() =>
+    normalizeUiLocale(tenantsStore.businessProfile?.locale),
+  )
+
+  const numberLocaleTag = computed(() => toNumberLocaleTag(uiLocale.value))
+
+  // Dates stay es-CO until date locale work; number/currency punctuation follows uiLocale.
   const dateFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
     day: '2-digit', month: '2-digit', year: '2-digit',
     timeZone: timezone.value,
@@ -42,12 +55,20 @@ export const useFormatters = () => {
     return dateFormatter.value.format(new Date(dateString))
   }
 
-  /** Display-only money; currency_code from prefs, default COP. See display-currency.md */
+  /** Display-only money; currency_code from prefs (default COP) + locale punctuation. */
   const formatCurrency = (value: number | null): string => {
     return formatMoney(value, {
       currency: currencyCode.value,
-      locale: currencyLocale.value,
+      locale: uiLocale.value,
     })
+  }
+
+  const formatNumber = (
+    value: number | null | undefined,
+    options?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
+  ): string => {
+    if (value === null || value === undefined || !Number.isFinite(value)) return ''
+    return formatLocaleNumber(value, uiLocale.value, options)
   }
 
   const formatDateTime = (dateString: string | null | undefined): string => {
@@ -68,10 +89,14 @@ export const useFormatters = () => {
   }
 
   return {
+    uiLocale,
+    numberLocaleTag,
+    defaultUiLocale: DEFAULT_UI_LOCALE,
     formatDate,
     formatCalendarDate,
     formatDateShort,
     formatCurrency,
+    formatNumber,
     formatDateTime,
     formatRelativeDate,
   }

@@ -250,8 +250,27 @@ export default defineNuxtConfig({
     '@nuxtjs/robots',
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
-    'nuxt-icon'
+    'nuxt-icon',
+    '@nuxtjs/i18n',
   ],
+  i18n: {
+    // Shell foundation (#1602): es default + en secondary; no URL prefix so
+    // product routes (/pos, /ventas, …) stay stable. Files live under i18n/ (v9).
+    restructureDir: 'i18n',
+    locales: [
+      { code: 'es', language: 'es-CO', name: 'Español', file: 'es/shell.json' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en/shell.json' },
+    ],
+    lazy: true,
+    langDir: 'locales',
+    defaultLocale: 'es',
+    strategy: 'no_prefix',
+    vueI18n: 'i18n.config.ts',
+    detectBrowserLanguage: false,
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
+  },
   site: {
     url: 'https://warocol.com'
   },

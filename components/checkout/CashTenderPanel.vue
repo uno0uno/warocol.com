@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import {
+  formatIntegerMoney,
+  normalizeUiLocale,
+  parseIntegerMoney,
+  type UiLocale,
+} from '~/utils/parseLocaleDecimal'
+
 const cashReceived = defineModel<number>({ default: 0 })
 
 const props = withDefaults(defineProps<{
@@ -9,6 +16,11 @@ const props = withDefaults(defineProps<{
 }>(), {
   requireInputForFeedback: false,
 })
+
+const tenantsStore = useTenantsStore()
+const uiLocale = computed<UiLocale>(() =>
+  normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+)
 
 const cashPresetsExtra = [
   { label: '+ $1.000', offset: 1000 },
@@ -26,14 +38,14 @@ const cashShortfall = computed(() =>
   Math.max(0, props.amountToCharge - (cashReceived.value || 0)),
 )
 const cashReceivedDisplay = computed(() =>
-  cashReceived.value > 0 ? cashReceived.value.toLocaleString('es-CO') : '',
+  formatIntegerMoney(cashReceived.value, uiLocale.value),
 )
 
 const onCashReceivedInput = (e: Event) => {
   const input = e.target as HTMLInputElement
-  const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
-  cashReceived.value = Number.isFinite(raw) ? raw : 0
-  input.value = raw ? raw.toLocaleString('es-CO') : ''
+  const raw = parseIntegerMoney(input.value, uiLocale.value)
+  cashReceived.value = raw
+  input.value = formatIntegerMoney(raw, uiLocale.value)
 }
 
 const showVuelto = computed(() => {

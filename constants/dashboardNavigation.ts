@@ -31,7 +31,8 @@ export type ActivePage =
 export interface DashboardNavItem {
   to: string
   page: ActivePage
-  label: string
+  /** i18n key under i18n/locales/*/shell.json (e.g. nav.ventas) */
+  labelKey: string
   icon: FunctionalComponent
   module: Module
   feature?: AccessFeature
@@ -39,41 +40,41 @@ export interface DashboardNavItem {
 }
 
 export const dashboardPrimaryItems: DashboardNavItem[] = [
-  { to: '/pos', page: 'pos', label: 'POS', icon: ComputerDesktopIcon, module: 'pos' },
-  { to: '/ventas', page: 'ventas', label: 'Ventas', icon: ShoppingCartIcon, module: 'ventas' },
-  { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon, module: 'despacho' },
+  { to: '/pos', page: 'pos', labelKey: 'nav.pos', icon: ComputerDesktopIcon, module: 'pos' },
+  { to: '/ventas', page: 'ventas', labelKey: 'nav.ventas', icon: ShoppingCartIcon, module: 'ventas' },
+  { to: '/despacho/domicilios', page: 'despacho', labelKey: 'nav.despacho', icon: MapPinIcon, module: 'despacho' },
 ]
 
 export const dashboardSecondaryItems: DashboardNavItem[] = [
-  { to: '/analitica', page: 'analytics', label: 'Analítica', icon: ChartBarIcon, module: 'analitica' },
-  { to: '/asistente/kali', page: 'asistente', label: 'Kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
-  { to: '/finanzas/arqueo', page: 'finanzas', label: 'Finanzas', icon: BanknotesIcon, module: 'finanzas' },
-  { to: '/facturacion', page: 'facturacion', label: 'Facturación', icon: DocumentTextIcon, module: 'facturacion' },
-  { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon, module: 'menu' },
-  { to: '/operaciones/comandas', page: 'operaciones', label: 'Operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
-  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: TruckIcon, module: 'abastecimiento' },
-  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon, module: 'equipo' },
-  { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon, module: 'integraciones' },
+  { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
+  { to: '/asistente/kali', page: 'asistente', labelKey: 'nav.kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
+  { to: '/finanzas/arqueo', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },
+  { to: '/facturacion', page: 'facturacion', labelKey: 'nav.facturacion', icon: DocumentTextIcon, module: 'facturacion' },
+  { to: '/menu/productos', page: 'menu', labelKey: 'nav.menu', icon: CubeIcon, module: 'menu' },
+  { to: '/operaciones/comandas', page: 'operaciones', labelKey: 'nav.operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
+  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', labelKey: 'nav.abastecimiento', icon: TruckIcon, module: 'abastecimiento' },
+  { to: '/equipo/miembros', page: 'equipo', labelKey: 'nav.equipo', icon: UserGroupIcon, module: 'equipo' },
+  { to: '/integraciones', page: 'integraciones', labelKey: 'nav.integraciones', icon: KeyIcon, module: 'integraciones' },
 ]
 
 export const dashboardCuentaItems: DashboardNavItem[] = [
-  { to: '/negocio', page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
-  { to: '/gestion/billing', page: 'admin', label: 'Mi Plan', icon: CreditCardIcon, module: 'mi_plan' },
+  { to: '/negocio', page: 'negocio', labelKey: 'nav.miNegocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
+  { to: '/gestion/billing', page: 'admin', labelKey: 'nav.miPlan', icon: CreditCardIcon, module: 'mi_plan' },
 ]
 
 export const dashboardMobileGridItems: DashboardNavItem[] = [
-  { to: '/ventas', page: 'ventas', label: 'Ventas', icon: ShoppingCartIcon, module: 'ventas' },
-  { to: '/pos', page: 'pos', label: 'POS', icon: ComputerDesktopIcon, module: 'pos' },
-  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: DocumentTextIcon, module: 'abastecimiento', showCriticalDot: true },
-  { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon, module: 'menu' },
-  { to: '/operaciones/comandas', page: 'operaciones', label: 'Operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
-  { to: '/analitica', page: 'analytics', label: 'Analítica', icon: ChartBarIcon, module: 'analitica' },
-  { to: '/asistente/kali', page: 'asistente', label: 'Kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
-  { to: '/finanzas/cartera', page: 'finanzas', label: 'Finanzas', icon: BanknotesIcon, module: 'finanzas' },
-  { to: '/facturacion', page: 'facturacion', label: 'Facturación', icon: ReceiptPercentIcon, module: 'facturacion' },
-  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon, module: 'equipo' },
-  { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon, module: 'integraciones' },
-  { to: '/despacho/domicilios', page: 'despacho', label: 'Domicilios', icon: MapPinIcon, module: 'despacho' },
-  { to: '/negocio', page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
-  { to: '/gestion/billing', page: 'admin', label: 'Mi Plan', icon: CreditCardIcon, module: 'mi_plan' },
+  { to: '/ventas', page: 'ventas', labelKey: 'nav.ventas', icon: ShoppingCartIcon, module: 'ventas' },
+  { to: '/pos', page: 'pos', labelKey: 'nav.pos', icon: ComputerDesktopIcon, module: 'pos' },
+  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', labelKey: 'nav.abastecimiento', icon: DocumentTextIcon, module: 'abastecimiento', showCriticalDot: true },
+  { to: '/menu/productos', page: 'menu', labelKey: 'nav.menu', icon: CubeIcon, module: 'menu' },
+  { to: '/operaciones/comandas', page: 'operaciones', labelKey: 'nav.operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
+  { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
+  { to: '/asistente/kali', page: 'asistente', labelKey: 'nav.kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
+  { to: '/finanzas/cartera', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },
+  { to: '/facturacion', page: 'facturacion', labelKey: 'nav.facturacion', icon: ReceiptPercentIcon, module: 'facturacion' },
+  { to: '/equipo/miembros', page: 'equipo', labelKey: 'nav.equipo', icon: UserGroupIcon, module: 'equipo' },
+  { to: '/integraciones', page: 'integraciones', labelKey: 'nav.integraciones', icon: KeyIcon, module: 'integraciones' },
+  { to: '/despacho/domicilios', page: 'despacho', labelKey: 'nav.domicilios', icon: MapPinIcon, module: 'despacho' },
+  { to: '/negocio', page: 'negocio', labelKey: 'nav.miNegocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
+  { to: '/gestion/billing', page: 'admin', labelKey: 'nav.miPlan', icon: CreditCardIcon, module: 'mi_plan' },
 ]

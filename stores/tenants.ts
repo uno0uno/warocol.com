@@ -30,7 +30,7 @@ export interface TenantBusinessProfile {
   latitude: number | null
   longitude: number | null
   timezone?: string | null
-  /** UI/number language pref from B1 (#1599) when API exposes it — es | en */
+  /** UI language pref from B1 (#1599) when API exposes it — es | en */
   locale?: string | null
   /** ISO 4217 display currency from B1 (#1599); default COP. Display-only — no FX. */
   currency_code?: string | null

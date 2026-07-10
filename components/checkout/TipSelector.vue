@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import {
+  formatIntegerMoney,
+  normalizeUiLocale,
+  parseIntegerMoney,
+  type UiLocale,
+} from '~/utils/parseLocaleDecimal'
 
 // Reusable tip selector for POS and online checkouts (warocol.com#639).
 // Props-driven, layout-agnostic — fills the parent container.
@@ -26,6 +32,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: TipModel): void
 }>()
+
+const tenantsStore = useTenantsStore()
+const uiLocale = computed<UiLocale>(() =>
+  normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+)
 
 type Mode = { kind: 'preset'; index: number } | { kind: 'custom' } | { kind: 'none' }
 
@@ -108,13 +119,13 @@ const selectNone = () => {
 
 const onCustomInput = (e: Event) => {
   const input = e.target as HTMLInputElement
-  const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
-  customAmount.value = Number.isFinite(raw) ? raw : 0
-  input.value = raw ? raw.toLocaleString('es-CO') : ''
+  const raw = parseIntegerMoney(input.value, uiLocale.value)
+  customAmount.value = raw
+  input.value = formatIntegerMoney(raw, uiLocale.value)
 }
 
 const customDisplay = computed(() =>
-  customAmount.value > 0 ? customAmount.value.toLocaleString('es-CO') : ''
+  formatIntegerMoney(customAmount.value, uiLocale.value),
 )
 
 const isActivePreset = (i: number) => activeMode.value.kind === 'preset' && activeMode.value.index === i
