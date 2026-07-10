@@ -320,6 +320,7 @@ import MetricCard from '~/components/shared/MetricCard.vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
+import { useIngredientAnalyticsFiltersStore } from '~/stores/ingredientAnalyticsFilters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 type IngredientAnalyticsRow = {
@@ -345,7 +346,16 @@ const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgr
 const { currentTenant } = useTenantReactive()
 const { formatCurrency } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
+const ingredientAnalyticsFiltersStore = useIngredientAnalyticsFiltersStore()
+const tenantId = computed(() => currentTenant.value?.id ?? null)
+const ingredientDateFilters = computed(() => ingredientAnalyticsFiltersStore.ingredientsFor(tenantId.value))
+const ingredientDateRangeDates = computed({
+  get: () => ingredientDateFilters.value.dateRangeDates,
+  set: (value) => {
+    ingredientDateFilters.value.dateRangeDates = value
+  },
+})
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets(ingredientDateRangeDates)
 
 useHead({ title: 'Analítica de Ingredientes' })
 
