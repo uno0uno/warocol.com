@@ -47,6 +47,8 @@ interface InvoiceTaxLine {
   amount?: number | string | null
 }
 
+import type { PlatformLegalPrint } from '~/constants/waroLegalEntity'
+
 const props = defineProps<{
   fiscalData?: {
     business_name?: string | null
@@ -56,6 +58,7 @@ const props = defineProps<{
     phone?: string | null
     email?: string | null
   } | null
+  platformLegal?: PlatformLegalPrint | null
   displayName?: string | null
   address?: string | null
   city?: string | null
@@ -161,9 +164,10 @@ const invoiceDianUrl = computed(() => {
     : null
 })
 
+/** Emisor FE = tenant fiscal only (never marketing displayName / WARO brand). */
 const fallbackIssuerLabel = computed(() => {
-  const name = props.fiscalData?.business_name || props.displayName
-  const nit = props.fiscalData?.nit
+  const name = props.fiscalData?.business_name?.trim() || null
+  const nit = props.fiscalData?.nit?.trim() || null
   if (name && nit) return `${name} - NIT ${nit}`
   return name || (nit ? `NIT ${nit}` : null)
 })
@@ -364,7 +368,25 @@ const printableItems = computed(() =>
     <div class="receipt-divider">================================</div>
     <div class="receipt-footer">Gracias por tu compra</div>
 
-    <template v-if="invoice">
+    <!-- Venta sin FE: comprobante del establecimiento (no factura DIAN) -->
+    <template v-if="!invoice">
+      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">
+        COMPROBANTE DE VENTA
+      </div>
+      <div class="receipt-row receipt-small">
+        No es factura electronica DIAN
+      </div>
+      <div
+        v-if="fallbackIssuerLabel"
+        class="receipt-row receipt-small"
+      >
+        Vendedor: {{ fallbackIssuerLabel }}
+      </div>
+      <PosReceiptPlatformFooter document-kind="sale" :platform-legal="platformLegal" />
+    </template>
+
+    <template v-else>
       <div class="receipt-divider">================================</div>
       <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRONICA DE VENTA</div>
       <div class="receipt-row receipt-small">Representacion impresa de factura electronica de venta</div>
@@ -402,6 +424,7 @@ const printableItems = computed(() =>
       >
       <div v-if="invoiceDianUrl" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
+      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" />
     </template>
     </div>
   </Teleport>

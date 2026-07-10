@@ -2407,6 +2407,8 @@ const printReceipt = async () => {
 // the cashier doesn't need MI_NEGOCIO. The /facturacion owner panel reads
 // /api/api/tenant/fiscal-data directly with its richer write surface.
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
+/** WARO + Matias print labels from backend env (not tenant issuer). */
+const platformLegal = computed(() => settingsData.value?.data?.platform_legal ?? null)
 
 const receiptPrintSettings = computed(() =>
   settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', tip_label: 'Propina', show_logo: true },
@@ -2591,6 +2593,13 @@ const receiptInvoiceTaxLines = computed(() => {
   ].filter(line => Number(line.amount) > 0)
 })
 
+const receiptIssuerLabel = computed(() => {
+  const name = fiscalData.value?.business_name?.trim() || null
+  const nit = fiscalData.value?.nit?.trim() || null
+  if (name && nit) return `${name} - NIT ${nit}`
+  return name || (nit ? `NIT ${nit}` : null)
+})
+
 const receiptInvoice = computed(() => {
   const invoice = invoiceResult.value
   if (!invoice) return null
@@ -2603,6 +2612,8 @@ const receiptInvoice = computed(() => {
     issuedAt: receiptInvoiceIssuedAt.value,
     paymentLabel: receiptSinglePaymentLabel.value,
     taxLines: receiptInvoiceTaxLines.value,
+    // Emisor FE = tenant fiscal only (Matias client_uuid is technical; WARO is not issuer)
+    issuerLabel: receiptIssuerLabel.value,
   }
 })
 
@@ -5034,6 +5045,7 @@ onUnmounted(() => {
     <PosReceiptPrintTicket
       v-if="orderResult"
       :fiscal-data="fiscalData"
+      :platform-legal="platformLegal"
       :display-name="businessProfile?.display_name"
       :address="businessProfile?.address"
       :city="businessProfile?.city"
@@ -5211,6 +5223,8 @@ onUnmounted(() => {
     <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
     <div class="receipt-footer receipt-small" style="font-weight:bold;">PREFACTURA — DOCUMENTO INFORMATIVO</div>
     <div class="receipt-footer receipt-small">No es comprobante fiscal ni factura electrónica DIAN</div>
+    <!-- WARO = software/tecnología; emisor/vendedor = establecimiento (tenant) -->
+    <PosReceiptPlatformFooter document-kind="prefactura" :platform-legal="platformLegal" />
   </div>
 
   <!-- Hidden receipt for printing — only visible via @media print -->
@@ -5369,6 +5383,9 @@ onUnmounted(() => {
       <div class="receipt-divider">================================</div>
       <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRÓNICA</div>
       <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
+      <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
+        Emisor: {{ receiptIssuerLabel }}
+      </div>
       <div v-if="invoiceResult.cufe" class="receipt-row receipt-small receipt-cufe">
         CUFE: {{ invoiceResult.cufe }}
       </div>
@@ -5380,6 +5397,16 @@ onUnmounted(() => {
       >
       <div v-if="invoiceResult.cufe" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
+      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" />
+    </template>
+    <template v-else>
+      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">COMPROBANTE DE VENTA</div>
+      <div class="receipt-row receipt-small">No es factura electrónica DIAN</div>
+      <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
+        Vendedor: {{ receiptIssuerLabel }}
+      </div>
+      <PosReceiptPlatformFooter document-kind="sale" :platform-legal="platformLegal" />
     </template>
   </div>
 
