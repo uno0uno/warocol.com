@@ -1,6 +1,23 @@
+import {
+  DEFAULT_UI_LOCALE,
+  formatLocaleNumber,
+  normalizeUiLocale,
+  toNumberLocaleTag,
+  type UiLocale,
+} from '~/utils/parseLocaleDecimal'
+
 export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
+  const tenantsStore = useTenantsStore()
 
+  /** Tenant UI locale for number punctuation (B1 surface when present; default es). */
+  const uiLocale = computed<UiLocale>(() =>
+    normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+  )
+
+  const numberLocaleTag = computed(() => toNumberLocaleTag(uiLocale.value))
+
+  // Dates stay es-CO until B4; only number/currency punctuation follows uiLocale.
   const dateFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
     day: '2-digit', month: '2-digit', year: '2-digit',
     timeZone: timezone.value,
@@ -32,13 +49,22 @@ export const useFormatters = () => {
     return dateFormatter.value.format(new Date(dateString))
   }
 
+  /** Currency display: COP code until B5; punctuation follows uiLocale. */
   const formatCurrency = (value: number | null): string => {
     if (value === null || value === undefined) return '$0'
-    return new Intl.NumberFormat('es-CO', {
+    return new Intl.NumberFormat(numberLocaleTag.value, {
       style: 'currency',
       currency: 'COP',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
     }).format(value)
+  }
+
+  const formatNumber = (
+    value: number | null | undefined,
+    options?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
+  ): string => {
+    if (value === null || value === undefined || !Number.isFinite(value)) return ''
+    return formatLocaleNumber(value, uiLocale.value, options)
   }
 
   const formatDateTime = (dateString: string | null | undefined): string => {
@@ -59,10 +85,14 @@ export const useFormatters = () => {
   }
 
   return {
+    uiLocale,
+    numberLocaleTag,
+    defaultUiLocale: DEFAULT_UI_LOCALE,
     formatDate,
     formatCalendarDate,
     formatDateShort,
     formatCurrency,
+    formatNumber,
     formatDateTime,
     formatRelativeDate,
   }
