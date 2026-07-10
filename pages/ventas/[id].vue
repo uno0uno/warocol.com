@@ -92,7 +92,7 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
 })
 
 // Load invoice for this order (404 = no invoice, not an error)
-const { data: invoiceData, refetch: refetchInvoice } = useQuery({
+const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = useQuery({
   key: () => ['order-invoice', currentTenant.value?.id ?? null, orderId.value],
   query: async () => {
     try {
@@ -125,6 +125,17 @@ const toast = useToast()
 const onInvoiceEmailSent = (email: string) => {
   toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
 }
+
+type SelectedCustomer = {
+  id: string
+  name: string | null
+  phone_number: string | null
+  email: string | null
+}
+
+const showCustomerModal = ref(false)
+const isAssociatingCustomer = ref(false)
+const customerAssociationError = ref('')
 
 // warocol.com#589 — detect the "ya validado" un-recoverable case so the UI
 // shows a clearer support-action banner instead of dumping the raw Matias
@@ -211,6 +222,14 @@ const order = computed(() => {
 
 const orderCustomer = computed(() => order.value?.customer ?? null)
 const orderHasInvoiceCustomer = computed(() => Boolean(orderCustomer.value?.id))
+const canAssociateOrderCustomer = computed(() => Boolean(
+  order.value
+    && invoiceStatus.value === 'success'
+    && !invoiceData.value
+))
+const customerAssociationLabel = computed(() =>
+  orderHasInvoiceCustomer.value ? 'Cambiar cliente' : 'Asociar cliente'
+)
 const canEmitInvoiceForOrder = computed(() => Boolean(
   !invoiceData.value
     && isInvoicingReady.value
@@ -227,6 +246,30 @@ const shouldShowInvoiceSection = computed(() => Boolean(
       && orderHasInvoiceCustomer.value
     ),
 ))
+
+const openCustomerModal = () => {
+  if (!canAssociateOrderCustomer.value) return
+  customerAssociationError.value = ''
+  showCustomerModal.value = true
+}
+
+const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
+  if (!customer?.id || isAssociatingCustomer.value || !canAssociateOrderCustomer.value) return
+  isAssociatingCustomer.value = true
+  customerAssociationError.value = ''
+  try {
+    await $fetch(`/api/orders/${orderId.value}/customer`, {
+      method: 'PATCH',
+      body: { customer_id: customer.id },
+    })
+    await Promise.all([refetchOrder(), refetchInvoice()])
+    toast.success('Cliente asociado a la venta', { title: 'Listo' })
+  } catch (error: any) {
+    customerAssociationError.value = error.data?.detail || error.data?.message || error.message || 'No se pudo asociar el cliente'
+  } finally {
+    isAssociatingCustomer.value = false
+  }
+}
 
 const orderTipPercent = computed(() => {
   const o = order.value
@@ -769,8 +812,22 @@ onUnmounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Cliente</p>
+          <div class="mb-2 flex items-start justify-between gap-3">
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Cliente</p>
+            <button
+              v-if="canAssociateOrderCustomer"
+              type="button"
+              :disabled="isAssociatingCustomer"
+              class="text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="openCustomerModal"
+            >
+              {{ isAssociatingCustomer ? 'Guardando...' : customerAssociationLabel }}
+            </button>
+          </div>
           <p class="text-lg font-bold text-text-primary">{{ order.customer_name }}</p>
+          <p v-if="customerAssociationError" class="mt-2 text-xs text-destructive">
+            {{ customerAssociationError }}
+          </p>
         </div>
 
         <!-- Customer Phone -->
@@ -1754,6 +1811,11 @@ onUnmounted(() => {
       :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
       :customer="orderData?.customer ?? null"
       @sent="onInvoiceEmailSent"
+    />
+
+    <PosCustomerIdentificationModal
+      v-model="showCustomerModal"
+      @customer-identified="onSaleCustomerIdentified"
     />
 
     <PosReceiptPrintTicket
