@@ -560,9 +560,11 @@ const printableItems = computed(() =>
     background: #fff;
     box-sizing: border-box;
     padding: 0 1.5mm 14mm;
-    position: fixed;
-    top: 0;
+    position: absolute;
+    top: 4mm;
     left: 0;
+    max-height: none !important;
+    overflow: visible !important;
     margin: 0 !important;
   }
 

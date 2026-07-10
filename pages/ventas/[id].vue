@@ -606,10 +606,13 @@ const printReceipt = async () => {
 
   document.body.classList.add('printing-receipt-ticket')
   await nextTick()
-  window.print()
-  window.setTimeout(() => {
+  const cleanup = () => {
     document.body.classList.remove('printing-receipt-ticket')
-  }, 250)
+    window.removeEventListener('afterprint', cleanup)
+  }
+  window.addEventListener('afterprint', cleanup)
+  window.print()
+  window.setTimeout(cleanup, 1500)
 }
 
 // Edit mode functions
