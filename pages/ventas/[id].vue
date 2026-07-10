@@ -94,11 +94,11 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
 })
 
 // Load invoice for this order (404 = no invoice, not an error).
-// staleTime 0: after emit we must not treat cached null (from 404) as fresh.
+// Browser still logs GET 404 until no FE exists — expected, not a failed emit.
 const invoiceQueryKey = () =>
   ['order-invoice', currentTenant.value?.id ?? null, orderId.value] as const
 
-const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = useQuery({
+const { data: invoiceQueryData, status: invoiceStatus, refetch: refetchInvoice } = useQuery({
   key: invoiceQueryKey,
   query: async () => {
     try {
@@ -111,6 +111,22 @@ const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = us
   enabled: () => !!currentTenant.value && !!orderId.value,
   staleTime: 0,
 })
+
+/**
+ * Local override: Pinia Colada setQueryData/refetch was unreliable after emit when
+ * the query had just cached null from 404 (worse after PATCH customer + refetch).
+ * Snapshot wins until a successful query result arrives.
+ */
+const invoiceSnapshot = ref<any>(null)
+watch(orderId, () => { invoiceSnapshot.value = null })
+watch(
+  invoiceQueryData,
+  (value) => {
+    if (value) invoiceSnapshot.value = value
+  },
+  { immediate: true },
+)
+const invoiceData = computed(() => invoiceSnapshot.value ?? invoiceQueryData.value ?? null)
 
 // DIAN invoicing readiness — read from the POS restaurant-context aggregator.
 // /api/api/tenant/invoicing-readiness (the richer detail) is owner-only MI_NEGOCIO;
@@ -200,8 +216,7 @@ const emitInvoice = async () => {
       attachments?: { pdf?: boolean; xml?: boolean }
     }
 
-    // Seed cache immediately so UI leaves "Sin factura" even if refetch is slow/skipped.
-    // Backend POST returns EmitInvoiceResponse (flat); GET returns richer shape.
+    // Always paint UI from POST first (does not depend on Pinia Colada).
     if (result?.status === 'accepted' || result?.status === 'rejected') {
       const seed = {
         order_id: orderId.value,
@@ -216,20 +231,31 @@ const emitInvoice = async () => {
         dian_url: result.dian_url ?? null,
         attachments: result.attachments ?? { pdf: false, xml: false },
       }
-      queryCache.setQueryData(invoiceQueryKey(), seed)
+      invoiceSnapshot.value = seed
+      try {
+        queryCache.setQueryData(invoiceQueryKey(), seed)
+      } catch {
+        /* ignore cache key mismatches */
+      }
     }
 
-    // Force network refresh for full presentation (issuer, resolution, etc.).
-    // Logs showed POST 200 without a following GET — plain refetch was not reliable
-    // after a cached null from the initial 404.
-    try {
-      await queryCache.invalidateQueries({ key: invoiceQueryKey(), exact: true }, 'all')
-      await refetchInvoice(true)
-    } catch {
-      // Seed above is enough for accepted state; full GET can wait for next open.
-    }
-
+    // Explicit GET (not only refetch): after PATCH customer the Colada entry
+    // sometimes never re-hit the network; this guarantees full presentation.
     if (result?.status === 'accepted') {
+      try {
+        const full = await $fetch(`/api/orders/${orderId.value}/invoice`) as any
+        if (full) {
+          invoiceSnapshot.value = full
+          try {
+            queryCache.setQueryData(invoiceQueryKey(), full)
+          } catch {
+            /* ignore */
+          }
+        }
+      } catch {
+        // Keep seed — FE is accepted even if detail GET lags.
+      }
+
       const label = [result.prefix, result.invoice_number].filter(Boolean).join('-')
       toast.success(
         label ? `Factura ${label} aceptada por DIAN` : 'Factura electrónica aceptada',
@@ -332,7 +358,9 @@ const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
       method: 'PATCH',
       body: { customer_id: customer.id },
     })
-    await Promise.all([refetchOrder(), refetchInvoice()])
+    // Only refresh order — refetchInvoice here always 404s (no FE yet) and
+    // was racing/poisoning the invoice query cache before emit.
+    await refetchOrder()
     toast.success('Cliente asociado a la venta', { title: 'Listo' })
   } catch (error: any) {
     customerAssociationError.value = error.data?.detail || error.data?.message || error.message || 'No se pudo asociar el cliente'
