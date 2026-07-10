@@ -670,7 +670,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useQuery } from '@pinia/colada'
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { useFormatters } from '~/composables/useFormatters'
@@ -681,6 +681,7 @@ const route = useRoute()
 const expenseId = route.params.id as string
 
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 
 // Payment methods
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
@@ -701,18 +702,16 @@ const attachmentsToRemove = ref<string[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
 
-// Load categories
-const { data: categoriesData } = useAsyncData(
-  `expense-categories-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/finance/expenses/categories'),
-  {
-    server: false,
-    default: () => ({ data: [] })
-  }
-)
+// Shared Colada key with list/create
+const { data: categoriesData } = useQuery({
+  key: () => ['finance', 'expense-categories', currentTenant.value?.id],
+  query: () => $fetch('/api/finance/expenses/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const categories = computed(() => {
-  const data = categoriesData.value
+  const data = categoriesData.value as any
   if (!data) return []
   return Array.isArray(data) ? data : (data.data || [])
 })
@@ -861,7 +860,9 @@ const handleSubmit = async () => {
       }
     }
 
-    // Success - refresh data and exit edit mode
+    // Invalidate list + this detail; progressive refresh via isRefreshing/header matrix
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
     await refetch()
     isEditing.value = false
     attachmentsToRemove.value = []
@@ -996,7 +997,9 @@ const deleteExpense = async () => {
       method: 'DELETE'
     })
 
-    navigateTo('/finanzas/gastos')
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
+    await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error deleting expense:', error)
     alert(error?.data?.detail || 'Error al eliminar el gasto')

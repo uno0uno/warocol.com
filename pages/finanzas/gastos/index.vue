@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -11,6 +13,7 @@ useHead({ title: 'Gastos' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
+const cache = useQueryCache()
 
 const defaultMonth = () => todayISO().slice(0, 7)
 const currentMonth = ref(defaultMonth())
@@ -122,7 +125,9 @@ const deleteExpense = async (expenseId: string) => {
       method: 'DELETE'
     })
 
-    // Refresh the list after deletion
+    // Invalidate list + detail so UI updates optimistically (progressive refresh)
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
     await refetch()
   } catch (error: any) {
     console.error('Error deleting expense:', error)
@@ -132,10 +137,12 @@ const deleteExpense = async (expenseId: string) => {
 
 // Set refresh handler for layout
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+// Progressive: full-page loader only on first fetch; refetches use header matrix
 registerProgressiveLoading(isRefreshing)
+// When returning from crear/editar/detalle, force a background refresh
+useMenuReturnRefresh('/finanzas/gastos', refetch, 'finanzas-last-path')
 onMounted(() => { setRefreshHandler(refetch) })
-onUnmounted(() => { clearRefreshHandler(refetch)
-})
+onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
 
 <template>
