@@ -18,6 +18,7 @@ export function normalizeAppLocale(value: unknown): AppLocaleCode | null {
 export function useAppLocale() {
   const { locale, setLocale, t, te } = useI18n()
   const cookie = useCookie<string | null>(APP_LOCALE_COOKIE, {
+    path: '/',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 365,
     watch: true,
