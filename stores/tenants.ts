@@ -30,6 +30,8 @@ export interface TenantBusinessProfile {
   latitude: number | null
   longitude: number | null
   timezone?: string | null
+  /** UI language pref from B1 (#1599) when API exposes it — es | en */
+  locale?: string | null
   business_hours: Record<string, BusinessHours> | null
   social_media: Record<string, string> | null
   accepts_online_orders: boolean

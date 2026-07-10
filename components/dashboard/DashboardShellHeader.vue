@@ -6,7 +6,7 @@
           v-if="!hideLogo"
           to="/financiero"
           class="dashboard-header-logo hidden xl:flex h-12 w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
-          aria-label="Ir al inicio del dashboard"
+          :aria-label="t('shell.goToDashboardHome')"
         >
           <img
             :key="route.fullPath"
@@ -29,21 +29,21 @@
           key="upload-invoice"
           to="/abastecimiento/compras-directas/crear"
           class="flex flex-shrink-0 items-center gap-1 md:gap-2 h-11 bg-shell-cta-bg text-shell-cta-text px-2 lg:px-4 rounded-xl font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
-          title="Cargar Factura IA"
+          :title="t('shell.uploadInvoiceAi')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></svg>
-          <span class="hidden lg:inline">Cargar Factura IA</span>
+          <span class="hidden lg:inline">{{ t('shell.uploadInvoiceAi') }}</span>
         </NuxtLink>
 
         <button
           key="pos-link"
           type="button"
           class="flex flex-shrink-0 items-center gap-1 md:gap-2 h-11 bg-shell-action-bg border-2 border-shell-action-border text-shell-action-text px-2 lg:px-4 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
-          title="Venta POS"
+          :title="t('shell.posSale')"
           @click="$emit('navigate-pos')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-          <span class="hidden lg:inline">Venta POS</span>
+          <span class="hidden lg:inline">{{ t('shell.posSale') }}</span>
         </button>
 
         <div key="portal-actions" id="dashboard-header-actions" class="flex items-center" />
@@ -83,10 +83,10 @@
         <button
           key="refresh-button"
           :disabled="isRefreshing || isProgressiveLoading"
-          aria-label="Refrescar datos"
+          :aria-label="t('shell.refreshData')"
           :aria-busy="isRefreshing || isProgressiveLoading"
           class="hidden md:flex w-11 h-11 items-center justify-center bg-shell-icon-bg border-0 rounded-lg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Refrescar"
+          :title="t('shell.refresh')"
           @click="$emit('refresh')"
         >
           <UiLoadingMatrix v-if="isRefreshing || isProgressiveLoading" size="5.5px" />
@@ -109,6 +109,7 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const { t } = useI18n()
 
 const logoAnimationSrc = computed(() =>
   `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,

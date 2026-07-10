@@ -11,10 +11,36 @@
         <div class="absolute inset-0 bg-overlay-backdrop-strong/60 backdrop-blur-sm" @click="closeTenantModal" />
         <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-sheet-surface-bg sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
           <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sheet-border flex-shrink-0">
-            <p class="text-sm font-semibold text-modal-surface-text">Cambiar negocio</p>
+            <p class="text-sm font-semibold text-modal-surface-text">{{ t('shell.settings') }}</p>
             <button @click="closeTenantModal" class="p-1.5 rounded-lg text-shell-notification-muted-text hover:bg-shell-notification-hover-bg hover:text-shell-notification-text focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors">
               <XMarkIcon class="w-4 h-4" />
             </button>
+          </div>
+          <!-- Language (desktop shell; mirrors mobile bottom-nav settings) -->
+          <div class="px-4 pt-3 pb-2 flex-shrink-0 border-b border-sheet-border">
+            <label class="text-xs font-medium text-text-secondary mb-2 block">{{ t('shell.language') }}</label>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
+                :class="locale === 'es'
+                  ? 'border-primary bg-icon-button-primary-bg text-text-primary'
+                  : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
+                @click="setUserLocale('es')"
+              >
+                {{ t('shell.localeEs') }}
+              </button>
+              <button
+                type="button"
+                class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
+                :class="locale === 'en'
+                  ? 'border-primary bg-icon-button-primary-bg text-text-primary'
+                  : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
+                @click="setUserLocale('en')"
+              >
+                {{ t('shell.localeEn') }}
+              </button>
+            </div>
           </div>
           <div class="px-4 py-3 flex-shrink-0">
             <div class="flex items-center gap-2 px-3 py-2 border-b border-form-control-border focus-within:border-form-control-focus-border transition-colors">
@@ -101,6 +127,8 @@ const openTenantModal = () => {
 }
 const closeTenantModal = () => { showTenantModal.value = false }
 
+const { t } = useI18n()
+const { locale, setUserLocale } = useAppLocale()
 const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)

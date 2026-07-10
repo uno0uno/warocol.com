@@ -13,7 +13,7 @@
           <h1 class="text-2xl font-bold text-gray-900">{{ organizationName }}</h1>
         </div>
         <div class="text-sm text-gray-600">
-          Plataforma de Profesionales
+          {{ t('auth.professionalsPlatform') }}
         </div>
       </div>
     </header>
@@ -26,7 +26,7 @@
     <!-- Footer -->
     <footer class="w-full px-4 py-6 border-t border-gray-200 bg-white/50">
       <div class="max-w-7xl mx-auto text-center text-sm text-gray-600">
-        <p>&copy; 2024 {{ organizationName }}. Conectando talento profesional.</p>
+        <p>&copy; 2024 {{ organizationName }}. {{ t('auth.footerTagline') }}</p>
       </div>
     </footer>
 
@@ -37,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const {
   public: {
     organizationName
