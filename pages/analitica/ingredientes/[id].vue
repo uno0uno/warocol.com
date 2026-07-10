@@ -513,6 +513,8 @@ type MovementRow = {
   created_at?: string | null
 }
 
+type HistoryPagination = NonNullable<IngredientReport['history_pagination']>
+
 type HistoryRow = {
   id: string
   timestamp: string
@@ -559,6 +561,7 @@ const lastUpdate = ref(new Date())
 const historyPageSize = 25
 const historyPage = ref(1)
 const pendingHistoryPage = ref<number | null>(null)
+const lastResolvedHistoryPagination = ref<HistoryPagination | null>(null)
 const historyTypeFilter = ref('')
 const recordKindFilter = ref('')
 const unitFilter = ref(queryStringValue(route.query.unit))
@@ -746,26 +749,64 @@ const unitHeaderOptions = computed(() =>
   historyUnits.value.map((unit) => ({ label: formatUnitLabel(unit), value: unit })),
 )
 const historyPagination = computed(() => report.value.history_pagination ?? null)
+const activeHistoryPagination = computed(() => historyPagination.value ?? lastResolvedHistoryPagination.value)
 const reportHistoryPage = computed(() => {
   const limit = Number(historyPagination.value?.limit) || historyPageSize
   const offset = Number(historyPagination.value?.offset) || 0
   return Math.floor(offset / limit) + 1
 })
 const isHistoryPageLoading = computed(() =>
-  queryAsyncStatus.value === 'loading'
-    && reportData.value != null
-    && pendingHistoryPage.value === historyPage.value,
+  reportData.value != null
+    && pendingHistoryPage.value === historyPage.value
+    && reportHistoryPage.value !== pendingHistoryPage.value,
 )
 const historyTotal = computed(() =>
-  historyPagination.value?.total == null
+  activeHistoryPagination.value?.total == null
     ? filteredHistoryRows.value.length
-    : Number(historyPagination.value.total),
+    : Number(activeHistoryPagination.value.total),
 )
 const historyTotalPages = computed(() => Math.max(1, Math.ceil(historyTotal.value / historyPageSize)))
 const historyStartItem = computed(() => historyTotal.value === 0 ? 0 : historyOffset.value + 1)
 const historyEndItem = computed(() => Math.min(historyOffset.value + filteredHistoryRows.value.length, historyTotal.value))
-const canPreviousHistoryPage = computed(() => historyPage.value > 1)
-const canNextHistoryPage = computed(() => Boolean(historyPagination.value?.has_more) || historyPage.value < historyTotalPages.value)
+const canChangeHistoryPage = computed(() => pendingHistoryPage.value === null && queryAsyncStatus.value !== 'loading')
+const canPreviousHistoryPage = computed(() => canChangeHistoryPage.value && historyPage.value > 1)
+const canNextHistoryPage = computed(() =>
+  canChangeHistoryPage.value
+  && (Boolean(activeHistoryPagination.value?.has_more) || historyPage.value < historyTotalPages.value),
+)
+
+function historyPaginationDebugSnapshot() {
+  const reportLimit = Number(historyPagination.value?.limit) || historyPageSize
+  const reportOffset = Number(historyPagination.value?.offset) || 0
+  const apiTotal = historyPagination.value?.total == null ? null : Number(historyPagination.value.total)
+  const apiTotalPages = apiTotal == null ? null : Math.max(1, Math.ceil(apiTotal / reportLimit))
+  const stableTotal = lastResolvedHistoryPagination.value?.total == null ? null : Number(lastResolvedHistoryPagination.value.total)
+  const stableTotalPages = stableTotal == null ? null : Math.max(1, Math.ceil(stableTotal / historyPageSize))
+
+  return {
+    queryAsyncStatus: queryAsyncStatus.value,
+    queryStatus: queryStatus.value,
+    requestedPage: historyPage.value,
+    requestedOffset: historyOffset.value,
+    pendingHistoryPage: pendingHistoryPage.value,
+    reportHistoryPage: reportHistoryPage.value,
+    currentPageOverTotal: `${historyPage.value}/${historyTotalPages.value}`,
+    reportPageOverApiTotal: apiTotalPages == null ? `${reportHistoryPage.value}/unknown` : `${reportHistoryPage.value}/${apiTotalPages}`,
+    reportOffset,
+    reportLimit,
+    apiTotal,
+    apiTotalPages,
+    stableTotal,
+    stableTotalPages,
+    total: historyTotal.value,
+    totalPages: historyTotalPages.value,
+    rows: filteredHistoryRows.value.length,
+    rawPurchases: report.value.purchases?.length ?? 0,
+    rawMovements: report.value.stock_movements?.length ?? 0,
+    hasReportData: reportData.value != null,
+    isHistoryPageLoading: isHistoryPageLoading.value,
+  }
+}
 
 const historyColumns = [
   { key: 'date', title: 'Fecha', sortable: false, format: 'text', align: 'left' },
@@ -785,20 +826,55 @@ watch([dateRangeDates, granularity], () => {
 })
 
 watch([dateRangeDates, appliedSearch, historyTypeFilter, recordKindFilter, unitFilter, quantityMinFilter, quantityMaxFilter], () => {
+  console.log('[ingredient-history-pagination] filters changed, reset page', historyPaginationDebugSnapshot())
+  pendingHistoryPage.value = null
+  lastResolvedHistoryPagination.value = null
   historyPage.value = 1
 })
 
-watch([queryAsyncStatus, reportHistoryPage], ([status, reportPage]) => {
+watch([queryAsyncStatus, reportHistoryPage], ([status, reportPage], [previousStatus, previousReportPage]) => {
+  console.log('[ingredient-history-pagination] query/page status changed', {
+    previousStatus,
+    status,
+    previousReportPage,
+    reportPage,
+    ...historyPaginationDebugSnapshot(),
+  })
   if (
     status === 'idle'
     && pendingHistoryPage.value !== null
     && reportPage === pendingHistoryPage.value
   ) {
+    lastResolvedHistoryPagination.value = historyPagination.value
+    console.log('[ingredient-history-pagination] pending page resolved', {
+      resolvedPage: reportPage,
+      ...historyPaginationDebugSnapshot(),
+    })
     pendingHistoryPage.value = null
   }
 })
 
+watch(historyPagination, (pagination) => {
+  if (!pagination) return
+  lastResolvedHistoryPagination.value = pagination
+}, { immediate: true })
+
+watch(isHistoryPageLoading, (loading, previousLoading) => {
+  console.log('[ingredient-history-pagination] local loader changed', {
+    previousLoading,
+    loading,
+    ...historyPaginationDebugSnapshot(),
+  })
+})
+
 watch(historyTotalPages, (totalPages) => {
+  if (pendingHistoryPage.value !== null || queryStatus.value === 'pending') {
+    console.log('[ingredient-history-pagination] total pages changed while page is pending, skip clamp', {
+      totalPages,
+      ...historyPaginationDebugSnapshot(),
+    })
+    return
+  }
   if (historyPage.value > totalPages) historyPage.value = totalPages
 })
 
@@ -834,14 +910,26 @@ function clearFilters() {
   unitFilter.value = ''
   quantityMinFilter.value = ''
   quantityMaxFilter.value = ''
+  pendingHistoryPage.value = null
+  lastResolvedHistoryPagination.value = null
   historyPage.value = 1
 }
 
 function goToHistoryPage(page: number) {
   const nextPage = Math.min(Math.max(page, 1), historyTotalPages.value)
+  const isBlocked = pendingHistoryPage.value !== null || queryAsyncStatus.value === 'loading'
+  console.log('[ingredient-history-pagination] page click', {
+    requestedPageFromClick: page,
+    nextPage,
+    ignored: isBlocked || nextPage === historyPage.value,
+    isBlocked,
+    ...historyPaginationDebugSnapshot(),
+  })
+  if (isBlocked) return
   if (nextPage === historyPage.value) return
   pendingHistoryPage.value = nextPage
   historyPage.value = nextPage
+  console.log('[ingredient-history-pagination] page state updated', historyPaginationDebugSnapshot())
 }
 
 function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
