@@ -1,5 +1,15 @@
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currencyDisplay'
+
 export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
+  const tenantsStore = useTenantsStore()
+
+  /** Display currency from tenant prefs (B1); missing → COP. */
+  const currencyCode = computed(() =>
+    normalizeCurrencyCode(tenantsStore.businessProfile?.currency_code),
+  )
+  /** Number-format locale pref when present; formatMoney defaults es-CO. */
+  const currencyLocale = computed(() => tenantsStore.businessProfile?.locale ?? null)
 
   const dateFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
     day: '2-digit', month: '2-digit', year: '2-digit',
@@ -32,13 +42,12 @@ export const useFormatters = () => {
     return dateFormatter.value.format(new Date(dateString))
   }
 
+  /** Display-only money; currency_code from prefs, default COP. See display-currency.md */
   const formatCurrency = (value: number | null): string => {
-    if (value === null || value === undefined) return '$0'
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(value)
+    return formatMoney(value, {
+      currency: currencyCode.value,
+      locale: currencyLocale.value,
+    })
   }
 
   const formatDateTime = (dateString: string | null | undefined): string => {

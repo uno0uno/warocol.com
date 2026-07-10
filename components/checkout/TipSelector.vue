@@ -90,12 +90,7 @@ watch(
   },
 )
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
+const { formatCurrency } = useFormatters()
 
 const formatPercentLabel = (p: number): string =>
   Number.isInteger(p) ? `${p}%` : `${p}%`

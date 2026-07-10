@@ -1544,14 +1544,8 @@ watch(selectedCustomer, async (customer) => {
   }
 })
 
-// Methods
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
+// Methods — display currency from tenant prefs (default COP); see display-currency.md
+const { formatCurrency } = useFormatters()
 
 const getItemTotal = (item: any) => {
   const basePrice = Number(item.product.price) || 0
