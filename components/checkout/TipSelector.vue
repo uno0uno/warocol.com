@@ -4,7 +4,6 @@ import {
   formatIntegerMoney,
   normalizeUiLocale,
   parseIntegerMoney,
-  toNumberLocaleTag,
   type UiLocale,
 } from '~/utils/parseLocaleDecimal'
 
@@ -102,12 +101,7 @@ watch(
   },
 )
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat(toNumberLocaleTag(uiLocale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
+const { formatCurrency } = useFormatters()
 
 const formatPercentLabel = (p: number): string =>
   Number.isInteger(p) ? `${p}%` : `${p}%`

@@ -32,6 +32,8 @@ export interface TenantBusinessProfile {
   timezone?: string | null
   /** UI language pref from B1 (#1599) when API exposes it — es | en */
   locale?: string | null
+  /** ISO 4217 display currency from B1 (#1599); default COP. Display-only — no FX. */
+  currency_code?: string | null
   business_hours: Record<string, BusinessHours> | null
   social_media: Record<string, string> | null
   accepts_online_orders: boolean

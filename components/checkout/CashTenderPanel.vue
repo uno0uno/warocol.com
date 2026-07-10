@@ -3,7 +3,6 @@ import {
   formatIntegerMoney,
   normalizeUiLocale,
   parseIntegerMoney,
-  toNumberLocaleTag,
   type UiLocale,
 } from '~/utils/parseLocaleDecimal'
 
@@ -30,12 +29,7 @@ const cashPresetsExtra = [
   { label: '+ $20.000', offset: 20000 },
 ] as const
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat(toNumberLocaleTag(uiLocale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
+const { formatCurrency } = useFormatters()
 
 const cashChange = computed(() =>
   Math.max(0, (cashReceived.value || 0) - props.amountToCharge),

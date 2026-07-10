@@ -1,3 +1,4 @@
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 import {
   DEFAULT_UI_LOCALE,
   formatLocaleNumber,
@@ -10,14 +11,19 @@ export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
   const tenantsStore = useTenantsStore()
 
+  /** Display currency from tenant prefs (B1/B5); missing → COP. */
+  const currencyCode = computed(() =>
+    normalizeCurrencyCode(tenantsStore.businessProfile?.currency_code),
+  )
+
   /** Tenant UI locale for number punctuation (B1 surface when present; default es). */
   const uiLocale = computed<UiLocale>(() =>
-    normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+    normalizeUiLocale(tenantsStore.businessProfile?.locale),
   )
 
   const numberLocaleTag = computed(() => toNumberLocaleTag(uiLocale.value))
 
-  // Dates stay es-CO until B4; only number/currency punctuation follows uiLocale.
+  // Dates stay es-CO until date locale work; number/currency punctuation follows uiLocale.
   const dateFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
     day: '2-digit', month: '2-digit', year: '2-digit',
     timeZone: timezone.value,
@@ -49,14 +55,12 @@ export const useFormatters = () => {
     return dateFormatter.value.format(new Date(dateString))
   }
 
-  /** Currency display: COP code until B5; punctuation follows uiLocale. */
+  /** Display-only money; currency_code from prefs (default COP) + locale punctuation. */
   const formatCurrency = (value: number | null): string => {
-    if (value === null || value === undefined) return '$0'
-    return new Intl.NumberFormat(numberLocaleTag.value, {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value)
+    return formatMoney(value, {
+      currency: currencyCode.value,
+      locale: uiLocale.value,
+    })
   }
 
   const formatNumber = (
