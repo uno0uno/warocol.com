@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import QRCode from 'qrcode'
+import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
@@ -17,6 +18,7 @@ const {
   receiptLogoUrl,
   settingsData,
 } = useReceiptPrintSettings()
+const queryCache = useQueryCache()
 
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
@@ -91,9 +93,13 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
   staleTime: 60_000,
 })
 
-// Load invoice for this order (404 = no invoice, not an error)
+// Load invoice for this order (404 = no invoice, not an error).
+// staleTime 0: after emit we must not treat cached null (from 404) as fresh.
+const invoiceQueryKey = () =>
+  ['order-invoice', currentTenant.value?.id ?? null, orderId.value] as const
+
 const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = useQuery({
-  key: () => ['order-invoice', currentTenant.value?.id ?? null, orderId.value],
+  key: invoiceQueryKey,
   query: async () => {
     try {
       return await $fetch(`/api/orders/${orderId.value}/invoice`) as any
@@ -103,7 +109,7 @@ const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = us
     }
   },
   enabled: () => !!currentTenant.value && !!orderId.value,
-  staleTime: 60_000,
+  staleTime: 0,
 })
 
 // DIAN invoicing readiness — read from the POS restaurant-context aggregator.
@@ -184,10 +190,56 @@ const emitInvoice = async () => {
     const result = await $fetch(`/api/orders/${orderId.value}/invoice`, { method: 'POST' }) as {
       status?: string
       error_message?: string
+      prefix?: string
+      invoice_number?: number
+      cufe?: string | null
+      pdf_presigned_url?: string | null
+      emitted_at?: string | null
+      pdf_enabled?: boolean
+      dian_url?: string | null
+      attachments?: { pdf?: boolean; xml?: boolean }
     }
-    await refetchInvoice()
-    if (result?.status !== 'accepted') {
-      emitInvoiceError.value = result.error_message || 'Factura rechazada por DIAN'
+
+    // Seed cache immediately so UI leaves "Sin factura" even if refetch is slow/skipped.
+    // Backend POST returns EmitInvoiceResponse (flat); GET returns richer shape.
+    if (result?.status === 'accepted' || result?.status === 'rejected') {
+      const seed = {
+        order_id: orderId.value,
+        status: result.status,
+        prefix: result.prefix,
+        invoice_number: result.invoice_number,
+        cufe: result.cufe ?? null,
+        pdf_presigned_url: result.pdf_presigned_url ?? null,
+        error_message: result.error_message ?? null,
+        emitted_at: result.emitted_at ?? new Date().toISOString(),
+        pdf_enabled: result.pdf_enabled,
+        dian_url: result.dian_url ?? null,
+        attachments: result.attachments ?? { pdf: false, xml: false },
+      }
+      queryCache.setQueryData(invoiceQueryKey(), seed)
+    }
+
+    // Force network refresh for full presentation (issuer, resolution, etc.).
+    // Logs showed POST 200 without a following GET — plain refetch was not reliable
+    // after a cached null from the initial 404.
+    try {
+      await queryCache.invalidateQueries({ key: invoiceQueryKey(), exact: true }, 'all')
+      await refetchInvoice(true)
+    } catch {
+      // Seed above is enough for accepted state; full GET can wait for next open.
+    }
+
+    if (result?.status === 'accepted') {
+      const label = [result.prefix, result.invoice_number].filter(Boolean).join('-')
+      toast.success(
+        label ? `Factura ${label} aceptada por DIAN` : 'Factura electrónica aceptada',
+        { title: 'Emisión exitosa' },
+      )
+      if (result.cufe) {
+        invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
+      }
+    } else {
+      emitInvoiceError.value = result?.error_message || 'Factura rechazada por DIAN'
     }
   } catch (e: any) {
     emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al emitir factura'
@@ -195,6 +247,16 @@ const emitInvoice = async () => {
     isEmittingInvoice.value = false
   }
 }
+
+// Keep QR ready when invoice loads (refresh / refetch)
+watch(
+  () => invoiceData.value?.cufe,
+  async (cufe) => {
+    if (cufe && !invoiceQrDataUrl.value) {
+      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(cufe)
+    }
+  },
+)
 
 const copyCufe = async (cufe: string) => {
   try {
