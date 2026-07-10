@@ -225,7 +225,8 @@ const printableItems = computed(() =>
 </script>
 
 <template>
-  <div class="receipt-print-ticket" aria-hidden="true">
+  <Teleport to="body">
+    <div class="receipt-print-ticket" aria-hidden="true">
     <PosReceiptPrintHeader
       :fiscal-data="fiscalData"
       :display-name="displayName"
@@ -402,7 +403,8 @@ const printableItems = computed(() =>
       <div v-if="invoiceDianUrl" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
     </template>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style>
@@ -560,9 +562,9 @@ const printableItems = computed(() =>
     background: #fff;
     box-sizing: border-box;
     padding: 0 1.5mm 14mm;
-    position: absolute;
-    top: 4mm;
-    left: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
     max-height: none !important;
     overflow: visible !important;
     margin: 0 !important;
