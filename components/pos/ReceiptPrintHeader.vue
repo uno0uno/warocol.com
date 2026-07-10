@@ -17,8 +17,15 @@ const props = defineProps<{
   logoUrl?: string | null
 }>()
 
+/**
+ * Cabecera del establecimiento (tenant) — emisor comercial / vendedor.
+ * Según práctica Colombia: nombre o razón social + NIT del establecimiento.
+ * WARO no va aquí (ver ReceiptPlatformFooter).
+ */
 const headerName = computed(() =>
-  props.fiscalData?.business_name || props.displayName || 'WARO',
+  props.fiscalData?.business_name?.trim()
+  || props.displayName?.trim()
+  || '—',
 )
 
 const displayAddress = computed(() =>
@@ -33,6 +40,8 @@ const displayPhone = computed(() =>
   props.fiscalData?.phone || props.phone || null,
 )
 
+const sellerNit = computed(() => props.fiscalData?.nit?.trim() || null)
+
 const logoStyle = computed(() => buildReceiptLogoStyle())
 </script>
 
@@ -46,8 +55,11 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
       :style="logoStyle"
     >
     <div class="receipt-header">{{ headerName }}</div>
-    <div v-if="fiscalData?.nit" class="receipt-row receipt-small">
-      NIT: {{ fiscalData.nit }}
+    <div class="receipt-row receipt-small" style="font-weight:bold;">
+      Establecimiento / vendedor
+    </div>
+    <div v-if="sellerNit" class="receipt-row receipt-small">
+      NIT: {{ sellerNit }}
     </div>
     <div v-if="displayAddress" class="receipt-row receipt-small">
       {{ displayAddress }}<span v-if="displayCity">, {{ displayCity }}</span>

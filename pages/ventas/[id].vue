@@ -112,6 +112,7 @@ const { data: invoiceData, status: invoiceStatus, refetch: refetchInvoice } = us
 const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
 const isReadinessLoading = computed(() => !settingsData.value)
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
+const platformLegal = computed(() => settingsData.value?.data?.platform_legal ?? null)
 
 // Invoice emit state
 const isEmittingInvoice = ref(false)
@@ -543,6 +544,22 @@ const saleReceiptInvoiceTaxLines = computed(() => {
   ].filter(line => Number(line.amount) > 0)
 })
 
+const saleReceiptIssuerLabel = computed(() => {
+  // Prefer API presentation.issuer (fiscal-only); fallback to local fiscal_data.
+  const presentation = (invoiceData.value as any)?.presentation
+  const issuer = presentation?.issuer
+  if (issuer?.name || issuer?.fiscal_id) {
+    const name = String(issuer.name || '').trim()
+    const nit = String(issuer.fiscal_id || '').trim()
+    if (name && nit) return `${name} - NIT ${nit}`
+    return name || (nit ? `NIT ${nit}` : null)
+  }
+  const name = fiscalData.value?.business_name?.trim() || null
+  const nit = fiscalData.value?.nit?.trim() || null
+  if (name && nit) return `${name} - NIT ${nit}`
+  return name || (nit ? `NIT ${nit}` : null)
+})
+
 const saleReceiptInvoice = computed(() => {
   if (!invoiceData.value) return null
   return {
@@ -554,6 +571,7 @@ const saleReceiptInvoice = computed(() => {
     issuedAt: invoiceData.value.emitted_at ? formatDate(invoiceData.value.emitted_at) : null,
     paymentLabel: saleReceiptSinglePaymentLabel.value,
     taxLines: saleReceiptInvoiceTaxLines.value,
+    issuerLabel: saleReceiptIssuerLabel.value,
   }
 })
 
@@ -1843,6 +1861,7 @@ onUnmounted(() => {
     <PosReceiptPrintTicket
       v-if="order"
       :fiscal-data="fiscalData"
+      :platform-legal="platformLegal"
       :display-name="businessProfile?.display_name"
       :address="businessProfile?.address"
       :city="businessProfile?.city"
