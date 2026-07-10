@@ -9,8 +9,8 @@
     <template v-else>
       <section>
         <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="truncate text-xl font-bold text-text-primary md:text-2xl">
+          <div class="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
+            <h1 class="min-w-0 truncate text-xl font-bold leading-tight text-text-primary md:text-2xl">
               {{ ingredientName }}
             </h1>
             <UiStatusBadge
@@ -18,11 +18,17 @@
               format="text"
               :variant="coverageVariant(metrics.data_coverage)"
               size="sm"
+              class="shrink-0"
             />
+            <span class="hidden h-1 w-1 rounded-full bg-border sm:inline-block" aria-hidden="true" />
+            <span class="min-w-0 truncate rounded-md border border-border bg-surface px-2.5 py-1 text-sm font-medium leading-5 text-text-secondary">
+              <span class="text-text-primary">{{ ingredientCategory }}</span>
+              <span class="mx-1.5 text-border" aria-hidden="true">·</span>
+              <span class="tabular-nums">{{ displayIngredientUnit }}</span>
+              <span class="mx-1.5 text-border" aria-hidden="true">·</span>
+              <span class="tabular-nums">{{ periodLabel }}</span>
+            </span>
           </div>
-          <p class="mt-1 text-sm text-text-secondary">
-            {{ ingredientCategory }} · {{ ingredientUnit }} · {{ periodLabel }}
-          </p>
         </div>
       </section>
 
@@ -33,7 +39,7 @@
           format="text"
           variant="primary"
           size="sm"
-          :subtitle="ingredientUnit"
+          :subtitle="displayIngredientUnit"
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
@@ -95,6 +101,61 @@
         @clear="clearFilters"
       >
         <template #additional-filters>
+          <select
+            v-model="historyTypeFilter"
+            :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
+            aria-label="Filtrar historial por tipo"
+          >
+            <option value="">Tipo</option>
+            <option v-for="option in historyTypeOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+
+          <select
+            v-model="recordKindFilter"
+            :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
+            aria-label="Filtrar historial por registro"
+          >
+            <option value="">Registro</option>
+            <option v-for="option in recordKindOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+
+          <select
+            v-model="unitFilter"
+            :class="[filterSelectClass, 'w-full sm:w-32 md:hidden']"
+            aria-label="Filtrar historial por unidad"
+          >
+            <option value="">Unidad</option>
+            <option v-for="unit in historyUnits" :key="unit" :value="unit">
+              {{ formatUnitLabel(unit) }}
+            </option>
+          </select>
+
+          <input
+            v-model="quantityMinFilter"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
+            placeholder="Mín."
+            aria-label="Cantidad mínima"
+          />
+
+          <input
+            v-model="quantityMaxFilter"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
+            placeholder="Máx."
+            aria-label="Cantidad máxima"
+          />
+
           <div class="inline-flex h-10 rounded-lg border-2 border-border bg-background p-0.5">
             <button
               v-for="option in granularityOptions"
@@ -167,7 +228,9 @@
               <h2 class="text-base font-bold text-text-primary">Historial analítico</h2>
               <p class="text-xs text-text-secondary">Consumos, compras y movimientos del periodo.</p>
             </div>
-            <span class="text-xs font-semibold text-text-secondary">{{ filteredHistoryRows.length }} eventos</span>
+            <span class="text-xs font-semibold text-text-secondary">
+              {{ historyTotal }} eventos
+            </span>
           </div>
 
           <UiResponsiveDataView
@@ -182,8 +245,15 @@
               <div class="rounded-lg border border-border bg-background p-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="font-semibold text-text-primary">{{ item.title }}</p>
-                    <p class="mt-1 text-xs text-text-secondary">{{ item.subtitle }}</p>
+                    <NuxtLink
+                      v-if="item.recordHref"
+                      :to="item.recordHref"
+                      class="font-semibold text-primary hover:text-primary/80"
+                      @click.stop
+                    >
+                      {{ item.recordLabel }}
+                    </NuxtLink>
+                    <p v-else class="font-semibold text-text-primary">{{ item.recordLabel }}</p>
                   </div>
                   <UiStatusBadge
                     :value="item.kindLabel"
@@ -193,10 +263,14 @@
                     class="flex-shrink-0"
                   />
                 </div>
-                <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <div class="mt-3 grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <p class="text-xs text-text-secondary">Cantidad</p>
                     <p class="font-semibold tabular-nums text-text-primary">{{ item.quantityLabel }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-text-secondary">Unidad</p>
+                    <p class="font-semibold text-text-primary">{{ item.unitLabel }}</p>
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Costo</p>
@@ -210,6 +284,67 @@
               <span class="text-sm text-text-secondary">{{ item.dateLabel }}</span>
             </template>
 
+            <template #header-date>
+              <UiTableHeaderFilter
+                title="Fecha"
+                filter-type="none"
+                align="left"
+              />
+            </template>
+
+            <template #header-type>
+              <UiTableHeaderFilter
+                v-model="historyTypeFilter"
+                title="Tipo"
+                filter-type="select"
+                :options="historyTypeOptions"
+                all-label="Tipo"
+                align="center"
+              />
+            </template>
+
+            <template #header-detail>
+              <UiTableHeaderFilter
+                v-model="recordKindFilter"
+                title="Registro"
+                filter-type="select"
+                :options="recordKindOptions"
+                all-label="Registro"
+                align="left"
+              />
+            </template>
+
+            <template #header-quantity>
+              <UiTableHeaderFilter
+                title="Cantidad"
+                filter-type="number-range"
+                :min-value="quantityMinFilter"
+                :max-value="quantityMaxFilter"
+                align="right"
+                @update:min-value="quantityMinFilter = $event"
+                @update:max-value="quantityMaxFilter = $event"
+              />
+            </template>
+
+            <template #header-unit>
+              <UiTableHeaderFilter
+                v-model="unitFilter"
+                title="Unidad"
+                filter-type="select"
+                :options="unitHeaderOptions"
+                all-label="Unidad"
+                align="center"
+              />
+            </template>
+
+            <template #header-cost>
+              <UiTableHeaderFilter
+                title="Costo"
+                filter-type="none"
+                align="right"
+              />
+            </template>
+
             <template #cell-type="{ item }">
               <UiStatusBadge
                 :value="item.kindLabel"
@@ -221,8 +356,15 @@
 
             <template #cell-detail="{ item }">
               <div class="min-w-0">
-                <p class="text-sm font-semibold text-text-primary">{{ item.title }}</p>
-                <p class="text-xs text-text-secondary">{{ item.subtitle }}</p>
+                <NuxtLink
+                  v-if="item.recordHref"
+                  :to="item.recordHref"
+                  class="text-sm font-semibold text-primary hover:text-primary/80"
+                  @click.stop
+                >
+                  {{ item.recordLabel }}
+                </NuxtLink>
+                <span v-else class="text-sm font-semibold text-text-primary">{{ item.recordLabel }}</span>
               </div>
             </template>
 
@@ -230,10 +372,30 @@
               <span class="text-sm font-semibold tabular-nums text-text-primary">{{ item.quantityLabel }}</span>
             </template>
 
+            <template #cell-unit="{ item }">
+              <span class="text-sm font-semibold text-text-secondary">{{ item.unitLabel }}</span>
+            </template>
+
             <template #cell-cost="{ item }">
               <span class="text-sm tabular-nums text-text-primary">{{ item.costLabel }}</span>
             </template>
           </UiResponsiveDataView>
+
+          <UiTablePagination
+            v-if="historyTotal > historyPageSize"
+            class="mt-4"
+            :current-page="historyPage"
+            :total-pages="historyTotalPages"
+            :start-item="historyStartItem"
+            :end-item="historyEndItem"
+            :total-items="historyTotal"
+            :can-previous-page="canPreviousHistoryPage"
+            :can-next-page="canNextHistoryPage"
+            @first-page="goToHistoryPage(1)"
+            @previous-page="goToHistoryPage(historyPage - 1)"
+            @next-page="goToHistoryPage(historyPage + 1)"
+            @last-page="goToHistoryPage(historyTotalPages)"
+          />
         </div>
       </section>
     </template>
@@ -246,6 +408,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { BarChart3, LineChart } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
@@ -287,6 +450,15 @@ type IngredientReport = {
   purchases?: PurchaseRow[]
   stock_movements?: MovementRow[]
   consumption_movements?: MovementRow[]
+  history_pagination?: {
+    limit?: number | null
+    offset?: number | null
+    total?: number | null
+    has_more?: boolean | null
+    unit?: string | null
+    quantity_min?: number | null
+    quantity_max?: number | null
+  }
   data_coverage?: Coverage
 }
 
@@ -302,6 +474,7 @@ type PurchaseRow = {
   purchase_item_id?: string
   purchase_id?: string
   purchase_number?: string | null
+  is_direct_entry?: boolean | null
   purchase_date?: string | null
   base_quantity?: number | null
   base_unit?: string | null
@@ -323,6 +496,7 @@ type MovementRow = {
   cost_per_unit?: number | null
   reference_table?: string | null
   reference_id?: string | null
+  reference_order_number?: number | null
   reason?: string | null
   notes?: string | null
   created_at?: string | null
@@ -335,9 +509,10 @@ type HistoryRow = {
   type: 'purchase' | 'movement'
   kindLabel: string
   kindVariant: 'success' | 'warning' | 'info' | 'secondary'
-  title: string
-  subtitle: string
+  recordLabel: string
+  recordHref?: string | null
   quantityLabel: string
+  unitLabel: string
   costLabel: string
   searchText: string
 }
@@ -345,31 +520,83 @@ type HistoryRow = {
 definePageMeta({ layout: 'dashboard', module: 'analitica' })
 
 const route = useRoute()
+const { dateAtNoon } = useTenantTimezone()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { formatCalendarDate, formatCurrency, formatDateTime } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
+const initialDateRangeDates = ref<Date[] | null>(routeDateRangeDates())
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets(initialDateRangeDates)
 
 const ingredientId = computed(() => String(route.params.id || ''))
 const granularity = ref<Granularity>('day')
 const lastUpdate = ref(new Date())
+const historyPageSize = 25
+const historyPage = ref(1)
+const historyTypeFilter = ref('')
+const recordKindFilter = ref('')
+const unitFilter = ref(queryStringValue(route.query.unit))
+const quantityMinFilter = ref(queryStringValue(route.query.quantity_min))
+const quantityMaxFilter = ref(queryStringValue(route.query.quantity_max))
+const historyOffset = computed(() => (historyPage.value - 1) * historyPageSize)
 
 const granularityOptions: Array<{ label: string; value: Granularity }> = [
   { label: 'Día', value: 'day' },
   { label: 'Mes', value: 'month' },
 ]
+const historyTypeOptions = [
+  { label: 'Compra', value: 'purchase' },
+  { label: 'Consumo', value: 'consumption' },
+  { label: 'Entrada', value: 'entry' },
+  { label: 'Ajuste', value: 'adjustment' },
+  { label: 'Pérdida', value: 'loss' },
+  { label: 'Movimiento', value: 'movement' },
+]
+const recordKindOptions = [
+  { label: 'Orden', value: 'order' },
+  { label: 'Compra', value: 'purchase' },
+  { label: 'Sin registro', value: 'none' },
+]
+
+function queryStringValue(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+function routeDateRangeDates(): Date[] | null {
+  const from = route.query.date_from
+  const to = route.query.date_to
+  if (typeof from !== 'string' || typeof to !== 'string') return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return null
+
+  const fromDate = dateAtNoon(from)
+  const toDate = dateAtNoon(to)
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return null
+  return [fromDate, toDate]
+}
 
 const { data: reportData, error: fetchError, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['analytics', 'ingredient-report', currentTenant.value?.id, ingredientId.value, {
     from: dateRange.value.from,
     to: dateRange.value.to,
+    limit: historyPageSize,
+    offset: historyOffset.value,
+    historyType: historyTypeFilter.value || null,
+    recordKind: recordKindFilter.value || null,
+    unit: unitFilter.value || null,
+    quantityMin: quantityMinFilter.value || null,
+    quantityMax: quantityMaxFilter.value || null,
   }],
   query: () => $fetch(`/api/analytics/ingredients/${encodeURIComponent(ingredientId.value)}/report`, {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
-      limit: 200,
+      limit: historyPageSize,
+      offset: historyOffset.value,
+      history_type: historyTypeFilter.value || undefined,
+      record_kind: recordKindFilter.value || undefined,
+      unit: unitFilter.value || undefined,
+      quantity_min: quantityMinFilter.value || undefined,
+      quantity_max: quantityMaxFilter.value || undefined,
     },
   }),
   enabled: () => !!currentTenant.value && !!ingredientId.value,
@@ -395,12 +622,23 @@ const metrics = computed(() => ({
 const selectedSeries = computed<SeriesPoint[]>(() => report.value.series?.[granularity.value] ?? [])
 const isLoading = computed(() => queryStatus.value === 'pending' && !reportData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && reportData.value != null)
-const hasActiveFilters = computed(() => !!dateRangeDates.value || !!localSearchTerm.value || !!appliedSearch.value || granularity.value !== 'day')
+const hasActiveFilters = computed(() =>
+  !!dateRangeDates.value
+  || !!localSearchTerm.value
+  || !!appliedSearch.value
+  || granularity.value !== 'day'
+  || !!historyTypeFilter.value
+  || !!recordKindFilter.value
+  || !!unitFilter.value
+  || !!quantityMinFilter.value
+  || !!quantityMaxFilter.value,
+)
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
 const ingredientName = computed(() => ingredient.value.name || 'Ingrediente')
 const ingredientCategory = computed(() => ingredient.value.category || 'Sin categoría')
 const ingredientUnit = computed(() => ingredient.value.unit || 'und')
+const displayIngredientUnit = computed(() => formatUnitLabel(ingredientUnit.value))
 const periodLabel = computed(() => {
   if (!reportPeriod.value?.from || !reportPeriod.value?.to) return 'Periodo actual'
   return `${formatCalendarDate(reportPeriod.value.from)} - ${formatCalendarDate(reportPeriod.value.to)}`
@@ -439,7 +677,7 @@ const consumptionChartOptions = computed(() => chartOptions({
   categories: chartCategories.value,
   type: 'area',
   colors: [hslToken('--state-info-icon', '#2563eb')],
-  valueFormatter: (value: number) => `${formatQuantity(value)} ${ingredientUnit.value}`,
+  valueFormatter: (value: number) => `${formatQuantity(value)} ${displayIngredientUnit.value}`,
 }))
 
 const costChartOptions = computed(() => chartOptions({
@@ -464,12 +702,41 @@ const filteredHistoryRows = computed(() => {
   if (!q) return historyRows.value
   return historyRows.value.filter((row) => row.searchText.includes(q))
 })
+const historyUnits = computed(() => {
+  const values = new Set<string>()
+  if (ingredientUnit.value) values.add(ingredientUnit.value)
+  const purchases = report.value.purchases ?? []
+  const movements = report.value.stock_movements ?? []
+  purchases.forEach((row) => {
+    const unit = row.purchase_unit || row.base_unit
+    if (unit) values.add(unit)
+  })
+  movements.forEach((row) => {
+    if (row.unit) values.add(row.unit)
+  })
+  return Array.from(values).sort()
+})
+const unitHeaderOptions = computed(() =>
+  historyUnits.value.map((unit) => ({ label: formatUnitLabel(unit), value: unit })),
+)
+const historyPagination = computed(() => report.value.history_pagination ?? null)
+const historyTotal = computed(() =>
+  historyPagination.value?.total == null
+    ? filteredHistoryRows.value.length
+    : Number(historyPagination.value.total),
+)
+const historyTotalPages = computed(() => Math.max(1, Math.ceil(historyTotal.value / historyPageSize)))
+const historyStartItem = computed(() => historyTotal.value === 0 ? 0 : historyOffset.value + 1)
+const historyEndItem = computed(() => Math.min(historyOffset.value + filteredHistoryRows.value.length, historyTotal.value))
+const canPreviousHistoryPage = computed(() => historyPage.value > 1)
+const canNextHistoryPage = computed(() => Boolean(historyPagination.value?.has_more) || historyPage.value < historyTotalPages.value)
 
 const historyColumns = [
   { key: 'date', title: 'Fecha', sortable: false, format: 'text', align: 'left' },
   { key: 'type', title: 'Tipo', sortable: false, format: 'text', align: 'center' },
-  { key: 'detail', title: 'Detalle', sortable: false, format: 'text', align: 'left' },
+  { key: 'detail', title: 'Registro', sortable: false, format: 'text', align: 'left' },
   { key: 'quantity', title: 'Cantidad', sortable: false, format: 'text', align: 'right' },
+  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'center' },
   { key: 'cost', title: 'Costo', sortable: false, format: 'text', align: 'right' },
 ] as const
 
@@ -481,9 +748,12 @@ watch([dateRangeDates, granularity], () => {
   lastUpdate.value = new Date()
 })
 
-watch(dateRange, async () => {
-  if (!currentTenant.value || !ingredientId.value || queryStatus.value === 'pending') return
-  await refetch()
+watch([dateRangeDates, appliedSearch, historyTypeFilter, recordKindFilter, unitFilter, quantityMinFilter, quantityMaxFilter], () => {
+  historyPage.value = 1
+})
+
+watch(historyTotalPages, (totalPages) => {
+  if (historyPage.value > totalPages) historyPage.value = totalPages
 })
 
 watch(lastUpdate, () => {
@@ -513,14 +783,24 @@ function clearFilters() {
   clearSearch()
   clearDateRange()
   granularity.value = 'day'
+  historyTypeFilter.value = ''
+  recordKindFilter.value = ''
+  unitFilter.value = ''
+  quantityMinFilter.value = ''
+  quantityMaxFilter.value = ''
+  historyPage.value = 1
+}
+
+function goToHistoryPage(page: number) {
+  historyPage.value = Math.min(Math.max(page, 1), historyTotalPages.value)
 }
 
 function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
   const timestamp = row.received_at || row.purchase_date || ''
   const quantity = row.purchase_quantity ?? row.base_quantity
   const unit = row.purchase_unit || row.base_unit || ingredientUnit.value
-  const title = row.purchase_number ? `Compra ${row.purchase_number}` : 'Compra registrada'
-  const subtitle = row.received_at ? `Recibida ${formatDateTime(row.received_at)}` : 'Compra del periodo'
+  const recordLabel = row.purchase_number ? `Compra ${row.purchase_number}` : 'Compra'
+  const recordHref = purchaseLink(row)
   const costLabel = row.total_cost !== null && row.total_cost !== undefined
     ? formatCurrency(row.total_cost)
     : formatUnitCost(row.unit_cost)
@@ -532,11 +812,12 @@ function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
     type: 'purchase',
     kindLabel: 'Compra',
     kindVariant: 'info',
-    title,
-    subtitle,
-    quantityLabel: `${formatQuantity(quantity)} ${unit}`,
+    recordLabel,
+    recordHref,
+    quantityLabel: formatQuantity(quantity),
+    unitLabel: formatUnitLabel(unit),
     costLabel,
-    searchText: `${title} ${subtitle} compra ${unit}`.toLowerCase(),
+    searchText: `${recordLabel} compra ${unit}`.toLowerCase(),
   }
 }
 
@@ -544,8 +825,8 @@ function movementHistoryRow(row: MovementRow): HistoryRow {
   const movementType = row.movement_type || 'movement'
   const isConsumption = movementType === 'consumption' && numberOrZero(row.quantity_change) < 0
   const quantity = isConsumption ? row.consumed_quantity : row.quantity_change
-  const title = movementTitle(row)
-  const subtitle = [row.reason, row.notes, row.reference_table].filter(Boolean).join(' · ') || 'Movimiento de inventario analítico'
+  const recordLabel = movementRecordLabel(row)
+  const recordHref = movementRecordLink(row)
 
   return {
     id: `movement-${row.id || row.created_at}`,
@@ -554,20 +835,32 @@ function movementHistoryRow(row: MovementRow): HistoryRow {
     type: 'movement',
     kindLabel: isConsumption ? 'Consumo' : movementKindLabel(movementType),
     kindVariant: isConsumption ? 'warning' : 'secondary',
-    title,
-    subtitle,
-    quantityLabel: `${formatQuantity(quantity)} ${row.unit || ingredientUnit.value}`,
+    recordLabel,
+    recordHref,
+    quantityLabel: formatQuantity(quantity),
+    unitLabel: formatUnitLabel(row.unit || ingredientUnit.value),
     costLabel: formatUnitCost(row.cost_per_unit),
-    searchText: `${title} ${subtitle} ${movementType} ${row.unit || ''}`.toLowerCase(),
+    searchText: `${recordLabel} ${movementType} ${row.unit || ''}`.toLowerCase(),
   }
 }
 
-function movementTitle(row: MovementRow): string {
-  if (row.movement_type === 'consumption') return 'Consumo registrado'
-  if (row.movement_type === 'purchase') return 'Entrada por compra'
-  if (row.movement_type === 'adjustment') return 'Ajuste de stock'
-  if (row.movement_type === 'loss') return 'Pérdida registrada'
-  return 'Movimiento de stock'
+function purchaseLink(row: PurchaseRow): string | null {
+  if (!row.purchase_id) return null
+  if (row.is_direct_entry === false) return `/abastecimiento/compra/${row.purchase_id}`
+  return `/abastecimiento/compras-directas/${row.purchase_id}`
+}
+
+function movementRecordLabel(row: MovementRow): string {
+  if (row.reference_table === 'orders' && row.reference_order_number) {
+    return `Orden #${row.reference_order_number}`
+  }
+  if (row.reference_table === 'orders') return 'Orden'
+  return movementKindLabel(row.movement_type || 'movement')
+}
+
+function movementRecordLink(row: MovementRow): string | null {
+  if (row.reference_table !== 'orders' || !row.reference_id) return null
+  return `/ventas/${row.reference_id}`
 }
 
 function movementKindLabel(value: string): string {
@@ -593,7 +886,35 @@ function formatQuantity(value: number | string | null | undefined, maxFractionDi
 
 function formatUnitCost(value: number | null | undefined): string {
   if (value === null || value === undefined) return '-'
-  return `${formatCurrency(value)}/${ingredientUnit.value}`
+  return `${formatCurrency(value)}/${displayIngredientUnit.value}`
+}
+
+function formatUnitLabel(value: string | null | undefined): string {
+  const normalized = String(value || 'und').trim()
+  const key = normalized.toLowerCase()
+  const labels: Record<string, string> = {
+    gramo: 'gr',
+    gramos: 'gr',
+    gram: 'gr',
+    grams: 'gr',
+    kilogramo: 'kg',
+    kilogramos: 'kg',
+    kilogram: 'kg',
+    kilograms: 'kg',
+    mililitro: 'ml',
+    mililitros: 'ml',
+    milliliter: 'ml',
+    milliliters: 'ml',
+    litro: 'lt',
+    litros: 'lt',
+    liter: 'lt',
+    liters: 'lt',
+    unidad: 'und',
+    unidades: 'und',
+    unit: 'und',
+    units: 'und',
+  }
+  return labels[key] || normalized
 }
 
 function formatCostVariation(value: number | null): string {
