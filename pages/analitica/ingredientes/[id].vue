@@ -420,6 +420,7 @@ import { BarChart3, LineChart } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
+import { useIngredientAnalyticsFiltersStore } from '~/stores/ingredientAnalyticsFilters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 type Coverage = 'recorded_movements' | 'no_recorded_consumption' | string
@@ -535,8 +536,22 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { formatCalendarDate, formatCurrency, formatDateTime } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const initialDateRangeDates = ref<Date[] | null>(routeDateRangeDates())
-const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets(initialDateRangeDates)
+const ingredientAnalyticsFiltersStore = useIngredientAnalyticsFiltersStore()
+const tenantId = computed(() => currentTenant.value?.id ?? null)
+const ingredientDateFilters = computed(() => ingredientAnalyticsFiltersStore.ingredientsFor(tenantId.value))
+const ingredientDateRangeDates = computed({
+  get: () => ingredientDateFilters.value.dateRangeDates,
+  set: (value) => {
+    ingredientDateFilters.value.dateRangeDates = value
+  },
+})
+const routeDateRange = ref<Date[] | null>(routeDateRangeDates())
+const seedDateRangeFromRoute = () => {
+  if (routeDateRange.value) ingredientDateRangeDates.value = routeDateRange.value
+}
+seedDateRangeFromRoute()
+watch(tenantId, seedDateRangeFromRoute, { immediate: true })
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets(ingredientDateRangeDates)
 
 const ingredientId = computed(() => String(route.params.id || ''))
 const granularity = ref<Granularity>('day')
