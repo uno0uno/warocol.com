@@ -34,7 +34,7 @@ const emit = defineEmits<{
   (e: 'sent', email: string): void
 }>()
 
-const title = 'Enviar factura por correo'
+const title = 'Enviar factura electronica'
 
 // warocol.com#603 — A profile is "generic" (no useful email to prefill)
 // when either the phone is '0000000000' (per-tenant default Genérico) OR
@@ -138,7 +138,7 @@ const contentTemplate = () =>
                 h(
                   'p',
                   { class: 'text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-all' },
-                  `Se envió ${props.invoiceLabel} a ${sentToEmail.value}.`,
+                  `Se envio ${props.invoiceLabel} a ${sentToEmail.value}. Si el PDF/XML esta disponible, ira adjunto para soporte contable.`,
                 ),
               ]),
             ],
@@ -167,6 +167,19 @@ const contentTemplate = () =>
     // ─── Form (idle / sending / error) ──────────────────────────────────────
     state.value !== 'sent'
       ? h('div', { class: 'space-y-4' }, [
+          h(
+            'div',
+            { class: 'rounded-xl border border-border bg-surface-secondary/60 p-3' },
+            [
+              h('p', { class: 'text-sm font-semibold text-text-primary' }, `Factura ${props.invoiceLabel}`),
+              h(
+                'p',
+                { class: 'text-xs text-text-secondary mt-1 leading-snug' },
+                'Envia una copia fiscal al cliente o al contador. La factura aceptada puede incluir PDF y XML cuando esten disponibles.',
+              ),
+            ],
+          ),
+
           // Generic-customer hint banner
           isGenericCustomer.value
             ? h(
@@ -177,7 +190,7 @@ const contentTemplate = () =>
                   h(
                     'p',
                     { class: 'text-xs text-amber-800 dark:text-amber-300 leading-snug' },
-                    'Cliente genérico — sin correo en archivo. Indicá un destinatario.',
+                    'Cliente generico - sin correo en archivo. Indica un destinatario para enviar la factura.',
                   ),
                 ],
               )
@@ -250,11 +263,11 @@ const contentTemplate = () =>
                     },
                   ),
                   h('div', { class: 'min-w-0 flex-1' }, [
-                    h('p', { class: 'text-sm font-semibold text-text-primary' }, 'Otro correo'),
+                    h('p', { class: 'text-sm font-semibold text-text-primary' }, 'Correo contable u otro'),
                     h(
                       'p',
                       { class: 'text-xs text-text-secondary mt-0.5' },
-                      'Enviar a una dirección distinta',
+                      'Enviar a contador, administracion o una direccion distinta',
                     ),
                   ]),
                 ],

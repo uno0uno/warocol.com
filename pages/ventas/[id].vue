@@ -527,6 +527,22 @@ const saleReceiptSinglePaymentLabel = computed(() => {
   return resolveLabel(o.payment_method, o.payment_method_id)
 })
 
+const saleReceiptInvoiceTaxLines = computed(() => {
+  const o = order.value
+  if (!o) return []
+  return [
+    {
+      label: o.standard_tax_label || 'Impuesto',
+      amount: Number(o.standard_tax) || 0,
+    },
+    {
+      label: 'IVA licores',
+      rate: 5,
+      amount: Number(o.liquor_tax) || 0,
+    },
+  ].filter(line => Number(line.amount) > 0)
+})
+
 const saleReceiptInvoice = computed(() => {
   if (!invoiceData.value) return null
   return {
@@ -535,6 +551,9 @@ const saleReceiptInvoice = computed(() => {
     cufe: invoiceData.value.cufe,
     status: invoiceData.value.status,
     qrDataUrl: invoiceQrDataUrl.value,
+    issuedAt: invoiceData.value.emitted_at ? formatDate(invoiceData.value.emitted_at) : null,
+    paymentLabel: saleReceiptSinglePaymentLabel.value,
+    taxLines: saleReceiptInvoiceTaxLines.value,
   }
 })
 
