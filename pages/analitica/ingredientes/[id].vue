@@ -233,7 +233,17 @@
             </span>
           </div>
 
+          <div
+            v-if="isHistoryPageLoading"
+            class="flex min-h-[200px] items-center justify-center"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <CommonsTheCustomLoader size="medium" />
+          </div>
+
           <UiResponsiveDataView
+            v-else
             row-size="sm"
             :columns="historyColumns"
             :data="filteredHistoryRows"
@@ -533,6 +543,7 @@ const granularity = ref<Granularity>('day')
 const lastUpdate = ref(new Date())
 const historyPageSize = 25
 const historyPage = ref(1)
+const pendingHistoryPage = ref<number | null>(null)
 const historyTypeFilter = ref('')
 const recordKindFilter = ref('')
 const unitFilter = ref(queryStringValue(route.query.unit))
@@ -720,6 +731,16 @@ const unitHeaderOptions = computed(() =>
   historyUnits.value.map((unit) => ({ label: formatUnitLabel(unit), value: unit })),
 )
 const historyPagination = computed(() => report.value.history_pagination ?? null)
+const reportHistoryPage = computed(() => {
+  const limit = Number(historyPagination.value?.limit) || historyPageSize
+  const offset = Number(historyPagination.value?.offset) || 0
+  return Math.floor(offset / limit) + 1
+})
+const isHistoryPageLoading = computed(() =>
+  queryAsyncStatus.value === 'loading'
+    && reportData.value != null
+    && pendingHistoryPage.value === historyPage.value,
+)
 const historyTotal = computed(() =>
   historyPagination.value?.total == null
     ? filteredHistoryRows.value.length
@@ -750,6 +771,16 @@ watch([dateRangeDates, granularity], () => {
 
 watch([dateRangeDates, appliedSearch, historyTypeFilter, recordKindFilter, unitFilter, quantityMinFilter, quantityMaxFilter], () => {
   historyPage.value = 1
+})
+
+watch([queryAsyncStatus, reportHistoryPage], ([status, reportPage]) => {
+  if (
+    status === 'idle'
+    && pendingHistoryPage.value !== null
+    && reportPage === pendingHistoryPage.value
+  ) {
+    pendingHistoryPage.value = null
+  }
 })
 
 watch(historyTotalPages, (totalPages) => {
@@ -792,7 +823,10 @@ function clearFilters() {
 }
 
 function goToHistoryPage(page: number) {
-  historyPage.value = Math.min(Math.max(page, 1), historyTotalPages.value)
+  const nextPage = Math.min(Math.max(page, 1), historyTotalPages.value)
+  if (nextPage === historyPage.value) return
+  pendingHistoryPage.value = nextPage
+  historyPage.value = nextPage
 }
 
 function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
