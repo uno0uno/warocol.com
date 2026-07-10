@@ -56,6 +56,13 @@ function formatTenantDateTime(date = new Date()) {
   })
 }
 
+function formatOptionalTenantDateTime(value?: string | Date | null) {
+  if (!value) return null
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return formatTenantDateTime(date)
+}
+
 function invalidateCheckoutPromoPreview() {
   cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] })
   if (isKitchenServiceMode.value && posStore.activeTableSession?.tableId) {
@@ -180,11 +187,12 @@ const isReadinessLoading = computed(() => !settingsData.value)
 
 // Invoice state
 const invoiceLoading = ref(false)
-const invoiceResult = ref<{ cufe: string; invoice_number: number; prefix: string; pdf_presigned_url: string | null; status: string } | null>(null)
+const invoiceResult = ref<{ cufe: string; invoice_number: number; prefix: string; pdf_presigned_url: string | null; status: string; emitted_at?: string | null; created_at?: string | null } | null>(null)
 const invoiceError = ref('')
 const invoiceQrDataUrl = ref('')
 const invoiceProgress = ref('')
 const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: number; cufe: string; status: string; error?: string }[]>([])
+const showInvoiceEmailModal = ref(false)
 
 const extractInvoiceFetchError = (e: any) =>
   e?.data?.detail || e?.data?.message || e?.message || 'Error al generar factura'
@@ -2330,6 +2338,8 @@ const generateInvoice = async () => {
             prefix: result.prefix,
             pdf_presigned_url: result.pdf_presigned_url || null,
             status: result.status,
+            emitted_at: result.emitted_at || null,
+            created_at: result.created_at || null,
           }
           if (result.cufe) {
             invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
@@ -2382,7 +2392,14 @@ const printReceipt = async () => {
     invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
   }
   await nextTick()
+  document.body.classList.add('printing-receipt-ticket')
+  const cleanup = () => {
+    document.body.classList.remove('printing-receipt-ticket')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  window.addEventListener('afterprint', cleanup)
   window.print()
+  setTimeout(cleanup, 1500)
 }
 
 // Issue #535 — tenant fiscal data for the prefactura header.
@@ -2522,6 +2539,105 @@ const receiptPromoBreakdown = computed(() => {
   if (savings <= 0) return []
   return [{ promotion_name: 'Promoción', promo_type: '', savings }]
 })
+
+const receiptPaymentLines = computed(() =>
+  splitPaymentsSnapshot.value.map(payment => ({
+    id: payment.id,
+    label: payment.payment_method_name,
+    amount: Number(payment.amount) || 0,
+    change: Number(payment.change) || null,
+  })),
+)
+
+const receiptSinglePaymentLabel = computed(() => {
+  const result = orderResult.value
+  if (!result?.payment_method) return null
+  return result.payment_method_name
+    ? `${getPaymentMethodLabel(result.payment_method)} · ${result.payment_method_name}`
+    : getPaymentMethodLabel(result.payment_method)
+})
+
+const receiptLocationLabel = computed(() => {
+  const context = receiptPrintContext.value
+  if (!context) return null
+  if (context.wasMesa && context.tableName) return `${tableSingular.value} ${context.tableCode} - ${context.tableName}`
+  if (context.isBar) return 'Barra'
+  return 'Mostrador'
+})
+
+const receiptCustomerFiscalLabel = computed(() => {
+  const context = receiptPrintContext.value
+  if (!context?.customerFiscalId) return null
+  return [context.customerFiscalIdType, context.customerFiscalId].filter(Boolean).join(': ')
+})
+
+const receiptInvoiceIssuedAt = computed(() =>
+  formatOptionalTenantDateTime(invoiceResult.value?.emitted_at || invoiceResult.value?.created_at) || receiptPrintContext.value?.soldAt || null,
+)
+
+const receiptInvoiceTaxLines = computed(() => {
+  const result = orderResult.value
+  if (!result) return []
+  return [
+    {
+      label: result.standard_tax_label || 'Impuesto',
+      amount: Number(result.standard_tax) || 0,
+    },
+    {
+      label: 'IVA licores',
+      rate: 5,
+      amount: Number(result.liquor_tax) || 0,
+    },
+  ].filter(line => Number(line.amount) > 0)
+})
+
+const receiptInvoice = computed(() => {
+  const invoice = invoiceResult.value
+  if (!invoice) return null
+  return {
+    prefix: invoice.prefix,
+    invoice_number: invoice.invoice_number,
+    cufe: invoice.cufe,
+    status: invoice.status,
+    qrDataUrl: invoiceQrDataUrl.value,
+    issuedAt: receiptInvoiceIssuedAt.value,
+    paymentLabel: receiptSinglePaymentLabel.value,
+    taxLines: receiptInvoiceTaxLines.value,
+  }
+})
+
+const singleAcceptedInvoiceOrderId = computed(() => {
+  if (invoiceResult.value?.status !== 'accepted') return null
+  const ids = orderResult.value?.order_id
+    ? [orderResult.value.order_id]
+    : (orderResult.value?.order_ids ?? [])
+  if (ids.length !== 1) return null
+  if (invoiceResults.value.length > 0) {
+    const current = invoiceResults.value.find(result => result.order_id === ids[0])
+    if (!current || current.status !== 'accepted') return null
+  }
+  return ids[0]
+})
+
+const posInvoiceEmailCustomer = computed(() => {
+  const customer = selectedCustomer.value
+  if (!customer) return null
+  return {
+    name: customer.fiscal_business_name || customer.name || null,
+    phone: customer.phone_number,
+    email: customer.fiscal_email || customer.email,
+  }
+})
+
+const posInvoiceLabel = computed(() =>
+  invoiceResult.value
+    ? [invoiceResult.value.prefix, invoiceResult.value.invoice_number].filter(Boolean).join('-')
+    : '',
+)
+
+const onPosInvoiceEmailSent = (email: string) => {
+  toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
+}
 
 function capturePrefacturaPrintSnapshot() {
   prefacturaPrintSnapshot.value = {
@@ -4787,12 +4903,20 @@ onUnmounted(() => {
             <!-- Success — show ONLY invoice number -->
             <div
               v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
-              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center"
+              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center space-y-2"
             >
               <p class="text-xs font-semibold text-state-success-text">Factura generada</p>
               <p class="text-sm font-semibold text-state-success-text mt-1">
                 {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
               </p>
+              <button
+                v-if="singleAcceptedInvoiceOrderId"
+                type="button"
+                @click="showInvoiceEmailModal = true"
+                class="mx-auto min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold border border-state-success-border bg-surface text-state-success-text hover:bg-state-success-bg transition-colors"
+              >
+                Enviar factura por correo
+              </button>
             </div>
 
             <!-- Error -->
@@ -4897,6 +5021,49 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <VentasInvoiceEmailModal
+      v-if="singleAcceptedInvoiceOrderId"
+      v-model:open="showInvoiceEmailModal"
+      :order-id="singleAcceptedInvoiceOrderId"
+      :invoice-label="posInvoiceLabel"
+      :customer="posInvoiceEmailCustomer"
+      @sent="onPosInvoiceEmailSent"
+    />
+
+    <PosReceiptPrintTicket
+      v-if="orderResult"
+      :fiscal-data="fiscalData"
+      :display-name="businessProfile?.display_name"
+      :address="businessProfile?.address"
+      :city="businessProfile?.city"
+      :phone="businessProfile?.phone_number"
+      :logo-url="receiptLogoUrl"
+      :document-label="receiptDocumentLabel"
+      :order-number="orderResult.order_number"
+      :sold-at="receiptPrintContext?.soldAt"
+      :location-label="receiptLocationLabel"
+      :waiter-name="receiptPrintContext?.waiterName"
+      :customer-name="receiptPrintContext?.customerName"
+      :customer-fiscal-label="receiptCustomerFiscalLabel"
+      :items="printableReceiptItems"
+      :subtotal="orderResult.subtotal"
+      :promo-breakdown="receiptPromoBreakdown"
+      :discount-amount="Number(orderResult.discount_amount) || 0"
+      :waro-discount-label="orderResultWaroLineLabel"
+      :waro-discount-amount="orderResultWaroDiscountCop"
+      :standard-tax-label="orderResult.standard_tax_label"
+      :standard-tax="Number(orderResult.standard_tax) || 0"
+      :liquor-tax="Number(orderResult.liquor_tax) || 0"
+      :order-total="Number(orderResult.total_amount) || 0"
+      :tip-label="receiptTipLabel"
+      :tip-amount="Number(orderResult.tip_amount) || 0"
+      :advance-applied="Number(orderResult.advance_applied) || 0"
+      :charged-total="orderResultChargedAmount"
+      :payments="receiptPaymentLines"
+      :single-payment-label="receiptSinglePaymentLabel"
+      :invoice="receiptInvoice"
+    />
 
   <!-- Issue #535 — Hidden prefactura for printing.
        Only visible via @media print + body class .printing-prefactura.

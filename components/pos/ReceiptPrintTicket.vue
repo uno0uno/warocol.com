@@ -40,6 +40,13 @@ interface PromoLine {
   savings: number
 }
 
+interface InvoiceTaxLine {
+  label?: string | null
+  base?: number | string | null
+  rate?: number | string | null
+  amount?: number | string | null
+}
+
 const props = defineProps<{
   fiscalData?: {
     business_name?: string | null
@@ -84,6 +91,13 @@ const props = defineProps<{
     cufe?: string | null
     status?: string | null
     qrDataUrl?: string | null
+    issuedAt?: string | null
+    dianUrl?: string | null
+    resolutionText?: string | null
+    issuerLabel?: string | null
+    acquirerLabel?: string | null
+    paymentLabel?: string | null
+    taxLines?: InvoiceTaxLine[] | null
   } | null
 }>()
 
@@ -124,6 +138,64 @@ const hasSettlementBreakdown = computed(() =>
 const finalTotal = computed(() =>
   props.chargedTotal != null ? Number(props.chargedTotal) : Number(props.orderTotal) || 0,
 )
+
+const formatRate = (value: number | string | null | undefined) => {
+  if (value == null || value === '') return null
+  const numeric = Number(value)
+  if (Number.isFinite(numeric)) return `${numeric}%`
+  return String(value)
+}
+
+const invoiceNumberLabel = computed(() => {
+  const invoice = props.invoice
+  if (!invoice) return null
+  return [invoice.prefix, invoice.invoice_number].filter(Boolean).join('-') || null
+})
+
+const invoiceDianUrl = computed(() => {
+  const invoice = props.invoice
+  if (!invoice) return null
+  if (invoice.dianUrl) return invoice.dianUrl
+  return invoice.cufe
+    ? `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${invoice.cufe}`
+    : null
+})
+
+const fallbackIssuerLabel = computed(() => {
+  const name = props.fiscalData?.business_name || props.displayName
+  const nit = props.fiscalData?.nit
+  if (name && nit) return `${name} - NIT ${nit}`
+  return name || (nit ? `NIT ${nit}` : null)
+})
+
+const fallbackAcquirerLabel = computed(() => {
+  if (props.customerName && props.customerFiscalLabel) return `${props.customerName} - ${props.customerFiscalLabel}`
+  return props.customerName || props.customerFiscalLabel || null
+})
+
+const invoicePaymentLabel = computed(() => {
+  if (props.invoice?.paymentLabel) return props.invoice.paymentLabel
+  if ((props.payments?.length ?? 0) > 0) {
+    return props.payments!.map(payment => payment.label).filter(Boolean).join(' + ') || null
+  }
+  return props.singlePaymentLabel || null
+})
+
+const invoiceTaxLines = computed(() => {
+  const explicit = (props.invoice?.taxLines ?? []).filter(line =>
+    line?.label || Number(line?.base) > 0 || Number(line?.amount) > 0,
+  )
+  if (explicit.length > 0) return explicit
+
+  const lines: InvoiceTaxLine[] = []
+  if (Number(props.standardTax) > 0) {
+    lines.push({ label: props.standardTaxLabel || 'Impuesto', amount: props.standardTax })
+  }
+  if (Number(props.liquorTax) > 0) {
+    lines.push({ label: 'IVA licores', rate: 5, amount: props.liquorTax })
+  }
+  return lines
+})
 
 const printableItems = computed(() =>
   consolidateReceiptPrintLines(props.items, {
@@ -293,10 +365,31 @@ const printableItems = computed(() =>
 
     <template v-if="invoice">
       <div class="receipt-divider">================================</div>
-      <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRONICA</div>
-      <div v-if="invoice.prefix || invoice.invoice_number" class="receipt-row">
-        {{ [invoice.prefix, invoice.invoice_number].filter(Boolean).join('-') }}
+      <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRONICA DE VENTA</div>
+      <div class="receipt-row receipt-small">Representacion impresa de factura electronica de venta</div>
+      <div v-if="invoiceNumberLabel" class="receipt-row" style="font-weight:bold;">{{ invoiceNumberLabel }}</div>
+      <div v-if="invoice.issuedAt" class="receipt-row receipt-small">Fecha emision DIAN: {{ invoice.issuedAt }}</div>
+      <div v-if="invoice.issuerLabel || fallbackIssuerLabel" class="receipt-row receipt-small">
+        Emisor: {{ invoice.issuerLabel || fallbackIssuerLabel }}
       </div>
+      <div v-if="invoice.acquirerLabel || fallbackAcquirerLabel" class="receipt-row receipt-small">
+        Adquirente: {{ invoice.acquirerLabel || fallbackAcquirerLabel }}
+      </div>
+      <div v-if="invoice.resolutionText" class="receipt-row receipt-small">{{ invoice.resolutionText }}</div>
+      <div v-if="invoicePaymentLabel" class="receipt-row receipt-small">Forma/medio de pago: {{ invoicePaymentLabel }}</div>
+      <template v-if="invoiceTaxLines.length > 0">
+        <div class="receipt-divider receipt-small">--------------------------------</div>
+        <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle tributario</div>
+        <div
+          v-for="(line, idx) in invoiceTaxLines"
+          :key="`${line.label ?? 'tax'}-${idx}`"
+          class="receipt-tax-line receipt-small"
+        >
+          <span>{{ line.label || 'Impuesto' }}<template v-if="formatRate(line.rate)"> {{ formatRate(line.rate) }}</template></span>
+          <span v-if="Number(line.base) > 0">Base {{ money(line.base) }}</span>
+          <span>{{ money(line.amount) }}</span>
+        </div>
+      </template>
       <div v-if="invoice.cufe" class="receipt-row receipt-small receipt-cufe">
         CUFE: {{ invoice.cufe }}
       </div>
@@ -306,7 +399,7 @@ const printableItems = computed(() =>
         alt="QR verificacion DIAN"
         class="receipt-qr"
       >
-      <div v-if="invoice.cufe" class="receipt-row receipt-small">Verificar en DIAN</div>
+      <div v-if="invoiceDianUrl" class="receipt-row receipt-small">Verificar en DIAN</div>
       <div class="receipt-divider">================================</div>
     </template>
   </div>
@@ -350,6 +443,23 @@ const printableItems = computed(() =>
 .receipt-print-ticket .receipt-item span:last-child {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.receipt-print-ticket .receipt-tax-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.receipt-print-ticket .receipt-tax-line span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.receipt-print-ticket .receipt-tax-line span:not(:first-child) {
+  white-space: nowrap;
+  text-align: right;
 }
 
 .receipt-print-ticket .receipt-total {
@@ -416,6 +526,7 @@ const printableItems = computed(() =>
 }
 
 @media print {
+  html,
   body.printing-receipt-ticket {
     margin: 0;
     padding: 0;
@@ -423,6 +534,14 @@ const printableItems = computed(() =>
 
   body.printing-receipt-ticket * {
     visibility: hidden;
+  }
+
+  body.printing-receipt-ticket #pos-receipt,
+  body.printing-receipt-ticket #pos-receipt *,
+  body.printing-receipt-ticket #pos-prefactura,
+  body.printing-receipt-ticket #pos-prefactura * {
+    display: none !important;
+    visibility: hidden !important;
   }
 
   body.printing-receipt-ticket .receipt-print-ticket,
@@ -441,9 +560,10 @@ const printableItems = computed(() =>
     background: #fff;
     box-sizing: border-box;
     padding: 0 1.5mm 14mm;
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
+    margin: 0 !important;
   }
 
   body.printing-receipt-ticket .receipt-print-ticket .receipt-logo {
