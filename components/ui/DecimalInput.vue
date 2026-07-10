@@ -2,11 +2,15 @@
 /**
  * Locale-safe decimal input — avoids HTML5 `type="number"` step validation.
  * Use in purchase/quantity forms (see epic #1074). Batch migrations: pass field-specific `precision`.
+ * Display/parse punctuation follows tenant UI locale (es|en); defaults es-CO.
  */
 import {
+  formatLocaleNumber,
+  normalizeUiLocale,
   parseLocaleDecimal,
   roundToPrecision,
   type DecimalPrecision,
+  type UiLocale,
 } from '~/utils/parseLocaleDecimal'
 
 const props = withDefaults(
@@ -21,10 +25,13 @@ const props = withDefaults(
     required?: boolean
     id?: string
     class?: string
+    /** Optional override; defaults to tenant businessProfile.locale → es. */
+    locale?: UiLocale | string | null
   }>(),
   {
     modelValue: null,
     precision: 2,
+    locale: undefined,
   },
 )
 
@@ -32,19 +39,34 @@ const emit = defineEmits<{
   'update:modelValue': [value: number | null]
 }>()
 
+const tenantsStore = useTenantsStore()
 const inputRef = ref<HTMLInputElement>()
 const displayValue = ref('')
 
+const resolvedLocale = computed<UiLocale>(() => {
+  if (props.locale != null && props.locale !== '') {
+    return normalizeUiLocale(props.locale)
+  }
+  return normalizeUiLocale(
+    (tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale,
+  )
+})
+
 function formatModelForDisplay(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return ''
-  return String(value)
+  // No thousands grouping: es-CO "5.000" would parse as 5 under only-dot decimal rules.
+  return formatLocaleNumber(value, resolvedLocale.value, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: props.precision,
+    useGrouping: false,
+  })
 }
 
 watch(
-  () => props.modelValue,
-  (value) => {
+  [() => props.modelValue, resolvedLocale, () => props.precision],
+  () => {
     if (document.activeElement === inputRef.value) return
-    displayValue.value = formatModelForDisplay(value ?? null)
+    displayValue.value = formatModelForDisplay(props.modelValue ?? null)
   },
   { immediate: true },
 )
@@ -59,7 +81,7 @@ function onInput(event: Event) {
 }
 
 function commitValue() {
-  const parsed = parseLocaleDecimal(displayValue.value)
+  const parsed = parseLocaleDecimal(displayValue.value, resolvedLocale.value)
   if (parsed === null) {
     emit('update:modelValue', null)
     displayValue.value = ''

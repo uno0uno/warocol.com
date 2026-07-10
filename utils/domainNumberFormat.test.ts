@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { formatDomainQuantity, normalizeDomainNumber } from './domainNumberFormat.ts'
 
 describe('formatDomainQuantity', () => {
-  it('keeps meaningful sub-unit precision without long tails', () => {
+  it('keeps meaningful sub-unit precision without long tails (es default)', () => {
     assert.equal(formatDomainQuantity(1.345), '1,345')
     assert.equal(formatDomainQuantity(0.3333333333333), '0,3333')
     assert.equal(formatDomainQuantity(0.3333333333333, 6), '0,333333')
@@ -17,6 +17,12 @@ describe('formatDomainQuantity', () => {
 
   it('formats tiny float residue as a clean zero', () => {
     assert.equal(formatDomainQuantity(0.1 + 0.2 - 0.3), '0')
+  })
+
+  it('formats en-US punctuation when locale is en', () => {
+    assert.equal(formatDomainQuantity(1.345, 4, 'en'), '1.345')
+    assert.equal(formatDomainQuantity(1000, 6, 'en'), '1,000')
+    assert.equal(formatDomainQuantity(0.3333333333333, 4, 'en'), '0.3333')
   })
 })
 
