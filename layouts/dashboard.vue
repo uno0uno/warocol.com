@@ -91,7 +91,7 @@ import { usePosMobileCart } from '~/composables/usePosMobileCart'
 const { unreadCount: notificationsUnreadCount } = useNotifications()
 
 // Billing access status — drives banner and blocked redirect
-const { accessStatus, fetchAccessStatus } = useBilling()
+const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
 const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
 
 // Get route-based configuration

@@ -291,10 +291,11 @@ export const resolveOperationalQuota = (
   }
 }
 
-export const useBilling = () => {
+export const useBilling = (options: { overview?: boolean } = {}) => {
   const cache = useQueryCache()
   const { currentTenant } = useTenantReactive()
   const tenantId = computed(() => currentTenant.value?.id ?? 'none')
+  const loadOverview = options.overview !== false
 
   // ── Pagination state ──────────────────────────────────────────────────────────
   const eventsPage = ref(0)
@@ -305,7 +306,7 @@ export const useBilling = () => {
 
   const { data: plans, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
     key: ['billing', 'plans'],
-    enabled: () => import.meta.client,
+    enabled: () => import.meta.client && loadOverview,
     query: () => $fetch<BillingPlan[]>('/api/billing/plans'),
   })
 
@@ -319,19 +320,26 @@ export const useBilling = () => {
         throw err
       }
     },
-    enabled: () => import.meta.client && !!currentTenant.value,
+    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
   })
 
   const { data: accessStatus, status: accessStatus_status, asyncStatus: accessStatusAsyncStatus } = useQuery({
     key: () => ['billing', 'access-status', tenantId.value],
-    query: () => $fetch<AccessStatus>('/api/billing/access-status'),
+    query: async () => {
+      try {
+        return await $fetch<AccessStatus>('/api/billing/access-status')
+      } catch (err: any) {
+        if (err?.status === 403 || err?.statusCode === 403) return null
+        throw err
+      }
+    },
     enabled: () => import.meta.client && !!currentTenant.value,
   })
 
   const { data: usageHistoryData, status: usageStatus, asyncStatus: usageAsyncStatus } = useQuery({
     key: () => ['billing', 'usage-history', tenantId.value, usageMonths.value],
     query: () => $fetch<ScanMonthlyEntry[]>(`/api/billing/usage-history?months=${usageMonths.value}`),
-    enabled: () => import.meta.client && !!currentTenant.value,
+    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
   })
 
   const { data: remainingUsage, status: remainingUsageStatus, asyncStatus: remainingUsageAsyncStatus } = useQuery({
@@ -344,7 +352,7 @@ export const useBilling = () => {
         throw err
       }
     },
-    enabled: () => import.meta.client && !!currentTenant.value,
+    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
   })
 
   const { data: eventsData, status: eventsStatus, asyncStatus: eventsAsyncStatus } = useQuery({
@@ -352,7 +360,7 @@ export const useBilling = () => {
     query: () => $fetch<BillingEventsResponse>(
       `/api/billing/events?limit=${eventsLimit.value}&offset=${eventsPage.value * eventsLimit.value}`
     ),
-    enabled: () => import.meta.client && !!currentTenant.value,
+    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
   })
 
   // ── Mutations ─────────────────────────────────────────────────────────────────

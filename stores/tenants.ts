@@ -107,7 +107,11 @@ export const useTenantsStore = defineStore('tenants', () => {
     query: () => $fetch<{ success: boolean; data: TenantBusinessProfile }>(
       '/api/api/tenant/public-profile'
     ).then(r => r?.data ?? null),
-    enabled: () => import.meta.client && !!selectedTenant.value,
+    enabled: () =>
+      import.meta.client
+      && !!selectedTenant.value
+      && accessStore.isLoaded
+      && accessStore.can('mi_negocio'),
   })
 
   // ── selectTenant mutation ─────────────────────────────────────────────────────
