@@ -5434,10 +5434,19 @@ onUnmounted(() => {
     padding: 0;
   }
 
-  /* Hide everything, then reveal only the receipt (default — post-payment). */
+  /* Hide everything, then reveal only the legacy receipt unless the shared
+     receipt component is driving this print job. */
   body * { visibility: hidden; }
-  #pos-receipt,
-  #pos-receipt * { visibility: visible; }
+  body:not(.printing-receipt-ticket) #pos-receipt,
+  body:not(.printing-receipt-ticket) #pos-receipt * { visibility: visible; }
+
+  body.printing-receipt-ticket #pos-receipt,
+  body.printing-receipt-ticket #pos-receipt *,
+  body.printing-receipt-ticket #pos-prefactura,
+  body.printing-receipt-ticket #pos-prefactura * {
+    display: none !important;
+    visibility: hidden !important;
+  }
 
   /* Issue #535 — when body has .printing-prefactura class, swap which
      printable div is visible. The receipt path stays the default. */
@@ -5465,6 +5474,8 @@ onUnmounted(() => {
 
   /* Hide each by default; the body class toggles which is shown. */
   #pos-prefactura { display: none !important; }
+  body.printing-receipt-ticket #pos-receipt,
+  body.printing-receipt-ticket #pos-prefactura { display: none !important; }
   body.printing-prefactura #pos-receipt { display: none !important; }
   body.printing-prefactura #pos-prefactura { display: block !important; }
 
