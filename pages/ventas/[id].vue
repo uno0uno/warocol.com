@@ -113,6 +113,13 @@ const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_read
 const isReadinessLoading = computed(() => !settingsData.value)
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 const platformLegal = computed(() => settingsData.value?.data?.platform_legal ?? null)
+/** When false, Matias PDF is not expected (INVOICE_PDF_ENABLED). */
+const invoicePdfEnabled = computed(() => settingsData.value?.data?.invoice_pdf_enabled === true)
+const invoicePdfAvailable = computed(() =>
+  invoiceData.value?.status === 'accepted'
+  && invoicePdfEnabled.value
+  && !!invoiceData.value?.pdf_presigned_url,
+)
 
 // Invoice emit state
 const isEmittingInvoice = ref(false)
@@ -1099,9 +1106,11 @@ onUnmounted(() => {
               <h3 class="text-sm font-bold text-text-primary mb-4">Descargar</h3>
               <div class="flex-1 flex flex-col justify-start gap-3 w-full h-fit">
                 <p class="text-sm text-text-secondary">
-                  Descarga tu factura electrónica en formato PDF
+                  {{ invoicePdfAvailable
+                    ? 'Descarga tu factura electrónica en formato PDF'
+                    : 'Envía la factura por correo (recibo + CUFE/XML; PDF gráfico no disponible en este entorno)' }}
                 </p>
-                <a v-if="invoiceData.status === 'accepted' && invoiceData.pdf_presigned_url"
+                <a v-if="invoicePdfAvailable"
                   :href="invoiceData.pdf_presigned_url" target="_blank" rel="noopener"
                   class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
