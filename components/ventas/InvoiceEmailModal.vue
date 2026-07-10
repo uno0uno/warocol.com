@@ -138,7 +138,7 @@ const contentTemplate = () =>
                 h(
                   'p',
                   { class: 'text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-all' },
-                  `Se envio ${props.invoiceLabel} a ${sentToEmail.value}. Si el PDF/XML esta disponible, ira adjunto para soporte contable.`,
+                  `Se envio ${props.invoiceLabel} a ${sentToEmail.value}. El correo incluye el detalle de la FE (CUFE); el XML se adjunta si esta disponible. El PDF grafico de Matias no se envia en este entorno.`,
                 ),
               ]),
             ],
