@@ -12,9 +12,9 @@
       <span class="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-status-critical-bg border-2 border-white" />
     </div>
 
-    <h3 class="text-base font-semibold text-text-primary mb-1">Algo salió mal</h3>
+    <h3 class="text-base font-semibold text-text-primary mb-1">{{ t('errors.somethingWrong') }}</h3>
     <p v-if="message" class="text-sm text-text-secondary max-w-xs">{{ message }}</p>
-    <p v-else class="text-sm text-text-secondary max-w-xs">No se pudo cargar la información. Intenta recargar la página.</p>
+    <p v-else class="text-sm text-text-secondary max-w-xs">{{ t('errors.reloadHint') }}</p>
   </div>
 </template>
 
@@ -22,4 +22,6 @@
 defineProps<{
   message?: string
 }>()
+
+const { t } = useI18n()
 </script>

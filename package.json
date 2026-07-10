@@ -16,6 +16,7 @@
     "@nuxt/schema": "3.17.7",
     "@nuxt/vite-builder": "3.17.7",
     "@nuxtjs/google-fonts": "^3.0.2",
+    "@nuxtjs/i18n": "^9.5.6",
     "@nuxtjs/robots": "^4.0.0",
     "@pinia/colada": "^1.0.0",
     "@pinia/colada-nuxt": "^0.3.2",

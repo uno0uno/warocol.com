@@ -5,8 +5,8 @@
     <div v-if="isLoggingOut" class="logout-overlay fixed inset-0 flex items-center justify-center z-[9999]">
       <div class="logout-card rounded-2xl shadow-xl p-8 flex flex-col items-center">
         <UiLoadingMatrix class="mb-4" size="9px" color="currentColor" />
-        <p class="logout-title text-lg font-medium">Cerrando sesión...</p>
-        <p class="logout-message text-sm mt-2">Por favor espera</p>
+        <p class="logout-title text-lg font-medium">{{ t('shell.loggingOut') }}</p>
+        <p class="logout-message text-sm mt-2">{{ t('shell.pleaseWait') }}</p>
       </div>
     </div>
   </Teleport>
@@ -27,7 +27,7 @@
             v-for="item in visiblePrimaryItems"
             :key="item.to"
             :to="item.to"
-            :title="item.label"
+            :title="t(item.labelKey)"
             :class="[
               'nav-item group',
               collapsed ? 'justify-center' : '',
@@ -39,7 +39,7 @@
             @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
-            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ t(item.labelKey) }}</span>
           </NuxtLink>
         </div>
       </template>
@@ -52,7 +52,7 @@
             v-for="item in visibleSecondaryItems"
             :key="item.to"
             :to="item.to"
-            :title="item.label"
+            :title="t(item.labelKey)"
             :class="[
               'nav-item',
               collapsed ? 'justify-center' : '',
@@ -65,7 +65,7 @@
           >
             <component :is="item.icon" class="nav-icon" />
             <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
-              {{ item.label }}
+              {{ t(item.labelKey) }}
               <span
                 v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
                 class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ml-1.5"
@@ -79,18 +79,18 @@
       <template v-if="showEventos">
         <div v-if="!collapsed" class="my-1.5 mx-1 border-t nav-divider" />
         <div class="space-y-0.5">
-          <p v-if="!collapsed" class="nav-section-label">Apps</p>
+          <p v-if="!collapsed" class="nav-section-label">{{ t('nav.apps') }}</p>
           <a
             href="https://warotickets.com/gestion/eventos"
             target="_blank"
-            title="Eventos"
+            :title="t('nav.eventos')"
             :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '', props.billingBlocked ? 'nav-item--disabled' : '']"
             :aria-disabled="props.billingBlocked"
             :tabindex="props.billingBlocked ? -1 : undefined"
             @click="(event) => handleExternalNavClick(event, close)"
           >
             <Squares2X2Icon class="nav-icon" />
-            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ t('nav.eventos') }}</span>
           </a>
         </div>
       </template>
@@ -105,7 +105,7 @@
             v-for="item in visibleCuentaItems"
             :key="item.to"
             :to="item.to"
-            :title="item.label"
+            :title="t(item.labelKey)"
             :class="[
               'nav-item',
               collapsed ? 'justify-center' : '',
@@ -117,7 +117,7 @@
             @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
-            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ t(item.labelKey) }}</span>
           </NuxtLink>
         </div>
       </template>
@@ -133,10 +133,10 @@
           'nav-item nav-item--idle nav-item--logout group w-full',
           collapsed ? 'justify-center' : '',
         ]"
-        title="Cerrar sesión"
+        :title="t('shell.logout')"
       >
         <ArrowRightOnRectangleIcon class="nav-icon" />
-        <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Cerrar sesión</span>
+        <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ t('shell.logout') }}</span>
       </button>
     </template>
 
@@ -179,6 +179,7 @@ defineEmits<{
 
 const isLoggingOut = ref(false)
 const router = useRouter()
+const { t } = useI18n()
 
 const { hasCriticalAlerts } = useDataQualityStatus()
 

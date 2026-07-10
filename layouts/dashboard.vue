@@ -25,7 +25,7 @@
       <SubscriptionBanner
         v-if="accessStatus && (accessStatus.level === 'full_with_warning' || accessStatus.level === 'read_only')"
         :level="accessStatus.level"
-        :message="accessStatus.message || (accessStatus.level === 'read_only' ? 'Tu suscripción está vencida. El acceso es de solo lectura.' : 'Tu suscripción vence pronto.')"
+        :message="accessStatus.message || (accessStatus.level === 'read_only' ? t('shell.subscriptionReadOnly') : t('shell.subscriptionExpiring'))"
         :grace-days-remaining="accessStatus.grace_days_remaining"
       />
 
@@ -33,12 +33,12 @@
       <div :class="['flex-1 min-h-0 overflow-y-auto', mobileContentBottomPadding]">
         <div class="p-4 sm:p-6 md:p-8">
           <!-- Breadcrumb (if provided) -->
-          <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
+          <nav v-if="showBreadcrumb" class="flex mb-6" :aria-label="t('shell.breadcrumb')">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
               <li class="inline-flex items-center">
                 <NuxtLink to="/financiero"
                   class="text-sm font-medium text-text-secondary hover:text-primary transition-colors">
-                  Financiero
+                  {{ t('shell.financiero') }}
                 </NuxtLink>
               </li>
               <li v-if="breadcrumbPage">
@@ -86,6 +86,8 @@ import {
 import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
+
+const { t } = useI18n()
 
 // Notifications SSE is owned by plugins/notifications.client.ts.
 const { unreadCount: notificationsUnreadCount } = useNotifications()

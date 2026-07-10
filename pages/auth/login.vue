@@ -2,7 +2,7 @@
   <div v-if="checking" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
       <TheCustomLoader size="large" />
-      <p class="text-text-secondary font-medium mt-6">Verificando sesión...</p>
+      <p class="text-text-secondary font-medium mt-6">{{ t('auth.checkingSession') }}</p>
     </div>
   </div>
   <AuthLoginForm v-else />
@@ -21,7 +21,8 @@ definePageMeta({
   robots: 'noindex, nofollow'
 })
 
-useHead({ title: 'Iniciar Sesión' })
+const { t } = useI18n()
+useHead({ title: () => t('auth.loginTitle') })
 
 const checking = ref(true)
 const router = useRouter()
