@@ -295,6 +295,7 @@
 </template>
 
 <script setup lang="ts">
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
 
@@ -305,6 +306,7 @@ useHead({ title: 'Registrar Gasto' })
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
 const { formatCalendarDate } = useFormatters()
+const cache = useQueryCache()
 
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
@@ -312,29 +314,26 @@ fetchPaymentMethods()
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 
-const { data: categoriesData, pending: isLoadingCategories } = useAsyncData(
-  `expense-categories-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/finance/expenses/categories'),
-  {
-    server: false,
-    default: () => ({ data: [] })
-  }
-)
+// Shared Colada key with list → cache hit when coming from /finanzas/gastos (optimistic form)
+const { data: categoriesData, refetch: refetchCategories } = useQuery({
+  key: () => ['finance', 'expense-categories', currentTenant.value?.id],
+  query: () => $fetch('/api/finance/expenses/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const categories = computed(() => {
-  const data = categoriesData.value
+  const data = categoriesData.value as any
   if (!data) return []
   return Array.isArray(data) ? data : (data.data || [])
 })
 
-const { setRefreshHandler } = useLayoutActions()
-const refreshCategories = async () => {
-  await refreshNuxtData(`expense-categories-${currentTenant.value?.id || 'default'}`)
-}
+// Full-page loader only when there is no cache yet (mirrors productos create)
+const isLoadingCategories = computed(() => !categoriesData.value)
 
-onMounted(() => {
-  setRefreshHandler(refreshCategories)
-})
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refetchCategories) })
+onUnmounted(() => { clearRefreshHandler(refetchCategories) })
 
 const form = reactive({
   transactionDate: todayISO(),
@@ -494,11 +493,15 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
+        // Still invalidate list so the created expense appears on return
+        cache.invalidateQueries({ key: ['finance', 'expenses'] })
         submitError.value = 'Gasto creado, pero hubo un error al subir los archivos.'
         return
       }
     }
 
+    // Invalidate list cache so return to index shows progressive refresh (like productos)
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
     await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error creating expense:', error)

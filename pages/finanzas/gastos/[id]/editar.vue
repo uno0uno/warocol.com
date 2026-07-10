@@ -156,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -164,6 +165,7 @@ const route = useRoute()
 const expenseId = route.params.id as string
 
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 
 // Payment methods
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
@@ -172,32 +174,30 @@ fetchPaymentMethods()
 // State
 const isSubmitting = ref(false)
 
-// Load categories
-const { data: categoriesData } = await useAsyncData(
-  `expense-categories-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/finance/expenses/categories'),
-  {
-    server: false,
-    default: () => ({ data: [] })
-  }
-)
+// Shared Colada key with list → cache hit when navigating from index
+const { data: categoriesData } = useQuery({
+  key: () => ['finance', 'expense-categories', currentTenant.value?.id],
+  query: () => $fetch('/api/finance/expenses/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const categories = computed(() => {
-  const data = categoriesData.value
+  const data = categoriesData.value as any
   if (!data) return []
   return Array.isArray(data) ? data : (data.data || [])
 })
 
-// Fetch expense data
-const { data: expenseData, pending: isLoading, error: fetchError } = await useAsyncData(
-  `expense-edit-${expenseId}`,
-  () => $fetch(`/api/finance/expenses/${expenseId}`),
-  {
-    server: false
-  }
-)
+// Shared key with detail page → open edit with cached expense (optimistic)
+const { data: expenseData, error: fetchError } = useQuery({
+  key: () => ['expense', expenseId],
+  query: () => $fetch(`/api/finance/expenses/${expenseId}`),
+  staleTime: 30_000,
+})
 
-const expense = computed(() => expenseData.value?.data)
+const expense = computed(() => (expenseData.value as any)?.data)
+// Full-page loader only when no cache yet
+const isLoading = computed(() => !expenseData.value && !fetchError.value)
 
 // Form state
 const form = reactive({
@@ -267,8 +267,10 @@ const handleSubmit = async () => {
       body: payload
     })
 
-    // Success - redirect to detail
-    navigateTo(`/finanzas/gastos/${expenseId}`)
+    // Invalidate list + detail so return path progressive-refreshes (like productos)
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
+    await navigateTo(`/finanzas/gastos/${expenseId}`)
   } catch (error: any) {
     console.error('Error updating expense:', error)
 
