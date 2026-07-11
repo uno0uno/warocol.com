@@ -166,7 +166,10 @@
       "fromTime": "From {time}",
       "untilTime": "Until {time}",
       "lastWeek": "Last week",
-      "lastMonth": "Last month"
+      "lastMonth": "Last month",
+      "loadSummaryError": "The summary could not be loaded. Check the period and try again.",
+      "untrackedPaymentGroup": "No registered method",
+      "orders": "Orders"
     },
     "cartera": {
       "totalReceivable": "Total receivable",

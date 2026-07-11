@@ -166,7 +166,10 @@
       "fromTime": "Desde {time}",
       "untilTime": "Hasta {time}",
       "lastWeek": "Última semana",
-      "lastMonth": "Último mes"
+      "lastMonth": "Último mes",
+      "loadSummaryError": "No se pudo cargar el resumen. Verifica el período e intenta de nuevo.",
+      "untrackedPaymentGroup": "Sin método registrado",
+      "orders": "Órdenes"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",

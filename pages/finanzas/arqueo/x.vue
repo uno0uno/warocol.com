@@ -13,7 +13,7 @@
               </svg>
             </div>
             <div>
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Período</p>
+              <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.common.period') }}</p>
               <p class="text-base font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
             </div>
           </div>
@@ -25,12 +25,12 @@
               range
               :preset-dates="presetDates"
               :enable-time-picker="false"
-              :locale="es"
-              placeholder="Rango de fechas"
+              :locale="locale"
+              :placeholder="t('finanzas.common.dateRange')"
               auto-apply
               :timezone="timezone"
               :max-date="maxDate"
-              :format="'dd/MM/yy'"
+              :format="formatDateRange"
               input-class-name="dp-custom-input"
               menu-class-name="dp-custom-menu"
               calendar-cell-class-name="dp-custom-cell"
@@ -47,7 +47,7 @@
 
     <!-- Error -->
     <div v-else-if="previewError" class="text-center py-16 text-text-secondary text-sm">
-      No se pudo cargar el resumen. Verifica el período e intenta de nuevo.
+      {{ t('finanzas.arqueo.loadSummaryError') }}
     </div>
 
     <!-- Preview cards -->
@@ -55,27 +55,27 @@
       <!-- Ventas -->
       <div class="bg-surface border-2 border-border rounded-lg">
         <div class="p-3 sm:p-4 border-b border-border">
-          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3>
+          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.periodSales') }}</h3>
         </div>
         <div class="divide-y divide-border">
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Total ventas</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
             <span class="font-bold text-text-primary">{{ formatCurrency(previewData.totalSales) }}</span>
           </div>
           <div v-if="hasCapturedTips(previewData)" class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Propinas</span>
+            <span class="text-text-secondary">{{ t('finanzas.common.tips') }}</span>
             <span class="font-medium">{{ formatCurrency(previewData.totalTips) }}</span>
           </div>
           <div v-if="(previewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Impuesto propina</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span>
             <span class="font-medium">{{ formatCurrency(previewData.totalTipTax) }}</span>
           </div>
           <div v-if="hasCapturedTips(previewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold">
-            <span class="text-text-primary">Total cobrado</span>
+            <span class="text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span>
             <span>{{ formatCurrency(previewData.totalCharged) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Órdenes</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.orders') }}</span>
             <span class="font-medium">{{ previewData.itemsSold }}</span>
           </div>
         </div>
@@ -84,27 +84,31 @@
       <!-- Caja -->
       <div class="bg-surface border-2 border-border rounded-lg">
         <div class="p-3 sm:p-4 border-b border-border">
-          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3>
+          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.drawerState') }}</h3>
         </div>
         <div class="divide-y divide-border">
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo recibido</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span>
             <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
           </div>
           <div v-if="(previewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Propinas en efectivo</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.cashTips') }}</span>
             <span class="font-medium">+ {{ formatCurrency(previewData.cashTips) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Gastos en efectivo</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpensesLong') }}</span>
             <span class="font-medium text-destructive">− {{ formatCurrency(previewData.gastosEfectivo) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm font-semibold">
-            <span class="text-text-primary">Esperado en caja</span>
+            <span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
             <span class="text-text-primary">{{ formatCurrency(previewData.cashExpected) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">{{ tablePlural }} abiertas</span>
+            <span class="text-text-secondary">{{ t('finanzas.arqueo.openTables', {
+              count: previewData.openTablesCount,
+              table: tablePlural,
+              state: t('finanzas.arqueo.tableOpenPlural'),
+            }) }}</span>
             <span
               class="font-medium"
               :class="previewData.openTablesCount > 0 ? 'text-state-warning-text font-semibold' : 'text-text-primary'"
@@ -118,7 +122,7 @@
       <!-- Métodos de pago -->
       <div class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
         <div class="p-3 sm:p-4 border-b border-border">
-          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
+          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.paymentMethods') }}</h3>
         </div>
         <div v-if="groupedMethods?.length" class="divide-y divide-border">
           <div
@@ -158,7 +162,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
+        <div v-else class="px-4 py-4 text-sm text-text-secondary">{{ t('finanzas.arqueo.noPaymentMethods') }}</div>
       </div>
 
       <!-- CTA -->
@@ -173,7 +177,7 @@
           } })"
           class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          Registrar arqueo con este período →
+          {{ t('finanzas.arqueo.registerPeriod') }}
         </button>
       </div>
     </div>
@@ -182,11 +186,10 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.x') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -194,13 +197,10 @@ const { currentTenant } = useTenantReactive()
 const { plural: tablePlural } = useTableLabel()
 const route = useRoute()
 const { addDaysISO, dateAtNoon, isoFromDate, timezone, todayISO } = useTenantTimezone()
+const { formatCalendarDate, formatCurrency: formatMoneyValue } = useFormatters()
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
-const formatIsoDateLong = (iso: string) => {
-  const [year, month, day] = iso.split('-')
-  return `${day}/${month}/${year}`
-}
 
 // Initialise from query params if present
 const initStart     = (route.query.start     as string) || today
@@ -215,18 +215,18 @@ const periodStartTime = ref<string | null>(initStartTime)
 const periodEndTime   = ref<string | null>(initEndTime)
 
 const todayNoon = dateAtNoon(today)
-const presetDates = ref([
-  { label: 'Hoy',           value: [todayNoon, todayNoon] },
+const presetDates = computed(() => [
+  { label: t('finanzas.common.today'),           value: [todayNoon, todayNoon] },
   { label: t('finanzas.common.yesterday'),          value: (() => { const d = dateAtNoon(addDaysISO(today, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today, -7)), todayNoon] },
-  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today, -30)), todayNoon] },
+  { label: t('finanzas.arqueo.lastWeek'), value: [dateAtNoon(addDaysISO(today, -7)), todayNoon] },
+  { label: t('finanzas.arqueo.lastMonth'),    value: [dateAtNoon(addDaysISO(today, -30)), todayNoon] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = formatIsoDateLong(isoFromDate(dates[0]))
+  const from = formatCalendarDate(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${formatIsoDateLong(isoFromDate(dates[1]))}`
+  return `${from} - ${formatCalendarDate(isoFromDate(dates[1]))}`
 }
 
 const periodStart = computed(() =>
@@ -255,8 +255,15 @@ const previewLoading = computed(() => previewStatus.value === 'pending' && !prev
 const previewError   = computed(() => previewErr.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
 
-const GROUP_LABELS: Record<string, string> = {
-  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
+const groupLabel = (slug: string) => {
+  const labels: Record<string, string> = {
+    cash: t('finanzas.common.cash'),
+    card: t('finanzas.common.card'),
+    digital: t('finanzas.common.digital'),
+    credit: t('finanzas.common.credit'),
+    untracked: t('finanzas.arqueo.untrackedPaymentGroup'),
+  }
+  return labels[slug] ?? slug
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -280,7 +287,7 @@ const displayMethods = computed<DisplayMethod[]>(() => {
         key:        `${r.group_slug}__${r.method_name}`,
         groupSlug:  r.group_slug,
         label:      r.method_name,
-        groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
+        groupLabel: groupLabel(r.group_slug),
         total:      r.total,
       }))
   }
@@ -338,15 +345,14 @@ registerProgressiveLoading(isRefreshing)
 onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+const formatCurrency = (value?: number | null) => formatMoneyValue(value ?? 0)
 
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => formatIsoDateLong(d)
+  const fmt = (d: string) => formatCalendarDate(d)
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>
