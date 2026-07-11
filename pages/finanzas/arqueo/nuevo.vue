@@ -973,15 +973,14 @@ const applySuggested = () => {
 // ── Date picker state (paso 0) — solo un día ──────────────────────────────
 
 interface Preset { key: string; label: string; date: Date }
-const buildPresets = (): Preset[] => {
+const presets = computed<Preset[]>(() => {
   const todayNoon = dateAtNoon(today)
   const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
   return [
     { key: 'today',     label: t('finanzas.common.today'),  date: todayNoon },
     { key: 'yesterday', label: t('finanzas.common.yesterday'), date: yesterdayNoon },
   ]
-}
-const presets      = buildPresets()
+})
 const selectedDate = ref<Date>(dateAtNoon(initStart))
 const activePreset = ref<string | null>(
   initStart === today ? 'today'
@@ -1110,13 +1109,13 @@ watch(
 )
 
 // ── Wizard state ──────────────────────────────────────────────────────────
-const wizardSteps = [
+const wizardSteps = computed(() => [
   { n: 1, label: t('finanzas.common.period') },
   { n: 2, label: t('finanzas.common.cash') },
   { n: 3, label: t('finanzas.arqueo.otherMethodsDetail') },
   { n: 4, label: t('finanzas.arqueo.breakdown') },
   { n: 5, label: t('finanzas.common.close') },
-]
+])
 
 const currentStep     = ref(1)
 const confirmArmed    = ref(false)
