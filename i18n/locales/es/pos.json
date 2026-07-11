@@ -171,7 +171,10 @@
       "updateQtyError": "Error al actualizar la cantidad",
       "releaseError": "Error al liberar la {table}",
       "clearBarError": "Error al limpiar la barra",
-      "clearCartError": "Error al limpiar el carrito"
+      "clearCartError": "Error al limpiar el carrito",
+      "yesDelete": "Sí, eliminar",
+      "yesReduce": "Sí, reducir",
+      "yesClear": "Sí, limpiar"
     },
     "floor": {
       "minCovered": "Mínimo cubierto",
@@ -310,6 +313,10 @@
       "comanda": "Comanda #{numbers}",
       "station": "Estación: {name}",
       "noStation": "Sin cocina asignada"
+    },
+    "glossary": {
+      "table": "Mesa",
+      "tables": "Mesas"
     }
   }
 }

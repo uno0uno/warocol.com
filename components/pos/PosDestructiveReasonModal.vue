@@ -42,10 +42,10 @@
               </div>
               <div class="flex-1 min-w-0">
                 <h3 :id="titleId" class="text-base font-bold text-text-primary leading-tight">
-                  {{ title }}
+                  {{ resolvedTitle }}
                 </h3>
-                <p v-if="message" class="text-sm text-text-secondary mt-1 leading-snug">
-                  {{ message }}
+                <p v-if="resolvedMessage" class="text-sm text-text-secondary mt-1 leading-snug">
+                  {{ resolvedMessage }}
                 </p>
               </div>
             </div>
@@ -98,12 +98,21 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
+import { computed, ref, watch } from 'vue'
+
 interface Props {
   modelValue: boolean
-  title: string
+  /** Pre-translated title (legacy). Prefer titleKey. */
+  title?: string
+  titleKey?: string
+  titleParams?: Record<string, unknown>
   message?: string
+  messageKey?: string
+  messageParams?: Record<string, unknown>
   confirmLabel?: string
+  confirmLabelKey?: string
+  confirmLabelParams?: Record<string, unknown>
   reasonPlaceholder?: string
   loading?: boolean
   error?: string
@@ -111,9 +120,15 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  title: '',
+  titleKey: undefined,
+  titleParams: () => ({}),
   message: '',
+  messageKey: undefined,
+  messageParams: () => ({}),
   confirmLabel: undefined,
-  // defineProps defaults are hoisted — cannot call t() here
+  confirmLabelKey: undefined,
+  confirmLabelParams: () => ({}),
   reasonPlaceholder: undefined,
   loading: false,
   error: '',
@@ -126,12 +141,26 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const resolvedReasonPlaceholder = computed(
-  () => props.reasonPlaceholder || t('pos.destructive.reasonPlaceholder'),
-)
-const resolvedConfirmLabel = computed(
-  () => props.confirmLabel || t('pos.destructive.confirm'),
-)
+const resolvedTitle = computed(() => {
+  void locale.value
+  if (props.titleKey) return t(props.titleKey, props.titleParams as any)
+  return props.title
+})
+const resolvedMessage = computed(() => {
+  void locale.value
+  if (props.messageKey) return t(props.messageKey, props.messageParams as any)
+  return props.message
+})
+const resolvedReasonPlaceholder = computed(() => {
+  void locale.value
+  return props.reasonPlaceholder || t('pos.destructive.reasonPlaceholder')
+})
+const resolvedConfirmLabel = computed(() => {
+  void locale.value
+  if (props.confirmLabelKey) return t(props.confirmLabelKey, props.confirmLabelParams as any)
+  if (props.confirmLabel) return props.confirmLabel
+  return t('pos.destructive.confirm')
+})
 
 const uid = useId()
 const titleId = `pos-destructive-title-${uid}`
@@ -156,3 +185,4 @@ const submit = () => {
   emit('confirm', reason.value.trim())
 }
 </script>
+

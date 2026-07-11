@@ -32,6 +32,7 @@ const oldLocalStorageKey = (tenantId: string) => `waro_table_label_${tenantId}`
  * so existing consumers from #612 keep working unchanged.
  */
 export function useTableLabel() {
+  const { t } = useI18n()
   const { currentTenant } = useTenantReactive()
   const cache = useQueryCache()
 
@@ -44,11 +45,12 @@ export function useTableLabel() {
 
   const singular = computed(() => {
     const value = contextData.value?.data?.tables_label_singular
-    return (typeof value === 'string' && value.trim()) ? value.trim() : DEFAULTS.singular
+    // Tenant custom label wins; otherwise follow UI locale (Mesa/Table).
+    return (typeof value === 'string' && value.trim()) ? value.trim() : t('pos.glossary.table')
   })
   const plural = computed(() => {
     const value = contextData.value?.data?.tables_label_plural
-    return (typeof value === 'string' && value.trim()) ? value.trim() : DEFAULTS.plural
+    return (typeof value === 'string' && value.trim()) ? value.trim() : t('pos.glossary.tables')
   })
 
   const setLabel = async (newSingular: string, newPlural: string) => {
