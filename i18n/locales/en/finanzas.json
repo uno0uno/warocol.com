@@ -562,7 +562,34 @@
       "createAdjust": "Create COA adjustment as reviewable draft",
       "supportHint": "Support, statement, explanation, or internal reference.",
       "viewEntry": "View entry",
-      "viewClose": "View close"
+      "viewClose": "View close",
+      "unreported": "Unreported",
+      "reconcile": "Reconcile",
+      "reconcileMethod": "Reconcile {method}",
+      "save": "Save reconciliation",
+      "saveError": "Could not save the reconciliation.",
+      "status": {
+        "pending": "Pending",
+        "matched": "No difference",
+        "notRequired": "Not required",
+        "resolved": "Resolved",
+        "resolvedF": "Resolved"
+      },
+      "groups": {
+        "customerWallet": "Customer wallet",
+        "tableAdvance": "Table advances"
+      },
+      "reasons": {
+        "timing": "Timing difference",
+        "commission": "Bank fee",
+        "missingSale": "Unrecorded sale",
+        "duplicate": "Duplicate payment",
+        "clientBalance": "Customer credit balance",
+        "methodMisclassified": "Misclassified method",
+        "realSurplus": "Actual surplus",
+        "realShortage": "Actual shortage",
+        "other": "Other"
+      }
     },
     "cierreContable": {
       "title": "Accounting close",

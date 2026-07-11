@@ -2,10 +2,10 @@
   <div class="page-layout">
     <div class="flex flex-col gap-3 md:gap-4">
       <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <MetricCard title="Pendientes" :value="summary.pending" variant="primary" />
-        <MetricCard title="Con diferencia" :value="summary.withDifference" variant="destructive" />
-        <MetricCard title="Total esperado" :value="summary.totalExpected" format="currency" variant="primary" />
-        <MetricCard title="Diferencia total" :value="summary.totalDifference" format="currency" :variant="summary.totalDifference >= 0 ? 'primary' : 'destructive'" />
+        <MetricCard :title="t('finanzas.conciliacion.pending')" :value="summary.pending" variant="primary" />
+        <MetricCard :title="t('finanzas.conciliacion.withDiff')" :value="summary.withDifference" variant="destructive" />
+        <MetricCard :title="t('finanzas.conciliacion.totalExpected')" :value="summary.totalExpected" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.conciliacion.totalDiff')" :value="summary.totalDifference" format="currency" :variant="summary.totalDifference >= 0 ? 'primary' : 'destructive'" />
       </div>
 
       <div class="rounded-lg border border-border bg-surface p-3">
@@ -25,7 +25,7 @@
               to="/finanzas/conciliacion"
               class="h-10 px-3 rounded-lg border border-primary/30 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center"
             >
-              Ver todas
+              {{ t('finanzas.conciliacion.viewAll') }}
             </NuxtLink>
           </template>
         </UiAdvancedFiltersBar>
@@ -42,8 +42,8 @@
           :data="rows"
           :columns="columns"
           row-size="sm"
-          empty-message="No hay conciliaciones para estos filtros."
-          empty-sub-message="Cambia los filtros de cabecera para ver otros estados."
+          :empty-message="t('finanzas.conciliacion.empty')"
+          :empty-sub-message="t('finanzas.conciliacion.emptyHint')"
         >
           <template #cell-period="{ row }">
             <span class="text-sm font-semibold text-text-primary whitespace-nowrap">{{ formatPeriod(row) }}</span>
@@ -62,10 +62,10 @@
           <template #header-groupSlug>
             <UiTableHeaderFilter
               v-model="groupHeaderFilter"
-              title="Tipo"
+              :title="t('finanzas.common.type')"
               filter-type="select"
               :options="groupHeaderOptions"
-              all-label="Todos"
+              :all-label="t('finanzas.common.all')"
               align="left"
             />
           </template>
@@ -81,7 +81,7 @@
             <span class="text-sm font-semibold tabular-nums" :class="amountToneClass(value)">{{ formatCurrency(value) }}</span>
           </template>
           <template #cell-reportedAmount="{ value }">
-            <span class="text-sm tabular-nums" :class="value == null ? 'text-text-tertiary' : amountToneClass(value)">{{ value == null ? 'Sin reportar' : formatCurrency(value) }}</span>
+            <span class="text-sm tabular-nums" :class="value == null ? 'text-text-tertiary' : amountToneClass(value)">{{ value == null ? t('finanzas.conciliacion.unreported') : formatCurrency(value) }}</span>
           </template>
           <template #cell-differenceAmount="{ value }">
             <span class="text-sm font-semibold" :class="differenceClass(value)">
@@ -96,10 +96,10 @@
           <template #header-reconciliationStatus>
             <UiTableHeaderFilter
               v-model="statusHeaderFilter"
-              title="Estado"
+              :title="t('finanzas.common.status')"
               filter-type="select"
               :options="statusOptions"
-              all-label="Todos"
+              :all-label="t('finanzas.common.all')"
               align="left"
             />
           </template>
@@ -109,13 +109,13 @@
                 @click.stop="openReconcile(row)"
                 class="h-8 px-2 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
               >
-                {{ isActionable(row) ? 'Conciliar' : 'Ver' }}
+                {{ isActionable(row) ? t('finanzas.conciliacion.reconcile') : t('finanzas.common.viewDetail') }}
               </button>
               <NuxtLink
                 :to="`/finanzas/arqueo/${row.cierreId}`"
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-                title="Ver cierre"
-                aria-label="Ver cierre"
+                :title="t('finanzas.conciliacion.viewClose')"
+                :aria-label="t('finanzas.conciliacion.viewClose')"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -126,8 +126,8 @@
                 v-if="row.journalEntryId"
                 to="/finanzas/contabilidad/asientos"
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-                title="Ver asiento"
-                aria-label="Ver asiento"
+                :title="t('finanzas.conciliacion.viewEntry')"
+                :aria-label="t('finanzas.conciliacion.viewEntry')"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
@@ -144,40 +144,40 @@
         <div class="absolute inset-0 bg-overlay-backdrop/50" @click="closeReconcile" />
         <div class="relative w-full max-w-lg rounded-xl bg-surface shadow-xl">
           <div class="border-b border-border px-5 py-4">
-            <h2 class="text-base font-bold text-text-primary">Conciliar {{ selectedRow.methodName }}</h2>
+            <h2 class="text-base font-bold text-text-primary">{{ t('finanzas.conciliacion.reconcileMethod', { method: selectedRow.methodName }) }}</h2>
             <p class="text-xs text-text-secondary">{{ formatPeriod(selectedRow) }} · {{ groupLabel(selectedRow.groupSlug) }}</p>
           </div>
 
           <div class="space-y-4 p-5">
             <div class="grid grid-cols-3 gap-2">
               <div class="rounded-lg border border-border bg-background p-3">
-                <p class="text-xs text-text-secondary">Entradas</p>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.conciliacion.entries') }}</p>
                 <p class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(selectedRow.grossInflowsAmount) }}</p>
               </div>
               <div class="rounded-lg border border-border bg-background p-3">
-                <p class="text-xs text-text-secondary">Salidas</p>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.conciliacion.exits') }}</p>
                 <p class="text-sm font-bold" :class="totalOutflows(selectedRow) > 0 ? 'text-destructive' : 'text-text-secondary'">
                   {{ totalOutflows(selectedRow) > 0 ? `− ${formatCurrency(totalOutflows(selectedRow))}` : formatCurrency(0) }}
                 </p>
               </div>
               <div class="rounded-lg border border-border bg-background p-3">
-                <p class="text-xs text-text-secondary">Esperado neto</p>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.conciliacion.expectedNet') }}</p>
                 <p class="text-sm font-bold tabular-nums" :class="amountToneClass(selectedRow.expectedAmount)">{{ formatCurrency(selectedRow.expectedAmount) }}</p>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div class="rounded-lg border border-border bg-background p-3">
-                <p class="text-xs text-text-secondary">Reportado</p>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.conciliacion.reported') }}</p>
                 <p class="text-sm font-bold tabular-nums" :class="amountToneClass(Number(reportedAmount || 0))">{{ formatCurrency(Number(reportedAmount || 0)) }}</p>
               </div>
               <div class="rounded-lg border border-border bg-background p-3">
-                <p class="text-xs text-text-secondary">Diferencia</p>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.common.difference') }}</p>
                 <p class="text-sm font-bold" :class="differenceClass(currentDifference)">{{ currentDifference >= 0 ? '+' : '' }}{{ formatCurrency(currentDifference) }}</p>
               </div>
             </div>
 
             <label class="block">
-              <span class="mb-1 block text-xs font-medium text-text-secondary">Monto reportado</span>
+              <span class="mb-1 block text-xs font-medium text-text-secondary">{{ t('finanzas.conciliacion.reportedAmount') }}</span>
               <input
                 v-model="reportedAmount"
                 type="number"
@@ -187,25 +187,25 @@
             </label>
 
             <label class="block">
-              <span class="mb-1 block text-xs font-medium text-text-secondary">Motivo</span>
+              <span class="mb-1 block text-xs font-medium text-text-secondary">{{ t('finanzas.conciliacion.reason') }}</span>
               <select v-model="reason" class="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
                 <option v-for="option in reasonOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
 
             <label class="block">
-              <span class="mb-1 block text-xs font-medium text-text-secondary">Notas</span>
+              <span class="mb-1 block text-xs font-medium text-text-secondary">{{ t('finanzas.common.notes') }}</span>
               <textarea
                 v-model="notes"
                 rows="3"
                 class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Soporte, extracto, explicación o referencia interna."
+                :placeholder="t('finanzas.conciliacion.supportHint')"
               />
             </label>
 
             <label class="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
               <input v-model="createJournalEntry" type="checkbox" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
-              <span class="text-sm text-text-primary">Crear ajuste PUC como borrador revisable</span>
+              <span class="text-sm text-text-primary">{{ t('finanzas.conciliacion.createAdjust') }}</span>
             </label>
 
             <p v-if="formError" class="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ formError }}</p>
@@ -217,14 +217,14 @@
               :disabled="saving"
               class="h-11 flex-1 rounded-lg border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
             >
-              Volver
+              {{ t('finanzas.common.back') }}
             </button>
             <button
               @click="saveReconciliation"
               :disabled="saving"
               class="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {{ saving ? 'Guardando...' : 'Guardar conciliación' }}
+              {{ saving ? t('finanzas.common.saving') : t('finanzas.conciliacion.save') }}
             </button>
           </div>
         </div>
@@ -234,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -266,7 +266,7 @@ const route = useRoute()
 const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-const { formatCalendarDate } = useFormatters()
+const { formatCalendarDate, formatCurrency } = useFormatters()
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
 const cierreIdFilter = computed(() => route.query.cierreId as string | undefined)
@@ -307,7 +307,7 @@ const hasActiveFilters = computed(() =>
   !!statusFilter.value || !!groupFilter.value || !!dateRangeDates.value || !!cierreIdFilter.value,
 )
 
-const columns = [
+const columns = computed(() => [
   { key: 'period', title: t('finanzas.common.date'), sortable: false },
   { key: 'method', title: t('finanzas.common.method'), sortable: false },
   { key: 'groupSlug', title: t('finanzas.common.type'), sortable: false },
@@ -318,22 +318,22 @@ const columns = [
   { key: 'differenceAmount', title: t('finanzas.common.difference'), sortable: false },
   { key: 'reconciliationStatus', title: t('finanzas.common.status'), sortable: false },
   { key: 'actions', title: t('finanzas.common.actions'), sortable: false },
-]
+])
 
-const statusOptions = [
-  { value: 'pending', label: 'Pendiente' },
-  { value: 'matched', label: 'Sin diferencia' },
+const statusOptions = computed(() => [
+  { value: 'pending', label: t('finanzas.conciliacion.status.pending') },
+  { value: 'matched', label: t('finanzas.conciliacion.status.matched') },
   { value: 'needs_review', label: t('finanzas.conciliacion.withDiff') },
-  { value: 'resolved', label: 'Resuelto' },
-]
+  { value: 'resolved', label: t('finanzas.conciliacion.status.resolved') },
+])
 
-const groupHeaderOptions = [
-  { value: 'digital', label: 'Digital' },
-  { value: 'card', label: 'Tarjeta' },
-  { value: 'credit', label: 'Crédito' },
-  { value: 'customer_wallet', label: 'Billetera cliente' },
-  { value: 'table_session_advance', label: 'Anticipos mesa' },
-]
+const groupHeaderOptions = computed(() => [
+  { value: 'digital', label: t('finanzas.common.digital') },
+  { value: 'card', label: t('finanzas.common.card') },
+  { value: 'credit', label: t('finanzas.common.credit') },
+  { value: 'customer_wallet', label: t('finanzas.conciliacion.groups.customerWallet') },
+  { value: 'table_session_advance', label: t('finanzas.conciliacion.groups.tableAdvance') },
+])
 
 const statusHeaderFilter = computed({
   get: () => statusFilter.value,
@@ -349,33 +349,33 @@ const groupHeaderFilter = computed({
   },
 })
 
-const reasonOptions = [
-  { value: 'timing', label: 'Diferencia temporal' },
-  { value: 'commission', label: 'Comisión bancaria' },
-  { value: 'missing_sale', label: 'Venta no registrada' },
-  { value: 'duplicate', label: 'Pago duplicado' },
-  { value: 'client_balance', label: 'Saldo a favor cliente' },
-  { value: 'method_misclassified', label: 'Método mal clasificado' },
-  { value: 'real_surplus', label: 'Sobrante real' },
-  { value: 'real_shortage', label: 'Faltante real' },
-  { value: 'other', label: 'Otro' },
-]
+const reasonOptions = computed(() => [
+  { value: 'timing', label: t('finanzas.conciliacion.reasons.timing') },
+  { value: 'commission', label: t('finanzas.conciliacion.reasons.commission') },
+  { value: 'missing_sale', label: t('finanzas.conciliacion.reasons.missingSale') },
+  { value: 'duplicate', label: t('finanzas.conciliacion.reasons.duplicate') },
+  { value: 'client_balance', label: t('finanzas.conciliacion.reasons.clientBalance') },
+  { value: 'method_misclassified', label: t('finanzas.conciliacion.reasons.methodMisclassified') },
+  { value: 'real_surplus', label: t('finanzas.conciliacion.reasons.realSurplus') },
+  { value: 'real_shortage', label: t('finanzas.conciliacion.reasons.realShortage') },
+  { value: 'other', label: t('finanzas.conciliacion.reasons.other') },
+])
 
-const groupLabels: Record<string, string> = {
-  card: 'Tarjeta',
-  credit: 'Crédito',
-  customer_wallet: 'Billetera cliente',
-  digital: 'Digital',
-  table_session_advance: 'Anticipos mesa',
-}
+const groupLabelMap = computed<Record<string, string>>(() => ({
+  card: t('finanzas.common.card'),
+  credit: t('finanzas.common.credit'),
+  customer_wallet: t('finanzas.conciliacion.groups.customerWallet'),
+  digital: t('finanzas.common.digital'),
+  table_session_advance: t('finanzas.conciliacion.groups.tableAdvance'),
+}))
 
-const statusLabels: Record<string, string> = {
-  matched: 'Sin diferencia',
+const statusLabels = computed<Record<string, string>>(() => ({
+  matched: t('finanzas.conciliacion.status.matched'),
   needs_review: t('finanzas.conciliacion.withDiff'),
-  not_required: 'No requerida',
-  pending: 'Pendiente',
-  resolved: 'Resuelta',
-}
+  not_required: t('finanzas.conciliacion.status.notRequired'),
+  pending: t('finanzas.conciliacion.status.pending'),
+  resolved: t('finanzas.conciliacion.status.resolvedF'),
+}))
 
 const clearFilters = () => {
   statusFilter.value = 'pending'
@@ -384,15 +384,12 @@ const clearFilters = () => {
   if (cierreIdFilter.value) navigateTo('/finanzas/conciliacion')
 }
 
-const formatCurrency = (value?: number | null) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
-
 const formatPeriod = (row: ReconciliationRow) => {
   if (row.periodStart === row.periodEnd) return formatCalendarDate(row.periodStart)
   return `${formatCalendarDate(row.periodStart)} - ${formatCalendarDate(row.periodEnd)}`
 }
 
-const groupLabel = (slug: string) => groupLabels[slug] ?? slug
+const groupLabel = (slug: string) => groupLabelMap.value[slug] ?? slug
 
 const groupDotClass = (slug: string) => {
   if (slug === 'credit') return 'bg-state-warning-icon'
@@ -400,7 +397,7 @@ const groupDotClass = (slug: string) => {
   return 'bg-primary'
 }
 
-const statusLabel = (value: string) => statusLabels[value] ?? value
+const statusLabel = (value: string) => statusLabels.value[value] ?? value
 const statusClass = (value: string) => {
   if (value === 'matched' || value === 'resolved') return 'bg-state-success-bg text-state-success-text border border-state-success-border'
   if (value === 'needs_review') return 'bg-destructive/10 text-destructive border border-destructive/20'
@@ -476,7 +473,7 @@ const saveReconciliation = async () => {
     cache.invalidateQueries({ key: ['accounting', 'journal-entries'] })
     selectedRow.value = null
   } catch (err: any) {
-    formError.value = err?.data?.detail ?? err?.data?.message ?? err?.message ?? 'No se pudo guardar la conciliación.'
+    formError.value = err?.data?.detail ?? err?.data?.message ?? err?.message ?? t('finanzas.conciliacion.saveError')
   } finally {
     saving.value = false
   }

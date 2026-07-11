@@ -562,7 +562,34 @@
       "createAdjust": "Crear ajuste PUC como borrador revisable",
       "supportHint": "Soporte, extracto, explicación o referencia interna.",
       "viewEntry": "Ver asiento",
-      "viewClose": "Ver cierre"
+      "viewClose": "Ver cierre",
+      "unreported": "Sin reportar",
+      "reconcile": "Conciliar",
+      "reconcileMethod": "Conciliar {method}",
+      "save": "Guardar conciliación",
+      "saveError": "No se pudo guardar la conciliación.",
+      "status": {
+        "pending": "Pendiente",
+        "matched": "Sin diferencia",
+        "notRequired": "No requerida",
+        "resolved": "Resuelto",
+        "resolvedF": "Resuelta"
+      },
+      "groups": {
+        "customerWallet": "Billetera cliente",
+        "tableAdvance": "Anticipos mesa"
+      },
+      "reasons": {
+        "timing": "Diferencia temporal",
+        "commission": "Comisión bancaria",
+        "missingSale": "Venta no registrada",
+        "duplicate": "Pago duplicado",
+        "clientBalance": "Saldo a favor cliente",
+        "methodMisclassified": "Método mal clasificado",
+        "realSurplus": "Sobrante real",
+        "realShortage": "Faltante real",
+        "other": "Otro"
+      }
     },
     "cierreContable": {
       "title": "Cierre contable",
