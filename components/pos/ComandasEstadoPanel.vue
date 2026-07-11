@@ -1,5 +1,52 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
+
+const PANEL_FALLBACK = {
+  es: {
+    title: 'Estado de comandas',
+    readyTab: 'Listas',
+    preparingTab: 'En preparación',
+    soundLabel: 'Aviso sonoro',
+    ticketOne: 'comanda',
+    ticketMany: 'comandas',
+    selectAll: 'Seleccionar todas',
+    deselectAll: 'Deseleccionar todas',
+    markReady: 'Marcar como listas',
+    markDelivered: 'Marcar como entregadas',
+    closePanelAria: 'Cerrar panel',
+  },
+  en: {
+    title: 'Ticket status',
+    readyTab: 'Ready',
+    preparingTab: 'Preparing',
+    soundLabel: 'Sound alert',
+    ticketOne: 'ticket',
+    ticketMany: 'tickets',
+    selectAll: 'Select all',
+    deselectAll: 'Deselect all',
+    markReady: 'Mark as ready',
+    markDelivered: 'Mark as delivered',
+    closePanelAria: 'Close panel',
+  },
+} as const
+
+function uiLoc(): 'es' | 'en' {
+  return locale.value === 'en' ? 'en' : 'es'
+}
+
+function panelLabel<K extends keyof typeof PANEL_FALLBACK['en']>(key: K): string {
+  void locale.value
+  const full = `pos.comandasPanel.${key}`
+  try {
+    const v = String(t(full))
+    if (v && v !== full) {
+      // If EN UI but value matches ES fallback pack, force EN dict
+      if (uiLoc() === 'en' && v === PANEL_FALLBACK.es[key]) return PANEL_FALLBACK.en[key]
+      return v
+    }
+  } catch { /* ignore */ }
+  return PANEL_FALLBACK[uiLoc()][key]
+}
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
@@ -166,9 +213,9 @@ const chipClass = (firedAt: string): string => {
 }
 const ageLabel = (firedAt: string): string => {
   const m = ageMinutes(firedAt)
-  if (m < 1)   return 'recién'
+  if (m < 1) return uiLoc() === 'en' ? 'just now' : 'recién'
   if (m === 1) return '1 min'
-  if (m < 60)  return `${m} min`
+  if (m < 60) return `${m} min`
   const h = Math.floor(m / 60)
   const r = m % 60
   return r === 0 ? `${h} h` : `${h} h ${r} min`
@@ -181,7 +228,7 @@ const submitTarget = computed<'ready' | 'delivered'>(() =>
 const submitLabel = computed(() => {
   const n = selectedIds.value.size
   if (n === 0) {
-    return activeTab.value === 'preparing' ? t('pos.comandasPanel.markReady') : t('pos.comandasPanel.markDelivered')
+    return activeTab.value === 'preparing' ? panelLabel('markReady') : panelLabel('markDelivered')
   }
   if (activeTab.value === 'preparing') return `Marcar ${n} como ${n === 1 ? 'lista' : 'listas'}`
   return `Marcar ${n} como ${n === 1 ? 'entregada' : 'entregadas'}`
@@ -200,11 +247,12 @@ const submit = async () => {
     const ok = res.success_count ?? ids.length
     const failed = (res.failed ?? []).length
     if (failed === 0) {
-      toast.success(`${ok} ${ok === 1 ? 'comanda actualizada' : 'comandas actualizadas'}`, {
-        title: t('pos.comandasPanel.statusUpdated'),
-      })
+      toast.success(
+        `${ok} ${ok === 1 ? t('pos.comandasPanel.updatedOne') : t('pos.comandasPanel.updatedMany')}`,
+        { title: t('pos.comandasPanel.statusUpdated') },
+      )
     } else {
-      toast.success(`${ok} actualizadas · ${failed} fallaron`, { title: 'Resultado parcial' })
+      toast.success(t('pos.comandasPanel.partialBody', { ok, failed }), { title: t('pos.comandasPanel.partialResult') })
     }
     selectedIds.value = new Set()
     await fetchComandas()
@@ -235,7 +283,7 @@ const submit = async () => {
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="t('pos.comandasPanel.title')"
+        :aria-label="panelLabel('title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
@@ -253,16 +301,17 @@ const submit = async () => {
                 <ClipboardDocumentListIcon class="w-5 h-5" />
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('pos.comandasPanel.title') }}</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ panelLabel('title') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
-                  {{ tableDisplayName ? `${tableSingular} ${tableDisplayName}` : t('pos.comandasPanel.active') }}
-                  · {{ comandas.length }} {{ comandas.length === 1 ? 'comanda' : 'comandas' }}
+                  {{ tableDisplayName || panelLabel('title') }}
+                  · {{ comandas.length }}
+                  {{ comandas.length === 1 ? panelLabel('ticketOne') : panelLabel('ticketMany') }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              :aria-label="t('pos.comandasPanel.closePanelAria')"
+              :aria-label="panelLabel('closePanelAria')"
               class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
@@ -282,7 +331,7 @@ const submit = async () => {
                 : 'border-transparent text-text-secondary hover:text-text-primary'"
               @click="activeTab = 'ready'"
             >
-              <span>Listas</span>
+              <span>{{ panelLabel('readyTab') }}</span>
               <span
                 class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[11px] font-bold tabular-nums"
                 :class="activeTab === 'ready'
@@ -298,7 +347,7 @@ const submit = async () => {
                 : 'border-transparent text-text-secondary hover:text-text-primary'"
               @click="activeTab = 'preparing'"
             >
-              <span>En preparación</span>
+              <span>{{ panelLabel('preparingTab') }}</span>
               <span
                 class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[11px] font-bold tabular-nums"
                 :class="activeTab === 'preparing'
@@ -404,7 +453,7 @@ const submit = async () => {
               class="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
               @click="toggleAll"
             >
-              {{ allSelected ? t('pos.comandasPanel.deselectAll') : t('pos.comandasPanel.selectAll') }}
+              {{ allSelected ? panelLabel('deselectAll') : panelLabel('selectAll') }}
             </button>
             <button
               type="button"
@@ -418,7 +467,7 @@ const submit = async () => {
             >
               <BellAlertIcon v-if="audioEnabled" class="w-3.5 h-3.5" />
               <BellSlashIcon v-else class="w-3.5 h-3.5" />
-              Aviso sonoro
+              {{ panelLabel('soundLabel') }}
             </button>
           </div>
 

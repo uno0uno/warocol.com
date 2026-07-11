@@ -120,7 +120,16 @@
       "selectAll": "Seleccionar todas",
       "soundOffAria": "Desactivar aviso sonoro",
       "soundOnAria": "Activar aviso sonoro",
-      "markDelivered": "Marcar como entregadas"
+      "markDelivered": "Marcar como entregadas",
+      "readyTab": "Listas",
+      "preparingTab": "En preparación",
+      "soundLabel": "Aviso sonoro",
+      "ticketOne": "comanda",
+      "ticketMany": "comandas",
+      "updatedOne": "comanda actualizada",
+      "updatedMany": "comandas actualizadas",
+      "partialResult": "Resultado parcial",
+      "partialBody": "{ok} actualizadas · {failed} fallaron"
     },
     "advance": {
       "title": "Pagar anticipo de mesa",
