@@ -251,7 +251,10 @@
       "aging0_30": "0–30 días",
       "aging31_60": "31–60 días",
       "aging61_90": "61–90 días",
-      "aging90plus": "90+ días"
+      "aging90plus": "90+ días",
+      "customerCount": "{count} cliente | {count} clientes",
+      "orderCount": "{count} orden | {count} órdenes",
+      "overdueDaysCount": "{count} día mora | {count} días mora"
     },
     "gastos": {
       "title": "Gastos",

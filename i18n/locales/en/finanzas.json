@@ -251,7 +251,10 @@
       "aging0_30": "0–30 days",
       "aging31_60": "31–60 days",
       "aging61_90": "61–90 days",
-      "aging90plus": "90+ days"
+      "aging90plus": "90+ days",
+      "customerCount": "{count} customer | {count} customers",
+      "orderCount": "{count} order | {count} orders",
+      "overdueDaysCount": "{count} day overdue | {count} days overdue"
     },
     "gastos": {
       "title": "Expenses",

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { enUS, es as dateFnsEs } from 'date-fns/locale'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -16,6 +17,10 @@ const statusFilter = ref<'all' | 'overdue' | 'current'>('all')
 const agingFilter = ref<string | null>(null)
 
 const agingRanges: Record<string, { days_min?: number; days_max?: number }> = {
+  '0–30 days':  { days_min: 0,  days_max: 30 },
+  '31–60 days': { days_min: 31, days_max: 60 },
+  '61–90 days': { days_min: 61, days_max: 90 },
+  '90+ days':   { days_min: 91 },
   '0–30 días':  { days_min: 0,  days_max: 30 },
   '31–60 días': { days_min: 31, days_max: 60 },
   '61–90 días': { days_min: 61, days_max: 90 },
@@ -24,6 +29,10 @@ const agingRanges: Record<string, { days_min?: number; days_max?: number }> = {
 
 const agingLabel = (key: string) => {
   const map: Record<string, string> = {
+    '0–30 days': t('finanzas.cartera.aging0_30'),
+    '31–60 days': t('finanzas.cartera.aging31_60'),
+    '61–90 days': t('finanzas.cartera.aging61_90'),
+    '90+ days': t('finanzas.cartera.aging90plus'),
     '0–30 días': t('finanzas.cartera.aging0_30'),
     '31–60 días': t('finanzas.cartera.aging31_60'),
     '61–90 días': t('finanzas.cartera.aging61_90'),
@@ -52,10 +61,10 @@ const clearFilters = () => {
   agingFilter.value = null
 }
 
-const statusFilterOptions = [
+const statusFilterOptions = computed(() => [
   { label: t('finanzas.cartera.overdue'), value: 'overdue' },
   { label: t('finanzas.cartera.current'), value: 'current' },
-]
+])
 
 const setStatusFilter = (value: string | boolean) => {
   statusFilter.value = typeof value === 'string' && value ? value as 'overdue' | 'current' : 'all'
@@ -138,18 +147,17 @@ const agingColors = [
 ]
 
 // ── Table columns ─────────────────────────────────────────────────────────
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'name',              title: t('finanzas.cartera.customer'),     sortable: false },
   { key: 'total_outstanding', title: t('finanzas.cartera.totalDebt'), sortable: false },
   { key: 'order_count',       title: t('finanzas.cartera.orders'),     sortable: false },
   { key: 'oldest_order_days', title: t('finanzas.cartera.daysOverdue'),   sortable: false },
   { key: 'status',            title: t('finanzas.common.status'),      sortable: false },
   { key: 'actions',           title: t('finanzas.common.actions'),    sortable: false },
-]
+])
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value || 0)
+const { formatCurrency } = useFormatters()
 
 const isRefreshing = computed(() => isRefreshingCustomers.value)
 
@@ -159,8 +167,8 @@ const handleRefresh = async () => {
 }
 
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : dateFnsEs)
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 watch(lastUpdate, () => { if (setLastUpdateText) setLastUpdateText(lastUpdateText.value) })
 
@@ -210,15 +218,15 @@ onUnmounted(() => {
             <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="text-sm font-semibold text-text-primary">Antigüedad de cartera</h3>
+            <h3 class="text-sm font-semibold text-text-primary">{{ t('finanzas.cartera.agingTitle') }}</h3>
           </div>
           <button
             v-if="agingFilter"
             @click="agingFilter = null"
             class="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
-            aria-label="Limpiar filtro de antigüedad"
+            :aria-label="t('finanzas.cartera.clearAging')"
           >
-            <span class="font-medium">{{ agingFilter }}</span>
+            <span class="font-medium">{{ agingLabel(agingFilter) }}</span>
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -250,7 +258,7 @@ onUnmounted(() => {
               {{ formatCurrency(bucket.total_amount) }}
             </p>
             <p class="text-xs text-text-secondary mt-0.5">
-              {{ bucket.customer_count }} cliente{{ bucket.customer_count !== 1 ? 's' : '' }}
+              {{ t('finanzas.cartera.customerCount', bucket.customer_count, { count: bucket.customer_count }) }}
             </p>
           </button>
         </div>
@@ -267,9 +275,9 @@ onUnmounted(() => {
           <select
             v-model="statusFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por estado"
+            :aria-label="t('finanzas.cartera.filterStatus')"
           >
-            <option value="all">Estado</option>
+            <option value="all">{{ t('finanzas.cartera.all') }}</option>
             <option v-for="option in statusFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -282,7 +290,7 @@ onUnmounted(() => {
         row-size="sm"
         :columns="tableColumns"
         :data="customers"
-        empty-message="Sin deudas pendientes"
+        :empty-message="t('finanzas.cartera.emptyTitle')"
         :empty-sub-message="t('finanzas.cartera.emptySub')"
         variant="default"
       >
@@ -292,7 +300,7 @@ onUnmounted(() => {
             :title="t('finanzas.common.status')"
             filter-type="select"
             :options="statusFilterOptions"
-            all-label="Todos"
+            :all-label="t('finanzas.cartera.all')"
             @update:model-value="setStatusFilter"
           />
         </template>
@@ -312,8 +320,8 @@ onUnmounted(() => {
               <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
               <p class="text-xs text-text-secondary mt-0.5">
                 {{ item.phone || t('finanzas.cartera.noPhone') }}
-                · {{ item.order_count }} orden{{ item.order_count !== 1 ? 'es' : '' }}
-                · {{ item.oldest_order_days }} días mora
+                · {{ t('finanzas.cartera.orderCount', item.order_count, { count: item.order_count }) }}
+                · {{ t('finanzas.cartera.overdueDaysCount', item.oldest_order_days, { count: item.oldest_order_days }) }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -350,7 +358,7 @@ onUnmounted(() => {
 
         <template #cell-oldest_order_days="{ value }">
           <span class="text-sm" :class="value > 30 ? 'text-destructive font-medium' : 'text-text-secondary'">
-            {{ value }} días
+            {{ t('finanzas.cartera.overdueDaysCount', value, { count: value }) }}
           </span>
         </template>
 
