@@ -23,11 +23,11 @@ import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
   layout: 'dashboard',
-  title: t('finanzas.pagos.registerTitle'),
+  title: 'Registrar Pago',
   module: 'finanzas',
 })
 
-useHead({ title: t('finanzas.pagos.registerTitle') })
+useHead({ title: () => t('finanzas.pagos.registerTitle') })
 
 const route = useRoute()
 const loading = ref(true)

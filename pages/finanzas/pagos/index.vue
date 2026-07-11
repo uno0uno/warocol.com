@@ -217,14 +217,14 @@ import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard',
-  title: t('finanzas.pagos.title'),
+  title: 'Gestión de Pagos', // static — definePageMeta is not setup; use useHead for i18n
   module: 'finanzas',
 })
 
 useHead({
-  title: 'Gestión de Pagos - Warocol',
+  title: () => t('finanzas.head.pagos'),
   meta: [
-    { name: 'description', content: t('finanzas.pagos.subtitle') }
+    { name: 'description', content: () => t('finanzas.pagos.subtitle') }
   ]
 })
 
