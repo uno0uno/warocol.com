@@ -204,8 +204,6 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
 
 definePageMeta({ layout: 'dashboard', module: 'analitica' })
 
