@@ -214,7 +214,15 @@
       "restaurant": "Restaurant",
       "cashCountInstruction": "Enter the bills and coins in the drawer:",
       "countEachMethodHint": "Enter the counted amount for each method:",
-      "countedAmountForMethod": "Counted amount for {method}"
+      "countedAmountForMethod": "Counted amount for {method}",
+      "daySummary": "Day summary",
+      "salesList": "Sales list",
+      "dayExpenses": "Day expenses",
+      "closeLockNotice": "The Z close will be recorded and the period will be locked.",
+      "closing": "Closing...",
+      "confirmCashCount": "Confirm cash count?",
+      "next": "Next",
+      "loadPeriodSummaryError": "The period summary could not be loaded."
     },
     "cartera": {
       "totalReceivable": "Total receivable",

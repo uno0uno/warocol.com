@@ -214,7 +214,15 @@
       "restaurant": "Restaurante",
       "cashCountInstruction": "Ingresa los billetes y monedas en caja:",
       "countEachMethodHint": "Ingresa el monto contado para cada método:",
-      "countedAmountForMethod": "Monto contado para {method}"
+      "countedAmountForMethod": "Monto contado para {method}",
+      "daySummary": "Resumen del día",
+      "salesList": "Lista de ventas",
+      "dayExpenses": "Gastos del día",
+      "closeLockNotice": "El cierre Z quedará registrado y el período se bloqueará.",
+      "closing": "Cerrando...",
+      "confirmCashCount": "¿Confirmar arqueo?",
+      "next": "Siguiente",
+      "loadPeriodSummaryError": "No se pudo cargar el resumen del período."
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",
