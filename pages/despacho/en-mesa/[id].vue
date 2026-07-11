@@ -10,7 +10,9 @@ import { normalizeTimezone } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
-useHead({ title: 'Pedido en mesa — WARO' })
+const { t } = useI18n({ useScope: 'global' })
+
+useHead({ title: () => t('despacho.head.pedidoMesa') })
 
 const route = useRoute()
 const router = useRouter()
@@ -18,7 +20,7 @@ const toast = useToast()
 const cache = useQueryCache()
 const { markAsRead, notifications } = useNotifications()
 const requestId = computed(() => route.params.id as string)
-const { formatCurrency } = useFormatters()
+const { formatCurrency, numberLocaleTag } = useFormatters()
 const { timezone } = useTenantTimezone()
 const { businessProfile, currentTenant } = useTenantReactive()
 
@@ -65,7 +67,7 @@ const {
 
 const request = computed(() => requestResponse.value?.data ?? null)
 const requestTimezone = computed(() => normalizeTimezone(request.value?.tenant_timezone ?? timezone.value))
-const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat(numberLocaleTag.value, {
   day: '2-digit',
   month: '2-digit',
   year: '2-digit',
@@ -75,7 +77,7 @@ const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', 
   timeZone: requestTimezone.value,
 }))
 const formatRequestDateTime = (value: string | null | undefined) =>
-  value ? tenantDateTimeFormatter.value.format(new Date(value)) : 'No especificada'
+  value ? tenantDateTimeFormatter.value.format(new Date(value)) : t('despacho.common.notSpecified')
 const isPending = computed(() => request.value?.status === 'pending')
 const isLoading = computed(() => !requestResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestResponse.value != null)
@@ -132,9 +134,9 @@ async function acceptRequest() {
       await notifyTableSessionUpdated(tableId)
     }
 
-    toast.success(`Se agregó a ${acceptedTableName}`, { title: 'Pedido aceptado' })
+    toast.success(t('despacho.detail.acceptedToast', { table: acceptedTableName }), { title: t('despacho.detail.acceptedToastTitle') })
     if (res.data?.order_number) {
-      toast.success(`Comanda #${res.data.order_number} enviada a cocina`, { title: 'Comanda enviada' })
+      toast.success(t('despacho.detail.sentToKitchen', { number: res.data.order_number }), { title: t('despacho.detail.sentToKitchenTitle') })
     }
     await dismissTableQrNotification(requestId.value)
     invalidateAfterAction()
@@ -143,7 +145,7 @@ async function acceptRequest() {
     const detail = err?.data?.detail
     actionError.value = typeof detail === 'string'
       ? detail
-      : detail?.message ?? 'No se pudo aceptar el pedido'
+      : detail?.message ?? t('despacho.detail.acceptError')
   } finally {
     isWorking.value = false
   }
@@ -155,7 +157,7 @@ async function rejectRequest() {
   actionError.value = null
   try {
     await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, { method: 'PATCH' })
-    toast.success('Pedido rechazado', { title: 'Listo' })
+    toast.success(t('despacho.detail.rejectedToast'), { title: t('despacho.comandas.done') })
     await dismissTableQrNotification(requestId.value)
     invalidateAfterAction()
     await router.replace(pendingListRoute)
@@ -163,7 +165,7 @@ async function rejectRequest() {
     const detail = err?.data?.detail
     actionError.value = typeof detail === 'string'
       ? detail
-      : detail?.message ?? 'No se pudo rechazar el pedido'
+      : detail?.message ?? t('despacho.detail.rejectError')
   } finally {
     isWorking.value = false
   }
@@ -190,7 +192,7 @@ onUnmounted(() => {
 })
 
 function itemDisplayName(item: TableQrItem): string {
-  return item.product_name ?? 'Producto'
+  return item.product_name ?? t('despacho.common.productFallback')
 }
 
 const itemQuantity = (item: TableQrItem) => {
@@ -227,7 +229,7 @@ const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
   return [{
     id: req.id,
     comanda_number: `QR-${req.id.slice(0, 8)}`,
-    station_name: 'Pedido QR en mesa',
+    station_name: t('despacho.detail.tableQrStation'),
     table_display_name: req.table_name,
     fired_at: req.created_at,
     items: req.items.map(item => ({
@@ -261,34 +263,34 @@ async function printQrComanda() {
     </div>
 
     <div v-else-if="fetchError" class="text-center py-16 px-4">
-      <h2 class="text-lg font-semibold text-foreground">Pedido no disponible</h2>
+      <h2 class="text-lg font-semibold text-foreground">{{ t('despacho.detail.unavailableTitle') }}</h2>
       <p class="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-        El pedido ya fue aceptado, fue rechazado o no existe. Vuelve al listado para ver los pendientes.
+        {{ t('despacho.detail.unavailableBody') }}
       </p>
       <UiButton class="mt-6" @click="goBack">
-        Volver al listado
+        {{ t('despacho.detail.backToList') }}
       </UiButton>
     </div>
 
     <div v-else-if="request" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Mesa</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.table') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ request.table_name }}</p>
         </div>
 
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Fecha</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.date') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ formatRequestDateTime(request.created_at) }}</p>
         </div>
 
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Pago</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.payment') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ formatTableQrPayment(request) }}</p>
         </div>
 
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.total') }}</p>
           <p class="text-2xl font-bold text-primary">{{ formatCurrency(request.total_amount) }}</p>
         </div>
       </div>
@@ -298,33 +300,33 @@ async function printQrComanda() {
         class="bg-state-warning/10 border border-state-warning-border/40 rounded-xl p-4 sm:p-6"
       >
         <p class="text-sm font-medium text-text-primary">
-          Este pedido ya fue procesado. Vuelve al listado para ver los pendientes.
+          {{ t('despacho.detail.alreadyProcessed') }}
         </p>
         <UiButton class="mt-4" variant="secondary" @click="goBack">
-          Volver al listado
+          {{ t('despacho.detail.backToList') }}
         </UiButton>
       </div>
 
       <div v-else-if="isPending" class="bg-surface border border-border rounded-xl p-4 sm:p-6">
-        <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Acciones</p>
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">{{ t('despacho.detail.actions') }}</p>
         <div class="flex flex-col sm:flex-row gap-3">
           <UiButton size="lg" :disabled="isWorking" @click="acceptRequest">
-            {{ isWorking ? 'Procesando...' : 'Aceptar pedido' }}
+            {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.acceptOrder') }}
           </UiButton>
           <UiButton variant="destructive" size="lg" :disabled="isWorking" @click="rejectRequest">
-            {{ isWorking ? 'Procesando...' : 'Rechazar' }}
+            {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.reject') }}
           </UiButton>
           <UiButton
             variant="crocus-outline"
             size="lg"
             class="gap-2"
             :disabled="isWorking || !canPrintComanda"
-            aria-label="Imprimir comanda"
-            title="Imprimir comanda"
+            :aria-label="t('despacho.common.printComanda')"
+            :title="t('despacho.common.printComanda')"
             @click="printQrComanda"
           >
             <Printer class="h-4 w-4" aria-hidden="true" />
-            <span>Imprimir</span>
+            <span>{{ t('despacho.common.print') }}</span>
           </UiButton>
         </div>
         <p v-if="actionError" role="alert" class="mt-3 text-sm text-destructive">{{ actionError }}</p>
@@ -333,19 +335,19 @@ async function printQrComanda() {
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
         <div class="p-6 border-b border-border">
           <h2 class="text-lg font-semibold text-text-primary">
-            Items ({{ request.item_count }})
+            {{ t('despacho.detail.orderItemsTitle', { count: request.item_count }) }}
           </h2>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <caption class="sr-only">Items del pedido en mesa</caption>
+            <caption class="sr-only">{{ t('despacho.detail.tableOrderItemsCaption') }}</caption>
             <thead class="bg-surface-secondary">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.product') }}</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.quantityShort') }}</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.price') }}</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.subtotal') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -404,7 +406,7 @@ async function printQrComanda() {
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
                 <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
-                  Total del pedido:
+                  {{ t('despacho.common.orderTotal') }}
                 </td>
                 <td class="px-6 py-4 text-right">
                   <span class="text-xl font-bold text-primary">{{ formatCurrency(request.total_amount) }}</span>
@@ -419,7 +421,7 @@ async function printQrComanda() {
         v-if="request.customer_notes"
         class="bg-info/10 border border-info/20 rounded-xl p-4 sm:p-6"
       >
-        <p class="text-xs font-semibold text-info uppercase tracking-wider mb-2">Notas del cliente</p>
+        <p class="text-xs font-semibold text-info uppercase tracking-wider mb-2">{{ t('despacho.detail.customerNotes') }}</p>
         <p class="text-sm text-text-primary">{{ request.customer_notes }}</p>
       </div>
     </div>

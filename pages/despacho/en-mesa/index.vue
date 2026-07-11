@@ -7,11 +7,13 @@ import { normalizeTimezone } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
-useHead({ title: 'Pedidos en mesa (QR) — WARO' })
+const { t } = useI18n({ useScope: 'global' })
+
+useHead({ title: () => t('despacho.head.enMesa') })
 
 const route = useRoute()
 const router = useRouter()
-const { formatCurrency } = useFormatters()
+const { formatCurrency, numberLocaleTag } = useFormatters()
 const { currentTenant } = useTenantReactive()
 const { timezone } = useTenantTimezone()
 
@@ -85,7 +87,7 @@ const {
 const isLoading = computed(() => pendingStatus.value === 'loading' || (!pendingData.value && !fetchError.value))
 const isRefreshing = computed(() => pendingAsyncStatus.value === 'loading' && pendingData.value != null)
 const tenantTimezone = computed(() => normalizeTimezone(pendingData.value?.data?.tenant_timezone ?? timezone.value))
-const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat(numberLocaleTag.value, {
   day: '2-digit',
   month: '2-digit',
   year: '2-digit',
@@ -95,7 +97,7 @@ const tenantDateTimeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', 
   timeZone: tenantTimezone.value,
 }))
 const formatRequestDateTime = (value: string | null | undefined) =>
-  value ? tenantDateTimeFormatter.value.format(new Date(value)) : 'No especificada'
+  value ? tenantDateTimeFormatter.value.format(new Date(value)) : t('despacho.common.notSpecified')
 
 const tableOptions = computed(() =>
   (pendingData.value?.data?.tables ?? []).map(t => ({
@@ -143,19 +145,22 @@ const sortedRequests = computed(() => {
       return (new Date(String(av)).getTime() - new Date(String(bv)).getTime()) * dir
     }
     if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
-    return String(av).localeCompare(String(bv), 'es') * dir
+    return String(av).localeCompare(String(bv)) * dir
   })
 
   return list
 })
 
-const columns: Column[] = [
-  { key: 'table_name', title: 'Mesa', sortable: true },
-  { key: 'created_at', title: 'Fecha', sortable: true },
-  { key: 'item_count', title: 'Items', sortable: true },
-  { key: 'payment_method', title: 'Pago', sortable: true },
-  { key: 'total_amount', title: 'Total', sortable: true },
-]
+const columns = computed<Column[]>(() => [
+  { key: 'table_name', title: t('despacho.common.table'), sortable: true },
+  { key: 'created_at', title: t('despacho.common.date'), sortable: true },
+  { key: 'item_count', title: t('despacho.common.items'), sortable: true },
+  { key: 'payment_method', title: t('despacho.common.payment'), sortable: true },
+  { key: 'total_amount', title: t('despacho.common.total'), sortable: true },
+])
+
+const itemCountLabel = (count: number) =>
+  t(count === 1 ? 'despacho.enMesa.itemCountOne' : 'despacho.enMesa.itemCountMany', { count })
 
 function syncTableQuery() {
   const query = { ...route.query }
@@ -207,7 +212,7 @@ const viewRequest = (request: TableQrRequestRow) => {
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-placeholder="Buscar mesa..."
+        :search-placeholder="t('despacho.common.searchTable')"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
@@ -217,9 +222,9 @@ const viewRequest = (request: TableQrRequestRow) => {
             v-model="tableFilterId"
             :class="filterSelectClass"
             class="md:hidden"
-            aria-label="Filtrar por mesa"
+            :aria-label="t('despacho.enMesa.filterTable')"
           >
-            <option value="">Mesa</option>
+            <option value="">{{ t('despacho.common.table') }}</option>
             <option v-for="t in tableOptions" :key="t.id" :value="t.id">
               {{ t.name }}
             </option>
@@ -233,8 +238,8 @@ const viewRequest = (request: TableQrRequestRow) => {
           :data="sortedRequests"
           :sort-field="sortField"
           :sort-direction="sortDirection"
-          empty-message="Sin pedidos pendientes."
-          empty-sub-message="Los nuevos pedidos QR aparecerán aquí."
+          :empty-message="t('despacho.enMesa.emptyTitle')"
+          :empty-sub-message="t('despacho.enMesa.emptySub')"
           variant="default"
           @sort="handleSort"
           @row-click="viewRequest"
@@ -242,14 +247,14 @@ const viewRequest = (request: TableQrRequestRow) => {
           <template #header-table_name>
             <UiTableHeaderFilter
               v-model="tableFilterId"
-              title="Mesa"
+              :title="t('despacho.common.table')"
               column-key="table_name"
               sortable
               :sort-field="sortField"
               :sort-direction="sortDirection"
               filter-type="select"
               :options="tableHeaderOptions"
-              all-label="Todas"
+              :all-label="t('despacho.common.allFemale')"
               @sort="handleSort"
             />
           </template>
@@ -265,7 +270,7 @@ const viewRequest = (request: TableQrRequestRow) => {
                   {{ item.table_name }}
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.item_count }} item{{ item.item_count !== 1 ? 's' : '' }}
+                  {{ itemCountLabel(item.item_count) }}
                   · {{ formatRequestDateTime(item.created_at) }}
                   <span v-if="formatTableQrPayment(item) !== '—'"> · {{ formatTableQrPayment(item) }}</span>
                 </p>

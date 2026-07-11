@@ -5,7 +5,9 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
-useHead({ title: 'Domicilios — WARO' })
+const { t } = useI18n({ useScope: 'global' })
+
+useHead({ title: () => t('despacho.head.domicilios') })
 
 const { formatDateTime, formatCurrency } = useFormatters()
 const { currentTenant } = useTenantReactive()
@@ -21,14 +23,15 @@ const statusHeaderFilter = computed({
     statusFilter.value = typeof value === 'string' && value ? value : null
   },
 })
-const statusHeaderOptions = [
-  { value: 'pending', label: 'Pendiente' },
-  { value: 'confirmed', label: 'Confirmado' },
-  { value: 'preparing', label: 'En preparación' },
-  { value: 'delivered', label: 'Entregado' },
-  { value: 'completed', label: 'Completado' },
-  { value: 'cancelled', label: 'Cancelado' },
-]
+const statusLabel = (status: string) => t(`despacho.orderStatuses.${status}`)
+const statusHeaderOptions = computed(() => [
+  { value: 'pending', label: statusLabel('pending') },
+  { value: 'confirmed', label: statusLabel('confirmed') },
+  { value: 'preparing', label: statusLabel('preparing') },
+  { value: 'delivered', label: statusLabel('delivered') },
+  { value: 'completed', label: statusLabel('completed') },
+  { value: 'cancelled', label: statusLabel('cancelled') },
+])
 
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
@@ -104,20 +107,24 @@ onMounted(() => { setRefreshHandler(refetchOrders) })
 onUnmounted(() => { clearRefreshHandler(refetchOrders) })
 registerProgressiveLoading(isRefreshingOrders)
 
-const columns: Column[] = [
-  { key: 'order_number', title: '# Pedido', sortable: true },
-  { key: 'order_date', title: 'Fecha', sortable: true },
-  { key: 'scheduled_time', title: 'Programado', sortable: true },
-  { key: 'order_type', title: 'Tipo', sortable: true },
-  { key: 'status', title: 'Estado', sortable: false },
-  { key: 'total_amount', title: 'Total', sortable: true },
-  { key: 'verified_email', title: 'Cliente', sortable: true },
-]
+const columns = computed<Column[]>(() => [
+  { key: 'order_number', title: t('despacho.common.orderNumber'), sortable: true },
+  { key: 'order_date', title: t('despacho.common.date'), sortable: true },
+  { key: 'scheduled_time', title: t('despacho.common.scheduled'), sortable: true },
+  { key: 'order_type', title: t('despacho.common.type'), sortable: true },
+  { key: 'status', title: t('despacho.common.status'), sortable: false },
+  { key: 'total_amount', title: t('despacho.common.total'), sortable: true },
+  { key: 'verified_email', title: t('despacho.common.customer'), sortable: true },
+  { key: 'customer_phone', title: t('despacho.common.phone'), sortable: true },
+])
 
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  delivery: 'Domicilio',
-  pickup: 'Recogida',
-  'dine-in': 'En mesa',
+const orderTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    delivery: t('despacho.orderTypes.delivery'),
+    pickup: t('despacho.orderTypes.pickup'),
+    'dine-in': t('despacho.orderTypes.dineIn'),
+  }
+  return labels[type] ?? type
 }
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
@@ -149,7 +156,7 @@ const viewOrder = (order: any) => {
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar # pedido o cliente..."
+        :search-placeholder="t('despacho.common.searchOrderCustomer')"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -162,25 +169,25 @@ const viewOrder = (order: any) => {
             v-model="statusFilter"
             :class="filterSelectClass"
             class="md:hidden"
-            aria-label="Filtrar por estado"
+            :aria-label="t('despacho.domicilios.filterStatus')"
           >
-            <option :value="null">Estado</option>
-            <option value="pending">Pendiente</option>
-            <option value="confirmed">Confirmado</option>
-            <option value="preparing">En preparación</option>
-            <option value="delivered">Entregado</option>
-            <option value="completed">Completado</option>
-            <option value="cancelled">Cancelado</option>
+            <option :value="null">{{ t('despacho.common.status') }}</option>
+            <option value="pending">{{ statusLabel('pending') }}</option>
+            <option value="confirmed">{{ statusLabel('confirmed') }}</option>
+            <option value="preparing">{{ statusLabel('preparing') }}</option>
+            <option value="delivered">{{ statusLabel('delivered') }}</option>
+            <option value="completed">{{ statusLabel('completed') }}</option>
+            <option value="cancelled">{{ statusLabel('cancelled') }}</option>
           </select>
           <select
             v-model="orderTypeFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por tipo de pedido"
+            :aria-label="t('despacho.domicilios.filterType')"
           >
-            <option :value="null">Tipo</option>
-            <option value="delivery">Domicilio</option>
-            <option value="pickup">Recogida</option>
-            <option value="dine-in">En mesa</option>
+            <option :value="null">{{ t('despacho.common.type') }}</option>
+            <option value="delivery">{{ t('despacho.orderTypes.delivery') }}</option>
+            <option value="pickup">{{ t('despacho.orderTypes.pickup') }}</option>
+            <option value="dine-in">{{ t('despacho.orderTypes.dineIn') }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -191,8 +198,8 @@ const viewOrder = (order: any) => {
           :data="displayOrders"
           :sort-field="sortField"
           :sort-direction="sortDirection"
-          empty-message="Aún no hay pedidos online."
-          empty-sub-message="Los domicilios y recogidas aparecerán aquí."
+          :empty-message="t('despacho.domicilios.emptyTitle')"
+          :empty-sub-message="t('despacho.domicilios.emptySub')"
           variant="default"
           @sort="handleSort"
           @row-click="viewOrder"
@@ -200,10 +207,10 @@ const viewOrder = (order: any) => {
           <template #header-status>
             <UiTableHeaderFilter
               v-model="statusHeaderFilter"
-              title="Estado"
+              :title="t('despacho.common.status')"
               filter-type="select"
               :options="statusHeaderOptions"
-              all-label="Todos"
+              :all-label="t('despacho.common.all')"
               align="center"
             />
           </template>
@@ -220,7 +227,7 @@ const viewOrder = (order: any) => {
                   <span class="text-text-secondary font-normal"> · {{ item.verified_email ?? '—' }}</span>
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.customer_phone || 'Sin teléfono' }} · {{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }} · {{ formatDateTime(item.order_date) }}
+                  {{ item.customer_phone || t('despacho.common.noPhone') }} · {{ orderTypeLabel(item.order_type) }} · {{ formatDateTime(item.order_date) }}
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -240,11 +247,11 @@ const viewOrder = (order: any) => {
           </template>
           <template #cell-scheduled_time="{ value }">
             <span class="text-sm text-text-secondary">
-              {{ value ? formatDateTime(value) : 'Inmediato' }}
+              {{ value ? formatDateTime(value) : t('despacho.common.immediate') }}
             </span>
           </template>
           <template #cell-order_type="{ value }">
-            <UiStatusBadge :value="ORDER_TYPE_LABELS[value] ?? value" format="text" variant="info" size="sm" />
+            <UiStatusBadge :value="orderTypeLabel(value)" format="text" variant="info" size="sm" />
           </template>
           <template #cell-status="{ value, row }">
             <UiStatusBadge :variant="getStatusVariant(value)" size="sm" format="text">
@@ -257,8 +264,10 @@ const viewOrder = (order: any) => {
           <template #cell-verified_email="{ value, row }">
             <div class="min-w-0">
               <p class="text-sm text-text-secondary truncate">{{ value ?? '—' }}</p>
-              <p class="text-xs text-text-tertiary truncate">{{ row.customer_phone || 'Sin teléfono' }}</p>
             </div>
+          </template>
+          <template #cell-customer_phone="{ value }">
+            <span class="text-sm text-text-secondary">{{ value || t('despacho.common.noPhone') }}</span>
           </template>
         </UiResponsiveDataView>
     </div>

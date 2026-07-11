@@ -14,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const close = () => emit('update:modelValue', false)
+const { t } = useI18n({ useScope: 'global' })
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending:   ['preparing', 'cancelled'],
@@ -32,11 +33,14 @@ const ALLOWED_TRANSITIONS_POS: Record<string, string[]> = {
   cancelled: [],
 }
 
-const TRANSITION_LABELS: Record<string, string> = {
-  preparing: 'Marcar en preparación',
-  ready:     'Listo',
-  delivered: 'Marcar entregada',
-  cancelled: 'Cancelar comanda',
+const transitionLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    preparing: t('despacho.transitions.markPreparing'),
+    ready:     t('despacho.transitions.ready'),
+    delivered: t('despacho.transitions.markDelivered'),
+    cancelled: t('despacho.transitions.cancelled'),
+  }
+  return labels[status] ?? status
 }
 
 const availableTransitions = computed((): string[] => {
@@ -59,7 +63,7 @@ const updateStatus = async (status: string) => {
     emit('status-updated')
     close()
   } catch (err: any) {
-    useToast().error(err.data?.detail || 'Error al actualizar', { title: 'Error' })
+    useToast().error(err.data?.detail || t('despacho.comandas.updateError'), { title: t('despacho.comandas.updateError') })
   } finally {
     isUpdating.value = false
   }
@@ -69,17 +73,20 @@ const { singular: tableSingular } = useTableLabel()
 
 const SOURCE_LABELS = computed<Record<string, string>>(() => ({
   table:    tableSingular.value,
-  pos:      'Mostrador',
-  delivery: 'Domicilio',
-  pickup:   'Recogida',
+  pos:      t('despacho.orderTypes.counter'),
+  delivery: t('despacho.orderTypes.delivery'),
+  pickup:   t('despacho.orderTypes.pickup'),
 }))
 
-const COMANDA_STATUS_LABELS: Record<string, string> = {
-  pending:   'Pendiente',
-  preparing: 'En preparación',
-  ready:     'Lista',
-  delivered: 'Entregada',
-  cancelled: 'Cancelada',
+const comandaStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    pending:   t('despacho.orderStatuses.pending'),
+    preparing: t('despacho.orderStatuses.preparing'),
+    ready:     t('despacho.transitions.ready'),
+    delivered: t('despacho.transitions.delivered'),
+    cancelled: t('despacho.orderStatuses.cancelled'),
+  }
+  return labels[status] ?? status
 }
 
 const getComandaStatusVariant = (status: string) => {
@@ -126,6 +133,8 @@ const formatElapsed = (seconds: number | null): string => {
 }
 
 const activeItems = computed(() => props.comanda?.items ?? [])
+const itemCountLabel = (count: number) =>
+  t(count === 1 ? 'despacho.comandas.itemCountOne' : 'despacho.comandas.itemCountMany', { count })
 </script>
 
 <template>
@@ -153,7 +162,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
         v-if="modelValue && comanda"
         role="dialog"
         aria-modal="true"
-        :aria-label="`Detalle comanda #${comanda.comanda_number}-${String(comanda.comanda_index).padStart(2, '0')}`"
+        :aria-label="`${t('despacho.common.viewDetail')} #${comanda.comanda_number}-${String(comanda.comanda_index).padStart(2, '0')}`"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -172,7 +181,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Comanda #{{ comanda.comanda_number }}-{{ String(comanda.comanda_index).padStart(2, '0') }}
+                  {{ t('despacho.comandas.comanda') }} {{ comanda.comanda_number }}-{{ String(comanda.comanda_index).padStart(2, '0') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   {{ SOURCE_LABELS[comanda.source_type] ?? comanda.source_type }}
@@ -182,7 +191,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('common.close')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
@@ -193,7 +202,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
           <!-- Status + time row -->
           <div class="flex items-center gap-2 mt-3">
             <UiStatusBadge :variant="getComandaStatusVariant(comanda.status)" size="sm" format="text">
-              {{ COMANDA_STATUS_LABELS[comanda.status] ?? comanda.status }}
+              {{ comandaStatusLabel(comanda.status) }}
             </UiStatusBadge>
             <span
               class="text-xs font-bold tabular-nums"
@@ -202,7 +211,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
               {{ formatElapsed(effectiveElapsed) }}
             </span>
             <span class="text-xs text-text-secondary ml-auto">
-              {{ activeItems.filter(i => i.status !== 'cancelled').length }} item{{ activeItems.filter(i => i.status !== 'cancelled').length !== 1 ? 's' : '' }}
+              {{ itemCountLabel(activeItems.filter(i => i.status !== 'cancelled').length) }}
             </span>
           </div>
         </div>
@@ -210,7 +219,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
         <!-- Items list -->
         <div class="flex-1 overflow-y-auto">
           <div v-if="!activeItems.length" class="flex items-center justify-center h-32 text-sm text-text-secondary">
-            Sin items activos
+            {{ t('despacho.comandas.emptyTitle') }}
           </div>
 
           <div v-else class="grid gap-3 p-4">
@@ -239,7 +248,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
                   {{ item.kitchen_name }}
                 </p>
                 <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-tight rounded bg-destructive/10 text-destructive">
-                  Anulado
+                  {{ t('despacho.comandas.voidedBadge') }}
                 </span>
                 <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-5 h-5 rounded-full bg-success/15 text-success flex items-center justify-center mt-1">
                   <svg viewBox="0 0 10 8" fill="none" class="w-2.5 h-2"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -281,7 +290,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             @click="updateStatus(status)"
           >
             <UiLoadingDots v-if="isUpdating && status !== 'cancelled'" size="9px" color="currentColor" />
-            <span v-else>{{ TRANSITION_LABELS[status] ?? status }}</span>
+            <span v-else>{{ transitionLabel(status) }}</span>
           </button>
         </div>
       </div>

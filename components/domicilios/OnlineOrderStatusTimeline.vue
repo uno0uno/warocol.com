@@ -16,6 +16,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useI18n({ useScope: 'global' })
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 const { formatDateTime } = useFormatters()
 
@@ -49,25 +50,25 @@ function getStatusIcon(status: string): string {
 
 <template>
   <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
-    <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Historial de estados</p>
+    <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">{{ t('despacho.timeline.title') }}</p>
 
     <!-- Loading: thin animated bar per issue spec -->
-    <div v-if="isLoading" aria-live="polite" aria-label="Cargando historial">
+    <div v-if="isLoading" aria-live="polite" :aria-label="t('despacho.timeline.loading')">
       <div class="animate-pulse h-1 bg-border rounded w-full" />
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" aria-live="polite" role="alert">
-      <p class="text-sm text-destructive">Error al cargar el historial.</p>
+      <p class="text-sm text-destructive">{{ t('despacho.timeline.loadError') }}</p>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="history.length === 0" class="text-center py-6">
-      <p class="text-sm text-text-secondary">Sin historial registrado</p>
+      <p class="text-sm text-text-secondary">{{ t('despacho.timeline.empty') }}</p>
     </div>
 
     <!-- Timeline -->
-    <ol v-else aria-label="Historial de estados del pedido" class="space-y-6">
+    <ol v-else :aria-label="t('despacho.timeline.aria')" class="space-y-6">
       <li v-for="(entry, index) in history" :key="entry.id" class="relative">
         <!-- Connector line (hidden on last item) -->
         <div
@@ -98,12 +99,12 @@ function getStatusIcon(status: string): string {
             <div class="bg-background border border-border rounded-lg p-4">
               <!-- Status title -->
               <h4 class="font-semibold text-text-primary">
-                {{ entry.old_status === null ? 'Pedido creado' : getStatusText(entry.new_status, props.orderType) }}
+                {{ entry.old_status === null ? t('despacho.timeline.created') : getStatusText(entry.new_status, props.orderType) }}
               </h4>
 
               <!-- Previous status (skip on creation event) -->
               <p v-if="entry.old_status !== null" class="text-xs text-text-secondary mt-0.5">
-                Desde: {{ getStatusText(entry.old_status, props.orderType) }}
+                {{ t('despacho.timeline.from', { status: getStatusText(entry.old_status, props.orderType) }) }}
               </p>
 
               <!-- Date/time -->

@@ -5,7 +5,8 @@ import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { printComandaTickets } from '~/composables/useComandaPrint'
 
 definePageMeta({ layout: 'dashboard', module: 'despacho' })
-useHead({ title: 'Detalle Pedido — WARO' })
+const { t } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('despacho.head.detallePedido') })
 
 const route = useRoute()
 const router = useRouter()
@@ -95,10 +96,10 @@ const confirmDelivered = async () => {
     } else {
       paymentSubmitError.value = typeof statusUpdateError.value === 'string'
         ? statusUpdateError.value
-        : (statusUpdateError.value as any)?.message ?? 'Error al guardar el pago'
+        : (statusUpdateError.value as any)?.message ?? t('despacho.detail.savePaymentError')
     }
   } catch (err: any) {
-    paymentSubmitError.value = err?.data?.detail?.message ?? err?.message ?? 'Error al guardar el pago'
+    paymentSubmitError.value = err?.data?.detail?.message ?? err?.message ?? t('despacho.detail.savePaymentError')
   }
 }
 
@@ -114,7 +115,7 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
     await refetchOrder()
     await refetchHistory()
   } catch (err: any) {
-    statusUpdateError.value = err?.data?.detail ?? err?.message ?? 'Error al actualizar el estado'
+    statusUpdateError.value = err?.data?.detail ?? err?.message ?? t('despacho.detail.updateStatusError')
   } finally {
     isStatusUpdating.value = false
   }
@@ -122,10 +123,13 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
 
 const confirmOrder = () => updateStatus('confirmed', { auto_complete: true })
 
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  delivery: 'Domicilio',
-  pickup: 'Recogida',
-  'dine-in': 'En mesa',
+const orderTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    delivery: t('despacho.orderTypes.delivery'),
+    pickup: t('despacho.orderTypes.pickup'),
+    'dine-in': t('despacho.orderTypes.dineIn'),
+  }
+  return labels[type] ?? type
 }
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
@@ -151,9 +155,9 @@ const businessName = computed(() =>
 
 const printLocationLabel = computed(() => {
   if (!order.value) return null
-  if (order.value.order_type === 'delivery') return 'Domicilio'
-  if (order.value.order_type === 'pickup') return 'Recogida'
-  return ORDER_TYPE_LABELS[order.value.order_type] ?? order.value.order_type
+  if (order.value.order_type === 'delivery') return t('despacho.orderTypes.delivery')
+  if (order.value.order_type === 'pickup') return t('despacho.orderTypes.pickup')
+  return orderTypeLabel(order.value.order_type)
 })
 
 const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
@@ -162,11 +166,11 @@ const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
   return [{
     id: currentOrder.id,
     comanda_number: currentOrder.order_number ?? `ONLINE-${orderId.value.slice(0, 8)}`,
-    station_name: printLocationLabel.value || 'Domicilio',
+    station_name: printLocationLabel.value || t('despacho.orderTypes.delivery'),
     table_display_name: printLocationLabel.value,
     fired_at: currentOrder.scheduled_time ?? currentOrder.order_date,
     items: (currentOrder.items ?? []).map((item: any) => ({
-      kitchen_name: item.product_name ?? item.name ?? 'Producto',
+      kitchen_name: item.product_name ?? item.name ?? t('despacho.common.productFallback'),
       quantity: Number(item.quantity ?? 1),
       modifiers_snapshot: (item.modifiers ?? []).map((mod: any) => ({
         name: mod.name,
@@ -227,27 +231,27 @@ onUnmounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Cliente -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Cliente</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.customer') }}</p>
           <p class="text-lg font-bold text-text-primary truncate">{{ order.verified_email ?? '—' }}</p>
-          <p class="text-sm text-text-secondary mt-1 truncate">{{ order.customer_phone || 'Sin teléfono' }}</p>
+          <p class="text-sm text-text-secondary mt-1 truncate">{{ order.customer_phone || t('despacho.common.noPhone') }}</p>
         </div>
 
         <!-- Card 2: Pedido -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Pedido</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.detail.order') }}</p>
           <p class="text-lg font-bold text-text-primary">#{{ order.order_number }}</p>
           <p class="text-sm text-text-secondary mt-1">{{ formatDate(order.order_date) }}</p>
           <UiStatusBadge v-if="order.scheduled_time" variant="warning" size="sm" format="text" class="mt-1 border-0">
-            Programado · {{ formatDateTime(order.scheduled_time) }}
+            {{ t('despacho.detail.scheduledAt', { date: formatDateTime(order.scheduled_time) }) }}
           </UiStatusBadge>
           <UiStatusBadge v-else variant="success" size="sm" format="text" class="mt-1 border-0">
-            Entrega inmediata
+            {{ t('despacho.detail.immediateDelivery') }}
           </UiStatusBadge>
         </div>
 
         <!-- Card 3: Estado -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Estado</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.status') }}</p>
           <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
             {{ getStatusText(order.status, order.order_type) }}
           </UiStatusBadge>
@@ -255,63 +259,63 @@ onUnmounted(() => {
 
         <!-- Card 4: Total (primary accent) -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.total') }}</p>
           <p class="text-2xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
         </div>
       </div>
 
       <!-- ── Section 1.5: Status Actions ── -->
       <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
-        <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Acciones del pedido</p>
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">{{ t('despacho.detail.orderActions') }}</p>
 
         <!-- Terminal states -->
         <div v-if="order.status === 'completed'" class="flex flex-col sm:flex-row sm:items-center gap-3">
           <span class="text-sm text-text-secondary">
-            {{ order.order_type === 'delivery' ? 'Pedido aceptado.' : 'Pedido completado.' }}
-            No hay más acciones disponibles.
+            {{ order.order_type === 'delivery' ? t('despacho.detail.orderAccepted') : t('despacho.detail.orderCompleted') }}
+            {{ t('despacho.detail.noMoreActions') }}
           </span>
           <UiButton
             variant="crocus-outline"
             size="lg"
             class="gap-2 sm:ml-auto"
             :disabled="!canPrintComanda"
-            aria-label="Imprimir comanda"
-            title="Imprimir comanda"
+            :aria-label="t('despacho.common.printComanda')"
+            :title="t('despacho.common.printComanda')"
             @click="printOrderComanda"
           >
             <Printer class="h-4 w-4" aria-hidden="true" />
-            <span>Imprimir</span>
+            <span>{{ t('despacho.common.print') }}</span>
           </UiButton>
         </div>
         <div v-else-if="order.status === 'cancelled'" class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <span class="text-sm text-text-secondary">Pedido cancelado. No hay más acciones disponibles.</span>
+          <span class="text-sm text-text-secondary">{{ t('despacho.detail.orderCancelled') }} {{ t('despacho.detail.noMoreActions') }}</span>
           <UiButton
             variant="crocus-outline"
             size="lg"
             class="gap-2 sm:ml-auto"
             :disabled="!canPrintComanda"
-            aria-label="Imprimir comanda"
-            title="Imprimir comanda"
+            :aria-label="t('despacho.common.printComanda')"
+            :title="t('despacho.common.printComanda')"
             @click="printOrderComanda"
           >
             <Printer class="h-4 w-4" aria-hidden="true" />
-            <span>Imprimir</span>
+            <span>{{ t('despacho.common.print') }}</span>
           </UiButton>
         </div>
 
         <!-- Active states -->
         <div v-else class="flex flex-col sm:flex-row gap-3">
           <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="confirmOrder()">
-            {{ isStatusUpdating ? 'Confirmando...' : 'Confirmar pedido' }}
+            {{ isStatusUpdating ? t('despacho.detail.confirming') : t('despacho.detail.confirmOrder') }}
           </UiButton>
           <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
-            {{ isStatusUpdating ? 'Actualizando...' : 'Marcar en preparación' }}
+            {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markPreparing') }}
           </UiButton>
           <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="openDeliveredCapture">
-            {{ isStatusUpdating ? 'Actualizando...' : 'Marcar como entregado' }}
+            {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markDelivered') }}
           </UiButton>
           <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
-            {{ isStatusUpdating ? 'Completando...' : 'Completar pedido' }}
+            {{ isStatusUpdating ? t('despacho.detail.completing') : t('despacho.detail.completeOrder') }}
           </UiButton>
 
           <UiButton
@@ -321,19 +325,19 @@ onUnmounted(() => {
             :disabled="isStatusUpdating"
             @click="updateStatus('cancelled')"
           >
-            {{ isStatusUpdating ? 'Cancelando...' : 'Cancelar pedido' }}
+            {{ isStatusUpdating ? t('despacho.detail.cancelling') : t('despacho.detail.cancelOrder') }}
           </UiButton>
           <UiButton
             variant="crocus-outline"
             size="lg"
             class="gap-2"
             :disabled="isStatusUpdating || !canPrintComanda"
-            aria-label="Imprimir comanda"
-            title="Imprimir comanda"
+            :aria-label="t('despacho.common.printComanda')"
+            :title="t('despacho.common.printComanda')"
             @click="printOrderComanda"
           >
             <Printer class="h-4 w-4" aria-hidden="true" />
-            <span>Imprimir</span>
+            <span>{{ t('despacho.common.print') }}</span>
           </UiButton>
         </div>
 
@@ -343,18 +347,18 @@ onUnmounted(() => {
       <!-- ── Section 2: Items ── -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
         <div class="p-6 border-b border-border">
-          <h2 class="text-lg font-semibold text-text-primary">Items de la Orden ({{ order.items.length }})</h2>
+          <h2 class="text-lg font-semibold text-text-primary">{{ t('despacho.detail.orderItemsTitle', { count: order.items.length }) }}</h2>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <caption class="sr-only">Items de la orden</caption>
+            <caption class="sr-only">{{ t('despacho.detail.orderItemsCaption') }}</caption>
             <thead class="bg-surface-secondary">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.product') }}</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.quantityShort') }}</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.price') }}</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.subtotal') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -412,7 +416,7 @@ onUnmounted(() => {
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
                 <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
-                  Total del pedido:
+                  {{ t('despacho.common.orderTotal') }}
                 </td>
                 <td class="px-6 py-4 text-right">
                   <span class="text-xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
@@ -434,7 +438,7 @@ onUnmounted(() => {
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Dirección de entrega</span>
+            <span>{{ t('despacho.detail.deliveryAddress') }}</span>
           </h3>
 
           <div v-if="order.delivery_address" class="space-y-3">
@@ -444,7 +448,7 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <div>
-                <p class="text-xs text-text-secondary mb-0.5">Dirección</p>
+                <p class="text-xs text-text-secondary mb-0.5">{{ t('despacho.detail.address') }}</p>
                 <p class="text-sm font-medium text-text-primary">
                   {{ order.delivery_address.address_line1 }}<span v-if="order.delivery_address.address_line2">, {{ order.delivery_address.address_line2 }}</span>
                 </p>
@@ -475,7 +479,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">Instrucciones de entrega</p>
+              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">{{ t('despacho.detail.deliveryInstructions') }}</p>
               <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
             </div>
           </div>
@@ -488,7 +492,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <span>Recogida en tienda</span>
+            <span>{{ t('despacho.detail.pickupInStore') }}</span>
           </h3>
 
           <!-- Notes -->
@@ -497,7 +501,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">Notas</p>
+              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">{{ t('despacho.detail.notes') }}</p>
               <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
             </div>
           </div>
@@ -510,13 +514,13 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            <span>En mesa</span>
+            <span>{{ t('despacho.orderTypes.dineIn') }}</span>
           </h3>
           <div class="flex items-center gap-3">
             <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span class="text-sm text-text-secondary">Pedido servido en el local</span>
+            <span class="text-sm text-text-secondary">{{ t('despacho.detail.servedInStore') }}</span>
           </div>
         </template>
 
@@ -526,13 +530,13 @@ onUnmounted(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <p class="text-xs text-text-secondary mb-0.5">Hora programada</p>
+            <p class="text-xs text-text-secondary mb-0.5">{{ t('despacho.detail.scheduledTime') }}</p>
             <p v-if="order.scheduled_time" class="text-sm font-medium text-text-primary">
               {{ formatDateTime(order.scheduled_time) }}
             </p>
             <div v-else class="flex items-center gap-2 mt-0.5">
-              <span class="text-sm text-text-secondary">Sin hora programada</span>
-              <UiStatusBadge variant="success" size="sm" format="text">Inmediato</UiStatusBadge>
+              <span class="text-sm text-text-secondary">{{ t('despacho.detail.noScheduledTime') }}</span>
+              <UiStatusBadge variant="success" size="sm" format="text">{{ t('despacho.common.immediate') }}</UiStatusBadge>
             </div>
           </div>
         </div>
@@ -584,15 +588,15 @@ onUnmounted(() => {
               <!-- Header -->
               <div class="flex-shrink-0 px-6 py-4 border-b border-border flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                  <h3 id="payment-modal-title" class="text-xl font-bold text-text-primary">¿Cómo pagó el cliente?</h3>
+                  <h3 id="payment-modal-title" class="text-xl font-bold text-text-primary">{{ t('despacho.detail.howDidCustomerPay') }}</h3>
                   <p class="text-sm text-text-secondary mt-1">
-                    Total: <span class="font-semibold text-text-primary">{{ formatCurrency(order?.total_amount ?? 0) }}</span>
+                    {{ t('despacho.common.total') }}: <span class="font-semibold text-text-primary">{{ formatCurrency(order?.total_amount ?? 0) }}</span>
                   </p>
                 </div>
                 <button
                   type="button"
                   :disabled="isStatusUpdating"
-                  aria-label="Cerrar"
+                  :aria-label="t('common.close')"
                   class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
                   @click="closePaymentModal"
                 >
@@ -623,7 +627,7 @@ onUnmounted(() => {
                   class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   @click="closePaymentModal"
                 >
-                  Cancelar
+                  {{ t('common.cancel') }}
                 </button>
                 <button
                   type="button"
@@ -632,7 +636,7 @@ onUnmounted(() => {
                   @click="confirmDelivered"
                 >
                   <UiLoadingDots v-if="isStatusUpdating" size="8px" color="currentColor" />
-                  <span>{{ isStatusUpdating ? 'Guardando...' : 'Marcar como entregado' }}</span>
+                  <span>{{ isStatusUpdating ? t('despacho.detail.saving') : t('despacho.detail.markDelivered') }}</span>
                 </button>
               </div>
             </div>
