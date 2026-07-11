@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-between">
     <div class="text-sm text-muted-foreground">
-      Mostrando {{ startItem }} a {{ endItem }} de {{ totalItems }} resultados
+      {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total: totalItems }) }}
     </div>
     <div class="flex items-center space-x-2">
       <Button 
@@ -21,7 +21,7 @@
         <Icon name="heroicons:chevron-left" class="h-4 w-4" />
       </Button>
       <span class="text-sm text-foreground px-2 font-medium">
-        Página {{ currentPage }} de {{ totalPages }}
+        {{ t('common.pagination.pageOf', { page: currentPage, total: totalPages }) }}
       </span>
       <Button 
         variant="outline" 
@@ -45,6 +45,8 @@
 
 <script setup lang="ts">
 import { Button } from '~/components/ui'
+
+const { t } = useI18n({ useScope: 'global' })
 
 defineProps({
   currentPage: {

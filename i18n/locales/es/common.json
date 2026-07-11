@@ -30,6 +30,10 @@
       "last15": "Últimos 15 días",
       "lastMonth": "Último mes",
       "last90": "Últimos 90 días"
+    },
+    "pagination": {
+      "showingRange": "Mostrando {start} a {end} de {total} resultados",
+      "pageOf": "Página {page} de {total}"
     }
   }
 }

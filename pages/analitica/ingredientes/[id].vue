@@ -34,7 +34,7 @@
 
       <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <MetricCard
-          title="Consumo"
+          :title="t('analitica.ingredientes.consumption')"
           :value="formatQuantity(metrics.consumed_quantity)"
           format="text"
           variant="primary"
@@ -43,7 +43,7 @@
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
-          title="Costo estimado"
+          :title="t('analitica.ingredientes.estCost')"
           :value="formatCurrency(metrics.estimated_consumed_cost)"
           format="text"
           variant="primary"
@@ -52,16 +52,16 @@
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
-          title="Costo promedio"
+          :title="t('analitica.ingredientes.avgCostFull')"
           :value="formatUnitCost(metrics.weighted_avg_cost_per_unit)"
           format="text"
           variant="primary"
           size="sm"
-          subtitle="Compra ponderada"
+          :subtitle="t('analitica.ingredientes.weightedPurchase')"
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
-          title="Último costo"
+          :title="t('analitica.ingredientes.lastCost')"
           :value="formatUnitCost(metrics.latest_cost_per_unit)"
           format="text"
           variant="primary"
@@ -70,16 +70,16 @@
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
-          title="Variación"
+          :title="t('analitica.ingredientes.variation')"
           :value="formatCostVariation(metrics.cost_variation_pct)"
           format="text"
           variant="primary"
           size="sm"
-          subtitle="Primera vs última compra"
+          :subtitle="t('analitica.ingredientes.firstVsLastPurchase')"
           class="min-w-0 overflow-hidden"
         />
         <MetricCard
-          title="Movimientos"
+          :title="t('analitica.ingredientes.movements')"
           :value="metrics.movement_count"
           format="number"
           variant="primary"
@@ -92,7 +92,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar historial..."
+        :search-placeholder="t('analitica.ingredientes.searchHistory')"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -104,9 +104,9 @@
           <select
             v-model="historyTypeFilter"
             :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
-            aria-label="Filtrar historial por tipo"
+            :aria-label="t('analitica.ingredientes.filterHistoryType')"
           >
-            <option value="">Tipo</option>
+            <option value="">{{ t('analitica.ingredientes.type') }}</option>
             <option v-for="option in historyTypeOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -115,9 +115,9 @@
           <select
             v-model="recordKindFilter"
             :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
-            aria-label="Filtrar historial por registro"
+            :aria-label="t('analitica.ingredientes.filterHistoryRecord')"
           >
-            <option value="">Registro</option>
+            <option value="">{{ t('analitica.ingredientes.record') }}</option>
             <option v-for="option in recordKindOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -126,9 +126,9 @@
           <select
             v-model="unitFilter"
             :class="[filterSelectClass, 'w-full sm:w-32 md:hidden']"
-            aria-label="Filtrar historial por unidad"
+            :aria-label="t('analitica.ingredientes.filterHistoryUnit')"
           >
-            <option value="">Unidad</option>
+            <option value="">{{ t('analitica.ingredientes.unit') }}</option>
             <option v-for="unit in historyUnits" :key="unit" :value="unit">
               {{ formatUnitLabel(unit) }}
             </option>
@@ -141,8 +141,8 @@
             min="0"
             step="any"
             :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
-            placeholder="Mín."
-            aria-label="Cantidad mínima"
+            :placeholder="t('analitica.ingredientes.min')"
+            :aria-label="t('analitica.ingredientes.minQty')"
           />
 
           <input
@@ -152,8 +152,8 @@
             min="0"
             step="any"
             :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
-            placeholder="Máx."
-            aria-label="Cantidad máxima"
+            :placeholder="t('analitica.ingredientes.max')"
+            :aria-label="t('analitica.ingredientes.maxQty')"
           />
 
           <div class="inline-flex h-10 rounded-lg border-2 border-border bg-background p-0.5">
@@ -175,15 +175,15 @@
         <div class="rounded-lg border border-border bg-background p-4">
           <div class="mb-3 flex items-center justify-between gap-3">
             <div class="min-w-0">
-              <h2 class="text-base font-bold text-text-primary">Consumo</h2>
+              <h2 class="text-base font-bold text-text-primary">{{ t('analitica.ingredientes.consumption') }}</h2>
               <p class="text-xs text-text-secondary">{{ chartSubtitle }}</p>
             </div>
             <BarChart3 class="h-5 w-5 flex-shrink-0 text-text-secondary" aria-hidden="true" />
           </div>
           <div v-if="selectedSeries.length === 0" class="flex h-[260px] items-center justify-center text-center">
             <div>
-              <p class="font-semibold text-text-primary">Sin consumo registrado</p>
-              <p class="mt-1 text-sm text-text-secondary">Cambia el rango de fechas para revisar otro periodo.</p>
+              <p class="font-semibold text-text-primary">{{ t('analitica.ingredientes.noRecordedConsumption') }}</p>
+              <p class="mt-1 text-sm text-text-secondary">{{ t('analitica.ingredientes.changeDateRange') }}</p>
             </div>
           </div>
           <ClientOnly v-else>
@@ -199,15 +199,15 @@
         <div class="rounded-lg border border-border bg-background p-4">
           <div class="mb-3 flex items-center justify-between gap-3">
             <div class="min-w-0">
-              <h2 class="text-base font-bold text-text-primary">Costo y unidad</h2>
+              <h2 class="text-base font-bold text-text-primary">{{ t('analitica.ingredientes.costAndUnit') }}</h2>
               <p class="text-xs text-text-secondary">{{ chartSubtitle }}</p>
             </div>
             <LineChart class="h-5 w-5 flex-shrink-0 text-text-secondary" aria-hidden="true" />
           </div>
           <div v-if="selectedSeries.length === 0" class="flex h-[260px] items-center justify-center text-center">
             <div>
-              <p class="font-semibold text-text-primary">Sin costo para graficar</p>
-              <p class="mt-1 text-sm text-text-secondary">El reporte mostrará costos cuando existan movimientos.</p>
+              <p class="font-semibold text-text-primary">{{ t('analitica.ingredientes.noCostToChart') }}</p>
+              <p class="mt-1 text-sm text-text-secondary">{{ t('analitica.ingredientes.costsWhenMovements') }}</p>
             </div>
           </div>
           <ClientOnly v-else>
@@ -225,11 +225,11 @@
         <div class="min-w-0">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="text-base font-bold text-text-primary">Historial analítico</h2>
-              <p class="text-xs text-text-secondary">Consumos, compras y movimientos del periodo.</p>
+              <h2 class="text-base font-bold text-text-primary">{{ t('analitica.ingredientes.analyticHistory') }}</h2>
+              <p class="text-xs text-text-secondary">{{ t('analitica.ingredientes.analyticHistorySub') }}</p>
             </div>
             <span class="text-xs font-semibold text-text-secondary">
-              {{ historyTotal }} eventos
+              {{ t('analitica.ingredientes.eventsCount', { count: historyTotal }) }}
             </span>
           </div>
 
@@ -249,8 +249,8 @@
             :columns="historyColumns"
             :data="filteredHistoryRows"
             item-key="id"
-            empty-message="Sin historial para este periodo"
-            empty-sub-message="No hay compras ni movimientos analíticos con los filtros actuales"
+            :empty-message="t('analitica.ingredientes.emptyHistory')"
+            :empty-sub-message="t('analitica.ingredientes.emptyHistorySub')"
           >
             <template #card="{ item, index }">
               <div
@@ -294,7 +294,7 @@
 
             <template #header-date>
               <UiTableHeaderFilter
-                title="Fecha"
+                :title="t('analitica.common.date')"
                 filter-type="none"
                 align="left"
               />
@@ -303,10 +303,10 @@
             <template #header-type>
               <UiTableHeaderFilter
                 v-model="historyTypeFilter"
-                title="Tipo"
+                :title="t('analitica.ingredientes.type')"
                 filter-type="select"
                 :options="historyTypeOptions"
-                all-label="Tipo"
+                :all-label="t('analitica.ingredientes.type')"
                 align="center"
               />
             </template>
@@ -314,17 +314,17 @@
             <template #header-detail>
               <UiTableHeaderFilter
                 v-model="recordKindFilter"
-                title="Registro"
+                :title="t('analitica.ingredientes.record')"
                 filter-type="select"
                 :options="recordKindOptions"
-                all-label="Registro"
+                :all-label="t('analitica.ingredientes.record')"
                 align="left"
               />
             </template>
 
             <template #header-quantity>
               <UiTableHeaderFilter
-                title="Cantidad"
+                :title="t('analitica.ingredientes.quantity')"
                 filter-type="number-range"
                 :min-value="quantityMinFilter"
                 :max-value="quantityMaxFilter"
@@ -337,17 +337,17 @@
             <template #header-unit>
               <UiTableHeaderFilter
                 v-model="unitFilter"
-                title="Unidad"
+                :title="t('analitica.ingredientes.unit')"
                 filter-type="select"
                 :options="unitHeaderOptions"
-                all-label="Unidad"
+                :all-label="t('analitica.ingredientes.unit')"
                 align="center"
               />
             </template>
 
             <template #header-cost>
               <UiTableHeaderFilter
-                title="Costo"
+                :title="t('analitica.ingredientes.cost')"
                 filter-type="none"
                 align="right"
               />
@@ -413,7 +413,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import { BarChart3, LineChart } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
@@ -531,6 +531,7 @@ type HistoryRow = {
 definePageMeta({ layout: 'dashboard', module: 'analitica' })
 
 const route = useRoute()
+const { t, locale } = useI18n({ useScope: 'global' })
 const { dateAtNoon } = useTenantTimezone()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
@@ -567,23 +568,24 @@ const quantityMinFilter = ref(queryStringValue(route.query.quantity_min))
 const quantityMaxFilter = ref(queryStringValue(route.query.quantity_max))
 const historyOffset = computed(() => (historyPage.value - 1) * historyPageSize)
 
-const granularityOptions: Array<{ label: string; value: Granularity }> = [
-  { label: 'Día', value: 'day' },
-  { label: 'Mes', value: 'month' },
-]
-const historyTypeOptions = [
-  { label: 'Compra', value: 'purchase' },
-  { label: 'Consumo', value: 'consumption' },
-  { label: 'Entrada', value: 'entry' },
-  { label: 'Ajuste', value: 'adjustment' },
-  { label: 'Pérdida', value: 'loss' },
-  { label: 'Movimiento', value: 'movement' },
-]
-const recordKindOptions = [
-  { label: 'Orden', value: 'order' },
-  { label: 'Compra', value: 'purchase' },
-  { label: 'Sin registro', value: 'none' },
-]
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const granularityOptions = computed<Array<{ label: string; value: Granularity }>>(() => [
+  { label: t('analitica.ingredientes.day'), value: 'day' },
+  { label: t('analitica.ingredientes.month'), value: 'month' },
+])
+const historyTypeOptions = computed(() => [
+  { label: t('analitica.ingredientes.purchase'), value: 'purchase' },
+  { label: t('analitica.ingredientes.consumption'), value: 'consumption' },
+  { label: t('analitica.ingredientes.entry'), value: 'entry' },
+  { label: t('analitica.ingredientes.adjustment'), value: 'adjustment' },
+  { label: t('analitica.ingredientes.loss'), value: 'loss' },
+  { label: t('analitica.ingredientes.movement'), value: 'movement' },
+])
+const recordKindOptions = computed(() => [
+  { label: t('analitica.ingredientes.order'), value: 'order' },
+  { label: t('analitica.ingredientes.purchase'), value: 'purchase' },
+  { label: t('analitica.ingredientes.noRecord'), value: 'none' },
+])
 
 function queryStringValue(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -660,22 +662,22 @@ const hasActiveFilters = computed(() =>
   || !!quantityMinFilter.value
   || !!quantityMaxFilter.value,
 )
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
-const ingredientName = computed(() => ingredient.value.name || 'Ingrediente')
-const ingredientCategory = computed(() => ingredient.value.category || 'Sin categoría')
+const ingredientName = computed(() => ingredient.value.name || t('analitica.ingredientes.ingredient'))
+const ingredientCategory = computed(() => ingredient.value.category || t('analitica.ingredientes.noCategory'))
 const ingredientUnit = computed(() => ingredient.value.unit || 'und')
 const displayIngredientUnit = computed(() => formatUnitLabel(ingredientUnit.value))
 const periodLabel = computed(() => {
-  if (!reportPeriod.value?.from || !reportPeriod.value?.to) return 'Periodo actual'
+  if (!reportPeriod.value?.from || !reportPeriod.value?.to) return t('analitica.ingredientes.currentPeriod')
   return `${formatCalendarDate(reportPeriod.value.from)} - ${formatCalendarDate(reportPeriod.value.to)}`
 })
-const chartSubtitle = computed(() => granularity.value === 'day' ? 'Agrupado por día' : 'Agrupado por mes')
-const latestCostLabel = computed(() => metrics.value.latest_cost_at ? formatDateTime(metrics.value.latest_cost_at) : 'Sin costo reciente')
+const chartSubtitle = computed(() => granularity.value === 'day' ? t('analitica.ingredientes.groupedByDay') : t('analitica.ingredientes.groupedByMonth'))
+const latestCostLabel = computed(() => metrics.value.latest_cost_at ? formatDateTime(metrics.value.latest_cost_at) : t('analitica.ingredientes.noRecentCost'))
 const costBasisLabel = computed(() => {
-  if (metrics.value.cost_basis === 'weighted_avg_purchase_cost') return 'Costo ponderado'
-  if (metrics.value.cost_basis === 'latest_movement_cost') return 'Último movimiento'
-  return 'Sin base de costo'
+  if (metrics.value.cost_basis === 'weighted_avg_purchase_cost') return t('analitica.ingredientes.weightedCost')
+  if (metrics.value.cost_basis === 'latest_movement_cost') return t('analitica.ingredientes.latestMovement')
+  return t('analitica.ingredientes.noCostBasis')
 })
 
 const chartCategories = computed(() =>
@@ -684,18 +686,18 @@ const chartCategories = computed(() =>
 
 const consumptionChartSeries = computed(() => [
   {
-    name: 'Consumo',
+    name: t('analitica.ingredientes.consumption'),
     data: selectedSeries.value.map((point) => numberOrZero(point.consumed_quantity)),
   },
 ])
 
 const costChartSeries = computed(() => [
   {
-    name: 'Costo estimado',
+    name: t('analitica.ingredientes.estCost'),
     data: selectedSeries.value.map((point) => numberOrZero(point.estimated_consumed_cost)),
   },
   {
-    name: 'Costo unitario',
+    name: t('analitica.ingredientes.unitCost'),
     data: selectedSeries.value.map((point) => numberOrZero(point.unit_cost)),
   },
 ])
@@ -806,21 +808,21 @@ function historyPaginationDebugSnapshot() {
   }
 }
 
-const historyColumns = [
-  { key: 'date', title: 'Fecha', sortable: false, format: 'text', align: 'left' },
-  { key: 'type', title: 'Tipo', sortable: false, format: 'text', align: 'center' },
-  { key: 'detail', title: 'Registro', sortable: false, format: 'text', align: 'left' },
-  { key: 'quantity', title: 'Cantidad', sortable: false, format: 'text', align: 'right' },
-  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'center' },
-  { key: 'cost', title: 'Costo', sortable: false, format: 'text', align: 'right' },
-] as const
+const historyColumns = computed(() => [
+  { key: 'date', title: t('analitica.common.date'), sortable: false, format: 'text', align: 'left' },
+  { key: 'type', title: t('analitica.ingredientes.type'), sortable: false, format: 'text', align: 'center' },
+  { key: 'detail', title: t('analitica.ingredientes.record'), sortable: false, format: 'text', align: 'left' },
+  { key: 'quantity', title: t('analitica.ingredientes.quantity'), sortable: false, format: 'text', align: 'right' },
+  { key: 'unit', title: t('analitica.ingredientes.unit'), sortable: false, format: 'text', align: 'center' },
+  { key: 'cost', title: t('analitica.ingredientes.cost'), sortable: false, format: 'text', align: 'right' },
+] as const)
 
 function historyMobileRowClass(index: number) {
   return index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'
 }
 
 useHead(() => ({
-  title: `${ingredientName.value} | Analítica de Ingredientes`,
+  title: t('analitica.ingredientes.detailHead', { name: ingredientName.value }),
 }))
 
 watch([dateRangeDates, granularity], () => {
@@ -938,7 +940,9 @@ function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
   const timestamp = row.received_at || row.purchase_date || ''
   const quantity = row.purchase_quantity ?? row.base_quantity
   const unit = row.purchase_unit || row.base_unit || ingredientUnit.value
-  const recordLabel = row.purchase_number ? `Compra ${row.purchase_number}` : 'Compra'
+  const recordLabel = row.purchase_number
+    ? t('analitica.ingredientes.purchaseNumber', { number: row.purchase_number })
+    : t('analitica.ingredientes.purchase')
   const recordHref = purchaseLink(row)
   const costLabel = row.total_cost !== null && row.total_cost !== undefined
     ? formatCurrency(row.total_cost)
@@ -949,14 +953,14 @@ function purchaseHistoryRow(row: PurchaseRow): HistoryRow {
     timestamp,
     dateLabel: formatHistoryDate(timestamp),
     type: 'purchase',
-    kindLabel: 'Compra',
+    kindLabel: t('analitica.ingredientes.purchase'),
     kindVariant: 'info',
     recordLabel,
     recordHref,
     quantityLabel: formatQuantity(quantity),
     unitLabel: formatUnitLabel(unit),
     costLabel,
-    searchText: `${recordLabel} compra ${unit}`.toLowerCase(),
+    searchText: `${recordLabel} purchase compra ${unit}`.toLowerCase(),
   }
 }
 
@@ -972,7 +976,7 @@ function movementHistoryRow(row: MovementRow): HistoryRow {
     timestamp: row.created_at || '',
     dateLabel: formatHistoryDate(row.created_at),
     type: 'movement',
-    kindLabel: isConsumption ? 'Consumo' : movementKindLabel(movementType),
+    kindLabel: isConsumption ? t('analitica.ingredientes.consumption') : movementKindLabel(movementType),
     kindVariant: isConsumption ? 'warning' : 'secondary',
     recordLabel,
     recordHref,
@@ -991,9 +995,9 @@ function purchaseLink(row: PurchaseRow): string | null {
 
 function movementRecordLabel(row: MovementRow): string {
   if (row.reference_table === 'orders' && row.reference_order_number) {
-    return `Orden #${row.reference_order_number}`
+    return t('analitica.ingredientes.orderNumber', { number: row.reference_order_number })
   }
-  if (row.reference_table === 'orders') return 'Orden'
+  if (row.reference_table === 'orders') return t('analitica.ingredientes.order')
   return movementKindLabel(row.movement_type || 'movement')
 }
 
@@ -1004,15 +1008,15 @@ function movementRecordLink(row: MovementRow): string | null {
 
 function movementKindLabel(value: string): string {
   const labels: Record<string, string> = {
-    purchase: 'Entrada',
-    adjustment: 'Ajuste',
-    loss: 'Pérdida',
+    purchase: t('analitica.ingredientes.entry'),
+    adjustment: t('analitica.ingredientes.adjustment'),
+    loss: t('analitica.ingredientes.loss'),
   }
-  return labels[value] ?? 'Movimiento'
+  return labels[value] ?? t('analitica.ingredientes.movement')
 }
 
 function coverageLabel(value: Coverage): string {
-  return value === 'recorded_movements' ? 'Registrado' : 'Sin consumo'
+  return value === 'recorded_movements' ? t('analitica.ingredientes.recorded') : t('analitica.ingredientes.noConsumption')
 }
 
 function coverageVariant(value: Coverage): 'success' | 'warning' {
@@ -1064,7 +1068,7 @@ function formatCostVariation(value: number | null): string {
 }
 
 function formatHistoryDate(value?: string | null): string {
-  if (!value) return 'Sin fecha'
+  if (!value) return t('common.notSpecified')
   return value.includes('T') ? formatDateTime(value) : formatCalendarDate(value)
 }
 
