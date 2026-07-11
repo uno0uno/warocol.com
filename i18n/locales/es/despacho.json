@@ -1,11 +1,17 @@
 {
   "despacho": {
     "head": {
+      "index": "Despacho — WARO",
       "domicilios": "Domicilios — WARO",
       "enMesa": "Pedidos en mesa (QR) — WARO",
       "comandas": "Comandas — WARO",
       "detallePedido": "Detalle Pedido — WARO",
       "pedidoMesa": "Pedido en mesa — WARO"
+    },
+    "tabs": {
+      "domicilios": "Domicilios",
+      "enMesa": "Pedidos en mesa (QR)",
+      "comandas": "Comandas"
     },
     "common": {
       "searchOrderCustomer": "Buscar # pedido o cliente...",

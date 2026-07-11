@@ -1,11 +1,17 @@
 {
   "despacho": {
     "head": {
+      "index": "Dispatch — WARO",
       "domicilios": "Delivery orders — WARO",
       "enMesa": "Table orders (QR) — WARO",
       "comandas": "Kitchen tickets — WARO",
       "detallePedido": "Order detail — WARO",
       "pedidoMesa": "Table order — WARO"
+    },
+    "tabs": {
+      "domicilios": "Delivery",
+      "enMesa": "Table orders (QR)",
+      "comandas": "Kitchen tickets"
     },
     "common": {
       "searchOrderCustomer": "Search order # or customer...",
