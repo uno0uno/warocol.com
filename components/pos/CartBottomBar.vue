@@ -4,7 +4,7 @@
       v-if="visible"
       class="pos-cart-bottom-bar bg-surface-secondary border-b border-border"
       role="region"
-      aria-label="Resumen del carrito"
+      :aria-label="t('pos.cart.summaryAria')"
     >
       <div class="px-4 py-3">
         <div class="flex items-center justify-between gap-3">
@@ -16,7 +16,7 @@
             </div>
             <div class="min-w-0">
               <p class="font-bold text-text-primary text-sm sm:text-base truncate">
-                {{ itemCount }} {{ itemCount === 1 ? 'producto' : 'productos' }}
+                {{ itemCount }} {{ itemCount === 1 ? t('pos.cart.product') : t('pos.cart.products') }}
               </p>
               <p class="text-xs sm:text-sm text-text-secondary tabular-nums truncate">
                 {{ formattedTotal }}
@@ -26,10 +26,10 @@
           <button
             type="button"
             class="flex items-center gap-2 flex-shrink-0 min-h-[44px] py-2.5 px-4 sm:px-6 bg-action-primary-bg text-action-primary-text rounded-lg font-semibold text-sm sm:text-base transition-opacity hover:opacity-90 active:opacity-80"
-            aria-label="Ver orden actual"
+            :aria-label="t('pos.cart.viewOrderAria')"
             @click="$emit('open-cart')"
           >
-            Ver orden
+            {{ t('pos.cart.viewOrder') }}
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 withDefaults(defineProps<{
   visible: boolean
   itemCount: number

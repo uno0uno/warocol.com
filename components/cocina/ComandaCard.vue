@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, inject, onMounted, onUnmounted, type Ref } from 'vue'
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -76,14 +77,14 @@ const updateStatus = async (newStatus: string) => {
     })
     emit('refresh')
     if (newStatus === 'delivered') {
-      toast.success('Comanda entregada')
+      toast.success(t('cocina.card.delivered'))
     }
   } catch (error: any) {
     const status = error?.status ?? error?.statusCode ?? error?.response?.status
     toast.error(
       status === 401
-        ? 'Enlace KDS expirado. Recarga la página.'
-        : 'Error al actualizar estado',
+        ? t('cocina.card.tokenExpired')
+        : t('cocina.card.statusError'),
     )
   } finally {
     isUpdating.value = false
@@ -148,7 +149,7 @@ onUnmounted(() => {
         <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
       </svg>
       <span class="text-xs font-bold text-text-primary">
-        {{ comanda.table_display_name || 'Venta Rápida' }}
+        {{ comanda.table_display_name || t('cocina.card.quickSale') }}
       </span>
     </div>
 
@@ -186,7 +187,7 @@ onUnmounted(() => {
             class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
-            <span v-else>Listo</span>
+            <span v-else>{{ t('cocina.card.ready') }}</span>
           </button>
           <button
             @click="cancelComanda"
@@ -194,7 +195,7 @@ onUnmounted(() => {
             class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
-            <span v-else>Cancelar</span>
+            <span v-else>{{ t('common.cancel') }}</span>
           </button>
         </template>
       </template>
@@ -216,7 +217,7 @@ onUnmounted(() => {
             class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
-            <span v-else>Cancelar</span>
+            <span v-else>{{ t('common.cancel') }}</span>
           </button>
         </template>
         <template v-else-if="comanda.status === 'preparing'">
@@ -226,7 +227,7 @@ onUnmounted(() => {
             class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
-            <span v-else>Listo</span>
+            <span v-else>{{ t('cocina.card.ready') }}</span>
           </button>
           <button
             @click="cancelComanda"
@@ -234,7 +235,7 @@ onUnmounted(() => {
             class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
-            <span v-else>Cancelar</span>
+            <span v-else>{{ t('common.cancel') }}</span>
           </button>
         </template>
       </template>

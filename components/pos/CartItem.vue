@@ -19,7 +19,7 @@
                 <span
                   v-if="item.fulfillmentStatus === 'new' && showFulfillmentStatus"
                   class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-state-warning-text bg-state-warning-bg  "
-                >Sin enviar</span>
+                >{{ t('pos.cartItem.notSent') }}</span>
                 <span
                   v-else-if="item.fulfillmentStatus && item.fulfillmentStatus !== 'new'"
                   class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
@@ -31,10 +31,10 @@
                   }"
                 >
                   {{
-                    item.fulfillmentStatus === 'sent' ? 'En cocina' :
-                    item.fulfillmentStatus === 'preparing' ? 'Preparando' :
-                    item.fulfillmentStatus === 'ready' ? 'Listo' :
-                    item.fulfillmentStatus === 'delivered' ? 'Entregado' : item.fulfillmentStatus
+                    item.fulfillmentStatus === 'sent' ? t('pos.cartItem.inKitchen') :
+                    item.fulfillmentStatus === 'preparing' ? t('pos.cartItem.preparing') :
+                    item.fulfillmentStatus === 'ready' ? t('pos.cartItem.ready') :
+                    item.fulfillmentStatus === 'delivered' ? t('pos.cartItem.delivered') : item.fulfillmentStatus
                   }}
                 </span>
                 <span
@@ -43,7 +43,7 @@
                   :title="promoTitle || promoLabel"
                 >{{ promoLabel }}</span>
               </div>
-              <p v-if="item.sentAt" class="mt-0.5 text-[10px] text-text-tertiary">Fuego: {{ formatTime(item.sentAt) }}</p>
+              <p v-if="item.sentAt" class="mt-0.5 text-[10px] text-text-tertiary">{{ t('pos.cartItem.firedAt') }} {{ formatTime(item.sentAt) }}</p>
             </div>
 
             <div class="shrink-0 text-right leading-tight">
@@ -66,9 +66,9 @@
           <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0 text-xs tabular-nums">
             <template v-if="promoSavings > 0 && item.quantity > 0">
               <span class="line-through text-text-tertiary">{{ formatCurrency(unitGross) }}</span>
-              <span class="font-semibold text-text-secondary">{{ formatCurrency(unitNet) }} c/u</span>
+              <span class="font-semibold text-text-secondary">{{ formatCurrency(unitNet) }} {{ t('pos.cartItem.perUnit') }}</span>
             </template>
-            <span v-else class="font-semibold text-text-secondary">{{ formatCurrency(Number(item.product.price)) }} c/u</span>
+            <span v-else class="font-semibold text-text-secondary">{{ formatCurrency(Number(item.product.price)) }} {{ t('pos.cartItem.perUnit') }}</span>
           </p>
 
           <div v-if="item.modifiers.length > 0 || item.notes" class="mt-1 space-y-0.5">
@@ -76,7 +76,7 @@
               <span class="min-w-0 truncate text-text-tertiary">+ {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template></span>
               <span class="shrink-0 tabular-nums text-text-secondary">{{ formatCurrency(Number(mod.price) * (mod.quantity ?? 1)) }}</span>
             </div>
-            <p v-if="item.notes" class="text-[11px] italic text-text-tertiary">Nota: {{ item.notes }}</p>
+            <p v-if="item.notes" class="text-[11px] italic text-text-tertiary">{{ t('pos.cartItem.note') }} {{ item.notes }}</p>
           </div>
         </div>
       </div>
@@ -92,7 +92,7 @@
           type="button"
           class="cart-item-tool rounded-l-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="item.quantity <= 1"
-          aria-label="Reducir cantidad"
+          :aria-label="t('pos.cartItem.decreaseQtyAria')"
           @click.stop="$emit('decrement')"
         >
           <MinusIcon class="cart-item-icon" aria-hidden="true" />
@@ -104,7 +104,7 @@
           v-if="!lockIncrement"
           type="button"
           class="cart-item-tool rounded-r-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary"
-          aria-label="Aumentar cantidad"
+          :aria-label="t('pos.cartItem.increaseQtyAria')"
           @click.stop="$emit('increment')"
         >
           <PlusIcon class="cart-item-icon" aria-hidden="true" />
@@ -121,7 +121,7 @@
           v-if="!hideDuplicate"
           type="button"
           class="cart-item-tool rounded-lg text-text-secondary transition-colors hover:bg-primary/10 hover:text-primary"
-          aria-label="Duplicar ítem"
+          :aria-label="t('pos.cartItem.duplicateAria')"
           @click.stop="$emit('duplicate')"
         >
           <DocumentDuplicateIcon class="cart-item-icon" aria-hidden="true" />
@@ -131,7 +131,7 @@
           v-if="!hideEdit && !item.is_resale && !item.is_open_sale"
           type="button"
           class="cart-item-tool rounded-lg text-text-secondary transition-colors hover:bg-primary/10 hover:text-primary"
-          aria-label="Editar ítem"
+          :aria-label="t('pos.cartItem.editAria')"
           @click.stop="$emit('edit')"
         >
           <PencilSquareIcon class="cart-item-icon" aria-hidden="true" />
@@ -140,7 +140,7 @@
         <button
           type="button"
           class="cart-item-tool rounded-lg text-text-secondary transition-colors hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Eliminar ítem"
+          :aria-label="t('pos.cartItem.removeAria')"
           @click.stop="$emit('remove')"
         >
           <TrashIcon class="cart-item-icon" aria-hidden="true" />
@@ -152,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed } from 'vue'
 import {
   MinusIcon,

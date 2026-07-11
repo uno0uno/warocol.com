@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue'
 
 definePageMeta({
@@ -43,7 +44,7 @@ watch(station, (s) => {
   }
 }, { immediate: true })
 
-useHead({ title: computed(() => station.value ? `KDS · ${station.value.name}` : 'KDS') })
+useHead({ title: computed(() => station.value ? t('cocina.kds.titleStation', { name: station.value.name }) : t('cocina.kds.title')) })
 
 // ── Comandas fetch ──────────────────────────────────────────────────────────
 const { todayISO } = useTenantTimezone()
@@ -230,7 +231,7 @@ watch(allComandas, checkNewComandas)
 const { currentPhrase: loadingPhrase, start: startPhrases, stop: stopPhrases } = useLoadingPhrases([
   'Actualizando...',
   'Sincronizando...',
-  'Cargando cambios...',
+  t('cocina.kds.loadingChanges'),
 ])
 watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true })
 
@@ -241,7 +242,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
   <div v-if="!kdsToken || tokenError" class="flex items-center justify-center h-screen bg-background">
     <div class="text-center space-y-3 p-8">
       <svg class="w-16 h-16 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-      <h1 class="text-xl font-bold text-text-primary">Enlace inválido</h1>
+      <h1 class="text-xl font-bold text-text-primary">{{ t('cocina.kds.invalidLink') }}</h1>
       <p class="text-sm text-text-secondary max-w-sm">Este enlace KDS no es válido o fue revocado. Solicita un nuevo enlace al administrador desde Operaciones → Comandas.</p>
     </div>
   </div>
@@ -289,7 +290,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
               </svg>
-              <span>Activar sonido</span>
+              <span>{{ t('cocina.kds.enableSound') }}</span>
             </template>
           </button>
           <button
@@ -312,15 +313,15 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
     <div v-if="stationStatus === 'pending' && !station" class="flex items-center justify-center h-full">
       <div class="flex flex-col items-center gap-4">
         <div class="w-12 h-12 rounded-full border-4 border-border border-t-primary animate-spin" />
-        <p class="text-text-secondary text-sm">Cargando estación…</p>
+        <p class="text-text-secondary text-sm">{{ t('cocina.kds.loadingStation') }}</p>
       </div>
     </div>
 
     <!-- Station error / not found -->
     <div v-else-if="stationStatus === 'error'" class="flex items-center justify-center h-full text-center px-8">
       <div>
-        <p class="text-2xl font-bold text-destructive mb-2">Estación no encontrada</p>
-        <p class="text-text-secondary">Verificá la URL o el enlace de acceso.</p>
+        <p class="text-2xl font-bold text-destructive mb-2">{{ t('cocina.kds.stationNotFound') }}</p>
+        <p class="text-text-secondary">{{ t('cocina.kds.checkUrl') }}</p>
       </div>
     </div>
 
@@ -371,7 +372,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           <button
             key="sound"
             @click="toggleSound"
-            :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
+            :title="soundEnabled ? t('cocina.kds.soundOffAria') : t('cocina.kds.soundOnAria')"
             class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-secondary hover:bg-surface-tertiary transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             :class="soundEnabled ? 'text-text-primary' : 'text-text-tertiary'"
           >
@@ -391,7 +392,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
             key="refresh"
             @click="refetch()"
             :disabled="isRefreshing"
-            aria-label="Refrescar comandas"
+            :aria-label="t('cocina.kds.refreshAria')"
             class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-secondary hover:bg-surface-tertiary text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <UiLoadingMatrix v-if="isRefreshing" size="5px" />
@@ -431,14 +432,14 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           <svg class="w-16 h-16 text-text-tertiary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
           </svg>
-          <p class="text-xl font-bold text-text-secondary">No hay comandas activas en esta estación</p>
+          <p class="text-xl font-bold text-text-secondary">{{ t('cocina.kds.noActive') }}</p>
         </div>
 
         <!-- Active comandas (pending + preparing) -->
         <div v-else>
           <div v-if="activeComandas.length > 0">
             <div class="flex items-center gap-2 mb-3">
-              <h2 class="text-xs font-black uppercase tracking-widest text-text-secondary">Activas</h2>
+              <h2 class="text-xs font-black uppercase tracking-widest text-text-secondary">{{ t('cocina.kds.active') }}</h2>
               <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-surface-secondary text-text-secondary text-[10px] font-black">
                 {{ activeComandas.length }}
               </span>
@@ -457,7 +458,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           <!-- Ready comandas -->
           <div v-if="readyComandas.length > 0" class="mt-6">
             <div class="flex items-center gap-2 mb-3">
-              <h2 class="text-xs font-black uppercase tracking-widest text-success">Listos para entregar</h2>
+              <h2 class="text-xs font-black uppercase tracking-widest text-success">{{ t('cocina.kds.readyToServe') }}</h2>
               <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-success/15 text-success text-[10px] font-black">
                 {{ readyComandas.length }}
               </span>

@@ -21,7 +21,7 @@
         <!-- Activar comandas -->
         <div class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
-            <p class="text-sm font-semibold leading-snug text-text-primary">Activar comandas</p>
+            <p class="text-sm font-semibold leading-snug text-text-primary">{{ t('operaciones.comandas.enableComandas') }}</p>
           </div>
           <UiToggleSwitch
             :checked="businessProfile?.comandas_enabled"
@@ -52,7 +52,7 @@
         <!-- Activar KDS (only when comandas ON) -->
         <div v-if="businessProfile?.comandas_enabled" class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
-            <p class="text-sm font-semibold leading-snug text-text-primary">Activar pantallas KDS</p>
+            <p class="text-sm font-semibold leading-snug text-text-primary">{{ t('operaciones.comandas.enableKds') }}</p>
           </div>
           <UiToggleSwitch
             :checked="businessProfile?.kds_enabled"
@@ -65,7 +65,7 @@
         <!-- Issue #537 — Expediter mode (waiter advances comanda state from POS) -->
         <div v-if="businessProfile?.comandas_enabled" class="flex min-h-[64px] items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
-            <p class="text-sm font-semibold leading-snug text-text-primary">Mesero avanza estado desde POS</p>
+            <p class="text-sm font-semibold leading-snug text-text-primary">{{ t('operaciones.comandas.waiterAdvances') }}</p>
           </div>
           <UiToggleSwitch
             :checked="businessProfile?.expediter_enabled"
@@ -83,7 +83,7 @@
             <UiToggleSwitch
               v-model:checked="draftMinimumConsumptionEnabled"
               :disabled="isSavingMinimumConsumption"
-              :aria-label="draftMinimumConsumptionEnabled ? 'Desactivar consumo mínimo' : 'Activar consumo mínimo'"
+              :aria-label="draftMinimumConsumptionEnabled ? t('operaciones.comandas.disableMinConsumption') : t('operaciones.comandas.enableMinConsumption')"
             />
           </div>
 
@@ -148,7 +148,7 @@
           type="button"
           @click="openCreateStation"
           :disabled="isActiveKitchenQuotaBlocked"
-          :title="isActiveKitchenQuotaBlocked ? activeKitchenQuotaMessage : 'Crear estación'"
+          :title="isActiveKitchenQuotaBlocked ? activeKitchenQuotaMessage : t('operaciones.comandas.createStation')"
           class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors min-h-[36px]"
           :class="isActiveKitchenQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-action-primary-bg' : ''"
         >
@@ -166,8 +166,8 @@
       <UiResponsiveDataView
         :data="stations"
         :columns="stationColumns"
-        empty-message="Sin estaciones configuradas"
-        empty-sub-message="Crea la primera estación para empezar."
+        :empty-message="t('operaciones.comandas.noStations')"
+        :empty-sub-message="t('operaciones.comandas.createFirstStation')"
         item-key="id"
         row-size="sm"
       >
@@ -185,7 +185,7 @@
                   @click="generateKdsToken(cardStation.id)"
                   :disabled="generatingToken === cardStation.id"
                   class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
-                  aria-label="Generar QR KDS"
+                  :aria-label="t('operaciones.comandas.generateKdsQr')"
                   title="Generar QR"
                 >
                   <UiLoadingDots v-if="generatingToken === cardStation.id" size="7px" color="currentColor" />
@@ -195,7 +195,7 @@
                   <button
                     @click="copyKdsUrl(cardStation.id)"
                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
-                    aria-label="Copiar enlace KDS"
+                    :aria-label="t('operaciones.comandas.copyKdsLink')"
                     title="Copiar enlace"
                   >
                     <ClipboardIcon class="w-4 h-4" />
@@ -204,7 +204,7 @@
                     @click="revokeKdsToken(cardStation.id)"
                     :disabled="revokingToken === cardStation.id"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
-                    aria-label="Revocar enlace KDS"
+                    :aria-label="t('operaciones.comandas.revokeKdsLink')"
                     title="Revocar enlace"
                   >
                     <UiLoadingDots v-if="revokingToken === cardStation.id" size="7px" color="currentColor" />
@@ -213,7 +213,7 @@
                   <button
                     @click="downloadKdsQrPng(cardStation.id, cardStation.name)"
                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
-                    aria-label="Descargar QR KDS"
+                    :aria-label="t('operaciones.comandas.downloadKdsQr')"
                     title="Descargar QR"
                   >
                     <ArrowDownTrayIcon class="w-4 h-4" />
@@ -251,7 +251,7 @@
               @click="generateKdsToken(st.id)"
               :disabled="generatingToken === st.id"
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
-              aria-label="Generar QR KDS"
+              :aria-label="t('operaciones.comandas.generateKdsQr')"
               title="Generar QR"
             >
               <UiLoadingDots v-if="generatingToken === st.id" size="7px" color="currentColor" />
@@ -261,7 +261,7 @@
               <button
                 @click="copyKdsUrl(st.id)"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
-                aria-label="Copiar enlace KDS"
+                :aria-label="t('operaciones.comandas.copyKdsLink')"
                 title="Copiar enlace"
               >
                 <ClipboardIcon class="w-4 h-4" />
@@ -270,7 +270,7 @@
                 @click="revokeKdsToken(st.id)"
                 :disabled="revokingToken === st.id"
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
-                aria-label="Revocar enlace KDS"
+                :aria-label="t('operaciones.comandas.revokeKdsLink')"
                 title="Revocar enlace"
               >
                 <UiLoadingDots v-if="revokingToken === st.id" size="7px" color="currentColor" />
@@ -279,7 +279,7 @@
               <button
                 @click="downloadKdsQrPng(st.id, st.name)"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
-                aria-label="Descargar QR KDS"
+                :aria-label="t('operaciones.comandas.downloadKdsQr')"
                 title="Descargar QR"
               >
                 <ArrowDownTrayIcon class="w-4 h-4" />
@@ -323,8 +323,8 @@
       <UiResponsiveDataView
         :data="mappedCategories"
         :columns="categoryColumns"
-        empty-message="Sin categorías"
-        empty-sub-message="Crea categorías en el menú para asignarlas."
+        :empty-message="t('operaciones.comandas.noCategories')"
+        :empty-sub-message="t('operaciones.comandas.createCategories')"
         item-key="id"
         row-size="sm"
       >
@@ -521,6 +521,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import {
   FireIcon,
   QueueListIcon,
@@ -536,7 +537,7 @@ import {
 import QRCode from 'qrcode'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
-useHead({ title: 'Comandas & Cocina | Operaciones' })
+useHead({ title: () => t('operaciones.head.comandas') })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
@@ -610,9 +611,9 @@ const saveMinimumConsumptionConfig = async () => {
       },
     })
     await invalidateContextCaches()
-    toast.success('Configuración de consumo mínimo guardada', { title: 'Guardado' })
+    toast.success(t('operaciones.comandas.minConsumptionSaved'), { title: 'Guardado' })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar consumo mínimo', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.minConsumptionError'), { title: 'Error' })
   } finally {
     isSavingMinimumConsumption.value = false
   }
@@ -753,9 +754,9 @@ const handleToggleComandas = async (event: Event) => {
   try {
     await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
     await invalidateContextCaches()
-    toast.success('Módulo de comandas activado', { title: 'Activado' })
+    toast.success(t('operaciones.comandas.moduleOn'), { title: 'Activado' })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al activar comandas', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.activateError'), { title: 'Error' })
   } finally {
     isTogglingComandas.value = false
   }
@@ -768,9 +769,9 @@ const confirmDisableComandas = async () => {
   try {
     await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: false } })
     await invalidateContextCaches()
-    toast.success('Módulo de comandas desactivado', { title: 'Desactivado' })
+    toast.success(t('operaciones.comandas.moduleOff'), { title: 'Desactivado' })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al desactivar comandas', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.deactivateError'), { title: 'Error' })
   } finally {
     isTogglingComandas.value = false
   }
@@ -784,11 +785,11 @@ const handleToggleKds = async (event: Event) => {
     await $fetch('/api/operaciones/toggles/kds', { method: 'PATCH', body: { enabled: newState } })
     await invalidateContextCaches()
     toast.success(
-      newState ? 'Pantallas KDS activadas' : 'Pantallas KDS desactivadas',
+      newState ? t('operaciones.comandas.kdsOn') : t('operaciones.comandas.kdsOff'),
       { title: newState ? 'Activado' : 'Desactivado' }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar estado KDS', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.kdsToggleError'), { title: 'Error' })
   } finally {
     isTogglingKds.value = false
   }
@@ -805,12 +806,12 @@ const handleToggleExpediter = async (event: Event) => {
     await invalidateContextCaches()
     toast.success(
       newState
-        ? 'El mesero puede avanzar comandas desde el POS'
-        : 'Solo cocina avanza comandas (desde KDS)',
+        ? t('operaciones.comandas.expeditorWaiter')
+        : t('operaciones.comandas.expeditorKitchen'),
       { title: newState ? 'Activado' : 'Desactivado' }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar modo expedidor', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.expeditorError'), { title: 'Error' })
   } finally {
     isTogglingExpediter.value = false
   }
@@ -837,9 +838,9 @@ const generateKdsToken = async (stationId: string) => {
     if (res.data?.token) {
       kdsTokens.value[stationId] = res.data.token
     }
-    toast.success('Enlace KDS generado')
+    toast.success(t('operaciones.comandas.kdsLinkGenerated'))
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al generar token')
+    toast.error(e.data?.detail || t('operaciones.comandas.tokenError'))
   } finally {
     generatingToken.value = null
   }
@@ -850,9 +851,9 @@ const revokeKdsToken = async (stationId: string) => {
   try {
     await $fetch(`/api/api/stations/${stationId}/kds-token`, { method: 'DELETE' })
     delete kdsTokens.value[stationId]
-    toast.success('Enlace KDS revocado')
+    toast.success(t('operaciones.comandas.kdsLinkRevoked'))
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al revocar token')
+    toast.error(e.data?.detail || t('operaciones.comandas.revokeError'))
   } finally {
     revokingToken.value = null
   }
@@ -868,7 +869,7 @@ const buildKdsUrl = (stationId: string) => {
 const copyKdsUrl = (stationId: string) => {
   const url = buildKdsUrl(stationId)
   navigator.clipboard.writeText(url)
-  toast.success('Enlace KDS copiado al portapapeles')
+  toast.success(t('operaciones.comandas.kdsCopied'))
 }
 
 const downloadKdsQrPng = async (stationId: string, stationName: string) => {

@@ -1,0 +1,162 @@
+{
+  "pos": {
+    "cart": {
+      "currentOrder": "Orden Actual",
+      "item": "ítem",
+      "items": "ítems",
+      "product": "producto",
+      "products": "productos",
+      "summaryAria": "Resumen del carrito",
+      "viewOrder": "Ver orden",
+      "viewOrderAria": "Ver orden actual",
+      "servedBy": "Servido por",
+      "assignWaiterAria": "Atribuir esta orden a un mesero",
+      "unassigned": "Sin asignar",
+      "promoDiscounts": "Descuentos promoción",
+      "tableAdvance": "Anticipo mesa",
+      "total": "Total",
+      "openSale": "Venta libre",
+      "processOrder": "Procesar Orden",
+      "processing": "Procesando...",
+      "clearCart": "Limpiar Carrito",
+      "clear": "Limpiar",
+      "requestBill": "Cuenta",
+      "requestBillAria": "Pedir la cuenta",
+      "reprintLatestAria": "Reimprimir última comanda enviada",
+      "latest": "Última",
+      "comandas": "Comandas",
+      "openComandasReprintAria": "Abrir comandas para reimprimir",
+      "sendToKitchen": "Enviar a cocina",
+      "sending": "Enviando...",
+      "addToTable": "Agregar a la {table}",
+      "addItemsToTableAria": "Agregar items a la {table}",
+      "emptyCart": "Carrito vacío",
+      "tableNoOrders": "{table} sin pedidos",
+      "selectProducts": "Selecciona productos para agregar",
+      "toAdd": "Por agregar"
+    },
+    "cartItem": {
+      "notSent": "Sin enviar",
+      "inKitchen": "En cocina",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "delivered": "Entregado",
+      "firedAt": "Fuego:",
+      "perUnit": "c/u",
+      "note": "Nota:",
+      "decreaseQtyAria": "Reducir cantidad",
+      "increaseQtyAria": "Aumentar cantidad",
+      "duplicateAria": "Duplicar ítem",
+      "editAria": "Editar ítem",
+      "removeAria": "Eliminar ítem"
+    },
+    "openSale": {
+      "title": "Venta libre",
+      "productPrefix": "Producto: {name}",
+      "customAmount": "Monto personalizado",
+      "amountLabel": "Monto (COP)",
+      "amountPlaceholder": "Ej. 25000",
+      "description": "Descripción",
+      "optional": "(opcional)",
+      "descriptionPlaceholder": "Ej. Servicio especial, propina externa...",
+      "addToCart": "Agregar al carrito",
+      "adding": "Agregando...",
+      "amountError": "Ingresa un monto mayor a cero"
+    },
+    "checkout": {
+      "title": "Checkout",
+      "emptyTitle": "Carrito Vacío",
+      "emptyBody": "No hay productos en tu orden",
+      "applyPromo": "Aplicar promoción",
+      "identifyCustomer": "Buscar o identificar cliente",
+      "searchMethod": "Buscar método...",
+      "paymentDueOptional": "Fecha límite de pago",
+      "optional": "(opcional)",
+      "customerNoData": "Cliente sin datos",
+      "loadingWalletAria": "Cargando saldo wallet",
+      "taxFallback": "Impuesto",
+      "liquorVat": "IVA licores",
+      "invoiceSentTitle": "Enviado",
+      "invoiceSent": "Factura enviada a {email}",
+      "sendReceiptErrorTitle": "Error al enviar recibo",
+      "errorTitle": "Error"
+    },
+    "customer": {
+      "closeModalAria": "Cerrar modal",
+      "searchPlaceholder": "Nombre, teléfono, cédula o NIT...",
+      "clearSearchAria": "Limpiar búsqueda",
+      "noName": "Sin nombre",
+      "noPhone": "Sin teléfono",
+      "noData": "Sin datos",
+      "businessName": "Razón social",
+      "saveAndContinue": "Guardar y continuar",
+      "saveData": "Guardar datos",
+      "requestInvoiceData": "Pedir datos para factura",
+      "newCustomer": "Nuevo cliente",
+      "invoiceData": "Datos para factura",
+      "searchCustomer": "Buscar cliente",
+      "newCustomerHint": "Ingresa los datos del nuevo cliente",
+      "invoiceDataHint": "Para emitir factura electrónica identificada",
+      "searchHint": "Busca por nombre, teléfono o NIT/cédula",
+      "loadError": "No se pudo cargar el cliente",
+      "customerNoData": "Cliente sin datos",
+      "saveCustomerError": "Error al guardar el cliente",
+      "saveDataError": "Error al guardar los datos"
+    },
+    "comandasPanel": {
+      "title": "Estado de comandas",
+      "active": "Comandas activas",
+      "closePanelAria": "Cerrar panel",
+      "markReady": "Marcar como listas",
+      "statusUpdated": "Estado actualizado",
+      "updateError": "Error al actualizar comandas",
+      "nothingReady": "Nada listo aún",
+      "noComandas": "Sin comandas en cocina",
+      "readyHint": "Las comandas aparecerán aquí cuando cocina las marque como listas.",
+      "emptyHint": "Cuando se generen comandas nuevas las verás aquí.",
+      "deselectAll": "Deseleccionar todas",
+      "selectAll": "Seleccionar todas",
+      "soundOffAria": "Desactivar aviso sonoro",
+      "soundOnAria": "Activar aviso sonoro"
+    },
+    "advance": {
+      "title": "Pagar anticipo de mesa",
+      "activeTable": "Mesa activa",
+      "closePanelAria": "Cerrar panel",
+      "voidAdvance": "Anular anticipo",
+      "loadError": "No se pudieron cargar los anticipos",
+      "registerError": "No se pudo registrar el anticipo",
+      "voidedFromPos": "Anulado desde POS",
+      "voided": "Anticipo anulado",
+      "voidError": "No se pudo anular el anticipo",
+      "tableAdvance": "Anticipo mesa"
+    },
+    "destructive": {
+      "reasonPlaceholder": "Ej: cliente cambió de opinión"
+    },
+    "floor": {
+      "minCovered": "Mínimo cubierto",
+      "unassigned": "Sin asignar"
+    },
+    "delivery": {
+      "notesPlaceholder": "Ej: portería en la calle 51, edificio amarillo",
+      "saveAddress": "Guardar dirección",
+      "newAddress": "Nueva dirección",
+      "address": "Dirección"
+    },
+    "tip": {
+      "optional": "Propina (opcional)",
+      "optionsAria": "Opciones de propina"
+    },
+    "cash": {
+      "exactAria": "Pagar exacto, sin vuelto"
+    },
+    "waiter": {
+      "tipWaiterAria": "Mesero para propina",
+      "selectWaiterAria": "Seleccionar mesero para esta venta"
+    },
+    "product": {
+      "pageTitle": "Producto POS"
+    }
+  }
+}

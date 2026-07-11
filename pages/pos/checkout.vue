@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
@@ -37,7 +38,7 @@ definePageMeta({
   module: 'pos',
 })
 
-useHead({ title: 'Checkout' })
+useHead({ title: () => t('pos.checkout.title') })
 
 const router = useRouter()
 const posStore = usePOSStore()
@@ -772,7 +773,7 @@ const taxPreview = computed<TaxPreview | null>(() => {
     return {
       standard_tax: Number(session.standard_tax) || 0,
       liquor_tax: Number(session.liquor_tax) || 0,
-      standard_tax_label: session.standard_tax_label || 'Impuesto',
+      standard_tax_label: session.standard_tax_label || t('pos.checkout.taxFallback'),
     }
   }
   const data = posTaxPreviewData.value
@@ -780,7 +781,7 @@ const taxPreview = computed<TaxPreview | null>(() => {
   return {
     standard_tax: Number(data.standard_tax) || 0,
     liquor_tax: Number(data.liquor_tax) || 0,
-    standard_tax_label: data.standard_tax_label || 'Impuesto',
+    standard_tax_label: data.standard_tax_label || t('pos.checkout.taxFallback'),
   }
 })
 
@@ -1136,7 +1137,7 @@ const addSplitPayment = async () => {
           : {}),
         standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
         liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
-        standard_tax_label: completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label ?? 'Impuesto',
+        standard_tax_label: completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label ?? t('pos.checkout.taxFallback'),
         ...(tipAmount.value > 0
           ? {
               tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
@@ -1654,7 +1655,7 @@ const toggleLinePromoApply = async (item: any, apply: boolean) => {
   } catch (error: any) {
     toast.error(
       error?.data?.detail || error?.data?.message || 'No se pudo actualizar la promoción del ítem',
-      { title: 'Error' },
+      { title: t('pos.checkout.errorTitle') },
     )
   } finally {
     togglingPromoLineId.value = null
@@ -1790,7 +1791,7 @@ const processOrder = async () => {
           customer_id: selectedCustomer.value.id,
           standard_tax: taxPreview.value?.standard_tax ?? 0,
           liquor_tax: taxPreview.value?.liquor_tax ?? 0,
-          standard_tax_label: taxPreview.value?.standard_tax_label ?? 'Impuesto',
+          standard_tax_label: taxPreview.value?.standard_tax_label ?? t('pos.checkout.taxFallback'),
         }
         wasMesaMode.value = false
         cartItemsSnapshot.value = [...cartItems.value]
@@ -1879,7 +1880,7 @@ const processOrder = async () => {
         order_ids: closeData.order_ids || [],
         standard_tax: Number(closeData.standard_tax) || 0,
         liquor_tax: Number(closeData.liquor_tax) || 0,
-        standard_tax_label: closeData.standard_tax_label || 'Impuesto',
+        standard_tax_label: closeData.standard_tax_label || t('pos.checkout.taxFallback'),
         ...promoFieldsFromCloseResponse(closeData, _subtotal),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
@@ -2022,7 +2023,7 @@ const processOrder = async () => {
         customer_id: selectedCustomer.value?.id,
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
-        standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
+        standard_tax_label: response.data.standard_tax_label ?? t('pos.checkout.taxFallback'),
         ...promoFieldsFromCloseResponse(response.data, _subtotalPos),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
@@ -2576,11 +2577,11 @@ const receiptInvoiceTaxLines = computed(() => {
   if (!result) return []
   return [
     {
-      label: result.standard_tax_label || 'Impuesto',
+      label: result.standard_tax_label || t('pos.checkout.taxFallback'),
       amount: Number(result.standard_tax) || 0,
     },
     {
-      label: 'IVA licores',
+      label: t('pos.checkout.liquorVat'),
       rate: 5,
       amount: Number(result.liquor_tax) || 0,
     },
@@ -2641,7 +2642,7 @@ const posInvoiceLabel = computed(() =>
 )
 
 const onPosInvoiceEmailSent = (email: string) => {
-  toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
+  toast.success(t('pos.checkout.invoiceSent', { email }), { title: t('pos.checkout.invoiceSentTitle') })
 }
 
 function capturePrefacturaPrintSnapshot() {
@@ -2839,7 +2840,7 @@ const sendReceiptEmail = async () => {
         subtotal: orderResult.value.subtotal ?? 0,
         standard_tax: orderResult.value.standard_tax ?? 0,
         liquor_tax: orderResult.value.liquor_tax ?? 0,
-        standard_tax_label: orderResult.value.standard_tax_label ?? 'Impuesto',
+        standard_tax_label: orderResult.value.standard_tax_label ?? t('pos.checkout.taxFallback'),
         promo_savings: orderResult.value.promo_savings ?? 0,
         promo_breakdown: orderResult.value.promo_breakdown ?? [],
         waro_redemption_summary: orderResult.value.waro_redemption_summary ?? null,
@@ -2861,7 +2862,7 @@ const sendReceiptEmail = async () => {
         : typeof detail === 'string'
           ? detail
           : 'No se pudo enviar el correo. Verifica la dirección.'
-    toast.error(message, { title: 'Error al enviar recibo' })
+    toast.error(message, { title: t('pos.checkout.sendReceiptErrorTitle') })
   } finally {
     isSendingEmail.value = false
   }
@@ -3064,7 +3065,7 @@ watch(
         '/api/customers/search-or-create',
         {
           method: 'POST',
-          body: { phone_number: '0000000000', name: 'Cliente sin datos' },
+          body: { phone_number: '0000000000', name: t('pos.checkout.customerNoData') },
         },
       )
       if (res.success) selectedCustomer.value = res.data
@@ -3103,8 +3104,8 @@ onUnmounted(() => {
       <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
-      <h2 class="text-xl font-semibold text-text-primary mb-2">Carrito Vacío</h2>
-      <p class="text-text-secondary mb-6">No hay productos en tu orden</p>
+      <h2 class="text-xl font-semibold text-text-primary mb-2">{{ t('pos.checkout.emptyTitle') }}</h2>
+      <p class="text-text-secondary mb-6">{{ t('pos.checkout.emptyBody') }}</p>
       <UiButton variant="default" @click="sessionStorage.setItem('posNavigation', 'true'); router.push('/pos')">
         Volver al POS
       </UiButton>
@@ -3223,7 +3224,7 @@ onUnmounted(() => {
                   class="mt-2 flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2 cursor-pointer"
                   :class="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') ? 'opacity-60 pointer-events-none' : ''"
                 >
-                  <span class="text-xs font-medium text-text-primary">Aplicar promoción</span>
+                  <span class="text-xs font-medium text-text-primary">{{ t('pos.checkout.applyPromo') }}</span>
                   <span class="relative inline-flex items-center flex-shrink-0">
                     <input
                       type="checkbox"
@@ -3255,7 +3256,7 @@ onUnmounted(() => {
               {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
+              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || t('pos.checkout.customerNoData') }}</p>
               <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
               <p v-if="selectedCustomer.fiscal_id" class="text-xs text-state-success-text  truncate mt-0.5 flex items-center gap-1">
                 <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
@@ -3269,7 +3270,7 @@ onUnmounted(() => {
                 <div
                   v-if="isWalletPending"
                   class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
-                  aria-label="Cargando saldo wallet"
+                  :aria-label="t('pos.checkout.loadingWalletAria')"
                 />
                 <span
                   v-else
@@ -3296,7 +3297,7 @@ onUnmounted(() => {
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
-            <span class="font-medium">Buscar o identificar cliente</span>
+            <span class="font-medium">{{ t('pos.checkout.identifyCustomer') }}</span>
           </button>
         </div>
 
@@ -3494,7 +3495,7 @@ onUnmounted(() => {
               <input
                 v-model="methodSearch"
                 type="text"
-                placeholder="Buscar método..."
+                :placeholder="t('pos.checkout.searchMethod')"
                 class="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -3568,7 +3569,7 @@ onUnmounted(() => {
           <!-- Credit due date (optional) — shown only when a triggersCartera group is selected -->
           <div v-if="selectedGroup?.triggersCartera && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-state-warning-bg  border border-state-warning-border  rounded-xl">
             <label class="block text-xs font-semibold text-state-warning-text  mb-1.5">
-              Fecha límite de pago <span class="font-normal text-state-warning-text">(opcional)</span>
+              {{ t('pos.checkout.paymentDueOptional') }} <span class="font-normal text-state-warning-text">{{ t('pos.checkout.optional') }}</span>
             </label>
             <input
               v-model="creditDueDate"
@@ -4760,7 +4761,7 @@ onUnmounted(() => {
               <span class="text-sm font-medium text-state-warning-text">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
             </div>
             <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? 'Impuesto' }}</span>
+              <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? t('pos.checkout.taxFallback') }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
             </div>
             <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between gap-3">
@@ -5158,7 +5159,7 @@ onUnmounted(() => {
       <span>-{{ formatCurrency(prefacturaPrintData.waroDiscountCop) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
-      <span>{{ taxPreview.standard_tax_label || 'Impuesto' }}</span>
+      <span>{{ taxPreview.standard_tax_label || t('pos.checkout.taxFallback') }}</span>
       <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
@@ -5306,7 +5307,7 @@ onUnmounted(() => {
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
       <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de impuestos</div>
       <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-item receipt-small">
-        <span>{{ orderResult.standard_tax_label || 'Impuesto' }}</span>
+        <span>{{ orderResult.standard_tax_label || t('pos.checkout.taxFallback') }}</span>
         <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
       </div>
       <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">

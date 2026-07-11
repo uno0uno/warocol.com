@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 import {
   BanknotesIcon,
@@ -125,7 +126,7 @@ const loadAdvances = async () => {
     advances.value = res?.data?.advances ?? []
   } catch (error: any) {
     advances.value = []
-    toast.error(error?.data?.detail || 'No se pudieron cargar los anticipos', { title: 'Error' })
+    toast.error(error?.data?.detail || t('pos.advance.loadError'), { title: 'Error' })
   } finally {
     loadingAdvances.value = false
   }
@@ -153,11 +154,11 @@ const submit = async () => {
         notes: notes.value.trim() || null,
       },
     })
-    toast.success(`Anticipo registrado por ${formatCurrency(amountNumber.value)}`, { title: 'Anticipo mesa' })
+    toast.success(`Anticipo registrado por ${formatCurrency(amountNumber.value)}`, { title: t('pos.advance.tableAdvance') })
     resetForm()
     await refreshAfterMutation()
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'No se pudo registrar el anticipo', { title: 'Error' })
+    toast.error(error?.data?.detail || t('pos.advance.registerError'), { title: 'Error' })
   } finally {
     submitting.value = false
   }
@@ -169,12 +170,12 @@ const voidAdvance = async (advance: SessionAdvance) => {
   try {
     await $fetch(`/api/tables/${props.tableId}/session-advances/${advance.id}`, {
       method: 'DELETE',
-      body: { reason: 'Anulado desde POS' },
+      body: { reason: t('pos.advance.voidedFromPos') },
     })
-    toast.success('Anticipo anulado', { title: 'Anticipo mesa' })
+    toast.success(t('pos.advance.voided'), { title: t('pos.advance.tableAdvance') })
     await refreshAfterMutation()
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'No se pudo anular el anticipo', { title: 'Error' })
+    toast.error(error?.data?.detail || t('pos.advance.voidError'), { title: 'Error' })
   } finally {
     voidingId.value = null
   }
@@ -219,7 +220,7 @@ watch(suggestedAmount, () => {
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Pagar anticipo de mesa"
+        :aria-label="t('pos.advance.title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -235,13 +236,13 @@ watch(suggestedAmount, () => {
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">Pagar anticipo</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
-                  {{ tableName || 'Mesa activa' }}
+                  {{ tableName || t('pos.advance.activeTable') }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('pos.advance.closePanelAria')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
@@ -380,7 +381,7 @@ watch(suggestedAmount, () => {
                   type="button"
                   class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-status-error-text/30 text-status-error-text hover:bg-status-error-bg disabled:opacity-50"
                   :disabled="!!voidingId"
-                  aria-label="Anular anticipo"
+                  :aria-label="t('pos.advance.voidAdvance')"
                   @click="voidAdvance(advance)"
                 >
                   <UiLoadingDots v-if="voidingId === advance.id" size="6px" />

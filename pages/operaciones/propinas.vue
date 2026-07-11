@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
@@ -7,7 +8,7 @@ definePageMeta({
   module: 'finanzas',
 })
 
-useHead({ title: 'Propinas | Ventas' })
+useHead({ title: () => t('operaciones.head.propinas') })
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
@@ -57,12 +58,12 @@ const toggleTipTaxableDefault = async () => {
     await invalidateContextCaches()
     toast.success(
       newState
-        ? 'Por defecto las propinas se cobrarán gravadas (con impuesto)'
-        : 'Por defecto las propinas se cobrarán sin impuesto',
-      { title: newState ? 'Propina gravada por defecto' : 'Propina no gravada por defecto' },
+        ? t('operaciones.propinas.taxedDefaultOn')
+        : t('operaciones.propinas.taxedDefaultOff'),
+      { title: newState ? t('operaciones.propinas.taxedDefault') : t('operaciones.propinas.untaxedDefault') },
     )
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: 'Error' })
   } finally {
     isTogglingTaxable.value = false
   }
@@ -80,12 +81,12 @@ const toggleTipEnabled = async () => {
     await invalidateContextCaches()
     toast.success(
       newState
-        ? 'Los clientes verán la opción de propina en el checkout'
-        : 'La propina queda oculta en el checkout',
-      { title: newState ? 'Propinas activadas' : 'Propinas desactivadas' },
+        ? t('operaciones.propinas.visibleOn')
+        : t('operaciones.propinas.hiddenOff'),
+      { title: newState ? t('operaciones.propinas.enabled') : t('operaciones.propinas.disabled') },
     )
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: 'Error' })
   } finally {
     isToggling.value = false
   }
@@ -127,20 +128,20 @@ const addPreset = () => {
   presetError.value = ''
   const raw = newPresetInput.value.trim().replace(',', '.')
   if (!raw) {
-    presetError.value = 'Ingresa un porcentaje.'
+    presetError.value = t('operaciones.propinas.enterPercent')
     return
   }
   const value = Number(raw)
   if (!Number.isFinite(value)) {
-    presetError.value = 'Ingresa un número válido.'
+    presetError.value = t('operaciones.propinas.invalidNumber')
     return
   }
   if (value < 0 || value > 100) {
-    presetError.value = 'El porcentaje debe estar entre 0 y 100.'
+    presetError.value = t('operaciones.propinas.percentRange')
     return
   }
   if (draftPresets.value.length >= 5) {
-    presetError.value = 'Máximo 5 sugerencias.'
+    presetError.value = t('operaciones.propinas.maxPresets')
     return
   }
   // Round to 2 decimals to match DB numeric(5,2) precision and avoid silent rounding.
@@ -166,7 +167,7 @@ const isSavingConfig = ref(false)
 const saveConfig = async () => {
   if (!hasChanges.value || isSavingConfig.value) return
   if (draftPresets.value.length === 0) {
-    toast.error('Necesitas al menos un preset.', { title: 'Sin presets' })
+    toast.error('Necesitas al menos un preset.', { title: t('operaciones.propinas.noPresets') })
     return
   }
   isSavingConfig.value = true
@@ -179,9 +180,9 @@ const saveConfig = async () => {
       },
     })
     await invalidateContextCaches()
-    toast.success('Configuración guardada', { title: 'Guardado' })
+    toast.success(t('operaciones.propinas.saved'), { title: 'Guardado' })
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al guardar la configuración', { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.saveError'), { title: 'Error' })
   } finally {
     isSavingConfig.value = false
   }
@@ -204,7 +205,7 @@ const saveConfig = async () => {
       >
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
-            {{ businessProfile.tip_enabled ? 'Propinas activadas' : 'Propinas desactivadas' }}
+            {{ businessProfile.tip_enabled ? t('operaciones.propinas.enabled') : t('operaciones.propinas.disabled') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
             Cuando está activado, los clientes ven sugerencias de propina al cobrar (POS y online). La propina es voluntaria y se asigna al mesero de la orden.
@@ -213,7 +214,7 @@ const saveConfig = async () => {
         <label
           class="relative inline-flex items-center cursor-pointer flex-shrink-0"
           :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
-          :aria-label="businessProfile.tip_enabled ? 'Desactivar propinas' : 'Activar propinas'"
+          :aria-label="businessProfile.tip_enabled ? t('operaciones.propinas.disable') : t('operaciones.propinas.enable')"
         >
           <input
             type="checkbox"
@@ -234,7 +235,7 @@ const saveConfig = async () => {
         >
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              {{ businessProfile.tip_taxable_default ? 'Propina gravada por defecto' : 'Propina no gravada por defecto' }}
+              {{ businessProfile.tip_taxable_default ? t('operaciones.propinas.taxedDefault') : t('operaciones.propinas.untaxedDefault') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
               En el checkout el cajero puede cambiar por venta. Si está activo, se aplica IVA o INC a la propina según la configuración fiscal.
@@ -243,7 +244,7 @@ const saveConfig = async () => {
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingTaxable ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.tip_taxable_default ? 'Desactivar propina gravada por defecto' : 'Activar propina gravada por defecto'"
+            :aria-label="businessProfile.tip_taxable_default ? t('operaciones.propinas.disableTaxedDefault') : t('operaciones.propinas.enableTaxedDefault')"
           >
             <input
               type="checkbox"
@@ -267,14 +268,14 @@ const saveConfig = async () => {
         <!-- ── Presets section ── -->
         <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 flex flex-col gap-4">
           <div class="flex flex-col gap-1">
-            <p class="text-sm font-semibold text-text-primary">Porcentajes sugeridos</p>
+            <p class="text-sm font-semibold text-text-primary">{{ t('operaciones.propinas.suggestedPercents') }}</p>
             <p class="text-xs leading-snug text-text-secondary">
               Hasta 5 opciones, cada una entre 0 y 100. Se muestran como chips en el checkout, calculados sobre el subtotal (antes de impuestos).
             </p>
           </div>
 
           <!-- Chip row -->
-          <div role="group" aria-label="Porcentajes sugeridos" class="flex flex-wrap gap-2">
+          <div role="group" :aria-label="t('operaciones.propinas.suggestedPercents')" class="flex flex-wrap gap-2">
             <div
               v-for="(p, i) in draftPresets"
               :key="`preset-${i}-${p}`"
@@ -298,7 +299,7 @@ const saveConfig = async () => {
           <!-- Add control -->
           <div class="flex flex-col sm:flex-row gap-2 sm:items-start">
             <div class="flex-1 flex flex-col gap-1">
-              <label for="new-preset" class="sr-only">Agregar porcentaje</label>
+              <label for="new-preset" class="sr-only">{{ t('operaciones.propinas.addPercent') }}</label>
               <input
                 id="new-preset"
                 v-model="newPresetInput"
@@ -335,7 +336,7 @@ const saveConfig = async () => {
           </div>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-            :aria-label="draftPreselect ? 'Desactivar pre-selección' : 'Activar pre-selección'"
+            :aria-label="draftPreselect ? t('operaciones.propinas.disablePreselect') : t('operaciones.propinas.enablePreselect')"
           >
             <input
               type="checkbox"
@@ -359,7 +360,7 @@ const saveConfig = async () => {
             class="min-h-[44px] px-4 py-2 rounded-lg bg-action-primary-bg text-action-primary-text font-medium text-sm transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
             @click="saveConfig"
           >
-            {{ isSavingConfig ? 'Guardando...' : 'Guardar cambios' }}
+            {{ isSavingConfig ? t('common.loading') : t('operaciones.propinas.saveChanges') }}
           </button>
         </div>
 

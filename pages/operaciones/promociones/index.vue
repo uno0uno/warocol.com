@@ -14,7 +14,7 @@
       >
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
-            {{ opsProfile.allow_promo_line_opt_out ? 'Exclusión por ítem activada' : 'Exclusión por ítem desactivada' }}
+            {{ opsProfile.allow_promo_line_opt_out ? t('operaciones.promociones.itemOptOutOn') : t('operaciones.promociones.itemOptOutOff') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
             Permitir excluir promoción por ítem en checkout — el cajero puede desactivar la promoción en una línea sin quitar el producto.
@@ -23,7 +23,7 @@
         <label
           class="inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px] min-w-[2.5rem]"
           :class="isTogglingPromoLineOptOut ? 'opacity-50 pointer-events-none' : ''"
-          :aria-label="opsProfile.allow_promo_line_opt_out ? 'Desactivar exclusión por ítem' : 'Activar exclusión por ítem'"
+          :aria-label="opsProfile.allow_promo_line_opt_out ? t('operaciones.promociones.disableItemOptOut') : t('operaciones.promociones.enableItemOptOut')"
         >
           <input
             type="checkbox"
@@ -42,7 +42,7 @@
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-placeholder="Buscar promociones..."
+        :search-placeholder="t('operaciones.promociones.searchPlaceholder')"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
@@ -86,8 +86,8 @@
         :columns="columns"
         :data="filteredPromotions"
         :row-class="getRowClass"
-        empty-message="No hay promociones"
-        empty-sub-message="Crea la primera para aplicarla en el POS."
+        :empty-message="t('operaciones.promociones.emptyTitle')"
+        :empty-sub-message="t('operaciones.promociones.emptyBody')"
         variant="default"
         row-size="sm"
       >
@@ -291,7 +291,7 @@
       v-model="deleteModalOpen"
       :title="deleteModalTitle"
       :message="deleteModalMessage"
-      confirm-label="Sí, eliminar"
+      :confirm-label="t('operaciones.promociones.yesDelete')"
       reason-placeholder="Ej: promoción vencida, regla duplicada, campaña finalizada"
       :loading="!!deletingPromotionId"
       :error="deleteError"
@@ -302,6 +302,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { PencilIcon as PencilOutlineIcon, TrashIcon as TrashOutlineIcon } from '@heroicons/vue/24/outline'
@@ -366,12 +367,12 @@ const togglePromoLineOptOutSetting = async () => {
     await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
     toast.success(
       enabled
-        ? 'Los cajeros pueden excluir promociones por ítem en checkout'
-        : 'Exclusión de promoción por ítem desactivada',
-      { title: enabled ? 'Opción activada' : 'Opción desactivada' },
+        ? t('operaciones.promociones.cashiersCanOptOut')
+        : t('operaciones.promociones.itemOptOutDisabledMsg'),
+      { title: enabled ? t('operaciones.promociones.optionOn') : t('operaciones.promociones.optionOff') },
     )
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al guardar la configuración', { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.promociones.saveError'), { title: 'Error' })
   } finally {
     isTogglingPromoLineOptOut.value = false
   }
@@ -397,11 +398,11 @@ const deleteModalOpen = computed({
 const deleteModalTitle = computed(() =>
   deletePromotionTarget.value
     ? `¿Eliminar ${deletePromotionTarget.value.name}?`
-    : '¿Eliminar promoción?',
+    : t('operaciones.promociones.deleteConfirmTitle'),
 )
 const deleteModalMessage = computed(() =>
   deletePromotionTarget.value
-    ? 'Se eliminará la promoción y el motivo quedará registrado en la bitácora de operaciones.'
+    ? t('operaciones.promociones.deleteConfirmBody')
     : '',
 )
 
@@ -413,8 +414,8 @@ const statusHeaderOptions = [
   { value: 'inactive', label: 'Inactivas' },
 ]
 const promoTypeHeaderOptions = [
-  { value: 'percent_off', label: '% descuento' },
-  { value: 'fixed_off', label: 'Descuento fijo' },
+  { value: 'percent_off', label: t('operaciones.promociones.percentDiscount') },
+  { value: 'fixed_off', label: t('operaciones.promociones.fixedDiscount') },
   { value: 'bogo', label: '2x1 / BOGO' },
 ]
 
@@ -608,11 +609,11 @@ async function deletePromotion(item: PromotionRow, reason: string) {
       method: 'DELETE',
       body: { reason: reason.trim() },
     })
-    toast.success('Promoción eliminada')
+    toast.success(t('operaciones.promociones.deleted'))
     deletePromotionTarget.value = null
     await refreshHandler()
   } catch (error: any) {
-    deleteError.value = error?.data?.detail ?? 'No se pudo eliminar la promoción'
+    deleteError.value = error?.data?.detail ?? t('operaciones.promociones.deleteError')
     toast.error(deleteError.value, { title: 'Error' })
   } finally {
     deletingPromotionId.value = null
@@ -652,7 +653,7 @@ watch(() => route.query, openFromQuery)
 const statusBadgeLabel = (item: PromotionRow) => {
   if (!item.is_active) return 'Desactivada'
   if (item.is_currently_active === true) return 'Activa ahora'
-  if (item.is_currently_active === false) return 'Fuera de horario'
+  if (item.is_currently_active === false) return t('operaciones.promociones.outsideHours')
   return 'Activa'
 }
 

@@ -6,9 +6,9 @@
     <!-- Cart Header -->
     <div class="px-4 py-2.5 border-b border-border bg-surface">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-bold text-text-primary tracking-wide">Orden Actual</h2>
+        <h2 class="text-sm font-bold text-text-primary tracking-wide">{{ t('pos.cart.currentOrder') }}</h2>
         <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-          {{ displayItemCount }} {{ displayItemCount === 1 ? 'ítem' : 'ítems' }}
+          {{ displayItemCount }} {{ displayItemCount === 1 ? t('pos.cart.item') : t('pos.cart.items') }}
         </span>
       </div>
     </div>
@@ -39,14 +39,14 @@
         <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
-        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-wider flex-shrink-0">Servido por</span>
+        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-wider flex-shrink-0">{{ t('pos.cart.servedBy') }}</span>
         <select
           :value="servedByMemberId || ''"
           class="flex-1 min-h-[32px] px-2.5 py-1 text-xs font-medium bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none text-text-primary cursor-pointer"
-          aria-label="Atribuir esta orden a un mesero"
+          :aria-label="t('pos.cart.assignWaiterAria')"
           @change="onServedByChange"
         >
-          <option value="">Sin asignar</option>
+          <option value="">{{ t('pos.cart.unassigned') }}</option>
           <option
             v-for="m in (members || [])"
             :key="m.id"
@@ -65,18 +65,18 @@
         v-if="orderPromoSavings > 0"
         class="flex items-center justify-between text-xs"
       >
-        <span class="font-medium text-text-tertiary">Descuentos promoción</span>
+        <span class="font-medium text-text-tertiary">{{ t('pos.cart.promoDiscounts') }}</span>
         <span class="font-semibold text-state-success-text  tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
       </div>
       <div
         v-if="tableAdvanceAvailable > 0"
         class="flex items-center justify-between text-xs"
       >
-        <span class="font-medium text-text-tertiary">Anticipo mesa</span>
+        <span class="font-medium text-text-tertiary">{{ t('pos.cart.tableAdvance') }}</span>
         <span class="font-semibold text-state-success-text tabular-nums">{{ formatCurrency(tableAdvanceAvailable) }}</span>
       </div>
       <div class="flex items-center justify-between gap-3">
-        <span class="text-[11px] font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
+        <span class="text-[11px] font-semibold text-text-tertiary uppercase tracking-widest">{{ t('pos.cart.total') }}</span>
         <div class="flex flex-col items-end">
           <span
             v-if="orderPromoSavings > 0"
@@ -99,7 +99,7 @@
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
-            Venta libre
+            {{ t('pos.cart.openSale') }}
           </button>
         </template>
         <template v-else>
@@ -115,7 +115,7 @@
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
-            Venta libre
+            {{ t('pos.cart.openSale') }}
           </button>
           <button
             v-if="hasCartItems && !hideProcessOrder"
@@ -131,7 +131,7 @@
             <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            {{ isDeleting ? 'Procesando...' : 'Procesar Orden' }}
+            {{ isDeleting ? t('pos.cart.processing') : t('pos.cart.processOrder') }}
           </button>
           <button
             v-if="hasCartItems"
@@ -143,7 +143,7 @@
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
-            Limpiar Carrito
+            {{ t('pos.cart.clearCart') }}
           </button>
         </template>
       </div>
@@ -161,7 +161,7 @@
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
-            Venta libre
+            {{ t('pos.cart.openSale') }}
           </button>
         </template>
         <template v-else>
@@ -177,7 +177,7 @@
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
           </svg>
-          Venta libre
+          {{ t('pos.cart.openSale') }}
         </button>
         <!-- Barra + catálogo en carrito sin venta libre como flujo principal (#796, #806) -->
         <button
@@ -190,7 +190,7 @@
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
-          Procesar Orden
+          {{ t('pos.cart.processOrder') }}
         </button>
         <!-- 2-col grid: secondary actions (Liberar moved to the active-mesa banner) -->
         <div class="grid grid-cols-2 gap-2">
@@ -199,13 +199,13 @@
             type="button"
             :disabled="tabItems.length === 0"
             class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Pedir la cuenta"
+            :aria-label="t('pos.cart.requestBillAria')"
             @click="$emit('request-bill')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185Z" />
             </svg>
-            Cuenta
+            {{ t('pos.cart.requestBill') }}
           </button>
           <!-- Limpiar -->
           <button
@@ -219,7 +219,7 @@
               <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
               </svg>
-              Limpiar
+              {{ t('pos.cart.clear') }}
             </template>
           </button>
         </div>
@@ -231,25 +231,25 @@
             type="button"
             :disabled="!canPrintLatestComanda"
             class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Reimprimir última comanda enviada"
+            :aria-label="t('pos.cart.reprintLatestAria')"
             @click="$emit('print-latest-comanda')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
             </svg>
-            Última
+            {{ t('pos.cart.latest') }}
           </button>
           <button
             type="button"
             class="min-h-[44px] rounded-lg border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-            aria-label="Abrir comandas para reimprimir"
+            :aria-label="t('pos.cart.openComandasReprintAria')"
             @click="$emit('open-comandas-reprint')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v14.25l-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5-2.625-1.5-2.625 1.5V6a2.25 2.25 0 0 1 2.25-2.25Z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5" />
             </svg>
-            <span>Comandas</span>
+            <span>{{ t('pos.cart.comandas') }}</span>
             <span
               v-if="persistedComandasCount > 0"
               class="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-surface-secondary text-[10px] font-bold text-text-secondary tabular-nums inline-flex items-center justify-center"
@@ -267,14 +267,14 @@
           :class="comandasEnabled
             ? 'bg-action-success-bg text-action-success-text focus-visible:ring-action-success-focus-ring'
             : 'bg-action-primary-bg text-action-primary-text focus-visible:ring-primary'"
-          :aria-label="`Agregar items a la ${tableSingularLower}`"
+          :aria-label="t('pos.cart.addItemsToTableAria', { table: tableSingularLower })"
           @click="$emit('add-to-tab')"
         >
           <UiLoadingDots v-if="isAddingToTab" size="9px" />
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Enviar a cocina' : `Agregar a la ${tableSingularLower}`) }}
+          {{ isAddingToTab ? t('pos.cart.sending') : (comandasEnabled ? t('pos.cart.sendToKitchen') : t('pos.cart.addToTable', { table: tableSingularLower })) }}
         </button>
         </template>
       </div>
@@ -349,7 +349,7 @@
       <!-- Divider when there are both tab items and new cart items -->
       <div v-if="mesaMode && tabItems.length > 0 && items.length > 0" class="flex items-center gap-2 py-1">
         <div class="flex-1 h-px bg-border" />
-        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex-shrink-0">Por agregar</span>
+        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex-shrink-0">{{ t('pos.cart.toAdd') }}</span>
         <div class="flex-1 h-px bg-border" />
       </div>
 
@@ -377,8 +377,8 @@
         <svg class="h-16 w-16 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
         </svg>
-        <p class="text-text-secondary">{{ mesaMode ? `${tableSingular} sin pedidos` : 'Carrito vacío' }}</p>
-          <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
+        <p class="text-text-secondary">{{ mesaMode ? t('pos.cart.tableNoOrders', { table: tableSingular }) : t('pos.cart.emptyCart') }}</p>
+          <p class="text-sm text-text-tertiary mt-1">{{ t('pos.cart.selectProducts') }}</p>
         </div>
 
       </template>
@@ -387,6 +387,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { usePOSStore } from '~/stores/usePOSStore'
 import { storeToRefs } from 'pinia'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -29,7 +30,7 @@ definePageMeta({
   module: 'pos',
 })
 
-useHead({ title: 'Producto POS' })
+useHead({ title: () => t('pos.product.pageTitle') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
@@ -180,7 +181,7 @@ const submitTarget = computed<'ready' | 'delivered'>(() =>
 const submitLabel = computed(() => {
   const n = selectedIds.value.size
   if (n === 0) {
-    return activeTab.value === 'preparing' ? 'Marcar como listas' : 'Marcar como entregadas'
+    return activeTab.value === 'preparing' ? t('pos.comandasPanel.markReady') : 'Marcar como entregadas'
   }
   if (activeTab.value === 'preparing') return `Marcar ${n} como ${n === 1 ? 'lista' : 'listas'}`
   return `Marcar ${n} como ${n === 1 ? 'entregada' : 'entregadas'}`
@@ -200,7 +201,7 @@ const submit = async () => {
     const failed = (res.failed ?? []).length
     if (failed === 0) {
       toast.success(`${ok} ${ok === 1 ? 'comanda actualizada' : 'comandas actualizadas'}`, {
-        title: 'Estado actualizado',
+        title: t('pos.comandasPanel.statusUpdated'),
       })
     } else {
       toast.success(`${ok} actualizadas · ${failed} fallaron`, { title: 'Resultado parcial' })
@@ -209,7 +210,7 @@ const submit = async () => {
     await fetchComandas()
     emit('success')
   } catch (err: any) {
-    toast.error(err?.data?.detail || err?.message || 'Error al actualizar comandas', { title: 'Error' })
+    toast.error(err?.data?.detail || err?.message || t('pos.comandasPanel.updateError'), { title: 'Error' })
   } finally {
     submitting.value = false
   }
@@ -234,7 +235,7 @@ const submit = async () => {
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Estado de comandas"
+        :aria-label="t('pos.comandasPanel.title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
@@ -252,16 +253,16 @@ const submit = async () => {
                 <ClipboardDocumentListIcon class="w-5 h-5" />
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Estado de comandas</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('pos.comandasPanel.title') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
-                  {{ tableDisplayName ? `${tableSingular} ${tableDisplayName}` : 'Comandas activas' }}
+                  {{ tableDisplayName ? `${tableSingular} ${tableDisplayName}` : t('pos.comandasPanel.active') }}
                   · {{ comandas.length }} {{ comandas.length === 1 ? 'comanda' : 'comandas' }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('pos.comandasPanel.closePanelAria')"
               class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
               @click="close"
             >
@@ -319,12 +320,12 @@ const submit = async () => {
               <CheckCircleIcon class="w-7 h-7 text-text-tertiary" />
             </div>
             <p class="text-sm font-semibold text-text-secondary">
-              {{ activeTab === 'ready' ? 'Nada listo aún' : 'Sin comandas en cocina' }}
+              {{ activeTab === 'ready' ? t('pos.comandasPanel.nothingReady') : t('pos.comandasPanel.noComandas') }}
             </p>
             <p class="text-xs text-text-tertiary mt-1 max-w-[14rem]">
               {{ activeTab === 'ready'
-                ? 'Las comandas aparecerán aquí cuando cocina las marque como listas.'
-                : 'Cuando se generen comandas nuevas las verás aquí.' }}
+                ? t('pos.comandasPanel.readyHint')
+                : t('pos.comandasPanel.emptyHint') }}
             </p>
           </div>
 
@@ -403,12 +404,12 @@ const submit = async () => {
               class="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
               @click="toggleAll"
             >
-              {{ allSelected ? 'Deseleccionar todas' : 'Seleccionar todas' }}
+              {{ allSelected ? t('pos.comandasPanel.deselectAll') : t('pos.comandasPanel.selectAll') }}
             </button>
             <button
               type="button"
               :aria-pressed="audioEnabled"
-              :aria-label="audioEnabled ? 'Desactivar aviso sonoro' : 'Activar aviso sonoro'"
+              :aria-label="audioEnabled ? t('pos.comandasPanel.soundOffAria') : t('pos.comandasPanel.soundOnAria')"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors"
               :class="audioEnabled
                 ? 'border-primary/30 bg-primary/5 text-primary'

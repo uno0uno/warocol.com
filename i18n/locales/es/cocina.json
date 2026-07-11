@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "Monitor de Comandas — WARO",
+      "heading": "Monitor de Comandas",
+      "disabledTitle": "Comandas no activadas",
+      "disabledBody": "Activá las comandas desde la configuración de tu negocio para usar este monitor.",
+      "all": "Todas",
+      "counter": "Mostrador",
+      "delivery": "Domicilios",
+      "pickup": "Recogidas",
+      "active": "Activas",
+      "ready": "Listas",
+      "readyToServe": "Listas para entregar",
+      "noActive": "No hay comandas activas",
+      "noComandas": "No hay comandas",
+      "emptyPending": "No hay órdenes pendientes ni en preparación ahora mismo.",
+      "emptyFiltered": "No se encontraron comandas con los filtros seleccionados.",
+      "soundOffAria": "Silenciar alertas",
+      "soundOnAria": "Activar alertas sonoras"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "Enlace inválido",
+      "checkUrl": "Verificá la URL o el enlace de acceso.",
+      "stationNotFound": "Estación no encontrada",
+      "loadingStation": "Cargando estación…",
+      "loadingChanges": "Cargando cambios...",
+      "soundOffAria": "Silenciar alertas",
+      "soundOnAria": "Activar alertas sonoras",
+      "enableSound": "Activar sonido",
+      "refreshAria": "Refrescar comandas",
+      "noActive": "No hay comandas activas en esta estación",
+      "readyToServe": "Listos para entregar",
+      "active": "Activas"
+    },
+    "card": {
+      "delivered": "Comanda entregada",
+      "tokenExpired": "Enlace KDS expirado. Recarga la página.",
+      "statusError": "Error al actualizar estado",
+      "quickSale": "Venta Rápida",
+      "ready": "Listo",
+      "cancel": "Cancelar"
+    },
+    "item": {
+      "tokenExpired": "Enlace KDS expirado. Recarga la página.",
+      "updateError": "Error al actualizar ítem"
+    },
+    "station": {
+      "createAria": "Crear nueva estación de cocina",
+      "newTitle": "Nueva estación",
+      "closePanelAria": "Cerrar panel",
+      "namePlaceholder": "Ej: Cocina Principal, Bar, Parrilla",
+      "colorPickerAria": "Selector de color",
+      "hexAria": "Código de color en hex",
+      "creating": "Creando estación",
+      "nameExists": "Ya existe una estación con ese nombre",
+      "createError": "Error al crear la estación"
+    }
+  }
+}

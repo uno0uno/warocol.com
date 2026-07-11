@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 interface Member {
   id: string
   name: string
@@ -26,7 +27,7 @@ const onChange = (event: Event) => {
 <template>
   <div class="flex flex-col gap-3 p-4 rounded-xl bg-surface border-2 border-border">
     <div class="flex flex-col gap-0.5">
-      <p class="text-sm font-semibold text-text-primary">Mesero para propina</p>
+      <p class="text-sm font-semibold text-text-primary">{{ t('pos.waiter.tipWaiterAria') }}</p>
       <p class="text-xs leading-snug text-text-secondary">
         Confirma o cambia quién recibe el crédito de esta venta en propinas y reportes.
       </p>
@@ -46,7 +47,7 @@ const onChange = (event: Event) => {
       <select
         :value="modelValue || ''"
         class="flex-1 min-h-[44px] px-3 py-2 text-sm font-medium bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none text-text-primary cursor-pointer"
-        aria-label="Seleccionar mesero para esta venta"
+        :aria-label="t('pos.waiter.selectWaiterAria')"
         @change="onChange"
       >
         <option value="">Sin asignar</option>

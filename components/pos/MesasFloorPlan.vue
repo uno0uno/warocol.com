@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
@@ -167,7 +168,7 @@ const minimumConsumptionLabel = (table: any): string | null => {
   const state = table.session?.minimum_consumption
   if (!state?.enabled || !(Number(state.amount) > 0)) return null
   const remaining = Number(state.remaining) || 0
-  if (state.covered || remaining <= 0) return 'Mínimo cubierto'
+  if (state.covered || remaining <= 0) return t('pos.floor.minCovered')
   return `${formatCurrency(remaining)} faltante`
 }
 
@@ -431,7 +432,7 @@ onUnmounted(() => {
                 class="text-xs font-medium truncate text-center"
                 :class="[footerTextClass(table.status), !table.effective_waiter_member_name && 'italic']"
               >
-                {{ table.effective_waiter_member_name || 'Sin asignar' }}
+                {{ table.effective_waiter_member_name || t('pos.floor.unassigned') }}
               </span>
             </div>
           </button>

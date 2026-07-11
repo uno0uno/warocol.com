@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
@@ -108,11 +109,11 @@ const inactiveTables = computed(() => {
 const tableColumns = computed(() => {
   const cols: Array<{ key: string; title: string; sortable?: boolean }> = [
     { key: 'name', title: singular.value, sortable: false },
-    { key: 'code', title: 'Código POS', sortable: false },
-    { key: 'capacity', title: 'Capacidad' },
+    { key: 'code', title: t('operaciones.mesas.posCode'), sortable: false },
+    { key: 'capacity', title: t('operaciones.mesas.capacity') },
   ]
   if (businessProfile.value?.waiter_attribution_enabled) {
-    cols.push({ key: 'mesero', title: 'Mesero' })
+    cols.push({ key: 'mesero', title: t('operaciones.mesas.waiter') })
   }
   if (businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled) {
     cols.push({ key: 'qr', title: 'QR' })
@@ -171,9 +172,9 @@ const isTableDragDisabled = computed(() =>
 )
 
 const tableDragDisabledReason = computed(() => {
-  if (hasActiveTableFilters.value) return 'Limpia la búsqueda o el filtro para reordenar'
+  if (hasActiveTableFilters.value) return t('operaciones.mesas.reorderHint')
   if (activeRegularTables.value.length < 2) return `Necesitas al menos 2 ${pluralLower.value} activas`
-  if (isSavingTableOrder.value) return 'Guardando orden...'
+  if (isSavingTableOrder.value) return t('operaciones.mesas.savingOrder')
   return `Arrastra para ordenar ${pluralLower.value} en POS`
 })
 
@@ -193,12 +194,12 @@ const saveTableOrder = async () => {
     lastConfirmedTableOrder.value = [...nextOrder]
     toast.success(
       response?.message || response?.data?.message || `Orden de ${pluralLower.value} guardado para el POS`,
-      { title: 'Orden actualizado' },
+      { title: t('operaciones.mesas.orderUpdated') },
     )
   } catch (err: any) {
     tableOrderDraft.value = [...lastConfirmedTableOrder.value]
     tableOrderError.value = tableErrorMessage(err, `Error al guardar el orden de ${pluralLower.value}`)
-    toast.error(tableOrderError.value, { title: 'No se pudo guardar' })
+    toast.error(tableOrderError.value, { title: t('operaciones.mesas.saveError') })
   } finally {
     isSavingTableOrder.value = false
   }
@@ -244,7 +245,7 @@ const confirmDeactivate = async () => {
     const status = err?.response?.status ?? err?.status
     deactivateError.value = status === 409
       ? (err?.data?.detail ?? `${singular.value} con sesión abierta, ciérrala primero`)
-      : (err?.data?.detail ?? 'Error al desactivar')
+      : (err?.data?.detail ?? t('operaciones.mesas.deactivateError'))
   } finally {
     isDeactivating.value = false
   }
@@ -299,7 +300,7 @@ const confirmDelete = async () => {
     const status = err?.response?.status ?? err?.status
     deleteError.value = status === 409
       ? (err?.data?.detail ?? `No se puede eliminar esta ${singularLower.value} ahora`)
-      : (err?.data?.detail ?? 'Error al eliminar')
+      : (err?.data?.detail ?? t('operaciones.mesas.deleteError'))
   } finally {
     isDeleting.value = false
   }
@@ -332,7 +333,7 @@ const activeTableQuotaMessage = computed(() => {
 })
 
 const showActiveTableQuotaBlocked = () => {
-  toast.warning(activeTableQuotaMessage.value, { title: 'Cupo de mesas agotado' })
+  toast.warning(activeTableQuotaMessage.value, { title: t('operaciones.mesas.quotaFull') })
 }
 
 const activeQrQuota = computed(() => getOperationalQuota('active_qr_tables'))
@@ -400,10 +401,10 @@ const toggleTablesEnabled = async () => {
     posStore.tablesEnabled = newState
     toast.success(
       newState ? `Gestión de ${pluralLower.value} activada para el POS` : `Gestión de ${pluralLower.value} desactivada`,
-      { title: newState ? '¡Módulo activado!' : 'Módulo desactivado' }
+      { title: newState ? t('operaciones.mesas.moduleOn') : t('operaciones.mesas.moduleOff') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar estado del módulo', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.mesas.moduleToggleError'), { title: 'Error' })
   } finally {
     isTogglingTables.value = false
   }
@@ -426,12 +427,12 @@ const toggleWaiterAttribution = async () => {
     await cache.invalidateQueries({ key: ['tables'] })
     toast.success(
       newState
-        ? 'Habilitado. Asigna meseros desde la tabla o al editar cada mesa.'
-        : 'Asignación de meseros deshabilitada',
+        ? t('operaciones.mesas.waiterAssignOn')
+        : t('operaciones.mesas.waiterAssignOff'),
       { title: newState ? 'Activado' : 'Desactivado' }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar el toggle', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.mesas.toggleError'), { title: 'Error' })
   } finally {
     isTogglingWaiterAttribution.value = false
   }
@@ -452,12 +453,12 @@ const toggleTableQrModule = async () => {
     await cache.invalidateQueries({ key: ['tables'] })
     toast.success(
       newState
-        ? 'Los clientes pueden pedir por QR en la mesa (con confirmación del personal)'
-        : 'Pedido por QR en mesa desactivado',
-      { title: newState ? 'Módulo activado' : 'Módulo desactivado' },
+        ? t('operaciones.mesas.qrOn')
+        : t('operaciones.mesas.qrOff'),
+      { title: newState ? t('operaciones.mesas.moduleActivated') : t('operaciones.mesas.moduleOff') },
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar el módulo QR', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.mesas.qrModuleError'), { title: 'Error' })
   } finally {
     isTogglingTableQrModule.value = false
   }
@@ -563,7 +564,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingTableQrModule ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.table_qr_module_enabled ? 'Desactivar pedido por QR' : 'Activar pedido por QR'"
+            :aria-label="businessProfile.table_qr_module_enabled ? t('operaciones.mesas.disableQr') : t('operaciones.mesas.enableQr')"
           >
             <input
               type="checkbox"
@@ -588,7 +589,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #additional-filters>
           <UiFilterSelect
             v-model="statusFilter"
-            placeholder="Todos los estados"
+            :placeholder="t('operaciones.mesas.allStatuses')"
             :options="statusOptions"
             aria-label="Estado"
           />
@@ -674,7 +675,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           chosen-class="bg-data-table-row-hover-bg"
           drag-class="shadow-lg"
           class="divide-y divide-data-table-border"
-          aria-label="Mesas activas"
+          :aria-label="t('operaciones.mesas.activeTables')"
           @start="onTableOrderDragStart"
           @end="onTableOrderDragEnd"
         >
@@ -703,14 +704,14 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   </span>
                 </div>
                 <p class="mt-0.5 text-xs text-text-secondary md:hidden">
-                  {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
+                  {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : t('operaciones.mesas.noCapacity') }}
                 </p>
                 <p
                   v-if="businessProfile?.waiter_attribution_enabled"
                   class="text-[11px] mt-0.5 font-medium truncate md:hidden"
                   :class="table.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
                 >
-                  Mesero: {{ table.assigned_member_name || 'sin asignar' }}
+                  Mesero: {{ table.assigned_member_name || t('operaciones.mesas.unassigned') }}
                 </p>
                 <div
                   v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled"
@@ -780,7 +781,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <ol
           v-else
           class="divide-y divide-data-table-border"
-          aria-label="Mesas activas filtradas"
+          :aria-label="t('operaciones.mesas.filteredActive')"
         >
           <li
             v-for="(table, index) in activeTables"
@@ -806,14 +807,14 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 </span>
               </div>
               <p class="mt-0.5 text-xs text-text-secondary md:hidden">
-                {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
+                {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : t('operaciones.mesas.noCapacity') }}
               </p>
               <p
                 v-if="businessProfile?.waiter_attribution_enabled"
                 class="text-[11px] mt-0.5 font-medium truncate md:hidden"
                 :class="table.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
               >
-                Mesero: {{ table.assigned_member_name || 'sin asignar' }}
+                Mesero: {{ table.assigned_member_name || t('operaciones.mesas.unassigned') }}
               </p>
             </div>
             <span class="hidden text-sm text-text-secondary md:block">
@@ -863,7 +864,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-secondary line-through">{{ item.name }}</span>
                 <p class="text-xs text-text-tertiary mt-0.5">
-                  {{ item.capacity ? `${item.capacity} persona${item.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
+                  {{ item.capacity ? `${item.capacity} persona${item.capacity !== 1 ? 's' : ''}` : t('operaciones.mesas.noCapacity') }}
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">

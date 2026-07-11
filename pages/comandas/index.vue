@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
@@ -6,7 +7,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
-useHead({ title: 'Monitor de Comandas — WARO' })
+useHead({ title: () => t('cocina.monitor.title') })
 
 const { currentTenant, businessProfile } = useTenantReactive()
 const { plural: tablePlural } = useTableLabel()
@@ -17,17 +18,17 @@ const comandasEnabled = computed(() => businessProfile.value?.comandas_enabled =
 
 // ── Filters ────────────────────────────────────────────────────────────────
 const SOURCE_TYPES = computed(() => [
-  { value: '',         label: 'Todas' },
+  { value: '',         label: t('cocina.monitor.all') },
   { value: 'table',    label: tablePlural.value },
-  { value: 'pos',      label: 'Mostrador' },
-  { value: 'delivery', label: 'Domicilios' },
-  { value: 'pickup',   label: 'Recogidas' },
+  { value: 'pos',      label: t('cocina.monitor.counter') },
+  { value: 'delivery', label: t('cocina.monitor.delivery') },
+  { value: 'pickup',   label: t('cocina.monitor.pickup') },
 ])
 
 const STATUS_OPTIONS = [
-  { value: 'pending,preparing', label: 'Activas' },
-  { value: 'ready',             label: 'Listas' },
-  { value: '',                  label: 'Todas' },
+  { value: 'pending,preparing', label: t('cocina.monitor.active') },
+  { value: 'ready',             label: t('cocina.monitor.ready') },
+  { value: '',                  label: t('cocina.monitor.all') },
 ]
 
 const selectedSourceType = ref('')
@@ -132,9 +133,9 @@ onUnmounted(() => {
       <div class="w-16 h-16 bg-surface-secondary rounded-full flex items-center justify-center mb-4 text-primary">
         <Icon name="lucide:queue" size="32" />
       </div>
-      <h3 class="text-lg font-bold text-text-primary">Comandas no activadas</h3>
+      <h3 class="text-lg font-bold text-text-primary">{{ t('cocina.monitor.disabledTitle') }}</h3>
       <p class="text-sm text-text-secondary max-w-xs mt-1">
-        Activá las comandas desde la configuración de tu negocio para usar este monitor.
+        {{ t('cocina.monitor.disabledBody') }}
       </p>
       <NuxtLink
         to="/negocio"
@@ -150,12 +151,12 @@ onUnmounted(() => {
 
       <!-- Header -->
       <div class="flex flex-wrap items-center justify-between gap-3 py-2">
-        <h1 class="text-xl font-bold text-text-primary">Monitor de Comandas</h1>
+        <h1 class="text-xl font-bold text-text-primary">{{ t('cocina.monitor.heading') }}</h1>
         <div class="flex items-center gap-2">
           <!-- Sound toggle -->
           <button
             @click="toggleSound"
-            :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
+            :title="soundEnabled ? t('cocina.monitor.soundOffAria') : t('cocina.monitor.soundOnAria')"
             class="flex items-center justify-center h-9 w-9 rounded-lg bg-surface border border-border hover:bg-surface-secondary transition-colors"
             :class="soundEnabled ? 'text-primary' : 'text-text-tertiary'"
           >
@@ -248,12 +249,12 @@ onUnmounted(() => {
             <Icon name="lucide:check-circle-2" size="32" />
           </div>
           <h3 class="text-lg font-bold text-text-primary">
-            {{ selectedStatus === 'pending,preparing' ? 'No hay comandas activas' : 'No hay comandas' }}
+            {{ selectedStatus === 'pending,preparing' ? t('cocina.monitor.noActive') : t('cocina.monitor.noComandas') }}
           </h3>
           <p class="text-sm text-text-secondary mt-1">
             {{ selectedStatus === 'pending,preparing'
-              ? 'No hay órdenes pendientes ni en preparación ahora mismo.'
-              : 'No se encontraron comandas con los filtros seleccionados.' }}
+              ? t('cocina.monitor.emptyPending')
+              : t('cocina.monitor.emptyFiltered') }}
           </p>
         </div>
 
@@ -286,14 +287,14 @@ onUnmounted(() => {
               v-else
               class="flex flex-col items-center justify-center p-6 bg-surface/50 border border-dashed border-border rounded-xl text-center"
             >
-              <p class="text-sm text-text-secondary">No hay comandas activas.</p>
+              <p class="text-sm text-text-secondary">{{ t('cocina.monitor.noActive') }}.</p>
             </div>
           </div>
 
-          <!-- Listas para entregar swim lane -->
+          <!-- {{ t('cocina.monitor.readyToServe') }} swim lane -->
           <div v-if="readyComandas.length > 0 || selectedStatus === 'ready'">
             <div class="flex items-center gap-2 mb-3">
-              <h2 class="text-sm font-black uppercase tracking-wider text-success">Listas para entregar</h2>
+              <h2 class="text-sm font-black uppercase tracking-wider text-success">{{ t('cocina.monitor.readyToServe') }}</h2>
               <span
                 v-if="readyComandas.length > 0"
                 class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-action-success-bg text-action-success-text text-[10px] font-black"
@@ -316,7 +317,7 @@ onUnmounted(() => {
               v-else
               class="flex flex-col items-center justify-center p-6 bg-surface/50 border border-dashed border-border rounded-xl text-center"
             >
-              <p class="text-sm text-text-secondary">No hay comandas listas para entregar.</p>
+              <p class="text-sm text-text-secondary">{{ t('cocina.monitor.noComandas') }} listas para entregar.</p>
             </div>
           </div>
 
