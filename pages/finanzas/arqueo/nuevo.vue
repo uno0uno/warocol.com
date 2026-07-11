@@ -140,7 +140,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ [t('finanzas.common.period'),t('finanzas.common.cash'),t('finanzas.arqueo.otherMethodsDetail'),t('finanzas.arqueo.breakdown'),t('finanzas.common.close')][currentStep - 1] }}
+            {{ [t('finanzas.common.period'), t('finanzas.common.cash'), t('finanzas.arqueo.otherMethods'), t('finanzas.arqueo.summary'), t('finanzas.common.close')][currentStep - 1] }}
           </span>
         </div>
 
@@ -682,7 +682,7 @@
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.expected') }}</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.reported') }}</span>
                 <span class="px-3 py-2 text-right">{{ t('finanzas.common.difference') }}</span>
               </div>
               <div
@@ -821,7 +821,7 @@
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.expected') }}</span>
-                <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
+                <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.reported') }}</span>
               </div>
               <div
                 v-for="(method, index) in nonCashMethods"
@@ -1112,8 +1112,8 @@ watch(
 const wizardSteps = computed(() => [
   { n: 1, label: t('finanzas.common.period') },
   { n: 2, label: t('finanzas.common.cash') },
-  { n: 3, label: t('finanzas.arqueo.otherMethodsDetail') },
-  { n: 4, label: t('finanzas.arqueo.breakdown') },
+  { n: 3, label: t('finanzas.arqueo.otherMethods') },
+  { n: 4, label: t('finanzas.arqueo.summary') },
   { n: 5, label: t('finanzas.common.close') },
 ])
 

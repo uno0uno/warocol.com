@@ -222,7 +222,10 @@
       "closing": "Closing...",
       "confirmCashCount": "Confirm cash count?",
       "next": "Next",
-      "loadPeriodSummaryError": "The period summary could not be loaded."
+      "loadPeriodSummaryError": "The period summary could not be loaded.",
+      "otherMethods": "Other methods",
+      "summary": "Summary",
+      "reported": "Reported"
     },
     "cartera": {
       "totalReceivable": "Total receivable",

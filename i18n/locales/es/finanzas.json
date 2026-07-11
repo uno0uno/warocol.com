@@ -222,7 +222,10 @@
       "closing": "Cerrando...",
       "confirmCashCount": "¿Confirmar arqueo?",
       "next": "Siguiente",
-      "loadPeriodSummaryError": "No se pudo cargar el resumen del período."
+      "loadPeriodSummaryError": "No se pudo cargar el resumen del período.",
+      "otherMethods": "Otros métodos",
+      "summary": "Resumen",
+      "reported": "Reportado"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",
