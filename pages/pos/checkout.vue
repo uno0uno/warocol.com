@@ -2410,8 +2410,8 @@ const receiptPrintSettings = computed(() =>
 )
 
 const receiptTipLabel = computed(() => {
-  const label = (receiptPrintSettings.value.tip_label || 'Propina').trim()
-  return label || 'Propina'
+  const label = (receiptPrintSettings.value.tip_label || t('pos.receipt.tipDefault')).trim()
+  return label || t('pos.receipt.tipDefault')
 })
 
 const receiptLogoUrl = computed(() => {
@@ -2424,7 +2424,7 @@ const receiptLogoUrl = computed(() => {
 const prefacturaDocumentLabel = computed(() => {
   const label = (receiptPrintSettings.value.document_label || '').trim()
   if (!label || /factura/i.test(label) || /prefactura|pre-cuenta|pre cuenta|precuenta/i.test(label)) {
-    return 'Prefactura'
+    return t('pos.receipt.documentPrefactura')
   }
   return label
 })
@@ -2432,7 +2432,7 @@ const prefacturaDocumentLabel = computed(() => {
 const receiptDocumentLabel = computed(() => {
   const label = (receiptPrintSettings.value.document_label || '').trim()
   // Prefactura-like labels first — /factura/i matches the "factura" substring in "Prefactura" (#942).
-  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return 'Factura'
+  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return t('pos.receipt.documentFactura')
   if (/factura/i.test(label)) return label
   return label
 })
@@ -5093,14 +5093,14 @@ onUnmounted(() => {
     <div v-if="isKitchenServiceMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
       {{ tableSingular }} {{ prefacturaTableCode }} — {{ posStore.activeTableSession.tableName }}
     </div>
-    <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">Barra</div>
-    <div v-else class="receipt-row receipt-small">Mostrador</div>
+    <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">{{ t('pos.receipt.bar') }}</div>
+    <div v-else class="receipt-row receipt-small">{{ t('pos.receipt.counter') }}</div>
     <div v-if="prefacturaWaiterName" class="receipt-row receipt-small">
-      Mesero: {{ prefacturaWaiterName }}
+      {{ t('pos.receipt.waiter', { name: prefacturaWaiterName }) }}
     </div>
     <template v-if="selectedCustomer && !isAnonymousCustomer">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">Datos cliente</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.customerData') }}</div>
       <div class="receipt-row receipt-small">
         {{ selectedCustomer.fiscal_business_name || selectedCustomer.name || selectedCustomer.phone_number }}
       </div>
@@ -5111,10 +5111,10 @@ onUnmounted(() => {
     <div class="receipt-divider">--------------------------------</div>
 
     <div class="receipt-grid-header receipt-small">
-      <span class="receipt-col-desc">Descripción</span>
-      <span class="receipt-col-qty">Cant</span>
-      <span class="receipt-col-price">Precio</span>
-      <span class="receipt-col-total">Total</span>
+      <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>
+      <span class="receipt-col-qty">{{ t('pos.receipt.qty') }}</span>
+      <span class="receipt-col-price">{{ t('pos.receipt.price') }}</span>
+      <span class="receipt-col-total">{{ t('pos.receipt.total') }}</span>
     </div>
     <template v-for="item in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
       <div class="receipt-grid-row receipt-small">
@@ -5139,7 +5139,7 @@ onUnmounted(() => {
     <div class="receipt-divider">--------------------------------</div>
 
     <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
-      <span>Subtotal</span>
+      <span>{{ t('pos.receipt.subtotal') }}</span>
       <span>{{ formatCurrency(prefacturaPrintData.cartSubtotal) }}</span>
     </div>
     <div
@@ -5151,11 +5151,11 @@ onUnmounted(() => {
       <span>-{{ formatCurrency(promo.savings) }}</span>
     </div>
     <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
-      <span>Descuento manual</span>
+      <span>{{ t('pos.receipt.manualDiscount') }}</span>
       <span>-{{ formatCurrency(prefacturaPrintData.manualDiscountAmount) }}</span>
     </div>
     <div v-if="prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
-      <span>{{ prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : 'Canje WaRo' }}</span>
+      <span>{{ prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : t('pos.receipt.waroRedeem') }}</span>
       <span>-{{ formatCurrency(prefacturaPrintData.waroDiscountCop) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
@@ -5163,13 +5163,13 @@ onUnmounted(() => {
       <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
-      <span>IVA licores 5%</span>
+      <span>{{ t('pos.receipt.liquorVat') }}</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
     <template v-if="prefacturaPrintData.tipAmount > 0 || prefacturaPrintData.advanceApplied > 0">
       <div class="receipt-item">
-        <span>Total orden</span>
+        <span>{{ t('pos.receipt.orderTotal') }}</span>
         <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
       </div>
       <div class="receipt-item">
@@ -5181,21 +5181,21 @@ onUnmounted(() => {
         <span>{{ formatCurrency(prefacturaPrintData.tipTaxAmount) }}</span>
       </div>
       <div v-if="prefacturaPrintData.advanceApplied > 0" class="receipt-item">
-        <span>Anticipo mesa</span>
+        <span>{{ t('pos.receipt.tableAdvance') }}</span>
         <span>-{{ formatCurrency(prefacturaPrintData.advanceApplied) }}</span>
       </div>
       <div class="receipt-total">
-        <span>TOTAL A COBRAR</span>
+        <span>{{ t('pos.receipt.totalDue') }}</span>
         <span>{{ formatCurrency(prefacturaPrintData.amountDue) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
-      <span>TOTAL</span>
+      <span>{{ t('pos.receipt.totalUpper') }}</span>
       <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
     </div>
     <template v-if="prefacturaPrintData.splitPayments.length > 0">
       <div class="receipt-divider">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">Pagos registrados</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentsRegistered') }}</div>
       <div
         v-for="(p, idx) in prefacturaPrintData.splitPayments"
         :key="p.id"
@@ -5205,19 +5205,19 @@ onUnmounted(() => {
         <span>{{ formatCurrency(p.amount) }}</span>
       </div>
       <div class="receipt-item">
-        <span>{{ prefacturaPrintData.splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+        <span>{{ prefacturaPrintData.splitIsComplete ? t('pos.receipt.paymentComplete') : t('pos.receipt.balancePending') }}</span>
         <span>{{ formatCurrency(prefacturaPrintData.splitRemaining) }}</span>
       </div>
     </template>
 
     <div v-if="isKitchenServiceMode && cartItems.some(i => i.fired === false)" class="receipt-row receipt-small" style="margin-top:6px;">
-      * pendiente de enviar a cocina
+      {{ t('pos.receipt.pendingKitchen') }}
     </div>
 
     <div class="receipt-divider">================================</div>
     <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
-    <div class="receipt-footer receipt-small" style="font-weight:bold;">PREFACTURA — DOCUMENTO INFORMATIVO</div>
-    <div class="receipt-footer receipt-small">No es comprobante fiscal ni factura electrónica DIAN</div>
+    <div class="receipt-footer receipt-small" style="font-weight:bold;">{{ t('pos.receipt.prefacturaBanner') }}</div>
+    <div class="receipt-footer receipt-small">{{ t('pos.receipt.prefacturaNotFiscal') }}</div>
     <!-- WARO = software/tecnología; emisor/vendedor = establecimiento (tenant) -->
     <PosReceiptPlatformFooter document-kind="prefactura" :platform-legal="platformLegal" />
   </div>
@@ -5240,14 +5240,14 @@ onUnmounted(() => {
     <div v-if="receiptPrintContext?.wasMesa && receiptPrintContext.tableName" class="receipt-row receipt-small">
       {{ tableSingular }} {{ receiptPrintContext.tableCode }} — {{ receiptPrintContext.tableName }}
     </div>
-    <div v-else-if="receiptPrintContext?.isBar" class="receipt-row receipt-small">Barra</div>
-    <div v-else-if="receiptPrintContext" class="receipt-row receipt-small">Mostrador</div>
+    <div v-else-if="receiptPrintContext?.isBar" class="receipt-row receipt-small">{{ t('pos.receipt.bar') }}</div>
+    <div v-else-if="receiptPrintContext" class="receipt-row receipt-small">{{ t('pos.receipt.counter') }}</div>
     <div v-if="receiptPrintContext?.waiterName" class="receipt-row receipt-small">
-      Mesero: {{ receiptPrintContext.waiterName }}
+      {{ t('pos.receipt.waiter', { name: receiptPrintContext.waiterName }) }}
     </div>
     <template v-if="receiptPrintContext?.customerName">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">Datos cliente</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.customerData') }}</div>
       <div class="receipt-row receipt-small">{{ receiptPrintContext.customerName }}</div>
       <div v-if="receiptPrintContext.customerFiscalId" class="receipt-row receipt-small">
         {{ receiptPrintContext.customerFiscalIdType }}: {{ receiptPrintContext.customerFiscalId }}
@@ -5256,10 +5256,10 @@ onUnmounted(() => {
     <div class="receipt-divider">--------------------------------</div>
 
     <div class="receipt-grid-header receipt-small">
-      <span class="receipt-col-desc">Descripción</span>
-      <span class="receipt-col-qty">Cant</span>
-      <span class="receipt-col-price">Precio</span>
-      <span class="receipt-col-total">Total</span>
+      <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>
+      <span class="receipt-col-qty">{{ t('pos.receipt.qty') }}</span>
+      <span class="receipt-col-price">{{ t('pos.receipt.price') }}</span>
+      <span class="receipt-col-total">{{ t('pos.receipt.total') }}</span>
     </div>
     <template v-for="item in printableReceiptItems" :key="item.id ?? item.orderItemId">
       <div class="receipt-grid-row receipt-small">
