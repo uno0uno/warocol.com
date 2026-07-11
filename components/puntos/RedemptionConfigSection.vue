@@ -1,8 +1,8 @@
 <template>
   <div class="bg-surface border border-border rounded-lg overflow-hidden">
     <div class="px-4 py-3 border-b border-border">
-      <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Canje B1 — conversión Waros</h3>
-      <p class="text-xs text-text-secondary mt-0.5">Cuántos Waros equivalen a pesos en checkout</p>
+      <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.puntos.redemption.title') }}</h3>
+      <p class="text-xs text-text-secondary mt-0.5">{{ t('analitica.puntos.redemption.subtitle') }}</p>
     </div>
 
     <div v-if="isLoading" class="flex justify-center py-10">
@@ -11,7 +11,7 @@
 
     <form v-else class="px-4 py-4 space-y-4" @submit.prevent="handleSubmit">
       <label class="flex items-center justify-between gap-4 cursor-pointer">
-        <span class="text-sm font-medium text-text-primary">Canje habilitado</span>
+        <span class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.redemption.enabled') }}</span>
         <button
           type="button"
           role="switch"
@@ -34,7 +34,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="flex flex-col gap-1.5">
           <label for="waros-per-1000" class="text-xs font-medium text-text-secondary">
-            Waros por cada $1.000 COP
+            {{ t('analitica.puntos.redemption.warosPerCop') }}
           </label>
           <input
             id="waros-per-1000"
@@ -46,7 +46,7 @@
         </div>
         <div class="flex flex-col gap-1.5">
           <label for="max-redeem-pct" class="text-xs font-medium text-text-secondary">
-            Máx. % del pedido canjeable
+            {{ t('analitica.puntos.redemption.maxPercent') }}
           </label>
           <input
             id="max-redeem-pct"
@@ -60,7 +60,7 @@
         </div>
         <div class="flex flex-col gap-1.5">
           <label for="min-waros" class="text-xs font-medium text-text-secondary">
-            Mínimo Waros para canjear
+            {{ t('analitica.puntos.redemption.minWaros') }}
           </label>
           <input
             id="min-waros"
@@ -81,7 +81,7 @@
           class="min-h-[44px] px-5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
         >
           <UiLoadingDots v-if="isSaving" size="9px" />
-          <span v-else>Guardar configuración</span>
+          <span v-else>{{ t('analitica.puntos.redemption.save') }}</span>
         </button>
       </div>
     </form>
@@ -92,6 +92,7 @@
 import { reactive, watch } from 'vue'
 
 const { show: showToast } = useToast()
+const { t } = useI18n({ useScope: 'global' })
 const { config, isLoading, saveConfig, isSaving, saveError } = useRedemptionConfig()
 
 const form = reactive({
@@ -121,9 +122,9 @@ const handleSubmit = async () => {
       max_redeem_percent_per_order: form.max_redeem_percent_per_order,
       min_waros_to_redeem: form.min_waros_to_redeem,
     })
-    showToast('Configuración de canje guardada', 'success')
+    showToast(t('analitica.puntos.redemption.saved'), 'success')
   } catch {
-    showToast(saveError.value || 'Error al guardar', 'error')
+    showToast(saveError.value || t('analitica.puntos.redemption.saveError'), 'error')
   }
 }
 </script>

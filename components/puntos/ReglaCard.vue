@@ -29,14 +29,14 @@
     <div class="flex-1 min-w-0">
       <p class="text-sm font-semibold text-text-primary leading-tight">{{ meta.label }}</p>
       <p :class="['text-xs leading-snug truncate', rule.is_active ? 'text-text-secondary' : 'text-text-tertiary italic']">
-        {{ rule.is_active ? summary : 'Sin configurar' }}
+        {{ rule.is_active ? summary : t('analitica.puntos.notConfigured') }}
       </p>
     </div>
 
     <!-- Status dot -->
     <span
       :class="['inline-block w-2 h-2 rounded-full flex-shrink-0', rule.is_active ? 'bg-green-500' : 'bg-slate-300']"
-      :title="rule.is_active ? 'Activa' : 'Inactiva'"
+      :title="statusLabel"
       aria-hidden="true"
     />
 
@@ -44,7 +44,7 @@
     <button
       role="switch"
       :aria-checked="rule.is_active"
-      :aria-label="`${rule.is_active ? 'Desactivar' : 'Activar'} regla ${meta.label}`"
+      :aria-label="t(rule.is_active ? 'analitica.puntos.disableRuleAria' : 'analitica.puntos.enableRuleAria', { rule: meta.label })"
       :disabled="toggling"
       @click="emit('toggle', rule)"
       :class="[
@@ -64,7 +64,7 @@
 
     <!-- Edit -->
     <button
-      :aria-label="`Editar regla ${meta.label}`"
+      :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
       @click="emit('edit', rule)"
       class="flex items-center justify-center min-h-[44px] min-w-[44px] -mr-2 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
       :class="[iconColor.replace('text-', 'hover:text-')]"
@@ -108,7 +108,7 @@
         ]"
       >
         <span :class="['inline-block w-1.5 h-1.5 rounded-full', rule.is_active ? 'bg-green-500' : 'bg-slate-400']" aria-hidden="true" />
-        {{ rule.is_active ? 'Activa' : 'Inactiva' }}
+        {{ statusLabel }}
       </span>
     </div>
 
@@ -116,7 +116,7 @@
     <div class="flex flex-col flex-1 px-4 pt-3 pb-3 gap-1.5">
       <p class="text-base font-semibold text-text-primary leading-tight">{{ meta.label }}</p>
       <p :class="['text-sm leading-snug flex-1', rule.is_active ? 'text-text-secondary' : 'text-text-tertiary italic']">
-        {{ rule.is_active ? summary : 'Sin configurar' }}
+        {{ rule.is_active ? summary : t('analitica.puntos.notConfigured') }}
       </p>
     </div>
 
@@ -126,7 +126,7 @@
         <button
           role="switch"
           :aria-checked="rule.is_active"
-          :aria-label="`${rule.is_active ? 'Desactivar' : 'Activar'} regla ${meta.label}`"
+          :aria-label="t(rule.is_active ? 'analitica.puntos.disableRuleAria' : 'analitica.puntos.enableRuleAria', { rule: meta.label })"
           :disabled="toggling"
           @click="emit('toggle', rule)"
           :class="[
@@ -145,7 +145,7 @@
         </button>
       </div>
       <button
-        :aria-label="`Editar regla ${meta.label}`"
+        :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
         @click="emit('edit', rule)"
         class="flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
         :class="[iconColor.replace('text-', 'hover:text-'), 'hover:bg-white/70']"
@@ -180,11 +180,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
+const { formatNumber } = useFormatters()
 
 // getRuleMeta and configSummary imported directly from warosConfigHelpers above
-const meta = computed(() => getRuleMeta(props.rule.rule_type))
-const summary = computed(() => configSummary(props.rule))
+const meta = computed(() => getRuleMeta(props.rule.rule_type, t))
+const summary = computed(() => configSummary(props.rule, t, formatNumber))
 const icon = computed(() => meta.value.icon)
+const statusLabel = computed(() => t(props.rule.is_active ? 'analitica.puntos.active' : 'analitica.puntos.inactive'))
 
 // ── Per-type color tokens ─────────────────────────────────────────────────
 // Warm palette for ticket/purchase (food context), cool for time/qty (admin)

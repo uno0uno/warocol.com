@@ -21,7 +21,7 @@
         v-if="open"
         role="dialog"
         aria-modal="true"
-        :aria-label="isEdit ? 'Editar recompensa WaRo' : 'Nueva recompensa WaRo'"
+        :aria-label="isEdit ? t('analitica.puntos.rewards.editAria') : t('analitica.puntos.rewards.newAria')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl border-border
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l"
@@ -43,16 +43,16 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-lg font-bold text-text-primary leading-tight">
-                  {{ isEdit ? 'Editar recompensa' : 'Nueva recompensa' }}
+                  {{ isEdit ? t('analitica.puntos.rewards.editTitle') : t('analitica.puntos.rewards.newTitle') }}
                 </h2>
                 <p class="text-sm text-text-secondary mt-0.5 leading-snug">
-                  {{ isEdit ? reward?.name : 'Catálogo B2 — canje en checkout (POS)' }}
+                  {{ isEdit ? reward?.name : t('analitica.puntos.rewards.subtitle') }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               @click="close"
             >
@@ -65,32 +65,32 @@
 
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
-            <label for="reward-name" class="text-sm font-medium text-text-primary">Nombre</label>
+            <label for="reward-name" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.rewards.name') }}</label>
             <input
               id="reward-name"
               v-model="form.name"
               type="text"
-              placeholder="Ej. Café gratis"
+              :placeholder="t('analitica.puntos.rewards.namePlaceholder')"
               class="h-10 px-3 text-sm border-2 border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               :disabled="isSaving"
             />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="reward-type" class="text-sm font-medium text-text-primary">Tipo</label>
+            <label for="reward-type" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.rewards.type') }}</label>
             <select
               id="reward-type"
               v-model="form.reward_type"
               class="h-10 px-3 text-sm border-2 border-border rounded-lg bg-background"
               :disabled="isSaving || isEdit"
             >
-              <option value="fixed_cop_off">Descuento fijo (COP)</option>
-              <option value="free_product">Producto gratis</option>
+              <option value="fixed_cop_off">{{ t('analitica.puntos.rewards.fixedDiscountFull') }}</option>
+              <option value="free_product">{{ t('analitica.puntos.rewards.freeProduct') }}</option>
             </select>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="reward-cost" class="text-sm font-medium text-text-primary">Costo en Waros</label>
+            <label for="reward-cost" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.rewards.cost') }}</label>
             <input
               id="reward-cost"
               v-model.number="form.waros_cost"
@@ -103,7 +103,7 @@
           </div>
 
           <div v-if="form.reward_type === 'fixed_cop_off'" class="flex flex-col gap-1.5">
-            <label for="reward-cop" class="text-sm font-medium text-text-primary">Descuento (COP)</label>
+            <label for="reward-cop" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.rewards.discountCop') }}</label>
             <input
               id="reward-cop"
               v-model.number="form.fixed_cop_off"
@@ -116,10 +116,10 @@
           </div>
 
           <div v-else class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Producto</label>
+            <label class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.rewards.product') }}</label>
             <UiProductSearchInput
               v-if="!selectedProduct"
-              placeholder="Buscar producto del menú..."
+              :placeholder="t('analitica.puntos.rewards.searchProduct')"
               @select="onProductSelect"
             />
             <div
@@ -132,7 +132,7 @@
                 class="text-xs text-text-secondary hover:text-text-primary"
                 @click="clearProduct"
               >
-                Cambiar
+                {{ t('common.edit') }}
               </button>
             </div>
           </div>
@@ -144,7 +144,7 @@
               class="rounded border-border text-primary focus:ring-primary"
               :disabled="isSaving"
             />
-            <span class="text-sm text-text-primary">Recompensa activa</span>
+            <span class="text-sm text-text-primary">{{ t('analitica.puntos.rewards.active') }}</span>
           </label>
 
           <p v-if="apiError" role="alert" class="text-sm text-red-600">{{ apiError }}</p>
@@ -156,7 +156,7 @@
             class="min-h-[44px] px-4 text-sm font-medium text-text-secondary border-2 border-border rounded-lg hover:bg-surface-secondary"
             @click="close"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -165,7 +165,7 @@
             @click="handleSubmit"
           >
             <UiLoadingDots v-if="isSaving" size="9px" />
-            <span v-else>{{ isEdit ? 'Guardar' : 'Crear' }}</span>
+            <span v-else>{{ isEdit ? t('common.save') : t('analitica.puntos.rewards.create') }}</span>
           </button>
         </div>
       </div>
@@ -198,6 +198,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
 
 const open = computed({
   get: () => props.modelValue,
@@ -236,12 +237,12 @@ watch(() => props.modelValue, async (v) => {
         )
         selectedProduct.value = {
           id: props.reward.product_id,
-          name: res.data?.name || 'Producto',
+          name: res.data?.name || t('analitica.puntos.rewards.product'),
         }
       } catch {
         selectedProduct.value = {
           id: props.reward.product_id,
-          name: 'Producto',
+          name: t('analitica.puntos.rewards.product'),
         }
       }
     } else {

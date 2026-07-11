@@ -32,25 +32,28 @@ export interface WarosConfigResponse {
 
 // ── Rule metadata ─────────────────────────────────────────────────────────
 
-const RULE_META: Record<string, { label: string; description: string; icon: string }> = {
+type TranslateFn = (key: string, params?: Record<string, any>) => string
+type NumberFormatFn = (value: number, options?: { maximumFractionDigits?: number }) => string
+
+const RULE_META: Record<string, { labelKey: string; descriptionKey: string; icon: string }> = {
   ticket_value: {
-    label: 'Por valor de compra',
-    description: 'Otorga Waros según el total de cada compra',
+    labelKey: 'analitica.puntos.rules.ticketValue',
+    descriptionKey: 'analitica.puntos.rules.ticketValueDesc',
     icon: 'bag',
   },
   purchase_count: {
-    label: 'Por número de compras',
-    description: 'Premia hitos de compra acumulados',
+    labelKey: 'analitica.puntos.rules.purchaseCount',
+    descriptionKey: 'analitica.puntos.rules.purchaseCountDesc',
     icon: 'count',
   },
   frequency: {
-    label: 'Por frecuencia',
-    description: 'Bonifica clientes que compran seguido',
+    labelKey: 'analitica.puntos.rules.frequency',
+    descriptionKey: 'analitica.puntos.rules.frequencyDesc',
     icon: 'calendar',
   },
   per_ticket_qty: {
-    label: 'Por productos comprados',
-    description: 'Otorga Waros según cantidad de ítems en el pedido',
+    labelKey: 'analitica.puntos.rules.perTicketQty',
+    descriptionKey: 'analitica.puntos.rules.perTicketQtyDesc',
     icon: 'box',
   },
 }
@@ -80,31 +83,43 @@ export const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
 
 // ── Pure helper functions ─────────────────────────────────────────────────
 
-export const getRuleMeta = (rule_type: string) =>
-  RULE_META[rule_type] ?? { label: rule_type, description: '', icon: '' }
+export const getRuleMeta = (rule_type: string, t?: TranslateFn) => {
+  const meta = RULE_META[rule_type]
+  if (!meta) return { label: rule_type, description: '', icon: '' }
+  return {
+    label: t ? t(meta.labelKey) : meta.labelKey,
+    description: t ? t(meta.descriptionKey) : meta.descriptionKey,
+    icon: meta.icon,
+  }
+}
 
-export const configSummary = (rule: WaroRule): string => {
+export const configSummary = (rule: WaroRule, t?: TranslateFn, formatNumber?: NumberFormatFn): string => {
+  const tr = t ?? ((key: string, params?: Record<string, any>) => key.replace(/\{(\w+)\}/g, (_, k) => String(params?.[k] ?? '')))
+  const nf = formatNumber ?? ((value: number) => String(value))
   const c = rule.config
   switch (rule.rule_type) {
     case 'ticket_value': {
       const waros = c.base_waros ?? 1
-      const pesos = (c.base_pesos ?? 1000).toLocaleString('es-CO')
+      const pesos = nf(c.base_pesos ?? 1000, { maximumFractionDigits: 0 })
       const tierCount = c.tiers?.length ?? 0
-      const base = `${waros} Waro por $${pesos} COP`
+      const base = tr('analitica.puntos.summaries.ticketValueBase', { waros, pesos })
       return tierCount > 0
-        ? `${base} · ${tierCount} tier${tierCount > 1 ? 's' : ''} configurado${tierCount > 1 ? 's' : ''}`
+        ? `${base} · ${tr(tierCount === 1 ? 'analitica.puntos.summaries.tierOne' : 'analitica.puntos.summaries.tierMany', { count: tierCount })}`
         : base
     }
     case 'purchase_count': {
       const m = c.milestones
-      if (!m?.length) return 'Sin hitos configurados'
-      return `${m.length} hito${m.length > 1 ? 's' : ''}: compra ${m.map((h: PurchaseCountMilestone) => `#${h.purchase_number} (+${h.bonus})`).join(', ')}`
+      if (!m?.length) return tr('analitica.puntos.summaries.noMilestones')
+      return tr(m.length === 1 ? 'analitica.puntos.summaries.milestoneOne' : 'analitica.puntos.summaries.milestoneMany', {
+        count: m.length,
+        milestones: m.map((h: PurchaseCountMilestone) => `#${h.purchase_number} (+${h.bonus})`).join(', '),
+      })
     }
     case 'frequency':
-      return `${c.purchases ?? 2} compras en ${c.within_days ?? 60} días → ${c.bonus ?? 75} Waros bonus`
+      return tr('analitica.puntos.summaries.frequency', { purchases: c.purchases ?? 2, days: c.within_days ?? 60, bonus: c.bonus ?? 75 })
     case 'per_ticket_qty': {
-      const base = `${c.points_per_item ?? 10} Waros por producto`
-      const bonus = c.bonus_from_qty ? ` · bonus desde ${c.bonus_from_qty} productos` : ''
+      const base = tr('analitica.puntos.summaries.perItem', { points: c.points_per_item ?? 10 })
+      const bonus = c.bonus_from_qty ? ` · ${tr('analitica.puntos.summaries.bonusFromQty', { qty: c.bonus_from_qty })}` : ''
       return base + bonus
     }
     default:

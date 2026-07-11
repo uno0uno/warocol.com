@@ -32,8 +32,8 @@ const openEdit = (rule: WaroRule) => {
 
 const onRuleSaved = async () => {
   await handleRefresh()
-  const label = selectedRule.value ? getRuleMeta(selectedRule.value.rule_type).label : 'Regla'
-  showToast(`${label} actualizada`, 'success')
+  const label = selectedRule.value ? getRuleMeta(selectedRule.value.rule_type, t).label : t('analitica.puntos.rule')
+  showToast(t('analitica.puntos.ruleUpdated', { rule: label }), 'success')
 }
 
 // ── Global toggle ─────────────────────────────────────────────────────────
@@ -41,9 +41,9 @@ const handleToggleGlobal = async () => {
   const newValue = !isEnabled.value
   try {
     await toggleGlobal(newValue)
-    showToast(newValue ? 'Sistema Waros activado' : 'Sistema Waros desactivado', 'success')
+    showToast(t(newValue ? 'analitica.puntos.systemEnabled' : 'analitica.puntos.systemDisabled'), 'success')
   } catch {
-    showToast('Error al cambiar el estado del sistema', 'error')
+    showToast(t('analitica.puntos.systemToggleError'), 'error')
   }
 }
 
@@ -54,16 +54,16 @@ const handleToggle = async (rule: WaroRule) => {
   togglingRuleType.value = rule.rule_type
   const prev = rule.is_active
   rule.is_active = !prev
-  const label = getRuleMeta(rule.rule_type).label
+  const label = getRuleMeta(rule.rule_type, t).label
   try {
     await toggleRule(rule.rule_type)
     showToast(
-      rule.is_active ? `${label} activada` : `${label} desactivada`,
+      t(rule.is_active ? 'analitica.puntos.ruleEnabled' : 'analitica.puntos.ruleDisabled', { rule: label }),
       'success'
     )
   } catch {
     rule.is_active = prev
-    showToast(`Error al cambiar ${label}`, 'error')
+    showToast(t('analitica.puntos.ruleToggleError', { rule: label }), 'error')
   } finally {
     togglingRuleType.value = null
   }
@@ -78,7 +78,7 @@ watch(() => currentTenant.value?.id, handleRefresh)
 
 onMounted(async () => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)
-  if (setLastUpdateText) setLastUpdateText('Configuración de Waros')
+  if (setLastUpdateText) setLastUpdateText(t('analitica.puntos.configTitle'))
   await fetchRules()
 })
 registerProgressiveLoading(isRefreshing)
@@ -104,12 +104,12 @@ onUnmounted(() => {
       <!-- Global toggle card -->
       <div class="bg-surface border border-border rounded-lg px-4 py-3 flex items-center justify-between gap-4">
         <span class="text-sm font-medium text-text-primary">
-          {{ isEnabled ? 'Sistema activo' : 'Sistema inactivo' }}
+          {{ isEnabled ? t('analitica.puntos.systemActive') : t('analitica.puntos.systemInactive') }}
         </span>
         <button
           role="switch"
           :aria-checked="isEnabled"
-          aria-label="Activar o desactivar el sistema de puntos Waros"
+          :aria-label="t('analitica.puntos.toggleHint')"
           @click="handleToggleGlobal"
           :class="[
             'flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
@@ -149,7 +149,7 @@ onUnmounted(() => {
         <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        <p class="text-sm font-medium">No hay reglas disponibles</p>
+        <p class="text-sm font-medium">{{ t('analitica.puntos.noRules') }}</p>
       </div>
     </template>
 

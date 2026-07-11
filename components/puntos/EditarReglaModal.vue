@@ -18,7 +18,7 @@
         v-if="open"
         role="dialog"
         aria-modal="true"
-        :aria-label="`Editar regla: ${meta.label}`"
+        :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -64,7 +64,7 @@
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+                :aria-label="t('analitica.customerDetail.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -74,15 +74,15 @@
           </div>
           <!-- Toggle row -->
           <div class="flex items-center justify-between mt-4 pt-3 border-t border-border/60">
-            <span class="text-sm font-medium text-text-primary">Estado de la regla</span>
+            <span class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.ruleStatus') }}</span>
             <div class="flex items-center gap-2">
               <span :class="['text-xs font-medium', localActive ? 'text-green-600' : 'text-slate-400']">
-                {{ localActive ? 'Activa' : 'Inactiva' }}
+                {{ localActive ? t('analitica.puntos.active') : t('analitica.puntos.inactive') }}
               </span>
               <button
                 role="switch"
                 :aria-checked="localActive"
-                :aria-label="`${localActive ? 'Desactivar' : 'Activar'} regla`"
+                :aria-label="t(localActive ? 'analitica.puntos.disableRule' : 'analitica.puntos.enableRule')"
                 @click="localActive = !localActive"
                 :class="[
                   'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
@@ -104,7 +104,7 @@
           <p class="text-xs font-semibold uppercase tracking-wider text-primary">Tasa base</p>
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
-              <label for="field-base_waros" class="text-sm font-medium text-text-primary">Waros a otorgar</label>
+              <label for="field-base_waros" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.ruleEditor.warosToGrant') }}</label>
               <input
                 id="field-base_waros"
                 v-model.number="tvConfig.base_waros"
@@ -129,7 +129,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-xs text-amber-800">
-              Ej. compra de ${{ (tvConfig.base_pesos * 10).toLocaleString('es-CO') }} → <strong class="text-amber-900">{{ tvConfig.base_waros * 10 }} Waros</strong>
+              {{ t('analitica.puntos.ruleEditor.ticketValueExample', { amount: formatNumber(tvConfig.base_pesos * 10, { maximumFractionDigits: 0 }), waros: tvConfig.base_waros * 10 }) }}
             </p>
           </div>
         </div>
@@ -149,7 +149,7 @@
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
               </svg>
-              Agregar
+              {{ t('common.add') }}
             </button>
           </div>
 
@@ -202,7 +202,7 @@
             <button
               @click="removeTier(i)"
               type="button"
-              :aria-label="`Eliminar tier ${i + 1}`"
+              :aria-label="t('analitica.puntos.ruleEditor.removeTierAria', { index: i + 1 })"
               class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -218,8 +218,8 @@
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Hitos de compra</p>
-              <p class="text-xs text-text-tertiary mt-0.5">Cada hito premia al cliente al alcanzar ese número de compras</p>
+              <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">{{ t('analitica.puntos.ruleEditor.purchaseMilestones') }}</p>
+              <p class="text-xs text-text-tertiary mt-0.5">{{ t('analitica.puntos.ruleEditor.purchaseMilestonesHelp') }}</p>
             </div>
             <button
               @click="addMilestone"
@@ -229,7 +229,7 @@
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
               </svg>
-              Agregar
+              {{ t('common.add') }}
             </button>
           </div>
 
@@ -244,12 +244,12 @@
             <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p class="text-xs text-text-secondary">Sin hitos — agrega al menos uno para activar la regla</p>
+            <p class="text-xs text-text-secondary">{{ t('analitica.puntos.ruleEditor.noMilestonesHelp') }}</p>
           </div>
 
           <div v-for="(m, i) in pcConfig.milestones" :key="i" class="flex items-end gap-2 bg-white/70 rounded-lg p-3 border border-border/40">
             <div class="flex flex-col gap-1 flex-1">
-              <label :for="`m-num-${i}`" class="text-xs font-medium text-text-secondary">Compra #</label>
+              <label :for="`m-num-${i}`" class="text-xs font-medium text-text-secondary">{{ t('analitica.puntos.ruleEditor.purchaseNumber') }}</label>
               <input
                 :id="`m-num-${i}`"
                 v-model.number="m.purchase_number"
@@ -259,7 +259,7 @@
               />
             </div>
             <div class="flex flex-col gap-1 flex-1">
-              <label :for="`m-bonus-${i}`" class="text-xs font-medium text-text-secondary">Waros bonus</label>
+              <label :for="`m-bonus-${i}`" class="text-xs font-medium text-text-secondary">{{ t('analitica.puntos.ruleEditor.warosBonus') }}</label>
               <input
                 :id="`m-bonus-${i}`"
                 v-model.number="m.bonus"
@@ -271,7 +271,7 @@
             <button
               @click="removeMilestone(i)"
               type="button"
-              :aria-label="`Eliminar hito ${i + 1}`"
+              :aria-label="t('analitica.puntos.ruleEditor.removeMilestoneAria', { index: i + 1 })"
               class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -311,7 +311,7 @@
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="field-freq-bonus" class="text-sm font-medium text-text-primary">Waros bonus</label>
+            <label for="field-freq-bonus" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.ruleEditor.warosBonus') }}</label>
             <input
               id="field-freq-bonus"
               v-model.number="freqConfig.bonus"
@@ -325,7 +325,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-xs text-amber-800">
-              Ej. {{ freqConfig.purchases ?? 2 }} compras en {{ freqConfig.within_days ?? 60 }} días → <strong class="text-amber-900">{{ freqConfig.bonus ?? 75 }} Waros bonus</strong>
+              {{ t('analitica.puntos.ruleEditor.frequencyExample', { purchases: freqConfig.purchases ?? 2, days: freqConfig.within_days ?? 60, bonus: freqConfig.bonus ?? 75 }) }}
             </p>
           </div>
         </div>
@@ -334,9 +334,9 @@
       <!-- ── per_ticket_qty ── -->
       <template v-else-if="rule.rule_type === 'per_ticket_qty'">
         <div class="bg-surface-secondary/50 border border-primary/15 rounded-xl p-4 space-y-4">
-          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Waros por producto</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">{{ t('analitica.puntos.ruleEditor.warosPerProductTitle') }}</p>
           <div class="flex flex-col gap-1.5">
-            <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por cada producto</label>
+            <label for="field-pti" class="text-sm font-medium text-text-primary">{{ t('analitica.puntos.ruleEditor.warosPerProduct') }}</label>
             <input
               id="field-pti"
               v-model.number="ptqConfig.points_per_item"
@@ -394,7 +394,7 @@
             <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
-            <p class="text-xs text-text-secondary">Sin bonus — se aplica solo Waros por producto</p>
+            <p class="text-xs text-text-secondary">{{ t('analitica.puntos.ruleEditor.noQtyBonus') }}</p>
           </div>
         </div>
       </template>
@@ -416,7 +416,7 @@
             type="button"
             class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             @click="save"
@@ -425,7 +425,7 @@
             class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
           >
             <UiLoadingDots v-if="isSaving" size="9px" />
-            <span v-else>Guardar cambios</span>
+            <span v-else>{{ t('common.save') }}</span>
           </button>
         </div>
       </div>
@@ -450,6 +450,8 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
+const { formatNumber } = useFormatters()
 
 const { updateRule, isSaving } = useWarosConfig()
 
@@ -461,7 +463,7 @@ const open = computed({
 })
 
 const meta = computed(() =>
-  props.rule ? getRuleMeta(props.rule.rule_type) : { label: '', description: '', icon: '' }
+  props.rule ? getRuleMeta(props.rule.rule_type, t) : { label: '', description: '', icon: '' }
 )
 
 // ── Local state ───────────────────────────────────────────────────────────
@@ -556,7 +558,7 @@ const removeMilestone = (i: number) => {
 const milestoneDupWarning = computed(() => {
   const nums = pcConfig.value.milestones.map(m => m.purchase_number)
   const dupes = nums.filter((n, i) => nums.indexOf(n) !== i)
-  return dupes.length ? `Número de compra duplicado: ${[...new Set(dupes)].join(', ')}` : null
+  return dupes.length ? t('analitica.puntos.ruleEditor.duplicatePurchaseNumber', { numbers: [...new Set(dupes)].join(', ') }) : null
 })
 
 // ── Validation ────────────────────────────────────────────────────────────
@@ -582,7 +584,7 @@ const validate = (): boolean => {
       break
     case 'purchase_count':
       if (pcConfig.value.milestones.some(m => !m.purchase_number || m.purchase_number <= 0 || !m.bonus || m.bonus <= 0)) {
-        validationError.value = 'Todos los hitos deben tener valores positivos'
+        validationError.value = t('analitica.puntos.ruleEditor.positiveMilestones')
         return false
       }
       break
@@ -602,7 +604,7 @@ const validate = (): boolean => {
       break
     case 'per_ticket_qty':
       if (!ptqConfig.value.points_per_item || ptqConfig.value.points_per_item <= 0) {
-        validationError.value = 'Los Waros por producto deben ser mayor a 0'
+        validationError.value = t('analitica.puntos.ruleEditor.positiveWarosPerProduct')
         return false
       }
       if (ptqConfig.value.bonus_from_qty && (!ptqConfig.value.bonus_extra_points || ptqConfig.value.bonus_extra_points <= 0)) {
@@ -648,7 +650,7 @@ const save = async () => {
     emit('saved')
     close()
   } catch (e: any) {
-    validationError.value = e?.data?.detail || e?.message || 'Error al guardar — intenta de nuevo'
+    validationError.value = e?.data?.detail || e?.message || t('analitica.puntos.ruleEditor.saveError')
   }
 }
 </script>
