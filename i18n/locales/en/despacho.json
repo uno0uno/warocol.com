@@ -25,6 +25,7 @@
       "customer": "Customer",
       "phone": "Phone",
       "table": "Table",
+      "bar": "Bar",
       "items": "Items",
       "payment": "Payment",
       "source": "Source",

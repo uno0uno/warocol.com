@@ -16,6 +16,7 @@ const router = useRouter()
 const { formatCurrency, numberLocaleTag } = useFormatters()
 const { currentTenant } = useTenantReactive()
 const { timezone } = useTenantTimezone()
+const { tableDisplayLabel } = useTableDisplayLabel()
 
 interface TableQrRequest {
   id: string
@@ -102,7 +103,7 @@ const formatRequestDateTime = (value: string | null | undefined) =>
 const tableOptions = computed(() =>
   (pendingData.value?.data?.tables ?? []).map(t => ({
     id: t.table_id,
-    name: t.table_name,
+    name: tableDisplayLabel(t.table_name),
   })),
 )
 const tableHeaderOptions = computed(() =>
@@ -127,6 +128,7 @@ const filteredRequests = computed(() => {
     if (tableFilterId.value && r.table_id !== tableFilterId.value) return false
     if (!q) return true
     return r.table_name.toLowerCase().includes(q)
+      || tableDisplayLabel(r.table_name).toLowerCase().includes(q)
   })
 })
 
@@ -267,7 +269,7 @@ const viewRequest = (request: TableQrRequestRow) => {
             >
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-text-primary leading-tight truncate">
-                  {{ item.table_name }}
+                  {{ tableDisplayLabel(item.table_name) }}
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ itemCountLabel(item.item_count) }}
@@ -282,7 +284,7 @@ const viewRequest = (request: TableQrRequestRow) => {
           </template>
 
           <template #cell-table_name="{ value }">
-            <span class="text-sm font-semibold text-text-primary">{{ value }}</span>
+            <span class="text-sm font-semibold text-text-primary">{{ tableDisplayLabel(value) }}</span>
           </template>
           <template #cell-created_at="{ value }">
             <span class="text-sm text-text-secondary">{{ formatRequestDateTime(value) }}</span>

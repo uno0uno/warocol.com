@@ -25,6 +25,7 @@
       "customer": "Cliente",
       "phone": "Teléfono",
       "table": "Mesa",
+      "bar": "Barra",
       "items": "Items",
       "payment": "Pago",
       "source": "Origen",
