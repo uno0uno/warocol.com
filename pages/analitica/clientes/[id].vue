@@ -267,7 +267,6 @@ const walletPaymentGroups = computed(() => {
   )
 })
 
-const walletMovementLabel = (type: string) => {
 const onWalletRecharged = async () => {
   await refetchWallet()
 }
