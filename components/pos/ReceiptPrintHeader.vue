@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
 import { buildReceiptLogoStyle } from '~/utils/receiptPrintConfig'
 
 const props = defineProps<{
@@ -56,16 +57,16 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
     >
     <div class="receipt-header">{{ headerName }}</div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">
-      Establecimiento / vendedor
+      {{ t('pos.receipt.establishmentSeller') }}
     </div>
     <div v-if="sellerNit" class="receipt-row receipt-small">
-      NIT: {{ sellerNit }}
+      {{ t('pos.receipt.nit', { nit: sellerNit }) }}
     </div>
     <div v-if="displayAddress" class="receipt-row receipt-small">
       {{ displayAddress }}<span v-if="displayCity">, {{ displayCity }}</span>
     </div>
     <div v-if="displayPhone" class="receipt-row receipt-small">
-      Tel: {{ displayPhone }}
+      {{ t('pos.receipt.tel', { phone: displayPhone }) }}
     </div>
     <div v-if="fiscalData?.email" class="receipt-row receipt-small">
       {{ fiscalData.email }}
