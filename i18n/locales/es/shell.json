@@ -109,7 +109,7 @@
     "myOrders": "Mis Pedidos",
     "customerEmailPrompt": "Ingresa tu correo para ver el estado de tus pedidos",
     "emailFieldLabel": "Correo electrónico",
-    "emailPlaceholder": "tu@correo.com",
+    "emailPlaceholder": "tu{'@'}correo.com",
     "sendCode": "Enviar código",
     "enterCode": "Ingresa el código",
     "codeSentTo": "Enviamos un código a {email}",

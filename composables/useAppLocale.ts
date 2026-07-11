@@ -15,6 +15,10 @@ export function normalizeAppLocale(value: unknown): AppLocaleCode | null {
   return null
 }
 
+/**
+ * Component/setup-only composable (calls useI18n).
+ * Do not use from Nuxt plugins — use nuxtApp.$i18n there instead.
+ */
 export function useAppLocale() {
   const { locale, setLocale, t, te } = useI18n()
   const cookie = useCookie<string | null>(APP_LOCALE_COOKIE, {
