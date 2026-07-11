@@ -1,27 +1,27 @@
 <template>
-  <UiModal v-model="open" title="Asignar Waros">
+  <UiModal v-model="open" :title="t('analitica.customerDetail.waros.assignTitle')">
     <div class="px-6 py-5 space-y-5">
 
       <!-- Customer + current balance -->
       <div class="flex items-center justify-between gap-4 pb-1">
         <div class="min-w-0">
-          <p class="text-sm text-text-secondary font-medium">Cliente</p>
+          <p class="text-sm text-text-secondary font-medium">{{ t('analitica.clientes.customer') }}</p>
           <p class="text-base font-semibold text-text-primary truncate">{{ customerName }}</p>
         </div>
         <div class="flex-shrink-0 text-right">
-          <p class="text-sm text-text-secondary font-medium">Balance actual</p>
+          <p class="text-sm text-text-secondary font-medium">{{ t('analitica.customerDetail.waros.currentBalance') }}</p>
           <p class="text-base font-semibold text-amber-700">
-            {{ currentBalance.toLocaleString('es-CO') }} Waros
+            {{ t('analitica.customerDetail.waros.balanceValue', { amount: formatWaros(currentBalance) }) }}
           </p>
         </div>
       </div>
 
       <hr class="border-border" />
 
-      <!-- Mode: Dar / Quitar -->
+      <!-- Give / remove mode -->
       <fieldset>
-        <legend class="text-sm font-medium text-text-primary mb-2">Acción</legend>
-        <div role="radiogroup" aria-label="Seleccionar acción" class="flex gap-3">
+        <legend class="text-sm font-medium text-text-primary mb-2">{{ t('analitica.customerDetail.waros.action') }}</legend>
+        <div role="radiogroup" :aria-label="t('analitica.customerDetail.waros.selectAction')" class="flex gap-3">
           <label
             class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 cursor-pointer transition-colors"
             :class="mode === 'dar'
@@ -32,7 +32,7 @@
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="text-sm font-semibold">Dar</span>
+            <span class="text-sm font-semibold">{{ t('analitica.customerDetail.waros.give') }}</span>
           </label>
           <label
             class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 cursor-pointer transition-colors"
@@ -44,7 +44,7 @@
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
             </svg>
-            <span class="text-sm font-semibold">Quitar</span>
+            <span class="text-sm font-semibold">{{ t('analitica.customerDetail.waros.remove') }}</span>
           </label>
         </div>
       </fieldset>
@@ -52,7 +52,7 @@
       <!-- Amount -->
       <div class="flex flex-col gap-1.5">
         <label for="waros-amount" class="text-sm font-medium text-text-primary">
-          Cantidad de Waros
+          {{ t('analitica.customerDetail.waros.amount') }}
         </label>
         <input
           id="waros-amount"
@@ -63,7 +63,7 @@
           placeholder="100"
           class="h-10 px-3 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
           :class="{ 'border-red-400 focus:border-red-400 focus:ring-red-400/20': !!validationError }"
-          aria-label="Cantidad de Waros"
+          :aria-label="t('analitica.customerDetail.waros.amount')"
           :aria-describedby="validationError ? 'amount-error' : undefined"
         />
         <p
@@ -79,25 +79,25 @@
         </p>
         <!-- Deduction preview -->
         <p v-if="mode === 'quitar' && amount > 0 && !validationError" class="text-xs text-text-secondary">
-          Balance resultante: {{ (currentBalance - amount).toLocaleString('es-CO') }} Waros
+          {{ t('analitica.customerDetail.waros.resultingBalance', { amount: formatWaros(currentBalance - amount) }) }}
         </p>
         <p v-if="mode === 'dar' && amount > 0" class="text-xs text-text-secondary">
-          Balance resultante: {{ (currentBalance + amount).toLocaleString('es-CO') }} Waros
+          {{ t('analitica.customerDetail.waros.resultingBalance', { amount: formatWaros(currentBalance + amount) }) }}
         </p>
       </div>
 
       <!-- Reason (optional) -->
       <div class="flex flex-col gap-1.5">
         <label for="waros-reason" class="text-sm font-medium text-text-primary">
-          Razón <span class="text-text-secondary font-normal">(opcional)</span>
+          {{ t('analitica.customerDetail.waros.reason') }} <span class="text-text-secondary font-normal">{{ t('analitica.customerDetail.optional') }}</span>
         </label>
         <textarea
           id="waros-reason"
           v-model="reason"
-          placeholder="Ej. Premio por fidelidad, corrección manual..."
+          :placeholder="t('analitica.customerDetail.waros.reasonPlaceholder')"
           rows="2"
           class="px-3 py-2 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors resize-none"
-          aria-label="Razón de la asignación (opcional)"
+          :aria-label="t('analitica.customerDetail.waros.reasonAria')"
         />
       </div>
 
@@ -123,7 +123,7 @@
           @click="open = false"
           class="min-h-[44px] px-4 text-sm font-medium text-text-secondary border-2 border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
-          Cancelar
+          {{ t('common.cancel') }}
         </button>
         <button
           type="button"
@@ -138,7 +138,7 @@
           ]"
         >
           <UiLoadingDots v-if="isSaving" size="9px" />
-          <span v-else>{{ mode === 'dar' ? '+ Dar Waros' : '− Quitar Waros' }}</span>
+          <span v-else>{{ mode === 'dar' ? t('analitica.customerDetail.waros.giveSubmit') : t('analitica.customerDetail.waros.removeSubmit') }}</span>
         </button>
       </div>
     </template>
@@ -165,6 +165,8 @@ const emit = defineEmits<Emits>()
 
 const { assignWaros, isSaving } = useWarosCliente()
 const { show: showToast } = useToast()
+const { t } = useI18n({ useScope: 'global' })
+const { formatNumber } = useFormatters()
 
 const open = computed({
   get: () => props.modelValue,
@@ -175,6 +177,7 @@ const mode = ref<'dar' | 'quitar'>('dar')
 const amount = ref<number | null>(null)
 const reason = ref('')
 const apiError = ref<string | null>(null)
+const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractionDigits: 0 })
 
 // Reset state when modal opens
 watch(() => props.modelValue, (v) => {
@@ -188,9 +191,9 @@ watch(() => props.modelValue, (v) => {
 
 const validationError = computed(() => {
   if (!amount.value || amount.value < 1) return null
-  if (!Number.isInteger(amount.value)) return 'La cantidad debe ser un número entero'
+  if (!Number.isInteger(amount.value)) return t('analitica.customerDetail.waros.integerError')
   if (mode.value === 'quitar' && amount.value > props.currentBalance) {
-    return `Saldo insuficiente. Balance actual: ${props.currentBalance.toLocaleString('es-CO')} Waros`
+    return t('analitica.customerDetail.waros.insufficientBalance', { amount: formatWaros(props.currentBalance) })
   }
   return null
 })
@@ -205,14 +208,14 @@ const handleSubmit = async () => {
     const res = await assignWaros(props.profileId, finalAmount, reason.value || undefined)
     showToast(
       mode.value === 'dar'
-        ? `+${amount.value} Waros asignados correctamente`
-        : `−${amount.value} Waros deducidos correctamente`,
+        ? t('analitica.customerDetail.waros.giveSuccess', { amount: formatWaros(amount.value) })
+        : t('analitica.customerDetail.waros.removeSuccess', { amount: formatWaros(amount.value) }),
       'success'
     )
     emit('assigned', { newBalance: res.new_balance })
     open.value = false
   } catch (e: any) {
-    apiError.value = e?.data?.detail || e?.message || 'Error al procesar la operación'
+    apiError.value = e?.data?.detail || e?.message || t('analitica.customerDetail.waros.operationError')
   }
 }
 </script>
