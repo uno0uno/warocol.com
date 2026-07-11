@@ -316,7 +316,8 @@
       "methodLabel": "Método:",
       "recurrenceLabel": "Recurrencia:",
       "docsLabel": "Documentos:",
-      "register": "+ Registrar gasto"
+      "register": "+ Registrar gasto",
+      "deleteConfirm": "¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer."
     },
     "pagos": {
       "title": "Gestión de Pagos",

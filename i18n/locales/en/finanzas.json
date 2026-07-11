@@ -316,7 +316,8 @@
       "methodLabel": "Method:",
       "recurrenceLabel": "Recurrence:",
       "docsLabel": "Documents:",
-      "register": "+ Record expense"
+      "register": "+ Record expense",
+      "deleteConfirm": "Are you sure you want to delete this expense? This action cannot be undone."
     },
     "pagos": {
       "title": "Payment management",

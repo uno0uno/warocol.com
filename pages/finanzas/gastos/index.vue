@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
@@ -9,7 +9,7 @@ import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
-useHead({ title: 'Gastos' })
+useHead({ title: () => t('finanzas.gastos.title') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -93,18 +93,10 @@ const clearFilters = () => {
   currentMonth.value = defaultMonth()
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const { formatCalendarDate } = useFormatters()
+const { formatCalendarDate, formatCurrency } = useFormatters()
 
 // Table columns
-const expensesTableColumns = [
+const expensesTableColumns = computed(() => [
   { key: 'expenseNumber', title: t('finanzas.gastos.colNumber'), sortable: false },
   { key: 'transactionDate', title: t('finanzas.gastos.colDate'), sortable: true },
   { key: 'category', title: t('finanzas.gastos.colCategory'), sortable: false },
@@ -113,11 +105,11 @@ const expensesTableColumns = [
   { key: 'description', title: t('finanzas.gastos.colDesc'), sortable: true },
   { key: 'amount', title: t('finanzas.gastos.colAmount'), sortable: true },
   { key: 'actions', title: '', sortable: false }
-]
+])
 
 // Delete expense
 const deleteExpense = async (expenseId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.')) {
+  if (!confirm(t('finanzas.gastos.deleteConfirm'))) {
     return
   }
 
@@ -160,10 +152,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Metrics Cards -->
       <div v-if="stats" class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
-        <MetricCard title="Total gastos" :value="stats.totalAmount" format="currency" variant="primary" />
-        <MetricCard title="Transacciones" :value="stats.count" format="number" variant="primary" />
+        <MetricCard :title="t('finanzas.gastos.total')" :value="stats.totalAmount" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.gastos.transactions')" :value="stats.count" format="number" variant="primary" />
         <MetricCard
-          title="Promedio"
+          :title="t('finanzas.gastos.average')"
           :value="stats.count > 0 ? stats.totalAmount / stats.count : 0"
           format="currency"
           variant="primary"
@@ -185,14 +177,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-model="currentMonth"
             type="month"
             :class="[filterSelectClass, 'min-w-[9rem] cursor-pointer']"
-            aria-label="Filtrar por mes"
+            :aria-label="t('finanzas.gastos.filterMonth')"
           >
           <select
             v-model="categoryFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por categoría"
+            :aria-label="t('finanzas.gastos.filterCategory')"
           >
-            <option value="">Categoría</option>
+            <option value="">{{ t('finanzas.common.category') }}</option>
             <option v-for="option in categoryFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -200,9 +192,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-model="expenseTypeFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por tipo de gasto"
+            :aria-label="t('finanzas.gastos.filterType')"
           >
-            <option value="">Tipo</option>
+            <option value="">{{ t('finanzas.common.type') }}</option>
             <option v-for="option in expenseTypeFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -224,14 +216,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         row-size="sm"
         :columns="expensesTableColumns"
         :data="expenses"
-        empty-message="No hay gastos registrados"
-        empty-sub-message="Los gastos del mes aparecerán aquí"
+        :empty-message="t('finanzas.gastos.emptyTitle')"
+        :empty-sub-message="t('finanzas.gastos.emptySub')"
         variant="default"
       >
         <template #header-category>
           <UiTableHeaderFilter
             v-model="categoryFilter"
-            title="Categoría"
+            :title="t('finanzas.gastos.colCategory')"
             filter-type="select"
             :options="categoryFilterOptions"
             :all-label="t('finanzas.gastos.allCategories')"
@@ -241,7 +233,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #header-expenseType>
           <UiTableHeaderFilter
             v-model="expenseTypeFilter"
-            title="Tipo"
+            :title="t('finanzas.gastos.colType')"
             filter-type="select"
             :options="expenseTypeFilterOptions"
             :all-label="t('finanzas.gastos.allTypes')"
@@ -267,7 +259,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.amount) }}</span>
-              <UiStatusBadge v-if="item.isRecurring" value="Recurrente" format="text" variant="info" size="sm" />
+              <UiStatusBadge v-if="item.isRecurring" :value="t('finanzas.gastos.recurring')" format="text" variant="info" size="sm" />
             </div>
           </div>
         </template>
@@ -316,7 +308,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <NuxtLink
               :to="`/finanzas/gastos/${row.id}`"
               class="text-text-secondary hover:text-primary transition-colors"
-              title="Ver y editar"
+              :title="t('finanzas.gastos.viewEdit')"
+              :aria-label="t('finanzas.gastos.viewEdit')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -326,7 +319,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <button
               @click="deleteExpense(row.id)"
               class="text-destructive hover:text-destructive/80 transition-colors"
-              title="Eliminar"
+              :title="t('finanzas.common.delete')"
+              :aria-label="t('finanzas.common.delete')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
