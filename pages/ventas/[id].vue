@@ -951,19 +951,17 @@ onUnmounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <div class="mb-2 flex items-start justify-between gap-3">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">{{ t('ventas.common.cliente') }}</p>
-            <button
-              v-if="canAssociateOrderCustomer"
-              type="button"
-              :disabled="isAssociatingCustomer"
-              class="text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="openCustomerModal"
-            >
-              {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
-            </button>
-          </div>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.cliente') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ order.customer_name }}</p>
+          <button
+            v-if="canAssociateOrderCustomer"
+            type="button"
+            :disabled="isAssociatingCustomer"
+            class="mt-2 text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="openCustomerModal"
+          >
+            {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
+          </button>
           <p v-if="customerAssociationError" class="mt-2 text-xs text-destructive">
             {{ customerAssociationError }}
           </p>
