@@ -18,7 +18,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Detalle del arqueo"
+        :aria-label="t('finanzas.cierrePanel.title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -38,7 +38,7 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Arqueo de caja</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('finanzas.arqueo.title') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <span
                     class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-1"
@@ -52,7 +52,7 @@
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('finanzas.cierrePanel.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,27 +73,27 @@
             <!-- Ventas -->
             <div class="border-b border-border">
               <div class="px-6 py-3 bg-background">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Ventas del período</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.periodSales') }}</span>
               </div>
               <div class="divide-y divide-border">
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Total ventas</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
                   <span class="font-bold text-text-primary">{{ formatCurrency(detail.totalSales) }}</span>
                 </div>
                 <div v-if="hasCapturedTips(detail)" class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Propinas</span>
+                  <span class="text-text-secondary">{{ t('finanzas.common.tips') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalTips) }}</span>
                 </div>
                 <div v-if="(detail.totalTipTax ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Impuesto propina</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalTipTax) }}</span>
                 </div>
                 <div v-if="hasCapturedTips(detail)" class="flex justify-between px-6 py-2.5 text-sm font-semibold">
-                  <span class="text-text-primary">Total cobrado</span>
+                  <span class="text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span>
                   <span class="text-text-primary">{{ formatCurrency(detail.totalCharged) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Órdenes</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.orders') }}</span>
                   <span class="font-medium text-text-primary">{{ detail.itemsSold }}</span>
                 </div>
               </div>
@@ -102,37 +102,37 @@
             <!-- Caja -->
             <div class="border-b border-border">
               <div class="px-6 py-3 bg-background">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Caja</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.cierrePanel.drawer') }}</span>
               </div>
               <div class="divide-y divide-border">
                 <div v-if="(detail.openingCash ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Fondo inicial</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.openingFloat') }}</span>
                   <span class="font-medium text-text-primary">+ {{ formatCurrency(detail.openingCash) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Efectivo recibido</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalCash) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Gastos en efectivo</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpensesLong') }}</span>
                   <span class="font-medium text-destructive">− {{ formatCurrency(detail.gastosEfectivo) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Esperado en caja</span>
+                  <span class="text-text-secondary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.cashExpected) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Contado en caja</span>
+                  <span class="text-text-secondary">{{ t('finanzas.cierrePanel.countedInDrawer') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.cashCounted) }}</span>
                 </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm font-semibold">
-                  <span class="text-text-primary">Diferencia</span>
+                  <span class="text-text-primary">{{ t('finanzas.common.difference') }}</span>
                   <span :class="detail.cashDifference >= 0 ? 'text-state-success-text' : 'text-destructive'">
                     {{ detail.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(detail.cashDifference) }}
                   </span>
                 </div>
                 <div v-if="(detail.cashLeftInDrawer ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
-                  <span class="text-text-secondary">Dejó en caja</span>
+                  <span class="text-text-secondary">{{ t('finanzas.cierrePanel.leftInDrawer') }}</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.cashLeftInDrawer) }}</span>
                 </div>
               </div>
@@ -141,7 +141,7 @@
             <!-- Métodos de pago -->
             <div v-if="detail.breakdown?.length" class="border-b border-border">
               <div class="px-6 py-3 bg-background">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Métodos de pago</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.paymentMethods') }}</span>
               </div>
               <div class="divide-y divide-border">
                 <div v-for="row in detail.breakdown" :key="row.groupSlug + row.methodName" class="flex justify-between px-6 py-2.5 text-sm">
@@ -153,17 +153,17 @@
 
             <!-- Notas -->
             <div v-if="detail.notes" class="border-b border-border px-6 py-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-1">Notas</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-1">{{ t('finanzas.common.notes') }}</p>
               <p class="text-sm text-text-primary">{{ detail.notes }}</p>
             </div>
 
             <!-- Registrado -->
             <div class="px-6 py-3">
-              <p class="text-xs text-text-secondary">Registrado: {{ formatDate(detail.closedAt) }}</p>
+              <p class="text-xs text-text-secondary">{{ t('finanzas.arqueo.registeredAt', { date: formatDate(detail.closedAt) }) }}</p>
             </div>
           </template>
 
-          <div v-else class="px-6 py-10 text-sm text-text-secondary text-center">No se pudo cargar el detalle.</div>
+          <div v-else class="px-6 py-10 text-sm text-text-secondary text-center">{{ t('finanzas.cierrePanel.loadError') }}</div>
         </div>
 
         <!-- Footer -->
@@ -173,11 +173,11 @@
               @click="confirmDelete = true"
               class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/5 transition-colors"
             >
-              Eliminar arqueo
+              {{ t('finanzas.arqueo.deleteArqueo') }}
             </button>
           </div>
           <div v-else class="flex flex-col gap-2">
-            <p class="text-sm text-text-primary font-medium">¿Eliminar este arqueo? Esta acción no se puede deshacer.</p>
+            <p class="text-sm text-text-primary font-medium">{{ t('finanzas.arqueo.deleteConfirmQ') }}</p>
             <div class="flex gap-2">
               <button
                 @click="handleDelete"
@@ -191,7 +191,7 @@
                 :disabled="deleting"
                 class="min-h-[44px] flex-1 px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
               >
-                Cancelar
+                {{ t('finanzas.common.cancel') }}
               </button>
             </div>
           </div>
@@ -202,8 +202,10 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, watch } from 'vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency: formatMoneyValue, formatDateTime } = useFormatters()
 
 const props = defineProps<{
   modelValue: boolean
@@ -255,22 +257,16 @@ const handleDelete = async () => {
   }
 }
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+const formatCurrency = (value?: number) => formatMoneyValue(value ?? 0)
 
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
-const { timezone } = useTenantTimezone()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
-    timeZone: timezone.value,
-  }).format(new Date(iso))
+  return formatDateTime(iso)
 }
 </script>
 
