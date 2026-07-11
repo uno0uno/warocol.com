@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Registrando arqueo..."
-      hint="Estamos guardando el cierre y consolidando el resumen del periodo."
+      :label="t('finanzas.arqueo.registeringClose')"
+      :hint="t('finanzas.arqueo.registeringCloseHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -32,7 +32,7 @@
             </div>
 
             <h2 id="cierre-success-title" class="text-xl font-bold leading-tight text-text-primary">
-              Arqueo registrado
+              {{ t('finanzas.arqueo.registeredSuccess') }}
             </h2>
             <p class="mt-1 text-sm text-text-secondary">
               {{ formatPeriod(periodStart, periodEnd) }}
@@ -40,19 +40,19 @@
 
             <div class="mt-4 rounded-lg border border-border bg-background p-3 text-left">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Total ventas</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalSales) }}</span>
               </div>
               <div v-if="hasCapturedTips(successData)" class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Total cobrado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalCharged') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalCharged) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Efectivo contado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashCounted') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.cashCounted) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
-                <span class="text-text-secondary">Diferencia</span>
+                <span class="text-text-secondary">{{ t('finanzas.common.difference') }}</span>
                 <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
                   {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
                 </span>
@@ -64,14 +64,14 @@
                 to="/finanzas/arqueo"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary"
               >
-                Ver historial
+                {{ t('finanzas.arqueo.viewHistory') }}
               </NuxtLink>
               <NuxtLink
                 v-if="successData?.id"
                 :to="`/finanzas/arqueo/${successData.id}`"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-action-primary-bg px-4 py-2.5 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg"
               >
-                Ver detalle
+                {{ t('finanzas.common.viewDetail') }}
               </NuxtLink>
             </div>
           </div>
@@ -87,20 +87,20 @@
             class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
             :class="arqueoWindowMode === 'template' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
             @click="setArqueoMode('template')"
-          >Plantilla</button>
+          >{{ t('finanzas.arqueo.templateShort') }}</button>
           <button
             type="button"
             class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
             :class="arqueoWindowMode === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
             @click="setArqueoMode('custom')"
-          >Personalizado</button>
+          >{{ t('finanzas.arqueo.customShort') }}</button>
 
           <select
             v-if="arqueoWindowMode === 'template'"
             v-model="selectedTemplateId"
             class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 flex-shrink-0 max-w-[11rem] sm:max-w-[13rem]"
           >
-            <option value="">Turno...</option>
+            <option value="">{{ t('finanzas.arqueo.shiftPlaceholder') }}</option>
             <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
               {{ t.name }} ({{ t.startTime }}-{{ t.endTime }})
             </option>
@@ -119,7 +119,7 @@
             v-if="arqueoWindowMode === 'template' && shiftTemplates.length === 0 && !templatesLoading"
             class="text-xs text-state-warning-text whitespace-nowrap flex-shrink-0"
           >
-            Sin turnos activos
+            {{ t('finanzas.arqueo.noActiveShifts') }}
           </p>
         <div class="h-10 w-px bg-border flex-shrink-0" aria-hidden="true" />
 
@@ -140,7 +140,7 @@
               :teleport="true"
               :enable-time-picker="false"
               :formats="dateOnlyFormats"
-              :locale="es"
+              :locale="locale"
               auto-apply
               :timezone="timezone"
               :max-date="maxDate"
@@ -165,7 +165,7 @@
             <span
               v-if="templateHoursLabel"
               class="flex items-center h-full px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
-              title="Horario definido por el turno"
+              :title="t('finanzas.arqueo.shiftScheduleTitle')"
             >
               {{ templateHoursLabel }}
             </span>
@@ -184,7 +184,7 @@
               :teleport="true"
               :preset-dates="dpPresets"
               :enable-time-picker="false"
-              :locale="es"
+              :locale="locale"
               auto-apply
               :timezone="timezone"
               :max-date="maxDate"
@@ -204,54 +204,54 @@
       <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
       <template v-else>
         <div v-if="xPreviewError" class="text-sm text-text-secondary py-4 px-2">
-          No se pudo cargar el resumen del período. Verifica tu conexión e intenta de nuevo.
+          {{ t('finanzas.arqueo.loadSummaryError') }}
         </div>
         <div v-else-if="xPreviewData" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Ventas -->
           <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.periodSales') }}</h3></div>
             <div class="divide-y divide-border">
               <div v-if="customInternalWindowLabel" class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">Ventana del período</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.periodWindow') }}</span>
                 <span class="font-medium text-text-primary">{{ customInternalWindowLabel }}</span>
               </div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
-              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
-              <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Impuesto propina</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
-              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Total cobrado</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.common.tips') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
+              <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
+              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.orders') }}</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
             </div>
           </div>
           <!-- Caja -->
           <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.drawerState') }}</h3></div>
             <div class="divide-y divide-border">
               <div v-if="customInternalWindowLabel" class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">Ventana del período</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.periodWindow') }}</span>
                 <span class="font-medium text-text-primary">{{ customInternalWindowLabel }}</span>
               </div>
-              <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
-              <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
-              <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Compras directas efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+              <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.openingFloat') }}</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+              <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashTips') }}</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpensesLong') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+              <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashPurchases') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">{{ tablePlural }} abiertas</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.openTables', { count: xPreviewData.openTablesCount, table: tablePlural, state: t('finanzas.arqueo.tableOpenPlural') }) }}</span>
                 <span class="font-medium" :class="xPreviewData.openTablesCount > 0 ? 'text-state-warning-text font-semibold' : 'text-text-primary'">{{ xPreviewData.openTablesCount }}</span>
               </div>
             </div>
           </div>
           <!-- Movimiento neto por método -->
           <div v-if="(xPreviewData.breakdown ?? []).length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Movimiento neto por método</h3></div>
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.netMovementByMethod') }}</h3></div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
-                <span class="px-3 py-2 text-right">Neto</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.inflow') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.outflow') }}</span>
+                <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
               </div>
               <div
                 v-for="(row, index) in (xPreviewData.breakdown ?? [])"
@@ -259,8 +259,8 @@
                 class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
                 :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
               >
-                <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-semibold text-data-table-cell-text">{{ row.method_name }}</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ GROUP_LABELS[row.group_slug] ?? row.group_slug }}</span>
+                <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-semibold text-data-table-cell-text">{{ methodDisplayName(row) }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ groupLabel(row.group_slug) }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right text-data-table-cell-text tabular-nums">{{ formatCurrency(rowGrossInflows(row)) }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right tabular-nums" :class="rowOutflows(row) > 0 ? 'text-destructive' : 'text-data-table-cell-muted'">
                   {{ rowOutflows(row) > 0 ? `− ${formatCurrency(rowOutflows(row))}` : formatCurrency(0) }}
@@ -277,8 +277,8 @@
           v-if="requiresShiftOpen && !shiftOpenForWindow"
           class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3 text-sm text-state-warning-text"
         >
-          Debes abrir el turno y declarar el fondo de caja antes de cerrar.
-          <NuxtLink :to="aperturaLink" class="font-semibold underline ml-1">Abrir turno</NuxtLink>
+          {{ t('finanzas.arqueo.openShiftBeforeCloseInline') }}
+          <NuxtLink :to="aperturaLink" class="font-semibold underline ml-1">{{ t('finanzas.arqueo.openShift') }}</NuxtLink>
         </div>
 
         <!-- CTA — always visible once not loading -->
@@ -288,7 +288,7 @@
             class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             :disabled="requiresShiftOpen && !shiftOpenForWindow"
           >
-            Continuar al cierre →
+            {{ t('finanzas.arqueo.continueToClose') }}
           </button>
         </div>
       </template>
@@ -560,7 +560,7 @@
 
             <div v-if="previewLoading" class="rounded-lg border border-border bg-background overflow-hidden">
               <div class="px-3 py-2 bg-surface border-b border-border">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Calculando caja</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.calculating') }}</span>
               </div>
               <div class="divide-y divide-border animate-pulse">
                 <div v-for="row in 3" :key="row" class="flex items-center justify-between px-3 py-2.5">
@@ -579,12 +579,12 @@
                   <svg v-else class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <span class="text-sm font-semibold">Diferencia</span>
+                  <span class="text-sm font-semibold">{{ t('finanzas.common.difference') }}</span>
                 </div>
                 <span class="text-lg font-bold">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
               </div>
               <div class="px-3 py-2 border-t border-black/10 flex justify-between text-xs opacity-80">
-                <span>Esperado en caja</span>
+                <span>{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
                 <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
               </div>
             </div>
@@ -612,16 +612,16 @@
 
       <!-- Step 3: Otros métodos -->
       <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-1">Otros métodos de pago</h3>
-        <p class="text-xs text-text-secondary mb-3">Ingresa el monto contado para cada método:</p>
+        <h3 class="text-sm font-semibold text-text-primary mb-1">{{ t('finanzas.arqueo.otherMethodsDetail') }}</h3>
+        <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.counted') }}</p>
 
         <div v-if="previewLoading" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[620px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Contado</span>
-            <span class="px-3 py-2 text-right">Diferencia</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
+            <span class="px-3 py-2 text-right">{{ t('finanzas.common.difference') }}</span>
           </div>
           <div class="animate-pulse">
             <div
@@ -640,12 +640,12 @@
         </div>
         <div v-else-if="nonCashMethods.length > 0" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
-            <span class="px-3 py-2 text-right">Contado</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.inflow') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.outflow') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
+            <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
           </div>
           <div
             v-for="(method, index) in nonCashMethods"
@@ -678,7 +678,7 @@
           </div>
         </div>
         <div v-else class="text-sm text-text-secondary mb-3 py-6 text-center bg-background rounded-lg border border-border">
-          No hay otros métodos de pago registrados para este período.
+          {{ t('finanzas.arqueo.noPaymentMethods') }}
         </div>
 
         <div class="flex gap-3">
@@ -701,34 +701,34 @@
 
       <!-- Step 4: Resumen -->
       <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-3">Resumen del día</h3>
+        <h3 class="text-sm font-semibold text-text-primary mb-3">{{ t('finanzas.arqueo.breakdown') }}</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
 
           <!-- Ventas -->
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Ventas</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.common.sales') }}</span>
             </div>
             <div class="divide-y divide-border">
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Período</span>
+                <span class="text-text-secondary">{{ t('finanzas.common.period') }}</span>
                 <span class="font-medium text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</span>
               </div>
               <div class="flex justify-between items-center px-3 py-2.5">
-                <span class="text-xs text-text-secondary">Total ventas</span>
+                <span class="text-xs text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
                 <span class="text-base font-bold text-text-primary">{{ formatCurrency(previewData?.totalSales) }}</span>
               </div>
               <div v-if="hasCapturedTips(previewData)" class="flex justify-between items-center px-3 py-2.5">
-                <span class="text-xs text-text-secondary">Propinas</span>
+                <span class="text-xs text-text-secondary">{{ t('finanzas.common.tips') }}</span>
                 <span class="text-sm font-medium text-text-primary">{{ formatCurrency(previewData?.totalTips) }}</span>
               </div>
               <div v-if="(previewData?.totalTipTax ?? 0) > 0" class="flex justify-between items-center px-3 py-2.5">
-                <span class="text-xs text-text-secondary">Impuesto propina</span>
+                <span class="text-xs text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span>
                 <span class="text-sm font-medium text-text-primary">{{ formatCurrency(previewData?.totalTipTax) }}</span>
               </div>
               <div v-if="hasCapturedTips(previewData)" class="flex justify-between items-center px-3 py-2.5">
-                <span class="text-xs font-semibold text-text-primary">Total cobrado</span>
+                <span class="text-xs font-semibold text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span>
                 <span class="text-sm font-bold text-text-primary">{{ formatCurrency(previewData?.totalCharged) }}</span>
               </div>
             </div>
@@ -737,35 +737,35 @@
           <!-- Caja -->
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Efectivo</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.common.cash') }}</span>
             </div>
             <div class="divide-y divide-border">
               <div v-if="(previewData?.openingCash ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Fondo inicial</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.openingFloat') }}</span>
                 <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.openingCash) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Recibido</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
               </div>
               <div v-if="(previewData?.cashTips ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Propinas en efectivo</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashTips') }}</span>
                 <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.cashTips) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Gastos</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.expenses') }}</span>
                 <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.gastosEfectivo) }}</span>
               </div>
               <div v-if="(previewData?.cashPurchases ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Compras directas</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.directPurchases') }}</span>
                 <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.cashPurchases) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Esperado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.expected') }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Contado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.counted') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(totalCounted) }}</span>
               </div>
             </div>
@@ -781,7 +781,7 @@
                 <svg v-else class="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">Diferencia</span>
+                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.common.difference') }}</span>
               </div>
               <span class="text-sm font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
                 {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
@@ -792,15 +792,15 @@
           <!-- Otros métodos (span full si hay) -->
           <div v-if="nonCashMethods.length > 0" class="sm:col-span-2 bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Otros métodos</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.otherMethodsDetail') }}</span>
             </div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[760px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Esperado</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Reportado</span>
-                <span class="px-3 py-2 text-right">Diferencia</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.expected') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
+                <span class="px-3 py-2 text-right">{{ t('finanzas.common.difference') }}</span>
               </div>
               <div
                 v-for="(method, index) in nonCashMethods"
@@ -812,7 +812,7 @@
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ method.groupLabel }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium text-data-table-cell-text tabular-nums">{{ formatCurrency(method.expectedAmount) }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? 'text-data-table-cell-text' : 'text-text-tertiary'">
-                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : 'Sin ingresar' }}
+                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : t('finanzas.arqueo.notEntered') }}
                 </span>
                 <span class="px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? amountToneClass(methodDiff(method)) : 'text-text-tertiary'">
                   {{ hasMethodAmount(method) ? `${methodDiff(method) >= 0 ? '+' : ''}${formatCurrency(methodDiff(method))}` : '—' }}
@@ -864,7 +864,7 @@
             ← Atrás
           </button>
           <button @click="currentStep = 5" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-            Continuar →
+            {{ t('finanzas.arqueo.continue') }}
           </button>
         </div>
       </div>
@@ -882,7 +882,7 @@
           </div>
           <!-- Total ventas -->
           <div class="bg-background rounded-lg border border-border px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Total ventas</p>
+            <p class="text-xs text-text-secondary mb-0.5">{{ t('finanzas.arqueo.totalSales') }}</p>
             <p class="text-base font-bold text-text-primary">{{ formatCurrency(previewData?.totalSales ?? 0) }}</p>
           </div>
           <!-- Diferencia caja -->
@@ -890,7 +890,7 @@
             class="rounded-lg border-2 px-3 py-2.5"
             :class="cashDiff >= 0 ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
           >
-            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">Diferencia caja</p>
+            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.arqueo.cashDifference') }}</p>
             <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
             </p>
@@ -900,31 +900,31 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Detalle de caja</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.cashDetail') }}</span>
             </div>
             <div class="divide-y divide-border">
               <div v-if="(previewData?.openingCash ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Fondo inicial</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.openingFloat') }}</span>
                 <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.openingCash) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Efectivo recibido</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Gastos efectivo</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpenses') }}</span>
                 <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.gastosEfectivo) }}</span>
               </div>
               <div v-if="(previewData?.cashPurchases ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Compras directas efectivo</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashPurchases') }}</span>
                 <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.cashPurchases) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Esperado en caja</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Contado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.counted') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(totalCounted) }}</span>
               </div>
             </div>
@@ -932,14 +932,14 @@
 
           <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border overflow-hidden lg:col-span-1">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Detalle de otros métodos</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.otherMethodsDetail') }}</span>
             </div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[620px] grid-cols-[1.15fr_.8fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Esperado</span>
-                <span class="px-3 py-2 text-right">Reportado</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+                <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.expected') }}</span>
+                <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
               </div>
               <div
                 v-for="(method, index) in nonCashMethods"
@@ -951,7 +951,7 @@
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ method.groupLabel }}</span>
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right font-medium text-data-table-cell-text tabular-nums">{{ formatCurrency(method.expectedAmount) }}</span>
                 <span class="px-3 py-2.5 text-right font-semibold tabular-nums" :class="hasMethodAmount(method) ? 'text-data-table-cell-text' : 'text-text-tertiary'">
-                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : 'Sin ingresar' }}
+                  {{ hasMethodAmount(method) ? formatCurrency(methodAmountValue(method)) : t('finanzas.arqueo.notEntered') }}
                 </span>
               </div>
             </div>
@@ -961,7 +961,7 @@
         <!-- Efectivo que queda en caja -->
         <div class="bg-background rounded-lg border border-border p-3 mb-3">
           <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-            Efectivo que queda en caja
+            {{ t('finanzas.arqueo.cashLeftInDrawer') }}
           </label>
           <p class="text-xs text-text-secondary mt-0.5 mb-2">
             Declara cuánto efectivo dejas en el cajón para el próximo turno (fondo para cambio).
@@ -1042,14 +1042,14 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useQueryCache } from '@pinia/colada'
-import { es } from 'date-fns/locale'
+import { enUS, es as dateFnsEs } from 'date-fns/locale'
 import { formatDistanceStrict } from 'date-fns'
 import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.z') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -1067,6 +1067,8 @@ const {
   todayISO,
   zonedParts,
 } = useTenantTimezone()
+const { formatCalendarDate, formatCurrency: formatMoneyValue, formatNumber } = useFormatters()
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : dateFnsEs)
 
 type ArqueoWindowMode = 'template' | 'custom'
 interface ShiftTemplateOption {
@@ -1086,10 +1088,7 @@ const suggestedLoading = ref(false)
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
-const formatIsoDateLong = (iso: string) => {
-  const [year, month, day] = iso.split('-')
-  return year && month && day ? `${day}/${month}/${year}` : iso
-}
+const formatIsoDateLong = (iso: string) => formatCalendarDate(iso)
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
 const initStart = (route.query.start as string) || today
@@ -1110,10 +1109,10 @@ const buildPresets = (): Preset[] => {
   const [y, m] = today.split('-').map(Number)
   const monthStartNoon = dateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
   return [
-    { key: 'today',     label: 'Hoy',           start: todayNoon,           end: todayNoon },
+    { key: 'today',     label: t('finanzas.common.today'),           start: todayNoon,           end: todayNoon },
     { key: 'yesterday', label: t('finanzas.common.yesterday'),           start: yesterdayNoon,       end: yesterdayNoon },
-    { key: 'week',      label: 'Últimos 7 días', start: weekStartNoon,       end: todayNoon },
-    { key: 'month',     label: 'Este mes',        start: monthStartNoon,      end: todayNoon },
+    { key: 'week',      label: t('finanzas.arqueo.last7Days'), start: weekStartNoon,       end: todayNoon },
+    { key: 'month',     label: t('finanzas.arqueo.thisMonth'),        start: monthStartNoon,      end: todayNoon },
   ]
 }
 const presets      = buildPresets()
@@ -1135,9 +1134,6 @@ const applyPreset = (p: Preset) => {
   }
 }
 
-/** Vue Datepicker v12 — sin componente de hora en el input */
-const dateOnlyFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
-
 const formatDateRange = (dates: Date[]) => {
   if (!dates?.[0]) return ''
   const from = formatIsoDateLong(isoFromDate(dates[0]))
@@ -1146,6 +1142,9 @@ const formatDateRange = (dates: Date[]) => {
   if (from === to) return from
   return `${from} – ${to}`
 }
+
+/** Vue Datepicker v12 — sin componente de hora en el input */
+const dateOnlyFormats = { input: formatDateRange, preview: formatDateRange }
 
 // Time inputs
 const initStartTimeQ = (route.query.startTime as string) || ''
@@ -1369,7 +1368,7 @@ const customInternalWindowLabel = computed(() => {
   if (s >= e) return null
   const hours = `${timeHHMMFromISO(startIso)} – ${timeHHMMFromISO(endIso)}`
   try {
-    return `${hours} · ${formatDistanceStrict(s, e, { locale: es })}`
+    return `${hours} · ${formatDistanceStrict(s, e, { locale: dateFnsLocale.value })}`
   } catch {
     return hours
   }
@@ -1468,8 +1467,15 @@ onUnmounted(() => { clearRefreshHandler(refetchPreview) })
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
-const GROUP_LABELS: Record<string, string> = {
-  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
+const groupLabel = (slug: string) => {
+  const labels: Record<string, string> = {
+    cash: t('finanzas.common.cash'),
+    card: t('finanzas.common.card'),
+    digital: t('finanzas.common.digital'),
+    credit: t('finanzas.common.credit'),
+    untracked: t('finanzas.arqueo.untrackedPaymentGroup'),
+  }
+  return labels[slug] ?? slug
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -1502,7 +1508,7 @@ const breakdownGroups = computed<BreakdownGroup[]>(() => {
     if (!map.has(row.group_slug)) {
       map.set(row.group_slug, {
         slug:  row.group_slug,
-        label: GROUP_LABELS[row.group_slug] ?? row.group_slug,
+        label: groupLabel(row.group_slug),
         total: 0,
       })
     }
@@ -1537,7 +1543,7 @@ const nonCashMethods = computed<BreakdownMethod[]>(() => {
         key:        `${r.group_slug}__${r.method_name}`,
         groupSlug:  r.group_slug,
         label:      r.method_name,
-        groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
+        groupLabel: groupLabel(r.group_slug),
         total:      r.total,
         grossInflowsAmount: r.grossInflowsAmount ?? r.gross_inflows_amount ?? r.total,
         expenseOutflowsAmount: r.expenseOutflowsAmount ?? r.expense_outflows_amount ?? 0,
@@ -1582,6 +1588,11 @@ const rowExpectedAmount = (row: BreakdownRowRaw) =>
 
 const rowGrossInflows = (row: BreakdownRowRaw) =>
   Number(row.grossInflowsAmount ?? row.gross_inflows_amount ?? row.total ?? 0)
+
+const methodDisplayName = (row: BreakdownRowRaw) =>
+  row.group_slug === 'untracked'
+    ? t('finanzas.arqueo.untrackedPaymentGroup')
+    : row.method_name
 
 const rowOutflows = (row: BreakdownRowRaw) =>
   Number(row.expenseOutflowsAmount ?? row.expense_outflows_amount ?? 0)
@@ -1671,7 +1682,7 @@ const formatMoneyParts = (value: string, allowNegative = false): string => {
   const negative = allowNegative && value.trim().startsWith('-')
   const digits = value.replace(/\D/g, '').replace(/^0+(?=\d)/, '')
   if (!digits) return negative ? '-' : ''
-  const formatted = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Number(digits))
+  const formatted = formatNumber(Number(digits), { maximumFractionDigits: 0 })
   return negative ? `-${formatted}` : formatted
 }
 const formatMoneyInput = (e: Event): string => {
@@ -1763,8 +1774,7 @@ onMounted(() => {
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+const formatCurrency = (value?: number | null) => formatMoneyValue(value ?? 0)
 
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
