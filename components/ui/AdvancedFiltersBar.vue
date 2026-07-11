@@ -9,7 +9,7 @@
         <button
           type="button"
           class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
-          aria-label="Buscar"
+          :aria-label="t('common.search')"
           @click="emit('search')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4" aria-hidden="true">
@@ -29,11 +29,11 @@
       <UiFilterSelect
         v-if="showSearch && searchFields.length > 0"
         :model-value="searchField"
-        placeholder="Campo"
+        :placeholder="t('common.filters.field')"
         :options="searchFields"
         always-active
         hide-placeholder
-        aria-label="Campo de búsqueda"
+        :aria-label="t('common.filters.searchField')"
         @update:model-value="emit('update:searchField', $event)"
       />
 
@@ -48,8 +48,8 @@
           range
           :preset-dates="presetDates"
           :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
+          :locale="locale"
+          :placeholder="t('common.filters.dateRange')"
           auto-apply
           :teleport="true"
           :timezone="effectiveTimezone"
@@ -69,7 +69,7 @@
         v-if="showClear"
         type="button"
         class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-        aria-label="Limpiar filtros"
+        :aria-label="t('common.filters.clear')"
         @click="emit('clear')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { es } from 'date-fns/locale'
+const { t, locale } = useI18n({ useScope: 'global' })
 
 export interface SearchFieldOption {
   label: string

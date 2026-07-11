@@ -16,6 +16,20 @@
     "yes": "Sí",
     "no": "No",
     "notSpecified": "No especificada",
-    "nA": "N/A"
+    "nA": "N/A",
+    "filters": {
+      "field": "Campo",
+      "searchField": "Campo de búsqueda",
+      "dateRange": "Rango de fechas",
+      "clear": "Limpiar filtros"
+    },
+    "datePresets": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "lastWeek": "Última semana",
+      "last15": "Últimos 15 días",
+      "lastMonth": "Último mes",
+      "last90": "Últimos 90 días"
+    }
   }
 }

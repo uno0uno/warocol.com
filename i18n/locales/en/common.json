@@ -16,6 +16,20 @@
     "yes": "Yes",
     "no": "No",
     "notSpecified": "Not specified",
-    "nA": "N/A"
+    "nA": "N/A",
+    "filters": {
+      "field": "Field",
+      "searchField": "Search field",
+      "dateRange": "Date range",
+      "clear": "Clear filters"
+    },
+    "datePresets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "lastWeek": "Last week",
+      "last15": "Last 15 days",
+      "lastMonth": "Last month",
+      "last90": "Last 90 days"
+    }
   }
 }

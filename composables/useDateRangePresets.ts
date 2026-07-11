@@ -12,6 +12,7 @@ export function useDateRangePresets(
   existing?: Ref<DateRangeModel | null>,
   options: { modelType?: 'date' | 'iso' } = {},
 ) {
+  const { t } = useI18n({ useScope: 'global' })
   const modelType = options.modelType ?? 'date'
   const dateRangeDates = existing ?? ref<DateRangeModel | null>(null)
   const { todayISO, addDaysISO, dateAtNoon, dateAtEndOfDay, isoFromDate } = useTenantTimezone()
@@ -21,25 +22,25 @@ export function useDateRangePresets(
   const maxDate = computed(() => modelType === 'iso' ? todayISO() : dateAtEndOfDay(todayISO()))
 
   const presetDates = computed(() => [
-    { label: 'Hoy', value: presetRange(todayISO()) },
+    { label: t('common.datePresets.today'), value: presetRange(todayISO()) },
     {
-      label: 'Ayer',
+      label: t('common.datePresets.yesterday'),
       value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)),
     },
     {
-      label: 'Última semana',
+      label: t('common.datePresets.lastWeek'),
       value: presetRange(addDaysISO(todayISO(), -7)),
     },
     {
-      label: 'Últimos 15 días',
+      label: t('common.datePresets.last15'),
       value: presetRange(addDaysISO(todayISO(), -15)),
     },
     {
-      label: 'Último mes',
+      label: t('common.datePresets.lastMonth'),
       value: presetRange(addDaysISO(todayISO(), -30)),
     },
     {
-      label: 'Últimos 90 días',
+      label: t('common.datePresets.last90'),
       value: presetRange(addDaysISO(todayISO(), -90)),
     },
   ])
