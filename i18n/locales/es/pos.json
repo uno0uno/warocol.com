@@ -149,7 +149,28 @@
       "registeredBy": "Anticipo registrado por {amount}"
     },
     "destructive": {
-      "reasonPlaceholder": "Ej: cliente cambió de opinión"
+      "reasonPlaceholder": "Ej: cliente cambió de opinión",
+      "reasonLabel": "Motivo",
+      "reasonRequired": "*",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "removeProductTitle": "¿Eliminar producto?",
+      "reduceQtyTitle": "¿Reducir cantidad?",
+      "clearBarTitle": "¿Limpiar la barra?",
+      "confirmActionTitle": "¿Confirmar acción?",
+      "firedNotifyVoid": "{name} ya fue enviado a cocina. Se notificará al cocinero que lo anule.",
+      "firedNotifyQty": "{name} ya fue enviado a cocina. Se notificará al cocinero del cambio de cantidad.",
+      "removeFromTab": "Se eliminará {name} de la cuenta.",
+      "clearTableAndCart": "Se borrarán todos los ítems pendientes de la {table} y del carrito.",
+      "releaseWithBalance": "Esta {table} tiene {amount} en consumo. Si la liberas ahora, se cerrará sin cobrar.",
+      "releaseEmpty": "Se cerrará la {table} sin cobrar.",
+      "clearBarMessage": "Se borrarán todos los ítems pendientes de la barra. La sesión permanece abierta.",
+      "yesRelease": "Sí, liberar {table}",
+      "deleteProductError": "Error al eliminar el producto",
+      "updateQtyError": "Error al actualizar la cantidad",
+      "releaseError": "Error al liberar la {table}",
+      "clearBarError": "Error al limpiar la barra",
+      "clearCartError": "Error al limpiar el carrito"
     },
     "floor": {
       "minCovered": "Mínimo cubierto",

@@ -856,19 +856,19 @@ const destructiveModalTitle = computed(() => {
   if (!flow) return ''
   switch (flow.kind) {
     case 'remove-tab-item':
-      return '¿Eliminar producto?'
+      return t('pos.destructive.removeProductTitle')
     case 'decrease-tab-item':
-      return '¿Reducir cantidad?'
+      return t('pos.destructive.reduceQtyTitle')
     case 'clear-cart':
       return posStore.activeTableSession ? t('pos.banner.clearAccount') : t('pos.banner.clearCartQ')
     case 'remove-cart-item':
-      return '¿Eliminar producto?'
+      return t('pos.destructive.removeProductTitle')
     case 'release-table':
       return t('pos.banner.releaseTableQ', { table: tableSingularLower.value })
     case 'clear-bar-tab':
-      return '¿Limpiar la barra?'
+      return t('pos.destructive.clearBarTitle')
     default:
-      return '¿Confirmar acción?'
+      return t('pos.destructive.confirmActionTitle')
   }
 })
 
@@ -880,18 +880,18 @@ const destructiveModalMessage = computed(() => {
       const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
       const name = item?.productName ?? t('pos.banner.thisProduct')
       if (comandasEnabled.value && isTabItemFired(flow.orderItemId)) {
-        return `${name} ya fue enviado a cocina. Se notificará al cocinero que lo anule.`
+        return t('pos.destructive.firedNotifyVoid', { name })
       }
-      return `Se eliminará ${name} de la cuenta.`
+      return t('pos.destructive.removeFromTab', { name })
     }
     case 'decrease-tab-item': {
       const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
       const name = item?.productName ?? t('pos.banner.thisProduct')
-      return `${name} ya fue enviado a cocina. Se notificará al cocinero del cambio de cantidad.`
+      return t('pos.destructive.firedNotifyQty', { name })
     }
     case 'clear-cart':
       return posStore.activeTableSession
-        ? `Se borrarán todos los ítems pendientes de la ${tableSingularLower.value} y del carrito.`
+        ? t('pos.destructive.clearTableAndCart', { table: tableSingularLower.value })
         : t('pos.banner.clearCartItems')
     case 'remove-cart-item': {
       const item = posStore.cart[flow.index]
@@ -900,12 +900,15 @@ const destructiveModalMessage = computed(() => {
     case 'release-table': {
       const session = posStore.activeTableSession
       if (session && session.runningTotal > 0) {
-        return `Esta ${tableSingularLower.value} tiene ${formatCurrencyPOS(session.runningTotal)} en consumo. Si la liberas ahora, se cerrará sin cobrar.`
+        return t('pos.destructive.releaseWithBalance', {
+          table: tableSingularLower.value,
+          amount: formatCurrencyPOS(session.runningTotal),
+        })
       }
-      return `Se cerrará la ${tableSingularLower.value} sin cobrar.`
+      return t('pos.destructive.releaseEmpty', { table: tableSingularLower.value })
     }
     case 'clear-bar-tab':
-      return 'Se borrarán todos los ítems pendientes de la barra. La sesión permanece abierta.'
+      return t('pos.destructive.clearBarMessage')
     default:
       return ''
   }
@@ -923,7 +926,7 @@ const destructiveModalConfirmLabel = computed(() => {
     case 'clear-cart':
       return t('pos.banner.yesClear')
     case 'release-table':
-      return `Sí, liberar ${tableSingularLower.value}`
+      return t('pos.destructive.yesRelease', { table: tableSingularLower.value })
     case 'clear-bar-tab':
       return t('pos.banner.yesClear')
     default:
@@ -1014,7 +1017,7 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   } catch (e: unknown) {
     bumpTableSessionFetchGen()
     posStore.setTabItems(previousTabItems)
-    const errText = destructiveFetchError(e, 'Error al eliminar el producto')
+    const errText = destructiveFetchError(e, t('pos.destructive.deleteProductError'))
     if (destructiveFlow.value?.kind === 'remove-tab-item') {
       destructiveError.value = errText
     } else {
@@ -1039,7 +1042,7 @@ const updateTabItemQuantity = async (orderItemId: string, quantity: number, reas
     })
     await refreshTableSession()
   } catch (e: unknown) {
-    const errText = destructiveFetchError(e, 'Error al actualizar la cantidad')
+    const errText = destructiveFetchError(e, t('pos.destructive.updateQtyError'))
     if (destructiveFlow.value?.kind === 'decrease-tab-item') {
       destructiveError.value = errText
     } else {
@@ -1174,7 +1177,7 @@ const executeBannerClose = async (reason: string) => {
       body: { reason: reason.trim() || null },
     })
   } catch (e: unknown) {
-    destructiveError.value = destructiveFetchError(e, `Error al liberar la ${tableSingularLower.value}`)
+    destructiveError.value = destructiveFetchError(e, t('pos.destructive.releaseError', { table: tableSingularLower.value }))
     return
   }
   resetComandaPrintState()
@@ -1195,7 +1198,7 @@ const executeClearBarTab = async (reason: string) => {
     posStore.clearAll()
     queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
   } catch (e: unknown) {
-    destructiveError.value = destructiveFetchError(e, 'Error al limpiar la barra')
+    destructiveError.value = destructiveFetchError(e, t('pos.destructive.clearBarError'))
   } finally {
     posStore.isCancellingMesa = false
   }
@@ -1535,7 +1538,7 @@ const executeClearCart = async (reason: string) => {
   try {
     await posStore.clearCart(reason)
   } catch (e: unknown) {
-    destructiveError.value = destructiveFetchError(e, 'Error al limpiar el carrito')
+    destructiveError.value = destructiveFetchError(e, t('pos.destructive.clearCartError'))
   }
 }
 
