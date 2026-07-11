@@ -13,7 +13,7 @@
         v-model:search="localSearchTerm"
         v-model:search-field="apiSearchField"
         :search-fields="searchFields"
-        search-placeholder="Buscar órdenes..."
+        :search-placeholder="t('finanzas.pagos.search')"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
         @search="performSearch"
@@ -198,7 +198,7 @@
                   ? 'bg-success/30 text-success border-2 border-success animate-pulse'
                   : 'bg-success/10 text-success'
               ]">
-                {{ row.isHighlighted ? '✓ Pagado (desde compra)' : 'Pagado' }}
+                {{ row.isHighlighted ? '✓ Pagado (desde compra)' : t('finanzas.pagos.paid') }}
               </span>
             </template>
           </UiDataTable>
@@ -210,20 +210,21 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, inject, onMounted } from 'vue'
 import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard',
-  title: 'Gestión de Pagos',
+  title: t('finanzas.pagos.title'),
   module: 'finanzas',
 })
 
 useHead({
   title: 'Gestión de Pagos - Warocol',
   meta: [
-    { name: 'description', content: 'Gestión de pagos a proveedores' }
+    { name: 'description', content: t('finanzas.pagos.subtitle') }
   ]
 })
 
@@ -362,26 +363,26 @@ const paidPurchases = computed(() => {
 // Table columns configuration
 const pendingColumns = [
   { key: 'seleccion', title: '', sortable: false, align: 'center' as const, class: 'font-normal' },
-  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const, class: 'font-bold' },
-  { key: 'fechaOrden', title: 'Fecha Orden', sortable: true, align: 'left' as const, class: 'font-normal' },
-  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const, class: 'font-normal' },
-  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'fechaFactura', title: 'Fecha Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'monto', title: 'Monto', sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
-  { key: 'vencimiento', title: 'Vencimiento', sortable: true, align: 'left' as const, class: 'font-normal' },
-  { key: 'acciones', title: 'Acciones', sortable: false, align: 'center' as const, class: 'font-normal' }
+  { key: 'orden', title: t('finanzas.pagos.colOrder'), sortable: true, align: 'left' as const, class: 'font-bold' },
+  { key: 'fechaOrden', title: t('finanzas.pagos.colOrderDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'factura', title: t('finanzas.pagos.colInvoice'), sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'fechaFactura', title: t('finanzas.pagos.colInvoiceDate'), sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'monto', title: t('finanzas.pagos.colAmount'), sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
+  { key: 'vencimiento', title: t('finanzas.pagos.colDue'), sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'acciones', title: t('finanzas.common.actions'), sortable: false, align: 'center' as const, class: 'font-normal' }
 ]
 
 const paidColumns = [
-  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const, class: 'font-bold' },
-  { key: 'fechaOrden', title: 'Fecha Orden', sortable: true, align: 'left' as const, class: 'font-normal' },
-  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const, class: 'font-normal' },
-  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'fechaFactura', title: 'Fecha Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
-  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const, format: 'text' as const, class: 'font-normal' },
-  { key: 'metodo', title: 'Método', sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'estado', title: 'Estado', sortable: false, align: 'center' as const, class: 'font-normal' }
+  { key: 'orden', title: t('finanzas.pagos.colOrder'), sortable: true, align: 'left' as const, class: 'font-bold' },
+  { key: 'fechaOrden', title: t('finanzas.pagos.colOrderDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'factura', title: t('finanzas.pagos.colInvoice'), sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'fechaFactura', title: t('finanzas.pagos.colInvoiceDate'), sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'montoPagado', title: t('finanzas.pagos.colPaid'), sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
+  { key: 'fechaPago', title: t('finanzas.pagos.colPaymentDate'), sortable: true, align: 'left' as const, format: 'text' as const, class: 'font-normal' },
+  { key: 'metodo', title: t('finanzas.pagos.colMethod'), sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'estado', title: t('finanzas.pagos.colStatus'), sortable: false, align: 'center' as const, class: 'font-normal' }
 ]
 
 // Transform pending purchases data for table

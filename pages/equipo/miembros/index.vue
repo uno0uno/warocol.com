@@ -13,7 +13,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         :search-fields="[]"
-        search-placeholder="Buscar por nombre o correo..."
+        :search-placeholder="t('equipo.miembros.search')"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
         @search="performSearch"
@@ -23,9 +23,9 @@
           <select
             v-model="roleFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por rol"
+            :aria-label="t('equipo.miembros.filterRole')"
           >
-            <option value="">Rol</option>
+            <option value="">{{ t('equipo.common.role') }}</option>
             <option v-for="option in roleFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -36,7 +36,7 @@
           <button
             v-if="canManageTeam"
             :disabled="isAdminUsersQuotaBlocked"
-            :title="isAdminUsersQuotaBlocked ? adminUsersQuotaMessage : 'Invitar miembro'"
+            :title="isAdminUsersQuotaBlocked ? adminUsersQuotaMessage : t('equipo.miembros.invite')"
             @click="openInviteModal"
             class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -332,7 +332,7 @@
                 :disabled="cancelingInvitation"
                 class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
               >
-                {{ cancelingInvitation ? 'Cancelando...' : 'Si, cancelar' }}
+                {{ cancelingInvitation ? t('equipo.miembros.canceling') : 'Si, cancelar' }}
               </button>
             </div>
           </div>
@@ -378,7 +378,7 @@
                 type="email"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="correo@ejemplo.com"
+                :placeholder="t('equipo.miembros.emailPlaceholder')"
               />
             </div>
 
@@ -430,7 +430,7 @@
                 :disabled="inviteSending || isAdminUsersQuotaBlocked"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
               >
-                {{ inviteSending ? 'Enviando...' : 'Enviar invitacion' }}
+                {{ inviteSending ? t('equipo.miembros.sending') : t('equipo.miembros.sendInvite') }}
               </button>
             </div>
           </form>
@@ -471,7 +471,7 @@
                 :disabled="deleting"
                 class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
-                {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+                {{ deleting ? t('equipo.common.deleting') : t('equipo.common.delete') }}
               </button>
             </div>
           </div>
@@ -550,7 +550,7 @@
                 :disabled="editProfileLoading"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
               >
-                {{ editProfileLoading ? 'Guardando...' : 'Guardar' }}
+                {{ editProfileLoading ? t('equipo.common.saving') : t('equipo.common.save') }}
               </button>
             </div>
           </form>
@@ -632,7 +632,7 @@
                 :disabled="editRoleLoading || editRoleForm.role === memberToEdit?.role"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
               >
-                {{ editRoleLoading ? 'Guardando...' : 'Guardar' }}
+                {{ editRoleLoading ? t('equipo.common.saving') : t('equipo.common.save') }}
               </button>
             </div>
           </form>
@@ -643,13 +643,14 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 const { formatDate: _fmtDate } = useFormatters()
 
 definePageMeta({ layout: 'dashboard', module: 'equipo' })
 
-useHead({ title: 'Miembros - Equipo' })
+useHead({ title: () => t('equipo.head.miembros') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -669,7 +670,7 @@ const roleDefinitions = {
     badgeClass: 'bg-amber-100 text-amber-800',
   },
   admin: {
-    label: 'Administrador',
+    label: t('equipo.roles.admin'),
     shortLabel: 'Admin',
     description: 'Gestiona la operación diaria, ventas, menú, reportes y configuración operativa.',
     badgeClass: 'bg-blue-100 text-blue-800',
@@ -688,7 +689,7 @@ const roleDefinitions = {
   },
   promotor: {
     label: 'Promotor comercial',
-    shortLabel: 'Promotor',
+    shortLabel: t('equipo.roles.promotor'),
     description: 'Rol comercial para promoción y apoyo de ventas con acceso limitado.',
     badgeClass: 'bg-purple-100 text-purple-800',
   },
@@ -807,7 +808,7 @@ const teamMembers = computed(() => {
 const pendingInvitations = computed(() => membersData.value.pendingInvitations || [])
 
 // Error message
-const error = computed(() => fetchError?.value ? 'Error al cargar los miembros del equipo' : null)
+const error = computed(() => fetchError?.value ? t('equipo.miembros.loadError') : null)
 
 // Session data for current user
 const { data: sessionData } = useAsyncData(
@@ -866,21 +867,21 @@ const getRoleBadgeClass = (role) => {
 const teamMembersTableColumns = [
   {
     key: 'name',
-    title: 'Miembro',
+    title: t('equipo.miembros.member'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'email',
-    title: 'Email',
+    title: t('equipo.common.email'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'role',
-    title: 'Rol',
+    title: t('equipo.common.role'),
     sortable: true,
     format: 'text',
     align: 'left'
@@ -921,7 +922,7 @@ const adminUsersQuotaMessage = computed(() => {
 const showAdminUsersQuotaBlocked = () => {
   const message = adminUsersQuotaMessage.value
   inviteError.value = message
-  toast.warning(message, { title: 'Cupo de usuarios agotado' })
+  toast.warning(message, { title: t('equipo.miembros.quotaBlocked') })
 }
 
 const quotaExceededMessageFromError = (err: any) => {
@@ -995,18 +996,18 @@ const sendInvitation = async () => {
 
     if (response.success) {
       toast.success(`Invitacion enviada a ${inviteForm.email}`, {
-        title: 'Invitacion enviada'
+        title: t('equipo.miembros.inviteSent')
       })
       closeInviteModal()
       await Promise.all([refresh(), fetchBillingOverview()])
     } else {
-      inviteError.value = response.message || 'Error al enviar la invitacion'
+      inviteError.value = response.message || t('equipo.miembros.inviteError')
     }
   } catch (err) {
     console.error('Error sending invitation:', err)
     inviteError.value = isQuotaExceededError(err)
       ? quotaExceededMessageFromError(err)
-      : err?.data?.message || err?.message || 'Error al enviar la invitacion'
+      : err?.data?.message || err?.message || t('equipo.miembros.inviteError')
   } finally {
     inviteSending.value = false
   }
@@ -1039,11 +1040,11 @@ const deleteMember = async () => {
       closeDeleteModal()
       refresh()
     } else {
-      toast.error(response.message || 'Error al eliminar miembro')
+      toast.error(response.message || t('equipo.miembros.deleteError'))
     }
   } catch (err) {
     console.error('Error deleting member:', err)
-    toast.error(err.data?.message || err.message || 'Error al eliminar miembro')
+    toast.error(err.data?.message || err.message || t('equipo.miembros.deleteError'))
   } finally {
     deleting.value = false
   }
@@ -1089,11 +1090,11 @@ const updateProfile = async () => {
       closeEditProfileModal()
       refresh()
     } else {
-      editProfileError.value = response.message || 'Error al actualizar perfil'
+      editProfileError.value = response.message || t('equipo.miembros.profileError')
     }
   } catch (err) {
     console.error('Error updating profile:', err)
-    editProfileError.value = err.data?.message || err.message || 'Error al actualizar perfil'
+    editProfileError.value = err.data?.message || err.message || t('equipo.miembros.profileError')
   } finally {
     editProfileLoading.value = false
   }
@@ -1139,11 +1140,11 @@ const updateRole = async () => {
       closeEditRoleModal()
       refresh()
     } else {
-      editRoleError.value = response.message || 'Error al actualizar rol'
+      editRoleError.value = response.message || t('equipo.miembros.roleError')
     }
   } catch (err) {
     console.error('Error updating role:', err)
-    editRoleError.value = err.data?.message || err.message || 'Error al actualizar rol'
+    editRoleError.value = err.data?.message || err.message || t('equipo.miembros.roleError')
   } finally {
     editRoleLoading.value = false
   }
@@ -1180,11 +1181,11 @@ const cancelInvitation = async () => {
       closeCancelInvitationModal()
       await Promise.all([refresh(), fetchBillingOverview()])
     } else {
-      toast.error(response.message || 'Error al cancelar invitacion')
+      toast.error(response.message || t('equipo.miembros.cancelInviteError'))
     }
   } catch (err) {
     console.error('Error canceling invitation:', err)
-    toast.error(err.data?.message || err.message || 'Error al cancelar invitacion')
+    toast.error(err.data?.message || err.message || t('equipo.miembros.cancelInviteError'))
   } finally {
     cancelingInvitation.value = false
   }

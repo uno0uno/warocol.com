@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+useHead({ title: () => t('analitica.head.puntos') })
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { WaroRule } from '~/composables/warosConfigHelpers'
 

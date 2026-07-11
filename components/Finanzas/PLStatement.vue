@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed } from 'vue'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -113,8 +114,8 @@ const isNegative = (value: number) => value < 0
 
 // ── Month label helper ────────────────────────────────────────────────────────
 const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  t('finanzas.pl.months.1'), t('finanzas.pl.months.2'), t('finanzas.pl.months.3'), t('finanzas.pl.months.4'), t('finanzas.pl.months.5'), t('finanzas.pl.months.6'),
+  t('finanzas.pl.months.7'), t('finanzas.pl.months.8'), t('finanzas.pl.months.9'), t('finanzas.pl.months.10'), t('finanzas.pl.months.11'), t('finanzas.pl.months.12'),
 ]
 
 const periodLabel = computed(() => {
@@ -278,7 +279,7 @@ const prevPeriodLabel = computed(() => {
           ? 'border-primary bg-primary text-white'
           : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
         :aria-pressed="showComparison"
-        :aria-label="showComparison ? 'Ocultar mes anterior' : 'Comparar mes anterior'"
+        :aria-label="showComparison ? 'Ocultar mes anterior' : t('finanzas.pl.comparePrev')"
         @click="showComparison = !showComparison"
       >
         Comparar mes anterior

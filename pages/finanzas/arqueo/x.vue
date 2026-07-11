@@ -182,11 +182,12 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Previsualización arqueo - Warocol' })
+useHead({ title: () => t('finanzas.head.x') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -216,7 +217,7 @@ const periodEndTime   = ref<string | null>(initEndTime)
 const todayNoon = dateAtNoon(today)
 const presetDates = ref([
   { label: 'Hoy',           value: [todayNoon, todayNoon] },
-  { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today, -1)); return [d, d] })() },
+  { label: t('finanzas.common.yesterday'),          value: (() => { const d = dateAtNoon(addDaysISO(today, -1)); return [d, d] })() },
   { label: 'Última semana', value: [dateAtNoon(addDaysISO(today, -7)), todayNoon] },
   { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today, -30)), todayNoon] },
 ])
@@ -255,7 +256,7 @@ const previewError   = computed(() => previewErr.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
 
 const GROUP_LABELS: Record<string, string> = {
-  cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -287,10 +288,10 @@ const displayMethods = computed<DisplayMethod[]>(() => {
   const p = previewData.value
   if (!p) return []
   return ([
-    { slug: 'cash',    label: 'Efectivo', total: p.totalCash    ?? 0 },
-    { slug: 'card',    label: 'Tarjeta',  total: p.totalCard    ?? 0 },
-    { slug: 'digital', label: 'Digital',  total: p.totalDigital ?? 0 },
-    { slug: 'credit',  label: 'Crédito',  total: p.totalCredit  ?? 0 },
+    { slug: 'cash',    label: t('finanzas.common.cash'), total: p.totalCash    ?? 0 },
+    { slug: 'card',    label: t('finanzas.common.card'),  total: p.totalCard    ?? 0 },
+    { slug: 'digital', label: t('finanzas.common.digital'),  total: p.totalDigital ?? 0 },
+    { slug: 'credit',  label: t('finanzas.common.credit'),  total: p.totalCredit  ?? 0 },
   ] as BreakdownGroup[])
     .filter(g => g.total > 0)
     .map(g => ({ key: g.slug, groupSlug: g.slug, label: g.label, groupLabel: g.label, total: g.total }))

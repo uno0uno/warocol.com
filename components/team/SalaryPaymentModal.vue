@@ -126,7 +126,7 @@
             class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 flex items-center gap-2"
           >
             <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
-            <span>{{ isSubmitting ? 'Registrando...' : 'Registrar Pago' }}</span>
+            <span>{{ isSubmitting ? t('equipo.salaryModal.registering') : t('equipo.salaryModal.registerPayment') }}</span>
           </button>
         </div>
       </div>
@@ -135,6 +135,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const props = defineProps({
   employee: { type: Object, required: true }
 })
@@ -142,10 +143,10 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 
 const paymentMethods = [
-  { value: 'transfer', label: 'Transferencia' },
-  { value: 'cash', label: 'Efectivo' },
-  { value: 'check', label: 'Cheque' },
-  { value: 'other', label: 'Otro' }
+  { value: 'transfer', label: t('equipo.salaryModal.transfer') },
+  { value: 'cash', label: t('equipo.salaryModal.cash') },
+  { value: 'check', label: t('equipo.salaryModal.check') },
+  { value: 'other', label: t('equipo.salaryModal.other') }
 ]
 
 const form = reactive({
@@ -209,7 +210,7 @@ const handleSubmit = async () => {
     emit('saved')
   } catch (err) {
     console.error('Error recording payment:', err)
-    useToast().error(err.data?.detail || 'Error al registrar el pago')
+    useToast().error(err.data?.detail || t('equipo.salaryModal.paymentError'))
   } finally {
     isSubmitting.value = false
   }

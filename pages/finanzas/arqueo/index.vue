@@ -13,16 +13,16 @@
         v-if="closedRows.length > 0"
         class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-5"
       >
-        <MetricCard title="Total ventas" :value="summaryStats.totalSales" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.arqueo.totalSales')" :value="summaryStats.totalSales" format="currency" variant="primary" />
         <MetricCard
-          title="Diferencia de caja"
+          :title="t('finanzas.arqueo.cashDiff')"
           :value="summaryStats.cashDifference"
           format="currency"
           :variant="summaryStats.cashDifference >= 0 ? 'primary' : 'destructive'"
         />
-        <MetricCard title="Efectivo" :value="summaryStats.totalCash" format="currency" variant="primary" />
-        <MetricCard title="Tarjeta" :value="summaryStats.totalCard" format="currency" variant="primary" />
-        <MetricCard title="Gastos efectivo" :value="summaryStats.gastosEfectivo" format="currency" variant="primary" class="col-span-2 md:col-span-1 xl:col-span-1" />
+        <MetricCard :title="t('finanzas.common.cash')" :value="summaryStats.totalCash" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.common.card')" :value="summaryStats.totalCard" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.arqueo.cashExpenses')" :value="summaryStats.gastosEfectivo" format="currency" variant="primary" class="col-span-2 md:col-span-1 xl:col-span-1" />
       </div>
 
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
@@ -33,7 +33,7 @@
           :preset-dates="presetDates"
           :enable-time-picker="false"
           :locale="es"
-          placeholder="Rango de fechas"
+          :placeholder="t('finanzas.common.dateRange')"
           auto-apply
           :teleport="true"
           :timezone="timezone"
@@ -99,7 +99,7 @@
 
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
       <div>
-        <h2 v-if="!hasOpenShift" class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
+        <h2 v-if="!hasOpenShift" class="text-sm font-semibold text-text-primary mb-2">{{ t('finanzas.arqueo.new') }}</h2>
         <details v-else class="group rounded-lg border border-border bg-surface">
           <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-text-primary flex items-center justify-between">
             Arqueo de otro período
@@ -178,7 +178,7 @@
         :data="filteredHistorial"
         :columns="historialColumns"
         row-size="sm"
-        empty-message="No hay arqueos registrados."
+        :empty-message="t('finanzas.arqueo.empty')"
       >
         <template #card="{ item, index }">
           <div
@@ -218,8 +218,8 @@
                   <button
                     @click.stop="openDeleteModal(item)"
                     class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-                    title="Cancelar apertura"
-                    aria-label="Cancelar apertura"
+                    :title="t('finanzas.arqueo.cancelOpen')"
+                    :aria-label="t('finanzas.arqueo.cancelOpen')"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -293,8 +293,8 @@
               <button
                 @click.stop="openDeleteModal(row)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Cancelar apertura"
-                aria-label="Cancelar apertura"
+                :title="t('finanzas.arqueo.cancelOpen')"
+                :aria-label="t('finanzas.arqueo.cancelOpen')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -306,14 +306,14 @@
                 v-if="hasReconciliationPending(row)"
                 :to="`/finanzas/conciliacion?cierreId=${row.id}`"
                 class="flex h-8 items-center justify-center rounded-lg px-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-                title="Conciliar medios"
+                :title="t('finanzas.arqueo.conciliarMedios')"
               >
                 Conciliar
               </NuxtLink>
               <button
                 @click.stop="openPanel(row.id)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-                title="Ver detalle"
+                :title="t('finanzas.common.viewDetail')"
                 aria-label="Ver detalle"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -324,7 +324,7 @@
               <button
                 @click.stop="openDeleteModal(row)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Eliminar"
+                :title="t('finanzas.common.delete')"
                 aria-label="Eliminar arqueo"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -356,7 +356,7 @@
             </svg>
           </div>
           <h3 class="text-lg font-bold text-text-primary mb-1">
-            {{ isCierreOpen(cierreToDelete) ? 'Cancelar apertura' : 'Eliminar arqueo' }}
+            {{ isCierreOpen(cierreToDelete) ? t('finanzas.arqueo.cancelOpen') : t('finanzas.arqueo.deleteArqueo') }}
           </h3>
           <p v-if="isCierreOpen(cierreToDelete)" class="text-sm text-text-secondary mb-6">
             Se eliminará el fondo declarado (<strong>{{ formatCurrency(cierreToDelete?.openingCash) }}</strong>)
@@ -379,7 +379,7 @@
               :disabled="deleting"
               class="flex-1 min-h-[44px] px-4 py-2 bg-action-destructive-bg text-action-destructive-text rounded-lg text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50"
             >
-              {{ deleting ? (isCierreOpen(cierreToDelete) ? 'Cancelando...' : 'Eliminando...') : (isCierreOpen(cierreToDelete) ? 'Cancelar apertura' : 'Eliminar') }}
+              {{ deleting ? (isCierreOpen(cierreToDelete) ? t('finanzas.common.canceling') : t('finanzas.common.deleting')) : (isCierreOpen(cierreToDelete) ? t('finanzas.arqueo.cancelOpen') : t('finanzas.common.delete')) }}
             </button>
           </div>
         </div>
@@ -391,6 +391,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
@@ -399,7 +400,7 @@ import MetricCard from '~/components/shared/MetricCard.vue'
 import { buildCierreCloseRoute, isCierreOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Arqueo de caja - Warocol' })
+useHead({ title: () => t('finanzas.head.arqueo') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -418,7 +419,7 @@ const dateRangeDates = ref<Date[] | null>(null)
 
 const presetDates = computed(() => [
   { label: 'Hoy',           value: [todayNoon.value, todayNoon.value] },
-  { label: 'Ayer',          value: (() => { const d = dateAtNoon(addDaysISO(today.value, -1)); return [d, d] })() },
+  { label: t('finanzas.common.yesterday'),          value: (() => { const d = dateAtNoon(addDaysISO(today.value, -1)); return [d, d] })() },
   { label: 'Última semana', value: [dateAtNoon(addDaysISO(today.value, -7)), todayNoon.value] },
   { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today.value, -30)), todayNoon.value] },
 ])
@@ -485,15 +486,15 @@ const summaryStats = computed(() => {
 })
 
 const historialColumns = [
-  { key: 'periodType',     title: 'Tipo',            sortable: false },
-  { key: 'periodDate',     title: 'Fecha',           sortable: false },
-  { key: 'periodTime',     title: 'Horario',         sortable: false },
-  { key: 'periodEnd',      title: 'Hasta',           sortable: false },
-  { key: 'totalSales',     title: 'Ventas',          sortable: false },
-  { key: 'gastosEfectivo', title: 'Gastos',          sortable: false },
-  { key: 'cashDifference', title: 'Diferencia',      sortable: false },
-  { key: 'closedAt',       title: 'Registrado',      sortable: false },
-  { key: 'actions',        title: 'Acciones',        sortable: false },
+  { key: 'periodType',     title: t('finanzas.arqueo.colType'),            sortable: false },
+  { key: 'periodDate',     title: t('finanzas.arqueo.colDate'),           sortable: false },
+  { key: 'periodTime',     title: t('finanzas.arqueo.colSchedule'),         sortable: false },
+  { key: 'periodEnd',      title: t('finanzas.arqueo.colUntil'),           sortable: false },
+  { key: 'totalSales',     title: t('finanzas.arqueo.colSales'),          sortable: false },
+  { key: 'gastosEfectivo', title: t('finanzas.arqueo.colExpenses'),          sortable: false },
+  { key: 'cashDifference', title: t('finanzas.arqueo.colDiff'),      sortable: false },
+  { key: 'closedAt',       title: t('finanzas.arqueo.colRegistered'),      sortable: false },
+  { key: 'actions',        title: t('finanzas.common.actions'),        sortable: false },
 ]
 
 const formatCurrency = (value?: number) =>

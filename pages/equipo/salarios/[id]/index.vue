@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, reactive, computed, watch, inject, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
@@ -9,7 +10,7 @@ const router = useRouter()
 const toast = useToast()
 const employeeId = route.params.id as string
 
-useHead({ title: 'Detalle del Salario' })
+useHead({ title: t('equipo.salarios.detailTitle') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -169,7 +170,7 @@ const saveChanges = async () => {
     attachmentsToRemove.value = []
   } catch (err: any) {
     console.error('Error updating salary:', err)
-    error.value = err?.data?.detail || 'Error al actualizar'
+    error.value = err?.data?.detail || t('equipo.salarios.updateError')
   } finally {
     isSubmitting.value = false
   }
@@ -190,7 +191,7 @@ const deleteEmployee = async () => {
     router.push('/equipo/salarios')
   } catch (error: any) {
     console.error('Error deleting employee:', error)
-    toast.error(error?.data?.detail || 'Error al eliminar empleado')
+    toast.error(error?.data?.detail || t('equipo.salarios.deleteError'))
     isDeleting.value = false
     isSubmitting.value = false
   }
@@ -211,7 +212,7 @@ const markAsPaid = async (payment: any) => {
     await refreshPayments()
   } catch (error: any) {
     console.error('Error marking as paid:', error)
-    toast.error(error?.data?.detail || 'Error al marcar como pagado')
+    toast.error(error?.data?.detail || t('equipo.salarios.markPaidError'))
   }
 }
 
@@ -239,7 +240,7 @@ const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     'pending': 'Pendiente',
     'paid': 'Pagado',
-    'cancelled': 'Cancelado'
+    'cancelled': t('equipo.salarios.canceled')
   }
   return labels[status] || status
 }
@@ -247,18 +248,18 @@ const getStatusLabel = (status: string) => {
 const getSalaryTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     'smmlv': 'Salario Mínimo',
-    'fixed': 'Fijo',
-    'hourly': 'Por Hora',
-    'daily': 'Jornalero'
+    'fixed': t('equipo.salarios.fixed'),
+    'hourly': t('equipo.salarios.hourly'),
+    'daily': t('equipo.salarios.dayLaborer')
   }
   return labels[type] || type
 }
 
 const getEmploymentTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    'employee': 'Empleado',
-    'contractor': 'Contratista',
-    'daily': 'Jornalero'
+    'employee': t('equipo.salarios.employee'),
+    'contractor': t('equipo.salarios.contractor'),
+    'daily': t('equipo.salarios.dayLaborer')
   }
   return labels[type] || type
 }
@@ -281,8 +282,8 @@ watch(employeeData, (data) => {
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      :label="isDeleting ? 'Eliminando empleado...' : 'Guardando cambios...'"
-      :hint="isDeleting ? 'Estamos eliminando el empleado y cerrando su registro.' : 'Estamos actualizando el empleado y guardando los cambios.'"
+      :label="isDeleting ? t('equipo.salarios.deletingEmployee') : t('equipo.salarios.savingEmployee')"
+      :hint="isDeleting ? t('equipo.salarios.deletingBody') : t('equipo.salarios.updatingBody')"
       variant="glass"
       indicator="matrix"
     />
@@ -626,7 +627,7 @@ watch(employeeData, (data) => {
                 :disabled="isSubmitting"
                 class="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
+                {{ isSubmitting ? t('equipo.common.saving') : t('equipo.salarios.saveChanges') }}
               </button>
             </div>
           </form>

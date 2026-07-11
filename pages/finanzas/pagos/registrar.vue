@@ -17,16 +17,17 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, inject, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
   layout: 'dashboard',
-  title: 'Registrar Pago',
+  title: t('finanzas.pagos.registerTitle'),
   module: 'finanzas',
 })
 
-useHead({ title: 'Registrar Pago' })
+useHead({ title: t('finanzas.pagos.registerTitle') })
 
 const route = useRoute()
 const loading = ref(true)
@@ -42,7 +43,7 @@ async function loadPurchases() {
   
   const idsParam = route.query.ids as string
   if (!idsParam) {
-    error.value = 'No se especificaron órdenes para pagar'
+    error.value = t('finanzas.pagos.noneSpecified')
     loading.value = false
     return
   }
@@ -65,18 +66,18 @@ async function loadPurchases() {
       .map(r => r.data)
 
     if (foundPurchases.length === 0) {
-      error.value = 'No se encontraron las órdenes especificadas'
+      error.value = t('finanzas.pagos.notFound')
     } else {
       purchases.value = foundPurchases
       
       if (foundPurchases.length !== ids.length) {
-        useToast().warning('Algunas órdenes no pudieron ser cargadas', { title: 'Advertencia' })
+        useToast().warning(t('finanzas.pagos.someLoadError'), { title: t('finanzas.pagos.warning') })
       }
     }
     
   } catch (err: any) {
     console.error('Error loading purchases:', err)
-    error.value = err.data?.detail || err.message || 'Error al cargar las órdenes'
+    error.value = err.data?.detail || err.message || t('finanzas.pagos.loadError')
   } finally {
     loading.value = false
   }

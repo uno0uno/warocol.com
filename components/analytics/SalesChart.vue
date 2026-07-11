@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed } from 'vue';
 
 interface SalesDataPoint {
@@ -18,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   salesData: () => [],
   loading: false,
   currentLabel: 'Hoy',
-  comparisonLabel: 'Ayer'
+  comparisonLabel: t('finanzas.common.yesterday')
 });
 
 const data = computed(() => {

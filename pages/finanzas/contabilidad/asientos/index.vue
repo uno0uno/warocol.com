@@ -1,10 +1,11 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Asientos contables - Warocol' })
+useHead({ title: () => t('finanzas.head.asientos') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -162,13 +163,13 @@ const sourceModuleFilterOptions = [
 
 // ── Table columns ────────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'entryDate',     title: 'Fecha',       sortable: false },
-  { key: 'description',   title: 'Descripción', sortable: false },
-  { key: 'sourceModule',  title: 'Módulo',      sortable: false },
-  { key: 'status',        title: 'Estado',      sortable: false },
-  { key: 'totalDebit',    title: 'Débito',      sortable: false },
-  { key: 'totalCredit',   title: 'Crédito',     sortable: false },
-  { key: 'actions',       title: 'Acciones',    sortable: false },
+  { key: 'entryDate',     title: t('finanzas.common.date'),       sortable: false },
+  { key: 'description',   title: t('finanzas.common.description'), sortable: false },
+  { key: 'sourceModule',  title: t('finanzas.contabilidad.module'),      sortable: false },
+  { key: 'status',        title: t('finanzas.common.status'),      sortable: false },
+  { key: 'totalDebit',    title: t('finanzas.contabilidad.debit'),      sortable: false },
+  { key: 'totalCredit',   title: t('finanzas.contabilidad.credit'),     sortable: false },
+  { key: 'actions',       title: t('finanzas.common.actions'),    sortable: false },
 ]
 
 // ── Entry navigation link ─────────────────────────────────────────────────────
@@ -327,7 +328,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           :columns="tableColumns"
           :data="entries"
           empty-message="No hay asientos contables registrados"
-          empty-sub-message="Crea el primer asiento manual con el botón 'Nuevo asiento'"
+          empty-sub-message="Crea el primer asiento manual con el botón t('finanzas.contabilidad.newEntry')"
           variant="default"
           @row-click="openDetail"
         >
@@ -416,7 +417,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <button
               type="button"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-              :aria-label="`Ver asiento del ${formatDate(row.entryDate)}`"
+              :aria-label="t('finanzas.contabilidad.viewEntryOf', { date: formatDate(row.entryDate) })"
               title="Ver detalle"
               @click.stop="openDetail(row)"
             >

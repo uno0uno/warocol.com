@@ -125,7 +125,7 @@
           class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2"
         >
           <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
-          <span>{{ isSubmitting ? 'Guardando...' : 'Guardar' }}</span>
+          <span>{{ isSubmitting ? t('equipo.common.saving') : t('equipo.common.save') }}</span>
         </button>
       </div>
     </template>
@@ -133,6 +133,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const props = defineProps({
   employee: { type: Object, required: true },
   smmlv: { type: Number, default: 1423500 }
@@ -204,7 +205,7 @@ const handleSubmit = async () => {
     emit('saved')
   } catch (err) {
     console.error('Error saving salary config:', err)
-    useToast().error(err.data?.detail || 'Error al guardar la configuracion')
+    useToast().error(err.data?.detail || t('equipo.salaryModal.saveError'))
   } finally {
     isSubmitting.value = false
   }

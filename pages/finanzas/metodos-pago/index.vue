@@ -44,7 +44,7 @@
               <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
               <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <UiStatusBadge
-                  :value="item.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+                  :value="item.tenantId === null ? t('finanzas.metodosPago.defaultOne') : t('finanzas.metodosPago.customOne')"
                   format="text"
                   :variant="item.tenantId === null ? 'secondary' : 'primary'"
                   size="sm"
@@ -75,7 +75,7 @@
         <!-- tipo -->
         <template #cell-tenantId="{ row }">
           <UiStatusBadge
-            :value="row.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+            :value="row.tenantId === null ? t('finanzas.metodosPago.defaultOne') : t('finanzas.metodosPago.customOne')"
             format="text"
             :variant="row.tenantId === null ? 'secondary' : 'primary'"
             size="sm"
@@ -112,11 +112,12 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Métodos de pago - Warocol' })
+useHead({ title: () => t('finanzas.head.metodosPago') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -133,11 +134,11 @@ interface PaymentGroup {
 }
 
 const columns: Column[] = [
-  { key: 'name',            title: 'Grupo',          sortable: false },
-  { key: 'tenantId',        title: 'Tipo',           sortable: false },
-  { key: 'triggersCartera', title: 'Genera cartera', sortable: false, align: 'center' },
-  { key: 'methodCount',     title: 'Métodos',        sortable: false, align: 'center' },
-  { key: 'actions',         title: 'Acciones',       sortable: false, align: 'right' },
+  { key: 'name',            title: t('finanzas.metodosPago.group'),          sortable: false },
+  { key: 'tenantId',        title: t('finanzas.metodosPago.type'),           sortable: false },
+  { key: 'triggersCartera', title: t('finanzas.metodosPago.triggersCartera'), sortable: false, align: 'center' },
+  { key: 'methodCount',     title: t('finanzas.metodosPago.methods'),        sortable: false, align: 'center' },
+  { key: 'actions',         title: t('finanzas.common.actions'),       sortable: false, align: 'right' },
 ]
 
 const {

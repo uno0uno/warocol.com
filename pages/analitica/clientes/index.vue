@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+useHead({ title: () => t('analitica.head.clientes') })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core'
@@ -127,14 +129,14 @@ watch(customers, (list) => {
 
 // ── Table columns ─────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'name', title: 'Cliente', sortable: false },
-  { key: 'phone', title: 'Teléfono', sortable: false },
-  { key: 'order_count', title: 'Pedidos', sortable: false },
-  { key: 'total_spent', title: 'Total comprado', sortable: false },
-  { key: 'avg_ticket', title: 'Ticket prom.', sortable: false },
-  { key: 'last_order_date', title: 'Última compra', sortable: false },
-  { key: 'waros_balance', title: 'Waros', sortable: false },
-  { key: 'credit_balance', title: 'Deuda', sortable: false },
+  { key: 'name', title: t('analitica.clientes.customer'), sortable: false },
+  { key: 'phone', title: t('analitica.clientes.phone'), sortable: false },
+  { key: 'order_count', title: t('analitica.clientes.orders'), sortable: false },
+  { key: 'total_spent', title: t('analitica.clientes.totalBought'), sortable: false },
+  { key: 'avg_ticket', title: t('analitica.clientes.avgTicketShort'), sortable: false },
+  { key: 'last_order_date', title: t('analitica.clientes.lastPurchase'), sortable: false },
+  { key: 'waros_balance', title: t('analitica.clientes.waros'), sortable: false },
+  { key: 'credit_balance', title: t('analitica.clientes.debt'), sortable: false },
   { key: 'actions', title: '', sortable: false },
 ]
 
@@ -289,7 +291,7 @@ onUnmounted(() => {
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.phone || 'Sin teléfono' }} · {{ item.order_count }} pedidos<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
+                  {{ item.phone || t('analitica.clientes.noPhone') }} · {{ item.order_count }} pedidos<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">

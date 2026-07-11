@@ -275,6 +275,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { useFormatters } from '~/composables/useFormatters'
@@ -283,7 +284,7 @@ import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Abrir turno — Arqueo - Warocol' })
+useHead({ title: () => t('finanzas.head.apertura') })
 
 type AperturaMode = 'template' | 'day' | 'custom'
 
@@ -450,11 +451,11 @@ const templateHoursLabel = computed(() => {
 })
 
 const dayWindowDisplayLabel = computed(() => {
-  if (dayWindowLoading.value) return 'Resolviendo ventana del día...'
+  if (dayWindowLoading.value) return t('finanzas.arqueo.resolvingDay')
   if (usesDayWindow.value && resolvedPeriodStartTime.value && resolvedPeriodEndTime.value) {
     return `Día restante · ${timeHHMMFromISO(resolvedPeriodStartTime.value)} – ${timeHHMMFromISO(resolvedPeriodEndTime.value)}`
   }
-  return 'Día completo · 00:00 – 23:59'
+  return t('finanzas.arqueo.fullDayWindow')
 })
 
 const customWindowLabel = computed(() => {
@@ -491,7 +492,7 @@ const closeLink = computed(() => {
 })
 
 const closeLinkLabel = computed(() =>
-  (aperturaMode.value === 'day' || isDayShiftSelected.value) ? 'Ir al cierre del día' : 'Ir al cierre Z',
+  (aperturaMode.value === 'day' || isDayShiftSelected.value) ? t('finanzas.arqueo.goToDayClose') : t('finanzas.arqueo.goToCloseZ'),
 )
 
 const canProceedToCount = computed(() => {
@@ -508,11 +509,11 @@ watch(selectedTemplateId, () => { stepError.value = null })
 const goToCount = () => {
   stepError.value = null
   if (aperturaMode.value === 'template' && !canProceedToCount.value) {
-    stepError.value = 'Selecciona un turno'
+    stepError.value = t('finanzas.arqueo.selectShift')
     return
   }
   if (isShiftOpen(existingShift.value)) {
-    stepError.value = 'Este turno ya está abierto'
+    stepError.value = t('finanzas.arqueo.shiftAlreadyOpen')
     return
   }
   currentStep.value = 2
@@ -524,11 +525,11 @@ const goToCount = () => {
 const submitOpening = async () => {
   submitError.value = null
   if (!isPastAnchorDate.value && totalCounted.value <= 0) {
-    submitError.value = 'El fondo debe ser mayor a cero'
+    submitError.value = t('finanzas.arqueo.openingMustBePositive')
     return
   }
   if (isPastAnchorDate.value && totalCounted.value < 0) {
-    submitError.value = 'El fondo no puede ser negativo'
+    submitError.value = t('finanzas.arqueo.openingNotNegative')
     return
   }
   isSubmitting.value = true
@@ -553,7 +554,7 @@ const submitOpening = async () => {
     cache.invalidateQueries({ key: ['cierre', 'preview'] })
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    submitError.value = err?.data?.detail ?? err?.data?.message ?? 'No se pudo abrir el turno'
+    submitError.value = err?.data?.detail ?? err?.data?.message ?? t('finanzas.arqueo.openFailed')
   } finally {
     isSubmitting.value = false
   }

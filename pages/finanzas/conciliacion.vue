@@ -234,12 +234,13 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Conciliación - Warocol' })
+useHead({ title: () => t('finanzas.head.conciliacion') })
 
 interface ReconciliationRow {
   id: string
@@ -307,22 +308,22 @@ const hasActiveFilters = computed(() =>
 )
 
 const columns = [
-  { key: 'period', title: 'Fecha', sortable: false },
-  { key: 'method', title: 'Método', sortable: false },
-  { key: 'groupSlug', title: 'Tipo', sortable: false },
-  { key: 'grossInflowsAmount', title: 'Entradas', sortable: false },
-  { key: 'outflowsAmount', title: 'Salidas', sortable: false },
-  { key: 'expectedAmount', title: 'Esperado', sortable: false },
-  { key: 'reportedAmount', title: 'Reportado', sortable: false },
-  { key: 'differenceAmount', title: 'Diferencia', sortable: false },
-  { key: 'reconciliationStatus', title: 'Estado', sortable: false },
-  { key: 'actions', title: 'Acciones', sortable: false },
+  { key: 'period', title: t('finanzas.common.date'), sortable: false },
+  { key: 'method', title: t('finanzas.common.method'), sortable: false },
+  { key: 'groupSlug', title: t('finanzas.common.type'), sortable: false },
+  { key: 'grossInflowsAmount', title: t('finanzas.conciliacion.entries'), sortable: false },
+  { key: 'outflowsAmount', title: t('finanzas.conciliacion.exits'), sortable: false },
+  { key: 'expectedAmount', title: t('finanzas.conciliacion.expected'), sortable: false },
+  { key: 'reportedAmount', title: t('finanzas.conciliacion.reported'), sortable: false },
+  { key: 'differenceAmount', title: t('finanzas.common.difference'), sortable: false },
+  { key: 'reconciliationStatus', title: t('finanzas.common.status'), sortable: false },
+  { key: 'actions', title: t('finanzas.common.actions'), sortable: false },
 ]
 
 const statusOptions = [
   { value: 'pending', label: 'Pendiente' },
   { value: 'matched', label: 'Sin diferencia' },
-  { value: 'needs_review', label: 'Con diferencia' },
+  { value: 'needs_review', label: t('finanzas.conciliacion.withDiff') },
   { value: 'resolved', label: 'Resuelto' },
 ]
 
@@ -370,7 +371,7 @@ const groupLabels: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   matched: 'Sin diferencia',
-  needs_review: 'Con diferencia',
+  needs_review: t('finanzas.conciliacion.withDiff'),
   not_required: 'No requerida',
   pending: 'Pendiente',
   resolved: 'Resuelta',

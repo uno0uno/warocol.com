@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -19,6 +20,16 @@ const agingRanges: Record<string, { days_min?: number; days_max?: number }> = {
   '31–60 días': { days_min: 31, days_max: 60 },
   '61–90 días': { days_min: 61, days_max: 90 },
   '90+ días':   { days_min: 91 },
+}
+
+const agingLabel = (key: string) => {
+  const map: Record<string, string> = {
+    '0–30 días': t('finanzas.cartera.aging0_30'),
+    '31–60 días': t('finanzas.cartera.aging31_60'),
+    '61–90 días': t('finanzas.cartera.aging61_90'),
+    '90+ días': t('finanzas.cartera.aging90plus'),
+  }
+  return map[key] ?? key
 }
 
 const selectAgingBucket = (label: string) => {
@@ -42,8 +53,8 @@ const clearFilters = () => {
 }
 
 const statusFilterOptions = [
-  { label: 'Vencidas', value: 'overdue' },
-  { label: 'Al día', value: 'current' },
+  { label: t('finanzas.cartera.overdue'), value: 'overdue' },
+  { label: t('finanzas.cartera.current'), value: 'current' },
 ]
 
 const setStatusFilter = (value: string | boolean) => {
@@ -128,12 +139,12 @@ const agingColors = [
 
 // ── Table columns ─────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'name',              title: 'Cliente',     sortable: false },
-  { key: 'total_outstanding', title: 'Deuda total', sortable: false },
-  { key: 'order_count',       title: 'Órdenes',     sortable: false },
-  { key: 'oldest_order_days', title: 'Días mora',   sortable: false },
-  { key: 'status',            title: 'Estado',      sortable: false },
-  { key: 'actions',           title: 'Acciones',    sortable: false },
+  { key: 'name',              title: t('finanzas.cartera.customer'),     sortable: false },
+  { key: 'total_outstanding', title: t('finanzas.cartera.totalDebt'), sortable: false },
+  { key: 'order_count',       title: t('finanzas.cartera.orders'),     sortable: false },
+  { key: 'oldest_order_days', title: t('finanzas.cartera.daysOverdue'),   sortable: false },
+  { key: 'status',            title: t('finanzas.common.status'),      sortable: false },
+  { key: 'actions',           title: t('finanzas.common.actions'),    sortable: false },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -180,10 +191,10 @@ onUnmounted(() => {
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
-        <MetricCard title="Total por cobrar" :value="summary.total_outstanding" format="currency" variant="primary" />
-        <MetricCard title="Clientes con deuda" :value="summary.customer_count" format="number" variant="primary" />
+        <MetricCard :title="t('finanzas.cartera.totalReceivable')" :value="summary.total_outstanding" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.cartera.customersWithDebt')" :value="summary.customer_count" format="number" variant="primary" />
         <MetricCard
-          title="Monto vencido"
+          :title="t('finanzas.cartera.overdueAmount')"
           :value="summary.overdue_amount"
           format="currency"
           :variant="summary.overdue_amount > 0 ? 'destructive' : 'primary'"
@@ -228,12 +239,12 @@ onUnmounted(() => {
               idx < 2 ? 'border-b sm:border-b-0' : '',
             ]"
             :aria-pressed="agingFilter === bucket.label"
-            :aria-label="`Filtrar por ${bucket.label}: ${bucket.customer_count} clientes`"
+            :aria-label="t('finanzas.cartera.filterBucket', { label: agingLabel(bucket.label), count: bucket.customer_count })"
             @click="selectAgingBucket(bucket.label)"
           >
             <div class="flex items-center gap-1.5 mb-1.5">
               <div class="w-2 h-2 rounded-full flex-shrink-0" :class="agingDots[idx]" />
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ bucket.label }}</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ agingLabel(bucket.label) }}</p>
             </div>
             <p class="text-base font-bold leading-tight" :class="agingColors[idx]?.amount ?? 'text-text-primary'">
               {{ formatCurrency(bucket.total_amount) }}
@@ -272,13 +283,13 @@ onUnmounted(() => {
         :columns="tableColumns"
         :data="customers"
         empty-message="Sin deudas pendientes"
-        empty-sub-message="No hay clientes con saldo pendiente en este momento"
+        :empty-sub-message="t('finanzas.cartera.emptySub')"
         variant="default"
       >
         <template #header-status>
           <UiTableHeaderFilter
             :model-value="statusFilter === 'all' ? '' : statusFilter"
-            title="Estado"
+            :title="t('finanzas.common.status')"
             filter-type="select"
             :options="statusFilterOptions"
             all-label="Todos"
@@ -294,13 +305,13 @@ onUnmounted(() => {
             @click="navigateTo(`/analitica/clientes/${item.customer_id}`)"
             role="button"
             tabindex="0"
-            :aria-label="`Ver detalle de ${item.name}`"
+            :aria-label="t('finanzas.cartera.viewCustomerOf', { name: item.name })"
             @keydown.enter="navigateTo(`/analitica/clientes/${item.customer_id}`)"
           >
             <div class="flex-1 min-w-0">
               <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
               <p class="text-xs text-text-secondary mt-0.5">
-                {{ item.phone || 'Sin teléfono' }}
+                {{ item.phone || t('finanzas.cartera.noPhone') }}
                 · {{ item.order_count }} orden{{ item.order_count !== 1 ? 'es' : '' }}
                 · {{ item.oldest_order_days }} días mora
               </p>
@@ -313,7 +324,7 @@ onUnmounted(() => {
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
                 :class="item.status === 'overdue' ? 'bg-state-danger-bg text-state-danger-text' : 'bg-state-warning-bg text-state-warning-text'"
               >
-                {{ item.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
+                {{ item.status === 'overdue' ? t('finanzas.cartera.overdueBadge') : t('finanzas.cartera.current') }}
               </span>
             </div>
           </div>
@@ -345,7 +356,7 @@ onUnmounted(() => {
 
         <template #cell-status="{ row }">
           <UiStatusBadge
-            :value="row.status === 'overdue' ? 'VENCIDA' : 'Al día'"
+            :value="row.status === 'overdue' ? t('finanzas.cartera.overdueBadge') : t('finanzas.cartera.current')"
             format="text"
             :variant="row.status === 'overdue' ? 'destructive' : 'warning'"
             size="sm"
@@ -356,8 +367,8 @@ onUnmounted(() => {
           <NuxtLink
             :to="`/analitica/clientes/${row.customer_id}`"
             class="text-text-secondary hover:text-primary transition-colors"
-            title="Ver detalle del cliente"
-            :aria-label="`Ver detalle de ${row.name}`"
+            :title="t('finanzas.cartera.viewCustomer')"
+            :aria-label="t('finanzas.cartera.viewCustomerOf', { name: row.name })"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

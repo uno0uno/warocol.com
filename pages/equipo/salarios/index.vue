@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
@@ -72,11 +73,11 @@ const formatDate = (dateString: string) => _fmtDate(dateString)
 
 // Table columns
 const employeesTableColumns = [
-  { key: 'name', title: 'Nombre', sortable: true },
-  { key: 'email', title: 'Email', sortable: false },
-  { key: 'role_label', title: 'Rol', sortable: false },
-  { key: 'calculated_salary', title: 'Salario', sortable: true },
-  { key: 'salary_type_display', title: 'Tipo', sortable: false },
+  { key: 'name', title: t('equipo.common.name'), sortable: true },
+  { key: 'email', title: t('equipo.common.email'), sortable: false },
+  { key: 'role_label', title: t('equipo.common.role'), sortable: false },
+  { key: 'calculated_salary', title: t('equipo.salarios.salary'), sortable: true },
+  { key: 'salary_type_display', title: t('equipo.salarios.type'), sortable: false },
   { key: 'actions', title: '', sortable: false }
 ]
 
@@ -95,7 +96,7 @@ const deleteEmployee = async (employeeId: string) => {
     await refetch()
   } catch (error: any) {
     console.error('Error deleting employee:', error)
-    alert(error?.data?.detail || 'Error al eliminar empleado')
+    alert(error?.data?.detail || t('equipo.salarios.deleteError'))
   }
 }
 
@@ -152,7 +153,7 @@ onUnmounted(() => {
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-placeholder="Buscar empleados..."
+        :search-placeholder="t('equipo.salarios.search')"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
@@ -201,7 +202,7 @@ onUnmounted(() => {
             <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary">{{ formatCurrency(item.calculated_salary || 0) }}</span>
               <span v-if="item.salary_type" class="text-xs text-text-secondary">
-                {{ item.salary_type === 'smmlv' ? `${item.multiplier || 0}x SMMLV` : item.salary_type === 'fixed' ? 'Fijo' : 'Por hora' }}
+                {{ item.salary_type === 'smmlv' ? `${item.multiplier || 0}x SMMLV` : item.salary_type === 'fixed' ? t('equipo.salarios.fixed') : t('equipo.salarios.hourly') }}
               </span>
               <span v-else class="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">Sin configurar</span>
             </div>

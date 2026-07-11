@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -7,7 +8,7 @@ import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
-useHead({ title: 'Nómina — Equipo' })
+useHead({ title: () => t('equipo.head.nomina') })
 
 const { currentTenant } = useTenantReactive()
 const { formatCurrency } = useFormatters()
@@ -22,18 +23,18 @@ const selectedMonth = ref<number | null>(null)
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 
 const monthOptions = [
-  { label: 'Enero',      value: 1  },
-  { label: 'Febrero',    value: 2  },
-  { label: 'Marzo',      value: 3  },
-  { label: 'Abril',      value: 4  },
-  { label: 'Mayo',       value: 5  },
-  { label: 'Junio',      value: 6  },
-  { label: 'Julio',      value: 7  },
-  { label: 'Agosto',     value: 8  },
-  { label: 'Septiembre', value: 9  },
-  { label: 'Octubre',    value: 10 },
-  { label: 'Noviembre',  value: 11 },
-  { label: 'Diciembre',  value: 12 },
+  { label: t('equipo.nomina.months.1'),      value: 1  },
+  { label: t('equipo.nomina.months.2'),    value: 2  },
+  { label: t('equipo.nomina.months.3'),      value: 3  },
+  { label: t('equipo.nomina.months.4'),      value: 4  },
+  { label: t('equipo.nomina.months.5'),       value: 5  },
+  { label: t('equipo.nomina.months.6'),      value: 6  },
+  { label: t('equipo.nomina.months.7'),      value: 7  },
+  { label: t('equipo.nomina.months.8'),     value: 8  },
+  { label: t('equipo.nomina.months.9'), value: 9  },
+  { label: t('equipo.nomina.months.10'),    value: 10 },
+  { label: t('equipo.nomina.months.11'),  value: 11 },
+  { label: t('equipo.nomina.months.12'),  value: 12 },
 ]
 
 const hasActiveFilters = computed(
@@ -203,32 +204,32 @@ const tableData = computed(() => {
 })
 
 const mobileBenefitCols = [
-  { key: 'primaS1',      label: 'Prima S1',       benefit: 'primaS1'      },
-  { key: 'primaS2',      label: 'Prima S2',       benefit: 'primaS2'      },
-  { key: 'cesantias',    label: 'Cesantías',      benefit: 'cesantias'    },
-  { key: 'intCesantias', label: 'Int. Cesantías', benefit: 'intCesantias' },
-  { key: 'vacaciones',   label: 'Vacaciones',     benefit: 'vacaciones'   },
-  { key: 'dotacion',     label: 'Dotación',       benefit: 'dotacion'     },
-  { key: 'horasExtras',  label: 'H. Extras',      benefit: 'horasExtras'  },
+  { key: 'primaS1',      label: t('equipo.nomina.primaS1'),       benefit: 'primaS1'      },
+  { key: 'primaS2',      label: t('equipo.nomina.primaS2'),       benefit: 'primaS2'      },
+  { key: 'cesantias',    label: t('equipo.nomina.cesantias'),      benefit: 'cesantias'    },
+  { key: 'intCesantias', label: t('equipo.nomina.intCesantias'), benefit: 'intCesantias' },
+  { key: 'vacaciones',   label: t('equipo.nomina.vacaciones'),     benefit: 'vacaciones'   },
+  { key: 'dotacion',     label: t('equipo.nomina.dotacion'),       benefit: 'dotacion'     },
+  { key: 'horasExtras',  label: t('equipo.nomina.hExtras'),      benefit: 'horasExtras'  },
 ]
 
 const tableColumns = [
   { key: 'select',        title: '',               sortable: false, align: 'center' as const },
-  { key: 'name',          title: 'Empleado',       sortable: false },
-  { key: 'employmentType',title: 'Tipo',           sortable: false, align: 'center' as const },
-  { key: 'primaS1',       title: 'Prima S1',       sortable: false, align: 'center' as const },
-  { key: 'primaS2',       title: 'Prima S2',       sortable: false, align: 'center' as const },
-  { key: 'cesantias',     title: 'Cesantías',      sortable: false, align: 'center' as const },
-  { key: 'intCesantias',  title: 'Int. Cesantías', sortable: false, align: 'center' as const },
-  { key: 'vacaciones',    title: 'Vacaciones',     sortable: false, align: 'center' as const },
-  { key: 'dotacion',      title: 'Dotación',       sortable: false, align: 'center' as const },
-  { key: 'horasExtras',   title: 'H. Extras',      sortable: false, align: 'center' as const },
+  { key: 'name',          title: t('equipo.common.employee'),       sortable: false },
+  { key: 'employmentType',title: t('equipo.common.type'),           sortable: false, align: 'center' as const },
+  { key: 'primaS1',       title: t('equipo.nomina.primaS1'),       sortable: false, align: 'center' as const },
+  { key: 'primaS2',       title: t('equipo.nomina.primaS2'),       sortable: false, align: 'center' as const },
+  { key: 'cesantias',     title: t('equipo.nomina.cesantias'),      sortable: false, align: 'center' as const },
+  { key: 'intCesantias',  title: t('equipo.nomina.intCesantias'), sortable: false, align: 'center' as const },
+  { key: 'vacaciones',    title: t('equipo.nomina.vacaciones'),     sortable: false, align: 'center' as const },
+  { key: 'dotacion',      title: t('equipo.nomina.dotacion'),       sortable: false, align: 'center' as const },
+  { key: 'horasExtras',   title: t('equipo.nomina.hExtras'),      sortable: false, align: 'center' as const },
 ]
 
 const employmentTypeLabel: Record<string, string> = {
   employee:   'Empleado',
   daily:      'Jornalero',
-  contractor: 'Contratista',
+  contractor: t('equipo.nomina.contractor'),
 }
 
 // ── PILA ──────────────────────────────────────────────────────────────────
@@ -318,7 +319,7 @@ async function submitPila() {
     activePilaPeriod.value = null
     await Promise.all([loadPilaPending(), loadPilaHistory()])
   } catch (err: any) {
-    pilaError.value = err?.data?.detail || 'Error al registrar el pago PILA'
+    pilaError.value = err?.data?.detail || t('equipo.nomina.pilaError')
   } finally {
     pilaSubmitting.value = false
   }
@@ -646,7 +647,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-placeholder="Buscar empleado..."
+        :search-placeholder="t('equipo.nomina.search')"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
@@ -740,7 +741,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- ── Desktop: select-all header ─────────────────────────────── -->
           <template #header-select>
-            <label class="cursor-pointer" :title="allSelected() ? 'Deseleccionar todo' : 'Seleccionar todo'">
+            <label class="cursor-pointer" :title="allSelected() ? t('equipo.nomina.deselectAll') : t('equipo.nomina.selectAll')">
               <input type="checkbox" class="sr-only peer" :checked="allSelected()" @change="toggleAll" />
               <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
                 <svg v-if="allSelected()" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
@@ -752,7 +753,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- ── Desktop: per-row checkbox (selects all benefits for that employee) ── -->
           <template #cell-select="{ row }">
-            <label class="cursor-pointer" :title="isRowSelected(row.id) ? 'Deseleccionar fila' : 'Seleccionar todas las prestaciones de esta fila'">
+            <label class="cursor-pointer" :title="isRowSelected(row.id) ? t('equipo.nomina.deselectRow') : t('equipo.nomina.selectRow')">
               <input type="checkbox" class="sr-only peer" :checked="isRowSelected(row.id)" @change="toggleRow(row.id)" />
               <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
                 <svg v-if="isRowSelected(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
@@ -784,20 +785,20 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- ── Column-select headers ───────────────────────────────── -->
           <template v-for="col in (['primaS1','primaS2','cesantias','intCesantias','vacaciones','dotacion','horasExtras'] as const)" :key="`h-${col}`" #[`header-${col}`]>
-            <label class="cursor-pointer flex flex-col items-center gap-0.5 select-none" :title="`Seleccionar columna ${col}`" @click.stop>
+            <label class="cursor-pointer flex flex-col items-center gap-0.5 select-none" :title="t('equipo.nomina.selectCol', { col })" @click.stop>
               <input type="checkbox" class="sr-only peer" :checked="isColumnSelected(col)" @change="toggleColumn(col)" />
               <span class="w-3.5 h-3.5 rounded border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
                 <svg v-if="isColumnSelected(col)" viewBox="0 0 10 8" fill="none" class="w-2 h-1.5">
                   <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
-              <span class="text-xs font-medium text-text-primary">{{ { primaS1: 'Prima S1', primaS2: 'Prima S2', cesantias: 'Cesantías', intCesantias: 'Int. Ces.', vacaciones: 'Vacaciones', dotacion: 'Dotación', horasExtras: 'H. Extras' }[col] }}</span>
+              <span class="text-xs font-medium text-text-primary">{{ { primaS1: t('equipo.nomina.primaS1'), primaS2: t('equipo.nomina.primaS2'), cesantias: t('equipo.nomina.cesantias'), intCesantias: 'Int. Ces.', vacaciones: t('equipo.nomina.vacaciones'), dotacion: t('equipo.nomina.dotacion'), horasExtras: t('equipo.nomina.hExtras') }[col] }}</span>
             </label>
           </template>
 
           <!-- Prima S1 -->
           <template #cell-primaS1="{ row }">
-            <button v-if="row.primaS1 == null" @click="toggleCell(row.id, 'primaS1')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS1') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'primaS1') ? 'Deseleccionar' : 'Seleccionar'} Prima S1 — ${row.name}`">
+            <button v-if="row.primaS1 == null" @click="toggleCell(row.id, 'primaS1')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS1') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'primaS1') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.primaS1'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.primaS1'), name: row.name }))">
               <UiStatusBadge :value="isCellSelected(row.id,'primaS1') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS1') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS1)" variant="success" size="sm" format="text" class="font-normal" />
@@ -805,7 +806,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Prima S2 -->
           <template #cell-primaS2="{ row }">
-            <button v-if="row.primaS2 == null" @click="toggleCell(row.id, 'primaS2')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS2') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'primaS2') ? 'Deseleccionar' : 'Seleccionar'} Prima S2 — ${row.name}`">
+            <button v-if="row.primaS2 == null" @click="toggleCell(row.id, 'primaS2')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS2') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'primaS2') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.primaS2'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.primaS2'), name: row.name }))">
               <UiStatusBadge :value="isCellSelected(row.id,'primaS2') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS2') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS2)" variant="success" size="sm" format="text" class="font-normal" />
@@ -813,7 +814,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Cesantías -->
           <template #cell-cesantias="{ row }">
-            <button v-if="row.cesantias == null" @click="toggleCell(row.id, 'cesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'cesantias') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'cesantias') ? 'Deseleccionar' : 'Seleccionar'} Cesantías — ${row.name}`">
+            <button v-if="row.cesantias == null" @click="toggleCell(row.id, 'cesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'cesantias') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'cesantias') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.cesantias'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.cesantias'), name: row.name }))">
               <UiStatusBadge :value="isCellSelected(row.id,'cesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'cesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.cesantias)" variant="success" size="sm" format="text" class="font-normal" />
@@ -821,7 +822,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Int. Cesantías -->
           <template #cell-intCesantias="{ row }">
-            <button v-if="row.intCesantias == null" @click="toggleCell(row.id, 'intCesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'intCesantias') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'intCesantias') ? 'Deseleccionar' : 'Seleccionar'} Int. Cesantías — ${row.name}`">
+            <button v-if="row.intCesantias == null" @click="toggleCell(row.id, 'intCesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'intCesantias') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'intCesantias') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.intCesantias'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.intCesantias'), name: row.name }))">
               <UiStatusBadge :value="isCellSelected(row.id,'intCesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'intCesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.intCesantias)" variant="success" size="sm" format="text" class="font-normal" />
@@ -829,7 +830,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Vacaciones -->
           <template #cell-vacaciones="{ row }">
-            <button v-if="row.vacaciones == null" @click="toggleCell(row.id, 'vacaciones')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'vacaciones') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'vacaciones') ? 'Deseleccionar' : 'Seleccionar'} Vacaciones — ${row.name}`">
+            <button v-if="row.vacaciones == null" @click="toggleCell(row.id, 'vacaciones')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'vacaciones') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'vacaciones') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.vacaciones'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.vacaciones'), name: row.name }))">
               <UiStatusBadge :value="isCellSelected(row.id,'vacaciones') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'vacaciones') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.vacaciones)" variant="success" size="sm" format="text" class="font-normal" />
@@ -839,7 +840,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #cell-dotacion="{ row }">
             <span v-if="row.employment_type !== 'employee'" class="text-xs text-text-tertiary px-2">N/A</span>
             <template v-else>
-              <button v-if="row.dotacion == null" @click="toggleCell(row.id, 'dotacion')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'dotacion') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'dotacion') ? 'Deseleccionar' : 'Seleccionar'} Dotación — ${row.name}`">
+              <button v-if="row.dotacion == null" @click="toggleCell(row.id, 'dotacion')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'dotacion') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'dotacion') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.dotacion'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.dotacion'), name: row.name }))">
                 <UiStatusBadge :value="isCellSelected(row.id,'dotacion') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'dotacion') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
               </button>
               <UiStatusBadge v-else :value="formatCurrency(row.dotacion)" variant="success" size="sm" format="text" class="font-normal" />
@@ -848,7 +849,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Horas Extras (always addable) -->
           <template #cell-horasExtras="{ row }">
-            <button @click="toggleCell(row.id, 'horasExtras')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'horasExtras') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'horasExtras') ? 'Deseleccionar' : 'Seleccionar'} Horas Extras — ${row.name}`">
+            <button @click="toggleCell(row.id, 'horasExtras')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'horasExtras') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'horasExtras') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.horasExtras'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.horasExtras'), name: row.name }))">
               <UiStatusBadge
                 :value="isCellSelected(row.id,'horasExtras') ? '✓ Seleccionada' : (row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar')"
                 :variant="isCellSelected(row.id,'horasExtras') ? 'info' : (row.horasExtras != null ? 'success' : 'secondary')"
@@ -898,7 +899,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               :class="activePilaPeriod === period.period_month ? 'bg-primary/5' : ''"
               @click="activePilaPeriod === period.period_month ? closePilaForm() : openPilaForm(period)"
               :aria-expanded="activePilaPeriod === period.period_month"
-              :aria-label="`Pagar PILA de ${formatPeriodMonth(period.period_month)}`"
+              :aria-label="t('equipo.nomina.pilaPay', { period: formatPeriodMonth(period.period_month) })"
             >
               <div class="flex items-center gap-4">
                 <span class="font-semibold text-text-primary">{{ formatPeriodMonth(period.period_month) }}</span>
@@ -1078,7 +1079,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 <p class="text-sm font-semibold text-text-primary">{{ row.name }}</p>
                 <UiStatusBadge :value="employmentTypeLabel[row.employment_type] ?? row.employment_type" variant="secondary" size="sm" />
               </div>
-              <button @click="toggleRow(row.id)" class="p-1 rounded hover:bg-surface text-text-secondary hover:text-text-primary transition-colors" :aria-label="`Quitar ${row.name}`">
+              <button @click="toggleRow(row.id)" class="p-1 rounded hover:bg-surface text-text-secondary hover:text-text-primary transition-colors" :aria-label="t('equipo.nomina.removeName', { name: row.name })">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
