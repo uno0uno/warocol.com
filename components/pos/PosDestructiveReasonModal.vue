@@ -54,7 +54,7 @@
               :for="reasonInputId"
               class="block text-xs font-medium text-text-secondary uppercase tracking-wide mt-4 mb-1.5"
             >
-              Motivo <span class="text-destructive">*</span>
+              {{ t('pos.destructive.reasonLabel') }} <span class="text-destructive">{{ t('pos.destructive.reasonRequired') }}</span>
             </label>
             <textarea
               :id="reasonInputId"
@@ -76,7 +76,7 @@
               class="flex-1 min-h-[44px] rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
               @click="close"
             >
-              Cancelar
+              {{ t('pos.destructive.cancel') }}
             </button>
             <button
               type="button"
@@ -88,7 +88,7 @@
               @click="submit"
             >
               <UiLoadingDots v-if="loading" size="9px" :color="variant === 'warning' ? 'white' : 'white'" />
-              <span v-else>{{ confirmLabel }}</span>
+              <span v-else>{{ resolvedConfirmLabel }}</span>
             </button>
           </div>
         </div>
@@ -112,7 +112,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   message: '',
-  confirmLabel: 'Confirmar',
+  confirmLabel: undefined,
   // defineProps defaults are hoisted — cannot call t() here
   reasonPlaceholder: undefined,
   loading: false,
@@ -128,6 +128,9 @@ const emit = defineEmits<{
 
 const resolvedReasonPlaceholder = computed(
   () => props.reasonPlaceholder || t('pos.destructive.reasonPlaceholder'),
+)
+const resolvedConfirmLabel = computed(
+  () => props.confirmLabel || t('pos.destructive.confirm'),
 )
 
 const uid = useId()

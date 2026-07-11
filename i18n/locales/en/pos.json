@@ -149,7 +149,28 @@
       "registeredBy": "Advance registered for {amount}"
     },
     "destructive": {
-      "reasonPlaceholder": "e.g. customer changed their mind"
+      "reasonPlaceholder": "e.g. customer changed their mind",
+      "reasonLabel": "Reason",
+      "reasonRequired": "*",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "removeProductTitle": "Delete product?",
+      "reduceQtyTitle": "Reduce quantity?",
+      "clearBarTitle": "Clear the bar?",
+      "confirmActionTitle": "Confirm action?",
+      "firedNotifyVoid": "{name} was already sent to the kitchen. The cook will be notified to void it.",
+      "firedNotifyQty": "{name} was already sent to the kitchen. The cook will be notified of the quantity change.",
+      "removeFromTab": "{name} will be removed from the tab.",
+      "clearTableAndCart": "All pending items on the {table} and in the cart will be cleared.",
+      "releaseWithBalance": "This {table} has {amount} in consumption. Releasing now closes it without charging.",
+      "releaseEmpty": "The {table} will be closed without charging.",
+      "clearBarMessage": "All pending bar items will be cleared. The session stays open.",
+      "yesRelease": "Yes, release {table}",
+      "deleteProductError": "Error deleting product",
+      "updateQtyError": "Error updating quantity",
+      "releaseError": "Error releasing {table}",
+      "clearBarError": "Error clearing the bar",
+      "clearCartError": "Error clearing the cart"
     },
     "floor": {
       "minCovered": "Minimum cover met",
