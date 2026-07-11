@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      :label="isDeleting ? 'Eliminando gasto...' : 'Guardando cambios...'"
-      :hint="isDeleting ? 'Estamos eliminando el gasto y cerrando su registro.' : 'Estamos actualizando el gasto y guardando los cambios.'"
+      :label="isDeleting ? t('finanzas.gastos.deleting') : t('finanzas.gastos.updating')"
+      :hint="isDeleting ? t('finanzas.gastos.deletingBody') : t('finanzas.gastos.updatingBody')"
       variant="glass"
       indicator="matrix"
     />
@@ -28,7 +28,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Volver</span>
+          <span>{{ t('finanzas.common.back') }}</span>
         </NuxtLink>
         <button
           v-if="!isEditing"
@@ -38,7 +38,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          <span>Eliminar</span>
+          <span>{{ t('finanzas.common.delete') }}</span>
         </button>
       </div>
 
@@ -55,7 +55,7 @@
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Número
+                  {{ t('finanzas.gastos.colNumber') }}
                 </p>
                 <p class="text-lg font-mono font-semibold text-text-primary">
                   {{ expense.expenseNumber }}
@@ -72,10 +72,10 @@
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Categoría
+                  {{ t('finanzas.gastos.colCategory') }}
                 </p>
                 <p class="text-lg font-semibold text-text-primary">
-                  {{ expense.category?.categoryName || 'Sin categoría' }}
+                  {{ expense.category?.categoryName || t('finanzas.common.noCategory') }}
                 </p>
               </div>
             </div>
@@ -89,7 +89,7 @@
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Fecha
+                  {{ t('finanzas.gastos.colDate') }}
                 </p>
                 <p class="text-lg font-semibold text-text-primary">
                   {{ formatCalendarDate(expense.transactionDate) }}
@@ -106,7 +106,7 @@
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Monto
+                  {{ t('finanzas.gastos.colAmount') }}
                 </p>
                 <p class="text-lg font-semibold text-primary">
                   {{ formatCurrency(expense.amount) }}
@@ -123,7 +123,7 @@
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Método de Pago
+                  {{ t('finanzas.gastos.methodLabel').replace(':', '') }}
                 </p>
                 <p class="text-lg font-semibold text-text-primary">
                   {{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}
@@ -143,7 +143,7 @@
                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span>Detalle del Gasto</span>
+                <span>{{ t('finanzas.gastos.detailTitle') }}</span>
               </h3>
               <button
                 v-if="!isEditing"
@@ -151,7 +151,7 @@
                 @click="startEditing"
                 class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
               >
-                Editar
+                {{ t('common.edit') }}
               </button>
             </div>
 
@@ -165,16 +165,16 @@
                     <div class="border-2 border-dashed border-border rounded-lg p-3 mb-3">
                       <!-- Description -->
                       <div class="mb-3">
-                        <p class="text-xs text-text-secondary mb-1">Descripción</p>
+                        <p class="text-xs text-text-secondary mb-1">{{ t('finanzas.gastos.colDesc') }}</p>
                         <h4 class="text-sm font-bold text-text-primary">
-                          {{ expense.description || 'Sin descripción' }}
+                          {{ expense.description || t('finanzas.gastos.noDesc') }}
                         </h4>
                       </div>
 
                       <!-- Amount -->
                       <div class="flex items-end justify-between pt-2 border-t border-border">
                         <div>
-                          <p class="text-xs text-text-secondary mb-0.5">Monto</p>
+                          <p class="text-xs text-text-secondary mb-0.5">{{ t('finanzas.gastos.colAmount') }}</p>
                           <p class="text-2xl font-bold text-primary">
                             {{ formatCurrency(expense.amount) }}
                           </p>
@@ -191,7 +191,7 @@
                             <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
-                            <span class="text-text-primary font-semibold text-xs">{{ expense.category?.categoryName || 'Sin categoría' }}</span>
+                            <span class="text-text-primary font-semibold text-xs">{{ expense.category?.categoryName || t('finanzas.common.noCategory') }}</span>
                           </div>
                         </div>
                       </div>
@@ -205,17 +205,17 @@
                     <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <p class="text-sm font-bold text-primary uppercase tracking-wide">Gasto Recurrente</p>
+                    <p class="text-sm font-bold text-primary uppercase tracking-wide">{{ t('finanzas.gastos.recurringExpenseTitle') }}</p>
                   </div>
                   <div class="space-y-2">
                     <div>
-                      <p class="text-xs text-text-secondary">Frecuencia</p>
+                      <p class="text-xs text-text-secondary">{{ t('finanzas.gastos.frequency') }}</p>
                       <p class="text-sm font-medium text-text-primary">{{ formatFrequency(expense.frequency) }}</p>
                     </div>
                     <div>
-                      <p class="text-xs text-text-secondary">Finaliza</p>
+                      <p class="text-xs text-text-secondary">{{ t('finanzas.gastos.ends') }}</p>
                       <p class="text-sm font-medium text-text-primary">
-                        {{ expense.recurringEndDate ? formatDate(expense.recurringEndDate) : 'Sin fecha de fin' }}
+                        {{ expense.recurringEndDate ? formatDate(expense.recurringEndDate) : t('finanzas.gastos.noEndDate') }}
                       </p>
                     </div>
                   </div>
@@ -228,10 +228,10 @@
                   <thead class="bg-surface-secondary">
                     <tr>
                       <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
-                        Campo
+                        {{ t('finanzas.gastos.field') }}
                       </th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
-                        Valor
+                        {{ t('finanzas.gastos.value') }}
                       </th>
                     </tr>
                   </thead>
@@ -239,24 +239,24 @@
                     <!-- Description Row -->
                     <tr class="hover:bg-surface-secondary/50 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Descripción
+                        {{ t('finanzas.gastos.colDesc') }}
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
-                        <p class="font-medium">{{ expense.description || 'Sin descripción' }}</p>
+                        <p class="font-medium">{{ expense.description || t('finanzas.gastos.noDesc') }}</p>
                       </td>
                     </tr>
 
                     <!-- Category Row -->
                     <tr class="hover:bg-surface-secondary/50 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Categoría
+                        {{ t('finanzas.gastos.colCategory') }}
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
                         <div class="flex items-center gap-2">
                           <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                           </svg>
-                          <span class="font-medium">{{ expense.category?.categoryName || 'Sin categoría' }}</span>
+                          <span class="font-medium">{{ expense.category?.categoryName || t('finanzas.common.noCategory') }}</span>
                         </div>
                       </td>
                     </tr>
@@ -264,7 +264,7 @@
                     <!-- Amount Row -->
                     <tr class="hover:bg-surface-secondary/50 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Monto
+                        {{ t('finanzas.gastos.colAmount') }}
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
                         <span class="font-bold text-primary text-lg">{{ formatCurrency(expense.amount) }}</span>
@@ -274,7 +274,7 @@
                     <!-- Frequency Row -->
                     <tr v-if="expense.isRecurring" class="hover:bg-surface-secondary/50 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Frecuencia
+                        {{ t('finanzas.gastos.frequency') }}
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
                         <div class="flex items-center gap-2">
@@ -289,10 +289,10 @@
                     <!-- Recurring End Date Row -->
                     <tr v-if="expense.isRecurring" class="hover:bg-surface-secondary/50 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Finaliza
+                        {{ t('finanzas.gastos.ends') }}
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
-                        <span class="font-medium">{{ expense.recurringEndDate ? formatDate(expense.recurringEndDate) : 'Sin fecha de fin' }}</span>
+                        <span class="font-medium">{{ expense.recurringEndDate ? formatDate(expense.recurringEndDate) : t('finanzas.gastos.noEndDate') }}</span>
                       </td>
                     </tr>
                   </tbody>
@@ -305,7 +305,7 @@
               <!-- Date -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Fecha del Gasto *
+                  {{ t('finanzas.gastos.dateReq') }}
                 </label>
                 <input
                   type="date"
@@ -318,14 +318,14 @@
               <!-- Category -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Categoría *
+                  {{ t('finanzas.gastos.categoryReq') }}
                 </label>
                 <select
                   v-model="form.expenseCategoryId"
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="" disabled>Seleccionar categoría...</option>
+                  <option value="" disabled>{{ t('finanzas.gastos.selectCategory') }}</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                     {{ cat.categoryName }}
                   </option>
@@ -335,21 +335,21 @@
               <!-- Description -->
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Descripción *
+                  {{ t('finanzas.gastos.descReq') }}
                 </label>
                 <input
                   type="text"
                   v-model="form.description"
                   required
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej: Reparación de tubería"
+                  :placeholder="t('finanzas.gastos.descPlaceholder')"
                 />
               </div>
 
               <!-- Amount -->
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Monto *
+                  {{ t('finanzas.gastos.amountReq') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -375,10 +375,10 @@
                   />
                   <div>
                     <span class="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">
-                      Gasto recurrente
+                      {{ t('finanzas.gastos.recurringToggle') }}
                     </span>
                     <p class="text-xs text-text-secondary">
-                      Marcar si este gasto se repite periódicamente
+                      {{ t('finanzas.gastos.recurringHelp') }}
                     </p>
                   </div>
                 </label>
@@ -390,36 +390,36 @@
                   <!-- Frequency -->
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-2">
-                      Frecuencia *
+                      {{ t('finanzas.gastos.freqReq') }}
                     </label>
                     <select
                       v-model="form.frequency"
                       :required="form.isRecurring"
                       class="input-base w-full px-4 py-2"
                     >
-                      <option value="" disabled>Seleccionar frecuencia...</option>
-                      <option value="weekly">Semanal</option>
-                      <option value="biweekly">Quincenal</option>
-                      <option value="monthly">Mensual</option>
-                      <option value="quarterly">Trimestral</option>
-                      <option value="yearly">Anual</option>
+                      <option value="" disabled>{{ t('finanzas.gastos.selectFrequency') }}</option>
+                      <option value="weekly">{{ t('finanzas.gastos.weekly') }}</option>
+                      <option value="biweekly">{{ t('finanzas.gastos.biweekly') }}</option>
+                      <option value="monthly">{{ t('finanzas.gastos.monthly') }}</option>
+                      <option value="quarterly">{{ t('finanzas.gastos.quarterly') }}</option>
+                      <option value="yearly">{{ t('finanzas.gastos.yearly') }}</option>
                     </select>
                   </div>
 
                   <!-- Recurring End Date -->
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-2">
-                      Fecha de finalización
+                      {{ t('finanzas.gastos.endDate') }}
                     </label>
                     <input
                       type="date"
                       v-model="form.recurringEndDate"
                       :min="form.transactionDate"
                       class="input-base w-full px-4 py-2"
-                      placeholder="Opcional"
+                      :placeholder="t('finanzas.common.optional')"
                     />
                     <p class="text-xs text-text-secondary mt-1">
-                      Dejar vacío si el gasto no tiene fecha de fin
+                      {{ t('finanzas.gastos.leaveEmptyNoEnd') }}
                     </p>
                   </div>
                 </div>
@@ -435,12 +435,12 @@
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
-              <span>Documentos Adjuntos</span>
+              <span>{{ t('finanzas.gastos.attachmentsTitle') }}</span>
             </h3>
 
             <!-- Existing Attachments -->
             <div v-if="expense.attachments && expense.attachments.length > 0" class="mb-4">
-              <p class="text-sm text-text-secondary mb-3">Archivos actuales ({{ expense.attachments.length }})</p>
+              <p class="text-sm text-text-secondary mb-3">{{ t('finanzas.gastos.currentFiles', { count: expense.attachments.length }) }}</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div
                   v-for="attachment in expense.attachments"
@@ -465,7 +465,8 @@
                     type="button"
                     @click="removeAttachment(attachment.id)"
                     class="text-destructive hover:text-destructive/80 flex-shrink-0"
-                    title="Eliminar archivo"
+                    :title="t('finanzas.gastos.removeFile')"
+                    :aria-label="t('finanzas.gastos.removeFile')"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -477,7 +478,7 @@
 
             <!-- Add New Attachments (Edit Mode) -->
             <div v-if="isEditing">
-              <p class="text-sm text-text-secondary mb-3">Agregar nuevos archivos (opcional)</p>
+              <p class="text-sm text-text-secondary mb-3">{{ t('finanzas.gastos.addNewFiles') }}</p>
               <div class="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 <input
                   ref="fileInput"
@@ -492,13 +493,13 @@
                   <svg class="mx-auto h-12 w-12 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
-                  <p class="mt-2 text-sm text-text-secondary">Arrastra archivos aquí o</p>
+                  <p class="mt-2 text-sm text-text-secondary">{{ t('finanzas.gastos.dragFiles') }}</p>
                   <button
                     type="button"
                     @click="$refs.fileInput.click()"
                     class="mt-2 btn-secondary px-4 py-2 rounded-lg text-sm"
                   >
-                    Seleccionar archivos
+                    {{ t('finanzas.gastos.selectFiles') }}
                   </button>
                 </div>
 
@@ -528,14 +529,14 @@
                     @click="$refs.fileInput.click()"
                     class="btn-secondary px-4 py-2 rounded-lg text-sm w-full"
                   >
-                    Agregar más archivos
+                    {{ t('finanzas.gastos.addFiles') }}
                   </button>
                 </div>
               </div>
             </div>
 
             <p v-if="!isEditing && (!expense.attachments || expense.attachments.length === 0)" class="text-sm text-text-secondary text-center py-4">
-              No hay documentos adjuntos
+              {{ t('finanzas.gastos.noAttachments') }}
             </p>
           </div>
         </div>
@@ -549,15 +550,15 @@
                 @click="cancelEditing"
                 class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
               >
-                Cancelar
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 :disabled="isSubmitting || !isFormValid"
                 class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base bg-success hover:bg-success/90"
               >
-                <span class="hidden sm:inline">{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
-                <span class="sm:hidden">{{ isSubmitting ? '...' : 'Guardar' }}</span>
+                <span class="hidden sm:inline">{{ isSubmitting ? t('finanzas.gastos.saving') : t('finanzas.gastos.saveChanges') }}</span>
+                <span class="sm:hidden">{{ isSubmitting ? '...' : t('common.save') }}</span>
               </button>
             </div>
           </div>
@@ -572,12 +573,12 @@
       <!-- Recurring Instances Section (only for recurring expenses) -->
       <div v-if="expense?.isRecurring" class="bg-surface border-2 border-border rounded-lg p-4 md:p-6 mt-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-bold text-text-primary">Instancias de Pago</h3>
+          <h3 class="text-lg font-bold text-text-primary">{{ t('finanzas.gastos.paymentInstances') }}</h3>
           <NuxtLink
             :to="`/finanzas/gastos/${expenseId}/instancia`"
             class="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
           >
-            + Nueva Instancia
+            {{ t('finanzas.gastos.newInstance') }}
           </NuxtLink>
         </div>
 
@@ -588,7 +589,7 @@
 
         <!-- Empty State -->
         <div v-else-if="instances.length === 0" class="text-center py-8">
-          <p class="text-sm text-text-secondary">No hay instancias de pago registradas</p>
+          <p class="text-sm text-text-secondary">{{ t('finanzas.gastos.noInstances') }}</p>
         </div>
 
         <!-- Instances Table -->
@@ -596,12 +597,12 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-border">
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Período</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Fecha</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">Monto</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Estado</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Archivos</th>
-                <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Acciones</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.period') }}</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colDate') }}</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colAmount') }}</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.common.status') }}</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.files') }}</th>
+                <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -610,7 +611,7 @@
                 :key="instance.id"
                 class="border-b border-border hover:bg-background transition-colors"
               >
-                <td class="py-3 px-4 text-sm text-text-primary">{{ instance.periodMonth }}</td>
+                <td class="py-3 px-4 text-sm text-text-primary">{{ formatPeriodLabel(instance.periodMonth) }}</td>
                 <td class="py-3 px-4 text-sm text-text-secondary">{{ formatCalendarDate(instance.scheduledDate) }}</td>
                 <td class="py-3 px-4 text-sm text-primary text-right font-medium">{{ formatCurrency(instance.amount) }}</td>
                 <td class="py-3 px-4">
@@ -639,7 +640,8 @@
                     <NuxtLink
                       :to="`/finanzas/gastos/instancias/${instance.id}`"
                       class="text-text-secondary hover:text-primary transition-colors"
-                      title="Ver detalles y archivos"
+                      :title="t('finanzas.gastos.viewDetailsFiles')"
+                      :aria-label="t('finanzas.gastos.viewDetailsFiles')"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -650,7 +652,8 @@
                       v-if="instance.status === 'pending'"
                       @click="markAsPaid(instance)"
                       class="text-state-success-text hover:text-state-success-text/80"
-                      title="Marcar como pagado"
+                      :title="t('finanzas.gastos.markPaid')"
+                      :aria-label="t('finanzas.gastos.markPaid')"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -677,6 +680,7 @@ import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
+const { t, locale } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const expenseId = route.params.id as string
 
@@ -728,7 +732,9 @@ const isLoading = computed(() => !expenseData.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && expenseData.value != null)
 
 useHead({
-  title: expense.value ? `Gasto - ${expense.value.description}` : 'Detalle del Gasto'
+  title: () => expense.value
+    ? t('finanzas.gastos.pageTitleExpense', { description: expense.value.description })
+    : t('finanzas.gastos.pageTitleDetail')
 })
 
 // Layout actions
@@ -762,7 +768,7 @@ const removeFile = (index: number) => {
 }
 
 const removeAttachment = (attachmentId: string) => {
-  if (confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
+  if (confirm(t('finanzas.gastos.deleteAttachmentConfirm'))) {
     attachmentsToRemove.value.push(attachmentId)
   }
 }
@@ -805,7 +811,7 @@ const isFormValid = computed(() => {
 // Submit handler
 const handleSubmit = async () => {
   if (!isFormValid.value) {
-    alert('Por favor complete todos los campos requeridos')
+    alert(t('finanzas.gastos.completeRequired'))
     return
   }
 
@@ -870,19 +876,19 @@ const handleSubmit = async () => {
   } catch (error: any) {
     console.error('Error updating expense:', error)
 
-    let errorMessage = 'Error al actualizar el gasto. Por favor intente nuevamente.'
+    let errorMessage = t('finanzas.gastos.updateError')
 
     if (error?.data?.detail) {
       if (typeof error.data.detail === 'string') {
         errorMessage = error.data.detail
       } else if (Array.isArray(error.data.detail)) {
-        errorMessage = error.data.detail.map((e: any) => e.msg || e.message || 'Revisa los datos del gasto.').join(', ')
+        errorMessage = error.data.detail.map((e: any) => e.msg || e.message || t('finanzas.gastos.reviewExpenseData')).join(', ')
       } else {
         errorMessage = error.data.detail.message
           || error.data.detail.msg
           || error.data.detail.error
           || error.data.detail.detail
-          || 'No se pudo actualizar el gasto. Revisa los datos e intenta nuevamente.'
+          || t('finanzas.gastos.updateDataError')
       }
     } else if (error?.message) {
       errorMessage = error.message
@@ -895,15 +901,7 @@ const handleSubmit = async () => {
 }
 
 // Format functions
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const { formatDate, formatCalendarDate } = useFormatters()
+const { formatDate, formatCalendarDate, formatCurrency } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return '0 Bytes'
@@ -915,13 +913,13 @@ const formatFileSize = (bytes: number) => {
 
 const formatFrequency = (frequency: string) => {
   const frequencies: { [key: string]: string } = {
-    'weekly': 'Semanal',
-    'biweekly': 'Quincenal',
-    'monthly': 'Mensual',
-    'quarterly': 'Trimestral',
-    'yearly': 'Anual'
+    'weekly': t('finanzas.gastos.weekly'),
+    'biweekly': t('finanzas.gastos.biweekly'),
+    'monthly': t('finanzas.gastos.monthly'),
+    'quarterly': t('finanzas.gastos.quarterly'),
+    'yearly': t('finanzas.gastos.yearly')
   }
-  return frequencies[frequency] || frequency
+  return frequencies[frequency] || frequency || t('finanzas.gastos.noFrequency')
 }
 
 // Fetch recurring instances if expense is recurring
@@ -960,16 +958,16 @@ const markAsPaid = async (instance: any) => {
     await refreshInstances()
   } catch (error: any) {
     console.error('Error marking as paid:', error)
-    alert(error?.data?.detail || 'Error al marcar como pagado')
+    alert(error?.data?.detail || t('finanzas.gastos.markPaidError'))
   }
 }
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    'pending': 'Pendiente',
-    'paid': 'Pagado',
-    'skipped': 'Omitido',
-    'cancelled': 'Cancelado'
+    'pending': t('finanzas.gastos.pending'),
+    'paid': t('finanzas.gastos.paid'),
+    'skipped': t('finanzas.gastos.skipped'),
+    'cancelled': t('finanzas.gastos.cancelled')
   }
   return labels[status] || status
 }
@@ -978,15 +976,15 @@ const formatPeriodLabel = (periodMonth: string) => {
   if (!periodMonth) return ''
   const [year, month] = periodMonth.split('-')
   const date = new Date(Number(year), Number(month) - 1)
-  return date.toLocaleDateString('es-CO', {
+  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     month: 'long',
     year: 'numeric'
-  })
+  }).format(date)
 }
 
 // Delete expense
 const deleteExpense = async () => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.')) {
+  if (!confirm(t('finanzas.gastos.deleteConfirm'))) {
     return
   }
 
@@ -1002,7 +1000,7 @@ const deleteExpense = async () => {
     await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error deleting expense:', error)
-    alert(error?.data?.detail || 'Error al eliminar el gasto')
+    alert(error?.data?.detail || t('finanzas.gastos.deleteError'))
   } finally {
     isDeleting.value = false
     isSubmitting.value = false

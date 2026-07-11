@@ -1,6 +1,6 @@
 <template>
   <div class="bg-surface border-2 border-border rounded-lg p-4 md:p-6">
-    <h3 class="text-lg font-bold text-text-primary mb-4">Historial de Cambios</h3>
+    <h3 class="text-lg font-bold text-text-primary mb-4">{{ t('finanzas.gastos.historyTitle') }}</h3>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center py-8">
@@ -11,13 +11,13 @@
     <div v-else-if="error" class="text-center py-8">
       <p class="text-sm text-red-500">{{ error }}</p>
       <button @click="fetchHistory" class="mt-4 text-sm text-primary hover:underline">
-        Reintentar
+        {{ t('finanzas.gastos.retry') }}
       </button>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="history.length === 0" class="text-center py-8">
-      <p class="text-sm text-text-secondary">No hay cambios registrados</p>
+      <p class="text-sm text-text-secondary">{{ t('finanzas.gastos.noHistory') }}</p>
     </div>
 
     <!-- Table -->
@@ -25,13 +25,13 @@
       <table class="w-full">
         <thead>
           <tr class="border-b border-border">
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Fecha</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Tipo</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Campo</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Antes</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Después</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Usuario</th>
-            <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Detalles</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colDate') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colType') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.field') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.before') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.after') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.user') }}</th>
+            <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.details') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -85,19 +85,19 @@
                 <div class="space-y-3">
                   <!-- Full Timestamp -->
                   <div class="flex items-center gap-2 text-sm">
-                    <span class="font-medium text-text-secondary">Fecha completa:</span>
+                    <span class="font-medium text-text-secondary">{{ t('finanzas.gastos.fullDate') }}</span>
                     <span class="text-text-primary">{{ formatDateTime(entry.changedAt) }}</span>
                   </div>
 
                   <!-- Notes -->
                   <div v-if="entry.notes" class="flex items-start gap-2 text-sm">
-                    <span class="font-medium text-text-secondary">Notas:</span>
+                    <span class="font-medium text-text-secondary">{{ t('finanzas.common.notes') }}:</span>
                     <span class="text-text-primary">{{ entry.notes }}</span>
                   </div>
 
                   <!-- Snapshot -->
                   <div v-if="entry.expenseSnapshot" class="text-sm">
-                    <span class="font-medium text-text-secondary block mb-2">Snapshot completo:</span>
+                    <span class="font-medium text-text-secondary block mb-2">{{ t('finanzas.gastos.snapshot') }}</span>
                     <pre class="bg-background border border-border rounded-lg p-3 text-xs text-text-secondary overflow-x-auto">{{ JSON.stringify(entry.expenseSnapshot, null, 2) }}</pre>
                   </div>
                 </div>
@@ -113,7 +113,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-const { formatDate, formatDateTime } = useFormatters()
+
+const { t } = useI18n({ useScope: 'global' })
+const { formatDate, formatDateTime, formatCurrency } = useFormatters()
 
 const props = defineProps<{
   expenseId: string
@@ -133,7 +135,7 @@ const fetchHistory = async () => {
     history.value = response || []
   } catch (err: any) {
     console.error('Error fetching history:', err)
-    error.value = err.data?.detail || 'Error al cargar el historial'
+    error.value = err.data?.detail || t('finanzas.gastos.historyLoadError')
   } finally {
     loading.value = false
   }
@@ -155,11 +157,11 @@ onMounted(() => {
 // Helper functions
 function getChangeTypeText(changeType: string): string {
   const types: Record<string, string> = {
-    'field_update': 'Actualización',
-    'created': 'Creado',
-    'deleted': 'Eliminado',
-    'attachment_added': 'Archivo +',
-    'attachment_removed': 'Archivo -'
+    'field_update': t('finanzas.gastos.changeFieldUpdate'),
+    'created': t('finanzas.gastos.changeCreated'),
+    'deleted': t('finanzas.gastos.changeDeleted'),
+    'attachment_added': t('finanzas.gastos.changeAttachmentAdded'),
+    'attachment_removed': t('finanzas.gastos.changeAttachmentRemoved')
   }
   return types[changeType] || changeType
 }
@@ -177,13 +179,13 @@ function getChangeTypeBadgeClass(changeType: string): string {
 
 function getFieldDisplayName(field: string): string {
   const fieldNames: Record<string, string> = {
-    'amount': 'Monto',
-    'description': 'Descripción',
-    'expense_category_id': 'Categoría',
-    'transaction_date': 'Fecha',
-    'is_recurring': 'Recurrencia',
-    'frequency': 'Frecuencia',
-    'recurring_end_date': 'Fecha Fin'
+    'amount': t('finanzas.gastos.colAmount'),
+    'description': t('finanzas.gastos.colDesc'),
+    'expense_category_id': t('finanzas.gastos.colCategory'),
+    'transaction_date': t('finanzas.gastos.colDate'),
+    'is_recurring': t('finanzas.gastos.recurrence'),
+    'frequency': t('finanzas.gastos.frequency'),
+    'recurring_end_date': t('finanzas.gastos.fieldEndDate')
   }
   return fieldNames[field] || field
 }
@@ -206,11 +208,7 @@ function formatFieldValue(field: string, value: any): string {
       return '-'
     }
 
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(amountValue)
+    return formatCurrency(amountValue)
   }
 
   if (field === 'transaction_date' || field === 'recurring_end_date') {
@@ -219,16 +217,16 @@ function formatFieldValue(field: string, value: any): string {
   }
 
   if (field === 'is_recurring') {
-    return value.is_recurring || value ? 'Sí' : 'No'
+    return value.is_recurring || value ? t('common.yes') : t('common.no')
   }
 
   if (field === 'frequency') {
     const frequencies: Record<string, string> = {
-      'weekly': 'Semanal',
-      'biweekly': 'Quincenal',
-      'monthly': 'Mensual',
-      'quarterly': 'Trimestral',
-      'yearly': 'Anual'
+      'weekly': t('finanzas.gastos.weekly'),
+      'biweekly': t('finanzas.gastos.biweekly'),
+      'monthly': t('finanzas.gastos.monthly'),
+      'quarterly': t('finanzas.gastos.quarterly'),
+      'yearly': t('finanzas.gastos.yearly')
     }
     return frequencies[value.frequency || value] || value
   }
