@@ -3,23 +3,23 @@
 
     <!-- Header: group name + add button -->
     <div class="flex items-center justify-between mb-3">
-      <h1 class="text-base font-bold text-text-primary">{{ group?.name ?? '…' }}</h1>
+      <h1 class="text-base font-bold text-text-primary">{{ group ? paymentGroupLabel(group) : '…' }}</h1>
       <button
-        v-if="group?.slug !== 'cash'"
+        v-if="group && !isCashGroup(group)"
         class="flex items-center gap-1.5 min-h-[32px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
         @click="openCreate"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Agregar método
+        {{ t('finanzas.metodosPago.addMethod') }}
       </button>
     </div>
 
     <!-- GL account card -->
     <div class="mb-3 rounded-lg border border-border bg-surface px-3 py-2 flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1.5 flex-1 min-w-0">
-        <span class="text-xs text-text-secondary">Cuenta contable:</span>
+        <span class="text-xs text-text-secondary">{{ t('finanzas.metodosPago.accountLabel') }}</span>
         <span
           v-if="group?.glAccountCode"
           class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary"
@@ -27,7 +27,7 @@
           {{ group.glAccountCode }}
         </span>
         <span v-if="currentGlAccount" class="text-xs text-text-secondary truncate">{{ currentGlAccount.name }}</span>
-        <span v-else-if="!group?.glAccountCode" class="text-xs text-text-secondary italic">Sin asignar</span>
+        <span v-else-if="!group?.glAccountCode" class="text-xs text-text-secondary italic">{{ t('finanzas.metodosPago.unassigned') }}</span>
       </div>
 
       <!-- Editable for custom groups only -->
@@ -36,9 +36,9 @@
           v-model="glAccountCode"
           class="text-xs border border-border rounded px-2 py-1 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary min-h-[28px]"
           :disabled="savingGl"
-          aria-label="Seleccionar cuenta contable de débito"
+          :aria-label="t('finanzas.metodosPago.selectDebitAccount')"
         >
-          <option value="">— Sin asignar —</option>
+          <option value="">{{ t('finanzas.metodosPago.noAssignedOption') }}</option>
           <option v-for="acct in leafAccounts" :key="acct.code" :value="acct.code">
             {{ acct.code }} · {{ acct.name }}
           </option>
@@ -52,12 +52,12 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          {{ savingGl ? '…' : 'Guardar' }}
+          {{ savingGl ? '…' : t('common.save') }}
         </button>
       </div>
 
       <!-- Read-only for global groups -->
-      <span v-else class="text-xs text-text-secondary flex-shrink-0">predeterminado</span>
+      <span v-else class="text-xs text-text-secondary flex-shrink-0">{{ t('finanzas.metodosPago.defaultLower') }}</span>
     </div>
 
     <!-- Loading -->
@@ -71,8 +71,8 @@
       v-else
       :columns="columns"
       :data="methods"
-      empty-message="No hay métodos configurados"
-      empty-sub-message="Agrega un método para que aparezca en el POS"
+      :empty-message="t('finanzas.metodosPago.noMethods')"
+      :empty-sub-message="t('finanzas.metodosPago.noMethodsSub')"
       row-size="sm"
     >
       <!-- Mobile card -->
@@ -90,7 +90,7 @@
               {{ item.name }}
             </span>
             <span v-if="item.glAccountCode" class="text-xs font-mono text-text-secondary">{{ item.glAccountCode }}</span>
-            <span v-else class="text-xs text-text-secondary italic">Sin asociar</span>
+            <span v-else class="text-xs text-text-secondary italic">{{ t('finanzas.metodosPago.noAssociated') }}</span>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
             <button
@@ -101,7 +101,7 @@
                 : 'border-border bg-background text-text-secondary hover:text-text-primary'"
               @click.stop="toggleActive(item)"
             >
-              {{ item.isActive ? 'Activo' : 'Inactivo' }}
+              {{ item.isActive ? t('finanzas.metodosPago.active') : t('finanzas.metodosPago.inactive') }}
             </button>
             <button
               class="p-2 rounded text-text-secondary hover:text-text-primary hover:bg-background transition-colors"
@@ -136,7 +136,7 @@
         <span v-if="row.glAccountCode" class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">
           {{ row.glAccountCode }}
         </span>
-        <span v-else class="text-xs text-text-secondary italic">Sin asociar</span>
+        <span v-else class="text-xs text-text-secondary italic">{{ t('finanzas.metodosPago.noAssociated') }}</span>
       </template>
 
       <!-- status toggle -->
@@ -147,10 +147,10 @@
           :class="row.isActive
             ? 'border-state-success-border bg-state-success-bg text-state-success-text hover:bg-state-success-bg/80'
             : 'border-border bg-background text-text-secondary hover:text-text-primary'"
-          :aria-label="row.isActive ? `Desactivar ${row.name}` : `Activar ${row.name}`"
+          :aria-label="row.isActive ? t('finanzas.metodosPago.deactivateNamed', { name: row.name }) : t('finanzas.metodosPago.activateNamed', { name: row.name })"
           @click.stop="toggleActive(row)"
         >
-          {{ row.isActive ? 'Activo' : 'Inactivo' }}
+          {{ row.isActive ? t('finanzas.metodosPago.active') : t('finanzas.metodosPago.inactive') }}
         </button>
       </template>
 
@@ -159,7 +159,7 @@
         <div class="flex items-center gap-1 justify-end">
           <button
             class="p-2 rounded text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
-            :aria-label="`Renombrar ${row.name}`"
+            :aria-label="t('finanzas.metodosPago.renameNamed', { name: row.name })"
             @click.stop="openEdit(row)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -169,7 +169,7 @@
           <button
             :disabled="savingId === row.id"
             class="p-2 rounded text-text-secondary hover:text-destructive hover:bg-surface-secondary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            :aria-label="`Eliminar ${row.name}`"
+            :aria-label="t('finanzas.metodosPago.deleteNamed', { name: row.name })"
             @click.stop="deleteMethod(row)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -205,7 +205,7 @@
         v-if="showPanel"
         role="dialog"
         aria-modal="true"
-        :aria-label="panelMode === 'create' ? 'Agregar método de pago' : 'Renombrar método'"
+        :aria-label="panelTitle"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -229,16 +229,16 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ panelMode === 'create' ? 'Agregar método de pago' : 'Renombrar método' }}
+                  {{ panelTitle }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ group?.name ?? '' }}
+                  {{ group ? paymentGroupLabel(group) : '' }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('finanzas.metodosPago.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="closePanel"
             >
@@ -253,14 +253,14 @@
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
             <label for="panel-method-name" class="text-sm font-medium text-text-primary">
-              Nombre del método
+              {{ t('finanzas.metodosPago.methodName') }}
             </label>
             <input
               id="panel-method-name"
               ref="panelInput"
               v-model="panelName"
               type="text"
-              placeholder="ej: Nequi, Tarjeta débito…"
+              :placeholder="t('finanzas.metodosPago.methodPlaceholder')"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
               @keydown.enter="savePanel"
               @keydown.escape="closePanel"
@@ -282,10 +282,10 @@
             />
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-text-primary leading-snug">
-                Crear sub-cuenta contable automáticamente
+                {{ t('finanzas.metodosPago.autoCreateTitle') }}
               </p>
               <p id="auto-create-help" class="text-xs text-text-secondary leading-snug mt-0.5">
-                Se crea una cuenta dedicada en tu plan de cuentas para que las ventas con este método se registren separadas en los reportes.
+                {{ t('finanzas.metodosPago.autoCreateHelp') }}
               </p>
             </div>
           </label>
@@ -296,19 +296,19 @@
             class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
           >
             <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
-              Vista previa
+              {{ t('finanzas.metodosPago.preview') }}
             </p>
             <p class="text-sm text-text-primary leading-snug">
-              Se creará la cuenta
+              {{ t('finanzas.metodosPago.previewCreateAccount') }}
               <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
-              bajo
+              {{ t('finanzas.metodosPago.previewUnder') }}
               <span class="font-mono">{{ parentAccount!.code }} {{ parentAccount!.name }}</span>.
             </p>
           </div>
 
           <!-- Warning: group has no default account configured -->
           <div
-            v-else-if="panelMode === 'create' && group?.slug !== 'cash' && !group?.glAccountCode"
+            v-else-if="panelMode === 'create' && group && !isCashGroup(group) && !group.glAccountCode"
             class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
           >
             <p class="text-xs text-state-warning-text leading-snug flex items-start gap-1.5">
@@ -316,7 +316,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span>
-                Para crear sub-cuentas automáticamente, primero asigna una cuenta contable al grupo desde el selector de arriba.
+                {{ t('finanzas.metodosPago.autoCreateWarning') }}
               </span>
             </p>
           </div>
@@ -335,13 +335,13 @@
             @click="savePanel"
           >
             <UiLoadingDots v-if="saving" size="8px" color="currentColor" />
-            <template v-else>{{ panelMode === 'create' ? 'Agregar' : 'Guardar' }}</template>
+            <template v-else>{{ panelMode === 'create' ? t('finanzas.metodosPago.add') : t('common.save') }}</template>
           </button>
           <button
             class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
             @click="closePanel"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -355,6 +355,7 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
+const { t } = useI18n({ useScope: 'global' })
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const route = useRoute()
@@ -396,12 +397,12 @@ interface PaymentMethod {
   glAccountCode: string | null
 }
 
-const columns: Column[] = [
-  { key: 'name',           title: 'Nombre',          sortable: false },
-  { key: 'glAccountCode',  title: 'Cuenta contable',  sortable: false },
-  { key: 'isActive',       title: 'Estado',           sortable: false, align: 'center' },
-  { key: 'actions',        title: 'Acciones',         sortable: false, align: 'right' },
-]
+const columns = computed<Column[]>(() => [
+  { key: 'name',           title: t('finanzas.metodosPago.name'), sortable: false },
+  { key: 'glAccountCode',  title: t('finanzas.metodosPago.account'), sortable: false },
+  { key: 'isActive',       title: t('finanzas.common.status'), sortable: false, align: 'center' },
+  { key: 'actions',        title: t('finanzas.common.actions'), sortable: false, align: 'right' },
+])
 
 // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -496,7 +497,9 @@ const saveGlAccount = async () => {
 }
 
 useHead(() => ({
-  title: group.value ? `${group.value.name} — Métodos de pago` : 'Métodos de pago - Warocol',
+  title: group.value
+    ? t('finanzas.metodosPago.detailTitle', { group: paymentGroupLabel(group.value) })
+    : t('finanzas.head.metodosPago'),
 }))
 
 const refreshAll = async () => {
@@ -549,6 +552,27 @@ const panelInput = ref<HTMLInputElement | null>(null)
 // Issue #533 — auto-create PUC sub-account state
 const autoCreateAccount = ref(true)
 const panelError = ref('')
+const panelTitle = computed(() =>
+  panelMode.value === 'create'
+    ? t('finanzas.metodosPago.createMethodTitle')
+    : t('finanzas.metodosPago.renameMethodTitle'),
+)
+
+const paymentGroupLabel = (paymentGroup: PaymentGroup): string => {
+  if (paymentGroup.tenantId !== null) return paymentGroup.name
+  const labels: Record<string, string> = {
+    cash: t('finanzas.common.cash'),
+    efectivo: t('finanzas.common.cash'),
+    card: t('finanzas.common.card'),
+    tarjeta: t('finanzas.common.card'),
+    digital: t('finanzas.common.digital'),
+    credit: t('finanzas.common.credit'),
+    credito: t('finanzas.common.credit'),
+  }
+  return labels[paymentGroup.slug] || paymentGroup.name
+}
+
+const isCashGroup = (paymentGroup: PaymentGroup) => ['cash', 'efectivo'].includes(paymentGroup.slug)
 
 const parentAccount = computed<TenantAccount | null>(() =>
   group.value?.glAccountCode
@@ -669,7 +693,7 @@ const savePanel = async () => {
     closePanel()
     await Promise.all([refetchMethods(), refetchAccounts()])
   } catch (err: any) {
-    panelError.value = err?.data?.detail || err?.data?.message || err?.message || 'Error al guardar el método'
+    panelError.value = err?.data?.detail || err?.data?.message || err?.message || t('finanzas.metodosPago.savingError')
   } finally {
     saving.value = false
   }
