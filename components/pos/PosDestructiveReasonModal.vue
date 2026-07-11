@@ -61,7 +61,7 @@
               v-model="reason"
               rows="2"
               :disabled="loading"
-              :placeholder="reasonPlaceholder"
+              :placeholder="resolvedReasonPlaceholder"
               class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50"
             />
             <p v-if="error" class="mt-2 text-sm text-destructive">
@@ -113,7 +113,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   message: '',
   confirmLabel: 'Confirmar',
-  reasonPlaceholder: t('pos.destructive.reasonPlaceholder'),
+  // defineProps defaults are hoisted — cannot call t() here
+  reasonPlaceholder: undefined,
   loading: false,
   error: '',
   variant: 'destructive',
@@ -124,6 +125,10 @@ const emit = defineEmits<{
   (e: 'confirm', reason: string): void
   (e: 'cancel'): void
 }>()
+
+const resolvedReasonPlaceholder = computed(
+  () => props.reasonPlaceholder || t('pos.destructive.reasonPlaceholder'),
+)
 
 const uid = useId()
 const titleId = `pos-destructive-title-${uid}`
