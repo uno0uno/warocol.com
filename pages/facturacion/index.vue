@@ -973,6 +973,7 @@ const taxLevels = [
       <div class="space-y-5">
 
         <!-- INC -->
+        <!-- tax toggles (i18n chrome) -->
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
