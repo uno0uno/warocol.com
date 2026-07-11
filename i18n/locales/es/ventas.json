@@ -316,6 +316,7 @@
       "online": "Online",
       "dateRangePlaceholder": "Rango de fechas",
       "clearFilters": "Limpiar filtros",
+      "closeReport": "Aceptar",
       "reportSent": "Reporte enviado",
       "tipsSentTo": "propinas enviadas a",
       "subtotalValue": "Subtotal: {amount}",

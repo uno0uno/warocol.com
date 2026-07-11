@@ -316,6 +316,7 @@
       "online": "Online",
       "dateRangePlaceholder": "Date range",
       "clearFilters": "Clear filters",
+      "closeReport": "Close",
       "reportSent": "Report sent",
       "tipsSentTo": "tips sent to",
       "subtotalValue": "Subtotal: {amount}",

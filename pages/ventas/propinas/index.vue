@@ -670,7 +670,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
               class="w-full min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
               @click="showExportModal = false"
             >
-              {{ t('ventas.common.aceptar') }}
+              {{ t('ventas.propinas.closeReport') }}
             </button>
           </div>
         </div>
