@@ -1,7 +1,6 @@
 <script setup lang="ts">
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
@@ -15,6 +14,7 @@ useHead({ title: () => t('ventas.head.propinas') })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
+const { formatDateTime: formatDate, formatCurrency } = useFormatters()
 
 // Payment groups (same query as /ventas/ordenes — shared cache)
 const { data: paymentGroupsData } = useQuery({
@@ -57,8 +57,8 @@ const formatIsoShort = (iso: string) => {
 }
 
 const presetDates = computed(() => [
-  { label: 'Hoy', value: presetRange(todayISO()) },
-  { label: 'Ayer', value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)) },
+  { label: t('ventas.propinas.today'), value: presetRange(todayISO()) },
+  { label: t('ventas.propinas.yesterday'), value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)) },
   { label: t('ventas.propinas.lastWeek'), value: presetRange(addDaysISO(todayISO(), -7)) },
   { label: t('ventas.propinas.last15'), value: presetRange(addDaysISO(todayISO(), -15)) },
   { label: t('ventas.propinas.lastMonth'), value: presetRange(addDaysISO(todayISO(), -30)) },
@@ -222,22 +222,13 @@ const exportToEmail = async () => {
 }
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value || 0)
-
-const { formatDateTime: formatDate } = useFormatters()
-
 const formatPercent = (value: number) => `${(value || 0).toFixed(2)}%`
 
 const channelLabel = (ch: string | null | undefined) => {
-  if (ch === 'online') return 'Online'
+  if (ch === 'online') return t('ventas.propinas.online')
   if (ch === 'mesa') return t('ventas.propinas.mesa')
-  if (ch === 'barra') return 'Barra'
-  return 'POS'
+  if (ch === 'barra') return t('ventas.propinas.barra')
+  return t('ventas.common.pos')
 }
 const channelVariant = (ch: string | null | undefined) => {
   if (ch === 'online') return 'success'
@@ -247,9 +238,9 @@ const channelVariant = (ch: string | null | undefined) => {
 }
 
 const channelHeaderOptions = [
-  { label: 'POS', value: 'pos' },
+  { label: t('ventas.common.pos'), value: 'pos' },
   { label: t('ventas.propinas.mesa'), value: 'mesa' },
-  { label: 'Online', value: 'online' },
+  { label: t('ventas.propinas.online'), value: 'online' },
 ]
 
 const memberHeaderOptions = computed(() =>
@@ -335,15 +326,15 @@ onUnmounted(() => clearRefreshHandler(refetch))
       class="flex flex-col items-center justify-center gap-3 py-16 px-6 bg-surface rounded-xl border-2 border-border text-center"
     >
       <span aria-hidden="true" class="text-4xl">💡</span>
-      <p class="text-base font-semibold text-text-primary">Las propinas no están activadas</p>
+      <p class="text-base font-semibold text-text-primary">{{ t('ventas.propinas.disabledTitle') }}</p>
       <p class="text-sm text-text-secondary max-w-md">
-        Activa el cobro de propinas para empezar a verlas aquí. Hoy el checkout no muestra la opción de propina a tus clientes.
+        {{ t('ventas.propinas.disabledBody') }}
       </p>
       <NuxtLink
         to="/operaciones/propinas"
         class="mt-2 min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
       >
-        Configurar propinas →
+        {{ t('ventas.propinas.configureTips') }}
       </NuxtLink>
     </div>
 
@@ -403,7 +394,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
           range
           :preset-dates="presetDates"
           :enable-time-picker="false"
-          :locale="es"
+          :locale="locale"
           :placeholder="t('ventas.propinas.dateRangePlaceholder')"
           auto-apply
           :teleport="true"
@@ -421,7 +412,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           :aria-label="t('ventas.propinas.filterWaiter')"
         >
-          <option :value="null">Mesero</option>
+          <option :value="null">{{ t('ventas.common.mesero') }}</option>
           <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
         </select>
 
@@ -429,12 +420,12 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <select
           v-model="channelFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
-          aria-label="Filtrar por canal"
+          :aria-label="t('ventas.propinas.filterChannel')"
         >
-          <option :value="null">Canal</option>
-          <option value="pos">POS</option>
+          <option :value="null">{{ t('ventas.propinas.channel') }}</option>
+          <option value="pos">{{ t('ventas.common.pos') }}</option>
           <option value="mesa">{{ t('ventas.propinas.mesa') }}</option>
-          <option value="online">Online</option>
+          <option value="online">{{ t('ventas.propinas.online') }}</option>
         </select>
 
         <!-- Payment method -->
@@ -452,7 +443,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
           v-if="localSearchTerm || dateRangeDates || memberFilter || paymentFilter || channelFilter"
           type="button"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          aria-label="Limpiar filtros"
+          :aria-label="t('ventas.propinas.clearFilters')"
           @click="clearAllFilters"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -498,10 +489,10 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #header-channel>
           <UiTableHeaderFilter
             v-model="channelHeaderFilter"
-            title="Canal"
+            :title="t('ventas.propinas.channel')"
             filter-type="select"
             :options="channelHeaderOptions"
-            all-label="Canal"
+            :all-label="t('ventas.propinas.channel')"
             align="center"
           />
         </template>
@@ -509,10 +500,10 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #header-member_name>
           <UiTableHeaderFilter
             v-model="memberHeaderFilter"
-            title="Mesero"
+            :title="t('ventas.common.mesero')"
             filter-type="select"
             :options="memberHeaderOptions"
-            all-label="Mesero"
+            :all-label="t('ventas.common.mesero')"
             align="left"
           />
         </template>
@@ -520,7 +511,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #header-payment_method>
           <UiTableHeaderFilter
             v-model="paymentHeaderFilter"
-            title="Método de pago"
+            :title="t('ventas.common.metodoPago')"
             filter-type="select"
             :options="paymentHeaderOptions"
             :all-label="t('ventas.common.metodoPagoShort')"
@@ -546,7 +537,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             </div>
             <div class="flex items-end justify-between">
               <div>
-                <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
+                <p class="text-xs text-text-secondary">{{ t('ventas.propinas.subtotalValue', { amount: formatCurrency(item.total_amount) }) }}</p>
                 <button
                   type="button"
                   class="text-sm font-medium text-text-primary hover:text-primary hover:underline mt-0.5"
@@ -606,7 +597,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
       <!-- Pagination -->
       <div v-if="totalCount > PAGE_SIZE" class="flex items-center justify-between gap-2 px-2 mt-0">
         <p class="text-xs text-text-secondary">
-          Página {{ currentPage }} de {{ totalPages }} · {{ totalCount }} resultados
+          {{ t('ventas.propinas.paginationSummary', { page: currentPage, pages: totalPages, total: totalCount }) }}
         </p>
         <div class="flex items-center gap-1">
           <button
@@ -679,7 +670,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
               class="w-full min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
               @click="showExportModal = false"
             >
-              Aceptar
+              {{ t('ventas.common.aceptar') }}
             </button>
           </div>
         </div>

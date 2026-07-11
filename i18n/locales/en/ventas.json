@@ -59,6 +59,7 @@
       "guardar": "Save",
       "cancelar": "Cancel",
       "aplicar": "Apply",
+      "aceptar": "OK",
       "cerrarPanel": "Close panel",
       "items": "items",
       "domicilio": "Delivery",
@@ -291,13 +292,19 @@
       "ordersWithTip": "Orders with tip",
       "search": "Search",
       "searchOrder": "Search by order #...",
+      "today": "Today",
+      "yesterday": "Yesterday",
       "dateRange": "Date range",
       "filterWaiter": "Filter by waiter",
       "filterPayment": "Filter by payment method",
+      "filterChannel": "Filter by channel",
       "exportAria": "Export tips by email",
       "exporting": "Exporting tips...",
       "emptyTitle": "No tips in the selected period",
       "emptySub": "Adjust the filters to see more results.",
+      "disabledTitle": "Tips are not enabled",
+      "disabledBody": "Enable tip collection to start seeing them here. Today, checkout does not show the tip option to your customers.",
+      "configureTips": "Configure tips →",
       "unassigned": "Unassigned",
       "lastWeek": "Last week",
       "last15": "Last 15 days",
@@ -305,9 +312,14 @@
       "last90": "Last 90 days",
       "channel": "Channel",
       "mesa": "Table",
+      "barra": "Bar",
+      "online": "Online",
       "dateRangePlaceholder": "Date range",
+      "clearFilters": "Clear filters",
       "reportSent": "Report sent",
-      "tipsSentTo": "tips sent to"
+      "tipsSentTo": "tips sent to",
+      "subtotalValue": "Subtotal: {amount}",
+      "paginationSummary": "Page {page} of {pages} · {total} results"
     }
   }
 }

@@ -59,6 +59,7 @@
       "guardar": "Guardar",
       "cancelar": "Cancelar",
       "aplicar": "Aplicar",
+      "aceptar": "Aceptar",
       "cerrarPanel": "Cerrar panel",
       "items": "items",
       "domicilio": "Domicilio",
@@ -291,13 +292,19 @@
       "ordersWithTip": "Órdenes con propina",
       "search": "Buscar",
       "searchOrder": "Buscar por Nº orden...",
+      "today": "Hoy",
+      "yesterday": "Ayer",
       "dateRange": "Rango de fechas",
       "filterWaiter": "Filtrar por mesero",
       "filterPayment": "Filtrar por método de pago",
+      "filterChannel": "Filtrar por canal",
       "exportAria": "Exportar propinas a correo",
       "exporting": "Exportando propinas...",
       "emptyTitle": "Sin propinas en el periodo seleccionado",
       "emptySub": "Ajusta los filtros para ver más resultados.",
+      "disabledTitle": "Las propinas no están activadas",
+      "disabledBody": "Activa el cobro de propinas para empezar a verlas aquí. Hoy el checkout no muestra la opción de propina a tus clientes.",
+      "configureTips": "Configurar propinas →",
       "unassigned": "Sin asignar",
       "lastWeek": "Última semana",
       "last15": "Últimos 15 días",
@@ -305,9 +312,14 @@
       "last90": "Últimos 90 días",
       "channel": "Canal",
       "mesa": "Mesa",
+      "barra": "Barra",
+      "online": "Online",
       "dateRangePlaceholder": "Rango de fechas",
+      "clearFilters": "Limpiar filtros",
       "reportSent": "Reporte enviado",
-      "tipsSentTo": "propinas enviadas a"
+      "tipsSentTo": "propinas enviadas a",
+      "subtotalValue": "Subtotal: {amount}",
+      "paginationSummary": "Página {page} de {pages} · {total} resultados"
     }
   }
 }
