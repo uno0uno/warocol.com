@@ -13,8 +13,9 @@ export interface CierrePeriodLike {
 export function useCierrePeriod() {
   const { formatCalendarDate } = useFormatters()
   const { timezone } = useTenantTimezone()
+  const { t, locale } = useI18n({ useScope: 'global' })
 
-  const timeFormatter = computed(() => new Intl.DateTimeFormat('es-CO', {
+  const timeFormatter = computed(() => new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -40,8 +41,8 @@ export function useCierrePeriod() {
     const start = cierre?.periodStartTime
     const end = cierre?.periodEndTime
     if (start && end) return `${timeFormatter.value.format(new Date(start))} – ${timeFormatter.value.format(new Date(end))}`
-    if (start) return `Desde ${timeFormatter.value.format(new Date(start))}`
-    if (end) return `Hasta ${timeFormatter.value.format(new Date(end))}`
+    if (start) return t('finanzas.arqueo.fromTime', { time: timeFormatter.value.format(new Date(start)) })
+    if (end) return t('finanzas.arqueo.untilTime', { time: timeFormatter.value.format(new Date(end)) })
     return null
   }
 
@@ -49,10 +50,10 @@ export function useCierrePeriod() {
     cierre?.status === 'open'
 
   const periodTypeLabel = (cierre: CierrePeriodLike | null | undefined): string => {
-    if (isOpenCierre(cierre)) return 'Abierto'
+    if (isOpenCierre(cierre)) return t('finanzas.arqueo.periodOpen')
     if (isTemplateCierre(cierre)) return cierre!.shiftTemplateName!
-    if (hasTimeWindow(cierre)) return 'Personalizado'
-    return 'Día completo'
+    if (hasTimeWindow(cierre)) return t('finanzas.arqueo.periodCustom')
+    return t('finanzas.common.fullDay')
   }
 
   const periodBadgeClass = (cierre: CierrePeriodLike | null | undefined): string => {

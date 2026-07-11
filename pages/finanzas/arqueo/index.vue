@@ -32,7 +32,7 @@
           range
           :preset-dates="presetDates"
           :enable-time-picker="false"
-          :locale="es"
+          :locale="locale"
           :placeholder="t('finanzas.common.dateRange')"
           auto-apply
           :teleport="true"
@@ -48,7 +48,7 @@
           v-if="dateRangeDates"
           @click="dateRangeDates = null"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          aria-label="Limpiar fechas"
+          :aria-label="t('finanzas.common.clearDates')"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +67,11 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            {{ openTablesCount }} {{ openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} {{ openTablesCount === 1 ? 'abierta' : 'abiertas' }}
+            {{ t('finanzas.arqueo.openTables', {
+              count: openTablesCount,
+              table: openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase(),
+              state: openTablesCount === 1 ? t('finanzas.arqueo.tableOpenSingular') : t('finanzas.arqueo.tableOpenPlural'),
+            }) }}
           </NuxtLink>
 
           <button
@@ -77,21 +81,21 @@
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
           >
-            Mes actual
+            {{ t('finanzas.common.currentMonth') }}
           </button>
 
           <NuxtLink
             to="/finanzas/arqueo/apertura"
             class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center flex-shrink-0"
           >
-            Abrir turno
+            {{ t('finanzas.arqueo.openShift') }}
           </NuxtLink>
 
           <NuxtLink
             :to="`/finanzas/arqueo/x?start=${periodStart}&end=${periodEnd}`"
             class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center flex-shrink-0"
           >
-            Corte X
+            {{ t('finanzas.arqueo.corteX') }}
           </NuxtLink>
 
         </div>
@@ -102,13 +106,13 @@
         <h2 v-if="!hasOpenShift" class="text-sm font-semibold text-text-primary mb-2">{{ t('finanzas.arqueo.new') }}</h2>
         <details v-else class="group rounded-lg border border-border bg-surface">
           <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-text-primary flex items-center justify-between">
-            Arqueo de otro período
+            {{ t('finanzas.arqueo.otherPeriod') }}
             <svg class="w-4 h-4 text-text-secondary transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </summary>
           <div class="px-4 pb-4 pt-1">
-            <p class="text-xs text-text-secondary mb-3">Para días pasados u otro turno distinto al abierto.</p>
+            <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.otherPeriodHint') }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NuxtLink
                 :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
@@ -120,8 +124,8 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-text-primary">Día completo</p>
-                  <p class="text-xs text-text-secondary mt-0.5">Un cierre por día calendario.</p>
+                  <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayMode') }}</p>
                 </div>
               </NuxtLink>
               <NuxtLink
@@ -134,8 +138,8 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
-                  <p class="text-xs text-text-secondary mt-0.5">Turno fijo configurado.</p>
+                  <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfigured') }}</p>
                 </div>
               </NuxtLink>
             </div>
@@ -152,8 +156,8 @@
               </svg>
             </div>
             <div>
-              <p class="text-sm font-semibold text-text-primary">Día completo</p>
-              <p class="text-xs text-text-secondary mt-0.5">Un cierre por día calendario (cierre nocturno o turno único).</p>
+              <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayModeLong') }}</p>
             </div>
           </NuxtLink>
           <NuxtLink
@@ -166,8 +170,8 @@
               </svg>
             </div>
             <div>
-              <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
-              <p class="text-xs text-text-secondary mt-0.5">Turno fijo ya configurado (Mañana, Tarde, noche…).</p>
+              <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfiguredLong') }}</p>
             </div>
           </NuxtLink>
         </div>
@@ -199,22 +203,22 @@
                 <span class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(item) ?? '—' }}</span>
               </div>
               <p v-if="isCierreOpen(item)" class="text-xs text-text-secondary mt-0.5">
-                Abierto {{ formatDate(item.openedAt) }} · Fondo {{ formatCurrency(item.openingCash) }}
+                {{ t('finanzas.arqueo.openAtWithFloat', { date: formatDate(item.openedAt), amount: formatCurrency(item.openingCash) }) }}
               </p>
               <p v-else class="text-xs text-text-secondary mt-0.5">
-                Registrado {{ formatDate(item.closedAt) }}
+                {{ t('finanzas.arqueo.registeredAt', { date: formatDate(item.closedAt) }) }}
                 <span
                   v-if="hasReconciliationPending(item)"
                   class="ml-1 inline-flex rounded bg-state-warning-bg px-1.5 py-0.5 text-[10px] font-semibold text-state-warning-text"
                 >
-                  Conciliar
+                  {{ t('finanzas.arqueo.conciliar') }}
                 </span>
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <template v-if="isCierreOpen(item)">
                 <div class="flex items-center gap-1">
-                  <span class="text-xs font-semibold text-state-success-text">Cerrar turno →</span>
+                  <span class="text-xs font-semibold text-state-success-text">{{ t('finanzas.arqueo.closeShift') }}</span>
                   <button
                     @click.stop="openDeleteModal(item)"
                     class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
@@ -238,7 +242,7 @@
                   class="rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
                   @click.stop
                 >
-                  Conciliar
+                  {{ t('finanzas.arqueo.conciliar') }}
                 </NuxtLink>
               </template>
             </div>
@@ -271,7 +275,7 @@
           <span v-else class="text-sm text-destructive">{{ formatCurrency(value) }}</span>
         </template>
         <template #cell-cashDifference="{ row, value }">
-          <span v-if="isCierreOpen(row)" class="text-sm font-medium text-state-success-text">Fondo {{ formatCurrency(row.openingCash) }}</span>
+          <span v-if="isCierreOpen(row)" class="text-sm font-medium text-state-success-text">{{ t('finanzas.arqueo.openingFloatAmount', { amount: formatCurrency(row.openingCash) }) }}</span>
           <span v-else class="text-sm font-semibold" :class="value >= 0 ? 'text-success' : 'text-destructive'">
             {{ value >= 0 ? '+' : '' }}{{ formatCurrency(value) }}
           </span>
@@ -288,7 +292,7 @@
                 @click.stop="onRowClick(row)"
                 class="flex items-center justify-center min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
               >
-                Cerrar
+                {{ t('finanzas.common.close') }}
               </button>
               <button
                 @click.stop="openDeleteModal(row)"
@@ -308,13 +312,13 @@
                 class="flex h-8 items-center justify-center rounded-lg px-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
                 :title="t('finanzas.arqueo.conciliarMedios')"
               >
-                Conciliar
+                {{ t('finanzas.arqueo.conciliar') }}
               </NuxtLink>
               <button
                 @click.stop="openPanel(row.id)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
                 :title="t('finanzas.common.viewDetail')"
-                aria-label="Ver detalle"
+                :aria-label="t('finanzas.arqueo.viewDetailAria')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -325,7 +329,7 @@
                 @click.stop="openDeleteModal(row)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
                 :title="t('finanzas.common.delete')"
-                aria-label="Eliminar arqueo"
+                :aria-label="t('finanzas.arqueo.deleteArqueoAria')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -359,12 +363,12 @@
             {{ isCierreOpen(cierreToDelete) ? t('finanzas.arqueo.cancelOpen') : t('finanzas.arqueo.deleteArqueo') }}
           </h3>
           <p v-if="isCierreOpen(cierreToDelete)" class="text-sm text-text-secondary mb-6">
-            Se eliminará el fondo declarado (<strong>{{ formatCurrency(cierreToDelete?.openingCash) }}</strong>)
-            del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>.
-            No hay cierre registrado. Esta acción no se puede deshacer.
+            {{ t('finanzas.arqueo.deleteOpenBodyStart') }} (<strong>{{ formatCurrency(cierreToDelete?.openingCash) }}</strong>)
+            {{ t('finanzas.arqueo.deleteOpenBodyPeriod') }} <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>.
+            {{ t('finanzas.arqueo.deleteOpenBodyEnd') }}
           </p>
           <p v-else class="text-sm text-text-secondary mb-6">
-            ¿Eliminar el arqueo del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>? Esta acción no se puede deshacer.
+            {{ t('finanzas.arqueo.deleteClosedBodyStart') }} <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>{{ t('finanzas.arqueo.deleteClosedBodyEnd') }}
           </p>
           <div class="flex gap-3">
             <button
@@ -372,7 +376,7 @@
               :disabled="deleting"
               class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
             >
-              Volver
+              {{ t('finanzas.common.back') }}
             </button>
             <button
               @click="handleDelete"
@@ -391,25 +395,20 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
-import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { buildCierreCloseRoute, isCierreOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.arqueo') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const { todayISO, addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone } = useTenantTimezone()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
-const formatIsoShort = (iso: string) => {
-  const [year, month, day] = iso.split('-')
-  return `${day}/${month}/${year.slice(2)}`
-}
 
 const today = computed(() => todayISO())
 const todayNoon = computed(() => dateAtNoon(today.value))
@@ -418,17 +417,17 @@ const maxDate = computed(() => dateAtNoon(todayISO()))
 const dateRangeDates = ref<Date[] | null>(null)
 
 const presetDates = computed(() => [
-  { label: 'Hoy',           value: [todayNoon.value, todayNoon.value] },
+  { label: t('finanzas.common.today'),           value: [todayNoon.value, todayNoon.value] },
   { label: t('finanzas.common.yesterday'),          value: (() => { const d = dateAtNoon(addDaysISO(today.value, -1)); return [d, d] })() },
-  { label: 'Última semana', value: [dateAtNoon(addDaysISO(today.value, -7)), todayNoon.value] },
-  { label: 'Último mes',    value: [dateAtNoon(addDaysISO(today.value, -30)), todayNoon.value] },
+  { label: t('finanzas.arqueo.lastWeek'), value: [dateAtNoon(addDaysISO(today.value, -7)), todayNoon.value] },
+  { label: t('finanzas.arqueo.lastMonth'),    value: [dateAtNoon(addDaysISO(today.value, -30)), todayNoon.value] },
 ])
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = formatIsoShort(isoFromDate(dates[0]))
+  const from = formatCalendarDate(isoFromDate(dates[0]))
   if (!dates[1]) return from
-  return `${from} - ${formatIsoShort(isoFromDate(dates[1]))}`
+  return `${from} - ${formatCalendarDate(isoFromDate(dates[1]))}`
 }
 
 const periodStart = computed(() =>
@@ -497,9 +496,6 @@ const historialColumns = [
   { key: 'actions',        title: t('finanzas.common.actions'),        sortable: false },
 ]
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
-
 const filterCurrentMonth = () => {
   const { first, last } = monthBounds(today.value)
   dateRangeDates.value = [dateAtNoon(first), dateAtNoon(last)]
@@ -511,7 +507,8 @@ const isCurrentMonthActive = computed(() => {
   return activeStart.value === first && activeEnd.value === last
 })
 
-const { formatCalendarDate, formatDateTime: _fmtDateTime } = useFormatters()
+const { formatCalendarDate, formatDateTime: _fmtDateTime, formatCurrency: formatMoneyValue } = useFormatters()
+const formatCurrency = (value?: number | null) => formatMoneyValue(value ?? 0)
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 const formatDay = (d: string) => {
   if (!d) return ''
