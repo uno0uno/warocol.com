@@ -2,13 +2,15 @@
 const { t } = useI18n()
 useHead({ title: () => t('analitica.head.ventas') })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { es } from 'date-fns/locale';
+import { enUS, es } from 'date-fns/locale';
 import { formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive();
+const { locale } = useI18n({ useScope: 'global' })
+const { numberLocaleTag } = useFormatters()
 
 const lastUpdate = ref<Date>(new Date());
 const currentTime = ref<Date>(new Date());
@@ -21,6 +23,7 @@ const { timezone, todayISO, addDaysISO, monthBounds } = useTenantTimezone()
 const hasDateFilter = computed(() =>
   dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
 )
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // Payment groups for filter dropdown
 const { data: paymentGroupsData } = useQuery({
@@ -69,7 +72,7 @@ const { data: filteredMetricsData, status: filteredMetricsStatus, asyncStatus: f
   staleTime: 30_000,
 })
 
-// warocol.com#641 — tip aggregates for the "Propinas del periodo" MetricCard.
+// warocol.com#641 — tip aggregates for the period tips MetricCard.
 // Reuses the same cache key as /operaciones/* and /ventas/propinas — Pinia
 // Colada dedupes the network call.
 const { data: ctxData } = useQuery({
@@ -124,7 +127,7 @@ const isRefreshing = computed(() =>
 
 const formatIsoDisplay = (iso: string, options: Intl.DateTimeFormatOptions = {}) => {
   const [year, month, day] = iso.split('-').map(Number)
-  return new Intl.DateTimeFormat('es-CO', {
+  return new Intl.DateTimeFormat(numberLocaleTag.value, {
     timeZone: 'UTC',
     ...options,
   }).format(new Date(Date.UTC(year, month - 1, day)))
@@ -169,24 +172,27 @@ const forecast = computed(() => {
 
 const forecastLabel = computed(() =>
   hasDateFilter.value
-    ? `Forecast ${formatIsoDisplay(todayISO(), { month: 'long' })}`
-    : `Forecast ${todayISO().slice(0, 4)}`
+    ? t('analitica.ventas.forecastMonth', { month: formatIsoDisplay(todayISO(), { month: 'long' }) })
+    : t('analitica.ventas.forecastYear', { year: todayISO().slice(0, 4) })
 )
 const forecastSubtitle = computed(() =>
-  hasDateFilter.value ? 'Proyección fin de mes' : 'Proyección fin de año'
+  hasDateFilter.value ? t('analitica.ventas.monthEndProjection') : t('analitica.ventas.yearEndProjection')
 )
 
 const chartTitle = computed(() => {
   const metadata = salesFlowData.value?.metadata
   const currentYear = todayISO().slice(0, 4)
-  if (!dateRange.value.from || !dateRange.value.to) return `Flujo de Ventas (${currentYear})`
+  if (!dateRange.value.from || !dateRange.value.to) return t('analitica.ventas.salesFlowYear', { year: currentYear })
   const { from, to } = dateRange.value
   if (from && to) {
-    if (from === to) return `Flujo de Ventas (${formatIsoDisplay(from)})`
-    const groupingLabel = metadata?.grouping === 'hour' ? 'por Hora' : 'por Día'
-    return `Flujo de Ventas ${groupingLabel} vs ${metadata?.comparison_label}`
+    if (from === to) return t('analitica.ventas.salesFlowDate', { date: formatIsoDisplay(from) })
+    const groupingLabel = metadata?.grouping === 'hour' ? t('analitica.ventas.byHour') : t('analitica.ventas.byDay')
+    return t('analitica.ventas.salesFlowComparison', {
+      grouping: groupingLabel,
+      comparison: metadata?.comparison_label ?? '',
+    })
   }
-  return 'Flujo de Ventas'
+  return t('analitica.ventas.salesFlow')
 })
 
 const chartLabels = computed(() => {
@@ -200,11 +206,11 @@ const chartLabels = computed(() => {
   }
   const days_diff = inclusiveDays(from, to)
   return days_diff <= 30
-    ? { current: 'Período Actual', comparison: 'Período Anterior' }
-    : { current: 'Este Año', comparison: 'Año Anterior' }
+    ? { current: t('analitica.ventas.currentPeriod'), comparison: t('analitica.ventas.previousPeriod') }
+    : { current: t('analitica.ventas.thisYear'), comparison: t('analitica.ventas.previousYear') }
 })
 
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 const handleRefresh = async () => {
   if (hasDateFilter.value) {
@@ -257,7 +263,7 @@ const metrics = computed(() => {
       total_discount_amount: data.total_discount_amount ?? 0,
       total_standard_tax: data.total_standard_tax ?? 0,
       total_liquor_tax: data.total_liquor_tax ?? 0,
-      standard_tax_label: data.standard_tax_label ?? 'Impuesto',
+      standard_tax_label: data.standard_tax_label ?? t('analitica.ventas.taxGeneric'),
     }
   }
   const main = dashboardData.value?.data?.main || {}
@@ -269,12 +275,9 @@ const metrics = computed(() => {
     total_discount_amount: main.total_discount_amount ?? 0,
     total_standard_tax: main.total_standard_tax ?? 0,
     total_liquor_tax: main.total_liquor_tax ?? 0,
-    standard_tax_label: dashboardData.value?.data?.standard_tax_label ?? 'Impuesto',
+    standard_tax_label: dashboardData.value?.data?.standard_tax_label ?? t('analitica.ventas.taxGeneric'),
   }
 })
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 
 </script>
 
@@ -292,8 +295,8 @@ const formatCurrency = (value: number) =>
     <div v-else class="space-y-8 pb-20">
       <section>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', tipEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4']">
-          <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
-          <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
+          <MetricCard :title="t('analitica.ventas.grossSales')" :value="metrics.total_sales" format="currency" variant="primary" />
+          <MetricCard :title="t('analitica.ventas.avgTicket')" :value="metrics.avg_ticket" format="currency" variant="primary" />
           <!-- warocol.com#641 — Tips card with deep-link to /ventas/propinas -->
           <NuxtLink
             v-if="tipEnabled"
@@ -302,10 +305,10 @@ const formatCurrency = (value: number) =>
               query: dateRange.from && dateRange.to ? { date_from: dateRange.from, date_to: dateRange.to } : {},
             }"
             class="contents"
-            aria-label="Ver historial de propinas"
+            :aria-label="t('analitica.ventas.tipsHistory')"
           >
             <MetricCard
-              title="Propinas del periodo"
+              :title="t('analitica.ventas.periodTips')"
               :value="tipSum"
               format="currency"
               variant="primary"
@@ -324,8 +327,8 @@ const formatCurrency = (value: number) =>
             range
             :preset-dates="presetDates"
             :enable-time-picker="false"
-            :locale="es"
-            placeholder="Rango de fechas"
+            :locale="dateFnsLocale"
+            :placeholder="t('analitica.common.dateRange')"
             auto-apply
             :teleport="true"
             :timezone="timezone"
@@ -335,17 +338,17 @@ const formatCurrency = (value: number) =>
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
           />
-          <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
-            <option :value="null">Método pago</option>
+          <select v-model="paymentMethodFilter" :aria-label="t('analitica.ventas.filterMethod')" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
+            <option :value="null">{{ t('analitica.ventas.paymentMethod') }}</option>
             <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
           </select>
-          <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
-            <option :value="null">Estado</option>
-            <option value="completed">Completadas</option>
-            <option value="cancelled">Canceladas</option>
-            <option value="pending">Pendientes</option>
+          <select v-model="statusFilter" :aria-label="t('analitica.ventas.filterStatus')" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
+            <option :value="null">{{ t('analitica.common.status') }}</option>
+            <option value="completed">{{ t('analitica.ventas.completed') }}</option>
+            <option value="cancelled">{{ t('analitica.ventas.canceled') }}</option>
+            <option value="pending">{{ t('analitica.ventas.pending') }}</option>
           </select>
-          <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
+          <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" :title="t('analitica.common.clearFilters')" :aria-label="t('analitica.common.clearFilters')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -356,9 +359,9 @@ const formatCurrency = (value: number) =>
           to="/analitica/rentabilidad"
           class="flex items-center justify-between gap-4 bg-primary text-primary-foreground rounded-xl px-5 py-3 mb-6"
         >
-          <p class="text-sm font-semibold leading-tight">Tu plato más vendido puede ser tu peor negocio</p>
+          <p class="text-sm font-semibold leading-tight">{{ t('analitica.ventas.marginCta') }}</p>
           <span class="flex-shrink-0 bg-primary-foreground text-primary px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">
-            Ver Rentabilidad →
+            {{ t('analitica.ventas.viewMargin') }}
           </span>
         </NuxtLink>
 

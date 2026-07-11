@@ -7,22 +7,23 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const { t } = useI18n({ useScope: 'global' })
 
 definePageMeta({
   layout: 'dashboard',
   module: 'analitica',
 })
 
-const navigationItems = [
-  { to: '/analitica/ventas', label: 'Ventas' },
-  { to: '/analitica/rentabilidad', label: 'Rentabilidad' },
-  { to: '/analitica/ingredientes', label: 'Ingredientes' },
-  { to: '/analitica/clientes', label: 'Clientes' },
-  { to: '/analitica/puntos', label: 'Puntos' },
-]
+const navigationItems = computed(() => [
+  { to: '/analitica/ventas', label: t('analitica.tabs.ventas') },
+  { to: '/analitica/rentabilidad', label: t('analitica.tabs.rentabilidad') },
+  { to: '/analitica/ingredientes', label: t('analitica.tabs.ingredientes') },
+  { to: '/analitica/clientes', label: t('analitica.tabs.clientes') },
+  { to: '/analitica/puntos', label: t('analitica.tabs.puntos') },
+])
 
 useHead({
-  title: 'Analítica - Warocol',
-  meta: [{ name: 'description', content: 'Módulo de analítica para Warocol' }]
+  title: () => t('analitica.head.index'),
+  meta: [{ name: 'description', content: () => t('analitica.head.description') }]
 })
 </script>

@@ -1,12 +1,21 @@
 {
   "analitica": {
     "head": {
+      "index": "Analytics - Warocol",
+      "description": "Analytics module for Warocol",
       "ventas": "Sales analytics - Warocol",
       "rentabilidad": "Profitability - Warocol",
       "puntos": "Waros points - Warocol",
       "cocina": "Kitchen analytics | WARO",
       "clientes": "Customers - Warocol",
       "ingredientes": "Ingredient analytics - Warocol"
+    },
+    "tabs": {
+      "ventas": "Sales",
+      "rentabilidad": "Profitability",
+      "ingredientes": "Ingredients",
+      "clientes": "Customers",
+      "puntos": "Points"
     },
     "common": {
       "dateRange": "Date range",
@@ -28,6 +37,21 @@
       "completed": "Completed",
       "canceled": "Canceled",
       "pending": "Pending",
+      "forecastMonth": "Forecast {month}",
+      "forecastYear": "Forecast {year}",
+      "monthEndProjection": "Month-end projection",
+      "yearEndProjection": "Year-end projection",
+      "salesFlow": "Sales flow",
+      "salesFlowYear": "Sales flow ({year})",
+      "salesFlowDate": "Sales flow ({date})",
+      "salesFlowComparison": "Sales flow {grouping} vs {comparison}",
+      "byHour": "by hour",
+      "byDay": "by day",
+      "currentPeriod": "Current period",
+      "previousPeriod": "Previous period",
+      "thisYear": "This year",
+      "previousYear": "Previous year",
+      "taxGeneric": "Tax",
       "marginCta": "Your best seller may be your worst margin",
       "viewMargin": "View profitability →",
       "taxFallback": "INC 8%"

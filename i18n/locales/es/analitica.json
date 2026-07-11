@@ -1,12 +1,21 @@
 {
   "analitica": {
     "head": {
+      "index": "Analítica - Warocol",
+      "description": "Módulo de analítica para Warocol",
       "ventas": "Analítica de ventas - Warocol",
       "rentabilidad": "Rentabilidad - Warocol",
       "puntos": "Puntos Waros - Warocol",
       "cocina": "Analítica de Cocina | WARO",
       "clientes": "Clientes - Warocol",
       "ingredientes": "Analítica de Ingredientes - Warocol"
+    },
+    "tabs": {
+      "ventas": "Ventas",
+      "rentabilidad": "Rentabilidad",
+      "ingredientes": "Ingredientes",
+      "clientes": "Clientes",
+      "puntos": "Puntos"
     },
     "common": {
       "dateRange": "Rango de fechas",
@@ -28,6 +37,21 @@
       "completed": "Completadas",
       "canceled": "Canceladas",
       "pending": "Pendientes",
+      "forecastMonth": "Forecast {month}",
+      "forecastYear": "Forecast {year}",
+      "monthEndProjection": "Proyección fin de mes",
+      "yearEndProjection": "Proyección fin de año",
+      "salesFlow": "Flujo de Ventas",
+      "salesFlowYear": "Flujo de Ventas ({year})",
+      "salesFlowDate": "Flujo de Ventas ({date})",
+      "salesFlowComparison": "Flujo de Ventas {grouping} vs {comparison}",
+      "byHour": "por Hora",
+      "byDay": "por Día",
+      "currentPeriod": "Período Actual",
+      "previousPeriod": "Período Anterior",
+      "thisYear": "Este Año",
+      "previousYear": "Año Anterior",
+      "taxGeneric": "Impuesto",
       "marginCta": "Tu plato más vendido puede ser tu peor negocio",
       "viewMargin": "Ver Rentabilidad →",
       "taxFallback": "INC 8%"
