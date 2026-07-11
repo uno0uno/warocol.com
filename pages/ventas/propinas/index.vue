@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -10,7 +11,7 @@ definePageMeta({
   module: 'finanzas',
 })
 
-useHead({ title: 'Historial de propinas — Ventas' })
+useHead({ title: () => t('ventas.head.propinas') })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
@@ -35,7 +36,7 @@ const { data: ctxData, asyncStatus: ctxAsyncStatus } = useQuery({
 })
 const tipEnabled = computed<boolean>(() => ctxData.value?.data?.tip_enabled === true)
 const memberOptions = computed<{ id: string; name: string }[]>(
-  () => (ctxData.value?.data?.members ?? []).map((m: any) => ({ id: String(m.id), name: m.name || 'Sin nombre' }))
+  () => (ctxData.value?.data?.members ?? []).map((m: any) => ({ id: String(m.id), name: m.name || t('ventas.common.sinNombre') }))
 )
 
 // ── Filter state ────────────────────────────────────────────────────────────
@@ -58,10 +59,10 @@ const formatIsoShort = (iso: string) => {
 const presetDates = computed(() => [
   { label: 'Hoy', value: presetRange(todayISO()) },
   { label: 'Ayer', value: presetRange(addDaysISO(todayISO(), -1), addDaysISO(todayISO(), -1)) },
-  { label: 'Última semana', value: presetRange(addDaysISO(todayISO(), -7)) },
-  { label: 'Últimos 15 días', value: presetRange(addDaysISO(todayISO(), -15)) },
-  { label: 'Último mes', value: presetRange(addDaysISO(todayISO(), -30)) },
-  { label: 'Últimos 90 días', value: presetRange(addDaysISO(todayISO(), -90)) },
+  { label: t('ventas.propinas.lastWeek'), value: presetRange(addDaysISO(todayISO(), -7)) },
+  { label: t('ventas.propinas.last15'), value: presetRange(addDaysISO(todayISO(), -15)) },
+  { label: t('ventas.propinas.lastMonth'), value: presetRange(addDaysISO(todayISO(), -30)) },
+  { label: t('ventas.propinas.last90'), value: presetRange(addDaysISO(todayISO(), -90)) },
 ])
 
 const formatDateRange = (dates: Date[]) => {
@@ -212,7 +213,7 @@ const exportToEmail = async () => {
   } catch (e: any) {
     exportResult.value = {
       success: false,
-      message: e?.data?.detail || e?.message || 'No se pudo exportar el reporte',
+      message: e?.data?.detail || e?.message || t('ventas.propinas.exportError'),
     }
     showExportModal.value = true
   } finally {
@@ -234,7 +235,7 @@ const formatPercent = (value: number) => `${(value || 0).toFixed(2)}%`
 
 const channelLabel = (ch: string | null | undefined) => {
   if (ch === 'online') return 'Online'
-  if (ch === 'mesa') return 'Mesa'
+  if (ch === 'mesa') return t('ventas.propinas.mesa')
   if (ch === 'barra') return 'Barra'
   return 'POS'
 }
@@ -247,7 +248,7 @@ const channelVariant = (ch: string | null | undefined) => {
 
 const channelHeaderOptions = [
   { label: 'POS', value: 'pos' },
-  { label: 'Mesa', value: 'mesa' },
+  { label: t('ventas.propinas.mesa'), value: 'mesa' },
   { label: 'Online', value: 'online' },
 ]
 
@@ -282,14 +283,14 @@ const paymentHeaderFilter = computed({
 
 // ── Columns ─────────────────────────────────────────────────────────────────
 const columns: Column[] = [
-  { key: 'order_date', title: 'Fecha', sortable: true, width: '180px' },
-  { key: 'order_number', title: 'Orden', sortable: true, width: '90px' },
-  { key: 'channel', title: 'Canal', width: '100px' },
-  { key: 'total_amount', title: 'Subtotal', sortable: true, align: 'right' },
-  { key: 'tip_amount', title: 'Propina', sortable: true, align: 'right' },
+  { key: 'order_date', title: t('ventas.common.fecha'), sortable: true, width: '180px' },
+  { key: 'order_number', title: t('ventas.common.orden'), sortable: true, width: '90px' },
+  { key: 'channel', title: t('ventas.propinas.channel'), width: '100px' },
+  { key: 'total_amount', title: t('ventas.common.subtotal'), sortable: true, align: 'right' },
+  { key: 'tip_amount', title: t('ventas.common.propina'), sortable: true, align: 'right' },
   { key: 'tip_percent', title: '%', align: 'right', width: '80px' },
-  { key: 'member_name', title: 'Mesero' },
-  { key: 'payment_method', title: 'Método de pago' },
+  { key: 'member_name', title: t('ventas.common.mesero') },
+  { key: 'payment_method', title: t('ventas.common.metodoPago') },
 ]
 
 // ── Layout integration ──────────────────────────────────────────────────────
@@ -297,7 +298,7 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 registerProgressiveLoading(isRefreshing)
 
 // warocol.com#641 — pre-apply the date range when arriving via the
-// "Propinas del periodo" MetricCard on /analitica/ventas. URL is the
+// "{{ t('ventas.propinas.periodTips') }}" MetricCard on /analitica/ventas. URL is the
 // source of truth on first paint; subsequent user interactions update
 // the local ref directly (we don't sync back to the URL — out of scope).
 const route = useRoute()
@@ -351,20 +352,20 @@ onUnmounted(() => clearRefreshHandler(refetch))
       <!-- Aggregates — MetricCard pattern (matches /analitica/ventas) -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
         <MetricCard
-          title="Total propinas"
+          :title="t('ventas.propinas.totalTips')"
           :value="aggregates.sum_tip"
           format="currency"
           variant="primary"
         />
         <MetricCard
-          title="Promedio sobre venta"
+          :title="t('ventas.propinas.avgOverSale')"
           :value="aggregates.avg_pct"
           format="percentage"
           :precision="2"
           variant="primary"
         />
         <MetricCard
-          title="Órdenes con propina"
+          :title="t('ventas.propinas.ordersWithTip')"
           :value="aggregates.count_with_tip"
           format="number"
           variant="primary"
@@ -380,7 +381,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             type="button"
             class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
             @click="applySearch"
-            aria-label="Buscar"
+            :aria-label="t('ventas.propinas.search')"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -390,7 +391,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             v-model="localSearchTerm"
             type="text"
             inputmode="numeric"
-            placeholder="Buscar por Nº orden..."
+            :placeholder="t('ventas.propinas.searchOrder')"
             class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             @keydown.enter.prevent="applySearch"
           />
@@ -403,7 +404,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
           :preset-dates="presetDates"
           :enable-time-picker="false"
           :locale="es"
-          placeholder="Rango de fechas"
+          :placeholder="t('ventas.propinas.dateRangePlaceholder')"
           auto-apply
           :teleport="true"
           :timezone="timezone"
@@ -418,7 +419,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <select
           v-model="memberFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
-          aria-label="Filtrar por mesero"
+          :aria-label="t('ventas.propinas.filterWaiter')"
         >
           <option :value="null">Mesero</option>
           <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
@@ -432,7 +433,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         >
           <option :value="null">Canal</option>
           <option value="pos">POS</option>
-          <option value="mesa">Mesa</option>
+          <option value="mesa">{{ t('ventas.propinas.mesa') }}</option>
           <option value="online">Online</option>
         </select>
 
@@ -440,9 +441,9 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <select
           v-model="paymentFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
-          aria-label="Filtrar por método de pago"
+          :aria-label="t('ventas.propinas.filterPayment')"
         >
-          <option :value="null">Método pago</option>
+          <option :value="null">{{ t('ventas.common.metodoPagoShort') }}</option>
           <option v-for="g in paymentGroups" :key="g.slug" :value="g.slug">{{ g.name }}</option>
         </select>
 
@@ -464,7 +465,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
           type="button"
           class="hidden md:flex h-10 px-3 items-center gap-2 rounded-lg border-2 border-border bg-background text-text-secondary text-sm font-medium hover:text-text-primary hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           :disabled="isExporting || tips.length === 0"
-          :aria-label="isExporting ? 'Exportando propinas...' : 'Exportar propinas a correo'"
+          :aria-label="isExporting ? t('ventas.propinas.exporting') : t('ventas.propinas.exportAria')"
           @click="exportToEmail"
         >
           <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,8 +489,8 @@ onUnmounted(() => clearRefreshHandler(refetch))
         :data="tips"
         :sort-field="sortField"
         :sort-direction="sortDirection"
-        empty-message="Sin propinas en el periodo seleccionado"
-        empty-sub-message="Ajusta los filtros para ver más resultados."
+        :empty-message="t('ventas.propinas.emptyTitle')"
+        :empty-sub-message="t('ventas.propinas.emptySub')"
         item-key="id"
         row-size="sm"
         @sort="handleSort"
@@ -522,7 +523,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             title="Método de pago"
             filter-type="select"
             :options="paymentHeaderOptions"
-            all-label="Método pago"
+            :all-label="t('ventas.common.metodoPagoShort')"
             align="left"
           />
         </template>
@@ -551,7 +552,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
                   class="text-sm font-medium text-text-primary hover:text-primary hover:underline mt-0.5"
                   @click.stop="filterByMember(item.served_by_member_id)"
                 >
-                  {{ item.member_name || 'Sin asignar' }}
+                  {{ item.member_name || t('ventas.propinas.unassigned') }}
                 </button>
                 <p class="text-xs text-text-tertiary mt-0.5">{{ resolveLabel(item.payment_method) }}</p>
               </div>
@@ -594,7 +595,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             class="text-sm text-text-primary hover:text-primary hover:underline text-left"
             @click.stop="filterByMember(row.served_by_member_id)"
           >
-            {{ row.member_name || 'Sin asignar' }}
+            {{ row.member_name || t('ventas.propinas.unassigned') }}
           </button>
         </template>
         <template #cell-payment_method="{ value }">
@@ -612,28 +613,28 @@ onUnmounted(() => clearRefreshHandler(refetch))
             type="button"
             class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
             :disabled="currentPage === 1"
-            aria-label="Primera página"
+            :aria-label="t('ventas.common.primeraPagina')"
             @click="goToPage(1)"
           >«</button>
           <button
             type="button"
             class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
             :disabled="currentPage === 1"
-            aria-label="Página anterior"
+            :aria-label="t('ventas.common.paginaAnterior')"
             @click="goToPage(currentPage - 1)"
           >‹</button>
           <button
             type="button"
             class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
             :disabled="currentPage === totalPages"
-            aria-label="Página siguiente"
+            :aria-label="t('ventas.common.paginaSiguiente')"
             @click="goToPage(currentPage + 1)"
           >›</button>
           <button
             type="button"
             class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
             :disabled="currentPage === totalPages"
-            aria-label="Última página"
+            :aria-label="t('ventas.common.ultimaPagina')"
             @click="goToPage(totalPages)"
           >»</button>
         </div>
@@ -664,10 +665,10 @@ onUnmounted(() => clearRefreshHandler(refetch))
               </svg>
             </div>
             <h2 class="text-xl font-bold text-text-primary mb-2">
-              {{ exportResult?.success ? 'Reporte enviado' : 'No se pudo exportar' }}
+              {{ exportResult?.success ? t('ventas.propinas.reportSent') : t('ventas.propinas.exportErrorTitle') }}
             </h2>
             <p v-if="exportResult?.success" class="text-sm text-text-secondary mb-1">
-              {{ exportResult.count }} propinas enviadas a
+              {{ exportResult.count }} {{ t('ventas.propinas.tipsSentTo') }}
             </p>
             <p v-if="exportResult?.success && exportResult.email" class="text-sm font-medium text-text-primary mb-5">
               {{ exportResult.email }}

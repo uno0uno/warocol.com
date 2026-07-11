@@ -1,11 +1,12 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 
-useHead({ title: 'Órdenes - Ventas' })
+useHead({ title: () => t('ventas.head.ordenes') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -30,9 +31,9 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
 const orderSearchFields = [
-  { label: 'Nº Orden', value: 'order_number' },
-  { label: 'Cliente', value: 'customer_name' },
-  { label: 'Teléfono', value: 'customer_phone' },
+  { label: t('ventas.ordenes.colOrder'), value: 'order_number' },
+  { label: t('ventas.common.cliente'), value: 'customer_name' },
+  { label: t('ventas.common.telefono'), value: 'customer_phone' },
 ]
 
 const apiSearchField = ref('order_number')
@@ -140,21 +141,21 @@ const orders = computed(() => {
 
   return ordersData.value.data.map((order: any) => ({
     ...order,
-    customer_name: order.customer?.name || 'Sin nombre',
+    customer_name: order.customer?.name || t('ventas.common.sinNombre'),
     customer_phone: order.customer?.phone || 'N/A'
   }))
 })
 
 const getInvoiceLabel = (order: any) => {
-  if (!order?.invoice_number) return 'Sin factura'
+  if (!order?.invoice_number) return t('ventas.ordenes.sinFactura')
   return order.invoice_prefix ? `${order.invoice_prefix}-${order.invoice_number}` : String(order.invoice_number)
 }
 
 // Search fields for the filter bar
 const searchFields = [
-  { label: 'Nº Orden', value: 'order_number' },
-  { label: 'Cliente', value: 'customer_name' },
-  { label: 'Teléfono', value: 'customer_phone' }
+  { label: t('ventas.ordenes.colOrder'), value: 'order_number' },
+  { label: t('ventas.common.cliente'), value: 'customer_name' },
+  { label: t('ventas.common.telefono'), value: 'customer_phone' }
 ]
 
 // Bulk selection
@@ -245,9 +246,9 @@ const executeBulkUpdate = async (customerId: string | null) => {
     }) as any
     clearSelection()
     await refetch()
-    useToast().success(res.message || 'Estado actualizado', { title: 'Listo' })
+    useToast().success(res.message || t('ventas.ordenes.statusUpdated'), { title: t('ventas.common.listo') })
   } catch (error: any) {
-    useToast().error(error.data?.message || 'Error al actualizar', { title: 'Error' })
+    useToast().error(error.data?.message || t('ventas.ordenes.updateError'), { title: t('ventas.common.error') })
   } finally {
     isBulkUpdating.value = false
   }
@@ -262,16 +263,16 @@ const hasAnyDiscount = computed(() => orders.value.some((o: any) => o.discount_a
 // Table columns configuration
 const ordersTableColumns = computed<Column[]>(() => [
   { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
-  { key: 'order_number', title: 'Nº Orden', sortable: true },
-  { key: 'order_date', title: 'Fecha', sortable: true },
-  { key: 'invoice', title: 'Factura', sortable: false },
-  { key: 'items_count', title: 'Items', sortable: false },
-  { key: 'source', title: 'Origen', sortable: false },
-  { key: 'payment_method', title: 'Método Pago', sortable: true },
-  { key: 'payment_status', title: 'Estado Pago', sortable: false },
-  ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: 'Descuento manual', sortable: true }] : []),
-  { key: 'total_amount', title: 'Total', sortable: true },
-  { key: 'status', title: 'Estado', sortable: false }
+  { key: 'order_number', title: t('ventas.ordenes.colOrder'), sortable: true },
+  { key: 'order_date', title: t('ventas.common.fecha'), sortable: true },
+  { key: 'invoice', title: t('ventas.common.factura'), sortable: false },
+  { key: 'items_count', title: t('ventas.ordenes.colItems'), sortable: false },
+  { key: 'source', title: t('ventas.ordenes.colSource'), sortable: false },
+  { key: 'payment_method', title: t('ventas.common.metodoPagoShort'), sortable: true },
+  { key: 'payment_status', title: t('ventas.ordenes.colPaymentStatus'), sortable: false },
+  ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: t('ventas.common.descuentoManual'), sortable: true }] : []),
+  { key: 'total_amount', title: t('ventas.common.total'), sortable: true },
+  { key: 'status', title: t('ventas.common.estado'), sortable: false }
 ])
 
 // Methods
@@ -322,7 +323,7 @@ const exportOrders = async () => {
   } catch (error: any) {
     exportResult.value = {
       success: false,
-      message: error.data?.message || error.message || 'Error al exportar'
+      message: error.data?.message || error.message || t('ventas.ordenes.exportError')
     }
     showExportModal.value = true
   } finally {
@@ -358,7 +359,7 @@ const { formatDateTime: formatDate } = useFormatters()
 const getPaymentStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     'paid': 'Pagado',
-    'credit': 'Crédito',
+    'credit': t('ventas.common.credito'),
     'partial': 'Parcial'
   }
   return labels[status] ?? status
@@ -366,26 +367,26 @@ const getPaymentStatusLabel = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    'completed': 'Completada',
-    'cancelled': 'Cancelada',
-    'pending': 'Pendiente'
+    'completed': t('ventas.common.completada'),
+    'cancelled': t('ventas.common.cancelada'),
+    'pending': t('ventas.common.pendientes')
   }
   return labels[status] || status
 }
 
 
-const statusPills = [
-  { label: 'Todas', value: null },
-  { label: 'Completadas', value: 'completed' },
-  { label: 'Canceladas', value: 'cancelled' },
-  { label: 'Pendientes', value: 'pending' },
-]
+const statusPills = computed(() => [
+  { label: t('ventas.common.todas'), value: null },
+  { label: t('ventas.common.completadas'), value: 'completed' },
+  { label: t('ventas.common.canceladas'), value: 'cancelled' },
+  { label: t('ventas.common.pendientes'), value: 'pending' },
+])
 
-const statusHeaderOptions = [
-  { label: 'Completadas', value: 'completed' },
-  { label: 'Canceladas', value: 'cancelled' },
-  { label: 'Pendientes', value: 'pending' },
-]
+const statusHeaderOptions = computed(() => [
+  { label: t('ventas.common.completadas'), value: 'completed' },
+  { label: t('ventas.common.canceladas'), value: 'cancelled' },
+  { label: t('ventas.common.pendientes'), value: 'pending' },
+])
 
 const paymentHeaderOptions = computed(() => {
   const options: { label: string; value: string }[] = []
@@ -463,7 +464,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         v-model:search-field="apiSearchField"
         v-model:date-range="dateRangeDates"
         :search-fields="orderSearchFields"
-        search-placeholder="Buscar ventas..."
+        :search-placeholder="t('ventas.ordenes.searchPlaceholder')"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
         :show-clear="hasActiveFilters"
@@ -477,7 +478,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           @change="() => { currentPage.value = 1 }"
           :class="[filterSelectClass, 'md:hidden']"
         >
-          <option :value="null">Método pago</option>
+          <option :value="null">{{ t('ventas.common.metodoPagoShort') }}</option>
           <template v-for="group in paymentGroups">
             <optgroup v-if="group.methods?.length" :key="`g-${group.slug}`" :label="group.name">
               <option :value="`g:${group.slug}`">{{ group.name }} (todos)</option>
@@ -493,7 +494,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           @change="() => { currentPage.value = 1 }"
           :class="[filterSelectClass, 'md:hidden']"
         >
-          <option :value="null">Estado</option>
+          <option :value="null">{{ t('ventas.ordenes.filterEstado') }}</option>
           <option value="completed">Completadas</option>
           <option value="cancelled">Canceladas</option>
           <option value="pending">Pendientes</option>
@@ -523,7 +524,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           @click="exportOrders"
           :disabled="isExporting"
           class="hidden md:flex h-10 px-3 items-center gap-2 rounded-lg border-2 border-border bg-background text-text-secondary text-sm font-medium hover:text-text-primary hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :aria-label="isExporting ? 'Exportando ventas...' : 'Exportar ventas a correo'"
+          :aria-label="isExporting ? t('ventas.ordenes.exporting') : t('ventas.ordenes.exportAria')"
         >
           <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -539,7 +540,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <NuxtLink
           to="/ventas/crear"
           class="hidden md:flex h-10 px-3 items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
-          aria-label="Registrar venta manual"
+          :aria-label="t('ventas.ordenes.newManual')"
         >
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -616,8 +617,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         :row-class="getRowClass"
         @sort="handleSort"
         @row-click="viewOrderDetails"
-        empty-message="No hay ventas registradas"
-        empty-sub-message="Las ventas completadas aparecerán aquí"
+        :empty-message="t('ventas.ordenes.emptyTitle')"
+        :empty-sub-message="t('ventas.ordenes.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -637,9 +638,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <!-- Lock icon for closed accounting period -->
                 <span
                   v-if="isOrderLocked(item)"
-                  title="Período contable cerrado — no modificable"
+                  :title="t('ventas.ordenes.lockedPeriod')"
                   class="inline-flex items-center text-text-secondary"
-                  aria-label="Período contable cerrado"
+                  :aria-label="t('ventas.ordenes.lockedPeriodShort')"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -724,9 +725,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <!-- Lock icon for closed accounting period -->
             <span
               v-if="row && isOrderLocked(row)"
-              title="Período contable cerrado — no modificable"
+              :title="t('ventas.ordenes.lockedPeriod')"
               class="inline-flex items-center text-text-secondary"
-              aria-label="Período contable cerrado"
+              :aria-label="t('ventas.ordenes.lockedPeriodShort')"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -769,14 +770,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #cell-payment_method="{ row }">
           <UiStatusBadge
             v-if="row?.split_payments_count > 1"
-            :value="`Dividido · ${row.split_payments_count}`"
+            :value="t('ventas.ordenes.splitCount', { count: row.split_payments_count })"
             format="text"
             variant="secondary"
             size="sm"
           />
           <UiStatusBadge
             v-else
-            :value="row?.payment_method ? resolveLabel(row.payment_method, row.payment_method_id) : 'Sin registrar'"
+            :value="row?.payment_method ? resolveLabel(row.payment_method, row.payment_method_id) : t('ventas.common.sinRegistrar')"
             format="text"
             :variant="row?.payment_method === 'cash' ? 'success' : row?.payment_method === 'card' ? 'info' : row?.payment_method === 'digital' ? 'primary' : row?.payment_method === 'credit' ? 'warning' : 'secondary'"
             size="sm"
@@ -817,7 +818,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :disabled="currentPage <= 1"
             @click="goToPage(1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Primera página"
+            :aria-label="t('ventas.common.primeraPagina')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
           </button>
@@ -825,7 +826,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :disabled="currentPage <= 1"
             @click="goToPage(currentPage - 1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página anterior"
+            :aria-label="t('ventas.common.paginaAnterior')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
@@ -834,7 +835,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :disabled="currentPage >= ordersTotalPages"
             @click="goToPage(currentPage + 1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página siguiente"
+            :aria-label="t('ventas.common.paginaSiguiente')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
           </button>
@@ -842,7 +843,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :disabled="currentPage >= ordersTotalPages"
             @click="goToPage(ordersTotalPages)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Última página"
+            :aria-label="t('ventas.common.ultimaPagina')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
           </button>
@@ -892,7 +893,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <!-- Title -->
           <h3 class="text-xl font-bold text-text-primary text-center mb-4">
-            {{ exportResult?.success ? 'Reporte Enviado' : 'Error al Exportar' }}
+            {{ exportResult?.success ? 'Reporte Enviado' : t('ventas.ordenes.exportErrorTitle') }}
           </h3>
 
           <!-- Success Details -->

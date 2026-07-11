@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
@@ -14,7 +15,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard', module: 'facturacion' })
-useHead({ title: 'Facturación' })
+useHead({ title: () => t('facturacion.head.module') })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
@@ -142,9 +143,9 @@ const saveResolution = async () => {
     invalidateReadiness()
     showResolutionForm.value = false
     resetResolutionForm()
-    toast.success(editingResolutionId.value ? 'Resolución actualizada' : 'Resolución creada', { title: 'Guardado' })
+    toast.success(editingResolutionId.value ? t('facturacion.toasts.resolutionUpdated') : t('facturacion.toasts.resolutionCreated'), { title: t('facturacion.common.saved') })
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al guardar resolución', { title: 'Error' })
+    toast.error(e.data?.detail || t('facturacion.toasts.resolutionSaveError'), { title: t('facturacion.common.error') })
   } finally {
     isSavingResolution.value = false
   }
@@ -156,14 +157,14 @@ const toggleResolution = async (resId: string) => {
     await refetchResolutions()
     invalidateReadiness()
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al cambiar estado', { title: 'Error' })
+    toast.error(e.data?.detail || t('facturacion.toasts.toggleError'), { title: t('facturacion.common.error') })
   }
 }
 
 const resolutionDocTypes = [
-  { value: 'invoice', label: 'Factura de venta' },
-  { value: 'credit_note', label: 'Nota crédito' },
-  { value: 'debit_note', label: 'Nota débito' },
+  { value: 'invoice', label: t('facturacion.docTypes.invoice') },
+  { value: 'credit_note', label: t('facturacion.docTypes.creditNote') },
+  { value: 'debit_note', label: t('facturacion.docTypes.debitNote') },
 ]
 
 // ── Facturación Status ──────────────────────────────────────────────────────
@@ -227,22 +228,22 @@ const saveTaxConfig = async () => {
     await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
     await refreshTaxConfig()
     invalidateReadiness()
-    toast.success('Impuestos aplicados a ventas guardados correctamente', { title: 'Guardado' })
+    toast.success(t('facturacion.toasts.taxSaved'), { title: t('facturacion.common.saved') })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar impuestos aplicados a ventas', { title: 'Error' })
+    toast.error(error.data?.detail || t('facturacion.toasts.taxSaveError'), { title: t('facturacion.common.error') })
   } finally {
     isSavingTax.value = false
   }
 }
 
 const docTypeLabels: Record<string, string> = {
-  invoice: 'Factura de venta',
-  credit_note: 'Nota crédito',
-  debit_note: 'Nota débito',
+  invoice: t('facturacion.docTypes.invoice'),
+  credit_note: t('facturacion.docTypes.creditNote'),
+  debit_note: t('facturacion.docTypes.debitNote'),
 }
 
 const docTypeShort: Record<string, string> = {
-  invoice: 'Factura',
+  invoice: t('facturacion.docTypes.invoiceShort'),
   credit_note: 'NC',
   debit_note: 'ND',
 }
@@ -260,15 +261,15 @@ const progressTextColor = (percent: number) => {
 }
 
 const resolutionColumns = [
-  { key: 'prefix',        title: 'Prefijo',       align: 'left'   as const },
-  { key: 'number',        title: 'N° Resolución', align: 'left'   as const },
-  { key: 'document_type', title: 'Tipo',          align: 'left'   as const },
-  { key: 'range',         title: 'Rango',         align: 'left'   as const },
-  { key: 'available',     title: 'Disponibles',   align: 'right'  as const },
-  { key: 'used',          title: 'Usadas',        align: 'right'  as const },
-  { key: 'percent',       title: '% Usado',       align: 'right'  as const },
-  { key: 'validity',      title: 'Vigencia',      align: 'left'   as const },
-  { key: 'is_active',     title: 'Estado',        align: 'center' as const },
+  { key: 'prefix',        title: t('facturacion.columns.prefix'),       align: 'left'   as const },
+  { key: 'number',        title: t('facturacion.columns.resolutionNumber'), align: 'left'   as const },
+  { key: 'document_type', title: t('facturacion.common.type'),          align: 'left'   as const },
+  { key: 'range',         title: t('facturacion.common.range'),         align: 'left'   as const },
+  { key: 'available',     title: t('facturacion.columns.available'),   align: 'right'  as const },
+  { key: 'used',          title: t('facturacion.columns.used'),        align: 'right'  as const },
+  { key: 'percent',       title: t('facturacion.columns.percentUsed'),       align: 'right'  as const },
+  { key: 'validity',      title: t('facturacion.columns.validity'),      align: 'left'   as const },
+  { key: 'is_active',     title: t('facturacion.common.status'),        align: 'center' as const },
   { key: 'actions',       title: '',              align: 'right'  as const },
 ]
 
@@ -294,8 +295,8 @@ const fiscalForm = reactive({
   email: '',
   electronic_invoicing_requested: false,
   matias_company_id: '',
-  receipt_document_label: 'Prefactura',
-  receipt_tip_label: 'Propina',
+  receipt_document_label: t('facturacion.defaults.prefactura'),
+  receipt_tip_label: t('facturacion.defaults.propina'),
   show_logo_on_receipts: true,
 })
 const isSavingFiscal = ref(false)
@@ -314,8 +315,8 @@ watch(fiscal, (f) => {
   fiscalForm.email = f.email || ''
   fiscalForm.electronic_invoicing_requested = f.electronic_invoicing_requested === true
   fiscalForm.matias_company_id = f.matias_company_id || ''
-  fiscalForm.receipt_document_label = f.receipt_document_label || 'Prefactura'
-  fiscalForm.receipt_tip_label = f.receipt_tip_label || 'Propina'
+  fiscalForm.receipt_document_label = f.receipt_document_label || t('facturacion.defaults.prefactura')
+  fiscalForm.receipt_tip_label = f.receipt_tip_label || t('facturacion.defaults.propina')
   fiscalForm.show_logo_on_receipts = f.show_logo_on_receipts !== false
 }, { immediate: true })
 
@@ -327,15 +328,15 @@ const savePrintSettings = async () => {
       body: {
         ...fiscalForm,
         matias_company_id: fiscalForm.matias_company_id.trim(),
-        receipt_document_label: fiscalForm.receipt_document_label.trim() || 'Prefactura',
-        receipt_tip_label: fiscalForm.receipt_tip_label.trim() || 'Propina',
+        receipt_document_label: fiscalForm.receipt_document_label.trim() || t('facturacion.defaults.prefactura'),
+        receipt_tip_label: fiscalForm.receipt_tip_label.trim() || t('facturacion.defaults.propina'),
       },
     })
     await refreshFiscal()
     await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
-    toast.success('Personalización de tickets guardada', { title: 'Guardado' })
+    toast.success(t('facturacion.toasts.printSaved'), { title: t('facturacion.common.saved') })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar personalización', { title: 'Error' })
+    toast.error(error.data?.detail || t('facturacion.toasts.printSaveError'), { title: t('facturacion.common.error') })
   } finally {
     isSavingFiscal.value = false
   }
@@ -354,28 +355,28 @@ const saveFiscalData = async () => {
     await refreshFiscal()
     invalidateReadiness()
     await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
-    toast.success('Datos fiscales guardados correctamente', { title: 'Guardado' })
+    toast.success(t('facturacion.toasts.fiscalSaved'), { title: t('facturacion.common.saved') })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar datos fiscales', { title: 'Error' })
+    toast.error(error.data?.detail || t('facturacion.toasts.fiscalSaveError'), { title: t('facturacion.common.error') })
   } finally {
     isSavingFiscal.value = false
   }
 }
 
 const orgTypes = [
-  { value: 1, label: 'Persona jurídica' },
-  { value: 2, label: 'Persona natural' },
+  { value: 1, label: t('facturacion.orgTypes.legal') },
+  { value: 2, label: t('facturacion.orgTypes.natural') },
 ]
 const taxRegimes = [
-  { value: 1, label: 'Responsable de IVA' },
-  { value: 2, label: 'No responsable de IVA' },
+  { value: 1, label: t('facturacion.taxRegimes.iva') },
+  { value: 2, label: t('facturacion.taxRegimes.noIva') },
 ]
 const taxLevels = [
-  { value: 1, label: 'Gran contribuyente' },
-  { value: 2, label: 'Autorretenedor' },
-  { value: 3, label: 'Agente de retención' },
-  { value: 4, label: 'Régimen simple' },
-  { value: 5, label: 'No aplica' },
+  { value: 1, label: t('facturacion.taxLevels.grand') },
+  { value: 2, label: t('facturacion.taxLevels.selfWithholding') },
+  { value: 3, label: t('facturacion.taxLevels.withholdingAgent') },
+  { value: 4, label: t('facturacion.taxLevels.simple') },
+  { value: 5, label: t('facturacion.taxLevels.na') },
 ]
 </script>
 
@@ -397,8 +398,8 @@ const taxLevels = [
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">Solicita la activación de facturación electrónica</p>
-          <p class="text-xs text-state-info-text/90 mt-0.5">Activa la solicitud en la sección <span class="font-medium">Proveedor de facturación electrónica</span>. WARO validará la habilitación técnica con Matias antes de emitir.</p>
+          <p class="text-sm font-semibold text-state-info-text">{{ t('facturacion.readiness.requestTitle') }}</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">{{ t('facturacion.readiness.requestBody') }}</p>
         </div>
       </div>
 
@@ -410,8 +411,8 @@ const taxLevels = [
       >
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-warning-text">Habilitación interna pendiente</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">La solicitud puede estar activa, pero WARO debe completar la habilitación técnica con Matias antes de emitir.</p>
+          <p class="text-sm font-semibold text-state-warning-text">{{ t('facturacion.readiness.pendingTitle') }}</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">{{ t('facturacion.readiness.pendingBody') }}</p>
         </div>
       </div>
 
@@ -423,8 +424,8 @@ const taxLevels = [
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">Faltan datos fiscales</p>
-          <p class="text-xs text-state-info-text/90 mt-0.5">Completa NIT, razón social, teléfono y email en la sección <span class="font-medium">Datos Fiscales del Negocio</span>.</p>
+          <p class="text-sm font-semibold text-state-info-text">{{ t('facturacion.readiness.missingFiscalTitle') }}</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">{{ t('facturacion.readiness.missingFiscalBody') }}</p>
         </div>
       </div>
 
@@ -436,8 +437,8 @@ const taxLevels = [
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">Sin resolución DIAN vigente</p>
-          <p class="text-xs text-state-info-text/90 mt-0.5">Configura una resolución activa con numeración disponible en la sección <span class="font-medium">Resolución DIAN</span>.</p>
+          <p class="text-sm font-semibold text-state-info-text">{{ t('facturacion.readiness.noResolutionTitle') }}</p>
+          <p class="text-xs text-state-info-text/90 mt-0.5">{{ t('facturacion.readiness.noResolutionBody') }}</p>
         </div>
       </div>
 
@@ -449,7 +450,7 @@ const taxLevels = [
       >
         <InformationCircleIcon class="w-5 h-5 text-state-info-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-info-text">Revisa el impuesto aplicado a ventas</p>
+          <p class="text-sm font-semibold text-state-info-text">{{ t('facturacion.readiness.taxReviewTitle') }}</p>
           <p class="text-xs text-state-info-text/90 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> solo cuando aplique a tus ventas. Si tu negocio emite sin esos impuestos, confirma que los datos fiscales correspondan a persona natural no responsable antes de guardar.</p>
         </div>
       </div>
@@ -462,8 +463,8 @@ const taxLevels = [
       >
         <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="flex-1">
-          <p class="text-sm font-semibold text-state-warning-text">Falta UUID cliente Matias</p>
-          <p class="text-xs text-state-warning-text/90 mt-0.5">Configura el <span class="font-medium">client_uuid</span> del cliente emisor en la sección <span class="font-medium">Proveedor de facturación electrónica</span> antes de emitir con Matias.</p>
+          <p class="text-sm font-semibold text-state-warning-text">{{ t('facturacion.readiness.matiasUuidTitle') }}</p>
+          <p class="text-xs text-state-warning-text/90 mt-0.5">{{ t('facturacion.readiness.matiasUuidBody') }}</p>
         </div>
       </div>
 
@@ -474,7 +475,7 @@ const taxLevels = [
         role="status"
       >
         <CheckCircleIcon class="w-5 h-5 text-state-success-icon flex-shrink-0" aria-hidden="true" />
-        <p class="text-sm font-medium text-state-success-text">Tu cuenta está lista para emitir facturas electrónicas.</p>
+        <p class="text-sm font-medium text-state-success-text">{{ t('facturacion.readiness.ready') }}</p>
       </div>
     </div>
 
@@ -483,7 +484,7 @@ const taxLevels = [
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2">
           <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Resolución DIAN
+          {{ t('facturacion.resolutions.title') }}
         </h3>
         <button
           @click="openNewResolution"
@@ -510,7 +511,7 @@ const taxLevels = [
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_24h ?? 0 }}</span> en 24h ·
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_7d ?? 0 }}</span> en 7d ·
               <span class="font-semibold tabular-nums">{{ gapsSummary?.last_30d ?? 0 }}</span> en 30d.
-              DIAN no permite reutilizarlos — revisa la bitácora.
+              {{ t('facturacion.resolutions.gapsHint') }}
             </p>
           </div>
           <svg class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -522,8 +523,8 @@ const taxLevels = [
       <!-- Empty state -->
       <div v-if="resolutions.length === 0 && !showResolutionForm" class="text-center py-8">
         <DocumentTextIcon class="w-10 h-10 mx-auto text-text-tertiary mb-2" />
-        <p class="text-sm text-text-secondary">Sin resoluciones DIAN configuradas</p>
-        <p class="text-xs text-text-tertiary mt-1">Configura la resolución que registraste en el portal de Matias (número, prefijo, rango)</p>
+        <p class="text-sm text-text-secondary">{{ t('facturacion.resolutions.emptyTitle') }}</p>
+        <p class="text-xs text-text-tertiary mt-1">{{ t('facturacion.resolutions.emptySub') }}</p>
         <button @click="openNewResolution" class="mt-3 min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors">
           Configurar resolución
         </button>
@@ -531,22 +532,22 @@ const taxLevels = [
 
       <!-- Resolution form (inline) -->
       <div v-if="showResolutionForm" class="border border-primary/30 bg-primary/5 rounded-xl p-4 mb-4 space-y-4">
-        <h4 class="text-sm font-bold text-text-primary">{{ editingResolutionId ? 'Editar resolución' : 'Nueva resolución' }}</h4>
+        <h4 class="text-sm font-bold text-text-primary">{{ editingResolutionId ? t('facturacion.resolutions.edit') : t('facturacion.resolutions.new') }}</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Número de resolución <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.number') }} <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.resolution_number" type="text" placeholder="18764074347312" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Prefijo <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.prefix') }} <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.prefix" type="text" placeholder="LZT" maxlength="10" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary uppercase" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Rango desde <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.rangeFrom') }} <span class="text-form-control-error">*</span></label>
             <input v-model.number="resolutionForm.from_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Rango hasta <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.rangeTo') }} <span class="text-form-control-error">*</span></label>
             <input v-model.number="resolutionForm.to_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <!-- warocol.com#589 — `current_number` solo visible al editar.
@@ -554,7 +555,7 @@ const taxLevels = [
                `from_number - 1` automáticamente, evitando colisiones con
                la historia cruzada de Matias. -->
           <div v-if="editingResolutionId" class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Número actual (consecutivo)</label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.currentNumber') }}</label>
             <input
               v-model.number="resolutionForm.current_number"
               type="number"
@@ -574,23 +575,23 @@ const taxLevels = [
             </p>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Tipo de documento</label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.docType') }}</label>
             <select v-model="resolutionForm.document_type" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
               <option v-for="dt in resolutionDocTypes" :key="dt.value" :value="dt.value">{{ dt.label }}</option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Fecha desde <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.dateFrom') }} <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.date_from" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-text-secondary">Fecha hasta <span class="text-form-control-error">*</span></label>
+            <label class="text-xs font-medium text-text-secondary">{{ t('facturacion.resolutions.dateTo') }} <span class="text-form-control-error">*</span></label>
             <input v-model="resolutionForm.date_to" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
         </div>
         <div class="flex items-center gap-2 justify-end">
           <button @click="showResolutionForm = false; resetResolutionForm()" class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors">
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             @click="saveResolution"
@@ -598,7 +599,7 @@ const taxLevels = [
             class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <CheckIcon v-if="!isSavingResolution" class="w-4 h-4" aria-hidden="true" />
-            <span>{{ isSavingResolution ? 'Guardando...' : (editingResolutionId ? 'Actualizar' : 'Crear resolución') }}</span>
+            <span>{{ isSavingResolution ? t('facturacion.common.saving') : (editingResolutionId ? t('facturacion.common.update') : t('facturacion.resolutions.create')) }}</span>
           </button>
         </div>
       </div>
@@ -663,11 +664,11 @@ const taxLevels = [
               class="text-xs font-semibold"
               :class="row.is_active ? 'text-state-success-text' : 'text-text-secondary'"
             >
-              {{ row.is_active ? 'Activa' : 'Inactiva' }}
+              {{ row.is_active ? t('facturacion.common.active') : t('facturacion.common.inactive') }}
             </span>
             <label
               class="relative inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px]"
-              :aria-label="row.is_active ? 'Desactivar resolución' : 'Activar resolución'"
+              :aria-label="row.is_active ? t('facturacion.resolutions.deactivate') : t('facturacion.resolutions.activate')"
               @click.stop
             >
               <input
@@ -686,7 +687,7 @@ const taxLevels = [
             type="button"
             @click.stop="openEditResolution(row)"
             class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-            aria-label="Editar resolución"
+            :aria-label="t('facturacion.resolutions.edit')"
           >
             <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
           </button>
@@ -705,7 +706,7 @@ const taxLevels = [
                   type="button"
                   @click="openEditResolution(row)"
                   class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                  aria-label="Editar resolución"
+                  :aria-label="t('facturacion.resolutions.edit')"
                 >
                   <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
                 </button>
@@ -713,11 +714,11 @@ const taxLevels = [
                   class="text-xs font-semibold"
                   :class="row.is_active ? 'text-state-success-text' : 'text-text-secondary'"
                 >
-                  {{ row.is_active ? 'Activa' : 'Inactiva' }}
+                  {{ row.is_active ? t('facturacion.common.active') : t('facturacion.common.inactive') }}
                 </span>
                 <label
                   class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-                  :aria-label="row.is_active ? 'Desactivar resolución' : 'Activar resolución'"
+                  :aria-label="row.is_active ? t('facturacion.resolutions.deactivate') : t('facturacion.resolutions.activate')"
                 >
                   <input
                     type="checkbox"
@@ -732,7 +733,7 @@ const taxLevels = [
             <p class="text-xs text-text-secondary">{{ docTypeLabels[row.document_type] || row.document_type }}</p>
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
-                <span class="text-text-secondary">Rango: {{ row.from_number }} → {{ row.to_number }}</span>
+                <span class="text-text-secondary">{{ t('facturacion.resolutions.rangeLabel', { from: row.from_number, to: row.to_number }).split(':')[0] }}: {{ row.from_number }} → {{ row.to_number }}</span>
                 <span class="font-medium text-text-primary">{{ row.used }} de {{ row.total_range }} usados ({{ row.usage_percent }}%)</span>
               </div>
               <div class="w-full h-2 bg-surface-secondary rounded-full overflow-hidden">
@@ -744,8 +745,8 @@ const taxLevels = [
               </div>
             </div>
             <div class="flex items-center gap-4 text-xs text-text-secondary">
-              <span>Desde: <span class="font-medium text-text-primary">{{ row.date_from }}</span></span>
-              <span>Hasta: <span class="font-medium text-text-primary">{{ row.date_to }}</span></span>
+              <span>{{ t('facturacion.resolutions.fromLabel') }} <span class="font-medium text-text-primary">{{ row.date_from }}</span></span>
+              <span>{{ t('facturacion.resolutions.toLabel') }} <span class="font-medium text-text-primary">{{ row.date_to }}</span></span>
             </div>
           </div>
         </template>
@@ -756,7 +757,7 @@ const taxLevels = [
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
         <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
-        Datos Fiscales del Negocio
+        {{ t('facturacion.fiscal.sectionTitle') }}
       </h3>
       <p class="text-xs text-text-secondary mb-4">
         Identifican al emisor ante DIAN y Matias. No activan impuestos por sí solos ni cambian el cálculo de IVA o INC.
@@ -765,7 +766,7 @@ const taxLevels = [
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- NIT -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">NIT <span class="text-form-control-error">*</span></label>
+          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.nit') }} <span class="text-form-control-error">*</span></label>
           <input
             id="fiscal-nit"
             v-model="fiscalForm.nit"
@@ -777,7 +778,7 @@ const taxLevels = [
 
         <!-- Razón social -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-name" class="text-sm font-medium text-text-primary">Razón social <span class="text-form-control-error">*</span></label>
+          <label for="fiscal-name" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.businessName') }} <span class="text-form-control-error">*</span></label>
           <input
             id="fiscal-name"
             v-model="fiscalForm.business_name"
@@ -789,7 +790,7 @@ const taxLevels = [
 
         <!-- Tipo organización -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-org" class="text-sm font-medium text-text-primary">Tipo de organización</label>
+          <label for="fiscal-org" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.orgType') }}</label>
           <select
             id="fiscal-org"
             v-model="fiscalForm.type_organization_id"
@@ -797,12 +798,12 @@ const taxLevels = [
           >
             <option v-for="opt in orgTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">Define si el emisor factura como persona natural o jurídica.</p>
+          <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.orgHint') }}</p>
         </div>
 
         <!-- Régimen tributario -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Responsabilidad IVA</label>
+          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.taxRegime') }}</label>
           <select
             id="fiscal-regime"
             v-model="fiscalForm.tax_regime_id"
@@ -810,12 +811,12 @@ const taxLevels = [
           >
             <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">Describe la responsabilidad fiscal del emisor; no reemplaza los toggles de impuestos de ventas.</p>
+          <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.taxRegimeHint') }}</p>
         </div>
 
         <!-- Nivel de responsabilidad -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-level" class="text-sm font-medium text-text-primary">Nivel de responsabilidad</label>
+          <label for="fiscal-level" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.taxLevel') }}</label>
           <select
             id="fiscal-level"
             v-model="fiscalForm.tax_level_id"
@@ -823,12 +824,12 @@ const taxLevels = [
           >
             <option v-for="opt in taxLevels" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">Registra responsabilidades adicionales del emisor, como gran contribuyente o régimen simple.</p>
+          <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.taxLevelHint') }}</p>
         </div>
 
         <!-- Dirección fiscal -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-address" class="text-sm font-medium text-text-primary">Dirección fiscal</label>
+          <label for="fiscal-address" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.address') }}</label>
           <input
             id="fiscal-address"
             v-model="fiscalForm.fiscal_address"
@@ -840,7 +841,7 @@ const taxLevels = [
 
         <!-- Ciudad -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-city" class="text-sm font-medium text-text-primary">Ciudad</label>
+          <label for="fiscal-city" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.city') }}</label>
           <input
             id="fiscal-city"
             v-model="fiscalForm.city"
@@ -852,7 +853,7 @@ const taxLevels = [
 
         <!-- Teléfono -->
         <div class="flex flex-col gap-1">
-          <label for="fiscal-phone" class="text-sm font-medium text-text-primary">Teléfono</label>
+          <label for="fiscal-phone" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.phone') }}</label>
           <input
             id="fiscal-phone"
             v-model="fiscalForm.phone"
@@ -864,7 +865,7 @@ const taxLevels = [
 
         <!-- Email facturación -->
         <div class="flex flex-col gap-1 sm:col-span-2">
-          <label for="fiscal-email" class="text-sm font-medium text-text-primary">Email facturación</label>
+          <label for="fiscal-email" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.email') }}</label>
           <input
             id="fiscal-email"
             v-model="fiscalForm.email"
@@ -883,7 +884,7 @@ const taxLevels = [
           class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
-          <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
+          <span>{{ isSavingFiscal ? t('facturacion.common.saving') : t('facturacion.fiscal.save') }}</span>
         </button>
       </div>
     </div>
@@ -896,7 +897,7 @@ const taxLevels = [
       </h3>
       <p class="text-xs text-text-secondary mb-4">
         Afecta prefactura y recibo impreso en el POS. El logo se configura en
-        <NuxtLink to="/negocio" class="text-primary font-medium hover:underline">Mi negocio</NuxtLink>.
+        <NuxtLink to="/negocio" class="text-primary font-medium hover:underline">{{ t('facturacion.fiscal.miNegocio') }}</NuxtLink>.
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -909,7 +910,7 @@ const taxLevels = [
             v-model="fiscalForm.receipt_document_label"
             type="text"
             maxlength="40"
-            placeholder="Prefactura, Orden de compra, Factura #…"
+            :placeholder="t('facturacion.print.docPlaceholder')"
             class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <p class="text-[11px] text-text-tertiary leading-snug">
@@ -926,7 +927,7 @@ const taxLevels = [
             v-model="fiscalForm.receipt_tip_label"
             type="text"
             maxlength="40"
-            placeholder="Propina, Servicio, Cargo por servicio…"
+            :placeholder="t('facturacion.print.tipPlaceholder')"
             class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <p class="text-[11px] text-text-tertiary leading-snug">
@@ -936,8 +937,8 @@ const taxLevels = [
 
         <div class="flex items-center justify-between py-2 sm:col-span-2">
           <div>
-            <p class="text-sm font-medium text-text-primary">Mostrar logo en tickets</p>
-            <p class="text-xs text-text-secondary mt-0.5">Usa el logo de Mi negocio en prefactura y factura impresa</p>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.print.showLogo') }}</p>
+            <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.print.showLogoHint') }}</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
             <input v-model="fiscalForm.show_logo_on_receipts" type="checkbox" class="sr-only peer" />
@@ -954,7 +955,7 @@ const taxLevels = [
           class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
-          <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar personalización' }}</span>
+          <span>{{ isSavingFiscal ? t('facturacion.common.saving') : t('facturacion.print.save') }}</span>
         </button>
       </div>
     </div>
@@ -975,15 +976,15 @@ const taxLevels = [
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
-              <p class="text-sm font-medium text-text-primary">INC — Impoconsumo 8%</p>
-              <p class="text-xs text-text-secondary mt-0.5">Aplica cuando tus ventas deben liquidar Impoconsumo. Afecta el total y el desglose de la factura.</p>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.incTitle') }}<p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.incBody') }}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
               <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
-          <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el INC">
+          <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howInc')">
             <button
               type="button"
               @click="taxForm.inc_included_in_price = true"
@@ -998,7 +999,7 @@ const taxLevels = [
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
               </svg>
-              <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
               <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% ya está dentro del precio. Ej: $10.800 → base $10.000 + INC $800</span>
             </button>
             <button
@@ -1014,7 +1015,7 @@ const taxLevels = [
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="text-xs font-bold leading-tight">Se suma al precio</span>
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
               <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% se agrega encima. Ej: $10.000 base → cobro $10.800</span>
             </button>
           </div>
@@ -1026,15 +1027,15 @@ const taxLevels = [
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
-              <p class="text-sm font-medium text-text-primary">IVA — 19%</p>
-              <p class="text-xs text-text-secondary mt-0.5">Actívalo solo si tus ventas deben llevar IVA 19%. Afecta el total y el desglose de la factura.</p>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.ivaTitle') }}<p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.ivaBody') }}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
               <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
-          <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el IVA">
+          <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howIva')">
             <button
               type="button"
               @click="taxForm.iva_included_in_price = true"
@@ -1049,7 +1050,7 @@ const taxLevels = [
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
               </svg>
-              <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
               <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% ya está dentro del precio. Ej: $11.900 → base $10.000 + IVA $1.900</span>
             </button>
             <button
@@ -1065,7 +1066,7 @@ const taxLevels = [
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="text-xs font-bold leading-tight">Se suma al precio</span>
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
               <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% se agrega encima. Ej: $10.000 base → cobro $11.900</span>
             </button>
           </div>
@@ -1076,8 +1077,8 @@ const taxLevels = [
         <!-- IVA Licores -->
         <div class="flex items-center justify-between py-1">
           <div>
-            <p class="text-sm font-medium text-text-primary">IVA Licores para llevar — 5%</p>
-            <p class="text-xs text-text-secondary mt-0.5">Para botellas o licores para llevar cuando corresponda; siempre se suma al precio base.</p>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.liquorTitle') }}<p>
+            <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.liquorBody') }}</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
             <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
@@ -1095,7 +1096,7 @@ const taxLevels = [
           class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingTax" class="w-4 h-4" aria-hidden="true" />
-          <span>{{ isSavingTax ? 'Guardando...' : 'Guardar configuración' }}</span>
+          <span>{{ isSavingTax ? t('facturacion.common.saving') : t('facturacion.tax.save') }}</span>
         </button>
       </div>
     </div>
@@ -1104,7 +1105,7 @@ const taxLevels = [
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
         <SignalIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        Proveedor de facturación electrónica
+        {{ t('facturacion.provider.title') }}
       </h3>
 
       <div class="space-y-3">
@@ -1155,30 +1156,30 @@ const taxLevels = [
               class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
             >
               <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
-              <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
+              <span>{{ isSavingFiscal ? t('facturacion.common.saving') : t('facturacion.fiscal.save') }}</span>
             </button>
           </div>
         </div>
 
         <!-- Environment -->
         <div class="flex items-center justify-between py-1">
-          <span class="text-sm text-text-secondary">Entorno</span>
+          <span class="text-sm text-text-secondary">{{ t('facturacion.provider.environment') }}</span>
           <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-badge-warning-bg text-badge-warning-text">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
-            {{ facturacionStatus?.environment || 'No configurado' }}
+            {{ facturacionStatus?.environment || t('facturacion.provider.notConfigured') }}
           </span>
         </div>
 
         <!-- Last document -->
         <div class="flex items-center justify-between py-1">
-          <span class="text-sm text-text-secondary">Último documento</span>
+          <span class="text-sm text-text-secondary">{{ t('facturacion.provider.lastDocument') }}</span>
           <span v-if="facturacionStatus?.last_document" class="text-sm font-medium text-text-primary">
             {{ facturacionStatus.last_document.prefix }}-{{ facturacionStatus.last_document.invoice_number }}
             <span class="text-xs text-text-tertiary ml-1">
               · {{ facturacionStatus.last_document.created_at ? formatDate(facturacionStatus.last_document.created_at) : '' }}
             </span>
           </span>
-          <span v-else class="text-sm text-text-tertiary">Sin documentos emitidos</span>
+          <span v-else class="text-sm text-text-tertiary">{{ t('facturacion.provider.noDocuments') }}</span>
         </div>
       </div>
     </div>

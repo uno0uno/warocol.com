@@ -8,6 +8,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, h, ref, watch } from 'vue'
 import {
   EnvelopeIcon,
@@ -34,7 +35,7 @@ const emit = defineEmits<{
   (e: 'sent', email: string): void
 }>()
 
-const title = 'Enviar factura electronica'
+const title = computed(() => t('ventas.emailModal.title'))
 
 // warocol.com#603 — A profile is "generic" (no useful email to prefill)
 // when either the phone is '0000000000' (per-tenant default Genérico) OR
@@ -107,7 +108,7 @@ const submit = async () => {
     } else if (typeof detail === 'string') {
       errorMessage.value = detail
     } else {
-      errorMessage.value = e?.message || 'No se pudo enviar la factura. Intentá nuevamente.'
+      errorMessage.value = e?.message || t('ventas.emailModal.sendError')
     }
   }
 }
@@ -134,11 +135,11 @@ const contentTemplate = () =>
             [
               h(CheckCircleIcon, { class: 'w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0 mt-0.5', 'aria-hidden': 'true' }),
               h('div', { class: 'min-w-0' }, [
-                h('p', { class: 'text-sm font-semibold text-green-900 dark:text-green-200' }, 'Factura enviada'),
+                h('p', { class: 'text-sm font-semibold text-green-900 dark:text-green-200' }, t('ventas.emailModal.sentTitle')),
                 h(
                   'p',
                   { class: 'text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-all' },
-                  `Se envio ${props.invoiceLabel} a ${sentToEmail.value}. El correo incluye el detalle de la FE (CUFE); el XML se adjunta si esta disponible. El PDF grafico de Matias no se envia en este entorno.`,
+                  t('ventas.emailModal.sentBody', { label: props.invoiceLabel, email: sentToEmail.value }),
                 ),
               ]),
             ],
@@ -150,7 +151,7 @@ const contentTemplate = () =>
                 onClick: cancel,
                 class: 'order-2 sm:order-1 min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors',
               },
-              'Cerrar',
+              t('common.close'),
             ),
             h(
               'button',
@@ -158,7 +159,7 @@ const contentTemplate = () =>
                 onClick: sendAnother,
                 class: 'order-1 sm:order-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
               },
-              'Enviar otra copia',
+              t('ventas.emailModal.sendAnother'),
             ),
           ]),
         ])
@@ -171,11 +172,11 @@ const contentTemplate = () =>
             'div',
             { class: 'rounded-xl border border-border bg-surface-secondary/60 p-3' },
             [
-              h('p', { class: 'text-sm font-semibold text-text-primary' }, `Factura ${props.invoiceLabel}`),
+              h('p', { class: 'text-sm font-semibold text-text-primary' }, t('ventas.emailModal.invoiceLabel', { label: props.invoiceLabel })),
               h(
                 'p',
                 { class: 'text-xs text-text-secondary mt-1 leading-snug' },
-                'Envia una copia fiscal al cliente o al contador. La factura aceptada puede incluir PDF y XML cuando esten disponibles.',
+                t('ventas.emailModal.intro'),
               ),
             ],
           ),
@@ -190,7 +191,7 @@ const contentTemplate = () =>
                   h(
                     'p',
                     { class: 'text-xs text-amber-800 dark:text-amber-300 leading-snug' },
-                    'Cliente generico - sin correo en archivo. Indica un destinatario para enviar la factura.',
+                    t('ventas.emailModal.genericCustomer'),
                   ),
                 ],
               )
@@ -224,7 +225,7 @@ const contentTemplate = () =>
                     },
                   ),
                   h('div', { class: 'min-w-0 flex-1' }, [
-                    h('p', { class: 'text-sm font-semibold text-text-primary' }, 'Correo del cliente'),
+                    h('p', { class: 'text-sm font-semibold text-text-primary' }, t('ventas.emailModal.customerEmail')),
                     h(
                       'p',
                       { class: 'text-xs text-text-secondary mt-0.5 break-all' },
@@ -263,11 +264,11 @@ const contentTemplate = () =>
                     },
                   ),
                   h('div', { class: 'min-w-0 flex-1' }, [
-                    h('p', { class: 'text-sm font-semibold text-text-primary' }, 'Correo contable u otro'),
+                    h('p', { class: 'text-sm font-semibold text-text-primary' }, t('ventas.emailModal.accountingEmail')),
                     h(
                       'p',
                       { class: 'text-xs text-text-secondary mt-0.5' },
-                      'Enviar a contador, administracion o una direccion distinta',
+                      t('ventas.emailModal.otherRecipient'),
                     ),
                   ]),
                 ],
@@ -316,7 +317,7 @@ const contentTemplate = () =>
                 disabled: state.value === 'sending',
                 class: 'order-2 sm:order-1 min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
               },
-              'Cancelar',
+              t('ventas.emailModal.cancel'),
             ),
             h(
               'button',
@@ -326,8 +327,8 @@ const contentTemplate = () =>
                 class: 'order-1 sm:order-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2',
               },
               state.value === 'sending'
-                ? 'Enviando…'
-                : [h(EnvelopeIcon, { class: 'w-4 h-4', 'aria-hidden': 'true' }), 'Enviar'],
+                ? t('ventas.emailModal.sending')
+                : [h(EnvelopeIcon, { class: 'w-4 h-4', 'aria-hidden': 'true' }), t('ventas.emailModal.send')],
             ),
           ]),
         ])

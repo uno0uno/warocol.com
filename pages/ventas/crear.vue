@@ -1,7 +1,8 @@
 <script setup lang="ts">
+const { t } = useI18n()
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
-useHead({ title: 'Nueva Venta' })
+useHead({ title: () => t('ventas.head.crear') })
 
 import { modifiersCartTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
@@ -111,7 +112,7 @@ const products = computed(() => {
       id: p.id,
       name: p.name,
       price: Number(p.price) || 0,
-      category: p.category_name || p.category?.name || p.category || 'Sin categoría',
+      category: p.category_name || p.category?.name || p.category || t('ventas.common.sinCategoria'),
       category_id: p.category_id ?? null,
       image: p.image || '🍽️',
       image_url: p.image_url || null,
@@ -122,7 +123,7 @@ const products = computed(() => {
 })
 
 const categories = computed(() => {
-  const cats = new Set(products.value.map((p: any) => p.category || 'Sin categoría'))
+  const cats = new Set(products.value.map((p: any) => p.category || t('ventas.common.sinCategoria')))
   return ['all', ...Array.from(cats).sort((a, b) => a.localeCompare(b))]
 })
 
@@ -393,8 +394,8 @@ function missingRequiredModifierGroupForItem(item: LineItem) {
 }
 
 function notifyMissingRequiredGroup(group: { name: string }) {
-  useToast().warning(`Selecciona ${group.name} antes de continuar`, {
-    title: 'Modificador obligatorio',
+  useToast().warning(t('ventas.crear.selectGroupBefore', { name: group.name }), {
+    title: t('ventas.crear.modifierRequired'),
   })
 }
 
@@ -417,9 +418,9 @@ const discountInputNumber = computed(() => Number(discountInput.value))
 const discountValidationError = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return ''
   const value = discountInputNumber.value
-  if (!Number.isFinite(value) || value <= 0) return 'Ingresa un descuento mayor a 0'
-  if (discountType.value === 'percent' && value > 100) return 'El descuento porcentual no puede superar el 100%'
-  if (discountType.value === 'fixed' && value > subtotal.value) return 'El descuento fijo no puede superar el subtotal'
+  if (!Number.isFinite(value) || value <= 0) return t('ventas.crear.discountGtZero')
+  if (discountType.value === 'percent' && value > 100) return t('ventas.crear.discountPctMax')
+  if (discountType.value === 'fixed' && value > subtotal.value) return t('ventas.crear.discountFixedMax')
   return ''
 })
 
@@ -440,18 +441,18 @@ const currentPaymentIsWallet = computed(() => form.value.payment_method === WALL
 const singlePaymentValidationError = computed(() => {
   if (splitMode.value) return ''
   if (!currentPaymentIsWallet.value) return ''
-  if (!selectedCustomer.value) return 'Identifica un cliente para usar wallet'
-  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado'
+  if (!selectedCustomer.value) return t('ventas.crear.identifyForWallet')
+  if (isAnonymousCustomer.value) return t('ventas.crear.walletNeedsCustomer')
   if (total.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
   return ''
 })
 const splitAmountValidationError = computed(() => {
   if (!splitMode.value || splitIsComplete.value) return ''
   if (splitAmountToAdd.value <= 0) return 'Ingresa un monto a cobrar'
-  if (splitAmountToAdd.value - splitRemaining.value > 0.01) return 'El pago excede el saldo pendiente'
+  if (splitAmountToAdd.value - splitRemaining.value > 0.01) return t('ventas.crear.paymentExceeds')
   if (!currentPaymentIsWallet.value) return ''
-  if (!selectedCustomer.value) return 'Identifica un cliente para usar wallet'
-  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado'
+  if (!selectedCustomer.value) return t('ventas.crear.identifyForWallet')
+  if (isAnonymousCustomer.value) return t('ventas.crear.walletNeedsCustomer')
   if (splitAmountToAdd.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
   return ''
 })
@@ -484,7 +485,7 @@ function paymentLabel(payment: Pick<ManualSplitPayment, 'payment_method' | 'paym
 
 function addSplitPayment() {
   if (splitAmountValidationError.value) {
-    useToast().warning(splitAmountValidationError.value, { title: 'Pago dividido' })
+    useToast().warning(splitAmountValidationError.value, { title: t('ventas.crear.splitPayment') })
     return
   }
   splitPayments.value.push({
@@ -607,10 +608,10 @@ async function submit() {
         }))
       }
     })
-    useToast().success('Venta registrada correctamente', { title: 'Venta creada' })
+    useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
     await navigateTo(`/ventas/${res.data.id}`)
   } catch (err: any) {
-    useToast().error(err?.data?.message || 'Error al registrar la venta', { title: 'Error' })
+    useToast().error(err?.data?.message || t('ventas.crear.error'), { title: t('ventas.common.error') })
   } finally {
     loading.value = false
   }
@@ -639,13 +640,13 @@ async function submit() {
           <NuxtLink
             to="/ventas"
             class="flex items-center justify-center w-9 h-9 shrink-0 rounded-lg border border-border hover:bg-surface-secondary transition-colors"
-            aria-label="Volver a ventas"
+            :aria-label="t('ventas.common.volver')"
           >
             <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </NuxtLink>
-          <h1 class="text-base font-bold text-text-primary">Nueva venta manual</h1>
+          <h1 class="text-base font-bold text-text-primary">{{ t('ventas.crear.title') }}</h1>
         </div>
         <!-- Row 2: date + payment + customer -->
         <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(16rem,1.3fr)] gap-2">
@@ -655,14 +656,14 @@ async function submit() {
             type="datetime-local"
             :max="new Date().toISOString().slice(0, 16)"
             required
-            aria-label="Fecha y hora de la venta"
+            :aria-label="t('ventas.crear.dateLabel')"
             class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
           <select
             id="payment_method"
             v-model="paymentSelectValue"
             required
-            aria-label="Método de pago"
+            :aria-label="t('ventas.crear.paymentMethod')"
             class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
           >
             <template v-for="g in visiblePaymentGroups" :key="g.id">
@@ -685,10 +686,10 @@ async function submit() {
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium text-text-primary truncate">
-                {{ selectedCustomer.name || 'Cliente sin datos' }}
+                {{ selectedCustomer.name || t('ventas.crear.customerNoData') }}
               </p>
               <p class="text-xs text-text-secondary truncate">
-                {{ selectedCustomer.phone_number || 'Sin teléfono' }}
+                {{ selectedCustomer.phone_number || t('ventas.common.sinTelefono') }}
               </p>
               <div
                 v-if="!isAnonymousCustomer"
@@ -698,7 +699,7 @@ async function submit() {
                 <div
                   v-if="isWalletPending"
                   class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
-                  aria-label="Cargando saldo wallet"
+                  :aria-label="t('ventas.crear.walletLoading')"
                 />
                 <span
                   v-else
@@ -718,7 +719,7 @@ async function submit() {
             <button
               type="button"
               class="h-7 w-7 rounded-md text-text-secondary hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
-              aria-label="Quitar cliente"
+              :aria-label="t('ventas.crear.removeCustomer')"
               @click="clearCustomer"
             >
               <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -735,7 +736,7 @@ async function submit() {
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
-            <span>Identificar cliente</span>
+            <span>{{ t('ventas.crear.identifyCustomer') }}</span>
           </button>
         </div>
       </div>
@@ -750,7 +751,7 @@ async function submit() {
           <div class="flex flex-col gap-3 min-w-0">
             <UiSearchBar
               v-model="searchQuery"
-              placeholder="Buscar productos..."
+              :placeholder="t('ventas.crear.searchProducts')"
             />
             <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0 max-w-full">
               <button
@@ -775,8 +776,8 @@ async function submit() {
             <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p class="text-sm font-medium text-text-primary">No hay productos disponibles</p>
-            <p class="text-xs mt-1">Ajusta la búsqueda o cambia de categoría</p>
+            <p class="text-sm font-medium text-text-primary">{{ t('ventas.crear.noProducts') }}</p>
+            <p class="text-xs mt-1">{{ t('ventas.crear.noProductsHint') }}</p>
           </div>
 
           <!-- Product Grid -->
@@ -825,7 +826,7 @@ async function submit() {
                 v-if="customizationItem"
                 role="dialog"
                 aria-modal="true"
-                :aria-label="`Personalizar ${customizationProduct?.name ?? 'producto'}`"
+                :aria-label="t('ventas.crear.personalize', { name: customizationProduct?.name ?? t('ventas.crear.productFallback') })"
                 class="fixed z-50 flex flex-col bg-surface shadow-2xl
                        inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                        md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -941,7 +942,7 @@ async function submit() {
                                 type="button"
                                 class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                                 :disabled="getModifierQty(customizationItem, option.id) <= 0"
-                                :aria-label="`Reducir ${option.name}`"
+                                :aria-label="t('ventas.crear.reduce', { name: option.name })"
                                 @click="decrementModifier(customizationItem, option)"
                               >
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -958,7 +959,7 @@ async function submit() {
                                 type="button"
                                 class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                                 :disabled="!canIncrementModifier(customizationItem, option, group)"
-                                :aria-label="`Aumentar ${option.name}`"
+                                :aria-label="t('ventas.crear.increase', { name: option.name })"
                                 @click="incrementModifier(customizationItem, option, group)"
                               >
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1028,7 +1029,7 @@ async function submit() {
 
           <!-- Cart header -->
           <div class="px-4 py-3 border-b border-border bg-primary flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-primary-foreground">Orden</h2>
+            <h2 class="text-sm font-semibold text-primary-foreground">{{ t('ventas.crear.orderTitle') }}</h2>
             <span class="text-xs bg-primary-foreground/10 text-primary-foreground rounded-full px-2 py-0.5 font-medium">
               {{ totalItemCount }} {{ totalItemCount === 1 ? 'unidad' : 'unidades' }}
             </span>
@@ -1044,7 +1045,7 @@ async function submit() {
               <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-              <p class="text-sm">Selecciona un producto</p>
+              <p class="text-sm">{{ t('ventas.crear.selectProduct') }}</p>
             </div>
 
             <!-- Cart item rows -->
@@ -1072,7 +1073,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="`Reducir cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.reduceQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="decrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1083,7 +1084,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="`Aumentar cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.increaseQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="incrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1098,7 +1099,7 @@ async function submit() {
                 <button
                   type="button"
                   class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="`Eliminar ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.removeItem', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="removeItem(index)"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1113,7 +1114,7 @@ async function submit() {
           <div class="p-4 border-t border-border flex flex-col gap-3 bg-surface">
             <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">Descuento</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.descuento') }}</span>
                 <button
                   type="button"
                   class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
@@ -1128,7 +1129,7 @@ async function submit() {
                   v-model="discountType"
                   class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary"
                 >
-                  <option value="percent">Porcentaje</option>
+                  <option value="percent">{{ t('ventas.common.porcentaje') }}</option>
                   <option value="fixed">Fijo COP</option>
                 </select>
                 <input
@@ -1142,14 +1143,14 @@ async function submit() {
               </div>
               <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
               <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
-                <span>Descuento manual</span>
+                <span>{{ t('ventas.common.descuentoManual') }}</span>
                 <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
               </div>
             </div>
 
             <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">Pago dividido</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.crear.splitPayment') }}</span>
                 <button
                   type="button"
                   class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
@@ -1169,7 +1170,7 @@ async function submit() {
                     <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
                     <div class="flex items-center gap-2">
                       <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
-                      <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">Quitar</button>
+                      <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
                     </div>
                   </div>
                 </div>
@@ -1199,11 +1200,11 @@ async function submit() {
               </div>
             </div>
             <div v-if="subtotal !== total" class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Subtotal</span>
+              <span class="text-sm text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
               <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Total</span>
+              <span class="text-sm text-text-secondary">{{ t('ventas.common.total') }}</span>
               <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
             </div>
             <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>
@@ -1245,7 +1246,7 @@ async function submit() {
             <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p class="text-sm">Selecciona un producto</p>
+            <p class="text-sm">{{ t('ventas.crear.selectProduct') }}</p>
           </div>
 
           <template v-else>
@@ -1272,7 +1273,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="`Reducir cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.reduceQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="decrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1283,7 +1284,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="`Aumentar cantidad de ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.increaseQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="incrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1297,7 +1298,7 @@ async function submit() {
                 <button
                   type="button"
                   class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="`Eliminar ${productFor(item)?.name ?? 'producto'}`"
+                  :aria-label="t('ventas.crear.removeItem', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
                   @click="removeItem(index)"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1313,7 +1314,7 @@ async function submit() {
           <div class="p-4 flex flex-col gap-3">
             <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">Descuento</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.descuento') }}</span>
                 <button
                   type="button"
                   class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
@@ -1325,7 +1326,7 @@ async function submit() {
               </div>
               <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
                 <select v-model="discountType" class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary">
-                  <option value="percent">Porcentaje</option>
+                  <option value="percent">{{ t('ventas.common.porcentaje') }}</option>
                   <option value="fixed">Fijo COP</option>
                 </select>
                 <input
@@ -1339,14 +1340,14 @@ async function submit() {
               </div>
               <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
               <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
-                <span>Descuento manual</span>
+                <span>{{ t('ventas.common.descuentoManual') }}</span>
                 <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
               </div>
             </div>
 
             <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">Pago dividido</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.crear.splitPayment') }}</span>
                 <button
                   type="button"
                   class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
@@ -1361,7 +1362,7 @@ async function submit() {
                   <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
                   <div class="flex items-center gap-2">
                     <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
-                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">Quitar</button>
+                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
                   </div>
                 </div>
                 <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
@@ -1390,11 +1391,11 @@ async function submit() {
               </div>
             </div>
             <div v-if="subtotal !== total" class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Subtotal</span>
+              <span class="text-sm text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
               <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Total</span>
+              <span class="text-sm text-text-secondary">{{ t('ventas.common.total') }}</span>
               <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
             </div>
             <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>

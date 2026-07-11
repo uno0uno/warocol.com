@@ -6,6 +6,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const route = useRoute()
 
 definePageMeta({
@@ -13,13 +14,13 @@ definePageMeta({
   module: 'ventas',
 })
 
-const navigationItems = [
-  { to: '/ventas/ordenes', label: 'Órdenes' },
-  { to: '/ventas/productos', label: 'Productos' },
-  { to: '/ventas/propinas', label: 'Propinas' },
-]
+const navigationItems = computed(() => [
+  { to: '/ventas/ordenes', label: t('ventas.nav.ordenes') },
+  { to: '/ventas/productos', label: t('ventas.nav.productos') },
+  { to: '/ventas/propinas', label: t('ventas.nav.propinas') },
+])
 
 useHead({
-  title: 'Ventas - Warocol',
+  title: () => t('ventas.head.module'),
 })
 </script>

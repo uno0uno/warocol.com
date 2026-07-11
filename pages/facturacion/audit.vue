@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
@@ -10,7 +11,7 @@ import {
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
-useHead({ title: 'Bitácora de números quemados — DIAN' })
+useHead({ title: () => t('facturacion.head.audit') })
 
 const { currentTenant } = useTenantReactive()
 const router = useRouter()
@@ -84,17 +85,17 @@ const goToPage = (page: number) => {
 }
 
 const columns = computed<Column[]>(() => [
-  { key: 'created_at', title: 'Cuándo', sortable: false },
-  { key: 'number', title: 'Número quemado', sortable: false },
-  { key: 'resolution_number', title: 'Resolución', sortable: false },
+  { key: 'created_at', title: t('facturacion.audit.when'), sortable: false },
+  { key: 'number', title: t('facturacion.audit.burnedNumber'), sortable: false },
+  { key: 'resolution_number', title: t('facturacion.audit.resolution'), sortable: false },
   { key: 'reason', title: 'Motivo', sortable: false },
-  { key: 'original_order_number', title: 'Orden', sortable: false },
+  { key: 'original_order_number', title: t('facturacion.audit.order'), sortable: false },
 ])
 
 const reasonLabel = (reason: string) => {
   const map: Record<string, string> = {
-    matias_ya_validado: 'Ya validado en DIAN',
-    matias_500: 'Error 5xx de Matias',
+    matias_ya_validado: t('facturacion.audit.validatedDian'),
+    matias_500: t('facturacion.audit.matias5xx'),
     network_timeout: 'Timeout de red',
   }
   return map[reason] || reason
@@ -114,7 +115,7 @@ const reasonClass = (reason: string) => {
       <button
         @click="router.push('/facturacion')"
         class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg hover:bg-surface-secondary transition-colors"
-        aria-label="Volver a Facturación"
+        :aria-label="t('facturacion.audit.back')"
       >
         <ArrowLeftIcon class="w-5 h-5 text-text-secondary" aria-hidden="true" />
       </button>
@@ -145,7 +146,7 @@ const reasonClass = (reason: string) => {
         <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ summary.last_30d }}</p>
       </div>
       <div class="bg-surface border-2 border-border rounded-xl p-3">
-        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">Total histórico</p>
+        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">{{ t('facturacion.audit.totalHistorical') }}</p>
         <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ summary.total }}</p>
       </div>
     </div>
@@ -155,7 +156,7 @@ const reasonClass = (reason: string) => {
       <select
         v-model="resolutionFilter"
         class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-        aria-label="Filtrar por resolución"
+        :aria-label="t('facturacion.audit.filterResolution')"
       >
         <option :value="null">Todas las resoluciones</option>
         <option v-for="r in resolutions" :key="r.id" :value="r.id">
@@ -175,7 +176,7 @@ const reasonClass = (reason: string) => {
     <!-- Empty -->
     <div v-else-if="gaps.length === 0" class="text-center py-16 space-y-3">
       <DocumentTextIcon class="w-12 h-12 mx-auto text-text-tertiary" />
-      <p class="text-text-secondary">No hay números quemados</p>
+      <p class="text-text-secondary">{{ t('facturacion.audit.emptyTitle') }}</p>
       <p class="text-sm text-text-tertiary">
         Tu numeración DIAN no ha tenido descartes
         <template v-if="resolutionFilter">en esta resolución</template>.
