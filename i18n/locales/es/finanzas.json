@@ -10,7 +10,8 @@
       "asientos": "Asientos contables - Warocol",
       "conciliacion": "Conciliación - Warocol",
       "cierre": "Cierre contable - Warocol",
-      "plMensual": "Estado de Resultados mensual - Warocol"
+      "plMensual": "Estado de Resultados mensual - Warocol",
+      "index": "Finanzas - Warocol"
     },
     "common": {
       "actions": "Acciones",
@@ -676,6 +677,19 @@
       "multiTitle": "Pagos Registrados",
       "fail": "No se pudo registrar el pago",
       "failAny": "No se pudo registrar ningún pago"
+    },
+    "nav": {
+      "arqueo": "Arqueo de caja",
+      "cierre": "Cierre contable",
+      "cartera": "Cartera",
+      "gastos": "Gastos",
+      "pagos": "Pagos",
+      "metodosPago": "Métodos de pago",
+      "conciliacion": "Conciliación",
+      "cuentas": "Cuentas",
+      "asientos": "Asientos",
+      "balance": "Balance",
+      "plMensual": "P&L Mensual"
     }
   }
 }

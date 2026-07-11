@@ -8,6 +8,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const lastFinanzasPath = useState<string | null>('finanzas-last-path', () => null)
 
@@ -27,19 +28,19 @@ watch(
   }
 )
 
-const navigationItems = [
-  { to: '/finanzas/arqueo',           label: 'Arqueo de caja' },
-  { to: '/finanzas/cierre-contable',  label: 'Cierre contable' },
-  { to: '/finanzas/cartera',          label: 'Cartera' },
-  { to: '/finanzas/gastos',           label: 'Gastos' },
-  { to: '/finanzas/pagos',            label: 'Pagos' },
-  { to: '/finanzas/metodos-pago',     label: 'Métodos de pago' },
-  { to: '/finanzas/conciliacion',     label: 'Conciliación' },
-  { to: '/finanzas/contabilidad/cuentas',             label: 'Cuentas',  matchPath: '/finanzas/contabilidad/cuentas' },
-  { to: '/finanzas/contabilidad/asientos',            label: 'Asientos', matchPath: '/finanzas/contabilidad/asientos' },
-  { to: '/finanzas/contabilidad/balance-comprobacion', label: 'Balance', matchPath: '/finanzas/contabilidad/balance-comprobacion' },
-  { to: '/finanzas/reportes/pl-mensual', label: 'P&L Mensual', matchPath: '/finanzas/reportes/pl-mensual' },
-]
+const navigationItems = computed(() => [
+  { to: '/finanzas/arqueo', label: t('finanzas.nav.arqueo') },
+  { to: '/finanzas/cierre-contable', label: t('finanzas.nav.cierre') },
+  { to: '/finanzas/cartera', label: t('finanzas.nav.cartera') },
+  { to: '/finanzas/gastos', label: t('finanzas.nav.gastos') },
+  { to: '/finanzas/pagos', label: t('finanzas.nav.pagos') },
+  { to: '/finanzas/metodos-pago', label: t('finanzas.nav.metodosPago') },
+  { to: '/finanzas/conciliacion', label: t('finanzas.nav.conciliacion') },
+  { to: '/finanzas/contabilidad/cuentas', label: t('finanzas.nav.cuentas'), matchPath: '/finanzas/contabilidad/cuentas' },
+  { to: '/finanzas/contabilidad/asientos', label: t('finanzas.nav.asientos'), matchPath: '/finanzas/contabilidad/asientos' },
+  { to: '/finanzas/contabilidad/balance-comprobacion', label: t('finanzas.nav.balance'), matchPath: '/finanzas/contabilidad/balance-comprobacion' },
+  { to: '/finanzas/reportes/pl-mensual', label: t('finanzas.nav.plMensual'), matchPath: '/finanzas/reportes/pl-mensual' },
+])
 
-useHead({ title: 'Finanzas - Warocol' })
+useHead({ title: () => t('finanzas.head.index') })
 </script>

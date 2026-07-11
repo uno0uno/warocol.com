@@ -10,7 +10,8 @@
       "asientos": "Journal entries - Warocol",
       "conciliacion": "Reconciliation - Warocol",
       "cierre": "Accounting close - Warocol",
-      "plMensual": "Monthly P&L - Warocol"
+      "plMensual": "Monthly P&L - Warocol",
+      "index": "Finance - Warocol"
     },
     "common": {
       "actions": "Actions",
@@ -676,6 +677,19 @@
       "multiTitle": "Payments recorded",
       "fail": "Could not record payment",
       "failAny": "Could not record any payment"
+    },
+    "nav": {
+      "arqueo": "Cash drawer",
+      "cierre": "Accounting close",
+      "cartera": "Receivables",
+      "gastos": "Expenses",
+      "pagos": "Payments",
+      "metodosPago": "Payment methods",
+      "conciliacion": "Reconciliation",
+      "cuentas": "Accounts",
+      "asientos": "Journal entries",
+      "balance": "Trial balance",
+      "plMensual": "Monthly P&L"
     }
   }
 }
