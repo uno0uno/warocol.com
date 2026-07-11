@@ -976,7 +976,7 @@ const taxLevels = [
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
-              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.incTitle') }}<p>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.incTitle') }}</p>
               <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.incBody') }}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
@@ -1027,7 +1027,7 @@ const taxLevels = [
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
-              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.ivaTitle') }}<p>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.ivaTitle') }}</p>
               <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.ivaBody') }}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
@@ -1077,7 +1077,7 @@ const taxLevels = [
         <!-- IVA Licores -->
         <div class="flex items-center justify-between py-1">
           <div>
-            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.liquorTitle') }}<p>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.liquorTitle') }}</p>
             <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.liquorBody') }}</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">

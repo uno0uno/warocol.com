@@ -933,7 +933,7 @@ onUnmounted(() => {
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
+    <!-- Error State (i18n) -->
     <div v-else-if="fetchError || !order" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">{{ t('ventas.detail.orderNotFound') }}</p>
