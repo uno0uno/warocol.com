@@ -154,7 +154,7 @@ const submit = async () => {
         notes: notes.value.trim() || null,
       },
     })
-    toast.success(`Anticipo registrado por ${formatCurrency(amountNumber.value)}`, { title: t('pos.advance.tableAdvance') })
+    toast.success(t('pos.advance.registeredBy', { amount: formatCurrency(amountNumber.value) }), { title: t('pos.advance.tableAdvance') })
     resetForm()
     await refreshAfterMutation()
   } catch (error: any) {
@@ -234,7 +234,7 @@ watch(suggestedAmount, () => {
                 <BanknotesIcon class="w-5 h-5" />
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Pagar anticipo</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('pos.advance.titleShort') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
                   {{ tableName || t('pos.advance.activeTable') }}
                 </p>
@@ -254,23 +254,23 @@ watch(suggestedAmount, () => {
         <form class="flex-1 overflow-y-auto px-6 py-5 space-y-5" @submit.prevent="submit">
           <div v-if="minimumConsumption" class="rounded-xl border border-border bg-surface-secondary/35 px-4 py-3 space-y-1">
             <div class="flex items-center justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Mínimo</span>
+              <span class="text-text-secondary">{{ t('pos.advance.minimum') }}</span>
               <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(minimumConsumption.amount) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Anticipado</span>
+              <span class="text-text-secondary">{{ t('pos.advance.advanced') }}</span>
               <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(activeAdvanceTotal) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Estado</span>
+              <span class="text-text-secondary">{{ t('pos.advance.status') }}</span>
               <span class="font-semibold tabular-nums" :class="minimumConsumption.covered ? 'text-state-success-text' : 'text-text-primary'">
-                {{ minimumConsumption.covered ? 'Cubierto' : `${formatCurrency(minimumConsumption.remaining)} faltante` }}
+                {{ minimumConsumption.covered ? t('pos.advance.covered') : t('pos.advance.remaining', { amount: formatCurrency(minimumConsumption.remaining) }) }}
               </span>
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label for="advance-amount" class="text-sm font-medium text-text-primary">Monto COP</label>
+            <label for="advance-amount" class="text-sm font-medium text-text-primary">{{ t('pos.advance.amountCop') }}</label>
             <input
               id="advance-amount"
               v-model="amount"
@@ -289,7 +289,7 @@ watch(suggestedAmount, () => {
           </div>
 
           <div class="space-y-3">
-            <label class="text-sm font-medium text-text-primary">Método de pago</label>
+            <label class="text-sm font-medium text-text-primary">{{ t('pos.advance.paymentMethod') }}</label>
             <div v-if="loadingMethods" class="grid grid-cols-3 gap-2">
               <div v-for="i in 3" :key="i" class="h-[68px] rounded-xl border border-border bg-surface-secondary animate-pulse" />
             </div>
@@ -338,7 +338,7 @@ watch(suggestedAmount, () => {
           </div>
 
           <div class="space-y-1.5">
-            <label for="advance-notes" class="text-sm font-medium text-text-primary">Notas</label>
+            <label for="advance-notes" class="text-sm font-medium text-text-primary">{{ t('pos.advance.notes') }}</label>
             <textarea
               id="advance-notes"
               v-model="notes"
@@ -352,14 +352,14 @@ watch(suggestedAmount, () => {
 
           <div class="space-y-2">
             <div class="flex items-center justify-between gap-3">
-              <h3 class="text-sm font-semibold text-text-primary">Anticipos registrados</h3>
+              <h3 class="text-sm font-semibold text-text-primary">{{ t('pos.advance.history') }}</h3>
               <span class="text-xs text-text-secondary tabular-nums">{{ formatCurrency(activeAdvanceTotal) }}</span>
             </div>
             <div v-if="loadingAdvances" class="rounded-xl border border-border bg-surface-secondary p-4 text-sm text-text-secondary">
-              Cargando anticipos...
+              {{ t('pos.advance.loading') }}
             </div>
             <div v-else-if="advances.length === 0" class="rounded-xl border border-dashed border-border bg-background p-4 text-sm text-text-secondary">
-              Sin anticipos registrados.
+              {{ t('pos.advance.empty') }}
             </div>
             <div v-else class="rounded-xl border border-border bg-background overflow-hidden divide-y divide-border">
               <div
@@ -387,7 +387,7 @@ watch(suggestedAmount, () => {
                   <UiLoadingDots v-if="voidingId === advance.id" size="6px" />
                   <TrashIcon v-else class="h-4 w-4" />
                 </button>
-                <span v-else class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">Anulado</span>
+                <span v-else class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">{{ t('pos.advance.voided') }}</span>
               </div>
             </div>
           </div>
@@ -403,7 +403,7 @@ watch(suggestedAmount, () => {
             <UiLoadingDots v-if="submitting" size="8px" color="currentColor" />
             <template v-else>
               <PlusIcon class="h-4 w-4" />
-              Registrar anticipo
+              {{ t('pos.advance.register') }}
             </template>
           </button>
         </div>

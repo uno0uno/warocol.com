@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
+import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
@@ -162,20 +163,20 @@ const formatDuration = (openedAt: string): string => {
 }
 
 const formatCurrency = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString('es-CO')}`
+  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))}`
 
 const minimumConsumptionLabel = (table: any): string | null => {
   const state = table.session?.minimum_consumption
   if (!state?.enabled || !(Number(state.amount) > 0)) return null
   const remaining = Number(state.remaining) || 0
   if (state.covered || remaining <= 0) return t('pos.floor.minCovered')
-  return `${formatCurrency(remaining)} faltante`
+  return t('pos.floor.remaining', { amount: formatCurrency(remaining) })
 }
 
 const badgeLabel = (status: string) => {
-  if (status === 'open') return 'En servicio'
-  if (status === 'bill_requested') return 'Cuenta'
-  return 'Libre'
+  if (status === 'open') return t('pos.floor.inService')
+  if (status === 'bill_requested') return t('pos.floor.bill')
+  return t('pos.floor.free')
 }
 
 
@@ -277,7 +278,7 @@ onUnmounted(() => {
     <div v-else>
       <!-- Legend -->
       <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <p class="text-sm text-text-secondary">Vista de planta principal</p>
+        <p class="text-sm text-text-secondary">{{ t('pos.floor.mainPlan') }}</p>
         <div class="flex gap-2 flex-wrap">
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
@@ -285,7 +286,7 @@ onUnmounted(() => {
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text/40" />
-            <span class="text-xs font-medium text-text-secondary">Ocupada</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.occupied') }}</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
@@ -293,7 +294,7 @@ onUnmounted(() => {
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-surface border-2 border-border" />
-            <span class="text-xs font-medium text-text-secondary">Libre</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.free') }}</span>
           </div>
         </div>
       </div>
@@ -303,7 +304,7 @@ onUnmounted(() => {
         <button
           class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           :disabled="isEnteringBar"
-          aria-label="Barra — siempre abierta"
+          :aria-label="t('pos.floor.barAlwaysOpenAria')"
           @click="handleBarClick"
         >
           <!-- Bar icon -->
@@ -316,15 +317,15 @@ onUnmounted(() => {
           <div class="flex-1 min-w-0 text-left">
             <div class="flex items-center gap-2">
               <span class="text-base font-black uppercase tracking-wide">Barra</span>
-              <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">Siempre abierta</span>
+              <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
             </div>
             <p class="text-xs opacity-90 mt-0.5 tabular-nums">
               <template v-if="barTable.session?.running_total > 0">
-                ${{ Math.round(barTable.session.running_total).toLocaleString('es-CO') }} acumulado ·
+                {{ t('pos.floor.accumulated', { amount: formatCurrency(barTable.session.running_total) }) }} ·
                 {{ formatDuration(barTable.session.opened_at) }}
               </template>
               <template v-else>
-                Sin consumo activo
+                {{ t('pos.floor.noActiveConsumption') }}
               </template>
             </p>
           </div>
@@ -415,7 +416,7 @@ onUnmounted(() => {
             <template v-else>
               <!-- Free table — "Libre" label (Reabrir UI removed; endpoint /session/reopen still exists) -->
               <div class="flex items-center justify-center px-3 min-h-11" :class="footerClass(table.status)">
-                <span class="text-xs font-semibold" :class="stripTextClass(table.status)">Libre</span>
+                <span class="text-xs font-semibold" :class="stripTextClass(table.status)">{{ t('pos.floor.free') }}</span>
               </div>
             </template>
 

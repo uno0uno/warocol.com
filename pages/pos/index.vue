@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t, locale } = useI18n()
+import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useQueryCache } from '@pinia/colada'
@@ -22,7 +24,7 @@ definePageMeta({
   module: 'pos',
 })
 
-useHead({ title: 'Punto de Venta' })
+useHead({ title: () => t('pos.banner.pageTitle') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -149,9 +151,9 @@ const {
   start: startWaiterChipPhrases,
   stop: stopWaiterChipPhrases,
 } = useLoadingPhrases([
-  'Asignando mesero...',
-  'Sincronizando...',
-  'Aplicando cambios...',
+  t('pos.banner.assigningWaiter'),
+  t('pos.banner.syncing'),
+  t('pos.banner.applyingChanges'),
 ])
 watch(isChangingSessionWaiter, (loading) => {
   if (loading) startWaiterChipPhrases()
@@ -183,17 +185,17 @@ const handleChangeSessionWaiter = async (event: Event) => {
       })
     }
     toast.success(
-      newMemberId ? `Mesero: ${result.data.attended_by_member_name}` : 'Sin mesero asignado',
-      { title: 'Actualizado' },
+      newMemberId ? t('pos.banner.waiterUpdated', { name: result.data.attended_by_member_name }) : t('pos.banner.noWaiterAssigned'),
+      { title: t('pos.banner.updated') },
     )
   } catch (error: any) {
     if (error?.statusCode === 403 || error?.response?.status === 403) {
       toast.error(
         'Solo el mesero actual o un supervisor pueden cambiar la asignación',
-        { title: 'No permitido' },
+        { title: t('pos.banner.notAllowed') },
       )
     } else {
-      toast.error(error?.data?.detail || 'Error al cambiar mesero', { title: 'Error' })
+      toast.error(error?.data?.detail || t('pos.banner.waiterChangeError'), { title: t('pos.banner.error') })
     }
     // Reset the select to current value to avoid showing stale selection
     target.value = posStore.activeTableSession?.effectiveWaiterMemberId ?? ''
@@ -417,7 +419,7 @@ const sentComandasForPanel = computed(() => (
     return {
       id: rawComandaId(c, index),
       comandaNumber: String(c.comanda_number ?? '—'),
-      stationName: (c.station_name as string) ?? 'Sin cocina asignada',
+      stationName: (c.station_name as string) ?? t('pos.banner.noKitchenStation'),
       status: String(c.status ?? ''),
       firedAt: c.fired_at != null ? String(c.fired_at) : null,
       itemCount: items.length,
@@ -537,7 +539,7 @@ async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
     tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
     setTimeout(() => { tabSuccess.value = null }, 3000)
   } else {
-    tabError.value = 'Ítems agregados a la mesa pero no se enviaron a cocina. Verifica que el producto tenga estación de cocina.'
+    tabError.value = t('pos.banner.itemsAddedNoKitchen')
     setTimeout(() => { tabError.value = null }, 6000)
   }
 }
@@ -704,14 +706,14 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
         ctx.isBar
           ? 'No hay sesión abierta en barra. Intenta de nuevo desde el plano.'
           : `No hay sesión abierta en esta ${tableSingularLower.value}.`,
-        { title: 'Sesión' },
+        { title: t('pos.banner.session') },
       )
       return
     }
   } catch (e: unknown) {
     posStore.exitSession()
     const detail = (e as { data?: { detail?: string } })?.data?.detail
-    toast.error(typeof detail === 'string' ? detail : 'No se pudo cargar la sesión', { title: 'Sesión' })
+    toast.error(typeof detail === 'string' ? detail : t('pos.banner.sessionLoadError'), { title: t('pos.banner.session') })
   } finally {
     isEnteringTable.value = false
     isLoadingTabItems.value = false
@@ -746,7 +748,7 @@ const consumePosDeepLink = async () => {
     if (!session?.id) {
       toast.error(
         `No hay sesión abierta en esa ${tableSingularLower.value}`,
-        { title: 'Comanda lista' },
+        { title: t('pos.banner.comandaReady') },
       )
       return
     }
@@ -758,7 +760,7 @@ const consumePosDeepLink = async () => {
     })
     if (expediterEnabled.value) showExpediterPanel.value = true
   } catch {
-    toast.error(`No se pudo abrir la ${tableSingularLower.value}`, { title: 'Comanda lista' })
+    toast.error(t('pos.banner.openSessionError', { table: tableSingularLower.value }), { title: t('pos.banner.comandaReady') })
   }
 }
 
@@ -798,7 +800,7 @@ registerTableSessionRefresh(
 )
 
 const formatCurrencyPOS = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString('es-CO')}`
+  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))}`
 
 const activeMinimumConsumption = computed(() => posStore.activeTableSession?.minimumConsumption ?? null)
 const showActiveMinimumConsumption = computed(() =>
@@ -811,8 +813,8 @@ const canPayTableAdvance = computed(() =>
 const activeMinimumStatusLabel = computed(() => {
   const state = activeMinimumConsumption.value
   if (!state || !state.enabled || state.amount <= 0) return ''
-  if (state.covered || state.remaining <= 0) return 'Mínimo cubierto'
-  return `${formatCurrencyPOS(state.remaining)} faltante`
+  if (state.covered || state.remaining <= 0) return t('pos.banner.minCovered')
+  return t('pos.banner.remaining', { amount: formatCurrencyPOS(state.remaining) })
 })
 const activeMinimumStatusClass = computed(() => {
   const state = activeMinimumConsumption.value
@@ -858,11 +860,11 @@ const destructiveModalTitle = computed(() => {
     case 'decrease-tab-item':
       return '¿Reducir cantidad?'
     case 'clear-cart':
-      return posStore.activeTableSession ? '¿Limpiar la cuenta?' : '¿Limpiar carrito?'
+      return posStore.activeTableSession ? t('pos.banner.clearAccount') : t('pos.banner.clearCartQ')
     case 'remove-cart-item':
       return '¿Eliminar producto?'
     case 'release-table':
-      return `¿Liberar la ${tableSingularLower.value}?`
+      return t('pos.banner.releaseTableQ', { table: tableSingularLower.value })
     case 'clear-bar-tab':
       return '¿Limpiar la barra?'
     default:
@@ -876,7 +878,7 @@ const destructiveModalMessage = computed(() => {
   switch (flow.kind) {
     case 'remove-tab-item': {
       const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
-      const name = item?.productName ?? 'Este producto'
+      const name = item?.productName ?? t('pos.banner.thisProduct')
       if (comandasEnabled.value && isTabItemFired(flow.orderItemId)) {
         return `${name} ya fue enviado a cocina. Se notificará al cocinero que lo anule.`
       }
@@ -884,16 +886,16 @@ const destructiveModalMessage = computed(() => {
     }
     case 'decrease-tab-item': {
       const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
-      const name = item?.productName ?? 'Este producto'
+      const name = item?.productName ?? t('pos.banner.thisProduct')
       return `${name} ya fue enviado a cocina. Se notificará al cocinero del cambio de cantidad.`
     }
     case 'clear-cart':
       return posStore.activeTableSession
         ? `Se borrarán todos los ítems pendientes de la ${tableSingularLower.value} y del carrito.`
-        : 'Se borrarán todos los productos del carrito actual.'
+        : t('pos.banner.clearCartItems')
     case 'remove-cart-item': {
       const item = posStore.cart[flow.index]
-      return item ? `Se eliminará ${item.product.name} del carrito.` : 'Se eliminará este producto del carrito.'
+      return item ? t('pos.banner.removeProduct', { name: item.product.name }) : t('pos.banner.removeProduct', { name: t('pos.banner.thisProduct') })
     }
     case 'release-table': {
       const session = posStore.activeTableSession
@@ -911,21 +913,21 @@ const destructiveModalMessage = computed(() => {
 
 const destructiveModalConfirmLabel = computed(() => {
   const flow = destructiveFlow.value
-  if (!flow) return 'Confirmar'
+  if (!flow) return t('pos.banner.confirm')
   switch (flow.kind) {
     case 'remove-tab-item':
     case 'remove-cart-item':
-      return 'Sí, eliminar'
+      return t('pos.banner.yesDelete')
     case 'decrease-tab-item':
-      return 'Sí, reducir'
+      return t('pos.banner.yesReduce')
     case 'clear-cart':
-      return 'Sí, limpiar'
+      return t('pos.banner.yesClear')
     case 'release-table':
       return `Sí, liberar ${tableSingularLower.value}`
     case 'clear-bar-tab':
-      return 'Sí, limpiar'
+      return t('pos.banner.yesClear')
     default:
-      return 'Confirmar'
+      return t('pos.banner.confirm')
   }
 })
 
@@ -1259,7 +1261,7 @@ watch(() => productsData.value, (data) => {
       price: Number(p.price) || 0,
       image: '🍽️',  // Emoji fallback shown when image_url is missing/empty
       image_url: p.image_url || null,  // Issue #465 — real image when uploaded
-      category: p.category_name || p.category?.name || 'Sin categoría',
+      category: p.category_name || p.category?.name || t('pos.banner.noCategory'),
       category_id: p.category_id ?? null,
       is_available: p.is_available,
       is_resale: p.is_resale || false,
@@ -1279,7 +1281,7 @@ const products = computed(() => {
     id: p.id,
     name: p.name,
     price: p.price,
-    category: p.category_name || p.category?.name || 'Sin categoría',
+    category: p.category_name || p.category?.name || t('pos.banner.noCategory'),
     category_id: p.category_id ?? null,
     image: '🍽️',
     image_url: p.image_url || null,
@@ -1403,7 +1405,7 @@ const editTabItem = async (orderItemId: string, productId: string) => {
 
 const handleOpenSaleClick = () => {
   if (!openSaleEnabled.value) {
-    toast.warning(openSaleDisabledReason.value ?? 'Venta libre no disponible', { title: 'Venta libre' })
+    toast.warning(openSaleDisabledReason.value ?? t('pos.banner.openSaleUnavailable'), { title: t('pos.banner.openSale') })
     return
   }
   openSaleModalOpen.value = true
@@ -1440,18 +1442,18 @@ const handleOpenSaleConfirm = async (payload: { amount: number; description?: st
     if (isKitchenServiceMode.value) {
       await addOpenSaleToTab(amount, payload.description)
       openSaleModalOpen.value = false
-      toast.success(`Agregado a la ${tableSingularLower.value}`, { title: 'Venta libre' })
+      toast.success(t('pos.banner.addedToTable', { table: tableSingularLower.value }), { title: t('pos.banner.openSale') })
       return
     }
     const line = buildOpenSaleCartLine(amount, payload.description)
     await posStore.addToCart(line)
     openSaleModalOpen.value = false
-    toast.success('Agregado al carrito', { title: 'Venta libre' })
+    toast.success(t('pos.banner.addedToCart'), { title: t('pos.banner.openSale') })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'No se pudo agregar la venta libre'
+    const message = err instanceof Error ? err.message : t('pos.banner.openSaleAddError')
     toast.error(typeof err === 'object' && err && 'data' in err
       ? (err as any).data?.detail ?? message
-      : message, { title: 'Venta libre' })
+      : message, { title: t('pos.banner.openSale') })
     openSaleModalRef.value?.clearSubmitting()
   }
 }
@@ -1749,7 +1751,7 @@ onUnmounted(() => {
           </svg>
         </div>
         <p class="text-sm text-status-success-text font-medium">
-          Promo activa: {{ activePromoHint }}
+          {{ t('pos.banner.promoActive', { name: activePromoHint }) }}
         </p>
       </div>
 
@@ -1778,12 +1780,12 @@ onUnmounted(() => {
             <span class="text-[10px] font-bold text-state-warning-text uppercase tracking-widest flex-shrink-0">Barra</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary">
-              {{ comandasEnabled ? 'Agregar y enviar a cocina antes de cobrar' : 'Venta directa en barra' }}
+              {{ comandasEnabled ? t('pos.banner.barHintKitchen') : t('pos.banner.barHintDirect') }}
             </span>
             <template v-if="comandasEnabled && unfiredCount > 0">
               <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
               <span class="flex items-center gap-1 text-xs font-semibold text-state-danger-text flex-shrink-0">
-                {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
+                {{ unfiredCount === 1 ? t('pos.banner.unsentOne', { count: unfiredCount }) : t('pos.banner.unsentMany', { count: unfiredCount }) }}
               </span>
             </template>
           </div>
@@ -1792,7 +1794,7 @@ onUnmounted(() => {
             class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
             @click="exitActiveTableSession"
           >
-            Salir
+            {{ t('pos.banner.exit') }}
           </button>
         </div>
       </div>
@@ -1808,7 +1810,7 @@ onUnmounted(() => {
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} activa</span>
+                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
                 <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
                 <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
                 <span
@@ -1820,12 +1822,12 @@ onUnmounted(() => {
                 </span>
               </div>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-secondary tabular-nums leading-snug">
-                <span>{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado</span>
+                <span>{{ t('pos.banner.accumulated', { amount: formatCurrencyPOS(posStore.activeTableSession.runningTotal) }) }}</span>
                 <span class="text-text-tertiary" aria-hidden="true">·</span>
                 <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
                 <template v-if="showActiveMinimumConsumption && activeMinimumConsumption">
                   <span class="text-text-tertiary" aria-hidden="true">·</span>
-                  <span>Mín. {{ formatCurrencyPOS(activeMinimumConsumption.amount) }}</span>
+                  <span>{{ t('pos.banner.min', { amount: formatCurrencyPOS(activeMinimumConsumption.amount) }) }}</span>
                 </template>
               </div>
             </div>
@@ -1847,13 +1849,13 @@ onUnmounted(() => {
             <div v-else-if="waiterAttributionEnabled" class="relative min-w-0 sm:min-w-[11rem]">
               <select
                 :value="bannerEffectiveWaiterId || ''"
-                aria-label="Cambiar mesero de la sesión activa"
+                :aria-label="t('pos.banner.changeWaiterAria')"
                 class="h-8 w-full inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
               >
-                <option value="">Sin mesero</option>
+                <option value="">{{ t('pos.banner.noWaiter') }}</option>
                 <option
                   v-for="m in tenantMembers"
                   :key="m.id"
@@ -1885,33 +1887,33 @@ onUnmounted(() => {
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="`Pagar anticipo de la ${tableSingularLower}`"
+              :aria-label="t('pos.banner.payAdvanceAria', { table: tableSingularLower })"
               @click="showTableAdvancePanel = true"
             >
               <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-              Pagar anticipo
+              {{ t('pos.banner.payAdvance') }}
             </button>
             <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
+              :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
               @click="leaveActiveTableSession"
             >
               <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
               </svg>
-              Volver
+              {{ t('pos.banner.back') }}
             </button>
             <!-- Liberar — destructive: closes the session via confirm modal -->
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="`Liberar la ${tableSingularLower}`"
+              :aria-label="t('pos.banner.releaseAria', { table: tableSingularLower })"
               @click="handleReleaseMesa"
             >
               <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
@@ -1919,7 +1921,7 @@ onUnmounted(() => {
                 <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
                 </svg>
-                Liberar
+                {{ t('pos.banner.release') }}
               </template>
             </button>
           </div>
@@ -1946,10 +1948,10 @@ onUnmounted(() => {
             </div>
             <div class="min-w-0">
               <p class="text-[10px] font-bold text-badge-primary-text uppercase tracking-widest">
-                Cliente Actual
+                {{ t('pos.banner.currentCustomer') }}
               </p>
               <p class="text-base font-bold text-text-primary leading-tight truncate">
-                {{ posStore.currentCustomer.name || 'Sin nombre' }}
+                {{ posStore.currentCustomer.name || t('pos.banner.noName') }}
               </p>
               <p class="text-xs text-text-secondary mt-0.5">
                 📱 {{ posStore.currentCustomer.phone_number }}
@@ -1989,7 +1991,7 @@ onUnmounted(() => {
             class="flex-shrink-0 text-xs font-semibold text-badge-primary-text hover:text-badge-primary-text px-3 py-2 rounded-lg border border-badge-primary-border hover:bg-badge-primary-bg transition-colors min-h-[44px]"
             @click="showCustomerModal = true"
           >
-            Cambiar
+            {{ t('pos.banner.change') }}
           </button>
         </div>
       </div>
@@ -2004,7 +2006,7 @@ onUnmounted(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          Identificar cliente
+          {{ t('pos.banner.identifyCustomer') }}
         </button>
       </div>
 
@@ -2013,7 +2015,7 @@ onUnmounted(() => {
             <div class="flex-1">
               <UiSearchBar
                 v-model="searchQuery"
-                placeholder="Buscar productos..."
+                :placeholder="t('pos.catalog.searchPlaceholder')"
               />
             </div>
           </div>
@@ -2029,7 +2031,7 @@ onUnmounted(() => {
                 : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
               @click="selectedCategory = cat"
             >
-              {{ cat === 'all' ? 'Todos' : cat }}
+              {{ cat === 'all' ? t('pos.catalog.all') : cat }}
             </button>
           </div>
         </div>
@@ -2041,8 +2043,8 @@ onUnmounted(() => {
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p class="text-lg font-medium">No hay productos disponibles</p>
-            <p class="text-sm mt-1">Agrega productos desde el menú</p>
+            <p class="text-lg font-medium">{{ t('pos.banner.noProducts') }}</p>
+            <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
           </div>
 
           <!-- Products Grid -->
@@ -2121,7 +2123,7 @@ onUnmounted(() => {
 
   <UiErrorAlertModal
     v-model="tabEditBlockedOpen"
-    title="No se puede editar"
+    :title="t('pos.banner.cannotEdit')"
     :message="tabEditBlockedMessage"
   />
 
@@ -2129,7 +2131,7 @@ onUnmounted(() => {
     ref="openSaleModalRef"
     v-model="openSaleModalOpen"
     :shell-name="openSaleProduct?.name"
-    :confirm-label="isMesaMode ? `Agregar a la ${tableSingularLower}` : 'Agregar al carrito'"
+    :confirm-label="isMesaMode ? t('pos.banner.addToTable', { table: tableSingularLower }) : t('pos.banner.addToCart')"
     @confirm="handleOpenSaleConfirm"
   />
 
@@ -2142,8 +2144,8 @@ onUnmounted(() => {
       <button
         v-if="expediterEnabled && comandasEnabled"
         type="button"
-        :aria-label="readyComandasCount > 0 ? `Estado de comandas — ${readyComandasCount} listas` : 'Estado de comandas'"
-        :title="readyComandasCount > 0 ? `${readyComandasCount} comanda${readyComandasCount === 1 ? '' : 's'} lista${readyComandasCount === 1 ? '' : 's'}` : 'Estado de comandas'"
+        :aria-label="readyComandasCount > 0 ? t('pos.banner.comandasStatusReady', { count: readyComandasCount }) : t('pos.banner.comandasStatus')"
+        :title="readyComandasCount > 0 ? (readyComandasCount === 1 ? t('pos.banner.comandasReadyTitleOne', { count: readyComandasCount }) : t('pos.banner.comandasReadyTitleMany', { count: readyComandasCount })) : t('pos.banner.comandasStatus')"
         class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-action-secondary-bg text-action-secondary-text text-sm font-medium hover:bg-action-secondary-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action-secondary-focus-ring mr-1.5 md:mr-2 px-2.5 sm:px-3 md:px-4"
         :class="readyComandasCount > 0 ? 'ring-1 ring-state-success-border/60' : ''"
         @click="showExpediterPanel = true"
@@ -2153,7 +2155,7 @@ onUnmounted(() => {
           <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
           <path d="m9 14 2 2 4-4"/>
         </svg>
-        <span class="hidden sm:inline text-sm font-medium">Comandas</span>
+        <span class="hidden sm:inline text-sm font-medium">{{ t('pos.banner.comandas') }}</span>
         <!-- Count badge: numeric on sm+, dot indicator on mobile -->
         <span
           v-if="readyComandasCount > 0"
@@ -2209,7 +2211,7 @@ onUnmounted(() => {
   />
 
   <!-- warocol.com#1032 — mobile/tablet cart sheet (bar lives in dashboard layout) -->
-  <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl" fill-content>
+  <UiBottomSheetModal v-model="showMobileCartSheet" :title="t('pos.banner.currentOrder')" max-height="xl" fill-content>
     <PosCartPanel
       class="border-0 shadow-none rounded-none h-full min-h-0"
       :items="posStore.cart"

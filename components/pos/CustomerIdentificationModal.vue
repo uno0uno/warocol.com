@@ -168,7 +168,7 @@
                 </svg>
               </div>
               <span class="font-semibold text-sm text-text-primary leading-tight text-center">
-                {{ isCreatingGeneric ? 'Procesando...' : t('pos.customer.noData') }}
+                {{ isCreatingGeneric ? t('common.loading') : t('pos.customer.noData') }}
               </span>
             </button>
           </div>
@@ -288,7 +288,7 @@
                   <!-- Razón social / legal name -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-name" class="text-sm font-medium text-text-primary">
-                      {{ createForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : 'Nombre legal completo' }}
+                      {{ createForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : t('pos.customer.legalName') }}
                       <span class="text-destructive">*</span>
                     </label>
                     <input
@@ -385,7 +385,7 @@
               <!-- Razón social / legal name -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-name" class="text-sm font-medium text-text-primary">
-                  {{ fiscalForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : 'Nombre legal completo' }}
+                  {{ fiscalForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : t('pos.customer.legalName') }}
                   <span class="text-destructive">*</span>
                 </label>
                 <input

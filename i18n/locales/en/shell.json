@@ -52,7 +52,11 @@
     "now": "Now",
     "minutesAgo": "{n} min ago",
     "hoursAgo": "{n} h ago",
-    "daysAgo": "{n} d ago"
+    "daysAgo": "{n} d ago",
+    "businessOpen": "Open",
+    "businessClosed": "Closed",
+    "businessOpenAria": "Restaurant open — click to close",
+    "businessClosedAria": "Restaurant closed — click to open"
   },
   "auth": {
     "loginTitle": "Sign in",

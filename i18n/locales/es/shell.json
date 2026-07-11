@@ -52,7 +52,11 @@
     "now": "Ahora",
     "minutesAgo": "Hace {n} min",
     "hoursAgo": "Hace {n} h",
-    "daysAgo": "Hace {n} d"
+    "daysAgo": "Hace {n} d",
+    "businessOpen": "Abierto",
+    "businessClosed": "Cerrado",
+    "businessOpenAria": "Restaurante abierto — click para cerrar",
+    "businessClosedAria": "Restaurante cerrado — click para abrir"
   },
   "auth": {
     "loginTitle": "Iniciar Sesión",
