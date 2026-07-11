@@ -69,32 +69,7 @@ const updateStatus = async (status: string) => {
   }
 }
 
-const { singular: tableSingular } = useTableLabel()
-
-const SOURCE_LABELS = computed<Record<string, string>>(() => ({
-  table:    tableSingular.value,
-  pos:      t('despacho.orderTypes.counter'),
-  delivery: t('despacho.orderTypes.delivery'),
-  pickup:   t('despacho.orderTypes.pickup'),
-}))
-
-const displayDestination = (value: unknown, sourceType?: string): string => {
-  const raw = String(value ?? '').trim()
-  if (!raw) return '—'
-
-  if (sourceType === 'delivery') {
-    if (/^Domicilio$/i.test(raw)) return t('despacho.orderTypes.delivery')
-    const deliveryMatch = raw.match(/^Domicilio\s+#(.+)$/i)
-    if (deliveryMatch) return `${t('despacho.orderTypes.delivery')} #${deliveryMatch[1]}`
-    if (/^(Pickup|Recogida)$/i.test(raw)) return t('despacho.orderTypes.pickup')
-  }
-
-  if (sourceType === 'pos' && /^Mostrador$/i.test(raw)) {
-    return t('despacho.orderTypes.counter')
-  }
-
-  return raw
-}
+const { sourceLabel, destinationLabel } = useComandaDisplayLabels()
 
 const comandaStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -202,8 +177,8 @@ const itemCountLabel = (count: number) =>
                   {{ t('despacho.comandas.comanda') }} {{ comanda.comanda_number }}-{{ String(comanda.comanda_index).padStart(2, '0') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ SOURCE_LABELS[comanda.source_type] ?? comanda.source_type }}
-                  · {{ displayDestination(comanda.table_display_name, comanda.source_type) }}
+                  {{ sourceLabel(comanda.source_type) }}
+                  · {{ destinationLabel(comanda.table_display_name, comanda.source_type) }}
                 </p>
               </div>
             </div>

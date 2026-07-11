@@ -12,6 +12,7 @@ useHead({ title: () => t('despacho.head.comandas') })
 
 const { currentTenant } = useTenantReactive()
 const { singular: tableSingular } = useTableLabel()
+const { sourceLabels, sourceLabel, destinationLabel } = useComandaDisplayLabels()
 const { activeStations } = useActiveStationsQuery()
 
 const selectedSourceType = ref('')
@@ -48,33 +49,9 @@ const clearFilters = () => {
   clearSelection()
 }
 
-const SOURCE_LABELS = computed<Record<string, string>>(() => ({
-  table:    tableSingular.value,
-  pos:      t('despacho.orderTypes.counter'),
-  delivery: t('despacho.orderTypes.delivery'),
-  pickup:   t('despacho.orderTypes.pickup'),
-}))
 const sourceHeaderOptions = computed(() =>
-  Object.entries(SOURCE_LABELS.value).map(([value, label]) => ({ value, label })),
+  Object.entries(sourceLabels.value).map(([value, label]) => ({ value, label })),
 )
-
-const displayDestination = (value: unknown, sourceType?: string): string => {
-  const raw = String(value ?? '').trim()
-  if (!raw) return '—'
-
-  if (sourceType === 'delivery') {
-    if (/^Domicilio$/i.test(raw)) return t('despacho.orderTypes.delivery')
-    const deliveryMatch = raw.match(/^Domicilio\s+#(.+)$/i)
-    if (deliveryMatch) return `${t('despacho.orderTypes.delivery')} #${deliveryMatch[1]}`
-    if (/^(Pickup|Recogida)$/i.test(raw)) return t('despacho.orderTypes.pickup')
-  }
-
-  if (sourceType === 'pos' && /^Mostrador$/i.test(raw)) {
-    return t('despacho.orderTypes.counter')
-  }
-
-  return raw
-}
 
 const comandaStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -426,11 +403,11 @@ const getComandaStatusVariant = (status: string): string => {
       </template>
       <template #cell-source_type="{ value }">
         <UiStatusBadge variant="info" size="sm" format="text">
-          {{ SOURCE_LABELS[value] ?? value }}
+          {{ sourceLabel(value) }}
         </UiStatusBadge>
       </template>
       <template #cell-table_display_name="{ value, row }">
-        <span class="text-sm font-medium" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">{{ displayDestination(value, row.source_type) }}</span>
+        <span class="text-sm font-medium" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">{{ destinationLabel(value, row.source_type) }}</span>
       </template>
       <template #cell-status="{ value }">
         <UiStatusBadge :variant="getComandaStatusVariant(value)" size="sm" format="text">
@@ -490,10 +467,10 @@ const getComandaStatusVariant = (status: string): string => {
           <div class="flex-1 min-w-0">
             <p class="text-sm font-black text-text-primary leading-tight">
               <span class="text-primary">#{{ item.comanda_number }}-{{ String(item.comanda_index).padStart(2, '0') }}</span>
-              <span class="text-text-secondary font-normal"> · {{ displayDestination(item.table_display_name, item.source_type) }}</span>
+              <span class="text-text-secondary font-normal"> · {{ destinationLabel(item.table_display_name, item.source_type) }}</span>
             </p>
             <p class="text-xs text-text-secondary mt-0.5">
-              {{ SOURCE_LABELS[item.source_type] ?? item.source_type }}
+              {{ sourceLabel(item.source_type) }}
               · {{ itemCountLabel(item.items?.filter((i: any) => i.status !== 'cancelled').length ?? 0) }}
             </p>
             <div class="flex items-center gap-2 mt-1.5">
