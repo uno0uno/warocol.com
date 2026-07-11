@@ -6,7 +6,7 @@
       <button
         @click="prevYear"
         class="h-10 w-10 flex items-center justify-center rounded-lg border-2 border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-        aria-label="Año anterior"
+        :aria-label="t('finanzas.cierreContable.prevYear')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -17,7 +17,7 @@
         @click="nextYear"
         :disabled="selectedYear >= currentYear"
         class="h-10 w-10 flex items-center justify-center rounded-lg border-2 border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        aria-label="Año siguiente"
+        :aria-label="t('finanzas.cierreContable.nextYear')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -30,7 +30,7 @@
         row-size="sm"
         :columns="columns"
         :data="months"
-        empty-message="No hay períodos disponibles"
+        :empty-message="t('finanzas.cierreContable.empty')"
       >
         <!-- Mobile card -->
         <template #card="{ item, index }">
@@ -44,12 +44,12 @@
             <div class="flex-1 min-w-0">
               <span class="text-sm font-bold text-text-primary">{{ item.name }} {{ selectedYear }}</span>
               <p v-if="item.closedAt" class="text-xs text-text-secondary mt-0.5">
-                Cerrado el {{ formatDate(item.closedAt) }}
+                {{ t('finanzas.cierreContable.closedOn', { date: formatDate(item.closedAt) }) }}
               </p>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <UiStatusBadge
-                :value="item.status === 'closed' ? 'Cerrado' : 'Abierto'"
+                :value="periodStatusLabel(item)"
                 format="text"
                 :variant="item.status === 'closed' ? 'destructive' : 'success'"
                 size="sm"
@@ -58,8 +58,8 @@
                 v-if="!item.isFuture && item.status === 'open'"
                 @click="openModal(item)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Cerrar período"
-                aria-label="Cerrar período"
+                :title="t('finanzas.cierreContable.closePeriod')"
+                :aria-label="t('finanzas.cierreContable.closePeriod')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -76,7 +76,7 @@
 
         <template #cell-status="{ row }">
           <UiStatusBadge
-            :value="row.status === 'closed' ? 'Cerrado' : (row.isFuture ? 'Futuro' : 'Abierto')"
+            :value="periodStatusLabel(row)"
             format="text"
             :variant="row.status === 'closed' ? 'destructive' : (row.isFuture ? 'secondary' : 'success')"
             size="sm"
@@ -95,14 +95,14 @@
               v-if="!row.isFuture && row.status === 'open'"
               @click="openModal(row)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title="Cerrar período"
-              aria-label="Cerrar período"
+              :title="t('finanzas.cierreContable.closePeriod')"
+              :aria-label="t('finanzas.cierreContable.closePeriod')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </button>
-            <span v-else-if="row.status === 'closed'" class="text-xs text-text-secondary">Bloqueado</span>
+            <span v-else-if="row.status === 'closed'" class="text-xs text-text-secondary">{{ t('finanzas.cierreContable.locked') }}</span>
           </div>
         </template>
       </UiResponsiveDataView>
@@ -118,14 +118,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary mb-1">Cerrar período contable</h3>
+            <h3 class="text-lg font-bold text-text-primary mb-1">{{ t('finanzas.cierreContable.closePeriodTitle') }}</h3>
             <p class="text-sm text-text-secondary mb-4">
-              ¿Cerrar el período contable de <strong>{{ selectedMonth?.name }} {{ selectedYear }}</strong>?
-              Todas las órdenes de este mes quedarán <strong>bloqueadas</strong> y no podrán modificarse.
+              {{ t('finanzas.cierreContable.closeConfirm', { period: `${selectedMonth?.name ?? ''} ${selectedYear}`.trim() }) }}
             </p>
             <textarea
               v-model="notes"
-              placeholder="Notas para el contador (opcional)..."
+              :placeholder="t('finanzas.cierreContable.notesPlaceholder')"
               rows="2"
               class="w-full mb-4 px-3 py-2 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
@@ -135,14 +134,14 @@
                 :disabled="closing"
                 class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
               >
-                Cancelar
+                {{ t('finanzas.common.cancel') }}
               </button>
               <button
                 @click="handleClose"
                 :disabled="closing"
                 class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
               >
-                {{ closing ? 'Cerrando...' : t('finanzas.cierreContable.closePeriod') }}
+                {{ closing ? t('finanzas.cierreContable.closing') : t('finanzas.cierreContable.closePeriod') }}
               </button>
             </div>
           </div>
@@ -154,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
@@ -165,10 +164,7 @@ const { formatDateTime } = useFormatters()
 const { todayISO } = useTenantTimezone()
 const { fetchPeriodStatus, closePeriod } = useClosedPeriods()
 
-const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-]
+const monthNames = computed(() => Array.from({ length: 12 }, (_, index) => t(`finanzas.cierreContable.months.${index + 1}`)))
 
 const tenantToday = computed(() => todayISO())
 const currentYear = computed(() => Number(tenantToday.value.slice(0, 4)))
@@ -178,12 +174,12 @@ const selectedYear = ref(currentYear.value)
 const prevYear = () => { selectedYear.value-- }
 const nextYear = () => { if (selectedYear.value < currentYear.value) selectedYear.value++ }
 
-const columns = [
+const columns = computed(() => [
   { key: 'name',     title: t('finanzas.cierreContable.month'),            sortable: false },
   { key: 'status',   title: t('finanzas.cierreContable.status'),         sortable: false },
   { key: 'closedAt', title: t('finanzas.cierreContable.closeDate'), sortable: false },
   { key: 'actions',  title: '',               sortable: false },
-]
+])
 
 // Per-month status cache: key = 'YYYY-M'
 const statusCache = ref<Record<string, { status: string; closedAt?: string }>>({})
@@ -208,7 +204,7 @@ const loadYear = async (year: number) => {
 watch(selectedYear, (y) => loadYear(y), { immediate: true })
 
 const months = computed(() =>
-  MONTH_NAMES.map((name, i) => {
+  monthNames.value.map((name, i) => {
     const m = i + 1
     const key = `${selectedYear.value}-${m}`
     const cached = statusCache.value[key]
@@ -224,6 +220,12 @@ const months = computed(() =>
 )
 
 const formatDate = (iso: string) => iso ? formatDateTime(iso) : '—'
+
+const periodStatusLabel = (item: { status: string; isFuture?: boolean }) => {
+  if (item.status === 'closed') return t('finanzas.cierreContable.closed')
+  if (item.isFuture) return t('finanzas.cierreContable.future')
+  return t('finanzas.cierreContable.open')
+}
 
 // Modal
 const showModal = ref(false)
@@ -253,7 +255,7 @@ const handleClose = async () => {
     showModal.value = false
     selectedMonth.value = null
   } catch (err: any) {
-    alert(err?.data?.detail ?? err?.data?.message ?? 'Error al cerrar el período')
+    alert(err?.data?.detail ?? err?.data?.message ?? t('finanzas.cierreContable.closeError'))
   } finally {
     closing.value = false
   }

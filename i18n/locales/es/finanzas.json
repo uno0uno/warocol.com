@@ -448,7 +448,28 @@
       "notesPlaceholder": "Notas para el contador (opcional)...",
       "empty": "No hay períodos disponibles",
       "prevYear": "Año anterior",
-      "nextYear": "Año siguiente"
+      "nextYear": "Año siguiente",
+      "months": {
+        "1": "Enero",
+        "2": "Febrero",
+        "3": "Marzo",
+        "4": "Abril",
+        "5": "Mayo",
+        "6": "Junio",
+        "7": "Julio",
+        "8": "Agosto",
+        "9": "Septiembre",
+        "10": "Octubre",
+        "11": "Noviembre",
+        "12": "Diciembre"
+      },
+      "open": "Abierto",
+      "closed": "Cerrado",
+      "future": "Futuro",
+      "closedOn": "Cerrado el {date}",
+      "closeConfirm": "¿Cerrar el período contable de {period}? Todas las órdenes de este mes quedarán bloqueadas y no podrán modificarse.",
+      "closing": "Cerrando...",
+      "closeError": "Error al cerrar el período"
     },
     "pl": {
       "title": "Estado de Resultados",

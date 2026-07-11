@@ -448,7 +448,28 @@
       "notesPlaceholder": "Notes for the accountant (optional)...",
       "empty": "No periods available",
       "prevYear": "Previous year",
-      "nextYear": "Next year"
+      "nextYear": "Next year",
+      "months": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      },
+      "open": "Open",
+      "closed": "Closed",
+      "future": "Future",
+      "closedOn": "Closed on {date}",
+      "closeConfirm": "Close the accounting period for {period}? All orders from this month will be locked and cannot be modified.",
+      "closing": "Closing...",
+      "closeError": "Error closing the period"
     },
     "pl": {
       "title": "Income statement",
