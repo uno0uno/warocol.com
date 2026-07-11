@@ -211,7 +211,8 @@
       "verifyAgain": "Verificar de nuevo",
       "selectDate": "Seleccionar fecha...",
       "irreversibilityWarning": "Esta acción no se puede deshacer",
-      "restaurant": "Restaurante"
+      "restaurant": "Restaurante",
+      "cashCountInstruction": "Ingresa los billetes y monedas en caja:"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",

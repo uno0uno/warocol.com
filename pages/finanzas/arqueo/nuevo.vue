@@ -330,15 +330,15 @@
 
       <!-- Step 2: Conteo de caja -->
       <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-1">Conteo de caja</h3>
-        <p class="text-xs text-text-secondary mb-3">Ingresa los billetes y monedas en caja:</p>
+        <h3 class="text-sm font-semibold text-text-primary mb-1">{{ t('finanzas.arqueo.cashCount') }}</h3>
+        <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.cashCountInstruction') }}</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
           <!-- Izquierda: denominaciones -->
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Billetes y monedas</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.billsCoins') }}</span>
             </div>
             <div class="divide-y divide-border">
               <div
@@ -364,7 +364,7 @@
                   :class="(parseInt(counts[denom]) || 0) > 0
                     ? 'border-primary/50 bg-primary/5 font-semibold'
                     : 'border-border bg-surface'"
-                  :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
+                  :aria-label="t('finanzas.arqueo.denominationCountAria', { amount: formatCurrency(denom) })"
                 />
                 <span class="text-text-tertiary text-xs flex-shrink-0">=</span>
                 <span
@@ -380,7 +380,7 @@
                 <span
                   class="text-sm w-24 text-right flex-shrink-0 transition-colors"
                   :class="parseMoneyInput(monedasAmount) > 0 ? 'font-semibold text-text-primary' : 'text-text-secondary'"
-                >Monedas</span>
+                >{{ t('finanzas.arqueo.coins') }}</span>
                 <span class="text-transparent text-xs flex-shrink-0">×</span>
                 <input
                   v-model="monedasAmount"
@@ -393,7 +393,7 @@
                   :class="parseMoneyInput(monedasAmount) > 0
                     ? 'border-primary/50 bg-primary/5 font-semibold'
                     : 'border-border bg-surface'"
-                  aria-label="Monto total en monedas"
+                  :aria-label="t('finanzas.arqueo.coinsAmountAria')"
                 />
                 <span class="text-text-tertiary text-xs flex-shrink-0">=</span>
                 <span
@@ -410,7 +410,7 @@
             <!-- Desglose + total elevado -->
             <div class="bg-background rounded-lg border border-border overflow-hidden">
               <div class="px-3 py-2 bg-surface border-b border-border">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Desglose</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.breakdown') }}</span>
               </div>
               <div class="divide-y divide-border">
                 <div v-for="denom in denominations" :key="denom" class="flex justify-between px-3 py-1.5">
@@ -427,7 +427,7 @@
                   <span
                     class="text-xs"
                     :class="parseMoneyInput(monedasAmount) > 0 ? 'font-medium text-text-primary' : 'text-text-tertiary'"
-                  >Monedas</span>
+                  >{{ t('finanzas.arqueo.coins') }}</span>
                   <span
                     class="text-xs"
                     :class="parseMoneyInput(monedasAmount) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
@@ -436,14 +436,14 @@
               </div>
               <!-- Total row — accent strip -->
               <div class="px-3 py-2.5 bg-primary/10 border-t-2 border-primary/20 flex items-center justify-between">
-                <span class="text-sm font-semibold text-primary">Total contado</span>
+                <span class="text-sm font-semibold text-primary">{{ t('finanzas.arqueo.cashCounted') }}</span>
                 <span class="text-base font-bold text-primary">{{ formatCurrency(totalCounted) }}</span>
               </div>
             </div>
 
             <div v-if="previewLoading" class="rounded-lg border border-border bg-background overflow-hidden">
               <div class="px-3 py-2 bg-surface border-b border-border">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Calculando caja</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.calculating') }}</span>
               </div>
               <div class="divide-y divide-border animate-pulse">
                 <div v-for="row in 3" :key="row" class="flex items-center justify-between px-3 py-2.5">
@@ -462,12 +462,12 @@
                   <svg v-else class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <span class="text-sm font-semibold">Diferencia</span>
+                  <span class="text-sm font-semibold">{{ t('finanzas.common.difference') }}</span>
                 </div>
                 <span class="text-lg font-bold">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
               </div>
               <div class="px-3 py-2 border-t border-black/10 flex justify-between text-xs opacity-80">
-                <span>Esperado en caja</span>
+                <span>{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
                 <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
               </div>
             </div>
@@ -477,7 +477,7 @@
 
         <div class="flex gap-3 mt-4">
           <button @click="currentStep = 1" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
-            ← Atrás
+            ← {{ t('finanzas.common.back') }}
           </button>
           <button
             @click="currentStep = 3"
