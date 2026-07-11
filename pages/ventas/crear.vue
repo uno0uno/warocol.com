@@ -147,6 +147,7 @@ const { data: paymentGroupsData } = useFetch<{ success: boolean; data: ApiPaymen
   '/api/pos/payment-methods',
 )
 const paymentGroups = computed(() => mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []))
+const { groupLabel, resolveLabel } = usePaymentLabel(paymentGroups)
 const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
 const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefreshingWallet } =
   useCustomerWallet(customerIdRef)
@@ -402,7 +403,12 @@ function notifyMissingRequiredGroup(group: { name: string }) {
 // ─── Totals ───────────────────────────────────────────────────────────────────
 
 function modifierTypeLabel(option: ModifierOption): string {
-  return option.type_label || formatModifierOptionTypeLabel(normalizeModifierOptionType(option.option_type))
+  const normalized = normalizeModifierOptionType(option.option_type)
+  if (normalized === 'INGREDIENT') return t('ventas.crear.ingredient')
+  if (normalized === 'RECIPE') return t('ventas.crear.recipe')
+  if (normalized === 'PRODUCT') return t('ventas.crear.linkedProduct')
+  if (normalized === 'NONE') return t('ventas.crear.priceOnly')
+  return option.type_label || formatModifierOptionTypeLabel(normalized)
 }
 
 function itemTotal(item: LineItem) {
@@ -443,17 +449,17 @@ const singlePaymentValidationError = computed(() => {
   if (!currentPaymentIsWallet.value) return ''
   if (!selectedCustomer.value) return t('ventas.crear.identifyForWallet')
   if (isAnonymousCustomer.value) return t('ventas.crear.walletNeedsCustomer')
-  if (total.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
+  if (total.value > walletBalanceCop.value) return t('ventas.crear.walletInsufficient')
   return ''
 })
 const splitAmountValidationError = computed(() => {
   if (!splitMode.value || splitIsComplete.value) return ''
-  if (splitAmountToAdd.value <= 0) return 'Ingresa un monto a cobrar'
+  if (splitAmountToAdd.value <= 0) return t('ventas.crear.amountGtZero')
   if (splitAmountToAdd.value - splitRemaining.value > 0.01) return t('ventas.crear.paymentExceeds')
   if (!currentPaymentIsWallet.value) return ''
   if (!selectedCustomer.value) return t('ventas.crear.identifyForWallet')
   if (isAnonymousCustomer.value) return t('ventas.crear.walletNeedsCustomer')
-  if (splitAmountToAdd.value > walletBalanceCop.value) return 'Saldo wallet insuficiente'
+  if (splitAmountToAdd.value > walletBalanceCop.value) return t('ventas.crear.walletInsufficient')
   return ''
 })
 
@@ -472,15 +478,12 @@ const totalItemCount = computed(() =>
 
 // ─── Currency ────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+const { formatCurrency } = useFormatters()
 
 const mobileCartFormattedTotal = computed(() => formatCurrency(total.value))
 
 function paymentLabel(payment: Pick<ManualSplitPayment, 'payment_method' | 'payment_method_id'>) {
-  const group = paymentGroups.value.find(g => g.slug === payment.payment_method)
-  const method = group?.methods.find(m => m.id === payment.payment_method_id)
-  return method ? `${group?.name} · ${method.name}` : (group?.name || payment.payment_method)
+  return resolveLabel(payment.payment_method, payment.payment_method_id)
 }
 
 function addSplitPayment() {
@@ -668,11 +671,11 @@ async function submit() {
           >
             <template v-for="g in visiblePaymentGroups" :key="g.id">
               <!-- Group default option (when no specific method picked) -->
-              <option :value="`${g.slug}:`">{{ g.name }}</option>
+              <option :value="`${g.slug}:`">{{ groupLabel(g) }}</option>
               <!-- Specific methods nested under the group -->
-              <optgroup v-if="g.methods && g.methods.length > 0" :label="g.name">
+              <optgroup v-if="g.methods && g.methods.length > 0" :label="groupLabel(g)">
                 <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
-                  {{ g.name }} · {{ m.name }}
+                  {{ groupLabel(g) }} · {{ m.name }}
                 </option>
               </optgroup>
             </template>
@@ -705,7 +708,7 @@ async function submit() {
                   v-else
                   class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
                 >
-                  Wallet: {{ formatCurrency(walletBalanceCop) }}
+                  {{ t('ventas.crear.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
                 </span>
               </div>
             </div>
@@ -714,7 +717,7 @@ async function submit() {
               class="h-7 px-2 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors shrink-0"
               @click="showCustomerModal = true"
             >
-              Cambiar
+              {{ t('ventas.common.cambiar') }}
             </button>
             <button
               type="button"
@@ -764,7 +767,7 @@ async function submit() {
                   : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
                 @click="selectedCategory = cat"
               >
-                {{ cat === 'all' ? 'Todos' : cat }}
+                {{ cat === 'all' ? t('ventas.common.todos') : cat }}
               </button>
             </div>
           </div>
@@ -842,7 +845,7 @@ async function submit() {
                         {{ customizationProduct?.name }}
                       </h2>
                       <p class="text-xs text-text-secondary">
-                        {{ formatCurrency(customizationItem.unit_price) }} c/u
+                        {{ t('ventas.crear.unitPrice', { amount: formatCurrency(customizationItem.unit_price) }) }}
                       </p>
                     </div>
                     <button
@@ -850,7 +853,7 @@ async function submit() {
                       class="text-xs text-text-secondary hover:text-text-primary transition-colors px-2 py-1 rounded min-h-[32px]"
                       @click="closeCustomizationPanel"
                     >
-                      Cerrar
+                      {{ t('ventas.common.cerrar') }}
                     </button>
                   </div>
 
@@ -867,7 +870,7 @@ async function submit() {
                         {{ group.name }}
                         <span v-if="group.is_required || group.min_qty > 0" class="text-destructive" aria-hidden="true">*</span>
                         <span class="normal-case font-normal ml-1 text-xs">
-                          (<template v-if="group.min_qty > 1">mín. {{ group.min_qty }} · </template>máx. {{ group.max_qty }})
+                          (<template v-if="group.min_qty > 1">{{ t('ventas.crear.minShort', { count: group.min_qty }) }} · </template>{{ t('ventas.crear.maxShort', { count: group.max_qty }) }})
                         </span>
                       </p>
                       <div v-if="isSingleSelectGroup(group)" class="flex flex-wrap gap-2">
@@ -897,7 +900,7 @@ async function submit() {
                           </svg>
                           {{ option.name }}
                           <span
-                            v-if="modifierTypeLabel(option) !== 'Ingrediente'"
+                            v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
                             class="text-[10px] uppercase tracking-wide text-text-tertiary"
                           >
                             {{ modifierTypeLabel(option) }}
@@ -924,7 +927,7 @@ async function submit() {
                               <p class="text-sm font-medium text-text-primary truncate">{{ option.name }}</p>
                               <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
                                 <span
-                                  v-if="modifierTypeLabel(option) !== 'Ingrediente'"
+                                  v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
                                   class="text-[10px] uppercase tracking-wide text-text-tertiary"
                                 >
                                   {{ modifierTypeLabel(option) }}
@@ -977,7 +980,7 @@ async function submit() {
                     v-else
                     class="text-sm text-text-secondary"
                   >
-                    Este producto no tiene adiciones configuradas.
+                    {{ t('ventas.crear.noAdditions') }}
                   </p>
 
                   <div
@@ -993,14 +996,14 @@ async function submit() {
                         class="h-10 px-4 rounded-lg border border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
                         @click="closeProductDetail"
                       >
-                        Cancelar
+                        {{ t('ventas.common.cancelar') }}
                       </button>
                       <button
                         type="button"
                         class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                         @click="confirmProductDetail"
                       >
-                        Agregar al carrito
+                        {{ t('ventas.crear.addToCart') }}
                       </button>
                     </div>
                   </div>
@@ -1014,7 +1017,7 @@ async function submit() {
                       class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                       @click="closeCustomizationPanel"
                     >
-                      Listo
+                      {{ t('ventas.common.listo') }}
                     </button>
                   </div>
                 </div>
@@ -1031,7 +1034,7 @@ async function submit() {
           <div class="px-4 py-3 border-b border-border bg-primary flex items-center justify-between">
             <h2 class="text-sm font-semibold text-primary-foreground">{{ t('ventas.crear.orderTitle') }}</h2>
             <span class="text-xs bg-primary-foreground/10 text-primary-foreground rounded-full px-2 py-0.5 font-medium">
-              {{ totalItemCount }} {{ totalItemCount === 1 ? 'unidad' : 'unidades' }}
+              {{ t(totalItemCount === 1 ? 'ventas.crear.unitCountOne' : 'ventas.crear.unitCountMany', { count: totalItemCount }) }}
             </span>
           </div>
 
@@ -1056,7 +1059,7 @@ async function submit() {
             >
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
-                <p class="text-xs text-text-secondary">{{ formatCurrency(item.unit_price) }} c/u</p>
+                <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
                 <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="mod in item.selected_modifiers"
@@ -1121,7 +1124,7 @@ async function submit() {
                   :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
                   @click="discountEnabled = !discountEnabled"
                 >
-                  {{ discountEnabled ? 'Activo' : 'Agregar' }}
+                  {{ discountEnabled ? t('ventas.crear.active') : t('ventas.common.agregar') }}
                 </button>
               </div>
               <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
@@ -1130,7 +1133,7 @@ async function submit() {
                   class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary"
                 >
                   <option value="percent">{{ t('ventas.common.porcentaje') }}</option>
-                  <option value="fixed">Fijo COP</option>
+                  <option value="fixed">{{ t('ventas.crear.fixedCop') }}</option>
                 </select>
                 <input
                   v-model="discountInput"
@@ -1157,7 +1160,7 @@ async function submit() {
                   :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
                   @click="splitMode = !splitMode"
                 >
-                  {{ splitMode ? 'Activo' : 'Dividir' }}
+                  {{ splitMode ? t('ventas.crear.active') : t('ventas.crear.splitAction') }}
                 </button>
               </div>
               <div v-if="splitMode" class="flex flex-col gap-2">
@@ -1181,7 +1184,7 @@ async function submit() {
                     min="1"
                     :max="Math.round(splitRemaining)"
                     class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
-                    placeholder="Monto"
+                    :placeholder="t('ventas.crear.amountPlaceholder')"
                   />
                   <button
                     type="button"
@@ -1189,12 +1192,12 @@ async function submit() {
                     :disabled="!!splitAmountValidationError"
                     @click="addSplitPayment"
                   >
-                    Agregar
+                    {{ t('ventas.common.agregar') }}
                   </button>
                 </div>
                 <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
                 <div class="flex items-center justify-between text-sm">
-                  <span class="text-text-secondary">{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+                  <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
                   <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
                 </div>
               </div>
@@ -1220,10 +1223,10 @@ async function submit() {
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Registrando...
+                {{ t('ventas.crear.registering') }}
               </span>
               <span v-else>
-                Registrar · {{ formatCurrency(total) }}
+                {{ t('ventas.crear.registerWithAmount', { amount: formatCurrency(total) }) }}
               </span>
             </button>
           </div>
@@ -1235,7 +1238,7 @@ async function submit() {
       <!-- ── Mobile: Cart Bottom Sheet ───────────────────────────────────── -->
       <UiBottomSheetModal
         v-model="showMobileCartSheet"
-        title="Orden actual"
+        :title="t('ventas.crear.currentOrder')"
         max-height="xl"
       >
         <div class="p-4 flex flex-col gap-3">
@@ -1257,7 +1260,7 @@ async function submit() {
             >
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
-                <p class="text-xs text-text-secondary">{{ formatCurrency(item.unit_price) }} c/u</p>
+                <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
                 <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="mod in item.selected_modifiers"
@@ -1321,13 +1324,13 @@ async function submit() {
                   :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
                   @click="discountEnabled = !discountEnabled"
                 >
-                  {{ discountEnabled ? 'Activo' : 'Agregar' }}
+                  {{ discountEnabled ? t('ventas.crear.active') : t('ventas.common.agregar') }}
                 </button>
               </div>
               <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
                 <select v-model="discountType" class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary">
                   <option value="percent">{{ t('ventas.common.porcentaje') }}</option>
-                  <option value="fixed">Fijo COP</option>
+                  <option value="fixed">{{ t('ventas.crear.fixedCop') }}</option>
                 </select>
                 <input
                   v-model="discountInput"
@@ -1354,7 +1357,7 @@ async function submit() {
                   :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
                   @click="splitMode = !splitMode"
                 >
-                  {{ splitMode ? 'Activo' : 'Dividir' }}
+                  {{ splitMode ? t('ventas.crear.active') : t('ventas.crear.splitAction') }}
                 </button>
               </div>
               <div v-if="splitMode" class="flex flex-col gap-2">
@@ -1372,7 +1375,7 @@ async function submit() {
                     min="1"
                     :max="Math.round(splitRemaining)"
                     class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
-                    placeholder="Monto"
+                    :placeholder="t('ventas.crear.amountPlaceholder')"
                   />
                   <button
                     type="button"
@@ -1380,12 +1383,12 @@ async function submit() {
                     :disabled="!!splitAmountValidationError"
                     @click="addSplitPayment"
                   >
-                    Agregar
+                    {{ t('ventas.common.agregar') }}
                   </button>
                 </div>
                 <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
                 <div class="flex items-center justify-between text-sm">
-                  <span class="text-text-secondary">{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+                  <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
                   <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
                 </div>
               </div>
@@ -1412,10 +1415,10 @@ async function submit() {
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Registrando...
+                {{ t('ventas.crear.registering') }}
               </span>
               <span v-else>
-                Registrar · {{ formatCurrency(total) }}
+                {{ t('ventas.crear.registerWithAmount', { amount: formatCurrency(total) }) }}
               </span>
             </button>
           </div>
