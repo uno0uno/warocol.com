@@ -1,15 +1,13 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 useHead({ title: () => t('ventas.head.productos') })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
-const { formatCurrency } = useFormatters()
+const { formatCurrency, formatRelativeDate } = useFormatters()
 
 const lastUpdate = ref<Date>(new Date())
 
@@ -154,7 +152,7 @@ const tableColumns = [
 ]
 
 // ── Layout actions ───────────────────────────────────────────────────────
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const lastUpdateText = computed(() => formatRelativeDate(lastUpdate.value.toISOString()))
 
 const handleRefresh = async () => {
   await refetch()
@@ -255,9 +253,9 @@ onUnmounted(() => {
             :class="filterSelectClass"
           >
             <option :value="null">{{ t('ventas.productos.channel') }}</option>
-            <option value="pos">POS</option>
-            <option value="mesa">Mesa</option>
-            <option value="online">Online</option>
+            <option value="pos">{{ t('ventas.common.pos') }}</option>
+            <option value="mesa">{{ t('ventas.productos.tableChannel') }}</option>
+            <option value="online">{{ t('ventas.productos.onlineChannel') }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>

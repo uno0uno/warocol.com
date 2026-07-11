@@ -301,6 +301,8 @@
       "filterCategory": "Filter by category",
       "filterChannel": "Filter by channel",
       "channel": "Channel",
+      "tableChannel": "Table",
+      "onlineChannel": "Online",
       "sortBy": "Sort by",
       "sortQtyDesc": "Best selling",
       "sortRevenueDesc": "Highest revenue",

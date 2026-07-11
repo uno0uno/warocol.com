@@ -301,6 +301,8 @@
       "filterCategory": "Filtrar por categoría",
       "filterChannel": "Filtrar por canal",
       "channel": "Canal",
+      "tableChannel": "Mesa",
+      "onlineChannel": "Online",
       "sortBy": "Ordenar por",
       "sortQtyDesc": "Más vendidos",
       "sortRevenueDesc": "Más ingresos",
