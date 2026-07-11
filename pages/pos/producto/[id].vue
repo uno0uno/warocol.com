@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -527,6 +527,21 @@ const basePriceFromProduct = () => Number(product.value?.price) || 0
 
 const netTotalPrice = computed(() => Math.max(0, totalPrice.value - promoSavings.value))
 
+const addToCartLabel = computed(() => {
+  if (isLineEditMode.value) return t('pos.product.saveChanges')
+  if (quantity.value > 1) return t('pos.product.addMultipleToCart', { count: quantity.value })
+  return t('pos.product.addToCart')
+})
+
+const modifierGroupMetaLabel = (group: ModifierGroup) => {
+  const parts = [
+    group.required || group.minQty > 0 ? t('pos.product.required') : t('pos.product.optional'),
+  ]
+  if (group.minQty > 1) parts.push(t('pos.product.minShort', { count: group.minQty }))
+  parts.push(t('pos.product.maxShort', { count: group.maxSelections }))
+  return parts.join(' • ')
+}
+
 // Methods
 const getModifierQty = (modifierId: string) =>
   activeStepModifiers.value.find(m => m.id === modifierId)?.quantity ?? 0
@@ -546,9 +561,11 @@ const missingRequiredModifierGroupFor = (modifiers: CartModifier[]) =>
   )
 
 const notifyMissingRequiredGroup = (group: { name: string }, unitNumber?: number) => {
-  const prefix = unitNumber ? `Ítem ${unitNumber}: ` : ''
-  useToast().warning(`${prefix}selecciona ${group.name} antes de continuar`, {
-    title: 'Modificador obligatorio',
+  useToast().warning(t(
+    unitNumber ? 'pos.product.missingRequiredForItem' : 'pos.product.missingRequired',
+    { number: unitNumber, group: group.name },
+  ), {
+    title: t('pos.product.missingRequiredTitle'),
   })
 }
 
@@ -739,7 +756,7 @@ const addToCart = async () => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -795,7 +812,7 @@ watch(product, (newProduct) => {
     <div v-if="loadingProduct || !product" class="flex items-center justify-center min-h-[70vh]">
       <div class="text-center">
         <CommonsTheCustomLoader size="large" />
-        <p class="text-text-secondary font-medium mt-6">Cargando producto...</p>
+        <p class="text-text-secondary font-medium mt-6">{{ t('pos.product.loading') }}</p>
       </div>
     </div>
 
@@ -808,7 +825,7 @@ watch(product, (newProduct) => {
         <div class="bg-surface rounded-2xl p-4 md:p-6 border border-border relative overflow-hidden">
           <!-- Popular Badge -->
           <div class="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-xl z-10">
-            POPULAR
+            {{ t('pos.product.popular') }}
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center">
@@ -861,15 +878,15 @@ watch(product, (newProduct) => {
         <section v-if="!isTabItemEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
           <div v-if="wizardMode" class="flex items-center justify-between">
             <h3 class="text-base md:text-lg font-bold text-text-primary">
-              Ítem {{ wizardStep + 1 }} de {{ quantity }}
+              {{ t('pos.product.itemStep', { current: wizardStep + 1, total: quantity }) }}
             </h3>
             <span class="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
-              Personalización individual
+              {{ t('pos.product.individualCustomization') }}
             </span>
           </div>
 
           <div v-if="!wizardMode" class="flex items-center justify-between">
-            <span class="text-sm font-semibold text-text-primary">Cantidad</span>
+            <span class="text-sm font-semibold text-text-primary">{{ t('pos.product.quantity') }}</span>
             <div class="flex items-center gap-3">
               <button
                 type="button"
@@ -898,8 +915,8 @@ watch(product, (newProduct) => {
                 @change="enableWizard"
               />
               <span>
-                <span class="block text-sm font-semibold text-text-primary">Personalizar cada uno individualmente</span>
-                <span class="block text-xs text-text-secondary mt-0.5">Ideal para promos 2×1 / 3×1 con extras distintos por unidad</span>
+                <span class="block text-sm font-semibold text-text-primary">{{ t('pos.product.customizeEach') }}</span>
+                <span class="block text-xs text-text-secondary mt-0.5">{{ t('pos.product.customizeEachHint') }}</span>
               </span>
             </label>
           </div>
@@ -910,9 +927,7 @@ watch(product, (newProduct) => {
           <div class="flex items-center justify-between mb-3 md:mb-4">
             <h3 class="text-base md:text-lg font-bold text-text-primary">{{ group.name }}</h3>
             <span class="text-xs font-medium bg-surface-secondary text-text-secondary px-2 py-1 rounded">
-              {{ group.required || group.minQty > 0 ? 'Obligatorio' : 'Opcional' }}
-              <template v-if="group.minQty > 1"> • Mín {{ group.minQty }}</template>
-              • Máx {{ group.maxSelections }}
+              {{ modifierGroupMetaLabel(group) }}
             </span>
           </div>
 
@@ -1009,7 +1024,7 @@ watch(product, (newProduct) => {
                   type="button"
                   class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                   :disabled="getModifierQty(option.id) <= 0"
-                  :aria-label="`Reducir ${option.name}`"
+                  :aria-label="t('pos.product.decreaseModifierAria', { name: option.name })"
                   @click="decrementModifier(option, group.id)"
                 >
                   −
@@ -1024,7 +1039,7 @@ watch(product, (newProduct) => {
                   type="button"
                   class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                   :disabled="!canIncrementModifier(option, group.id)"
-                  :aria-label="`Aumentar ${option.name}`"
+                  :aria-label="t('pos.product.increaseModifierAria', { name: option.name })"
                   @click="incrementModifier(option, group.id)"
                 >
                   +
@@ -1037,11 +1052,11 @@ watch(product, (newProduct) => {
         <!-- Notes Section -->
         <section>
           <h3 class="text-base md:text-lg font-bold text-text-primary mb-3">
-            {{ wizardMode ? `Notas — ítem ${wizardStep + 1}` : 'Notas Especiales' }}
+            {{ wizardMode ? t('pos.product.itemNotes', { number: wizardStep + 1 }) : t('pos.product.specialNotes') }}
           </h3>
           <textarea
             v-model="activeNotes"
-            placeholder="Ej: Sin cebolla, término medio, cortar en cuadros..."
+            :placeholder="t('pos.product.notesPlaceholder')"
             class="w-full border border-border rounded-xl p-3 md:p-4 text-xs md:text-sm text-text-primary focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm placeholder:text-muted-foreground bg-surface"
             rows="3"
           />
@@ -1051,7 +1066,7 @@ watch(product, (newProduct) => {
       <!-- Right Column: Summary (Desktop Sticky) -->
       <div class="hidden lg:block lg:w-96 flex-shrink-0">
         <div class="sticky top-6 bg-surface rounded-2xl p-6 shadow-lg border border-border">
-          <h3 class="text-base md:text-lg font-bold text-text-primary mb-4">Resumen</h3>
+          <h3 class="text-base md:text-lg font-bold text-text-primary mb-4">{{ t('pos.product.summary') }}</h3>
 
           <!-- Summary Items -->
           <div class="space-y-3 mb-6 border-b border-border pb-6">
@@ -1076,7 +1091,7 @@ watch(product, (newProduct) => {
 
           <!-- Total -->
           <div class="flex justify-between items-center mb-6">
-            <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
+            <span class="text-text-secondary font-medium text-sm md:text-base">{{ t('pos.cart.total') }}</span>
             <div class="flex flex-col items-end">
               <span
                 v-if="promoSavings > 0"
@@ -1098,7 +1113,7 @@ watch(product, (newProduct) => {
                 :disabled="wizardStep === 0"
                 @click="wizardStep--"
               >
-                ← Anterior
+                ← {{ t('pos.product.previous') }}
               </button>
               <button
                 v-if="wizardStep < quantity - 1"
@@ -1106,7 +1121,7 @@ watch(product, (newProduct) => {
                 class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl"
                 @click="goToNextStep"
               >
-                Siguiente →
+                {{ t('pos.product.next') }} →
               </button>
               <button
                 v-else
@@ -1114,7 +1129,7 @@ watch(product, (newProduct) => {
                 :disabled="isAdding"
                 class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
               >
-                Agregar {{ quantity }} ítems
+                {{ t('pos.product.addItems', { count: quantity }) }}
               </button>
             </div>
           </template>
@@ -1129,11 +1144,11 @@ watch(product, (newProduct) => {
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Agregando...
+              {{ t('pos.product.adding') }}
             </template>
             <template v-else>
               <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-              {{ isLineEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
+              {{ addToCartLabel }}
             </template>
           </button>
         </div>
@@ -1143,7 +1158,7 @@ watch(product, (newProduct) => {
     <!-- Mobile/Tablet Bottom Summary -->
     <div v-if="!loadingProduct && product" class="lg:hidden mt-4 md:mt-6 pb-4">
       <div class="bg-surface rounded-xl p-4 md:p-6 shadow-lg border border-border">
-        <h3 class="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">Resumen</h3>
+        <h3 class="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">{{ t('pos.product.summary') }}</h3>
 
         <!-- Summary Items -->
         <div class="space-y-2 md:space-y-3 mb-4 md:mb-6 border-b border-border pb-4 md:pb-6">
@@ -1168,7 +1183,7 @@ watch(product, (newProduct) => {
 
         <!-- Total -->
         <div class="flex justify-between items-center mb-4 md:mb-6">
-          <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
+          <span class="text-text-secondary font-medium text-sm md:text-base">{{ t('pos.cart.total') }}</span>
           <div class="flex flex-col items-end">
             <span
               v-if="promoSavings > 0"
@@ -1190,7 +1205,7 @@ watch(product, (newProduct) => {
               :disabled="wizardStep === 0"
               @click="wizardStep--"
             >
-              ← Anterior
+              ← {{ t('pos.product.previous') }}
             </button>
             <button
               v-if="wizardStep < quantity - 1"
@@ -1198,7 +1213,7 @@ watch(product, (newProduct) => {
               class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl"
               @click="goToNextStep"
             >
-              Siguiente →
+              {{ t('pos.product.next') }} →
             </button>
             <button
               v-else
@@ -1206,7 +1221,7 @@ watch(product, (newProduct) => {
               :disabled="isAdding"
               class="flex-[2] bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
             >
-              Agregar {{ quantity }} ítems
+              {{ t('pos.product.addItems', { count: quantity }) }}
             </button>
           </div>
         </template>
@@ -1221,11 +1236,11 @@ watch(product, (newProduct) => {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Agregando...
+            {{ t('pos.product.adding') }}
           </template>
           <template v-else>
             <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-            {{ isLineEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
+            {{ addToCartLabel }}
           </template>
         </button>
       </div>

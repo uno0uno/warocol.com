@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -191,7 +191,7 @@ const handleChangeSessionWaiter = async (event: Event) => {
   } catch (error: any) {
     if (error?.statusCode === 403 || error?.response?.status === 403) {
       toast.error(
-        'Solo el mesero actual o un supervisor pueden cambiar la asignación',
+        t('pos.banner.waiterChangeForbidden'),
         { title: t('pos.banner.notAllowed') },
       )
     } else {
@@ -291,6 +291,7 @@ const onPosCustomerIdentified = async (customer: {
 }
 
 const posWarosBalance = computed(() => posWarosSummary.value?.current_balance ?? 0)
+const pointsLocale = computed(() => toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))
 const posWalletBalance = computed(() => posCustomerWallet.value?.balance_cop ?? 0)
 const isPosWalletPending = computed(() => isLoadingPosWallet.value || isRefreshingPosWallet.value)
 
@@ -536,7 +537,10 @@ async function syncTabAfterAdd(addRes: unknown, addedCount: number) {
   applyFireResult(comandas, fired_items_count)
   await refreshPersistedComandas(undefined, tableSessionFetchGen, false)
   if (fired_items_count > 0) {
-    tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+    tabSuccess.value = t(
+      fired_items_count === 1 ? 'pos.banner.itemsSentKitchenOne' : 'pos.banner.itemsSentKitchenMany',
+      { count: fired_items_count },
+    )
     setTimeout(() => { tabSuccess.value = null }, 3000)
   } else {
     tabError.value = t('pos.banner.itemsAddedNoKitchen')
@@ -704,8 +708,8 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
       posStore.exitSession()
       toast.error(
         ctx.isBar
-          ? 'No hay sesión abierta en barra. Intenta de nuevo desde el plano.'
-          : `No hay sesión abierta en esta ${tableSingularLower.value}.`,
+          ? t('pos.banner.noOpenBarSession')
+          : t('pos.banner.noOpenTableSession', { table: tableSingularLower.value }),
         { title: t('pos.banner.session') },
       )
       return
@@ -747,7 +751,7 @@ const consumePosDeepLink = async () => {
     const table = res?.data?.table
     if (!session?.id) {
       toast.error(
-        `No hay sesión abierta en esa ${tableSingularLower.value}`,
+        t('pos.banner.noOpenThatTable', { table: tableSingularLower.value }),
         { title: t('pos.banner.comandaReady') },
       )
       return
@@ -1109,7 +1113,7 @@ const addToTab = async () => {
     await posStore.clearCart()
     await syncTabAfterAdd(addRes, items.length)
   } catch (e: any) {
-    tabError.value = e?.data?.detail ?? `Error al agregar a la ${tableSingularLower.value}`
+    tabError.value = e?.data?.detail ?? t('pos.banner.addToTableError', { table: tableSingularLower.value })
   } finally {
     isAddingToTab.value = false
   }
@@ -1401,11 +1405,11 @@ const editTabItem = async (orderItemId: string, productId: string) => {
     const detail = e?.data?.detail ?? e?.data?.message
     const message = typeof detail === 'string' ? detail : null
     if (status === 409) {
-      tabEditBlockedMessage.value = message ?? 'La cocina ya aceptó este ítem. No se pueden cambiar modificadores ni notas.'
+      tabEditBlockedMessage.value = message ?? t('pos.banner.editBlockedAccepted')
       tabEditBlockedOpen.value = true
       return
     }
-    tabError.value = message ?? 'No se pudo verificar si el ítem es editable'
+    tabError.value = message ?? t('pos.banner.editEligibilityError')
   }
 }
 
@@ -1435,7 +1439,7 @@ const addOpenSaleToTab = async (amount: number, description?: string) => {
       await refreshTableSession()
     }
   } catch (e: any) {
-    tabError.value = e?.data?.detail ?? e?.data?.message ?? `Error al agregar a la ${tableSingularLower.value}`
+    tabError.value = e?.data?.detail ?? e?.data?.message ?? t('pos.banner.addToTableError', { table: tableSingularLower.value })
     throw e
   } finally {
     isAddingToTab.value = false
@@ -1752,7 +1756,7 @@ onUnmounted(() => {
         class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
-          <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
           </svg>
         </div>
@@ -1774,16 +1778,16 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Barra Banner (bar session — behaves as normal POS) -->
+      <!-- Bar banner (bar session — behaves as normal POS) -->
       <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-2.5 shadow-sm">
         <div class="flex items-center gap-2.5">
           <div class="bg-state-warning-bg p-2 rounded-lg flex-shrink-0">
-            <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
             </svg>
           </div>
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold text-state-warning-text uppercase tracking-widest flex-shrink-0">Barra</span>
+            <span class="text-[10px] font-bold text-state-warning-text uppercase tracking-widest flex-shrink-0">{{ t('pos.floor.bar') }}</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary">
               {{ comandasEnabled ? t('pos.banner.barHintKitchen') : t('pos.banner.barHintDirect') }}
@@ -1810,7 +1814,7 @@ onUnmounted(() => {
         <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
           <div class="flex items-center gap-2.5 min-w-0 flex-1">
             <div class="bg-status-success-bg p-2 rounded-lg flex-shrink-0">
-              <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
               </svg>
             </div>
@@ -1872,7 +1876,7 @@ onUnmounted(() => {
               </select>
               <!-- User icon (overlapping left) -->
               <svg
-                class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0 text-text-secondary"
+                class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] flex-shrink-0 text-text-secondary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true"
               >
@@ -1880,7 +1884,7 @@ onUnmounted(() => {
               </svg>
               <!-- Caret (overlapping right) -->
               <svg
-                class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary"
+                class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true"
               >
@@ -1896,7 +1900,7 @@ onUnmounted(() => {
               :aria-label="t('pos.banner.payAdvanceAria', { table: tableSingularLower })"
               @click="showTableAdvancePanel = true"
             >
-              <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
               {{ t('pos.banner.payAdvance') }}
@@ -1909,7 +1913,7 @@ onUnmounted(() => {
               :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
               @click="leaveActiveTableSession"
             >
-              <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
               </svg>
               {{ t('pos.banner.back') }}
@@ -1924,7 +1928,7 @@ onUnmounted(() => {
             >
               <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
               <template v-else>
-                <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
                 </svg>
                 {{ t('pos.banner.release') }}
@@ -1948,7 +1952,7 @@ onUnmounted(() => {
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="bg-badge-primary-bg p-3 rounded-xl border border-badge-primary-border flex-shrink-0">
-              <svg class="w-5 h-5 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-[1em] w-[1em] text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
@@ -1981,13 +1985,13 @@ onUnmounted(() => {
                 <div
                   v-if="isLoadingPosWaros"
                   class="h-5 w-[7.5rem] rounded-full bg-surface-secondary animate-pulse"
-                  aria-label="Cargando puntos WaRo"
+                  :aria-label="t('pos.wallet.loadingPointsAria')"
                 />
                 <span
                   v-else
                   class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text border border-state-warning-border"
                 >
-                  WaRos: {{ posWarosBalance.toLocaleString('es-CO') }} pts
+                  {{ t('pos.wallet.warosBalance', { amount: posWarosBalance.toLocaleString(pointsLocale) }) }}
                 </span>
               </div>
             </div>
@@ -2009,7 +2013,7 @@ onUnmounted(() => {
           class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-badge-primary-border text-badge-primary-text font-semibold text-sm hover:bg-badge-primary-bg transition-colors"
           @click="showCustomerModal = true"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           {{ t('pos.banner.identifyCustomer') }}

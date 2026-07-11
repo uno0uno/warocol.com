@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
@@ -48,9 +48,18 @@ const { currentTenant, businessProfile } = useTenantReactive()
 const { timezone } = useTenantTimezone()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
+const uiLocale = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
+
+const localizedInternalTaxLabel = (label?: string | null) => {
+  const raw = String(label ?? '').trim()
+  if (!raw) return t('pos.checkout.taxFallback')
+  const normalized = raw.toLocaleLowerCase('es-CO')
+  if (normalized === 'impuesto' || normalized === 'tax') return t('pos.checkout.taxFallback')
+  return raw
+}
 
 function formatTenantDateTime(date = new Date()) {
-  return date.toLocaleString('es-CO', {
+  return date.toLocaleString(uiLocale.value, {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone: timezone.value,
@@ -196,7 +205,7 @@ const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: n
 const showInvoiceEmailModal = ref(false)
 
 const extractInvoiceFetchError = (e: any) =>
-  e?.data?.detail || e?.data?.message || e?.message || 'Error al generar factura'
+  e?.data?.detail || e?.data?.message || e?.message || t('pos.checkout.invoice.generateError')
 
 const isMatiasAuthInvoiceError = computed(() => {
   const msg = invoiceError.value.toLowerCase()
@@ -345,7 +354,7 @@ const tipTaxLabel = computed(() => {
   const cfg = tenantTaxConfig.value
   if (cfg?.inc_applicable) return 'INC propina'
   if (cfg?.iva_applicable) return 'IVA propina'
-  return 'Impuesto propina'
+  return t('pos.receipt.tipTax')
 })
 const checkoutTipBody = computed(() =>
   tipAmount.value > 0
@@ -619,7 +628,7 @@ const subtotalAfterPromos = computed(() => {
 const displayPromoBreakdown = computed(() => {
   if (promoBreakdown.value.length > 0) return promoBreakdown.value
   if (promoSavings.value <= 0) return []
-  const name = activePromoHint.value || 'Promoción'
+  const name = activePromoHint.value || t('pos.receipt.promoFallback')
   return [{ promotion_name: name, promo_type: '', savings: promoSavings.value }]
 })
 
@@ -641,7 +650,7 @@ function promoFieldsFromCloseResponse(
   if (savings <= 0) return {}
   const breakdown = data?.promo_breakdown?.length
     ? data.promo_breakdown
-    : [{ promotion_name: 'Promoción', promo_type: '', savings }]
+    : [{ promotion_name: t('pos.receipt.promoFallback'), promo_type: '', savings }]
   return {
     promo_savings: savings,
     promo_breakdown: breakdown,
@@ -666,18 +675,18 @@ const discountValidationError = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return ''
   const val = discountInputNumber.value
   if (!Number.isFinite(val) || val <= 0) {
-    return 'Ingresa un descuento mayor a 0'
+    return t('pos.checkout.discount.greaterThanZero')
   }
   if (discountType.value === 'percent') {
-    if (val > 100) return 'El descuento porcentual no puede superar el 100%'
+    if (val > 100) return t('pos.checkout.discount.percentMax')
     return ''
   }
   const maxFixedDiscount = Math.round(subtotalAfterPromos.value)
   if (maxFixedDiscount <= 0) {
-    return 'No hay subtotal disponible para aplicar descuento'
+    return t('pos.checkout.discount.noSubtotal')
   }
   if (Math.round(val) > maxFixedDiscount) {
-    return `El descuento fijo no puede superar $${maxFixedDiscount.toLocaleString('es-CO')}`
+    return t('pos.checkout.discount.fixedMax', { amount: formatCurrency(maxFixedDiscount) })
   }
   return ''
 })
@@ -773,7 +782,7 @@ const taxPreview = computed<TaxPreview | null>(() => {
     return {
       standard_tax: Number(session.standard_tax) || 0,
       liquor_tax: Number(session.liquor_tax) || 0,
-      standard_tax_label: session.standard_tax_label || t('pos.checkout.taxFallback'),
+      standard_tax_label: localizedInternalTaxLabel(session.standard_tax_label),
     }
   }
   const data = posTaxPreviewData.value
@@ -781,7 +790,7 @@ const taxPreview = computed<TaxPreview | null>(() => {
   return {
     standard_tax: Number(data.standard_tax) || 0,
     liquor_tax: Number(data.liquor_tax) || 0,
-    standard_tax_label: data.standard_tax_label || t('pos.checkout.taxFallback'),
+    standard_tax_label: localizedInternalTaxLabel(data.standard_tax_label),
   }
 })
 
@@ -896,7 +905,7 @@ const onSplitAmountInput = (e: Event) => {
   const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
   splitPartialAmount.value = raw || null
   cashReceivedInput.value = 0
-  input.value = raw ? raw.toLocaleString('es-CO') : ''
+  input.value = raw ? raw.toLocaleString(uiLocale.value) : ''
 }
 const isAddingPayment = ref(false)
 const splitPartialAmount = ref<number | null>(null)
@@ -935,9 +944,9 @@ const splitAmountValidationMessage = computed(() => {
   if (!splitMode.value || splitIsComplete.value) return ''
   const amount = splitPartialAmount.value
   if (amount === null) return ''
-  if (amount <= 0) return 'Ingresa un monto mayor a $0.'
+  if (amount <= 0) return t('pos.checkout.split.amountGreaterThanZero')
   if (amount - splitRemaining.value > 0.01) {
-    return `El monto supera el saldo pendiente (${formatCurrency(splitRemaining.value)}).`
+    return t('pos.checkout.split.amountExceedsPending', { amount: formatCurrency(splitRemaining.value) })
   }
   return ''
 })
@@ -956,7 +965,7 @@ const splitAmountToCharge = computed(() =>
 
 const addSplitPayment = async () => {
   if ((!isKitchenServiceMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
-    processingError.value = 'Selecciona método de pago y cliente antes de continuar'
+    processingError.value = t('pos.checkout.split.selectMethodAndCustomer')
     return
   }
   if (!manualDiscountIsValid.value) {
@@ -969,7 +978,7 @@ const addSplitPayment = async () => {
   }
   const amountToCharge = splitAmountToCharge.value
   if (amountToCharge <= 0) {
-    processingError.value = 'Ingresa un monto a cobrar antes de registrar el pago'
+    processingError.value = t('pos.checkout.split.enterAmount')
     return
   }
   isAddingPayment.value = true
@@ -1137,7 +1146,7 @@ const addSplitPayment = async () => {
           : {}),
         standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
         liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
-        standard_tax_label: completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label ?? t('pos.checkout.taxFallback'),
+        standard_tax_label: localizedInternalTaxLabel(completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label),
         ...(tipAmount.value > 0
           ? {
               tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
@@ -1157,7 +1166,7 @@ const addSplitPayment = async () => {
       prefacturaPrintSnapshot.value = null
     }
   } catch (e: any) {
-    processingError.value = checkoutErrorMessage(e, 'Error al registrar el pago parcial')
+    processingError.value = checkoutErrorMessage(e, t('pos.checkout.split.partialPaymentError'))
   } finally {
     isAddingPayment.value = false
   }
@@ -1213,7 +1222,7 @@ const confirmVoidPayment = async () => {
       ?? (Array.isArray(e?.data?.detail) ? e.data.detail.map((d: any) => d.msg ?? JSON.stringify(d)).join('; ') : e?.data?.detail)
       ?? e?.statusMessage
       ?? e?.message
-    voidPaymentError.value = beMessage || 'No se pudo eliminar el pago'
+    voidPaymentError.value = beMessage || t('pos.checkout.split.deletePaymentError')
     // eslint-disable-next-line no-console
     console.error('[#649] void payment failed', { status: e?.status, statusCode: e?.statusCode, data: e?.data, message: e?.message })
   } finally {
@@ -1227,6 +1236,11 @@ const { estimatedWaros, earnEligible: warosEarnEligible, isLoadingEstimate, syst
 const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
+const selectedCustomerDisplayName = computed(() =>
+  isAnonymousCustomer.value
+    ? t('pos.checkout.customerNoData')
+    : selectedCustomer.value?.name || t('pos.checkout.customerNoData'),
+)
 const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
 const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefreshingWallet, refetch: refetchWallet } =
   useCustomerWallet(customerIdRef)
@@ -1380,9 +1394,9 @@ function setWaroRewardSelected(reward: WaroReward, selected: boolean) {
 
 function waroRewardSubtitle(reward: WaroReward) {
   if (reward.reward_type === 'fixed_cop_off' && reward.fixed_cop_off) {
-    return `${reward.waros_cost.toLocaleString('es-CO')} pts · ${formatCurrency(reward.fixed_cop_off)}`
+    return `${reward.waros_cost.toLocaleString(uiLocale.value)} ${t('pos.wallet.pointsShort')} · ${formatCurrency(reward.fixed_cop_off)}`
   }
-  return `${reward.waros_cost.toLocaleString('es-CO')} pts`
+  return `${reward.waros_cost.toLocaleString(uiLocale.value)} ${t('pos.wallet.pointsShort')}`
 }
 
 function clearWaroRedemption() {
@@ -1479,7 +1493,7 @@ const handleSaveAddress = async (payload: AddressCreate) => {
     showAddressForm.value = false
   } catch (err: any) {
     addressFormError.value =
-      err?.data?.detail || err?.data?.message || err?.message || 'No se pudo guardar la dirección'
+      err?.data?.detail || err?.data?.message || err?.message || t('pos.checkout.deliveryCheckout.saveAddressError')
   } finally {
     addressFormLoading.value = false
   }
@@ -1654,7 +1668,7 @@ const toggleLinePromoApply = async (item: any, apply: boolean) => {
     invalidateCheckoutPromoPreview()
   } catch (error: any) {
     toast.error(
-      error?.data?.detail || error?.data?.message || 'No se pudo actualizar la promoción del ítem',
+      error?.data?.detail || error?.data?.message || t('pos.checkout.errors.updatePromo'),
       { title: t('pos.checkout.errorTitle') },
     )
   } finally {
@@ -1736,7 +1750,7 @@ function checkoutErrorMessage(error: any, fallback: string) {
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
-    processingError.value = 'Selecciona o identifica al cliente antes de continuar'
+    processingError.value = t('pos.checkout.errors.selectCustomer')
     return
   }
   if (!manualDiscountIsValid.value) {
@@ -1746,11 +1760,11 @@ const processOrder = async () => {
 
   if (isDeferredDeliveryPayment.value && posStore.activeTableSession?.isBar) {
     if (!addressStore.selectedAddressId) {
-      processingError.value = 'Selecciona o crea una dirección de entrega'
+      processingError.value = t('pos.checkout.deliveryCheckout.selectOrCreateAddress')
       return
     }
     if (storeTabItems.value.length === 0) {
-      processingError.value = 'Agrega los ítems a la cuenta y envíalos a cocina antes de dejarla pendiente'
+      processingError.value = t('pos.checkout.deliveryCheckout.pendingSaleNeedsKitchen')
       return
     }
 
@@ -1791,7 +1805,7 @@ const processOrder = async () => {
           customer_id: selectedCustomer.value.id,
           standard_tax: taxPreview.value?.standard_tax ?? 0,
           liquor_tax: taxPreview.value?.liquor_tax ?? 0,
-          standard_tax_label: taxPreview.value?.standard_tax_label ?? t('pos.checkout.taxFallback'),
+          standard_tax_label: localizedInternalTaxLabel(taxPreview.value?.standard_tax_label),
         }
         wasMesaMode.value = false
         cartItemsSnapshot.value = [...cartItems.value]
@@ -1806,7 +1820,7 @@ const processOrder = async () => {
         prefacturaPrintSnapshot.value = null
       }
     } catch (error: any) {
-      processingError.value = checkoutErrorMessage(error, 'Error al dejar la venta pendiente')
+      processingError.value = checkoutErrorMessage(error, t('pos.checkout.deliveryCheckout.deferSaleError'))
     } finally {
       isProcessing.value = false
     }
@@ -1816,7 +1830,7 @@ const processOrder = async () => {
   if (isKitchenServiceMode.value) {
     const session = posStore.activeTableSession!
     if (session.isBar && storeTabItems.value.length === 0) {
-      processingError.value = 'Agrega los ítems a la cuenta y envíalos a cocina antes de cobrar'
+      processingError.value = t('pos.checkout.errors.addItemsBeforeCharge')
       return
     }
     try {
@@ -1880,7 +1894,7 @@ const processOrder = async () => {
         order_ids: closeData.order_ids || [],
         standard_tax: Number(closeData.standard_tax) || 0,
         liquor_tax: Number(closeData.liquor_tax) || 0,
-        standard_tax_label: closeData.standard_tax_label || t('pos.checkout.taxFallback'),
+        standard_tax_label: localizedInternalTaxLabel(closeData.standard_tax_label),
         ...promoFieldsFromCloseResponse(closeData, _subtotal),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
@@ -1914,7 +1928,7 @@ const processOrder = async () => {
       document.body.classList.remove('printing-prefactura')
       prefacturaPrintSnapshot.value = null
     } catch (error: any) {
-      processingError.value = checkoutErrorMessage(error, `Error al cerrar la ${tableSingularLower.value}`)
+      processingError.value = checkoutErrorMessage(error, t('pos.checkout.errors.closeTable', { table: tableSingularLower.value }))
     } finally {
       isProcessing.value = false
     }
@@ -1923,17 +1937,17 @@ const processOrder = async () => {
 
   // Standard POS mode
   if (!selectedCustomer.value) {
-    processingError.value = 'Selecciona o identifica al cliente antes de continuar'
+    processingError.value = t('pos.checkout.errors.selectCustomer')
     return
   }
 
   if (!posStore.cartId) {
-    processingError.value = 'Error: El carrito no está sincronizado'
+    processingError.value = t('pos.checkout.errors.cartNotSynced')
     return
   }
 
   if (deliveryEnabled.value && !addressStore.selectedAddressId) {
-    processingError.value = 'Selecciona o crea una dirección de entrega'
+    processingError.value = t('pos.checkout.deliveryCheckout.selectOrCreateAddress')
     return
   }
 
@@ -2023,7 +2037,7 @@ const processOrder = async () => {
         customer_id: selectedCustomer.value?.id,
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
-        standard_tax_label: response.data.standard_tax_label ?? t('pos.checkout.taxFallback'),
+        standard_tax_label: localizedInternalTaxLabel(response.data.standard_tax_label),
         ...promoFieldsFromCloseResponse(response.data, _subtotalPos),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
@@ -2060,7 +2074,7 @@ const processOrder = async () => {
       prefacturaPrintSnapshot.value = null
     }
   } catch (error: any) {
-    processingError.value = checkoutErrorMessage(error, 'Error processing order')
+    processingError.value = checkoutErrorMessage(error, t('pos.checkout.errors.processOrder'))
   } finally {
     isProcessing.value = false
   }
@@ -2101,7 +2115,7 @@ const isDeferredDeliveryPayment = computed(() =>
 )
 const deferDeliveryPayment = () => {
   if (!selectedCustomer.value || isAnonymousCustomer.value) {
-    processingError.value = 'Identifica un cliente real para registrar domicilio'
+    processingError.value = t('pos.checkout.deliveryCheckout.realCustomerRequired')
     return
   }
   deliveryEnabled.value = true
@@ -2149,10 +2163,10 @@ const walletChargeAmount = computed(() =>
 
 const walletUnavailableMessage = computed(() => {
   if (!walletGroupAvailable.value) return ''
-  if (!selectedCustomer.value) return 'Identifica un cliente para usar saldo wallet.'
-  if (isAnonymousCustomer.value) return 'La wallet requiere un cliente identificado.'
-  if (isWalletPending.value) return 'Consultando saldo wallet...'
-  if (walletBalanceCop.value <= 0) return 'Este cliente no tiene saldo wallet disponible.'
+  if (!selectedCustomer.value) return t('pos.wallet.identifyCustomer')
+  if (isAnonymousCustomer.value) return t('pos.wallet.requiresIdentified')
+  if (isWalletPending.value) return t('pos.wallet.checking')
+  if (walletBalanceCop.value <= 0) return t('pos.wallet.noBalance')
   return ''
 })
 
@@ -2160,7 +2174,7 @@ const walletTenderValidationMessage = computed(() => {
   if (!isWalletMethod.value) return ''
   if (walletUnavailableMessage.value) return walletUnavailableMessage.value
   if (walletChargeAmount.value > walletBalanceCop.value) {
-    return `Saldo wallet insuficiente: disponible ${formatCurrency(walletBalanceCop.value)}.`
+    return t('pos.wallet.insufficient', { amount: formatCurrency(walletBalanceCop.value) })
   }
   return ''
 })
@@ -2168,7 +2182,7 @@ const walletTenderValidationMessage = computed(() => {
 async function ensureWalletTenderCanPay(amount: number) {
   if (!isWalletMethod.value) return true
   if (!selectedCustomer.value || isAnonymousCustomer.value) {
-    processingError.value = 'Identifica un cliente real para pagar con wallet'
+    processingError.value = t('pos.wallet.realCustomerRequired')
     return false
   }
   try {
@@ -2177,11 +2191,11 @@ async function ensureWalletTenderCanPay(amount: number) {
     // The backend remains authoritative; use the last cached balance if refresh fails.
   }
   if (walletBalanceCop.value <= 0) {
-    processingError.value = 'Este cliente no tiene saldo wallet disponible'
+    processingError.value = t('pos.wallet.noBalance')
     return false
   }
   if (amount > walletBalanceCop.value) {
-    processingError.value = `Saldo wallet insuficiente: disponible ${formatCurrency(walletBalanceCop.value)}`
+    processingError.value = t('pos.wallet.insufficient', { amount: formatCurrency(walletBalanceCop.value) })
     return false
   }
   return true
@@ -2204,7 +2218,7 @@ const cashIsValid = computed(() =>
 
 // Issue #524 — input starts at 0 and stays at 0 until the cashier either
 // taps a preset or types. Auto-prefilling with the amount made it look like
-// "Sin vuelto" was already chosen, which was confusing. Reset to 0 only when
+// The exact-cash shortcut was already chosen, which was confusing. Reset to 0 only when
 // the method group changes (so switching methods clears the previous tender).
 watch(
   isCashMethod,
@@ -2223,8 +2237,18 @@ const filteredMethods = computed(() => {
 })
 
 const getPaymentMethodLabel = (method: string) => {
-  if (method === 'table_session_advance') return 'Anticipo mesa'
+  if (method === 'table_session_advance') return t('pos.payment.tableAdvance')
+  const defaultKey = `pos.payment.defaults.${method}`
+  const translated = t(defaultKey)
+  if (translated !== defaultKey) return translated
   return posPaymentGroups.value.find(g => g.slug === method)?.name ?? method
+}
+
+const getPaymentGroupLabel = (group: PosPaymentGroup | null | undefined) => {
+  if (!group) return ''
+  const defaultKey = `pos.payment.defaults.${group.slug}`
+  const translated = t(defaultKey)
+  return translated !== defaultKey ? translated : group.name
 }
 
 // True when the selected group has sub-methods but none is chosen yet
@@ -2242,7 +2266,7 @@ const paymentGridClass = computed(() => {
 
 const cancelOrder = async () => {
   if (splitPayments.value.length > 0) {
-    if (!window.confirm('Ya hay pagos parciales registrados. ¿Seguro que quieres cancelar?')) return
+    if (!window.confirm(t('pos.checkout.split.cancelWithPartials'))) return
   }
   if (posStore.activeTableSession?.isBar) {
     // Bar session — clear local cart but keep session alive (it's permanent)
@@ -2287,7 +2311,7 @@ async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
 const generateInvoice = async () => {
   if (invoiceLoading.value) return
   if (isCreditOnlyInvoiceBlocked.value) {
-    invoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    invoiceError.value = t('pos.checkout.invoice.creditOnlyBlocked')
     return
   }
 
@@ -2304,7 +2328,7 @@ const generateInvoice = async () => {
 
   try {
     for (let i = 0; i < ids.length; i++) {
-      if (ids.length > 1) invoiceProgress.value = `Facturando orden ${i + 1} de ${ids.length}...`
+      if (ids.length > 1) invoiceProgress.value = t('pos.checkout.invoice.billingProgress', { current: i + 1, total: ids.length })
       try {
         const result = await $fetch(`/api/orders/${ids[i]}/invoice`, { method: 'POST' }) as any
         if (result.status === 'accepted') {
@@ -2322,7 +2346,7 @@ const generateInvoice = async () => {
             invoice_number: result.invoice_number,
             cufe: '',
             status: 'error',
-            error: result.error_message || `Rechazada: ${result.prefix}-${result.invoice_number}`,
+            error: result.error_message || t('pos.checkout.invoice.rejected', { label: `${result.prefix}-${result.invoice_number}` }),
           })
         }
         // For single order, set the legacy invoiceResult for QR/print
@@ -2340,7 +2364,7 @@ const generateInvoice = async () => {
             invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
           }
         } else if (ids.length === 1 && result.status !== 'accepted') {
-          invoiceError.value = result.error_message || `Factura rechazada: ${result.prefix}-${result.invoice_number}`
+          invoiceError.value = result.error_message || t('pos.checkout.invoice.invoiceRejected', { label: `${result.prefix}-${result.invoice_number}` })
         }
       } catch (e: any) {
         const errMsg = extractInvoiceFetchError(e)
@@ -2368,7 +2392,7 @@ const generateInvoice = async () => {
       }
       const failed = invoiceResults.value.filter(r => r.status === 'error').length
       if (failed > 0) {
-        invoiceError.value = `${failed} de ${ids.length} facturas falló. Reintenta para las pendientes.`
+        invoiceError.value = t('pos.checkout.invoice.multiFailed', { failed, total: ids.length })
       }
     }
     invoiceProgress.value = ''
@@ -2406,7 +2430,7 @@ const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 const platformLegal = computed(() => settingsData.value?.data?.platform_legal ?? null)
 
 const receiptPrintSettings = computed(() =>
-  settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', tip_label: 'Propina', show_logo: true },
+  settingsData.value?.data?.receipt_print_settings ?? { document_label: t('pos.receipt.documentPrefactura'), tip_label: t('pos.receipt.tipDefault'), show_logo: true },
 )
 
 const receiptTipLabel = computed(() => {
@@ -2510,7 +2534,7 @@ const prefacturaPrintData = computed(() => {
 const orderResultWaroDiscountCop = computed(() => Number(orderResult.value?.waro_discount_cop) || 0)
 const orderResultWaroLineLabel = computed(() => {
   const name = orderResult.value?.waro_reward_name
-  return name ? `WaRo: ${name}` : 'Canje WaRo'
+  return name ? `WaRo: ${name}` : t('pos.receipt.waroRedeem')
 })
 const orderResultChargedAmount = computed(() => {
   const result = orderResult.value
@@ -2534,7 +2558,7 @@ const receiptPromoBreakdown = computed(() => {
   if (breakdown.length > 0) return breakdown
   const savings = Number(orderResult.value?.promo_savings) || 0
   if (savings <= 0) return []
-  return [{ promotion_name: 'Promoción', promo_type: '', savings }]
+  return [{ promotion_name: t('pos.receipt.promoFallback'), promo_type: '', savings }]
 })
 
 const receiptPaymentLines = computed(() =>
@@ -2558,8 +2582,8 @@ const receiptLocationLabel = computed(() => {
   const context = receiptPrintContext.value
   if (!context) return null
   if (context.wasMesa && context.tableName) return `${tableSingular.value} ${context.tableCode} - ${context.tableName}`
-  if (context.isBar) return 'Barra'
-  return 'Mostrador'
+  if (context.isBar) return t('pos.receipt.bar')
+  return t('pos.receipt.counter')
 })
 
 const receiptCustomerFiscalLabel = computed(() => {
@@ -2577,7 +2601,7 @@ const receiptInvoiceTaxLines = computed(() => {
   if (!result) return []
   return [
     {
-      label: result.standard_tax_label || t('pos.checkout.taxFallback'),
+      label: localizedInternalTaxLabel(result.standard_tax_label),
       amount: Number(result.standard_tax) || 0,
     },
     {
@@ -2764,7 +2788,7 @@ const retryInvoice = async () => {
 const requestInvoice = async () => {
   if (invoiceLoading.value) return
   if (isCreditOnlyInvoiceBlocked.value) {
-    invoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    invoiceError.value = t('pos.checkout.invoice.creditOnlyBlocked')
     return
   }
   if (selectedCustomer.value && !selectedCustomer.value.fiscal_id && !isAnonymousCustomer.value) {
@@ -2803,14 +2827,14 @@ const submitFiscalAndInvoice = async () => {
       await generateInvoiceAndPrint()
     }
   } catch (e: any) {
-    fiscalWizardError.value = e.data?.detail || e.data?.message || e.message || 'Error al guardar los datos'
+    fiscalWizardError.value = e.data?.detail || e.data?.message || e.message || t('pos.customer.saveDataError')
   } finally {
     fiscalWizardSaving.value = false
   }
 }
 
 // Emit the invoice without auto-printing.
-// Printing is always manual via "Imprimir comprobante".
+// Printing is always manual via the print-receipt action.
 const generateInvoiceAndPrint = async () => {
   await generateInvoice()
 }
@@ -2840,7 +2864,7 @@ const sendReceiptEmail = async () => {
         subtotal: orderResult.value.subtotal ?? 0,
         standard_tax: orderResult.value.standard_tax ?? 0,
         liquor_tax: orderResult.value.liquor_tax ?? 0,
-        standard_tax_label: orderResult.value.standard_tax_label ?? t('pos.checkout.taxFallback'),
+        standard_tax_label: localizedInternalTaxLabel(orderResult.value.standard_tax_label),
         promo_savings: orderResult.value.promo_savings ?? 0,
         promo_breakdown: orderResult.value.promo_breakdown ?? [],
         waro_redemption_summary: orderResult.value.waro_redemption_summary ?? null,
@@ -2858,10 +2882,10 @@ const sendReceiptEmail = async () => {
     const detail = e?.data?.detail
     const message =
       Array.isArray(detail)
-        ? detail[0]?.msg ?? 'No se pudo enviar el correo.'
+        ? detail[0]?.msg ?? t('pos.checkout.receiptEmail.fallbackError')
         : typeof detail === 'string'
           ? detail
-          : 'No se pudo enviar el correo. Verifica la dirección.'
+          : t('pos.checkout.receiptEmail.invalidError')
     toast.error(message, { title: t('pos.checkout.sendReceiptErrorTitle') })
   } finally {
     isSendingEmail.value = false
@@ -2894,13 +2918,13 @@ const syncCart = async () => {
 
     const success = await posStore.syncCartBatch()
     if (!success) {
-      syncError.value = 'Error al sincronizar el carrito'
+      syncError.value = t('pos.checkout.errors.syncCart')
       posDebugLog('checkout', 'syncCart:batch-failed', { cartId: posStore.cartId })
     } else {
       posDebugLog('checkout', 'syncCart:ok', { cartId: posStore.cartId })
     }
   } catch (error: any) {
-    syncError.value = error.message || 'Error al sincronizar'
+    syncError.value = error.message || t('pos.checkout.errors.sync')
     posDebugLog('checkout', 'syncCart:failed', posDebugSerializeError(error))
   } finally {
     isSyncingCart.value = false
@@ -2945,7 +2969,7 @@ const refreshAll = async () => {
       : cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] }),
   ])
 }
-registerProgressiveLoading(isRefreshing, 'Actualizando pagos')
+registerProgressiveLoading(isRefreshing, t('pos.payment.updatingPayments'))
 
 // Issue warocol.com#656 — rehydrate splitPayments from the active query.
 // The same source of truth feeds both the initial render and any refetch
@@ -3031,9 +3055,9 @@ onUnmounted(() => {
   clearRefreshHandler(refreshAll)
 })
 
-// Issue #529 — auto-select Genérico when the tenant flag is on. Applies to
+// Issue #529 — auto-select the anonymous customer when the tenant flag is on. Applies to
 // counter, bar, AND mesa modes: the customer is only attached to orders at
-// close time anyway, so pre-selecting Genérico is safe and uniform across
+// close time anyway, so pre-selecting the anonymous customer is safe and uniform across
 // modes. Uses a watcher (not onMounted) because businessProfile is loaded
 // asynchronously by the tenants store and may still be undefined when
 // checkout mounts on a fresh page load.
@@ -3091,7 +3115,7 @@ onUnmounted(() => {
       <div class="text-center">
         <CommonsTheCustomLoader size="large" />
         <p class="text-text-secondary font-medium mt-6">
-          {{ isSyncingCart ? 'Preparando checkout...' : 'Cargando checkout...' }}
+          {{ isSyncingCart ? t('pos.checkout.loadingPreparing') : t('pos.checkout.loadingCheckout') }}
         </p>
       </div>
     </div>
@@ -3107,7 +3131,7 @@ onUnmounted(() => {
       <h2 class="text-xl font-semibold text-text-primary mb-2">{{ t('pos.checkout.emptyTitle') }}</h2>
       <p class="text-text-secondary mb-6">{{ t('pos.checkout.emptyBody') }}</p>
       <UiButton variant="default" @click="sessionStorage.setItem('posNavigation', 'true'); router.push('/pos')">
-        Volver al POS
+        {{ t('pos.checkout.backToPos') }}
       </UiButton>
     </div>
 
@@ -3121,12 +3145,12 @@ onUnmounted(() => {
         class="lg:col-span-12 flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
-          <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
           </svg>
         </div>
         <p class="text-sm text-status-success-text font-medium">
-          Promo activa: {{ activePromoHint }}
+          {{ t('pos.checkout.promoActive', { name: activePromoHint }) }}
         </p>
       </div>
 
@@ -3141,14 +3165,14 @@ onUnmounted(() => {
             class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-left hover:bg-surface-secondary/70 transition-colors"
           >
             <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
-              Orden
+              {{ t('pos.checkout.order') }}
               <span class="text-text-tertiary font-normal text-xs ml-1">({{ cartItems.length }})</span>
             </span>
             <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'order' ? 'rotate-0' : 'rotate-180'"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
               aria-hidden="true"
@@ -3207,7 +3231,7 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <p class="text-xs text-text-tertiary mt-0.5">{{ formatCurrency(item.product.price) }} c/u</p>
+                <p class="text-xs text-text-tertiary mt-0.5">{{ formatCurrency(item.product.price) }} {{ t('pos.cartItem.perUnit') }}</p>
 
                 <!-- Modifiers -->
                 <div v-if="item.modifiers && item.modifiers.length > 0" class="mt-0.5 space-y-0">
@@ -3244,10 +3268,10 @@ onUnmounted(() => {
         <!-- Section: Customer Identification -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
-            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
-            Datos del Cliente
+            {{ t('pos.checkout.customerData') }}
           </h2>
 
           <!-- Customer selected: show card -->
@@ -3256,11 +3280,11 @@ onUnmounted(() => {
               {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || t('pos.checkout.customerNoData') }}</p>
-              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
+              <p class="font-semibold text-text-primary truncate">{{ selectedCustomerDisplayName }}</p>
+              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</p>
               <p v-if="selectedCustomer.fiscal_id" class="text-xs text-state-success-text  truncate mt-0.5 flex items-center gap-1">
-                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
+                <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
               </p>
               <div
                 v-if="!isAnonymousCustomer"
@@ -3276,7 +3300,7 @@ onUnmounted(() => {
                   v-else
                   class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
                 >
-                  Wallet: {{ formatCurrency(walletBalanceCop) }}
+                  {{ t('pos.checkout.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
                 </span>
               </div>
             </div>
@@ -3284,7 +3308,7 @@ onUnmounted(() => {
               @click="showCustomerModal = true"
               class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
             >
-              Cambiar
+              {{ t('pos.checkout.changeCustomer') }}
             </button>
           </div>
 
@@ -3294,7 +3318,7 @@ onUnmounted(() => {
             @click="showCustomerModal = true"
             class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
           >
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <span class="font-medium">{{ t('pos.checkout.identifyCustomer') }}</span>
@@ -3304,10 +3328,10 @@ onUnmounted(() => {
         <!-- Section: Payment Method -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
-            <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
             </svg>
-            Método de Pago
+            {{ t('pos.checkout.paymentMethod') }}
           </h2>
 
           <!-- Skeleton while loading payment methods -->
@@ -3354,7 +3378,7 @@ onUnmounted(() => {
               </div>
               <div class="text-center md:text-left w-full">
                 <div class="font-semibold text-xs md:text-sm leading-tight">
-                  Al entregar
+                  {{ t('pos.checkout.payOnDelivery') }}
                 </div>
               </div>
               <div
@@ -3451,7 +3475,7 @@ onUnmounted(() => {
                     class="font-semibold text-xs md:text-sm leading-tight"
                     :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
                   >
-                    {{ group.name }}
+                    {{ getPaymentGroupLabel(group) }}
                   </div>
                 </div>
 
@@ -3481,10 +3505,10 @@ onUnmounted(() => {
           <!-- Sub-method selector — shown when selected group has subtypes (e.g. Nequi, Daviplata) -->
           <div v-if="selectedGroup?.methods?.length" class="mt-3">
             <p class="text-xs font-semibold mb-2 flex items-center gap-1.5" :class="requiresMethodSelection ? 'text-destructive' : 'text-text-secondary'">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
-              ¿Con cuál método de {{ selectedGroup.name }}?
+              {{ t('pos.checkout.subMethodQuestion', { group: getPaymentGroupLabel(selectedGroup) }) }}
             </p>
 
             <!-- Search — only when > 10 methods -->
@@ -3552,7 +3576,7 @@ onUnmounted(() => {
                   <span class="min-w-0 truncate pr-3">{{ method.name }}</span>
                   <svg
                     v-if="selectedPaymentMethodId === method.id"
-                    class="w-4 h-4 flex-shrink-0"
+                    class="h-[1em] w-[1em] flex-shrink-0"
                     :class="selectedGroup.triggersCartera ? 'text-state-warning-text' : 'text-primary'"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
@@ -3560,7 +3584,7 @@ onUnmounted(() => {
                   </svg>
                 </button>
                 <div v-if="filteredMethods.length === 0" class="px-4 py-3 text-sm text-text-secondary text-center">
-                  Sin resultados para "{{ methodSearch }}"
+                  {{ t('pos.checkout.noMethodResults', { query: methodSearch }) }}
                 </div>
               </div>
             </div>
@@ -3584,10 +3608,10 @@ onUnmounted(() => {
           <!-- Header with toggle -->
           <div class="flex items-center justify-between">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
-              Descuento
+              {{ t('pos.checkout.discount.title') }}
             </h2>
             <button
               type="button"
@@ -3622,7 +3646,7 @@ onUnmounted(() => {
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
                 :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
-                $ Fijo
+                {{ t('pos.checkout.discount.fixed') }}
               </button>
             </div>
 
@@ -3634,7 +3658,7 @@ onUnmounted(() => {
                 :min="0.01"
                 :max="discountType === 'percent' ? 100 : Math.round(subtotalAfterPromos)"
                 :step="discountType === 'percent' ? 0.01 : 1"
-                :placeholder="discountType === 'percent' ? 'Ej: 10 (10%)' : 'Ej: 5000'"
+                :placeholder="discountType === 'percent' ? t('pos.checkout.discount.percentPlaceholder') : t('pos.checkout.discount.fixedPlaceholder')"
                 :aria-invalid="discountValidationError ? 'true' : 'false'"
                 :class="discountValidationError ? 'border-state-danger-border focus:ring-state-danger-border' : 'border-border focus:ring-primary'"
                 class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2"
@@ -3652,7 +3676,7 @@ onUnmounted(() => {
                 v-else
                 class="text-xs text-text-tertiary"
               >
-                Base disponible: {{ formatCurrency(subtotalAfterPromos) }}
+                {{ t('pos.checkout.discount.baseAvailable', { amount: formatCurrency(subtotalAfterPromos) }) }}
               </p>
               <button
                 v-if="discountInput"
@@ -3660,13 +3684,13 @@ onUnmounted(() => {
                 @click="clearManualDiscount"
                 class="text-xs font-semibold text-text-secondary hover:text-primary"
               >
-                Limpiar
+                {{ t('pos.checkout.discount.clear') }}
               </button>
             </div>
 
             <!-- Live preview -->
             <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-primary/10 rounded-lg">
-              <span class="text-sm font-medium text-primary">Descuento aplicado</span>
+              <span class="text-sm font-medium text-primary">{{ t('pos.checkout.discount.applied') }}</span>
               <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
             </div>
           </div>
@@ -3698,12 +3722,12 @@ onUnmounted(() => {
               v-model="tipTaxable"
               type="checkbox"
               class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30"
-              aria-label="Propina gravada con impuesto al consumo"
+              :aria-label="t('pos.checkout.tipTax.aria')"
             />
             <span class="text-sm text-text-primary leading-snug">
-              Propina gravada
+              {{ t('pos.checkout.tipTax.title') }}
               <span class="block text-xs text-text-secondary mt-0.5">
-                Incluye {{ tipTaxLabel.toLowerCase() }} según la configuración fiscal del negocio.
+                {{ t('pos.checkout.tipTax.body', { tax: tipTaxLabel.toLowerCase() }) }}
               </span>
             </span>
           </label>
@@ -3716,14 +3740,14 @@ onUnmounted(() => {
         <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <div class="flex items-center justify-between gap-3">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
                 <path d="M15 18H9" />
                 <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
                 <circle cx="17" cy="18" r="2" />
                 <circle cx="7" cy="18" r="2" />
               </svg>
-              Domicilio
+              {{ t('pos.checkout.deliveryCheckout.title') }}
             </h2>
             <label
               class="relative inline-flex items-center"
@@ -3734,7 +3758,7 @@ onUnmounted(() => {
                 type="checkbox"
                 class="sr-only peer"
                 :disabled="!isDeliveryEligible"
-                aria-label="Activar domicilio para esta orden"
+                :aria-label="t('pos.checkout.deliveryCheckout.toggleAria')"
               />
               <div class="w-11 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
@@ -3742,13 +3766,13 @@ onUnmounted(() => {
 
           <!-- Helper messages — explain why the toggle is disabled -->
           <p v-if="!acceptsOnlineOrders" class="text-xs text-text-secondary mt-2">
-            Activa "Pedidos en línea" en /negocio para habilitar domicilios.
+            {{ t('pos.checkout.deliveryCheckout.enableOnlineOrders') }}
           </p>
           <p v-else-if="!selectedCustomer" class="text-xs text-text-secondary mt-2">
-            Selecciona un cliente para habilitar domicilio.
+            {{ t('pos.checkout.deliveryCheckout.selectCustomer') }}
           </p>
           <p v-else-if="isAnonymousCustomer" class="text-xs text-text-secondary mt-2">
-            Identifica al cliente (no anónimo) para habilitar domicilio.
+            {{ t('pos.checkout.deliveryCheckout.identifyRealCustomer') }}
           </p>
 
           <!-- Expanded delivery details — only when toggle is on -->
@@ -3775,14 +3799,14 @@ onUnmounted(() => {
               <!-- Delivery instructions (order-level) -->
               <div class="flex flex-col gap-1">
                 <label for="pos-delivery-instructions" class="text-sm font-medium text-text-primary">
-                  Notas para el repartidor (opcional)
+                  {{ t('pos.checkout.deliveryCheckout.courierNotes') }} {{ t('pos.checkout.optional') }}
                 </label>
                 <textarea
                   id="pos-delivery-instructions"
                   v-model="deliveryInstructions"
                   rows="3"
                   maxlength="500"
-                  placeholder="Ej: tocar el timbre, llegar por la entrada lateral…"
+                  :placeholder="t('pos.checkout.deliveryCheckout.courierNotesPlaceholder')"
                   class="input-base w-full px-3 py-2 text-sm resize-none"
                 />
               </div>
@@ -3822,7 +3846,7 @@ onUnmounted(() => {
               <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
             </div>
             <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
             >
@@ -3855,9 +3879,9 @@ onUnmounted(() => {
             @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
             class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
           >
-            <h3 class="font-bold text-text-primary">Resumen de la Orden</h3>
+	            <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
             <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'summary' ? 'rotate-0' : 'rotate-180'"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
             >
@@ -3869,11 +3893,11 @@ onUnmounted(() => {
           <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
             <div class="space-y-3 mb-4">
               <div class="flex justify-between text-sm text-text-secondary">
-                <span>Subtotal ({{ cartItems.length }} productos)</span>
+	                <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
               </div>
               <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
-                <span>Promoción</span>
+	                <span>{{ t('pos.checkout.summary.promotion') }}</span>
                 <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
               </div>
               <div
@@ -3889,19 +3913,19 @@ onUnmounted(() => {
                 v-if="promoSavings > 0"
                 class="flex justify-between text-sm text-text-secondary"
               >
-                <span>Subtotal con promoción</span>
+	                <span>{{ t('pos.checkout.summary.subtotalWithPromo') }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(subtotalAfterPromos) }}</span>
               </div>
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
-                <span>Descuento manual</span>
+	                <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
               <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
-                <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
+	                <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
                 <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
               </div>
               <div class="flex justify-between text-sm text-text-secondary">
-                <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+	                <span>{{ taxPreview ? localizedInternalTaxLabel(taxPreview.standard_tax_label) : t('pos.checkout.summary.taxesZero') }}</span>
                 <span class="font-medium text-text-primary">
                   {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
                 </span>
@@ -3927,18 +3951,18 @@ onUnmounted(() => {
                 v-if="tipAmount > 0 || checkoutSummaryAdvanceApplied > 0"
                 class="flex justify-between text-sm text-text-secondary mb-2"
               >
-                <span>Total orden</span>
+	                <span>{{ t('pos.checkout.summary.orderTotal') }}</span>
                 <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
               </div>
               <div
                 v-if="checkoutSummaryAdvanceApplied > 0"
                 class="flex justify-between text-sm text-state-success-text mb-2"
               >
-                <span>Anticipo mesa</span>
+	                <span>{{ t('pos.checkout.summary.tableAdvance') }}</span>
                 <span class="font-medium tabular-nums">- {{ formatCurrency(checkoutSummaryAdvanceApplied) }}</span>
               </div>
               <div class="flex justify-between items-end mb-1">
-                <span class="text-text-secondary font-medium">Total a Pagar</span>
+	                <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
                 <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
               </div>
               <p class="text-right text-xs text-text-tertiary">COP</p>
@@ -3955,15 +3979,15 @@ onUnmounted(() => {
             @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
             class="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
           >
-            <svg class="h-4 w-4 text-state-warning-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg class="h-[1em] w-[1em] text-state-warning-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
             </svg>
             <span class="font-semibold text-sm text-text-primary">Waros</span>
             <span v-if="!isLoadingWaros" class="ml-auto text-sm font-bold tabular-nums text-state-warning-text">
-              {{ warosBalance.toLocaleString('es-CO') }}
+              {{ warosBalance.toLocaleString(uiLocale) }}
             </span>
             <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'waros' ? 'rotate-0' : 'rotate-180'"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
               aria-hidden="true"
@@ -3977,9 +4001,9 @@ onUnmounted(() => {
             </div>
             <div v-else class="grid grid-cols-3 gap-2">
               <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
-                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Puntos</p>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.points') }}</p>
                 <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
-                  {{ warosBalance.toLocaleString('es-CO') }}
+                  {{ warosBalance.toLocaleString(uiLocale) }}
                 </p>
               </div>
               <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
@@ -3989,12 +4013,12 @@ onUnmounted(() => {
                 </p>
               </div>
               <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
-                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.earn') }}</p>
                 <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                   <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
                   <span v-else-if="!warosEarnEligible">—</span>
                   <span v-else-if="estimatedWaros === null">—</span>
-                  <span v-else>+{{ estimatedWaros.toLocaleString('es-CO') }}</span>
+                  <span v-else>+{{ estimatedWaros.toLocaleString(uiLocale) }}</span>
                 </p>
               </div>
             </div>
@@ -4005,7 +4029,7 @@ onUnmounted(() => {
                   v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward"
                   class="text-xs text-text-tertiary animate-pulse"
                 >
-                  Calculando canje…
+                  {{ t('pos.wallet.calculatingRedemption') }}
                 </p>
 
                 <ul v-if="activeWaroRewards.length" class="space-y-1.5">
@@ -4042,16 +4066,16 @@ onUnmounted(() => {
         <div v-if="selectedCustomer" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
-              <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75" />
               </svg>
-              Cobro Parcial
+	              {{ t('pos.checkout.split.title') }}
             </h3>
             <button
               type="button"
               role="switch"
               :aria-checked="splitMode"
-              :aria-label="splitMode ? 'Desactivar cobro parcial' : 'Activar cobro parcial'"
+	              :aria-label="splitMode ? t('pos.checkout.split.disableAria') : t('pos.checkout.split.enableAria')"
               @click="toggleSplitMode"
               class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               :class="splitMode ? 'bg-primary' : 'bg-border'"
@@ -4071,7 +4095,7 @@ onUnmounted(() => {
               <!-- Header: count + paid so far -->
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Pagos registrados
+	                  {{ t('pos.checkout.split.registeredPayments') }}
                 </span>
                 <span class="text-xs font-bold text-primary tabular-nums">
                   {{ splitPayments.length }} · {{ formatCurrency(splitPaidTotal) }}
@@ -4085,7 +4109,7 @@ onUnmounted(() => {
                   class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm"
                 >
                   <!-- Check icon -->
-                  <svg class="h-4 w-4 text-state-success-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="h-[1em] w-[1em] text-state-success-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
                   </svg>
                   <span class="text-text-secondary flex-1">#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
@@ -4098,11 +4122,11 @@ onUnmounted(() => {
                     :aria-label="`Eliminar pago #${idx + 1} de ${formatCurrency(p.amount)}`"
                     class="ml-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   >
-                    <svg v-if="isVoidingPayment === p.id" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg v-if="isVoidingPayment === p.id" class="h-[1em] w-[1em] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
-                    <svg v-else class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <svg v-else class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                     </svg>
                   </button>
@@ -4116,11 +4140,11 @@ onUnmounted(() => {
               class="rounded-lg border border-border bg-surface-secondary/60 px-3 py-2.5 space-y-1.5 text-sm"
             >
               <div class="flex items-center justify-between text-text-secondary">
-                <span>Total orden</span>
+	                <span>{{ t('pos.checkout.split.orderTotal') }}</span>
                 <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(discountedTotal) }}</span>
               </div>
               <div class="flex items-center justify-between text-text-secondary">
-                <span>Propina</span>
+	                <span>{{ t('pos.checkout.split.tip') }}</span>
                 <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipAmount) }}</span>
               </div>
               <div
@@ -4131,7 +4155,7 @@ onUnmounted(() => {
                 <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipTaxAmount) }}</span>
               </div>
               <div class="flex items-center justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
-                <span>Total a cobrar</span>
+	                <span>{{ t('pos.checkout.split.totalToCharge') }}</span>
                 <span class="tabular-nums">{{ formatCurrency(splitAmountDue) }}</span>
               </div>
             </div>
@@ -4142,10 +4166,10 @@ onUnmounted(() => {
               :class="splitIsComplete ? 'bg-state-success-bg ' : 'bg-primary/10'"
             >
               <span class="text-sm font-medium flex items-center gap-1.5" :class="splitIsComplete ? 'text-state-success-text ' : 'text-primary'">
-                <svg v-if="splitIsComplete" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg v-if="splitIsComplete" class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                 </svg>
-                {{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}
+	                {{ splitIsComplete ? t('pos.checkout.split.complete') : t('pos.checkout.split.pendingBalance') }}
               </span>
               <span
                 class="text-sm font-bold tabular-nums"
@@ -4156,13 +4180,13 @@ onUnmounted(() => {
 
             <!-- Partial amount input -->
             <div v-if="!splitIsComplete" class="flex flex-col gap-1">
-              <label class="text-xs font-medium text-text-secondary">Monto a cobrar ahora</label>
+	              <label class="text-xs font-medium text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
                 <input
                   type="text"
                   inputmode="numeric"
-                  :value="splitPartialAmount ? splitPartialAmount.toLocaleString('es-CO') : ''"
+                  :value="splitPartialAmount ? splitPartialAmount.toLocaleString(uiLocale) : ''"
                   @input="onSplitAmountInput"
                   class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
                   :class="splitAmountValidationMessage ? 'border-state-danger-border focus:border-state-danger-border focus:ring-state-danger-border/30' : ''"
@@ -4195,7 +4219,7 @@ onUnmounted(() => {
               class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <UiLoadingDots v-if="isAddingPayment" size="10px" />
-              <span v-else>Cobrar {{ formatCurrency(splitAmountToCharge) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
+	              <span v-else>{{ t('pos.checkout.split.chargeAmount', { amount: formatCurrency(splitAmountToCharge), method: getPaymentMethodLabel(selectedPaymentMethod) }) }}</span>
             </button>
           </div>
         </div>
@@ -4223,12 +4247,12 @@ onUnmounted(() => {
           class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
         >
           <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
-            <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
             </svg>
           </div>
-          <p class="text-sm text-state-warning-text font-medium">Los ítems serán enviados a cocina al cobrar</p>
+	          <p class="text-sm text-state-warning-text font-medium">{{ t('pos.checkout.kitchenSendOnCharge') }}</p>
         </div>
 
         <!-- Action Buttons (always visible) -->
@@ -4240,54 +4264,54 @@ onUnmounted(() => {
             class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
-            <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg v-else class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
             <span v-if="!isProcessing">
               {{ isDeferredDeliveryPayment
-                ? 'Dejar venta pendiente'
-                : selectedPaymentMethod === 'credit'
-                ? 'Registrar como crédito'
-                : tipAmount > 0 || mesaAdvanceAppliedEstimate > 0
-                  ? `Confirmar — ${formatCurrency(finalAmountToCollect)}`
-                  : 'Confirmar Orden' }}
+	                ? t('pos.checkout.actions.leavePending')
+	                : selectedPaymentMethod === 'credit'
+	                ? t('pos.checkout.actions.registerCredit')
+	                : tipAmount > 0 || mesaAdvanceAppliedEstimate > 0
+	                  ? t('pos.checkout.actions.confirmWithAmount', { amount: formatCurrency(finalAmountToCollect) })
+	                  : t('pos.checkout.actions.confirmOrder') }}
             </span>
-            <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg v-if="!isProcessing" class="h-[1em] w-[1em] opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
           </button>
-          <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+	          <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">{{ t('pos.checkout.actions.identifyCustomerToContinue') }}</p>
 
           <!-- Issue #535 — Imprimir prefactura (pre-cuenta para revisión del cliente) -->
           <button
             v-if="cartItems.length > 0"
             type="button"
             :disabled="prefacturaDisabled"
-            :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
+	            :title="prefacturaDisabled ? t('pos.checkout.actions.printPrefacturaTitleLoading') : t('pos.checkout.actions.printPrefacturaTitle')"
             @click="printPrefactura"
             class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
-            aria-label="Imprimir prefactura para revisión del cliente"
+	            :aria-label="t('pos.checkout.actions.printPrefacturaAria')"
           >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+            <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0H6.34m11.318 0a23.97 23.97 0 01-3.42-1.5m3.42 1.5l.42-.5m-3.84 1.5a23.97 23.97 0 003.42-1.5M14.25 9.75v.01m-3-.01v.01m-3-.01v.01M7.5 6.75h9a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-9a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75z" />
             </svg>
-            <span>Imprimir prefactura</span>
+	            <span>{{ t('pos.checkout.actions.printPrefactura') }}</span>
           </button>
 
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
           >
-            Cancelar
+	            {{ t('pos.checkout.actions.cancel') }}
           </button>
         </div>
 
         <!-- Security Note -->
         <div class="flex items-center justify-center gap-2 text-xs text-text-tertiary">
-          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
           </svg>
-          <span>Transacción segura y encriptada</span>
+	          <span>{{ t('pos.checkout.secureTransaction') }}</span>
         </div>
 
       </div>
@@ -4306,12 +4330,12 @@ onUnmounted(() => {
         class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
-          <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
           </svg>
         </div>
         <p class="text-sm text-status-success-text font-medium">
-          Promo activa: {{ activePromoHint }}
+          {{ t('pos.checkout.promoActive', { name: activePromoHint }) }}
         </p>
       </div>
 
@@ -4334,7 +4358,7 @@ onUnmounted(() => {
             <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
           </div>
           <svg
-            class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+            class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
             :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"
             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
           >
@@ -4359,9 +4383,9 @@ onUnmounted(() => {
           @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
           class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
         >
-          <h3 class="font-bold text-text-primary">Resumen de la Orden</h3>
+	          <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
           <svg
-            class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+            class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
             :class="activeAccordion === 'summary' ? 'rotate-0' : 'rotate-180'"
             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
           >
@@ -4371,11 +4395,11 @@ onUnmounted(() => {
         <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
           <div class="space-y-3 mb-4">
             <div class="flex justify-between text-sm text-text-secondary">
-              <span>Subtotal ({{ cartItems.length }} productos)</span>
+	              <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
             </div>
             <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
-              <span>Promoción</span>
+	              <span>{{ t('pos.checkout.summary.promotion') }}</span>
               <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
             </div>
             <div
@@ -4391,19 +4415,19 @@ onUnmounted(() => {
               v-if="promoSavings > 0"
               class="flex justify-between text-sm text-text-secondary"
             >
-              <span>Subtotal con promoción</span>
+	              <span>{{ t('pos.checkout.summary.subtotalWithPromo') }}</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(subtotalAfterPromos) }}</span>
             </div>
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-state-success-text ">
-              <span>Descuento manual</span>
+	              <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
               <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
             </div>
             <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
-              <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
+	              <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
               <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
             </div>
             <div class="flex justify-between text-sm text-text-secondary">
-              <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+	              <span>{{ taxPreview ? localizedInternalTaxLabel(taxPreview.standard_tax_label) : t('pos.checkout.summary.taxesZero') }}</span>
               <span class="font-medium text-text-primary">
                 {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
               </span>
@@ -4428,18 +4452,18 @@ onUnmounted(() => {
               v-if="tipAmount > 0 || checkoutSummaryAdvanceApplied > 0"
               class="flex justify-between text-sm text-text-secondary mb-2"
             >
-              <span>Total orden</span>
+	              <span>{{ t('pos.checkout.summary.orderTotal') }}</span>
               <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
             </div>
             <div
               v-if="checkoutSummaryAdvanceApplied > 0"
               class="flex justify-between text-sm text-state-success-text mb-2"
             >
-              <span>Anticipo mesa</span>
+	              <span>{{ t('pos.checkout.summary.tableAdvance') }}</span>
               <span class="font-medium tabular-nums">- {{ formatCurrency(checkoutSummaryAdvanceApplied) }}</span>
             </div>
             <div class="flex justify-between items-end mb-1">
-              <span class="text-text-secondary font-medium">Total a Pagar</span>
+	              <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
               <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
             </div>
             <p class="text-right text-xs text-text-tertiary">COP</p>
@@ -4456,7 +4480,7 @@ onUnmounted(() => {
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold text-text-primary text-sm">Waros</h3>
             <span v-if="!isLoadingWaros" class="text-sm font-bold tabular-nums text-state-warning-text">
-              {{ warosBalance.toLocaleString('es-CO') }}
+              {{ warosBalance.toLocaleString(uiLocale) }}
             </span>
           </div>
           <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-3 gap-2">
@@ -4464,9 +4488,9 @@ onUnmounted(() => {
           </div>
           <div v-else class="grid grid-cols-3 gap-2">
             <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
-              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Puntos</p>
+              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.points') }}</p>
               <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
-                {{ warosBalance.toLocaleString('es-CO') }}
+                {{ warosBalance.toLocaleString(uiLocale) }}
               </p>
             </div>
             <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
@@ -4476,19 +4500,19 @@ onUnmounted(() => {
               </p>
             </div>
             <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
-              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
+              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.earn') }}</p>
               <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                 <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
                 <span v-else-if="!warosEarnEligible">—</span>
                 <span v-else-if="estimatedWaros === null">—</span>
-                <span v-else>+{{ estimatedWaros.toLocaleString('es-CO') }}</span>
+                <span v-else>+{{ estimatedWaros.toLocaleString(uiLocale) }}</span>
               </p>
             </div>
           </div>
           <template v-if="waroRedemptionEnabled">
             <div class="space-y-3">
               <p v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward" class="text-xs text-text-tertiary animate-pulse">
-                Calculando canje…
+                {{ t('pos.wallet.calculatingRedemption') }}
               </p>
               <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                 <li v-for="reward in activeWaroRewards" :key="reward.id">
@@ -4534,12 +4558,12 @@ onUnmounted(() => {
         class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
       >
         <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
-          <svg class="w-4 h-4 text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
           </svg>
         </div>
-        <p class="text-sm text-state-warning-text font-medium">Los ítems serán enviados a cocina al cobrar</p>
+	        <p class="text-sm text-state-warning-text font-medium">{{ t('pos.checkout.kitchenSendOnCharge') }}</p>
       </div>
 
       <!-- Issue #524 — Cash tender (mobile / tablet; desktop uses right column) -->
@@ -4559,45 +4583,45 @@ onUnmounted(() => {
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
-          <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <svg v-else class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
           <span v-if="!isProcessing">
-            {{ isDeferredDeliveryPayment ? 'Dejar venta pendiente' : selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}
+            {{ isDeferredDeliveryPayment ? t('pos.checkout.actions.leavePending') : selectedPaymentMethod === 'credit' ? t('pos.checkout.actions.registerCredit') : t('pos.checkout.actions.confirmOrder') }}
           </span>
         </button>
-        <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+        <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">{{ t('pos.checkout.actions.identifyCustomerToContinue') }}</p>
 
         <!-- Issue #535 — Imprimir prefactura (pre-cuenta para revisión del cliente) -->
         <button
           v-if="cartItems.length > 0"
           type="button"
           :disabled="prefacturaDisabled"
-          :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
+	          :title="prefacturaDisabled ? t('pos.checkout.actions.printPrefacturaTitleLoading') : t('pos.checkout.actions.printPrefacturaTitle')"
           @click="printPrefactura"
           class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
-          aria-label="Imprimir prefactura para revisión del cliente"
+	          :aria-label="t('pos.checkout.actions.printPrefacturaAria')"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+          <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0H6.34m11.318 0a23.97 23.97 0 01-3.42-1.5m3.42 1.5l.42-.5m-3.84 1.5a23.97 23.97 0 003.42-1.5M14.25 9.75v.01m-3-.01v.01m-3-.01v.01M7.5 6.75h9a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-9a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75z" />
           </svg>
-          <span>Imprimir prefactura</span>
+	          <span>{{ t('pos.checkout.actions.printPrefactura') }}</span>
         </button>
 
-        <button
-          @click="cancelOrder"
-          class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
-        >
-          Cancelar
-        </button>
+	        <button
+	          @click="cancelOrder"
+	          class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+	        >
+	          {{ t('pos.checkout.actions.cancel') }}
+	        </button>
       </div>
 
       <!-- Security Note -->
       <div class="flex items-center justify-center gap-2 text-xs text-text-tertiary">
-        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
         </svg>
-        <span>Transacción segura y encriptada</span>
+	        <span>{{ t('pos.checkout.secureTransaction') }}</span>
       </div>
     </div>
 
@@ -4631,26 +4655,26 @@ onUnmounted(() => {
             v-if="voidPaymentTarget.payment_method === 'cash'"
             class="flex items-start gap-2 text-sm text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg p-3 mb-4"
           >
-            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <svg class="h-[1em] w-[1em] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span>Pago en efectivo — recuerda devolver físicamente el dinero al cliente antes de confirmar.</span>
+            <span>{{ t('pos.checkout.split.cashRefundWarning') }}</span>
           </p>
 
           <label for="void-payment-reason" class="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">
-            Motivo <span class="text-text-tertiary normal-case">(opcional)</span>
+            {{ t('pos.checkout.split.reason') }} <span class="text-text-tertiary normal-case">{{ t('pos.checkout.optional') }}</span>
           </label>
           <textarea
             id="void-payment-reason"
             v-model="voidPaymentReason"
             rows="2"
             :disabled="isVoidingPayment === voidPaymentTarget.id"
-            placeholder="Ej: cobro registrado por error"
+            :placeholder="t('pos.checkout.split.reasonPlaceholder')"
             class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50"
           />
 
           <p v-if="voidPaymentError" class="mt-3 text-sm text-destructive flex items-start gap-2">
-            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <svg class="h-[1em] w-[1em] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <span>{{ voidPaymentError }}</span>
@@ -4662,7 +4686,7 @@ onUnmounted(() => {
               :disabled="isVoidingPayment === voidPaymentTarget.id"
               @click="closeVoidPaymentModal"
               class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg border border-border bg-surface text-text-primary text-sm font-semibold hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >Cancelar</button>
+            >{{ t('pos.checkout.actions.cancel') }}</button>
             <button
               type="button"
               :disabled="isVoidingPayment === voidPaymentTarget.id"
@@ -4670,7 +4694,7 @@ onUnmounted(() => {
               class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg bg-action-destructive-bg text-action-destructive-text text-sm font-semibold hover:bg-action-destructive-hover-bg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isVoidingPayment === voidPaymentTarget.id" size="8px" />
-              <span v-else>Eliminar pago</span>
+              <span v-else>{{ t('pos.checkout.split.deletePayment') }}</span>
             </button>
           </div>
         </div>
@@ -4705,36 +4729,36 @@ onUnmounted(() => {
           <h3 class="text-xl font-bold leading-tight text-text-primary text-center mb-1.5">
             {{
               orderResult?.status === 'pending'
-                ? 'Venta pendiente'
+                ? t('pos.checkout.success.pendingTitle')
                 : orderResult?.payment_method === 'credit'
-                  ? 'Venta a crédito registrada'
-                  : 'Venta Completada'
+                  ? t('pos.checkout.success.creditTitle')
+                  : t('pos.checkout.success.completedTitle')
             }}
           </h3>
           <p class="text-sm leading-snug text-text-secondary text-center mb-4">
             {{
               orderResult?.status === 'pending'
-                ? 'Finalízala desde ventas cuando conozcas el método de pago.'
+                ? t('pos.checkout.success.pendingBody')
                 : orderResult?.payment_method === 'credit'
-                  ? 'El saldo queda pendiente en cartera.'
-                  : 'La orden fue procesada exitosamente.'
+                  ? t('pos.checkout.success.creditBody')
+                  : t('pos.checkout.success.completedBody')
             }}
           </p>
 
           <!-- Credit notice banner -->
           <div v-if="orderResult?.payment_method === 'credit'" class="mb-3 rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2.5">
             <div class="flex items-center gap-2">
-              <svg class="h-4 w-4 text-state-warning-text flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <svg class="h-[1em] w-[1em] text-state-warning-text flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <p class="text-xs font-medium leading-snug text-state-warning-text">Abonos y saldo: perfil del cliente.</p>
+              <p class="text-xs font-medium leading-snug text-state-warning-text">{{ t('pos.checkout.success.creditNotice') }}</p>
             </div>
           </div>
 
           <!-- Order Details -->
           <div v-if="orderResult" class="bg-background rounded-lg border border-border p-3 mb-4 space-y-2.5">
             <div v-if="(orderResult?.order_number ?? 0) > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">Nº Orden</span>
+              <span class="text-sm text-text-secondary">{{ t('pos.checkout.success.orderNumber') }}</span>
               <span class="text-lg font-bold leading-none text-primary">#{{ orderResult?.order_number ?? '' }}</span>
             </div>
             <div
@@ -4753,7 +4777,7 @@ onUnmounted(() => {
               <span class="text-sm font-medium text-state-success-text ">-{{ formatCurrency(promo.savings) }}</span>
             </div>
             <div v-if="orderResult.discount_amount" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-primary">Descuento manual</span>
+              <span class="text-sm text-primary">{{ t('pos.checkout.summary.manualDiscount') }}</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
             <div v-if="orderResultWaroDiscountCop > 0" class="flex items-center justify-between gap-3">
@@ -4761,44 +4785,44 @@ onUnmounted(() => {
               <span class="text-sm font-medium text-state-warning-text">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
             </div>
             <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? t('pos.checkout.taxFallback') }}</span>
+              <span class="text-sm text-text-secondary">{{ localizedInternalTaxLabel(orderResult.standard_tax_label) }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
             </div>
             <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">IVA licores 5%</span>
+              <span class="text-sm text-text-secondary">{{ t('pos.receipt.liquorVat') }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.liquor_tax) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3" :class="(orderResult.discount_amount || orderResult.waro_discount_cop || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-2.5' : ''">
-              <span class="text-sm text-text-secondary">Total</span>
+              <span class="text-sm text-text-secondary">{{ t('pos.checkout.summary.total') }}</span>
               <span class="text-base font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
             </div>
             <!-- warocol.com#639 — show tip on a separate line + the total charged to the customer -->
             <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">Propina</span>
+              <span class="text-sm text-text-secondary">{{ t('pos.checkout.summary.tip') }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.tip_amount) }}</span>
             </div>
             <div v-if="orderResult.advance_applied && orderResult.advance_applied > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-state-success-text">Anticipo mesa</span>
+              <span class="text-sm text-state-success-text">{{ t('pos.checkout.summary.tableAdvance') }}</span>
               <span class="text-sm font-medium text-state-success-text">-{{ formatCurrency(orderResult.advance_applied) }}</span>
             </div>
             <div
               v-if="(orderResult.tip_amount && orderResult.tip_amount > 0) || (orderResult.advance_applied && orderResult.advance_applied > 0)"
               class="flex items-center justify-between gap-3 rounded-md bg-primary/5 px-2.5 py-2"
             >
-              <span class="text-sm font-semibold text-text-primary">Total cobrado</span>
+              <span class="text-sm font-semibold text-text-primary">{{ t('pos.checkout.summary.totalCharged') }}</span>
               <span class="text-lg font-bold leading-none text-primary">
                 {{ formatCurrency(orderResultChargedAmount) }}
               </span>
             </div>
             <div class="flex items-center justify-between gap-3 min-w-0">
-              <span class="text-sm text-text-secondary shrink-0">Método de Pago</span>
+              <span class="text-sm text-text-secondary shrink-0">{{ t('pos.checkout.summary.paymentMethod') }}</span>
               <span class="text-sm font-medium text-text-primary min-w-0 overflow-x-auto whitespace-nowrap text-right">
                 {{
                   orderResult.payment_method
                     ? (orderResult.payment_method_name
                         ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
                         : getPaymentMethodLabel(orderResult.payment_method))
-                    : 'Pendiente por definir'
+                    : t('pos.checkout.summary.pendingPayment')
                 }}
               </span>
             </div>
@@ -4812,63 +4836,63 @@ onUnmounted(() => {
                 @click="requestInvoice"
                 class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
-                {{ (orderResult?.order_ids?.length ?? 0) > 1 ? `Facturar ${orderResult?.order_ids?.length} órdenes` : 'Generar factura electrónica DIAN' }}
+	                {{ (orderResult?.order_ids?.length ?? 0) > 1 ? t('pos.checkout.invoice.generateMultiple', { count: orderResult?.order_ids?.length }) : t('pos.checkout.invoice.generateDian') }}
               </button>
             </template>
             <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2 text-xs font-medium leading-snug text-state-warning-text">
-              Crédito puro: sin factura DIAN desde POS.
+	              {{ t('pos.checkout.invoice.creditOnlyShort') }}
             </div>
 
             <!-- Inline fiscal-data wizard -->
             <div v-else-if="fiscalWizardOpen" class="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
               <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664" /></svg>
+                <svg class="h-[1em] w-[1em] text-primary mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664" /></svg>
                 <div class="flex-1">
-                  <p class="text-sm font-semibold text-text-primary">Datos para la factura</p>
-                  <p class="text-xs text-text-secondary mt-0.5">Pídele al cliente su tipo y número de documento.</p>
+	                  <p class="text-sm font-semibold text-text-primary">{{ t('pos.checkout.invoice.dataTitle') }}</p>
+	                  <p class="text-xs text-text-secondary mt-0.5">{{ t('pos.checkout.invoice.dataHint') }}</p>
                 </div>
               </div>
 
               <div class="space-y-2">
-                <label class="text-xs font-medium text-text-primary">Tipo de documento</label>
+	                <label class="text-xs font-medium text-text-primary">{{ t('pos.customer.documentType') }}</label>
                 <select
                   v-model="fiscalWizardForm.fiscal_id_type"
                   :disabled="fiscalWizardSaving"
                   class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
                 >
-                  <option value="" disabled>Selecciona...</option>
-                  <option value="CC">Cédula de Ciudadanía</option>
-                  <option value="NIT">NIT (empresa)</option>
-                  <option value="CE">Cédula de Extranjería</option>
-                  <option value="PA">Pasaporte</option>
-                  <option value="TI">Tarjeta de Identidad</option>
+	                  <option value="" disabled>{{ t('pos.customer.selectDocumentType') }}</option>
+	                  <option value="CC">{{ t('pos.customer.docType.cc') }}</option>
+	                  <option value="NIT">{{ t('pos.customer.docType.nit') }}</option>
+	                  <option value="CE">{{ t('pos.customer.docType.ce') }}</option>
+	                  <option value="PA">{{ t('pos.customer.docType.pa') }}</option>
+	                  <option value="TI">{{ t('pos.customer.docType.ti') }}</option>
                 </select>
               </div>
 
               <div class="space-y-2">
-                <label class="text-xs font-medium text-text-primary">Número de documento</label>
+	                <label class="text-xs font-medium text-text-primary">{{ t('pos.customer.documentNumber') }}</label>
                 <input
                   v-model="fiscalWizardForm.fiscal_id"
                   type="text"
                   @input="fiscalWizardForm.fiscal_id = normalizeFiscalDocumentId(fiscalWizardForm.fiscal_id)"
-                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+	                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? t('pos.customer.nitPlaceholder') : t('pos.customer.idPlaceholder')"
                   :disabled="fiscalWizardSaving"
                   class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
                 />
-                <p v-if="fiscalWizardForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">Sin dígito de verificación</p>
+	                <p v-if="fiscalWizardForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">{{ t('pos.customer.nitWithoutDv') }}</p>
               </div>
 
               <div class="space-y-2">
                 <label class="text-xs font-medium text-text-primary">
-                  {{ fiscalWizardForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+	                  {{ fiscalWizardForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : t('pos.customer.legalName') }}
                 </label>
                 <input
                   v-model="fiscalWizardForm.fiscal_business_name"
                   type="text"
-                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez'"
+	                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessPlaceholder') : t('pos.customer.personPlaceholder')"
                   :disabled="fiscalWizardSaving"
                   class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
                 />
@@ -4883,7 +4907,7 @@ onUnmounted(() => {
                   @click="fiscalWizardOpen = false"
                   class="min-h-[44px] px-3 py-2 text-sm text-text-secondary font-medium border border-border bg-surface rounded-lg hover:bg-surface-secondary transition-colors disabled:opacity-50"
                 >
-                  Cancelar
+	                  {{ t('pos.checkout.actions.cancel') }}
                 </button>
                 <button
                   type="button"
@@ -4891,11 +4915,11 @@ onUnmounted(() => {
                   @click="submitFiscalAndInvoice"
                   class="flex-1 min-h-[44px] px-3 py-2 text-sm bg-action-primary-bg text-action-primary-text font-semibold rounded-lg hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <svg v-if="fiscalWizardSaving" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-if="fiscalWizardSaving" class="h-[1em] w-[1em] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
-                  {{ fiscalWizardSaving ? 'Guardando...' : 'Continuar y emitir' }}
+	                  {{ fiscalWizardSaving ? t('pos.checkout.invoice.saving') : t('pos.checkout.invoice.continueAndIssue') }}
                 </button>
               </div>
             </div>
@@ -4903,7 +4927,7 @@ onUnmounted(() => {
             <!-- Loading -->
             <div v-else-if="invoiceLoading" class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-secondary rounded-lg">
               <UiLoadingDots size="9px" color="currentColor" aria-hidden="true" />
-              <span class="text-sm text-text-secondary">{{ invoiceProgress || 'Generando factura DIAN...' }}</span>
+	              <span class="text-sm text-text-secondary">{{ invoiceProgress || t('pos.checkout.invoice.generating') }}</span>
             </div>
 
             <!-- Success — show ONLY invoice number -->
@@ -4911,7 +4935,7 @@ onUnmounted(() => {
               v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
               class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center space-y-2"
             >
-              <p class="text-xs font-semibold text-state-success-text">Factura generada</p>
+	              <p class="text-xs font-semibold text-state-success-text">{{ t('pos.checkout.invoice.generated') }}</p>
               <p class="text-sm font-semibold text-state-success-text mt-1">
                 {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
               </p>
@@ -4921,18 +4945,18 @@ onUnmounted(() => {
                 @click="showInvoiceEmailModal = true"
                 class="mx-auto min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold border border-state-success-border bg-surface text-state-success-text hover:bg-state-success-bg transition-colors"
               >
-                Enviar factura por correo
+	                {{ t('pos.checkout.invoice.sendByEmail') }}
               </button>
             </div>
 
             <!-- Error -->
             <div v-else-if="invoiceError" class="rounded-lg border border-state-danger-border bg-state-danger-bg p-3 space-y-2">
               <div class="flex items-start gap-2 text-state-danger-text">
-                <svg class="h-4 w-4 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                <svg class="h-[1em] w-[1em] shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
                 <div class="min-w-0 space-y-1">
                   <span class="text-sm font-medium block">{{ invoiceError }}</span>
                   <p v-if="isMatiasAuthInvoiceError" class="text-xs opacity-90">
-                    Error de autenticación con Matias. Corrige el token y pulsa Reintentar.
+	                    {{ t('pos.checkout.invoice.matiasAuthError') }}
                   </p>
                 </div>
               </div>
@@ -4942,11 +4966,11 @@ onUnmounted(() => {
                 @click="retryInvoice"
                 class="w-full min-h-[44px] py-2 px-4 bg-surface border border-state-danger-border text-state-danger-text text-sm font-semibold rounded-lg hover:bg-state-danger-bg focus:outline-none focus:ring-2 focus:ring-state-danger-border active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <svg v-if="invoiceLoading" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <svg v-if="invoiceLoading" class="h-[1em] w-[1em] animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                {{ invoiceLoading ? 'Reintentando…' : 'Reintentar' }}
+	                {{ invoiceLoading ? t('pos.checkout.invoice.retrying') : t('pos.checkout.invoice.retry') }}
               </button>
             </div>
           </div>
@@ -4957,17 +4981,17 @@ onUnmounted(() => {
             <div class="flex flex-col gap-1.5">
               <!-- When email comes from profile: confirmation mode -->
               <template v-if="emailFromProfile && !emailSent">
-                <p class="text-sm font-medium text-text-primary">¿Enviar recibo al cliente?</p>
+	                <p class="text-sm font-medium text-text-primary">{{ t('pos.checkout.receiptEmail.askSend') }}</p>
                 <div class="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
-                  <svg class="h-4 w-4 shrink-0 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+                  <svg class="h-[1em] w-[1em] shrink-0 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
                   <span class="flex-1 truncate text-sm text-text-primary">{{ receiptEmail }}</span>
                   <button
                     @click="sendReceiptEmail"
                     :disabled="!receiptEmail || isSendingEmail"
                     class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
                   >
-                    <span v-if="isSendingEmail">Enviando...</span>
-                    <span v-else>Confirmar envío</span>
+	                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
+	                    <span v-else>{{ t('pos.checkout.receiptEmail.confirmSend') }}</span>
                   </button>
                 </div>
               </template>
@@ -4975,15 +4999,15 @@ onUnmounted(() => {
               <!-- When email was sent (from profile or manual) -->
               <template v-else-if="emailSent">
                 <div class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text">
-                  <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                  <span class="text-sm font-medium">Recibo enviado a {{ receiptEmail }}</span>
+                  <svg class="h-[1em] w-[1em] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+	                  <span class="text-sm font-medium">{{ t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}</span>
                 </div>
               </template>
 
               <!-- When no profile email: manual input -->
               <template v-else>
                 <label for="receipt-email" class="text-xs font-semibold text-text-secondary">
-                  Recibo por correo <span class="font-normal text-text-tertiary">(opcional)</span>
+	                  {{ t('pos.checkout.receiptEmail.label') }} <span class="font-normal text-text-tertiary">{{ t('pos.checkout.optional') }}</span>
                 </label>
                 <div class="flex gap-2">
                   <input
@@ -4998,8 +5022,8 @@ onUnmounted(() => {
                     :disabled="!receiptEmail || isSendingEmail"
                     class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary"
                   >
-                    <span v-if="isSendingEmail">Enviando...</span>
-                    <span v-else>Enviar</span>
+	                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
+	                    <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
                   </button>
                 </div>
               </template>
@@ -5010,10 +5034,10 @@ onUnmounted(() => {
               @click="printReceipt"
               class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary active:scale-95 transition-all flex items-center justify-center gap-2"
             >
-              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.056 48.056 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
               </svg>
-              Imprimir comprobante
+	              {{ t('pos.checkout.actions.printReceipt') }}
             </button>
           </div>
 
@@ -5022,7 +5046,7 @@ onUnmounted(() => {
             @click="closeSuccessModal"
             class="w-full py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-medium hover:bg-action-primary-hover-bg transition-colors"
           >
-            Nueva Venta
+	            {{ t('pos.checkout.actions.newSale') }}
           </button>
         </div>
       </div>
@@ -5159,7 +5183,7 @@ onUnmounted(() => {
       <span>-{{ formatCurrency(prefacturaPrintData.waroDiscountCop) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
-      <span>{{ taxPreview.standard_tax_label || t('pos.checkout.taxFallback') }}</span>
+      <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
       <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
@@ -5297,7 +5321,7 @@ onUnmounted(() => {
       <span>-{{ formatCurrency(promo.savings) }}</span>
     </div>
     <div v-if="orderResult?.discount_amount" class="receipt-item">
-      <span>Descuento manual</span>
+	      <span>{{ t('pos.receipt.manualDiscount') }}</span>
       <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
     </div>
     <div v-if="orderResultWaroDiscountCop > 0" class="receipt-item">
@@ -5305,20 +5329,20 @@ onUnmounted(() => {
       <span>-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
     </div>
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
-      <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de impuestos</div>
+	      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxDetail') }}</div>
       <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-item receipt-small">
-        <span>{{ orderResult.standard_tax_label || t('pos.checkout.taxFallback') }}</span>
+        <span>{{ localizedInternalTaxLabel(orderResult.standard_tax_label) }}</span>
         <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
       </div>
       <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
-        <span>IVA licores 5%</span>
+	        <span>{{ t('pos.receipt.liquorVat') }}</span>
         <span>{{ formatCurrency(orderResult.liquor_tax) }}</span>
       </div>
     </template>
     <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->
     <template v-if="(orderResult?.tip_amount && orderResult.tip_amount > 0) || (orderResult?.advance_applied && orderResult.advance_applied > 0)">
       <div class="receipt-item">
-        <span>Total orden</span>
+	        <span>{{ t('pos.receipt.orderTotal') }}</span>
         <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
       </div>
       <div v-if="orderResult?.tip_amount && orderResult.tip_amount > 0" class="receipt-item">
@@ -5326,11 +5350,11 @@ onUnmounted(() => {
         <span>{{ formatCurrency(orderResult.tip_amount) }}</span>
       </div>
       <div v-if="orderResult?.advance_applied && orderResult.advance_applied > 0" class="receipt-item">
-        <span>Anticipo mesa</span>
+	        <span>{{ t('pos.receipt.tableAdvance') }}</span>
         <span>-{{ formatCurrency(orderResult.advance_applied) }}</span>
       </div>
       <div class="receipt-total">
-        <span>TOTAL COBRADO</span>
+	        <span>{{ t('pos.receipt.totalChargedUpper') }}</span>
         <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
       </div>
     </template>
@@ -5339,7 +5363,7 @@ onUnmounted(() => {
       <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
-    <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de pago</div>
+	    <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentDetail') }}</div>
     <template v-if="splitPaymentsSnapshot.length > 0">
       <template v-for="(p, idx) in splitPaymentsSnapshot" :key="p.id">
         <div class="receipt-item receipt-small">
@@ -5347,7 +5371,7 @@ onUnmounted(() => {
           <span>{{ formatCurrency(p.amount) }}</span>
         </div>
         <div v-if="p.change && p.change > 0" class="receipt-item receipt-small">
-          <span>Cambio (#{{ idx + 1 }})</span>
+	          <span>{{ t('pos.receipt.changeNumber', { number: idx + 1 }) }}</span>
           <span>{{ formatCurrency(p.change) }}</span>
         </div>
       </template>
@@ -5359,7 +5383,7 @@ onUnmounted(() => {
             ? (orderResult?.payment_method_name
                 ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
                 : getPaymentMethodLabel(orderResult.payment_method))
-            : 'Pendiente por definir'
+	            : t('pos.checkout.summary.pendingPayment')
         }}</span>
         <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
       </div>
@@ -5367,19 +5391,19 @@ onUnmounted(() => {
         v-if="receiptPrintContext?.singlePaymentChange && receiptPrintContext.singlePaymentChange > 0"
         class="receipt-item receipt-small"
       >
-        <span>Cambio</span>
+	        <span>{{ t('pos.receipt.change') }}</span>
         <span>{{ formatCurrency(receiptPrintContext.singlePaymentChange) }}</span>
       </div>
     </template>
     <div class="receipt-divider">================================</div>
-    <div class="receipt-footer">¡Gracias por tu compra!</div>
+	    <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
     <!-- DIAN invoice section on printed receipt -->
     <template v-if="invoiceResult">
       <div class="receipt-divider">================================</div>
-      <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRÓNICA</div>
+	      <div class="receipt-row" style="font-weight:bold;">{{ t('pos.receipt.electronicInvoice') }}</div>
       <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
       <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
-        Emisor: {{ receiptIssuerLabel }}
+	        {{ t('pos.receipt.issuer', { label: receiptIssuerLabel }) }}
       </div>
       <div v-if="invoiceResult.cufe" class="receipt-row receipt-small receipt-cufe">
         CUFE: {{ invoiceResult.cufe }}
@@ -5387,19 +5411,19 @@ onUnmounted(() => {
       <img
         v-if="invoiceQrDataUrl"
         :src="invoiceQrDataUrl"
-        alt="QR verificación DIAN"
+        :alt="t('pos.receipt.qrDianAlt')"
         class="receipt-qr"
       >
-      <div v-if="invoiceResult.cufe" class="receipt-row receipt-small">Verificar en DIAN</div>
+	      <div v-if="invoiceResult.cufe" class="receipt-row receipt-small">{{ t('pos.receipt.verifyDian') }}</div>
       <div class="receipt-divider">================================</div>
       <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" />
     </template>
     <template v-else>
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">COMPROBANTE DE VENTA</div>
-      <div class="receipt-row receipt-small">No es factura electrónica DIAN</div>
+	      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleReceipt') }}</div>
+	      <div class="receipt-row receipt-small">{{ t('pos.receipt.notDianInvoice') }}</div>
       <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
-        Vendedor: {{ receiptIssuerLabel }}
+	        {{ t('pos.receipt.seller', { label: receiptIssuerLabel }) }}
       </div>
       <PosReceiptPlatformFooter document-kind="sale" :platform-legal="platformLegal" />
     </template>

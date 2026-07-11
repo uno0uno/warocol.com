@@ -18,9 +18,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   salesData: () => [],
   loading: false,
-  currentLabel: 'Hoy',
-  comparisonLabel: t('finanzas.common.yesterday')
 });
+
+const currentSeriesLabel = computed(() => props.currentLabel ?? t('finanzas.common.today'));
+const comparisonSeriesLabel = computed(() => props.comparisonLabel ?? t('finanzas.common.yesterday'));
 
 const data = computed(() => {
   if (props.salesData && props.salesData.length > 0) return props.salesData;
@@ -59,11 +60,11 @@ const hslToken = (name: string, fallback: string, seen = new Set<string>()): str
 
 const series = computed(() => [
   {
-    name: props.comparisonLabel,
+    name: comparisonSeriesLabel.value,
     data: data.value.map(d => d.salesYesterday),
   },
   {
-    name: props.currentLabel,
+    name: currentSeriesLabel.value,
     data: data.value.map(d => d.sales),
   },
 ]);

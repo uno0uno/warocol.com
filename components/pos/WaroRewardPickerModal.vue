@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { WaroReward } from '~/composables/useWaroRewards'
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const props = defineProps<{
   modelValue: boolean
@@ -35,7 +36,7 @@ function pick(reward: WaroReward) {
 }
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -44,9 +45,9 @@ function formatCurrency(value: number) {
 
 function rewardSubtitle(reward: WaroReward) {
   if (reward.reward_type === 'fixed_cop_off' && reward.fixed_cop_off) {
-    return `-${formatCurrency(reward.fixed_cop_off)} · ${reward.waros_cost.toLocaleString('es-CO')} pts`
+    return `-${formatCurrency(reward.fixed_cop_off)} · ${reward.waros_cost.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${t('pos.wallet.pointsShort')}`
   }
-  return `Producto gratis · ${reward.waros_cost.toLocaleString('es-CO')} pts`
+  return `${t('pos.wallet.freeProduct')} · ${reward.waros_cost.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${t('pos.wallet.pointsShort')}`
 }
 </script>
 
@@ -63,14 +64,14 @@ function rewardSubtitle(reward: WaroReward) {
       >
         <div class="p-5 border-b border-border flex items-center justify-between">
           <div>
-            <h2 class="text-lg font-bold text-text-primary">Canjear recompensa</h2>
+            <h2 class="text-lg font-bold text-text-primary">{{ t('pos.wallet.redeemReward') }}</h2>
             <p class="text-sm text-text-secondary mt-0.5">
-              Saldo: {{ warosBalance.toLocaleString('es-CO') }} pts
+              {{ t('pos.wallet.pointsBalance', { amount: warosBalance.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }) }}
             </p>
           </div>
           <button
             type="button"
-            aria-label="Cerrar"
+            :aria-label="t('common.close')"
             class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary"
             @click="close"
           >
@@ -85,7 +86,7 @@ function rewardSubtitle(reward: WaroReward) {
             <div v-for="i in 3" :key="i" class="h-16 rounded-xl bg-surface-secondary animate-pulse" />
           </div>
           <div v-else-if="activeRewards.length === 0" class="py-8 text-center text-text-secondary text-sm">
-            No hay recompensas activas configuradas.
+            {{ t('pos.wallet.noActiveRewards') }}
           </div>
           <ul v-else class="space-y-2">
             <li v-for="reward in activeRewards" :key="reward.id">

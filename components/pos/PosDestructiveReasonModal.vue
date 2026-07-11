@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-const { t, locale } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { computed, ref, watch } from 'vue'
 
 interface Props {
@@ -185,4 +185,3 @@ const submit = () => {
   emit('confirm', reason.value.trim())
 }
 </script>
-

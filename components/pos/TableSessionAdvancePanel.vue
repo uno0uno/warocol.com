@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { computed, ref, watch } from 'vue'
 import {
   BanknotesIcon,
@@ -79,7 +79,7 @@ const suggestedAmount = computed(() => {
 })
 
 const formatCurrency = (value: number) =>
-  `$${Math.round(Number(value) || 0).toLocaleString('es-CO')}`
+  `$${Math.round(Number(value) || 0).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')}`
 
 const methodLabel = (advance: SessionAdvance) => {
   const group = paymentGroups.value.find(g => g.slug === advance.payment_method)
@@ -231,7 +231,7 @@ watch(suggestedAmount, () => {
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
-                <BanknotesIcon class="w-5 h-5" />
+                <BanknotesIcon class="h-[1em] w-[1em]" />
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('pos.advance.titleShort') }}</h2>
@@ -305,9 +305,9 @@ watch(suggestedAmount, () => {
                 :disabled="submitting"
                 @click="selectedGroupSlug = group.slug"
               >
-                <BanknotesIcon v-if="group.slug === 'cash'" class="h-5 w-5" />
-                <CreditCardIcon v-else-if="group.slug === 'card'" class="h-5 w-5" />
-                <DevicePhoneMobileIcon v-else class="h-5 w-5" />
+                <BanknotesIcon v-if="group.slug === 'cash'" class="h-[1em] w-[1em]" />
+                <CreditCardIcon v-else-if="group.slug === 'card'" class="h-[1em] w-[1em]" />
+                <DevicePhoneMobileIcon v-else class="h-[1em] w-[1em]" />
                 <span>{{ group.name }}</span>
               </button>
             </div>
@@ -346,7 +346,7 @@ watch(suggestedAmount, () => {
               maxlength="500"
               class="input-base w-full px-3 py-2 text-sm resize-none"
               :disabled="submitting"
-              placeholder="Opcional"
+              :placeholder="t('pos.checkout.optional')"
             />
           </div>
 
@@ -402,7 +402,7 @@ watch(suggestedAmount, () => {
           >
             <UiLoadingDots v-if="submitting" size="8px" color="currentColor" />
             <template v-else>
-              <PlusIcon class="h-4 w-4" />
+              <PlusIcon class="h-[1em] w-[1em]" />
               {{ t('pos.advance.register') }}
             </template>
           </button>

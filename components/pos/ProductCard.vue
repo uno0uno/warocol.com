@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+const { locale } = useI18n({ useScope: 'global' })
 import { ref, computed } from 'vue'
 
 interface Product {
@@ -168,7 +169,7 @@ const iconSlotStyle = computed(() => {
 })
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

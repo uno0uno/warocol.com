@@ -39,7 +39,7 @@
           <div class="px-4 pt-4 pb-3 flex-shrink-0">
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
               </span>
@@ -57,7 +57,7 @@
                 :aria-label="t('pos.customer.clearSearchAria')"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
               >
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -73,7 +73,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
               <p class="text-sm font-medium text-text-primary">{{ t('pos.customer.searchCustomer') }}</p>
-              <p class="text-xs mt-1 text-center">Por nombre, teléfono, cédula o NIT</p>
+              <p class="text-xs mt-1 text-center">{{ t('pos.customer.searchEmptyHint') }}</p>
             </div>
 
             <!-- Loading skeleton -->
@@ -102,10 +102,10 @@
                   <p class="font-medium text-text-primary truncate">{{ customer.name || t('pos.customer.noName') }}</p>
                   <p class="text-sm text-text-secondary truncate">{{ customer.phone_number || t('pos.customer.noPhone') }}</p>
                   <p v-if="customer.fiscal_id" class="text-xs text-text-tertiary truncate">
-                    {{ customer.fiscal_id_type || 'Doc' }}: {{ customer.fiscal_id }}
+                    {{ customer.fiscal_id_type || t('pos.customer.docType.doc') }}: {{ customer.fiscal_id }}
                   </p>
                 </div>
-                <svg class="h-4 w-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
@@ -118,23 +118,23 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 16.318A4.486 4.486 0 0 0 12.016 15a4.486 4.486 0 0 0-3.198 1.318M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
                 </svg>
               </div>
-              <p class="font-medium text-text-primary mb-1">Sin resultados para "{{ debouncedQuery }}"</p>
-              <p class="text-sm text-text-secondary mb-5">Puedes crear un nuevo cliente o continuar sin datos</p>
+              <p class="font-medium text-text-primary mb-1">{{ t('pos.customer.noResultsFor', { query: debouncedQuery }) }}</p>
+              <p class="text-sm text-text-secondary mb-5">{{ t('pos.customer.noResultsHint') }}</p>
 
               <div class="space-y-3">
                 <button
                   @click="state = 'create'"
                   class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all"
                 >
-                  Crear cliente nuevo
+                  {{ t('pos.customer.createNewCustomer') }}
                 </button>
                 <button
                   @click="selectGenericCustomer"
                   :disabled="isCreatingGeneric"
                   class="w-full min-h-[44px] px-4 py-3 bg-surface border border-border text-text-primary font-medium rounded-xl hover:bg-surface-secondary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span v-if="isCreatingGeneric">Procesando...</span>
-                  <span v-else>Continuar sin datos</span>
+                  <span v-if="isCreatingGeneric">{{ t('pos.customer.processing') }}</span>
+                  <span v-else>{{ t('pos.customer.continueWithoutData') }}</span>
                 </button>
               </div>
             </div>
@@ -182,7 +182,7 @@
               <!-- Phone -->
               <div class="flex flex-col gap-1">
                 <label for="new-phone" class="text-sm font-medium text-text-primary">
-                  Teléfono <span class="text-destructive">*</span>
+                  {{ t('pos.customer.phone') }} <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="new-phone"
@@ -198,13 +198,13 @@
               <!-- Name -->
               <div class="flex flex-col gap-1">
                 <label for="new-name" class="text-sm font-medium text-text-primary">
-                  Nombre <span class="text-text-tertiary text-xs">(opcional)</span>
+                  {{ t('pos.customer.name') }} <span class="text-text-tertiary text-xs">{{ t('pos.checkout.optional') }}</span>
                 </label>
                 <input
                   id="new-name"
                   v-model="createForm.name"
                   type="text"
-                  placeholder="Juan Pérez"
+                  :placeholder="t('pos.customer.namePlaceholder')"
                   :disabled="isCreating"
                   class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                 />
@@ -213,7 +213,7 @@
               <!-- Email -->
               <div class="flex flex-col gap-1">
                 <label for="new-email" class="text-sm font-medium text-text-primary">
-                  Correo electrónico <span class="text-text-tertiary text-xs">(opcional)</span>
+                  {{ t('pos.customer.email') }} <span class="text-text-tertiary text-xs">{{ t('pos.checkout.optional') }}</span>
                 </label>
                 <input
                   id="new-email"
@@ -235,12 +235,12 @@
                   class="w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-surface-secondary transition-colors"
                 >
                   <span class="flex items-center gap-2 text-text-primary font-medium">
-                    <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
                     </svg>
-                    ¿Necesita factura electrónica?
+                    {{ t('pos.customer.needsInvoice') }}
                   </span>
-                  <svg :class="['h-5 w-5 text-text-tertiary transition-transform', wantsInvoice && 'rotate-180']" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <svg :class="['h-[1em] w-[1em] text-text-tertiary transition-transform', wantsInvoice && 'rotate-180']" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </button>
@@ -249,7 +249,7 @@
                   <!-- Tipo doc -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-type" class="text-sm font-medium text-text-primary">
-                      Tipo de documento <span class="text-destructive">*</span>
+	                      {{ t('pos.customer.documentType') }} <span class="text-destructive">*</span>
                     </label>
                     <select
                       id="new-fiscal-type"
@@ -257,31 +257,31 @@
                       :disabled="isCreating"
                       class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                     >
-                      <option value="" disabled>Selecciona...</option>
-                      <option value="CC">Cédula de Ciudadanía</option>
-                      <option value="NIT">NIT (empresa)</option>
-                      <option value="CE">Cédula de Extranjería</option>
-                      <option value="PA">Pasaporte</option>
-                      <option value="TI">Tarjeta de Identidad</option>
+	                      <option value="" disabled>{{ t('pos.customer.selectDocumentType') }}</option>
+	                      <option value="CC">{{ t('pos.customer.docType.cc') }}</option>
+	                      <option value="NIT">{{ t('pos.customer.docType.nit') }}</option>
+	                      <option value="CE">{{ t('pos.customer.docType.ce') }}</option>
+	                      <option value="PA">{{ t('pos.customer.docType.pa') }}</option>
+	                      <option value="TI">{{ t('pos.customer.docType.ti') }}</option>
                     </select>
                   </div>
 
                   <!-- Número doc -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-id" class="text-sm font-medium text-text-primary">
-                      Número de documento <span class="text-destructive">*</span>
+	                      {{ t('pos.customer.documentNumber') }} <span class="text-destructive">*</span>
                     </label>
                     <input
                       id="new-fiscal-id"
                       v-model="createForm.fiscal_id"
                       type="text"
                       @input="createForm.fiscal_id = normalizeFiscalDocumentId(createForm.fiscal_id)"
-                      :placeholder="createForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+	                      :placeholder="createForm.fiscal_id_type === 'NIT' ? t('pos.customer.nitPlaceholder') : t('pos.customer.idPlaceholder')"
                       :disabled="isCreating"
                       class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                     />
                     <p v-if="createForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">
-                      Ingresa el NIT sin el dígito de verificación
+	                      {{ t('pos.customer.nitWithoutDv') }}
                     </p>
                   </div>
 
@@ -295,7 +295,7 @@
                       id="new-fiscal-name"
                       v-model="createForm.fiscal_business_name"
                       type="text"
-                      :placeholder="createForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez Gómez'"
+	                      :placeholder="createForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessPlaceholder') : t('pos.customer.personPlaceholder')"
                       :disabled="isCreating"
                       class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                     />
@@ -305,7 +305,7 @@
 
               <!-- Error -->
               <div v-if="createError" class="bg-state-danger-bg  border border-state-danger-border  rounded-xl p-4 flex items-start gap-3">
-                <svg class="h-5 w-5 text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <svg class="h-[1em] w-[1em] text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
                 <p class="text-sm text-state-danger-text ">{{ createError }}</p>
@@ -320,7 +320,7 @@
                 @click="state = 'search'"
                 class="min-h-[44px] px-4 py-3 bg-surface border border-border text-text-secondary font-medium rounded-xl hover:bg-surface-secondary transition-colors"
               >
-                ← Volver
+	                ← {{ t('pos.customer.back') }}
               </button>
               <button
                 type="submit"
@@ -340,13 +340,13 @@
             <div class="p-5 space-y-4 flex-1 overflow-y-auto">
 
               <p class="text-sm text-text-secondary">
-                Datos para emitir factura electrónica al cliente. Solo se piden los datos exigidos por la DIAN (Resolución 000202 de 2025).
+	                {{ t('pos.customer.invoiceDataBody') }}
               </p>
 
               <!-- Tipo doc -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-type" class="text-sm font-medium text-text-primary">
-                  Tipo de documento <span class="text-destructive">*</span>
+	                  {{ t('pos.customer.documentType') }} <span class="text-destructive">*</span>
                 </label>
                 <select
                   id="edit-fiscal-type"
@@ -354,31 +354,31 @@
                   :disabled="isCreating"
                   class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                 >
-                  <option value="" disabled>Selecciona...</option>
-                  <option value="CC">Cédula de Ciudadanía</option>
-                  <option value="NIT">NIT (empresa)</option>
-                  <option value="CE">Cédula de Extranjería</option>
-                  <option value="PA">Pasaporte</option>
-                  <option value="TI">Tarjeta de Identidad</option>
+	                  <option value="" disabled>{{ t('pos.customer.selectDocumentType') }}</option>
+	                  <option value="CC">{{ t('pos.customer.docType.cc') }}</option>
+	                  <option value="NIT">{{ t('pos.customer.docType.nit') }}</option>
+	                  <option value="CE">{{ t('pos.customer.docType.ce') }}</option>
+	                  <option value="PA">{{ t('pos.customer.docType.pa') }}</option>
+	                  <option value="TI">{{ t('pos.customer.docType.ti') }}</option>
                 </select>
               </div>
 
               <!-- Número doc -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-id" class="text-sm font-medium text-text-primary">
-                  Número de documento <span class="text-destructive">*</span>
+	                  {{ t('pos.customer.documentNumber') }} <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="edit-fiscal-id"
                   v-model="fiscalForm.fiscal_id"
                   type="text"
                   @input="fiscalForm.fiscal_id = normalizeFiscalDocumentId(fiscalForm.fiscal_id)"
-                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+	                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? t('pos.customer.nitPlaceholder') : t('pos.customer.idPlaceholder')"
                   :disabled="isCreating"
                   class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                 />
                 <p v-if="fiscalForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">
-                  Ingresa el NIT sin el dígito de verificación
+	                  {{ t('pos.customer.nitWithoutDv') }}
                 </p>
               </div>
 
@@ -392,7 +392,7 @@
                   id="edit-fiscal-name"
                   v-model="fiscalForm.fiscal_business_name"
                   type="text"
-                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez Gómez'"
+	                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessPlaceholder') : t('pos.customer.personPlaceholder')"
                   :disabled="isCreating"
                   class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
                 />
@@ -400,7 +400,7 @@
 
               <!-- Error -->
               <div v-if="createError" class="bg-state-danger-bg  border border-state-danger-border  rounded-xl p-4 flex items-start gap-3">
-                <svg class="h-5 w-5 text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <svg class="h-[1em] w-[1em] text-state-danger-text  flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
                 <p class="text-sm text-state-danger-text ">{{ createError }}</p>
@@ -415,7 +415,7 @@
                 @click="handleClose"
                 class="min-h-[44px] px-4 py-3 bg-surface border border-border text-text-secondary font-medium rounded-xl hover:bg-surface-secondary transition-colors"
               >
-                Cancelar
+	                {{ t('pos.customer.cancel') }}
               </button>
               <button
                 type="submit"
@@ -435,7 +435,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'

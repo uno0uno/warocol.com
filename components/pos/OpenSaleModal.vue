@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, watch, nextTick, computed } from 'vue'
 
 const props = withDefaults(

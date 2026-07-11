@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch } from 'vue'
 import {
   formatIntegerMoney,
@@ -139,11 +139,11 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
     <div class="flex flex-col gap-0.5">
       <p class="text-sm font-semibold text-text-primary">{{ t('pos.tip.optional') }}</p>
       <p class="text-xs leading-snug text-text-secondary">
-        Voluntaria — Ley 1935. Se calcula sobre el subtotal antes de impuestos.
+        {{ t('pos.tip.legal') }}
       </p>
     </div>
 
-    <!-- Chip row: presets + Personalizado + Sin propina -->
+    <!-- Chip row: presets + custom + no tip -->
     <div role="group" :aria-label="t('pos.tip.optionsAria')" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <button
         v-for="(p, i) in presets"
@@ -169,7 +169,7 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
           : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
         @click="selectCustom"
       >
-        Personalizado
+        {{ t('pos.tip.custom') }}
       </button>
 
       <button
@@ -181,13 +181,13 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
           : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
         @click="selectNone"
       >
-        Sin propina
+        {{ t('pos.tip.none') }}
       </button>
     </div>
 
-    <!-- Custom input — only when Personalizado is active -->
+    <!-- Custom input — only when custom is active -->
     <div v-if="isActiveCustom" class="flex flex-col gap-1">
-      <label for="tip-custom-input" class="sr-only">Monto personalizado</label>
+      <label for="tip-custom-input" class="sr-only">{{ t('pos.tip.customAmount') }}</label>
       <div class="relative">
         <input
           id="tip-custom-input"

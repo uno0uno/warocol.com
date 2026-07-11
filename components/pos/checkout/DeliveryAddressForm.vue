@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { reactive, computed } from 'vue'
 import type { AddressCreate } from '~/stores/address'
 
@@ -64,14 +64,14 @@ const submit = () => {
     <!-- Required: line 1 -->
     <div class="flex flex-col gap-1">
       <label for="addr-line1" class="text-sm font-medium text-text-primary">
-        Dirección <span class="text-destructive">*</span>
+        {{ t('pos.delivery.address') }} <span class="text-destructive">*</span>
       </label>
       <input
         id="addr-line1"
         v-model="form.address_line1"
         type="text"
         autocomplete="address-line1"
-        placeholder="Ej: Cra 50 #10-20"
+        :placeholder="t('pos.delivery.addressPlaceholder')"
         class="input-base w-full px-3 py-2 text-sm"
         :disabled="loading"
         required
@@ -81,14 +81,14 @@ const submit = () => {
     <!-- Optional: line 2 -->
     <div class="flex flex-col gap-1">
       <label for="addr-line2" class="text-sm font-medium text-text-primary">
-        Apto/Casa (opcional)
+        {{ t('pos.delivery.addressLine2') }}
       </label>
       <input
         id="addr-line2"
         v-model="form.address_line2"
         type="text"
         autocomplete="address-line2"
-        placeholder="Ej: Apto 305, Torre B"
+        :placeholder="t('pos.delivery.addressLine2Placeholder')"
         class="input-base w-full px-3 py-2 text-sm"
         :disabled="loading"
       />
@@ -98,7 +98,7 @@ const submit = () => {
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="flex flex-col gap-1">
         <label for="addr-city" class="text-sm font-medium text-text-primary">
-          Ciudad <span class="text-destructive">*</span>
+          {{ t('pos.delivery.city') }} <span class="text-destructive">*</span>
         </label>
         <input
           id="addr-city"
@@ -111,7 +111,7 @@ const submit = () => {
       </div>
       <div class="flex flex-col gap-1">
         <label for="addr-state" class="text-sm font-medium text-text-primary">
-          Departamento <span class="text-destructive">*</span>
+          {{ t('pos.delivery.state') }} <span class="text-destructive">*</span>
         </label>
         <input
           id="addr-state"
@@ -127,27 +127,27 @@ const submit = () => {
     <!-- Type + postal -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="flex flex-col gap-1">
-        <label for="addr-type" class="text-sm font-medium text-text-primary">Tipo</label>
+        <label for="addr-type" class="text-sm font-medium text-text-primary">{{ t('pos.delivery.type') }}</label>
         <select
           id="addr-type"
           v-model="form.address_type"
           class="input-base w-full px-3 py-2 text-sm"
           :disabled="loading"
         >
-          <option value="home">Hogar</option>
-          <option value="work">Trabajo</option>
-          <option value="other">Otro</option>
+          <option value="home">{{ t('pos.delivery.home') }}</option>
+          <option value="work">{{ t('pos.delivery.work') }}</option>
+          <option value="other">{{ t('pos.delivery.other') }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1">
         <label for="addr-postal" class="text-sm font-medium text-text-primary">
-          Código postal (opcional)
+          {{ t('pos.delivery.postalCode') }}
         </label>
         <input
           id="addr-postal"
           v-model="form.postal_code"
           type="text"
-          placeholder="Ej: 110221"
+          :placeholder="t('pos.delivery.postalCodePlaceholder')"
           autocomplete="postal-code"
           class="input-base w-full px-3 py-2 text-sm"
           :disabled="loading"
@@ -158,7 +158,7 @@ const submit = () => {
     <!-- Address-level notes -->
     <div class="flex flex-col gap-1">
       <label for="addr-notes" class="text-sm font-medium text-text-primary">
-        Notas de la dirección (opcional)
+        {{ t('pos.delivery.notes') }}
       </label>
       <textarea
         id="addr-notes"
@@ -182,7 +182,7 @@ const submit = () => {
         :disabled="loading"
         @click="$emit('cancel')"
       >
-        Cancelar
+        {{ t('common.cancel') }}
       </button>
       <button
         type="submit"

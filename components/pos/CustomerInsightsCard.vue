@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t, locale } = useI18n({ useScope: 'global' })
+
 interface TopProduct {
   name: string
   count: number
@@ -18,20 +20,23 @@ defineProps<{
 
 const formatCurrency = (value: number | null) => {
   if (value === null) return '—'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 }
 
 const formatRelativeDate = (dateString: string | null): string => {
   if (!dateString) return '—'
-  const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' })
+  const rtf = new Intl.RelativeTimeFormat(locale.value === 'en' ? 'en' : 'es', { numeric: 'auto' })
   const diffMs = new Date(dateString).getTime() - Date.now()
   const diffDays = Math.round(diffMs / 86400000)
   if (Math.abs(diffDays) < 1) {
     const diffHours = Math.round(diffMs / 3600000)
-    return Math.abs(diffHours) < 1 ? 'hace un momento' : rtf.format(diffHours, 'hour')
+    return Math.abs(diffHours) < 1 ? t('pos.customerInsights.justNow') : rtf.format(diffHours, 'hour')
   }
   return rtf.format(diffDays, 'day')
 }
+
+const frequencyLabel = (days: number | null) =>
+  days ? t('pos.customerInsights.everyDays', { count: Math.round(days) }) : '—'
 </script>
 
 <template>
@@ -46,7 +51,7 @@ const formatRelativeDate = (dateString: string | null): string => {
       </svg>
       <div>
         <p class="text-2xl font-bold text-text-primary leading-none">{{ insights.orders_count }}</p>
-        <p class="text-xs text-text-tertiary mt-1 leading-none">Visitas</p>
+        <p class="text-xs text-text-tertiary mt-1 leading-none">{{ t('pos.customerInsights.visits') }}</p>
       </div>
     </div>
 
@@ -57,7 +62,7 @@ const formatRelativeDate = (dateString: string | null): string => {
       </svg>
       <div>
         <p class="text-base font-bold text-text-primary leading-tight">{{ formatCurrency(insights.avg_ticket) }}</p>
-        <p class="text-xs text-text-tertiary mt-1 leading-none">Ticket prom.</p>
+        <p class="text-xs text-text-tertiary mt-1 leading-none">{{ t('pos.customerInsights.avgTicket') }}</p>
       </div>
     </div>
 
@@ -68,7 +73,7 @@ const formatRelativeDate = (dateString: string | null): string => {
       </svg>
       <div>
         <p class="text-sm font-bold text-text-primary leading-tight">{{ formatRelativeDate(insights.last_order_date) }}</p>
-        <p class="text-xs text-text-tertiary mt-1 leading-none">Última visita</p>
+        <p class="text-xs text-text-tertiary mt-1 leading-none">{{ t('pos.customerInsights.lastVisit') }}</p>
       </div>
     </div>
 
@@ -79,9 +84,9 @@ const formatRelativeDate = (dateString: string | null): string => {
       </svg>
       <div>
         <p class="text-sm font-bold text-text-primary leading-tight">
-          {{ insights.avg_days_between_visits ? `cada ${Math.round(insights.avg_days_between_visits)} días` : '—' }}
+          {{ frequencyLabel(insights.avg_days_between_visits) }}
         </p>
-        <p class="text-xs text-text-tertiary mt-1 leading-none">Frecuencia</p>
+        <p class="text-xs text-text-tertiary mt-1 leading-none">{{ t('pos.customerInsights.frequency') }}</p>
       </div>
     </div>
 
@@ -93,7 +98,7 @@ const formatRelativeDate = (dateString: string | null): string => {
       <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
       </svg>
-      Top productos
+      {{ t('pos.customerInsights.topProducts') }}
     </p>
     <div class="space-y-1.5">
       <div

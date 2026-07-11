@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { computed } from 'vue'
 import {
   MinusIcon,
@@ -248,7 +248,7 @@ const unitNet = computed(() => {
 })
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -256,7 +256,7 @@ const formatCurrency = (value: number) => {
 }
 
 const formatTime = (isoString: string) => {
-  return new Date(isoString).toLocaleTimeString('es-CO', {
+  return new Date(isoString).toLocaleTimeString(locale.value === 'en' ? 'en-US' : 'es-CO', {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: timezone.value,

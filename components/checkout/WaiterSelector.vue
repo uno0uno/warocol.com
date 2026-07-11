@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 interface Member {
   id: string
   name: string
@@ -29,7 +29,7 @@ const onChange = (event: Event) => {
     <div class="flex flex-col gap-0.5">
       <p class="text-sm font-semibold text-text-primary">{{ t('pos.waiter.tipWaiterAria') }}</p>
       <p class="text-xs leading-snug text-text-secondary">
-        Confirma o cambia quién recibe el crédito de esta venta en propinas y reportes.
+        {{ t('pos.waiter.tipWaiterHelp') }}
       </p>
     </div>
 
@@ -37,11 +37,11 @@ const onChange = (event: Event) => {
       v-if="members.length === 0"
       class="text-xs text-text-secondary bg-surface-secondary rounded-lg px-3 py-2.5"
     >
-      No hay miembros activos en el equipo. Puedes continuar sin asignar mesero.
+      {{ t('pos.waiter.noMembers') }}
     </p>
 
     <div v-else class="flex items-center gap-2">
-      <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
       <select
@@ -50,7 +50,7 @@ const onChange = (event: Event) => {
         :aria-label="t('pos.waiter.selectWaiterAria')"
         @change="onChange"
       >
-        <option value="">Sin asignar</option>
+        <option value="">{{ t('pos.waiter.unassigned') }}</option>
         <option v-for="m in members" :key="m.id" :value="m.id">
           {{ m.name }} ({{ m.role }})
         </option>

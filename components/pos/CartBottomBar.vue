@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 withDefaults(defineProps<{
   visible: boolean
   itemCount: number

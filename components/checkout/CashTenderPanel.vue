@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import {
   formatIntegerMoney,
   normalizeUiLocale,
@@ -62,7 +62,7 @@ const showShortfall = computed(() => {
 <template>
   <div class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
     <label :for="inputId" class="text-sm font-medium text-text-primary">
-      Efectivo recibido
+      {{ t('pos.cash.received') }}
     </label>
     <div class="relative">
       <input
@@ -70,7 +70,7 @@ const showShortfall = computed(() => {
         type="text"
         inputmode="numeric"
         :value="cashReceivedDisplay"
-        :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(amountToCharge)}`"
+        :aria-label="t('pos.cash.receivedAria', { amount: formatCurrency(amountToCharge) })"
         placeholder="0"
         class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
         @input="onCashReceivedInput"
@@ -83,7 +83,7 @@ const showShortfall = computed(() => {
       class="w-full min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
       @click="cashReceived = amountToCharge"
     >
-      Sin vuelto
+      {{ t('pos.cash.exact') }}
     </button>
     <div class="grid grid-cols-2 gap-3">
       <button
@@ -102,16 +102,16 @@ const showShortfall = computed(() => {
       role="status"
       aria-live="polite"
     >
-      <span class="text-base font-medium text-green-700 dark:text-green-400">Vuelto</span>
+      <span class="text-base font-medium text-green-700 dark:text-green-400">{{ t('pos.cash.change') }}</span>
       <span class="text-3xl font-bold text-green-700 dark:text-green-400 tabular-nums">
         {{ formatCurrency(cashChange) }}
       </span>
     </div>
     <p v-else-if="showShortfall" class="flex items-center gap-2 text-sm text-destructive">
-      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="h-[1em] w-[1em] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
-      Falta cobrar {{ formatCurrency(cashShortfall) }}
+      {{ t('pos.cash.shortfall', { amount: formatCurrency(cashShortfall) }) }}
     </p>
   </div>
 </template>

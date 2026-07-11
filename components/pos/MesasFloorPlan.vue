@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
@@ -282,7 +282,7 @@ onUnmounted(() => {
         <div class="flex gap-2 flex-wrap">
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
-            <span class="text-xs font-medium text-text-secondary">Barra</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.bar') }}</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text/40" />
@@ -290,7 +290,7 @@ onUnmounted(() => {
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
-            <span class="text-xs font-medium text-text-secondary">Cuenta</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.bill') }}</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
             <div class="w-3 h-3 rounded-sm bg-surface border-2 border-border" />
@@ -299,7 +299,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Barra tile — always visible, pinned before regular tables -->
+      <!-- Bar tile — always visible, pinned before regular tables -->
       <div v-if="barTable" class="mb-4">
         <button
           class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
@@ -316,7 +316,7 @@ onUnmounted(() => {
           <!-- Info -->
           <div class="flex-1 min-w-0 text-left">
             <div class="flex items-center gap-2">
-              <span class="text-base font-black uppercase tracking-wide">Barra</span>
+              <span class="text-base font-black uppercase tracking-wide">{{ t('pos.floor.bar') }}</span>
               <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
             </div>
             <p class="text-xs opacity-90 mt-0.5 tabular-nums">
@@ -396,7 +396,7 @@ onUnmounted(() => {
                 <span class="w-px h-4" :class="stripDividerClass(table.status)" />
                 <!-- Cell 2: running total -->
                 <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
-                  ${{ Math.round(table.session?.running_total ?? 0).toLocaleString('es-CO') }}
+                  {{ formatCurrency(table.session?.running_total ?? 0) }}
                 </span>
                 <span class="w-px h-4" :class="stripDividerClass(table.status)" />
                 <!-- Cell 3: move/transfer button -->

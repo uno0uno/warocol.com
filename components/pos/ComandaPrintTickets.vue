@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { computed } from 'vue'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { formatComandaModifierLabel, formatComandaPrintTime } from '~/composables/useComandaPrint'
@@ -97,7 +97,7 @@ const printTicket = computed(() => {
               ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
             </div>
             <div v-if="item.notes" class="receipt-row receipt-small item-detail">
-              Notas Especiales: {{ item.notes }}
+              {{ t('pos.printTicket.specialNotes') }}: {{ item.notes }}
             </div>
           </template>
         </section>

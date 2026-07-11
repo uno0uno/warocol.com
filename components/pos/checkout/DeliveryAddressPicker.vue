@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Address } from '~/stores/address'
+const { t } = useI18n({ useScope: 'global' })
 
 defineProps<{
   addresses: Address[]
@@ -12,10 +13,10 @@ defineEmits<{
   (e: 'add-new'): void
 }>()
 
-const ADDRESS_TYPE_LABELS: Record<string, string> = {
-  home: 'Hogar',
-  work: 'Trabajo',
-  other: 'Otro',
+const addressTypeLabel = (type: string | null | undefined) => {
+  const key = `pos.delivery.${type || 'other'}`
+  const translated = t(key)
+  return translated !== key ? translated : t('pos.delivery.other')
 }
 </script>
 
@@ -28,7 +29,7 @@ const ADDRESS_TYPE_LABELS: Record<string, string> = {
 
     <!-- Empty state -->
     <p v-else-if="!addresses.length" class="text-sm text-text-secondary py-2">
-      Este cliente no tiene direcciones guardadas. Agrega una nueva para continuar.
+      {{ t('pos.delivery.noAddressesHint') }}
     </p>
 
     <!-- Address list -->
@@ -52,13 +53,13 @@ const ADDRESS_TYPE_LABELS: Record<string, string> = {
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-sm font-semibold text-text-primary">{{ address.address_line1 }}</span>
           <span class="text-xs px-2 py-0.5 bg-surface-secondary rounded-full text-text-secondary">
-            {{ ADDRESS_TYPE_LABELS[address.address_type] ?? 'Otro' }}
+            {{ addressTypeLabel(address.address_type) }}
           </span>
           <span
             v-if="address.is_default"
             class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium"
           >
-            Predeterminada
+            {{ t('pos.delivery.default') }}
           </span>
         </div>
         <p v-if="address.address_line2" class="text-xs text-text-secondary mt-0.5">
@@ -79,7 +80,7 @@ const ADDRESS_TYPE_LABELS: Record<string, string> = {
       class="w-full min-h-[44px] py-2.5 px-4 border-2 border-dashed border-border rounded-xl text-sm font-semibold text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring/30"
       @click="$emit('add-new')"
     >
-      + Agregar nueva dirección
+      + {{ t('pos.delivery.addNew') }}
     </button>
   </div>
 </template>
