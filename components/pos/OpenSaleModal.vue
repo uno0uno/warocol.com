@@ -17,7 +17,7 @@
           <div>
             <h2 class="text-xl font-bold text-text-primary">{{ t('pos.openSale.title') }}</h2>
             <p class="text-sm text-text-secondary mt-0.5">
-              {{ shellName ? t('pos.openSale.productPrefix', { name: shellName }) : t('pos.openSale.customAmount') }}
+              {{ productLine }}
             </p>
           </div>
           <button
@@ -80,7 +80,7 @@
               :disabled="isSubmitting"
               class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-action-primary-bg text-action-primary-text font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isSubmitting ? t('pos.openSale.adding') : (confirmLabel || t('pos.openSale.addToCart')) }}
+              {{ isSubmitting ? t('pos.openSale.adding') : resolvedConfirmLabel }}
             </button>
           </div>
         </form>
@@ -91,16 +91,33 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
     modelValue: boolean
     shellName?: string | null
     confirmLabel?: string
+    mesaMode?: boolean
+    tableLabel?: string
   }>(),
-  { confirmLabel: undefined },
+  { confirmLabel: undefined, mesaMode: false, tableLabel: '' },
 )
+
+const productLine = computed(() => {
+  const name = (props.shellName || '').trim()
+  // Catalog open-sale product is often still named "Venta libre" — don't show raw ES SKU in EN UI.
+  if (!name || /^venta\s*libre$/i.test(name)) return t('pos.openSale.customAmount')
+  return t('pos.openSale.productPrefix', { name })
+})
+
+const resolvedConfirmLabel = computed(() => {
+  if (props.confirmLabel) return props.confirmLabel
+  if (props.mesaMode) {
+    return t('pos.openSale.addToTable', { table: props.tableLabel || 'mesa' })
+  }
+  return t('pos.openSale.addToCart')
+})
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void

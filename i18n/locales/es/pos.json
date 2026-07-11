@@ -61,7 +61,8 @@
       "descriptionPlaceholder": "Ej. Servicio especial, propina externa...",
       "addToCart": "Agregar al carrito",
       "adding": "Agregando...",
-      "amountError": "Ingresa un monto mayor a cero"
+      "amountError": "Ingresa un monto mayor a cero",
+      "addToTable": "Agregar a la {table}"
     },
     "checkout": {
       "title": "Checkout",
@@ -279,6 +280,36 @@
     "catalog": {
       "searchPlaceholder": "Buscar productos...",
       "all": "Todos"
+    },
+    "reprint": {
+      "title": "Reimprimir comandas",
+      "closePanelAria": "Cerrar panel",
+      "emptyTitle": "No hay comandas enviadas",
+      "emptySub": "Esta sesión todavía no tiene comandas para reimprimir.",
+      "selectComandaAria": "Seleccionar comanda {number}",
+      "itemOne": "ítem",
+      "itemMany": "ítems",
+      "selectAll": "Seleccionar todas",
+      "clear": "Limpiar",
+      "refresh": "Actualizar",
+      "printSelected": "Reimprimir seleccionadas",
+      "printSelectedCount": "Reimprimir seleccionadas ({count})",
+      "sessionCurrent": "Sesión actual",
+      "status": {
+        "sent": "Enviada",
+        "preparing": "Preparando",
+        "ready": "Lista",
+        "delivered": "Entregada",
+        "cancelled": "Cancelada",
+        "pending": "Pendiente"
+      },
+      "ticketOne": "comanda",
+      "ticketMany": "comandas"
+    },
+    "printTicket": {
+      "comanda": "Comanda #{numbers}",
+      "station": "Estación: {name}",
+      "noStation": "Sin cocina asignada"
     }
   }
 }

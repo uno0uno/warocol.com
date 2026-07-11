@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed } from 'vue'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { formatComandaModifierLabel, formatComandaPrintTime } from '~/composables/useComandaPrint'
@@ -34,7 +35,7 @@ const printTicket = computed(() => {
   const sectionByStation = new Map<string, (typeof sections)[number]>()
 
   for (const comanda of props.comandas) {
-    const stationName = comanda.station_name || 'Sin cocina asignada'
+    const stationName = comanda.station_name || t('pos.printTicket.noStation')
     let section = sectionByStation.get(stationName)
     if (!section) {
       section = {
@@ -71,7 +72,7 @@ const printTicket = computed(() => {
           {{ printTicket.tableDisplayName }}
         </div>
         <div class="receipt-row receipt-small">
-          Comanda #{{ printTicket.comandaNumbers.join(', ') }}
+          {{ t('pos.printTicket.comanda', { numbers: printTicket.comandaNumbers.join(', ') }) }}
         </div>
         <div class="receipt-divider">--------------------------------</div>
 
@@ -81,7 +82,7 @@ const printTicket = computed(() => {
           class="comanda-station-section"
         >
           <div class="receipt-row receipt-small station-title">
-            Estación: {{ section.stationName }}
+            {{ t('pos.printTicket.station', { name: section.stationName }) }}
           </div>
           <template v-for="(item, i) in section.items" :key="`${section.key}-${i}`">
             <div class="receipt-item receipt-small">

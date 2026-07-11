@@ -16,7 +16,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Reimprimir comandas"
+        :aria-label="t('pos.reprint.title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
@@ -35,15 +35,17 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Reimprimir comandas</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('pos.reprint.title') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
-                  {{ tableDisplayName || 'Sesión actual' }} · {{ comandas.length }} {{ comandas.length === 1 ? 'comanda' : 'comandas' }}
+                  {{ tableDisplayName || t('pos.reprint.sessionCurrent') }}
+                  · {{ comandas.length }}
+                  {{ comandas.length === 1 ? t('pos.reprint.ticketOne') : t('pos.reprint.ticketMany') }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('pos.reprint.closePanelAria')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="close"
             >
@@ -63,8 +65,8 @@
             v-else-if="comandas.length === 0"
             class="rounded-xl border border-border bg-surface-secondary/50 px-4 py-6 text-center"
           >
-            <p class="text-sm font-semibold text-text-primary">No hay comandas enviadas</p>
-            <p class="text-xs text-text-secondary mt-1">Esta sesión todavía no tiene comandas para reimprimir.</p>
+            <p class="text-sm font-semibold text-text-primary">{{ t('pos.reprint.emptyTitle') }}</p>
+            <p class="text-xs text-text-secondary mt-1">{{ t('pos.reprint.emptySub') }}</p>
           </div>
 
           <div v-else class="space-y-2.5">
@@ -78,7 +80,7 @@
                 type="checkbox"
                 class="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-action-primary-focus-ring/30 flex-shrink-0"
                 :checked="isSelected(comanda.id)"
-                :aria-label="`Seleccionar comanda ${comanda.comandaNumber}`"
+                :aria-label="t('pos.reprint.selectComandaAria', { number: comanda.comandaNumber })"
                 @change="$emit('toggle-comanda', comanda.id)"
               />
               <span class="min-w-0 flex-1">
@@ -88,7 +90,7 @@
                       #{{ comanda.comandaNumber }} · {{ comanda.stationName }}
                     </span>
                     <span class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-text-secondary">
-                      <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? 'ítem' : 'ítems' }}</span>
+                      <span class="font-medium">{{ comanda.itemCount }} {{ comanda.itemCount === 1 ? t('pos.reprint.itemOne') : t('pos.reprint.itemMany') }}</span>
                       <span v-if="statusLabel(comanda.status)" class="text-text-tertiary">· {{ statusLabel(comanda.status) }}</span>
                       <span v-if="comanda.itemPreview" class="truncate max-w-full">· {{ comanda.itemPreview }}</span>
                     </span>
@@ -110,26 +112,20 @@
                 :disabled="loading || comandas.length === 0"
                 class="min-h-[36px] px-3 rounded-lg border border-border text-[11px] font-semibold text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="$emit('select-all')"
-              >
-                Seleccionar todas
-              </button>
+              >{{ t('pos.reprint.selectAll') }}</button>
               <button
                 type="button"
                 :disabled="loading || selectedIds.length === 0"
                 class="min-h-[36px] px-3 rounded-lg border border-border text-[11px] font-semibold text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="$emit('clear-selection')"
-              >
-                Limpiar
-              </button>
+              >{{ t('pos.reprint.clear') }}</button>
             </div>
             <button
               type="button"
               :disabled="loading"
               class="min-h-[36px] px-3 rounded-lg text-[11px] font-semibold text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               @click="$emit('refresh')"
-            >
-              Actualizar
-            </button>
+            >{{ t('pos.reprint.refresh') }}</button>
           </div>
           <button
             type="button"
@@ -140,7 +136,7 @@
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
             </svg>
-            {{ selectedIds.length > 0 ? `Reimprimir seleccionadas (${selectedIds.length})` : 'Reimprimir seleccionadas' }}
+            {{ selectedIds.length > 0 ? t('pos.reprint.printSelectedCount', { count: selectedIds.length }) : t('pos.reprint.printSelected') }}
           </button>
         </div>
       </div>
@@ -149,6 +145,7 @@
 </template>
 
 <script setup lang="ts">
+const { t, locale } = useI18n()
 interface ReprintComanda {
   id: string
   comandaNumber: string
@@ -189,7 +186,7 @@ function formatComandaTime(value?: string | null): string {
   if (!value) return ''
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return ''
-  return new Intl.DateTimeFormat('es-CO', {
+  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(d)
@@ -197,11 +194,12 @@ function formatComandaTime(value?: string | null): string {
 
 function statusLabel(status?: string): string | null {
   const labels: Record<string, string> = {
-    pending: 'Pendiente',
-    preparing: 'Preparando',
-    ready: 'Lista',
-    delivered: 'Entregada',
-    cancelled: 'Cancelada',
+    pending: t('pos.reprint.status.pending'),
+    sent: t('pos.reprint.status.sent'),
+    preparing: t('pos.reprint.status.preparing'),
+    ready: t('pos.reprint.status.ready'),
+    delivered: t('pos.reprint.status.delivered'),
+    cancelled: t('pos.reprint.status.cancelled'),
   }
   return status ? labels[status] ?? status : null
 }
