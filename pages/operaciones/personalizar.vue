@@ -1,9 +1,10 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
-useHead({ title: 'Personalizar | Operaciones' })
+useHead({ title: () => t('operaciones.head.personalizar') })
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
@@ -42,7 +43,7 @@ interface LabelPreset {
 }
 
 const labelPresets: LabelPreset[] = [
-  { key: 'mesas', label: 'Mesas (predeterminado)', singular: 'Mesa', plural: 'Mesas' },
+  { key: 'mesas', label: t('operaciones.personalizar.tablesDefault'), singular: 'Mesa', plural: 'Mesas' },
   { key: 'habitaciones', label: 'Habitaciones', singular: 'Habitación', plural: 'Habitaciones' },
   { key: 'cabanas', label: 'Cabañas', singular: 'Cabaña', plural: 'Cabañas' },
   { key: 'areas', label: 'Áreas', singular: 'Área', plural: 'Áreas' },
@@ -115,7 +116,7 @@ const saveLabel = async () => {
     await setLabel(previewSingular.value, previewPlural.value)
     toast.success('Nombre actualizado para todo el restaurante', { title: 'Guardado' })
   } catch (error: any) {
-    toast.error(error?.data?.detail || 'No se pudo guardar el nombre', { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.personalizar.saveNameError'), { title: 'Error' })
   } finally {
     isSavingLabel.value = false
   }
@@ -149,12 +150,12 @@ const toggleAutoSelectGeneric = async () => {
     await invalidateRestaurantContext()
     toast.success(
       newState
-        ? 'El cobro abrirá con cliente Genérico ya seleccionado'
-        : 'El cobro abrirá sin cliente seleccionado',
-      { title: newState ? 'Pre-selección activada' : 'Pre-selección desactivada' }
+        ? t('operaciones.personalizar.genericOn')
+        : t('operaciones.personalizar.genericOff'),
+      { title: newState ? t('operaciones.personalizar.preselectOn') : t('operaciones.personalizar.preselectOff') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.personalizar.configError'), { title: 'Error' })
   } finally {
     isTogglingGeneric.value = false
   }
@@ -178,7 +179,7 @@ const toggleOpenSale = async () => {
     )
   } catch (error: any) {
     const detail = error?.data?.detail ?? error?.data?.message
-    toast.error(detail || 'Error al cambiar venta libre', { title: 'Error' })
+    toast.error(detail || t('operaciones.personalizar.openSaleError'), { title: 'Error' })
   } finally {
     isTogglingOpenSale.value = false
   }
@@ -213,8 +214,8 @@ const toggleOpenSale = async () => {
           class="relative inline-flex items-center cursor-pointer flex-shrink-0"
           :class="isTogglingOpenSale ? 'opacity-50 pointer-events-none' : ''"
           :aria-label="businessProfile.open_sale_enabled
-            ? 'Desactivar venta libre en el POS'
-            : 'Activar venta libre en el POS'"
+            ? t('operaciones.personalizar.disableOpenSale')
+            : t('operaciones.personalizar.enableOpenSale')"
         >
           <input
             type="checkbox"
@@ -235,8 +236,8 @@ const toggleOpenSale = async () => {
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
             {{ businessProfile.auto_select_generic_enabled
-              ? 'Cliente Genérico automático activo'
-              : 'Cliente Genérico automático desactivado' }}
+              ? t('operaciones.personalizar.genericActive')
+              : t('operaciones.personalizar.genericInactive') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
             El cobro abre con cliente Genérico ya seleccionado. El cajero puede cambiarlo desde la tarjeta de cliente.
@@ -246,8 +247,8 @@ const toggleOpenSale = async () => {
           class="relative inline-flex items-center cursor-pointer flex-shrink-0"
           :class="isTogglingGeneric ? 'opacity-50 pointer-events-none' : ''"
           :aria-label="businessProfile.auto_select_generic_enabled
-            ? 'Desactivar pre-selección de cliente Genérico'
-            : 'Activar pre-selección de cliente Genérico'"
+            ? t('operaciones.personalizar.disableGeneric')
+            : t('operaciones.personalizar.enableGeneric')"
         >
           <input
             type="checkbox"
@@ -297,7 +298,7 @@ const toggleOpenSale = async () => {
               v-model="customSingular"
               type="text"
               maxlength="40"
-              placeholder="Ej: Habitación"
+              :placeholder="t('operaciones.personalizar.singularPlaceholder')"
               class="input-base w-full px-4 py-2 min-h-[44px]"
             />
           </div>
@@ -310,7 +311,7 @@ const toggleOpenSale = async () => {
               v-model="customPlural"
               type="text"
               maxlength="40"
-              placeholder="Ej: Habitaciones"
+              :placeholder="t('operaciones.personalizar.pluralPlaceholder')"
               class="input-base w-full px-4 py-2 min-h-[44px]"
             />
           </div>

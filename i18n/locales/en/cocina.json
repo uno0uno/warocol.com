@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "Ticket monitor — WARO",
+      "heading": "Ticket monitor",
+      "disabledTitle": "Tickets not enabled",
+      "disabledBody": "Enable tickets from your business settings to use this monitor.",
+      "all": "All",
+      "counter": "Counter",
+      "delivery": "Delivery",
+      "pickup": "Pickup",
+      "active": "Active",
+      "ready": "Ready",
+      "readyToServe": "Ready to serve",
+      "noActive": "No active tickets",
+      "noComandas": "No tickets",
+      "emptyPending": "No pending or preparing orders right now.",
+      "emptyFiltered": "No tickets found with the selected filters.",
+      "soundOffAria": "Mute alerts",
+      "soundOnAria": "Enable sound alerts"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "Invalid link",
+      "checkUrl": "Check the URL or access link.",
+      "stationNotFound": "Station not found",
+      "loadingStation": "Loading station…",
+      "loadingChanges": "Loading changes...",
+      "soundOffAria": "Mute alerts",
+      "soundOnAria": "Enable sound alerts",
+      "enableSound": "Enable sound",
+      "refreshAria": "Refresh tickets",
+      "noActive": "No active tickets at this station",
+      "readyToServe": "Ready to serve",
+      "active": "Active"
+    },
+    "card": {
+      "delivered": "Ticket delivered",
+      "tokenExpired": "KDS link expired. Reload the page.",
+      "statusError": "Error updating status",
+      "quickSale": "Quick sale",
+      "ready": "Ready",
+      "cancel": "Cancel"
+    },
+    "item": {
+      "tokenExpired": "KDS link expired. Reload the page.",
+      "updateError": "Error updating item"
+    },
+    "station": {
+      "createAria": "Create new kitchen station",
+      "newTitle": "New station",
+      "closePanelAria": "Close panel",
+      "namePlaceholder": "e.g. Main kitchen, Bar, Grill",
+      "colorPickerAria": "Color picker",
+      "hexAria": "Hex color code",
+      "creating": "Creating station",
+      "nameExists": "A station with that name already exists",
+      "createError": "Error creating station"
+    }
+  }
+}

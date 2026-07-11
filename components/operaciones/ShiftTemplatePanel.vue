@@ -21,7 +21,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="isEdit ? `Editar turno: ${template?.name}` : 'Crear turno'"
+        :aria-label="isEdit ? `Editar turno: ${template?.name}` : t('operaciones.shiftPanel.create')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -36,16 +36,16 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ isEdit ? 'Editar turno' : 'Nuevo turno' }}
+                  {{ isEdit ? t('operaciones.shiftPanel.editTitle') : t('operaciones.shiftPanel.newTitle') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ isEdit ? template?.name : 'Horario reutilizable para arqueos de caja' }}
+                  {{ isEdit ? template?.name : t('operaciones.shiftPanel.subtitle') }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('operaciones.shiftPanel.closePanelAria')"
               :disabled="saving"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
               @click="close"
@@ -68,7 +68,7 @@
               v-model="form.name"
               type="text"
               maxlength="80"
-              placeholder="Ej: Mañana, Tarde, Noche..."
+              :placeholder="t('operaciones.shiftPanel.namePlaceholder')"
               class="input-base w-full px-4 py-2"
               @input="clearError('name')"
             />
@@ -132,7 +132,7 @@
               @click="submit"
             >
               <UiLoadingDots v-if="saving" size="8px" color="currentColor" />
-              <span>{{ saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear turno') }}</span>
+              <span>{{ saving ? t('common.loading') : (isEdit ? t('operaciones.shiftPanel.saveChanges') : t('operaciones.shiftPanel.create')) }}</span>
             </button>
           </div>
         </div>
@@ -142,6 +142,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ClockIcon } from '@heroicons/vue/24/outline'
 
 export interface ShiftTemplate {
@@ -239,11 +240,11 @@ const validate = () => {
     return false
   }
   if (!form.value.start_time || !form.value.end_time) {
-    errors.value = { times: 'Indica hora de inicio y fin' }
+    errors.value = { times: t('operaciones.shiftPanel.needTimes') }
     return false
   }
   if (!form.value.crosses_midnight && parseMinutes(form.value.end_time) <= parseMinutes(form.value.start_time)) {
-    errors.value = { times: 'La hora de fin debe ser posterior al inicio (o activa "Cruza medianoche")' }
+    errors.value = { times: t('operaciones.shiftPanel.endAfterStart') }
     return false
   }
   return true
@@ -281,17 +282,17 @@ const submit = async () => {
       errors.value = {
         name: typeof err?.data?.detail === 'string'
           ? err.data.detail
-          : 'Ya existe un turno con ese nombre',
+          : t('operaciones.shiftPanel.nameExists'),
       }
     } else if (err?.status === 422) {
       errors.value = {
         times: typeof err?.data?.detail === 'string'
           ? err.data.detail
-          : 'Horario inválido',
+          : t('operaciones.shiftPanel.invalidSchedule'),
       }
     } else {
       errors.value = {
-        general: err?.data?.detail || 'No se pudo guardar el turno. Inténtalo de nuevo.',
+        general: err?.data?.detail || t('operaciones.shiftPanel.saveError'),
       }
     }
   } finally {

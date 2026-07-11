@@ -23,7 +23,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Crear nueva estación de cocina"
+        :aria-label="t('cocina.station.createAria')"
         @keydown.esc="close"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
@@ -44,7 +44,7 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Nueva estación</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('cocina.station.newTitle') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   Punto de preparación para comandas (KDS)
                 </p>
@@ -53,7 +53,7 @@
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('cocina.station.closePanelAria')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -84,7 +84,7 @@
               type="text"
               required
               maxlength="100"
-              placeholder="Ej: Cocina Principal, Bar, Parrilla"
+              :placeholder="t('cocina.station.namePlaceholder')"
               class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm text-text-primary bg-surface"
               autocomplete="off"
               :disabled="loading"
@@ -99,7 +99,7 @@
                 id="station-color"
                 v-model="color"
                 type="color"
-                aria-label="Selector de color"
+                :aria-label="t('cocina.station.colorPickerAria')"
                 :disabled="loading"
                 class="w-11 h-11 rounded-lg cursor-pointer border border-border p-0 overflow-hidden disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -108,7 +108,7 @@
                 type="text"
                 pattern="^#[0-9A-Fa-f]{6}$"
                 placeholder="#6B7280"
-                aria-label="Código de color en hex"
+                :aria-label="t('cocina.station.hexAria')"
                 :disabled="loading"
                 class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring text-sm font-mono uppercase text-text-primary bg-surface"
               />
@@ -185,7 +185,7 @@
           >
             <template v-if="loading">
               <span>Creando</span>
-              <CommonsInlineDots aria-label="Creando estación" :size="5" />
+              <CommonsInlineDots :aria-label="t('cocina.station.creating')" :size="5" />
             </template>
             <template v-else>
               Crear estación
@@ -198,6 +198,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, nextTick, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '~/composables/useTenantReactive'
@@ -341,11 +342,11 @@ async function submit() {
     emit('update:modelValue', false)
   } catch (e: any) {
     if (e?.response?.status === 409 || e?.statusCode === 409) {
-      errorMsg.value = 'Ya existe una estación con ese nombre'
+      errorMsg.value = t('cocina.station.nameExists')
     } else if (isQuotaExceededError(e)) {
       errorMsg.value = quotaExceededMessageFromError(e)
     } else {
-      errorMsg.value = e?.data?.detail || e?.message || 'Error al crear la estación'
+      errorMsg.value = e?.data?.detail || e?.message || t('cocina.station.createError')
     }
   } finally {
     loading.value = false

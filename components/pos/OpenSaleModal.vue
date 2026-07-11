@@ -15,14 +15,14 @@
 
         <div class="p-5 border-b border-border flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 class="text-xl font-bold text-text-primary">Venta libre</h2>
+            <h2 class="text-xl font-bold text-text-primary">{{ t('pos.openSale.title') }}</h2>
             <p class="text-sm text-text-secondary mt-0.5">
-              {{ shellName ? `Producto: ${shellName}` : 'Monto personalizado' }}
+              {{ shellName ? t('pos.openSale.productPrefix', { name: shellName }) : t('pos.openSale.customAmount') }}
             </p>
           </div>
           <button
             type="button"
-            aria-label="Cerrar"
+            :aria-label="t('common.close')"
             class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
             @click="handleClose"
           >
@@ -35,7 +35,7 @@
         <form class="p-5 space-y-4" @submit.prevent="handleSubmit">
           <div>
             <label for="open-sale-amount" class="block text-sm font-medium text-text-primary mb-1.5">
-              Monto (COP) <span class="text-destructive">*</span>
+              {{ t('pos.openSale.amountLabel') }} <span class="text-destructive">*</span>
             </label>
             <input
               id="open-sale-amount"
@@ -46,21 +46,21 @@
               min="1"
               step="1"
               required
-              placeholder="Ej. 25000"
+              :placeholder="t('pos.openSale.amountPlaceholder')"
               class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base tabular-nums"
             />
           </div>
 
           <div>
             <label for="open-sale-description" class="block text-sm font-medium text-text-primary mb-1.5">
-              Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+              {{ t('pos.openSale.description') }} <span class="text-text-tertiary font-normal">{{ t('pos.openSale.optional') }}</span>
             </label>
             <input
               id="open-sale-description"
               v-model="descriptionInput"
               type="text"
               maxlength="200"
-              placeholder="Ej. Servicio especial, propina externa..."
+              :placeholder="t('pos.openSale.descriptionPlaceholder')"
               class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
             />
           </div>
@@ -73,14 +73,14 @@
               class="min-h-[44px] px-4 py-3 rounded-xl border border-border text-text-secondary font-medium hover:bg-surface-secondary transition-colors"
               @click="handleClose"
             >
-              Cancelar
+              {{ t('common.cancel') }}
             </button>
             <button
               type="submit"
               :disabled="isSubmitting"
               class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-action-primary-bg text-action-primary-text font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isSubmitting ? 'Agregando...' : confirmLabel }}
+              {{ isSubmitting ? t('pos.openSale.adding') : (confirmLabel || t('pos.openSale.addToCart')) }}
             </button>
           </div>
         </form>
@@ -90,6 +90,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, watch, nextTick } from 'vue'
 
 const props = withDefaults(
@@ -98,7 +99,7 @@ const props = withDefaults(
     shellName?: string | null
     confirmLabel?: string
   }>(),
-  { confirmLabel: 'Agregar al carrito' },
+  { confirmLabel: undefined },
 )
 
 const emit = defineEmits<{
@@ -137,7 +138,7 @@ const handleSubmit = () => {
   errorMessage.value = null
   const amount = Number(amountInput.value)
   if (!Number.isFinite(amount) || amount <= 0) {
-    errorMessage.value = 'Ingresa un monto mayor a cero'
+    errorMessage.value = t('pos.openSale.amountError')
     return
   }
   isSubmitting.value = true

@@ -24,8 +24,8 @@
       <UiResponsiveDataView
         :columns="columns"
         :data="templates"
-        empty-message="No hay turnos configurados"
-        empty-sub-message='Crea el primero, por ejemplo "Mañana 06:00–14:00".'
+        :empty-message="t('operaciones.turnos.emptyTitle')"
+        :empty-sub-message="t('operaciones.turnos.emptyBody')"
         row-size="sm"
       >
         <template #card="{ item, index }">
@@ -51,7 +51,7 @@
               <button
                 type="button"
                 :aria-label="`Editar ${item.name}`"
-                title="Editar"
+                :title="t('operaciones.turnos.edit')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="openEdit(item)"
               >
@@ -61,7 +61,7 @@
                 v-if="item.is_active"
                 type="button"
                 :aria-label="`Desactivar ${item.name}`"
-                title="Desactivar"
+                :title="t('operaciones.turnos.deactivate')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
                 @click="requestDeactivate(item)"
               >
@@ -71,7 +71,7 @@
                 v-else
                 type="button"
                 :aria-label="`Reactivar ${item.name}`"
-                title="Reactivar"
+                :title="t('operaciones.turnos.reactivate')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="reactivate(item)"
               >
@@ -103,7 +103,7 @@
             <button
               type="button"
               :aria-label="`Editar ${row.name}`"
-              title="Editar"
+              :title="t('operaciones.turnos.edit')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="openEdit(row)"
             >
@@ -113,7 +113,7 @@
               v-if="row.is_active"
               type="button"
               :aria-label="`Desactivar ${row.name}`"
-              title="Desactivar"
+              :title="t('operaciones.turnos.deactivate')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
               @click="requestDeactivate(row)"
             >
@@ -123,7 +123,7 @@
               v-else
               type="button"
               :aria-label="`Reactivar ${row.name}`"
-              title="Reactivar"
+              :title="t('operaciones.turnos.reactivate')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="reactivate(row)"
             >
@@ -142,7 +142,7 @@
 
     <UiConfirmActionModal
       v-model="confirmOpen"
-      title="Desactivar turno"
+      :title="t('operaciones.turnos.deactivateTitle')"
       :message="confirmMessage"
       confirm-label="Desactivar"
       loading-label="Desactivando..."
@@ -154,12 +154,13 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ArrowPathIcon, NoSymbolIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import type { ShiftTemplate } from '~/components/operaciones/ShiftTemplatePanel.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
-useHead({ title: 'Turnos | Operaciones' })
+useHead({ title: () => t('operaciones.head.turnos') })
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
@@ -167,9 +168,9 @@ const toast = useToast()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 const columns: Column[] = [
-  { key: 'name', title: 'Turno', sortable: false },
-  { key: 'schedule', title: 'Horario', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false, align: 'center' },
+  { key: 'name', title: t('operaciones.turnos.name'), sortable: false },
+  { key: 'schedule', title: t('operaciones.turnos.schedule'), sortable: false },
+  { key: 'status', title: t('operaciones.turnos.status'), sortable: false, align: 'center' },
   { key: 'actions', title: '', sortable: false, align: 'right' },
 ]
 
@@ -221,7 +222,7 @@ const openEdit = (row: ShiftTemplate) => {
 
 const onSaved = async () => {
   await cache.invalidateQueries({ key: ['operaciones', 'shifts'] })
-  toast.success('Turno guardado correctamente')
+  toast.success(t('operaciones.turnos.saved'))
 }
 
 const confirmOpen = ref(false)
@@ -248,7 +249,7 @@ const performDeactivate = async () => {
     toast.success(`Turno "${row.name}" desactivado`)
     confirmOpen.value = false
   } catch (err: any) {
-    toast.error(err?.data?.detail || 'No se pudo desactivar el turno', { title: 'Error' })
+    toast.error(err?.data?.detail || t('operaciones.turnos.deactivateError'), { title: 'Error' })
   } finally {
     isDeactivating.value = false
   }
@@ -263,7 +264,7 @@ const reactivate = async (row: ShiftTemplate) => {
     await cache.invalidateQueries({ key: ['operaciones', 'shifts'] })
     toast.success(`Turno "${row.name}" reactivado`)
   } catch (err: any) {
-    toast.error(err?.data?.detail || 'No se pudo reactivar el turno', { title: 'Error' })
+    toast.error(err?.data?.detail || t('operaciones.turnos.reactivateError'), { title: 'Error' })
   }
 }
 </script>

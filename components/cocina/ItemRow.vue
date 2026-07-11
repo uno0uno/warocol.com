@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { inject, type Ref } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
@@ -32,8 +33,8 @@ const toggleStatus = async () => {
     const status = error?.status ?? error?.statusCode ?? error?.response?.status
     toast.error(
       status === 401
-        ? 'Enlace KDS expirado. Recarga la página.'
-        : 'Error al actualizar ítem',
+        ? t('cocina.item.tokenExpired')
+        : t('cocina.item.updateError'),
     )
   } finally {
     isUpdating.value = false

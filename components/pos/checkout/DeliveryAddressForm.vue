@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { reactive, computed } from 'vue'
 import type { AddressCreate } from '~/stores/address'
 
@@ -58,7 +59,7 @@ const submit = () => {
 
 <template>
   <form class="flex flex-col gap-4 p-4 border-2 border-border rounded-xl bg-surface-secondary/30" @submit.prevent="submit">
-    <h4 class="text-sm font-semibold text-text-primary">Nueva dirección</h4>
+    <h4 class="text-sm font-semibold text-text-primary">{{ t('pos.delivery.newAddress') }}</h4>
 
     <!-- Required: line 1 -->
     <div class="flex flex-col gap-1">
@@ -164,7 +165,7 @@ const submit = () => {
         v-model="form.delivery_notes"
         rows="2"
         maxlength="200"
-        placeholder="Ej: portería en la calle 51, edificio amarillo"
+        :placeholder="t('pos.delivery.notesPlaceholder')"
         class="input-base w-full px-3 py-2 text-sm resize-none"
         :disabled="loading"
       />
@@ -188,7 +189,7 @@ const submit = () => {
         class="min-h-[44px] px-4 py-2 text-sm font-semibold bg-action-primary-bg text-action-primary-text rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring/30"
         :disabled="!isValid || loading"
       >
-        {{ loading ? 'Guardando...' : 'Guardar dirección' }}
+        {{ loading ? t('common.loading') : t('pos.delivery.saveAddress') }}
       </button>
     </div>
   </form>

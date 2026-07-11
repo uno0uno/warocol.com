@@ -61,7 +61,7 @@
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-text-primary truncate">
-                      {{ entry.member_name || 'Sin asignar' }}
+                      {{ entry.member_name || t('operaciones.mesaAssign.unassigned') }}
                       <span v-if="entry.member_role" class="text-xs text-text-tertiary font-normal">
                         ({{ entry.member_role }})
                       </span>
@@ -103,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, watch } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { XMarkIcon, ClockIcon } from '@heroicons/vue/24/outline'

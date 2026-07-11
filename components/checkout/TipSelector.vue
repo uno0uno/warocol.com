@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch } from 'vue'
 import {
   formatIntegerMoney,
@@ -136,14 +137,14 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
 <template>
   <div v-if="enabled" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border-2 border-border">
     <div class="flex flex-col gap-0.5">
-      <p class="text-sm font-semibold text-text-primary">Propina (opcional)</p>
+      <p class="text-sm font-semibold text-text-primary">{{ t('pos.tip.optional') }}</p>
       <p class="text-xs leading-snug text-text-secondary">
         Voluntaria — Ley 1935. Se calcula sobre el subtotal antes de impuestos.
       </p>
     </div>
 
     <!-- Chip row: presets + Personalizado + Sin propina -->
-    <div role="group" aria-label="Opciones de propina" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <div role="group" :aria-label="t('pos.tip.optionsAria')" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <button
         v-for="(p, i) in presets"
         :key="`preset-${i}`"

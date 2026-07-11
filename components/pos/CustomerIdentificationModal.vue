@@ -24,7 +24,7 @@
           </div>
           <button
             @click="handleClose"
-            aria-label="Cerrar modal"
+            :aria-label="t('pos.customer.closeModalAria')"
             class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
           >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -47,14 +47,14 @@
                 ref="searchInputRef"
                 v-model="searchQuery"
                 type="text"
-                placeholder="Nombre, teléfono, cédula o NIT..."
+                :placeholder="t('pos.customer.searchPlaceholder')"
                 class="w-full pl-10 pr-10 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
                 autocomplete="off"
               />
               <button
                 v-if="searchQuery"
                 @click="searchQuery = ''"
-                aria-label="Limpiar búsqueda"
+                :aria-label="t('pos.customer.clearSearchAria')"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
               >
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -72,7 +72,7 @@
               <svg class="h-12 w-12 mb-3 opacity-40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-              <p class="text-sm font-medium text-text-primary">Buscar cliente</p>
+              <p class="text-sm font-medium text-text-primary">{{ t('pos.customer.searchCustomer') }}</p>
               <p class="text-xs mt-1 text-center">Por nombre, teléfono, cédula o NIT</p>
             </div>
 
@@ -99,8 +99,8 @@
                   {{ customerInitial(customer) }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-medium text-text-primary truncate">{{ customer.name || 'Sin nombre' }}</p>
-                  <p class="text-sm text-text-secondary truncate">{{ customer.phone_number || 'Sin teléfono' }}</p>
+                  <p class="font-medium text-text-primary truncate">{{ customer.name || t('pos.customer.noName') }}</p>
+                  <p class="text-sm text-text-secondary truncate">{{ customer.phone_number || t('pos.customer.noPhone') }}</p>
                   <p v-if="customer.fiscal_id" class="text-xs text-text-tertiary truncate">
                     {{ customer.fiscal_id_type || 'Doc' }}: {{ customer.fiscal_id }}
                   </p>
@@ -143,7 +143,7 @@
 
           <!-- Footer: always-visible actions as cards -->
           <div class="px-4 pt-3 pb-6 md:pb-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
-            <!-- Nuevo cliente card -->
+            <!-- New customer card -->
             <button
               @click="state = 'create'"
               class="flex flex-col items-center justify-center gap-2 py-4 bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all active:scale-95 min-h-[88px]"
@@ -153,7 +153,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <span class="font-semibold text-sm text-text-primary leading-tight text-center">Nuevo cliente</span>
+              <span class="font-semibold text-sm text-text-primary leading-tight text-center">{{ t('pos.customer.newCustomer') }}</span>
             </button>
 
             <!-- Sin datos card -->
@@ -168,7 +168,7 @@
                 </svg>
               </div>
               <span class="font-semibold text-sm text-text-primary leading-tight text-center">
-                {{ isCreatingGeneric ? 'Procesando...' : 'Sin datos' }}
+                {{ isCreatingGeneric ? 'Procesando...' : t('pos.customer.noData') }}
               </span>
             </button>
           </div>
@@ -225,7 +225,7 @@
                 />
               </div>
 
-              <!-- Toggle: Datos para factura electrónica -->
+              <!-- Toggle: datos factura electrónica -->
               <div class="border-t border-border pt-4">
                 <button
                   type="button"
@@ -285,10 +285,10 @@
                     </p>
                   </div>
 
-                  <!-- Razón social -->
+                  <!-- Razón social / legal name -->
                   <div class="flex flex-col gap-1">
                     <label for="new-fiscal-name" class="text-sm font-medium text-text-primary">
-                      {{ createForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+                      {{ createForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : 'Nombre legal completo' }}
                       <span class="text-destructive">*</span>
                     </label>
                     <input
@@ -328,7 +328,7 @@
                 class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <CommonsTheCustomLoader v-if="isCreating" size="small" />
-                <span>{{ isCreating ? 'Guardando...' : 'Guardar y continuar' }}</span>
+                <span>{{ isCreating ? t('common.loading') : t('pos.customer.saveAndContinue') }}</span>
               </button>
             </div>
           </form>
@@ -382,10 +382,10 @@
                 </p>
               </div>
 
-              <!-- Razón social -->
+              <!-- Razón social / legal name -->
               <div class="flex flex-col gap-1">
                 <label for="edit-fiscal-name" class="text-sm font-medium text-text-primary">
-                  {{ fiscalForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+                  {{ fiscalForm.fiscal_id_type === 'NIT' ? t('pos.customer.businessName') : 'Nombre legal completo' }}
                   <span class="text-destructive">*</span>
                 </label>
                 <input
@@ -423,7 +423,7 @@
                 class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <CommonsTheCustomLoader v-if="isCreating" size="small" />
-                <span>{{ isCreating ? 'Guardando...' : 'Guardar datos' }}</span>
+                <span>{{ isCreating ? t('common.loading') : t('pos.customer.saveData') }}</span>
               </button>
             </div>
           </form>
@@ -435,6 +435,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'
@@ -469,7 +470,7 @@ interface SelectedCustomer extends FiscalFields {
 interface Props {
   modelValue: boolean
   // When provided, the modal opens directly into the fiscal-edit state for an
-  // already-identified customer (used by the POS checkout "Pedir datos para factura" button).
+  // already-identified customer (used by the POS checkout t('pos.customer.requestInvoiceData') button).
   editCustomer?: SelectedCustomer | null
 }
 
@@ -515,14 +516,14 @@ const fiscalForm = ref({
 })
 
 const headerTitle = computed(() => {
-  if (state.value === 'create') return 'Nuevo cliente'
-  if (state.value === 'edit-fiscal') return 'Datos para factura'
-  return 'Buscar cliente'
+  if (state.value === 'create') return t('pos.customer.newCustomer')
+  if (state.value === 'edit-fiscal') return t('pos.customer.invoiceData')
+  return t('pos.customer.searchCustomer')
 })
 const headerSubtitle = computed(() => {
-  if (state.value === 'create') return 'Ingresa los datos del nuevo cliente'
-  if (state.value === 'edit-fiscal') return 'Para emitir factura electrónica identificada'
-  return 'Busca por nombre, teléfono o NIT/cédula'
+  if (state.value === 'create') return t('pos.customer.newCustomerHint')
+  if (state.value === 'edit-fiscal') return t('pos.customer.invoiceDataHint')
+  return t('pos.customer.searchHint')
 })
 
 const canSubmitCreate = computed(() => {
@@ -650,7 +651,7 @@ const selectCustomer = async (customer: CustomerSummary) => {
     })
     emit('update:modelValue', false)
   } catch (e: any) {
-    selectionError.value = e?.data?.detail || e?.data?.message || e?.message || 'No se pudo cargar el cliente'
+    selectionError.value = e?.data?.detail || e?.data?.message || e?.message || t('pos.customer.loadError')
   } finally {
     isHydratingSelection.value = false
   }
@@ -687,7 +688,7 @@ const selectGenericCustomer = async () => {
   try {
     const response = await $fetch<CustomerApiResponse>('/api/customers/search-or-create', {
       method: 'POST',
-      body: { phone_number: '0000000000', name: 'Cliente sin datos' }
+      body: { phone_number: '0000000000', name: t('pos.customer.customerNoData') }
     })
     if (response.success) {
       emit('customer-identified', toSelected(response.data))
@@ -740,7 +741,7 @@ const handleCreate = async () => {
     posDebugLog('customer-modal', 'handleCreate:failed', {
       ...posDebugSerializeError(e),
     })
-    createError.value = e.data?.message || e.message || 'Error al guardar el cliente'
+    createError.value = e.data?.message || e.message || t('pos.customer.saveCustomerError')
   } finally {
     isCreating.value = false
   }
@@ -768,7 +769,7 @@ const handleSaveFiscal = async () => {
       emit('update:modelValue', false)
     }
   } catch (e: any) {
-    createError.value = e.data?.message || e.message || 'Error al guardar los datos'
+    createError.value = e.data?.message || e.message || t('pos.customer.saveDataError')
   } finally {
     isCreating.value = false
   }

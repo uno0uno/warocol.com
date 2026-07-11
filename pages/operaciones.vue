@@ -6,6 +6,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const route = useRoute()
 const { plural } = useTableLabel()
 
@@ -15,14 +16,14 @@ definePageMeta({
 })
 
 const navigationItems = computed(() => [
-  { to: '/operaciones/comandas', label: 'Comandas & Cocina' },
+  { to: '/operaciones/comandas', label: t('operaciones.nav.comandasCocina') },
   { to: '/operaciones/mesas', label: plural.value },
-  { to: '/operaciones/promociones', label: 'Promociones' },
-  { to: '/operaciones/bitacora', label: 'Bitácora' },
-  { to: '/operaciones/turnos', label: 'Turnos' },
-  { to: '/operaciones/personalizar', label: 'Personalizar' },
-  { to: '/operaciones/propinas', label: 'Propinas' },
+  { to: '/operaciones/promociones', label: t('operaciones.nav.promociones') },
+  { to: '/operaciones/bitacora', label: t('operaciones.nav.bitacora') },
+  { to: '/operaciones/turnos', label: t('operaciones.nav.turnos') },
+  { to: '/operaciones/personalizar', label: t('operaciones.nav.personalizar') },
+  { to: '/operaciones/propinas', label: t('operaciones.nav.propinas') },
 ])
 
-useHead({ title: 'Operaciones | WARO' })
+useHead({ title: () => t('operaciones.head.module') })
 </script>

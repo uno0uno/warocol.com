@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ClipboardDocumentListIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
@@ -15,7 +16,7 @@ import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
-useHead({ title: 'Bitácora de operaciones — WaRo' })
+useHead({ title: () => t('operaciones.head.bitacora') })
 
 const PAGE_SIZE = 50
 const { currentTenant } = useTenantReactive()
@@ -128,13 +129,13 @@ const detailPayloadJson = computed(() => {
 })
 
 const columns = computed<Column[]>(() => [
-  { key: 'created_at', title: 'Cuándo', sortable: false },
-  { key: 'actor', title: 'Usuario', sortable: false },
-  { key: 'channel', title: 'Canal', sortable: false },
-  { key: 'action', title: 'Acción', sortable: false },
-  { key: 'summary', title: 'Resumen', sortable: false },
-  { key: 'table_name', title: 'Mesa', sortable: false },
-  { key: 'reason', title: 'Motivo', sortable: false },
+  { key: 'created_at', title: t('operaciones.bitacora.when'), sortable: false },
+  { key: 'actor', title: t('operaciones.bitacora.user'), sortable: false },
+  { key: 'channel', title: t('operaciones.bitacora.channel'), sortable: false },
+  { key: 'action', title: t('operaciones.bitacora.action'), sortable: false },
+  { key: 'summary', title: t('operaciones.bitacora.summary'), sortable: false },
+  { key: 'table_name', title: t('operaciones.bitacora.table'), sortable: false },
+  { key: 'reason', title: t('operaciones.bitacora.reason'), sortable: false },
   { key: 'links', title: '', sortable: false, align: 'right' },
 ])
 
@@ -160,7 +161,7 @@ const tableNameFor = (row: OperationEventRow) =>
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar producto…"
+        :search-placeholder="t('operaciones.bitacora.searchPlaceholder')"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
         :show-clear="hasActiveFilters"
@@ -172,7 +173,7 @@ const tableNameFor = (row: OperationEventRow) =>
             v-model="channelFilter"
             :class="filterSelectClass"
             class="md:hidden"
-            aria-label="Filtrar por canal"
+            :aria-label="t('operaciones.bitacora.filterChannel')"
           >
             <option :value="null">Todos los canales</option>
             <option value="mesa">{{ CHANNEL_LABELS.mesa }}</option>
@@ -184,7 +185,7 @@ const tableNameFor = (row: OperationEventRow) =>
             v-model="actionFilter"
             :class="filterSelectClass"
             class="md:hidden"
-            aria-label="Filtrar por acción"
+            :aria-label="t('operaciones.bitacora.filterAction')"
           >
             <option :value="null">Todas las acciones</option>
             <option v-for="a in OPERATION_EVENT_ACTIONS" :key="a" :value="a">
@@ -200,10 +201,9 @@ const tableNameFor = (row: OperationEventRow) =>
         class="text-center py-16 space-y-3 bg-surface border-2 border-border rounded-xl"
       >
         <ClipboardDocumentListIcon class="w-12 h-12 mx-auto text-text-tertiary" aria-hidden="true" />
-        <p class="text-text-primary font-medium">Sin eventos en este período</p>
+        <p class="text-text-primary font-medium">{{ t('operaciones.bitacora.emptyTitle') }}</p>
         <p class="text-sm text-text-tertiary max-w-md mx-auto px-4">
-          La bitácora registra eliminaciones de tab, anulaciones de pago y cambios en carrito.
-          Si acabas de activar la función, los eventos aparecerán cuando el equipo use POS.
+          {{ t('operaciones.bitacora.emptyBody') }}
         </p>
       </div>
 
@@ -219,7 +219,7 @@ const tableNameFor = (row: OperationEventRow) =>
         <template #header-channel>
           <UiTableHeaderFilter
             v-model="channelHeaderFilter"
-            title="Canal"
+            :title="t('operaciones.bitacora.channel')"
             filter-type="select"
             :options="channelHeaderOptions"
             all-label="Todos"
@@ -230,7 +230,7 @@ const tableNameFor = (row: OperationEventRow) =>
         <template #header-action>
           <UiTableHeaderFilter
             v-model="actionHeaderFilter"
-            title="Acción"
+            :title="t('operaciones.bitacora.action')"
             filter-type="select"
             :options="actionHeaderOptions"
             all-label="Todas"
@@ -316,7 +316,7 @@ const tableNameFor = (row: OperationEventRow) =>
           Anterior
         </button>
         <span class="text-sm text-text-secondary tabular-nums">
-          Página {{ currentPage }} de {{ totalPages }}
+          {{ t('operaciones.bitacora.pageOf', { page: currentPage, total: totalPages }) }}
         </span>
         <button
           type="button"
@@ -361,7 +361,7 @@ const tableNameFor = (row: OperationEventRow) =>
             <button
               type="button"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg hover:bg-surface-secondary"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               @click="closeDetail"
             >
               <XMarkIcon class="w-5 h-5 text-text-secondary" />
@@ -395,7 +395,7 @@ const tableNameFor = (row: OperationEventRow) =>
               class="w-full min-h-[44px] rounded-xl bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg transition-colors"
               @click="closeDetail"
             >
-              Cerrar
+              {{ t('common.close') }}
             </button>
           </div>
         </div>

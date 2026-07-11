@@ -98,6 +98,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 interface Props {
   modelValue: boolean
   title: string
@@ -112,7 +113,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   message: '',
   confirmLabel: 'Confirmar',
-  reasonPlaceholder: 'Ej: cliente cambió de opinión',
+  reasonPlaceholder: t('pos.destructive.reasonPlaceholder'),
   loading: false,
   error: '',
   variant: 'destructive',

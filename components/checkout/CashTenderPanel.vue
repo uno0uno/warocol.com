@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import {
   formatIntegerMoney,
   normalizeUiLocale,
@@ -78,7 +79,7 @@ const showShortfall = computed(() => {
     </div>
     <button
       type="button"
-      aria-label="Pagar exacto, sin vuelto"
+      :aria-label="t('pos.cash.exactAria')"
       class="w-full min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
       @click="cashReceived = amountToCharge"
     >

@@ -1,0 +1,162 @@
+{
+  "pos": {
+    "cart": {
+      "currentOrder": "Current order",
+      "item": "item",
+      "items": "items",
+      "product": "product",
+      "products": "products",
+      "summaryAria": "Cart summary",
+      "viewOrder": "View order",
+      "viewOrderAria": "View current order",
+      "servedBy": "Served by",
+      "assignWaiterAria": "Assign this order to a waiter",
+      "unassigned": "Unassigned",
+      "promoDiscounts": "Promo discounts",
+      "tableAdvance": "Table advance",
+      "total": "Total",
+      "openSale": "Open sale",
+      "processOrder": "Process order",
+      "processing": "Processing...",
+      "clearCart": "Clear cart",
+      "clear": "Clear",
+      "requestBill": "Bill",
+      "requestBillAria": "Request the bill",
+      "reprintLatestAria": "Reprint last sent kitchen ticket",
+      "latest": "Latest",
+      "comandas": "Tickets",
+      "openComandasReprintAria": "Open tickets to reprint",
+      "sendToKitchen": "Send to kitchen",
+      "sending": "Sending...",
+      "addToTable": "Add to {table}",
+      "addItemsToTableAria": "Add items to {table}",
+      "emptyCart": "Cart empty",
+      "tableNoOrders": "{table} has no orders",
+      "selectProducts": "Select products to add",
+      "toAdd": "To add"
+    },
+    "cartItem": {
+      "notSent": "Not sent",
+      "inKitchen": "In kitchen",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "delivered": "Delivered",
+      "firedAt": "Fired:",
+      "perUnit": "ea",
+      "note": "Note:",
+      "decreaseQtyAria": "Decrease quantity",
+      "increaseQtyAria": "Increase quantity",
+      "duplicateAria": "Duplicate item",
+      "editAria": "Edit item",
+      "removeAria": "Remove item"
+    },
+    "openSale": {
+      "title": "Open sale",
+      "productPrefix": "Product: {name}",
+      "customAmount": "Custom amount",
+      "amountLabel": "Amount (COP)",
+      "amountPlaceholder": "e.g. 25000",
+      "description": "Description",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g. Special service, external tip...",
+      "addToCart": "Add to cart",
+      "adding": "Adding...",
+      "amountError": "Enter an amount greater than zero"
+    },
+    "checkout": {
+      "title": "Checkout",
+      "emptyTitle": "Empty cart",
+      "emptyBody": "There are no products in your order",
+      "applyPromo": "Apply promotion",
+      "identifyCustomer": "Search or identify customer",
+      "searchMethod": "Search method...",
+      "paymentDueOptional": "Payment due date",
+      "optional": "(optional)",
+      "customerNoData": "Customer without details",
+      "loadingWalletAria": "Loading wallet balance",
+      "taxFallback": "Tax",
+      "liquorVat": "Liquor VAT",
+      "invoiceSentTitle": "Sent",
+      "invoiceSent": "Invoice sent to {email}",
+      "sendReceiptErrorTitle": "Error sending receipt",
+      "errorTitle": "Error"
+    },
+    "customer": {
+      "closeModalAria": "Close modal",
+      "searchPlaceholder": "Name, phone, ID or tax ID...",
+      "clearSearchAria": "Clear search",
+      "noName": "No name",
+      "noPhone": "No phone",
+      "noData": "No data",
+      "businessName": "Business name",
+      "saveAndContinue": "Save and continue",
+      "saveData": "Save data",
+      "requestInvoiceData": "Request invoice details",
+      "newCustomer": "New customer",
+      "invoiceData": "Invoice details",
+      "searchCustomer": "Search customer",
+      "newCustomerHint": "Enter the new customer details",
+      "invoiceDataHint": "To issue an identified electronic invoice",
+      "searchHint": "Search by name, phone or tax ID",
+      "loadError": "Could not load customer",
+      "customerNoData": "Customer without details",
+      "saveCustomerError": "Error saving customer",
+      "saveDataError": "Error saving data"
+    },
+    "comandasPanel": {
+      "title": "Ticket status",
+      "active": "Active tickets",
+      "closePanelAria": "Close panel",
+      "markReady": "Mark as ready",
+      "statusUpdated": "Status updated",
+      "updateError": "Error updating tickets",
+      "nothingReady": "Nothing ready yet",
+      "noComandas": "No kitchen tickets",
+      "readyHint": "Tickets appear here when the kitchen marks them ready.",
+      "emptyHint": "When new tickets are created you will see them here.",
+      "deselectAll": "Deselect all",
+      "selectAll": "Select all",
+      "soundOffAria": "Disable sound alert",
+      "soundOnAria": "Enable sound alert"
+    },
+    "advance": {
+      "title": "Pay table advance",
+      "activeTable": "Active table",
+      "closePanelAria": "Close panel",
+      "voidAdvance": "Void advance",
+      "loadError": "Could not load advances",
+      "registerError": "Could not register advance",
+      "voidedFromPos": "Voided from POS",
+      "voided": "Advance voided",
+      "voidError": "Could not void advance",
+      "tableAdvance": "Table advance"
+    },
+    "destructive": {
+      "reasonPlaceholder": "e.g. customer changed their mind"
+    },
+    "floor": {
+      "minCovered": "Minimum cover met",
+      "unassigned": "Unassigned"
+    },
+    "delivery": {
+      "notesPlaceholder": "e.g. gate on 51st street, yellow building",
+      "saveAddress": "Save address",
+      "newAddress": "New address",
+      "address": "Address"
+    },
+    "tip": {
+      "optional": "Tip (optional)",
+      "optionsAria": "Tip options"
+    },
+    "cash": {
+      "exactAria": "Pay exact amount, no change"
+    },
+    "waiter": {
+      "tipWaiterAria": "Waiter for tip",
+      "selectWaiterAria": "Select waiter for this sale"
+    },
+    "product": {
+      "pageTitle": "POS product"
+    }
+  }
+}

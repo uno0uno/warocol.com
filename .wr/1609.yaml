@@ -1,0 +1,95 @@
+# Compact plan — wr-plan uno0uno/warocol.com#1609 (B2 English UI POS+cocina+ops)
+issue: 1609
+title: "Batch 2: English UI — POS + cocina + operaciones"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1609-english-ui-pos-ops
+parent: 1607
+depends: 1608
+
+paths:
+  - nuxt.config.ts
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - i18n/locales/es/operaciones.json
+  - i18n/locales/en/operaciones.json
+  - i18n/locales/es/cocina.json
+  - i18n/locales/en/cocina.json
+  - pages/pos/index.vue
+  - pages/pos/checkout.vue
+  - pages/pos/producto/[id].vue
+  - components/pos/CartBottomBar.vue
+  - components/pos/CartPanel.vue
+  - components/pos/CartItem.vue
+  - components/pos/ProductCard.vue
+  - components/pos/OpenSaleModal.vue
+  - components/pos/MoveTableModal.vue
+  - components/pos/MesasFloorPlan.vue
+  - components/pos/CustomerIdentificationModal.vue
+  - components/pos/ComandasEstadoPanel.vue
+  - components/pos/TableSessionAdvancePanel.vue
+  - components/pos/PosDestructiveReasonModal.vue
+  - components/pos/WaroRewardPickerModal.vue
+  - components/pos/checkout/DeliveryAddressForm.vue
+  - components/pos/checkout/DeliveryAddressPicker.vue
+  - components/checkout/CashTenderPanel.vue
+  - components/checkout/TipSelector.vue
+  - components/checkout/WaiterSelector.vue
+  - pages/cocina/[id].vue
+  - pages/comandas/index.vue
+  - pages/operaciones.vue
+  - pages/operaciones/bitacora.vue
+  - pages/operaciones/comandas.vue
+  - pages/operaciones/mesas.vue
+  - pages/operaciones/turnos.vue
+  - pages/operaciones/propinas.vue
+  - pages/operaciones/personalizar.vue
+  - pages/operaciones/promociones/index.vue
+  - pages/operaciones/promociones/[id].vue
+  - components/cocina/ComandaCard.vue
+  - components/cocina/ItemRow.vue
+  - components/cocina/StationPanel.vue
+  - components/operaciones/ShiftTemplatePanel.vue
+  - components/gestion/operaciones/MesaAssignmentHistoryModal.vue
+  - components/gestion/operaciones/MesaMemberAssignRow.vue
+  - docs/engineering/i18n.md
+
+ac:
+  - "Register pos.json + operaciones.json + cocina.json in nuxt.config i18n locales files[] for es and en (B1 multi-file + common already present)."
+  - "locale=en: POS primary chrome (cart bar/panel, checkout primary CTAs/sections/toasts, open-sale/floor-plan/customer ID) shows EN for wired keys."
+  - "locale=en: cocina KDS + comandas monitor + operaciones sub-nav/bitácora/turnos/mesas/propinas primary labels via t()."
+  - "locale=es: migrated keys 1:1 with previous hardcoded Spanish; missing EN falls back to ES (never blank)."
+  - "Prefer common.* for cancel/close/search/loading/confirm/save; domain keys as pos.* / operaciones.* / cocina.*."
+  - "No changes to ReceiptPrint* / ComandaPrintTickets, FE emit, Matias, guest online checkout, despacho, ventas/inventory/finanzas."
+
+out_of_scope:
+  - Receipt/print legal (ReceiptPrintTicket, ReceiptPrintHeader, ReceiptPlatformFooter, ComandaPrintTickets)
+  - Guest online/QR, pages/[tenant], mis-pedidos
+  - pages/despacho/**; ventas #1610; inventario #1611; finanzas #1612
+  - API/backend; api-facturacion; product synonym demo lists
+
+hints:
+  entry: "Branch from main AFTER #1608 lands (or base on wr-1608-i18n-module-kit). Create domain JSON; append to nuxt.config.ts:265,271 files arrays."
+  pattern: "useAppLocale()/useI18n t(); common.cancel etc; docs/engineering/i18n.md domain opt-in; shell login gold"
+  priority: "1) operaciones.vue sub-nav 2) CartBottomBar/CartPanel/CartItem 3) checkout primary chrome only (~template 3084+) 4) comandas+cocina cards 5) bitácora+rest ops"
+  skip_in_checkout: "Do not mass-translate every edge modal; leave print paths and API-driven labels (method names, tax_label from API)"
+  tests: "nuxi prepare; manual waro_locale=en: /pos cart+checkout chrome, /comandas, /cocina/:id, /operaciones/* sub-nav+bitácora; es regression 1:1; git diff --check"
+
+risk:
+  sensitive: false
+  areas:
+    - pages/pos/checkout.vue size (~5.5k) — primary chrome only
+    - depends on #1608 multi-file+common; without it domain files won't load
+    - useTableLabel() dynamic mesa labels vs ops keys
+    - avoid touching receipt print while editing checkout
+
+skip:
+  audits:
+    - full typecheck unless prepare fails
+    - E2E suite
+    - UX/color/typography audits
+
+next:
+  after_pr: "Closes #1609; epic #1607 → #1610 ventas ∥ remaining batches"
