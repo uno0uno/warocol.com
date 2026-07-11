@@ -120,7 +120,16 @@
       "selectAll": "Select all",
       "soundOffAria": "Disable sound alert",
       "soundOnAria": "Enable sound alert",
-      "markDelivered": "Mark as delivered"
+      "markDelivered": "Mark as delivered",
+      "readyTab": "Ready",
+      "preparingTab": "Preparing",
+      "soundLabel": "Sound alert",
+      "ticketOne": "ticket",
+      "ticketMany": "tickets",
+      "updatedOne": "ticket updated",
+      "updatedMany": "tickets updated",
+      "partialResult": "Partial result",
+      "partialBody": "{ok} updated · {failed} failed"
     },
     "advance": {
       "title": "Pay table advance",
