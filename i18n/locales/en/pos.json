@@ -61,7 +61,8 @@
       "descriptionPlaceholder": "e.g. Special service, external tip...",
       "addToCart": "Add to cart",
       "adding": "Adding...",
-      "amountError": "Enter an amount greater than zero"
+      "amountError": "Enter an amount greater than zero",
+      "addToTable": "Add to {table}"
     },
     "checkout": {
       "title": "Checkout",
@@ -279,6 +280,36 @@
     "catalog": {
       "searchPlaceholder": "Search products...",
       "all": "All"
+    },
+    "reprint": {
+      "title": "Reprint tickets",
+      "closePanelAria": "Close panel",
+      "emptyTitle": "No tickets sent",
+      "emptySub": "This session has no tickets to reprint yet.",
+      "selectComandaAria": "Select ticket {number}",
+      "itemOne": "item",
+      "itemMany": "items",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "refresh": "Refresh",
+      "printSelected": "Reprint selected",
+      "printSelectedCount": "Reprint selected ({count})",
+      "sessionCurrent": "Current session",
+      "status": {
+        "sent": "Sent",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled",
+        "pending": "Pending"
+      },
+      "ticketOne": "ticket",
+      "ticketMany": "tickets"
+    },
+    "printTicket": {
+      "comanda": "Ticket #{numbers}",
+      "station": "Station: {name}",
+      "noStation": "No kitchen station"
     }
   }
 }

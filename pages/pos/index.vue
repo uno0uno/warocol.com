@@ -2134,7 +2134,8 @@ onUnmounted(() => {
     ref="openSaleModalRef"
     v-model="openSaleModalOpen"
     :shell-name="openSaleProduct?.name"
-    :confirm-label="isMesaMode ? t('pos.banner.addToTable', { table: tableSingularLower }) : t('pos.banner.addToCart')"
+    :mesa-mode="isMesaMode"
+    :table-label="tableSingularLower"
     @confirm="handleOpenSaleConfirm"
   />
 
