@@ -31,7 +31,7 @@ export type ActivePage =
 export interface DashboardNavItem {
   to: string
   page: ActivePage
-  /** i18n key under i18n/locales/*/shell.json (e.g. nav.ventas) */
+  /** i18n key under i18n/locales/{es,en}/shell.json (e.g. nav.ventas) */
   labelKey: string
   icon: FunctionalComponent
   module: Module
