@@ -1,0 +1,166 @@
+{
+  "facturacion": {
+    "head": {
+      "module": "Facturación",
+      "audit": "Bitácora de números quemados — DIAN"
+    },
+    "common": {
+      "error": "Error",
+      "saved": "Guardado",
+      "saving": "Guardando...",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "status": "Estado",
+      "type": "Tipo",
+      "range": "Rango",
+      "from": "Desde",
+      "to": "Hasta",
+      "update": "Actualizar",
+      "edit": "Editar"
+    },
+    "toasts": {
+      "resolutionUpdated": "Resolución actualizada",
+      "resolutionCreated": "Resolución creada",
+      "resolutionSaveError": "Error al guardar resolución",
+      "toggleError": "Error al cambiar estado",
+      "taxSaved": "Impuestos aplicados a ventas guardados correctamente",
+      "taxSaveError": "Error al guardar impuestos aplicados a ventas",
+      "printSaved": "Personalización de tickets guardada",
+      "printSaveError": "Error al guardar personalización",
+      "fiscalSaved": "Datos fiscales guardados correctamente",
+      "fiscalSaveError": "Error al guardar datos fiscales"
+    },
+    "docTypes": {
+      "invoice": "Factura de venta",
+      "creditNote": "Nota crédito",
+      "debitNote": "Nota débito",
+      "invoiceShort": "Factura"
+    },
+    "columns": {
+      "prefix": "Prefijo",
+      "resolutionNumber": "N° Resolución",
+      "available": "Disponibles",
+      "used": "Usadas",
+      "percentUsed": "% Usado",
+      "validity": "Vigencia"
+    },
+    "defaults": {
+      "prefactura": "Prefactura",
+      "propina": "Propina"
+    },
+    "orgTypes": {
+      "legal": "Persona jurídica",
+      "natural": "Persona natural"
+    },
+    "taxRegimes": {
+      "iva": "Responsable de IVA",
+      "noIva": "No responsable de IVA"
+    },
+    "taxLevels": {
+      "grand": "Gran contribuyente",
+      "selfWithholding": "Autorretenedor",
+      "withholdingAgent": "Agente de retención",
+      "simple": "Régimen simple",
+      "na": "No aplica"
+    },
+    "readiness": {
+      "requestTitle": "Solicita la activación de facturación electrónica",
+      "requestBody": "Activa la solicitud en la sección Proveedor de facturación electrónica. WARO validará la habilitación técnica con Matias antes de emitir.",
+      "pendingTitle": "Habilitación interna pendiente",
+      "pendingBody": "La solicitud puede estar activa, pero WARO debe completar la habilitación técnica con Matias antes de emitir.",
+      "missingFiscalTitle": "Faltan datos fiscales",
+      "missingFiscalBody": "Completa NIT, razón social, teléfono y email en la sección Datos Fiscales del Negocio.",
+      "noResolutionTitle": "Sin resolución DIAN vigente",
+      "noResolutionBody": "Configura una resolución activa con numeración disponible en la sección Resolución DIAN.",
+      "taxReviewTitle": "Revisa el impuesto aplicado a ventas",
+      "matiasUuidTitle": "Falta UUID cliente Matias",
+      "matiasUuidBody": "Configura el client_uuid del cliente emisor en la sección Proveedor de facturación electrónica antes de emitir con Matias.",
+      "ready": "Tu cuenta está lista para emitir facturas electrónicas."
+    },
+    "resolutions": {
+      "title": "Resolución DIAN",
+      "new": "Nueva resolución",
+      "edit": "Editar resolución",
+      "emptyTitle": "Sin resoluciones DIAN configuradas",
+      "emptySub": "Configura la resolución que registraste en el portal de Matias (número, prefijo, rango)",
+      "number": "Número de resolución",
+      "prefix": "Prefijo",
+      "rangeFrom": "Rango desde",
+      "rangeTo": "Rango hasta",
+      "currentNumber": "Número actual (consecutivo)",
+      "docType": "Tipo de documento",
+      "dateFrom": "Fecha desde",
+      "dateTo": "Fecha hasta",
+      "create": "Crear resolución",
+      "activate": "Activar resolución",
+      "deactivate": "Desactivar resolución",
+      "editAria": "Editar resolución",
+      "rangeLabel": "Rango: {from} → {to}",
+      "fromLabel": "Desde:",
+      "toLabel": "Hasta:",
+      "gapsHint": "DIAN no permite reutilizarlos — revisa la bitácora."
+    },
+    "fiscal": {
+      "sectionTitle": "Datos Fiscales del Negocio",
+      "nit": "NIT",
+      "businessName": "Razón social",
+      "orgType": "Tipo de organización",
+      "orgHint": "Define si el emisor factura como persona natural o jurídica.",
+      "taxRegime": "Responsabilidad IVA",
+      "taxRegimeHint": "Describe la responsabilidad fiscal del emisor; no reemplaza los toggles de impuestos de ventas.",
+      "taxLevel": "Nivel de responsabilidad",
+      "taxLevelHint": "Registra responsabilidades adicionales del emisor, como gran contribuyente o régimen simple.",
+      "address": "Dirección fiscal",
+      "city": "Ciudad",
+      "phone": "Teléfono",
+      "email": "Email facturación",
+      "save": "Guardar datos fiscales",
+      "miNegocio": "Mi negocio"
+    },
+    "print": {
+      "docPlaceholder": "Prefactura, Orden de compra, Factura #…",
+      "tipPlaceholder": "Propina, Servicio, Cargo por servicio…",
+      "docHint": "Texto que encabeza el ticket (máx. 40 caracteres). Ej: Prefactura, Pedido N°.",
+      "tipHint": "Texto de la línea de propina en prefactura, recibo impreso y email (máx. 40 caracteres). Ej: Servicio.",
+      "showLogo": "Mostrar logo en tickets",
+      "showLogoHint": "Usa el logo de Mi negocio en prefactura y factura impresa",
+      "save": "Guardar personalización"
+    },
+    "tax": {
+      "incTitle": "INC — Impoconsumo 8%",
+      "incBody": "Aplica cuando tus ventas deben liquidar Impoconsumo. Afecta el total y el desglose de la factura.",
+      "ivaTitle": "IVA — 19%",
+      "ivaBody": "Actívalo solo si tus ventas deben llevar IVA 19%. Afecta el total y el desglose de la factura.",
+      "liquorTitle": "IVA Licores para llevar — 5%",
+      "liquorBody": "Para botellas o licores para llevar cuando corresponda; siempre se suma al precio base.",
+      "howInc": "Cómo aplicar el INC",
+      "howIva": "Cómo aplicar el IVA",
+      "included": "Incluido en el precio",
+      "added": "Se suma al precio",
+      "incIncludedHint": "El 8% ya está dentro del precio.",
+      "incAddedHint": "El 8% se agrega encima.",
+      "ivaIncludedHint": "El 19% ya está dentro del precio.",
+      "ivaAddedHint": "El 19% se agrega encima.",
+      "save": "Guardar configuración"
+    },
+    "provider": {
+      "title": "Proveedor de facturación electrónica",
+      "environment": "Entorno",
+      "notConfigured": "No configurado",
+      "lastDocument": "Último documento",
+      "noDocuments": "Sin documentos emitidos"
+    },
+    "audit": {
+      "back": "Volver a Facturación",
+      "filterResolution": "Filtrar por resolución",
+      "when": "Cuándo",
+      "burnedNumber": "Número quemado",
+      "resolution": "Resolución",
+      "order": "Orden",
+      "validatedDian": "Ya validado en DIAN",
+      "matias5xx": "Error 5xx de Matias",
+      "emptyTitle": "No hay números quemados",
+      "totalHistorical": "Total histórico"
+    }
+  }
+}

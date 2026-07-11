@@ -1,10 +1,11 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
-useHead({ title: 'Productos vendidos - Ventas' })
+useHead({ title: () => t('ventas.head.productos') })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -41,14 +42,14 @@ const clearFilters = () => {
 
 const emptyMessage = computed(() =>
   hasActiveFilters.value
-    ? 'Ningún producto coincide con los filtros'
-    : 'No hay ventas en este período',
+    ? t('ventas.productos.emptyFilter')
+    : t('ventas.productos.emptyPeriod'),
 )
 
 const emptySubMessage = computed(() =>
   hasActiveFilters.value
     ? 'Prueba ajustar o limpiar los filtros'
-    : 'Selecciona un rango de fechas o ajusta los filtros',
+    : t('ventas.productos.emptySub'),
 )
 
 // ── Data ─────────────────────────────────────────────────────────────────
@@ -145,10 +146,10 @@ function handleTableSort(field: string) {
 
 // ── Table columns ────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'product_name', title: 'Producto', sortable: true },
-  { key: 'category_name', title: 'Categoría', sortable: false },
-  { key: 'quantity_sold', title: 'Vendidos', sortable: true },
-  { key: 'total_revenue', title: 'Ingresos', sortable: true },
+  { key: 'product_name', title: t('ventas.common.producto'), sortable: true },
+  { key: 'category_name', title: t('ventas.productos.category'), sortable: false },
+  { key: 'quantity_sold', title: t('ventas.productos.sold'), sortable: true },
+  { key: 'total_revenue', title: t('ventas.productos.revenue'), sortable: true },
 ]
 
 const formatCurrency = (value: number) =>
@@ -198,7 +199,7 @@ onUnmounted(() => {
           variant="primary"
         />
         <MetricCard
-          title="Ingresos totales"
+          :title="t('ventas.productos.revenueTotal')"
           :value="totals.total_revenue"
           format="currency"
           variant="primary"
@@ -211,7 +212,7 @@ onUnmounted(() => {
         aria-label="Ver consumo y costo por ingrediente"
       >
         <span>
-          <span class="font-semibold text-text-primary">Productos vendidos</span>
+          <span class="font-semibold text-text-primary">{{ t('ventas.productos.soldTitle') }}</span>
           <span class="text-text-secondary"> muestran mix e ingresos; ingredientes muestra consumo y costo.</span>
         </span>
         <span class="font-semibold text-primary whitespace-nowrap">Ver ingredientes</span>
@@ -221,7 +222,7 @@ onUnmounted(() => {
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar producto..."
+        :search-placeholder="t('ventas.productos.searchPlaceholder')"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -233,16 +234,16 @@ onUnmounted(() => {
           <select
             v-if="cachedCategories.length > 0"
             v-model="categoryFilter"
-            aria-label="Filtrar por categoría"
+            :aria-label="t('ventas.productos.filterCategory')"
             :class="[filterSelectClass, 'md:hidden']"
           >
-            <option :value="null">Categoría</option>
+            <option :value="null">{{ t('ventas.productos.category') }}</option>
             <option v-for="cat in cachedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
 
           <select
             v-model="sortFilter"
-            aria-label="Ordenar por"
+            :aria-label="t('ventas.productos.sortBy')"
             :class="[filterSelectClass, 'md:hidden']"
           >
             <option value="qty_desc">Más vendidos</option>
@@ -252,7 +253,7 @@ onUnmounted(() => {
 
           <select
             v-model="channelFilter"
-            aria-label="Filtrar por canal"
+            :aria-label="t('ventas.productos.filterChannel')"
             :class="filterSelectClass"
           >
             <option :value="null">Canal</option>
@@ -283,7 +284,7 @@ onUnmounted(() => {
       >
         <template #header-product_name>
           <UiTableHeaderFilter
-            title="Producto"
+            :title="t('ventas.common.producto')"
             column-key="product_name"
             sortable
             :sort-field="tableSortField"
@@ -297,17 +298,17 @@ onUnmounted(() => {
         <template #header-category_name>
           <UiTableHeaderFilter
             v-model="categoryHeaderFilter"
-            title="Categoría"
+            :title="t('ventas.productos.category')"
             filter-type="select"
             :options="categoryHeaderOptions"
-            all-label="Categoría"
+            :all-label="t('ventas.productos.category')"
             align="left"
           />
         </template>
 
         <template #header-quantity_sold>
           <UiTableHeaderFilter
-            title="Vendidos"
+            :title="t('ventas.productos.sold')"
             column-key="quantity_sold"
             sortable
             :sort-field="tableSortField"
@@ -320,7 +321,7 @@ onUnmounted(() => {
 
         <template #header-total_revenue>
           <UiTableHeaderFilter
-            title="Ingresos"
+            :title="t('ventas.productos.revenue')"
             column-key="total_revenue"
             sortable
             :sort-field="tableSortField"
@@ -339,7 +340,7 @@ onUnmounted(() => {
           >
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-text-primary">{{ item.product_name }}</p>
-              <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name ?? 'Sin categoría' }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name ?? t('ventas.common.sinCategoria') }}</p>
             </div>
             <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_revenue) }}</span>
@@ -354,7 +355,7 @@ onUnmounted(() => {
         </template>
 
         <template #cell-category_name="{ value }">
-          <span class="text-sm text-text-secondary">{{ value ?? 'Sin categoría' }}</span>
+          <span class="text-sm text-text-secondary">{{ value ?? t('ventas.common.sinCategoria') }}</span>
         </template>
 
         <template #cell-quantity_sold="{ value }">
@@ -371,7 +372,7 @@ onUnmounted(() => {
         v-if="products.length > 0 && !isRefreshing"
         class="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl text-sm font-semibold"
       >
-        <span class="text-text-secondary">Total ({{ products.length }} producto{{ products.length !== 1 ? 's' : '' }})</span>
+        <span class="text-text-secondary">{{ products.length === 1 ? t('ventas.productos.totalProducts', { count: products.length }) : t('ventas.productos.totalProducts_plural', { count: products.length }) }}</span>
         <div class="flex items-center gap-6">
           <span class="text-text-primary">{{ totals.quantity_sold }} uds.</span>
           <span class="text-primary">{{ formatCurrency(totals.total_revenue) }}</span>

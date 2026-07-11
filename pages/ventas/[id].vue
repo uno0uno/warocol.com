@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, nextTick, watch } from 'vue'
 import QRCode from 'qrcode'
 import { useQueryCache } from '@pinia/colada'
@@ -8,7 +9,7 @@ import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paym
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
-useHead({ title: 'Detalle de Venta' })
+useHead({ title: () => t('ventas.head.detail') })
 
 // Tenant reactivity
 const { currentTenant, businessProfile } = useTenantReactive()
@@ -153,7 +154,7 @@ const invoiceQrDataUrl = ref('')
 const showEmailModal = ref(false)
 const toast = useToast()
 const onInvoiceEmailSent = (email: string) => {
-  toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
+  toast.success(t('ventas.detail.emailSent', { email }), { title: t('ventas.detail.emailSentTitle') })
 }
 
 type SelectedCustomer = {
@@ -197,7 +198,7 @@ const isMatiasAuthInvoiceError = computed(() => {
 const emitInvoice = async () => {
   if (isEmittingInvoice.value) return
   if (isCreditOnlyInvoiceBlocked.value) {
-    emitInvoiceError.value = 'Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.'
+    emitInvoiceError.value = t('ventas.detail.creditOnlyNoEmit')
     return
   }
   isEmittingInvoice.value = true
@@ -258,17 +259,17 @@ const emitInvoice = async () => {
 
       const label = [result.prefix, result.invoice_number].filter(Boolean).join('-')
       toast.success(
-        label ? `Factura ${label} aceptada por DIAN` : 'Factura electrónica aceptada',
-        { title: 'Emisión exitosa' },
+        label ? t('ventas.detail.acceptedWithLabel', { label }) : t('ventas.detail.accepted'),
+        { title: t('ventas.detail.emitSuccessTitle') },
       )
       if (result.cufe) {
         invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
       }
     } else {
-      emitInvoiceError.value = result?.error_message || 'Factura rechazada por DIAN'
+      emitInvoiceError.value = result?.error_message || t('ventas.detail.rejected')
     }
   } catch (e: any) {
-    emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al emitir factura'
+    emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || t('ventas.detail.emitError')
   } finally {
     isEmittingInvoice.value = false
   }
@@ -311,7 +312,7 @@ const order = computed(() => {
 
   return {
     ...orderData.value,
-    customer_name: orderData.value.customer?.name || 'Sin nombre',
+    customer_name: orderData.value.customer?.name || t('ventas.common.sinNombre'),
     customer_phone: orderData.value.customer?.phone || 'N/A'
   }
 })
@@ -324,7 +325,7 @@ const canAssociateOrderCustomer = computed(() => Boolean(
     && !invoiceData.value
 ))
 const customerAssociationLabel = computed(() =>
-  orderHasInvoiceCustomer.value ? 'Cambiar cliente' : 'Asociar cliente'
+  orderHasInvoiceCustomer.value ? t('ventas.detail.changeCustomer') : t('ventas.detail.associateCustomer')
 )
 const canEmitInvoiceForOrder = computed(() => Boolean(
   !invoiceData.value
@@ -361,9 +362,9 @@ const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
     // Only refresh order — refetchInvoice here always 404s (no FE yet) and
     // was racing/poisoning the invoice query cache before emit.
     await refetchOrder()
-    toast.success('Cliente asociado a la venta', { title: 'Listo' })
+    toast.success(t('ventas.detail.customerAssociated'), { title: t('ventas.common.listo') })
   } catch (error: any) {
-    customerAssociationError.value = error.data?.detail || error.data?.message || error.message || 'No se pudo asociar el cliente'
+    customerAssociationError.value = error.data?.detail || error.data?.message || error.message || t('ventas.detail.customerAssociateError')
   } finally {
     isAssociatingCustomer.value = false
   }
@@ -517,14 +518,14 @@ type SaleReceiptModifier = {
 
 const receiptDocumentLabel = computed(() => {
   const label = (receiptPrintSettings.value.document_label || '').trim()
-  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return 'Factura'
+  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return t('ventas.common.factura')
   if (/factura/i.test(label)) return label
   return label
 })
 
 const receiptTipLabel = computed(() => {
-  const label = (receiptPrintSettings.value.tip_label || 'Propina').trim()
-  return label || 'Propina'
+  const label = (receiptPrintSettings.value.tip_label || t('ventas.common.propina')).trim()
+  return label || t('ventas.common.propina')
 })
 
 const itemModifierTotal = (modifier: SaleReceiptModifier) =>
@@ -630,7 +631,7 @@ const saleReceiptInvoiceTaxLines = computed(() => {
   if (!o) return []
   return [
     {
-      label: o.standard_tax_label || 'Impuesto',
+      label: o.standard_tax_label || t('ventas.common.impuesto'),
       amount: Number(o.standard_tax) || 0,
     },
     {
@@ -649,12 +650,12 @@ const saleReceiptIssuerLabel = computed(() => {
     const name = String(issuer.name || '').trim()
     const nit = String(issuer.fiscal_id || '').trim()
     if (name && nit) return `${name} - NIT ${nit}`
-    return name || (nit ? `NIT ${nit}` : null)
+    return name || (nit ? t('ventas.detail.nit', { nit }) : null)
   }
   const name = fiscalData.value?.business_name?.trim() || null
   const nit = fiscalData.value?.nit?.trim() || null
   if (name && nit) return `${name} - NIT ${nit}`
-  return name || (nit ? `NIT ${nit}` : null)
+  return name || (nit ? t('ventas.detail.nit', { nit }) : null)
 })
 
 const saleReceiptInvoice = computed(() => {
@@ -682,8 +683,8 @@ async function buildInvoiceQrDataUrl(cufe: string): Promise<string> {
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    'completed': 'Completada',
-    'cancelled': 'Cancelada',
+    'completed': t('ventas.common.completada'),
+    'cancelled': t('ventas.common.cancelada'),
     'pending': 'Pendiente'
   }
   return labels[status] || status
@@ -704,15 +705,15 @@ const goBack = () => {
 
 const printReceipt = async () => {
   if (!order.value) {
-    useToast().error('No se pudo cargar la venta para imprimir.', { title: 'Sin datos' })
+    useToast().error(t('ventas.detail.printLoadError'), { title: 'Sin datos' })
     return
   }
   if (itemsLoading.value) {
-    useToast().error('Espera a que carguen los productos antes de imprimir.', { title: 'Cargando venta' })
+    useToast().error(t('ventas.detail.printWaitProducts'), { title: t('ventas.detail.loadingSale') })
     return
   }
   if (saleReceiptItems.value.length === 0) {
-    useToast().error('La venta no tiene productos para imprimir.', { title: 'Sin productos' })
+    useToast().error(t('ventas.detail.printNoProducts'), { title: t('ventas.detail.noProducts') })
     return
   }
   if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
@@ -750,7 +751,7 @@ const markItemForDeletion = (itemId: string) => {
   )
 
   if (remainingItems.length === 0) {
-    useToast().error('La venta debe tener al menos un producto', { title: 'No permitido' })
+    useToast().error(t('ventas.detail.needOneProduct'), { title: t('ventas.detail.notAllowed') })
     return
   }
 
@@ -788,9 +789,9 @@ const updateStatus = async () => {
     await refetchOrder()
     selectedNewStatus.value = ''
     selectedPaymentMethod.value = ''
-    useToast().success('Estado actualizado correctamente', { title: 'Listo' })
+    useToast().success(t('ventas.detail.statusUpdated'), { title: 'Listo' })
   } catch (error: any) {
-    useToast().error(error.data?.message || 'Error al actualizar el estado', { title: 'Error' })
+    useToast().error(error.data?.message || t('ventas.detail.statusUpdateError'), { title: t('ventas.common.error') })
   } finally {
     isUpdatingStatus.value = false
   }
@@ -812,11 +813,11 @@ const closeFinalizeSalePanel = () => {
 
 const finalizePendingSale = async () => {
   if (!selectedPaymentMethod.value) {
-    finalizeSaleError.value = 'Selecciona un método de pago'
+    finalizeSaleError.value = t('ventas.detail.selectPayment')
     return
   }
   if (finalizeRequiresMethodSelection.value) {
-    finalizeSaleError.value = 'Selecciona el método específico'
+    finalizeSaleError.value = t('ventas.detail.selectSpecificPayment')
     return
   }
   isFinalizingSale.value = true
@@ -836,9 +837,9 @@ const finalizePendingSale = async () => {
     showFinalizeSalePanel.value = false
     selectedPaymentMethod.value = ''
     selectedPaymentMethodId.value = null
-    useToast().success('Venta finalizada correctamente', { title: 'Listo' })
+    useToast().success(t('ventas.detail.saleCompleted'), { title: 'Listo' })
   } catch (error: any) {
-    finalizeSaleError.value = error.data?.message || error.data?.detail || 'Error al finalizar la venta'
+    finalizeSaleError.value = error.data?.message || error.data?.detail || t('ventas.detail.saleCompleteError')
   } finally {
     isFinalizingSale.value = false
   }
@@ -876,10 +877,10 @@ const saveChanges = async () => {
     itemsToDelete.value = new Set()
     modifiersToDelete.value = new Map()
 
-    useToast().success('Venta ajustada correctamente. Stock actualizado.', { title: 'Cambios guardados' })
+    useToast().success(t('ventas.detail.saleAdjusted'), { title: t('ventas.detail.changesSaved') })
   } catch (error: any) {
     console.error('Error saving changes:', error)
-    useToast().error(error.data?.message || 'Error al guardar los cambios', { title: 'Error' })
+    useToast().error(error.data?.message || t('ventas.detail.saveError'), { title: t('ventas.common.error') })
   } finally {
     isSaving.value = false
   }
@@ -908,7 +909,7 @@ onMounted(() => {
   setBackHandler?.(goBack)
   setHeaderAction?.({
     label: 'Imprimir',
-    ariaLabel: 'Imprimir venta',
+    ariaLabel: t('ventas.detail.printSale'),
     icon: 'printer',
     iconOnly: true,
     handler: printReceipt
@@ -932,13 +933,13 @@ onUnmounted(() => {
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
+    <!-- Error State (i18n) -->
     <div v-else-if="fetchError || !order" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Orden no encontrada</p>
-        <p class="text-sm text-text-secondary mb-6">{{ fetchError?.message || 'La orden que buscas no existe' }}</p>
+        <p class="text-xl font-semibold text-text-primary mb-2">{{ t('ventas.detail.orderNotFound') }}</p>
+        <p class="text-sm text-text-secondary mb-6">{{ fetchError?.message || t('ventas.detail.orderNotFound') }}</p>
         <button @click="goBack" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
-          Volver a Ventas
+          {{ t('ventas.common.volver') }}
         </button>
       </div>
     </div>
@@ -958,7 +959,7 @@ onUnmounted(() => {
               class="text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
               @click="openCustomerModal"
             >
-              {{ isAssociatingCustomer ? 'Guardando...' : customerAssociationLabel }}
+              {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
             </button>
           </div>
           <p class="text-lg font-bold text-text-primary">{{ order.customer_name }}</p>
@@ -992,7 +993,7 @@ onUnmounted(() => {
           class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
           :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
           @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
-          :aria-label="order.split_payments && order.split_payments.length > 0 ? 'Ver detalle de cobro dividido' : undefined">
+          :aria-label="order.split_payments && order.split_payments.length > 0 ? t('ventas.detail.viewSplitDetail') : undefined">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Método de Pago</p>
           <div class="flex items-center justify-between gap-2">
             <p class="text-lg font-bold text-info leading-tight">
@@ -1000,7 +1001,7 @@ onUnmounted(() => {
                 Cobro dividido · {{ order.split_payments.length }} pagos
               </template>
               <template v-else>
-                {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : 'Sin registrar' }}
+                {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : t('ventas.common.sinRegistrar') }}
               </template>
             </p>
             <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0"
@@ -1143,8 +1144,8 @@ onUnmounted(() => {
                 </svg>
               </span>
               <div class="min-w-0">
-                <h2 class="text-sm font-bold text-text-primary truncate">Factura Electrónica</h2>
-                <p class="text-xs text-text-tertiary mt-0.5">DIAN</p>
+                <h2 class="text-sm font-bold text-text-primary truncate">{{ t('ventas.detail.electronicInvoice') }}</h2>
+                <p class="text-xs text-text-tertiary mt-0.5">{{ t('ventas.detail.dian') }}</p>
               </div>
             </div>
 
@@ -1193,12 +1194,12 @@ onUnmounted(() => {
 
             <!-- Col 2: Descargar / Enviar -->
             <div class="p-5 flex flex-col justify-start">
-              <h3 class="text-sm font-bold text-text-primary mb-4">Descargar</h3>
+              <h3 class="text-sm font-bold text-text-primary mb-4">{{ t('ventas.detail.download') }}</h3>
               <div class="flex-1 flex flex-col justify-start gap-3 w-full h-fit">
                 <p class="text-sm text-text-secondary">
                   {{ invoicePdfAvailable
-                    ? 'Descarga tu factura electrónica en formato PDF'
-                    : 'Envía la factura por correo (recibo + CUFE/XML; PDF gráfico no disponible en este entorno)' }}
+                    ? t('ventas.detail.downloadPdf')
+                    : t('ventas.detail.sendEmailPdfUnavailable') }}
                 </p>
                 <a v-if="invoicePdfAvailable"
                   :href="invoiceData.pdf_presigned_url" target="_blank" rel="noopener"
@@ -1230,7 +1231,7 @@ onUnmounted(() => {
               <h3 class="text-sm font-bold text-text-primary mb-4">CUFE</h3>
               <div class="space-y-3">
                 <p class="text-sm text-text-secondary">
-                  Código Único de Factura Electrónica
+                  {{ t('ventas.detail.cufeTitle') }}
                 </p>
                 <div v-if="invoiceData.cufe" class="rounded-xl border border-border bg-surface-secondary/50 p-3">
                   <p class="text-xs font-mono text-text-secondary break-all leading-relaxed">
@@ -1239,7 +1240,7 @@ onUnmounted(() => {
                 </div>
                 <button v-if="invoiceData.cufe" @click="copyCufe(invoiceData.cufe)"
                   class="w-full min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors">
-                  {{ copiedCufe ? 'CUFE copiado' : 'Copiar código' }}
+                  {{ copiedCufe ? t('ventas.detail.cufeCopied') : t('ventas.detail.copyCode') }}
                 </button>
               </div>
             </div>
@@ -1256,10 +1257,10 @@ onUnmounted(() => {
             </svg>
             <div class="min-w-0">
               <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                Factura {{ invoiceData.prefix }}{{ invoiceData.invoice_number }} ya validada en DIAN
+                {{ t('ventas.detail.invoiceValidatedTitle', { label: `${invoiceData.prefix || ''}${invoiceData.invoice_number || ''}` }) }}
               </p>
               <p class="text-xs text-amber-700/90 dark:text-amber-400 mt-1 leading-relaxed">
-                DIAN tiene esta factura validada pero la información local quedó desincronizada.
+                {{ t('ventas.detail.invoiceValidatedBody') }}
                 Contacta soporte para reconciliar el documento — no la vuelvas a emitir, eso consumiría
                 otro número de la resolución sin éxito.
               </p>
@@ -1278,7 +1279,7 @@ onUnmounted(() => {
               <div class="min-w-0 space-y-1">
                 <span>{{ invoiceData.error_message }}</span>
                 <p v-if="isMatiasAuthInvoiceError" class="text-xs opacity-90">
-                  Error de autenticación con Matias. Corrige el token y pulsa Reintentar emisión.
+                  {{ t('ventas.detail.matiasAuthError') }}
                 </p>
               </div>
             </div>
@@ -1297,7 +1298,7 @@ onUnmounted(() => {
                 Reintentando…
               </template>
               <template v-else>
-                Reintentar emisión
+                {{ t('ventas.detail.retryEmit') }}
               </template>
             </button>
             <p v-if="emitInvoiceError" class="text-sm text-destructive flex items-center gap-1.5">
@@ -1320,9 +1321,9 @@ onUnmounted(() => {
               </svg>
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-text-primary leading-tight">Factura electrónica no disponible</p>
+              <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.invoiceUnavailableTitle') }}</p>
               <p class="text-xs text-text-secondary leading-snug">
-                Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.
+                {{ t('ventas.detail.invoiceUnavailableBody') }}
               </p>
             </div>
           </div>
@@ -1338,8 +1339,8 @@ onUnmounted(() => {
               </svg>
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-text-primary leading-tight">Sin factura electrónica</p>
-              <p class="text-xs text-text-secondary leading-snug">Genera la factura DIAN cuando lo necesites.</p>
+              <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.noInvoiceTitle') }}</p>
+              <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.noInvoiceBody') }}</p>
             </div>
             <button @click="emitInvoice" :disabled="isEmittingInvoice"
               class="flex-shrink-0 min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
@@ -1351,7 +1352,7 @@ onUnmounted(() => {
                 Generando…
               </template>
               <template v-else>
-                Emitir factura
+                {{ t('ventas.detail.emitCta') }}
               </template>
             </button>
           </div>
@@ -1370,7 +1371,7 @@ onUnmounted(() => {
             <svg class="w-5 h-5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="text-sm text-text-tertiary">Factura electrónica disponible al completar la orden</p>
+            <p class="text-sm text-text-tertiary">{{ t('ventas.detail.invoiceWhenComplete') }}</p>
           </div>
         </template>
       </div>
@@ -1431,7 +1432,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">Completada</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">{{ t('ventas.common.completada') }}</span>
           </button>
 
           <!-- Cancelada -->
@@ -1453,7 +1454,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">Cancelada</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">{{ t('ventas.common.cancelada') }}</span>
           </button>
         </div>
 
@@ -1527,7 +1528,7 @@ onUnmounted(() => {
                 <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+                {{ isSaving ? t('ventas.common.guardando') : t('common.save') }}
               </button>
             </template>
           </div>
@@ -1748,7 +1749,7 @@ onUnmounted(() => {
                 class="flex items-center justify-between gap-10"
               >
                 <span class="text-sm text-text-secondary">
-                  Propina
+                  {{ t('ventas.common.propina') }}
                   <span v-if="orderTipPercent != null" class="text-xs text-text-tertiary">
                     ({{ orderTipPercent }}%)
                   </span>
@@ -1761,7 +1762,7 @@ onUnmounted(() => {
                 v-if="order.tip_tax_amount && order.tip_tax_amount > 0"
                 class="flex items-center justify-between gap-10"
               >
-                <span class="text-sm text-text-secondary">Impuesto propina</span>
+                <span class="text-sm text-text-secondary">{{ t('ventas.detail.tipTax') }}</span>
                 <span class="text-sm tabular-nums text-text-secondary">
                   +{{ formatCurrency(order.tip_tax_amount) }}
                 </span>
@@ -1786,7 +1787,7 @@ onUnmounted(() => {
                 v-if="orderChargedTotal != null"
                 class="flex items-center justify-between gap-10"
               >
-                <span class="text-sm font-bold text-text-primary">Total cobrado</span>
+                <span class="text-sm font-bold text-text-primary">{{ t('ventas.detail.totalCharged') }}</span>
                 <span class="text-base font-bold text-primary tabular-nums">
                   {{ formatCurrency(orderChargedTotal) }}
                 </span>
@@ -1797,7 +1798,7 @@ onUnmounted(() => {
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
-          <p class="text-sm text-text-secondary">No hay items en esta orden</p>
+          <p class="text-sm text-text-secondary">{{ t('ventas.detail.noItems') }}</p>
         </div>
       </div>
 

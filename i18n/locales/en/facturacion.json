@@ -1,0 +1,166 @@
+{
+  "facturacion": {
+    "head": {
+      "module": "Invoicing",
+      "audit": "Burned numbers log — DIAN"
+    },
+    "common": {
+      "error": "Error",
+      "saved": "Saved",
+      "saving": "Saving...",
+      "active": "Active",
+      "inactive": "Inactive",
+      "status": "Status",
+      "type": "Type",
+      "range": "Range",
+      "from": "From",
+      "to": "To",
+      "update": "Update",
+      "edit": "Edit"
+    },
+    "toasts": {
+      "resolutionUpdated": "Resolution updated",
+      "resolutionCreated": "Resolution created",
+      "resolutionSaveError": "Could not save resolution",
+      "toggleError": "Could not change status",
+      "taxSaved": "Sales tax settings saved successfully",
+      "taxSaveError": "Could not save sales tax settings",
+      "printSaved": "Ticket customization saved",
+      "printSaveError": "Could not save customization",
+      "fiscalSaved": "Fiscal data saved successfully",
+      "fiscalSaveError": "Could not save fiscal data"
+    },
+    "docTypes": {
+      "invoice": "Sales invoice",
+      "creditNote": "Credit note",
+      "debitNote": "Debit note",
+      "invoiceShort": "Invoice"
+    },
+    "columns": {
+      "prefix": "Prefix",
+      "resolutionNumber": "Resolution #",
+      "available": "Available",
+      "used": "Used",
+      "percentUsed": "% Used",
+      "validity": "Validity"
+    },
+    "defaults": {
+      "prefactura": "Pre-invoice",
+      "propina": "Tip"
+    },
+    "orgTypes": {
+      "legal": "Legal entity",
+      "natural": "Natural person"
+    },
+    "taxRegimes": {
+      "iva": "VAT-liable",
+      "noIva": "Not VAT-liable"
+    },
+    "taxLevels": {
+      "grand": "Large taxpayer",
+      "selfWithholding": "Self-withholding",
+      "withholdingAgent": "Withholding agent",
+      "simple": "Simple regime",
+      "na": "Not applicable"
+    },
+    "readiness": {
+      "requestTitle": "Request electronic invoicing activation",
+      "requestBody": "Enable the request in the Electronic invoicing provider section. WARO will validate technical enablement with Matias before issuing.",
+      "pendingTitle": "Internal enablement pending",
+      "pendingBody": "The request may be active, but WARO must complete technical enablement with Matias before issuing.",
+      "missingFiscalTitle": "Missing fiscal data",
+      "missingFiscalBody": "Complete NIT, legal name, phone and email in the Business fiscal data section.",
+      "noResolutionTitle": "No active DIAN resolution",
+      "noResolutionBody": "Configure an active resolution with available numbering in the DIAN resolution section.",
+      "taxReviewTitle": "Review sales tax settings",
+      "matiasUuidTitle": "Missing Matias client UUID",
+      "matiasUuidBody": "Configure the issuer client_uuid in the Electronic invoicing provider section before issuing with Matias.",
+      "ready": "Your account is ready to issue electronic invoices."
+    },
+    "resolutions": {
+      "title": "DIAN resolution",
+      "new": "New resolution",
+      "edit": "Edit resolution",
+      "emptyTitle": "No DIAN resolutions configured",
+      "emptySub": "Configure the resolution you registered in the Matias portal (number, prefix, range)",
+      "number": "Resolution number",
+      "prefix": "Prefix",
+      "rangeFrom": "Range from",
+      "rangeTo": "Range to",
+      "currentNumber": "Current number (consecutive)",
+      "docType": "Document type",
+      "dateFrom": "Date from",
+      "dateTo": "Date to",
+      "create": "Create resolution",
+      "activate": "Activate resolution",
+      "deactivate": "Deactivate resolution",
+      "editAria": "Edit resolution",
+      "rangeLabel": "Range: {from} → {to}",
+      "fromLabel": "From:",
+      "toLabel": "To:",
+      "gapsHint": "DIAN does not allow reusing them — check the log."
+    },
+    "fiscal": {
+      "sectionTitle": "Business fiscal data",
+      "nit": "NIT",
+      "businessName": "Legal name",
+      "orgType": "Organization type",
+      "orgHint": "Defines whether the issuer invoices as a natural person or legal entity.",
+      "taxRegime": "VAT responsibility",
+      "taxRegimeHint": "Describes the issuer’s fiscal responsibility; it does not replace sales tax toggles.",
+      "taxLevel": "Responsibility level",
+      "taxLevelHint": "Records additional issuer responsibilities such as large taxpayer or simple regime.",
+      "address": "Fiscal address",
+      "city": "City",
+      "phone": "Phone",
+      "email": "Invoicing email",
+      "save": "Save fiscal data",
+      "miNegocio": "My business"
+    },
+    "print": {
+      "docPlaceholder": "Pre-invoice, Purchase order, Invoice #…",
+      "tipPlaceholder": "Tip, Service, Service charge…",
+      "docHint": "Text at the top of the ticket (max. 40 characters). E.g. Pre-invoice, Order #.",
+      "tipHint": "Tip line text on pre-invoice, printed receipt and email (max. 40 characters). E.g. Service.",
+      "showLogo": "Show logo on tickets",
+      "showLogoHint": "Use the My business logo on pre-invoice and printed invoice",
+      "save": "Save customization"
+    },
+    "tax": {
+      "incTitle": "INC — Consumption tax 8%",
+      "incBody": "Apply when sales must collect Impoconsumo. Affects the total and invoice breakdown.",
+      "ivaTitle": "VAT — 19%",
+      "ivaBody": "Enable only if sales must include 19% VAT. Affects the total and invoice breakdown.",
+      "liquorTitle": "VAT takeaway spirits — 5%",
+      "liquorBody": "For bottles or takeaway spirits when applicable; always added to the base price.",
+      "howInc": "How to apply INC",
+      "howIva": "How to apply VAT",
+      "included": "Included in price",
+      "added": "Added on top",
+      "incIncludedHint": "The 8% is already inside the price.",
+      "incAddedHint": "The 8% is added on top.",
+      "ivaIncludedHint": "The 19% is already inside the price.",
+      "ivaAddedHint": "The 19% is added on top.",
+      "save": "Save configuration"
+    },
+    "provider": {
+      "title": "Electronic invoicing provider",
+      "environment": "Environment",
+      "notConfigured": "Not configured",
+      "lastDocument": "Last document",
+      "noDocuments": "No documents issued"
+    },
+    "audit": {
+      "back": "Back to Invoicing",
+      "filterResolution": "Filter by resolution",
+      "when": "When",
+      "burnedNumber": "Burned number",
+      "resolution": "Resolution",
+      "order": "Order",
+      "validatedDian": "Already validated in DIAN",
+      "matias5xx": "Matias 5xx error",
+      "emptyTitle": "No burned numbers",
+      "totalHistorical": "Historical total"
+    }
+  }
+}
