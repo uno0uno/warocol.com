@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
@@ -32,15 +33,15 @@ const hasActiveFilters = computed(
 
 const performSearch = () => applySearch()
 
-const EXPENSE_TYPE_LABELS: Record<string, string> = {
-  cogs: 'Costo de ventas',
-  admin_expense: 'Gasto administrativo',
-  sales_expense: 'Gasto de ventas',
-  financial_expense: 'Gasto financiero',
-  other_expense: 'Otro gasto',
-}
+const EXPENSE_TYPE_LABELS = computed<Record<string, string>>(() => ({
+  cogs: t('finanzas.gastos.typeCogs'),
+  admin_expense: t('finanzas.gastos.typeAdmin'),
+  sales_expense: t('finanzas.gastos.typeSales'),
+  financial_expense: t('finanzas.gastos.typeFinancial'),
+  other_expense: t('finanzas.gastos.typeOther'),
+}))
 
-const expenseTypeFilterOptions = Object.entries(EXPENSE_TYPE_LABELS).map(([value, label]) => ({ value, label }))
+const expenseTypeFilterOptions = computed(() => Object.entries(EXPENSE_TYPE_LABELS.value).map(([value, label]) => ({ value, label })))
 
 // Load categories from API
 const { data: categoriesData } = useQuery({
@@ -104,13 +105,13 @@ const { formatCalendarDate } = useFormatters()
 
 // Table columns
 const expensesTableColumns = [
-  { key: 'expenseNumber', title: 'Número', sortable: false },
-  { key: 'transactionDate', title: 'Fecha', sortable: true },
-  { key: 'category', title: 'Categoría', sortable: false },
-  { key: 'expenseType', title: 'Tipo', sortable: false },
-  { key: 'isRecurring', title: 'Recurrente', sortable: false },
-  { key: 'description', title: 'Descripción', sortable: true },
-  { key: 'amount', title: 'Monto', sortable: true },
+  { key: 'expenseNumber', title: t('finanzas.gastos.colNumber'), sortable: false },
+  { key: 'transactionDate', title: t('finanzas.gastos.colDate'), sortable: true },
+  { key: 'category', title: t('finanzas.gastos.colCategory'), sortable: false },
+  { key: 'expenseType', title: t('finanzas.gastos.colType'), sortable: false },
+  { key: 'isRecurring', title: t('finanzas.gastos.recurring'), sortable: false },
+  { key: 'description', title: t('finanzas.gastos.colDesc'), sortable: true },
+  { key: 'amount', title: t('finanzas.gastos.colAmount'), sortable: true },
   { key: 'actions', title: '', sortable: false }
 ]
 
@@ -131,7 +132,7 @@ const deleteExpense = async (expenseId: string) => {
     await refetch()
   } catch (error: any) {
     console.error('Error deleting expense:', error)
-    alert(error?.data?.detail || 'Error al eliminar el gasto')
+    alert(error?.data?.detail || t('finanzas.gastos.deleteError'))
   }
 }
 
@@ -172,7 +173,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
-        search-placeholder="Buscar gastos..."
+        :search-placeholder="t('finanzas.gastos.search')"
         :search-fields="[]"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
@@ -212,8 +213,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             to="/finanzas/gastos/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
           >
-            <span class="hidden sm:inline">+ Registrar Gasto</span>
-            <span class="sm:hidden">+ Nuevo</span>
+            <span class="hidden sm:inline">{{ t('finanzas.gastos.save') }}</span>
+            <span class="sm:hidden">{{ t('finanzas.gastos.new') }}</span>
           </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -233,7 +234,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             title="Categoría"
             filter-type="select"
             :options="categoryFilterOptions"
-            all-label="Todas"
+            :all-label="t('finanzas.gastos.allCategories')"
           />
         </template>
 
@@ -243,7 +244,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             title="Tipo"
             filter-type="select"
             :options="expenseTypeFilterOptions"
-            all-label="Todos"
+            :all-label="t('finanzas.gastos.allTypes')"
           />
         </template>
 
@@ -261,7 +262,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <span class="text-xs text-text-secondary">{{ formatCalendarDate(item.transactionDate) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.category?.categoryName || 'Sin categoría' }}{{ item.description ? ` · ${item.description}` : '' }}
+                {{ item.category?.categoryName || t('finanzas.common.noCategory') }}{{ item.description ? ` · ${item.description}` : '' }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -281,7 +282,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-category="{ value }">
-          <UiStatusBadge :value="value?.categoryName || 'Sin categoría'" format="text" variant="secondary" size="sm" />
+          <UiStatusBadge :value="value?.categoryName || t('finanzas.common.noCategory')" format="text" variant="secondary" size="sm" />
         </template>
 
         <template #cell-expenseType="{ value }">
@@ -292,18 +293,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :variant="value === 'cogs' ? 'warning' : value === 'financial_expense' ? 'destructive' : value === 'admin_expense' ? 'info' : value === 'other_expense' ? 'secondary' : 'primary'"
             size="sm"
           />
-          <span v-else class="text-xs text-text-secondary">Sin clasificar</span>
+          <span v-else class="text-xs text-text-secondary">{{ t('finanzas.gastos.unclassified') }}</span>
         </template>
 
         <template #cell-isRecurring="{ value }">
           <div class="flex justify-center">
-            <UiStatusBadge v-if="value" value="Sí" format="text" variant="info" size="sm" />
-            <span v-else class="text-sm text-text-secondary">No</span>
+            <UiStatusBadge v-if="value" :value="t('common.yes')" format="text" variant="info" size="sm" />
+            <span v-else class="text-sm text-text-secondary">{{ t('common.no') }}</span>
           </div>
         </template>
 
         <template #cell-description="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ value || 'Sin descripción' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value || t('finanzas.gastos.noDesc') }}</span>
         </template>
 
         <template #cell-amount="{ value }">

@@ -279,7 +279,7 @@
               :disabled="isSubmitting || !isFormValid"
               class="btn-primary w-full min-h-[44px] px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isSubmitting ? 'Guardando...' : 'Guardar gasto' }}
+              {{ isSubmitting ? t('finanzas.gastos.saving') : t('finanzas.gastos.save') }}
             </button>
             <NuxtLink
               to="/finanzas/gastos"
@@ -295,6 +295,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
@@ -410,11 +411,11 @@ const formatCurrency = (value: number | null) => {
 }
 
 const expenseTypeLabels: Record<string, string> = {
-  cogs: 'Costo de ventas',
-  admin_expense: 'Gasto administrativo',
-  sales_expense: 'Gasto de ventas',
-  financial_expense: 'Gasto financiero',
-  other_expense: 'Otro gasto'
+  cogs: t('finanzas.gastos.typeCogs'),
+  admin_expense: t('finanzas.gastos.typeAdmin'),
+  sales_expense: t('finanzas.gastos.typeSales'),
+  financial_expense: t('finanzas.gastos.typeFinancial'),
+  other_expense: t('finanzas.gastos.typeOther')
 }
 
 const expenseTypeLabel = computed(() => expenseTypeLabels[form.expenseType] || 'Sin clasificar')
@@ -422,10 +423,10 @@ const expenseTypeLabel = computed(() => expenseTypeLabels[form.expenseType] || '
 const formatFrequency = (frequency: string) => {
   const frequencies: Record<string, string> = {
     weekly: 'Semanal',
-    biweekly: 'Quincenal',
-    monthly: 'Mensual',
+    biweekly: t('finanzas.gastos.biweekly'),
+    monthly: t('finanzas.gastos.monthly'),
     quarterly: 'Trimestral',
-    yearly: 'Anual'
+    yearly: t('finanzas.gastos.annual')
   }
   return frequencies[frequency] || 'Sin frecuencia'
 }
@@ -449,15 +450,15 @@ const extractErrorMessage = (error: any) => {
       || error.data.detail.msg
       || error.data.detail.error
       || error.data.detail.detail
-      || 'No se pudo guardar el gasto. Revisa los datos e intenta nuevamente.'
+      || t('finanzas.gastos.saveFailed')
   }
-  return error?.message || 'Error al guardar el gasto. Por favor intenta nuevamente.'
+  return error?.message || t('finanzas.gastos.saveError')
 }
 
 const handleSubmit = async () => {
   submitError.value = null
   if (!isFormValid.value) {
-    submitError.value = 'Completa los campos requeridos antes de guardar.'
+    submitError.value = t('finanzas.gastos.requiredFields')
     return
   }
 
@@ -495,7 +496,7 @@ const handleSubmit = async () => {
         console.error('Error uploading files:', fileError)
         // Still invalidate list so the created expense appears on return
         cache.invalidateQueries({ key: ['finance', 'expenses'] })
-        submitError.value = 'Gasto creado, pero hubo un error al subir los archivos.'
+        submitError.value = t('finanzas.gastos.createUploadWarn')
         return
       }
     }

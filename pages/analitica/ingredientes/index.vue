@@ -20,14 +20,14 @@
           :value="summary.estimatedCostLabel"
           format="text"
           variant="primary"
-          :subtitle="`${summary.movementCount} movimientos`"
+          :subtitle="t('analitica.ingredientes.movementsCount', { count: summary.movementCount })"
         />
         <MetricCard
           title="Con consumo"
           :value="summary.recordedRows"
           format="number"
           variant="primary"
-          :subtitle="`${summary.coveragePct}% con movimientos`"
+          :subtitle="t('analitica.ingredientes.coveragePct', { pct: summary.coveragePct })"
         />
         <MetricCard
           title="Variación costo"
@@ -42,7 +42,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar ingrediente..."
+        :search-placeholder="t('analitica.ingredientes.search')"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -148,7 +148,7 @@
                 />
               </div>
               <p class="text-xs text-text-secondary mt-1">
-                {{ item.category || 'Sin categoría' }} · {{ formatQuantity(item.consumed_quantity) }} {{ formatUnitLabel(item.unit) }}
+                {{ item.category || t('analitica.ingredientes.noCategory') }} · {{ formatQuantity(item.consumed_quantity) }} {{ formatUnitLabel(item.unit) }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -157,8 +157,8 @@
               <NuxtLink
                 :to="ingredientReportPath(item.ingredient_id)"
                 class="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                :title="`Abrir analítica de ${item.ingredient_name}`"
-                :aria-label="`Abrir analítica de ${item.ingredient_name}`"
+                :title="t('analitica.ingredientes.openOf', { name: item.ingredient_name })"
+                :aria-label="t('analitica.ingredientes.openOf', { name: item.ingredient_name })"
                 @click.stop
               >
                 <FileText class="h-4 w-4" aria-hidden="true" />
@@ -242,7 +242,7 @@
         </template>
 
         <template #cell-category="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || 'Sin categoría' }}</span>
+          <span class="text-sm text-text-secondary">{{ value || t('analitica.ingredientes.noCategory') }}</span>
         </template>
 
         <template #cell-consumed_quantity="{ item }">
@@ -298,8 +298,8 @@
             <NuxtLink
               :to="ingredientReportPath(row.ingredient_id)"
               class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              :title="`Abrir analítica de ${row.ingredient_name}`"
-              :aria-label="`Abrir analítica de ${row.ingredient_name}`"
+              :title="t('analitica.ingredientes.openOf', { name: row.ingredient_name })"
+              :aria-label="t('analitica.ingredientes.openOf', { name: row.ingredient_name })"
               @click.stop
             >
               <FileText class="h-4 w-4" aria-hidden="true" />
@@ -312,6 +312,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'
@@ -357,7 +358,7 @@ const ingredientDateRangeDates = computed({
 })
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets(ingredientDateRangeDates)
 
-useHead({ title: 'Analítica de Ingredientes' })
+useHead({ title: t('analitica.ingredientes.title') })
 
 const ingredientFilter = ref('')
 const categoryFilter = ref('')
@@ -575,16 +576,16 @@ const clearFilters = () => {
 }
 
 const ingredientTableColumns = [
-  { key: 'ingredient_name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' },
-  { key: 'category', title: 'Categoría', sortable: false, format: 'text', align: 'left' },
-  { key: 'consumed_quantity', title: 'Consumo', sortable: false, format: 'text', align: 'right' },
-  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'center' },
-  { key: 'estimated_consumed_cost', title: 'Costo estimado', sortable: false, format: 'text', align: 'right' },
-  { key: 'weighted_avg_cost_per_unit', title: 'Costo prom.', sortable: false, format: 'text', align: 'right' },
-  { key: 'latest_cost_per_unit', title: 'Último costo', sortable: false, format: 'text', align: 'right' },
-  { key: 'cost_trend', title: 'Tendencia', sortable: false, format: 'text', align: 'right' },
+  { key: 'ingredient_name', title: t('analitica.ingredientes.ingredient'), sortable: false, format: 'text', align: 'left' },
+  { key: 'category', title: t('analitica.ingredientes.category'), sortable: false, format: 'text', align: 'left' },
+  { key: 'consumed_quantity', title: t('analitica.ingredientes.consumption'), sortable: false, format: 'text', align: 'right' },
+  { key: 'unit', title: t('analitica.ingredientes.unit'), sortable: false, format: 'text', align: 'center' },
+  { key: 'estimated_consumed_cost', title: t('analitica.ingredientes.estCost'), sortable: false, format: 'text', align: 'right' },
+  { key: 'weighted_avg_cost_per_unit', title: t('analitica.ingredientes.avgCost'), sortable: false, format: 'text', align: 'right' },
+  { key: 'latest_cost_per_unit', title: t('analitica.ingredientes.lastCost'), sortable: false, format: 'text', align: 'right' },
+  { key: 'cost_trend', title: t('analitica.ingredientes.trend'), sortable: false, format: 'text', align: 'right' },
   { key: 'movement_count', title: 'Mov.', sortable: false, format: 'text', align: 'right' },
-  { key: 'data_coverage', title: 'Cobertura', sortable: false, format: 'text', align: 'center' },
+  { key: 'data_coverage', title: t('analitica.ingredientes.coverage'), sortable: false, format: 'text', align: 'center' },
   { key: 'actions', title: '', sortable: false, format: 'text', align: 'center' },
 ] as const
 
@@ -664,7 +665,7 @@ function costTrendClass(value: number | null): string {
 }
 
 function coverageLabel(value: string): string {
-  return value === 'recorded_movements' ? 'Registrado' : 'Sin consumo'
+  return value === 'recorded_movements' ? 'Registrado' : t('analitica.ingredientes.noConsumption')
 }
 
 function coverageVariant(value: string): 'success' | 'warning' {

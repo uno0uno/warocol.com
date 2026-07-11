@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+useHead({ title: () => t('analitica.head.ventas') })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { es } from 'date-fns/locale';
 import { formatDistanceToNow } from 'date-fns';
@@ -307,10 +309,10 @@ const formatCurrency = (value: number) =>
               :value="tipSum"
               format="currency"
               variant="primary"
-              :subtitle="`Promedio: ${tipAvgPct.toFixed(2)}%`"
+              :subtitle="t('analitica.ventas.tipAvg', { pct: tipAvgPct.toFixed(2) })"
             />
           </NuxtLink>
-          <MetricCard :title="metrics.standard_tax_label || 'INC 8%'" :value="metrics.total_standard_tax" format="currency" variant="primary" />
+          <MetricCard :title="metrics.standard_tax_label || t('analitica.ventas.taxFallback')" :value="metrics.total_standard_tax" format="currency" variant="primary" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
         </div>
 

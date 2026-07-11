@@ -184,7 +184,7 @@
                 :disabled="deleting"
                 class="min-h-[44px] flex-1 px-4 py-2 rounded-lg bg-action-destructive-bg text-action-destructive-text text-sm font-semibold hover:bg-action-destructive-hover-bg transition-colors disabled:opacity-50"
               >
-                {{ deleting ? 'Eliminando...' : 'Sí, eliminar' }}
+                {{ deleting ? t('finanzas.common.deleting') : t('finanzas.cierrePanel.confirmDelete') }}
               </button>
               <button
                 @click="confirmDelete = false"
@@ -202,6 +202,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, watch } from 'vue'
 
 const props = defineProps<{

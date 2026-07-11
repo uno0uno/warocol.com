@@ -112,7 +112,7 @@
             :disabled="suggestedLoading"
             @click="applySuggestedWindow"
           >
-            {{ suggestedLoading ? 'Cargando...' : 'Desde último arqueo' }}
+            {{ suggestedLoading ? t('finanzas.common.loading') : t('finanzas.arqueo.sinceLast') }}
           </button>
 
           <p
@@ -354,7 +354,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ ['Cuentas','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
+            {{ [t('finanzas.arqueo.accounts'),t('finanzas.common.cash'),'Otros métodos','Resumen',t('finanzas.common.close')][currentStep - 1] }}
           </span>
         </div>
 
@@ -605,7 +605,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
+            <span>{{ previewBusy ? t('finanzas.common.updating') : t('finanzas.arqueo.continue') }}</span>
           </button>
         </div>
       </div>
@@ -694,7 +694,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
+            <span>{{ previewBusy ? t('finanzas.common.updating') : t('finanzas.arqueo.continue') }}</span>
           </button>
         </div>
       </div>
@@ -988,7 +988,7 @@
           </svg>
           <div>
             <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-state-warning-text'">
-              {{ confirmArmed ? 'Confirma para cerrar definitivamente' : 'Esta acción no se puede deshacer' }}
+              {{ confirmArmed ? t('finanzas.arqueo.confirmClose') : 'Esta acción no se puede deshacer' }}
             </p>
             <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-state-warning-text/90'">
               El cierre Z quedará registrado y el período se bloqueará.
@@ -1042,6 +1042,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { es } from 'date-fns/locale'
@@ -1049,7 +1050,7 @@ import { formatDistanceStrict } from 'date-fns'
 import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Arqueo de caja - Warocol' })
+useHead({ title: () => t('finanzas.head.z') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -1110,7 +1111,7 @@ const buildPresets = (): Preset[] => {
   const monthStartNoon = dateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
   return [
     { key: 'today',     label: 'Hoy',           start: todayNoon,           end: todayNoon },
-    { key: 'yesterday', label: 'Ayer',           start: yesterdayNoon,       end: yesterdayNoon },
+    { key: 'yesterday', label: t('finanzas.common.yesterday'),           start: yesterdayNoon,       end: yesterdayNoon },
     { key: 'week',      label: 'Últimos 7 días', start: weekStartNoon,       end: todayNoon },
     { key: 'month',     label: 'Este mes',        start: monthStartNoon,      end: todayNoon },
   ]
@@ -1403,7 +1404,7 @@ const goToStep1 = () => {
     return
   }
   if (requiresShiftOpen.value && !shiftOpenForWindow.value) {
-    timeError.value = 'Abre el turno y declara el fondo de caja antes de continuar'
+    timeError.value = t('finanzas.arqueo.openShiftBeforeContinue')
     return
   }
   currentStep.value = 1
@@ -1411,11 +1412,11 @@ const goToStep1 = () => {
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
-  { n: 1, label: 'Cuentas' },
-  { n: 2, label: 'Efectivo' },
+  { n: 1, label: t('finanzas.arqueo.accounts') },
+  { n: 2, label: t('finanzas.common.cash') },
   { n: 3, label: 'Otros métodos' },
   { n: 4, label: 'Resumen' },
-  { n: 5, label: 'Cerrar' },
+  { n: 5, label: t('finanzas.common.close') },
 ]
 
 const currentStep     = ref(0)
@@ -1468,7 +1469,7 @@ const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExp
 
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
 const GROUP_LABELS: Record<string, string> = {
-  cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -1617,7 +1618,7 @@ const handleConfirmButton = async () => {
 // ── Submit ────────────────────────────────────────────────────────────────
 const submitCierre = async () => {
   if (requiresShiftOpen.value && !shiftOpenForWindow.value) {
-    submitError.value = 'Abre el turno y declara el fondo de caja antes de cerrar.'
+    submitError.value = t('finanzas.arqueo.openShiftBeforeClose')
     return
   }
   isSubmitting.value = true
@@ -1639,7 +1640,7 @@ const submitCierre = async () => {
     cache.invalidateQueries({ key: ['cierre', 'list'] })
     clearStorage()
   } catch (err: any) {
-    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el arqueo.'
+    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? t('finanzas.arqueo.registerError')
     submitError.value = msg.includes('superpone')
       ? 'Ya existe un arqueo para este período.'
       : msg
@@ -1776,9 +1777,9 @@ const formatPeriod = (start: string, end: string) => {
 
 const cierreWindowSummary = computed(() => {
   if (arqueoWindowMode.value === 'template') {
-    const templateName = shiftTemplates.value.find(t => t.id === selectedTemplateId.value)?.name ?? 'Turno'
+    const templateName = shiftTemplates.value.find(t => t.id === selectedTemplateId.value)?.name ?? t('finanzas.arqueo.shift')
     return {
-      title: 'Turno',
+      title: t('finanzas.arqueo.shift'),
       period: `${templateName} · ${formatPeriod(periodStart.value, periodEnd.value)}`,
       detail: templateHoursLabel.value,
     }

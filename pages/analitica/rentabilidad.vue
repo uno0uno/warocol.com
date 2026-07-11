@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+useHead({ title: () => t('analitica.head.rentabilidad') })
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'

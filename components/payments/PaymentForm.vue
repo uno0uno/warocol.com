@@ -188,6 +188,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted } from 'vue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
@@ -251,14 +252,14 @@ const canSubmitPayment = computed(() =>
   !loading.value && !isPaymentMethodsLoading.value && Boolean(formData.value.payment_method),
 )
 const submitButtonLabel = computed(() => {
-  if (loading.value) return 'Procesando...'
-  if (isPaymentMethodsLoading.value) return 'Cargando métodos...'
-  return 'Registrar pago'
+  if (loading.value) return t('finanzas.paymentForm.processing')
+  if (isPaymentMethodsLoading.value) return t('finanzas.paymentForm.loadingMethods')
+  return t('finanzas.paymentForm.register')
 })
 const compactSubmitButtonLabel = computed(() => {
-  if (loading.value) return 'Procesando...'
-  if (isPaymentMethodsLoading.value) return 'Cargando...'
-  return 'Registrar pago'
+  if (loading.value) return t('finanzas.paymentForm.processing')
+  if (isPaymentMethodsLoading.value) return t('finanzas.paymentForm.loading')
+  return t('finanzas.paymentForm.register')
 })
 
 // Helper functions
@@ -364,12 +365,12 @@ const handleSubmit = async () => {
       if (successCount > 0) {
         emit('paid')
         if (errorCount > 0) {
-          useToast().warning(`${successCount} pagos registrados, ${errorCount} fallaron`, { title: 'Pagos Parcialmente Registrados' })
+          useToast().warning(`${successCount} pagos registrados, ${errorCount} fallaron`, { title: t('finanzas.paymentForm.partialTitle') })
         } else {
-          useToast().success(`${successCount} pagos registrados exitosamente`, { title: 'Pagos Registrados' })
+          useToast().success(`${successCount} pagos registrados exitosamente`, { title: t('finanzas.paymentForm.multiTitle') })
         }
       } else {
-        useToast().error('No se pudo registrar ningún pago', { title: 'Error' })
+        useToast().error(t('finanzas.paymentForm.failAny'), { title: t('finanzas.common.error') })
       }
     } else {
       // Single payment
@@ -399,12 +400,12 @@ const handleSubmit = async () => {
 
       if (response.success) {
         emit('paid')
-        useToast().success('El pago ha sido registrado exitosamente', { title: 'Pago Registrado' })
+        useToast().success(t('finanzas.paymentForm.successBody'), { title: t('finanzas.paymentForm.successTitle') })
       }
     }
   } catch (error: any) {
     console.error('Error paying purchase:', error)
-    useToast().error(error.data?.detail || 'No se pudo registrar el pago', { title: 'Error' })
+    useToast().error(error.data?.detail || t('finanzas.paymentForm.fail'), { title: t('finanzas.common.error') })
   } finally {
     loading.value = false
   }

@@ -1,8 +1,9 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed } from 'vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Estado de Resultados mensual - Warocol' })
+useHead({ title: () => t('finanzas.head.plMensual') })
 
 // ── Query params (initial values from URL or current date) ────────────────────
 const route = useRoute()
@@ -61,7 +62,7 @@ const goToNext = () => {
     <div class="flex items-center justify-between gap-3 flex-wrap mb-1">
       <div>
         <h1 class="text-lg font-bold text-text-primary leading-tight">{{ pageTitle }}</h1>
-        <p class="text-xs text-text-secondary mt-0.5">P&amp;L mensual consolidado</p>
+        <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.pl.monthlyTitle') }}</p>
       </div>
 
       <!-- Month navigation -->

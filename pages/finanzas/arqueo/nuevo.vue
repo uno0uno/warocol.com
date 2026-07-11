@@ -140,7 +140,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ ['Período','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
+            {{ [t('finanzas.common.period'),t('finanzas.common.cash'),'Otros métodos','Resumen',t('finanzas.common.close')][currentStep - 1] }}
           </span>
         </div>
 
@@ -488,7 +488,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
+            <span>{{ previewBusy ? t('finanzas.common.updating') : t('finanzas.arqueo.continue') }}</span>
           </button>
         </div>
       </div>
@@ -577,7 +577,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span>{{ previewBusy ? 'Actualizando...' : 'Continuar →' }}</span>
+            <span>{{ previewBusy ? t('finanzas.common.updating') : t('finanzas.arqueo.continue') }}</span>
           </button>
         </div>
       </div>
@@ -853,7 +853,7 @@
           </svg>
           <div>
             <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-state-warning-text'">
-              {{ confirmArmed ? 'Confirma para cerrar definitivamente' : 'Esta acción no se puede deshacer' }}
+              {{ confirmArmed ? t('finanzas.arqueo.confirmClose') : 'Esta acción no se puede deshacer' }}
             </p>
             <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-state-warning-text/90'">
               El cierre Z quedará registrado y el período se bloqueará.
@@ -907,6 +907,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
@@ -980,7 +981,7 @@ const buildPresets = (): Preset[] => {
   const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
   return [
     { key: 'today',     label: 'Hoy',  date: todayNoon },
-    { key: 'yesterday', label: 'Ayer', date: yesterdayNoon },
+    { key: 'yesterday', label: t('finanzas.common.yesterday'), date: yesterdayNoon },
   ]
 }
 const presets      = buildPresets()
@@ -1061,7 +1062,7 @@ const dayWindowDisplayLabel = computed(() => {
   if (effectivePeriodStartTime.value && effectivePeriodEndTime.value) {
     return `Día restante · ${timeHHMMFromISO(effectivePeriodStartTime.value)} – ${timeHHMMFromISO(effectivePeriodEndTime.value)}`
   }
-  return 'Día completo · 00:00 – 23:59'
+  return t('finanzas.arqueo.fullDayWindow')
 })
 
 const shiftOpenForWindow = computed(() => isShiftOpen(rawShiftStatus.value?.data))
@@ -1111,11 +1112,11 @@ watch(
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
-  { n: 1, label: 'Período' },
-  { n: 2, label: 'Efectivo' },
+  { n: 1, label: t('finanzas.common.period') },
+  { n: 2, label: t('finanzas.common.cash') },
   { n: 3, label: 'Otros métodos' },
   { n: 4, label: 'Resumen' },
-  { n: 5, label: 'Cerrar' },
+  { n: 5, label: t('finanzas.common.close') },
 ]
 
 const currentStep     = ref(1)
@@ -1172,7 +1173,7 @@ const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExp
 
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
 const GROUP_LABELS: Record<string, string> = {
-  cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -1338,7 +1339,7 @@ const submitCierre = async () => {
     clearStorage()
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el arqueo.'
+    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? t('finanzas.arqueo.registerError')
     submitError.value = msg.includes('superpone')
       ? 'Ya existe un arqueo para este período.'
       : msg

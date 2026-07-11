@@ -142,7 +142,7 @@
                 :disabled="closing"
                 class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
               >
-                {{ closing ? 'Cerrando...' : 'Cerrar período' }}
+                {{ closing ? 'Cerrando...' : t('finanzas.cierreContable.closePeriod') }}
               </button>
             </div>
           </div>
@@ -154,11 +154,12 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Cierre contable - Warocol' })
+useHead({ title: () => t('finanzas.head.cierre') })
 
 const { formatDateTime } = useFormatters()
 const { todayISO } = useTenantTimezone()
@@ -178,9 +179,9 @@ const prevYear = () => { selectedYear.value-- }
 const nextYear = () => { if (selectedYear.value < currentYear.value) selectedYear.value++ }
 
 const columns = [
-  { key: 'name',     title: 'Mes',            sortable: false },
-  { key: 'status',   title: 'Estado',         sortable: false },
-  { key: 'closedAt', title: 'Fecha de cierre', sortable: false },
+  { key: 'name',     title: t('finanzas.cierreContable.month'),            sortable: false },
+  { key: 'status',   title: t('finanzas.cierreContable.status'),         sortable: false },
+  { key: 'closedAt', title: t('finanzas.cierreContable.closeDate'), sortable: false },
   { key: 'actions',  title: '',               sortable: false },
 ]
 

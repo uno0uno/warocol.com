@@ -1,10 +1,11 @@
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Cuentas contables' })
+useHead({ title: t('finanzas.contabilidad.accountsTitle') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -24,8 +25,8 @@ const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateA
 
 const presetDates = [
   { label: 'Hoy',             value: [dateAtNoon(today), dateAtNoon(today)] },
-  { label: 'Esta semana',     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
-  { label: 'Este mes',        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.thisWeek'),     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.thisMonth'),        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
   { label: 'Último mes',      value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
   { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
@@ -173,16 +174,16 @@ const accountTrial = (id: string) =>
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = computed(() => [
-  { key: 'code',           title: 'Código',     sortable: false },
-  { key: 'name',           title: 'Nombre',     sortable: false },
+  { key: 'code',           title: t('finanzas.contabilidad.code'),     sortable: false },
+  { key: 'name',           title: t('finanzas.contabilidad.name'),     sortable: false },
   { key: 'isSystem',       title: '',           sortable: false },
-  { key: 'level',          title: 'Nivel',      sortable: false },
-  { key: 'openingBalance', title: 'Saldo ini.', sortable: false },
-  { key: 'periodDebits',   title: 'Débitos',    sortable: false },
-  { key: 'periodCredits',  title: 'Créditos',   sortable: false },
-  { key: 'closingBalance', title: 'Saldo',      sortable: false },
-  { key: 'isActive',       title: 'Estado',     sortable: false },
-  { key: 'actions',        title: 'Acciones',   sortable: false },
+  { key: 'level',          title: t('finanzas.contabilidad.level'),      sortable: false },
+  { key: 'openingBalance', title: t('finanzas.contabilidad.openingBalanceShort'), sortable: false },
+  { key: 'periodDebits',   title: t('finanzas.contabilidad.debits'),    sortable: false },
+  { key: 'periodCredits',  title: t('finanzas.contabilidad.credits'),   sortable: false },
+  { key: 'closingBalance', title: t('finanzas.contabilidad.balance'),      sortable: false },
+  { key: 'isActive',       title: t('finanzas.common.status'),     sortable: false },
+  { key: 'actions',        title: t('finanzas.common.actions'),   sortable: false },
 ])
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -204,7 +205,7 @@ const toggleActive = async (account: TenantAccount) => {
     })
     await refetch()
   } catch (err: any) {
-    alert(err?.data?.detail || 'Error al actualizar la cuenta')
+    alert(err?.data?.detail || t('finanzas.contabilidad.updateError'))
   } finally {
     togglingId.value = null
   }
@@ -327,7 +328,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h4" />
           </svg>
-          {{ showAll ? 'PUC completo' : `Solo detalle (${totalDetail})` }}
+          {{ showAll ? t('finanzas.contabilidad.fullPuc') : `Solo detalle (${totalDetail})` }}
         </button>
       </div>
 
@@ -391,7 +392,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         type="button"
                         class="flex items-center justify-center w-7 h-7 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         :disabled="togglingId === item.id"
-                        :aria-label="item.isActive ? `Desactivar ${item.code}` : `Activar ${item.code}`"
+                        :aria-label="item.isActive ? t('finanzas.contabilidad.deactivateCode', { code: item.code }) : t('finanzas.contabilidad.activateCode', { code: item.code })"
                         @click.stop="toggleActive(item)"
                       >
                         <svg v-if="togglingId === item.id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -485,8 +486,8 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                       type="button"
                       class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       :disabled="togglingId === row.id"
-                      :aria-label="row.isActive ? `Desactivar ${row.code}` : `Activar ${row.code}`"
-                      :title="row.isActive ? 'Desactivar' : 'Activar'"
+                      :aria-label="row.isActive ? t('finanzas.contabilidad.deactivateCode', { code: row.code }) : t('finanzas.contabilidad.activateCode', { code: row.code })"
+                      :title="row.isActive ? t('finanzas.contabilidad.deactivate') : t('finanzas.contabilidad.activate')"
                       @click.stop="toggleActive(row)"
                     >
                       <svg v-if="togglingId === row.id" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">

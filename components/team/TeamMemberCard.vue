@@ -26,7 +26,7 @@
           <div class="flex items-center gap-2 flex-shrink-0">
             <span class="w-2 h-2 rounded-full" :class="member.active ? 'bg-success' : 'bg-text-secondary'"></span>
             <span class="text-xs font-medium" :class="member.active ? 'text-success' : 'text-text-secondary'">
-              {{ member.active ? 'Activo' : 'Inactivo' }}
+              {{ member.active ? t('equipo.roles.active') : t('equipo.roles.inactive') }}
             </span>
           </div>
         </div>
@@ -62,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 interface TeamMember {
   id: string
   name: string
@@ -84,15 +85,15 @@ const props = defineProps<Props>()
 const getRoleLabel = (role: string) => {
   switch (role) {
     case 'superuser':
-      return 'Super Usuario'
+      return t('equipo.roles.superuser')
     case 'admin':
-      return 'Administrador'
+      return t('equipo.roles.admin')
     case 'employee':
-      return 'Empleado'
+      return t('equipo.roles.employee')
     case 'promotor':
-      return 'Promotor'
+      return t('equipo.roles.promotor')
     default:
-      return 'Miembro'
+      return t('equipo.roles.member')
   }
 }
 
