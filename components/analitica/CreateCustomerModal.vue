@@ -21,7 +21,7 @@
         v-if="open"
         role="dialog"
         aria-modal="true"
-        aria-label="Crear nuevo cliente"
+        :aria-label="t('analitica.clientes.createNew')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl border-border
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l"
@@ -42,13 +42,13 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-lg font-bold text-text-primary leading-tight">Nuevo cliente</h2>
-                <p class="text-sm text-text-secondary mt-0.5">Teléfono obligatorio para identificarlo en POS</p>
+                <h2 class="text-lg font-bold text-text-primary leading-tight">{{ t('analitica.clientes.createTitle') }}</h2>
+                <p class="text-sm text-text-secondary mt-0.5">{{ t('analitica.clientes.createSubtitle') }}</p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               @click="close"
             >
@@ -62,7 +62,7 @@
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
             <label for="create-phone" class="text-sm font-medium text-text-primary">
-              Teléfono <span class="text-red-600">*</span>
+              {{ t('analitica.clientes.phone') }} <span class="text-red-600">*</span>
             </label>
             <input
               id="create-phone"
@@ -75,19 +75,19 @@
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="create-name" class="text-sm font-medium text-text-primary">Nombre</label>
+            <label for="create-name" class="text-sm font-medium text-text-primary">{{ t('analitica.clientes.name') }}</label>
             <input
               id="create-name"
               v-model="form.name"
               type="text"
-              placeholder="Nombre completo"
+              :placeholder="t('analitica.clientes.fullName')"
               autocomplete="name"
               class="h-10 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               :disabled="isSaving"
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="create-email" class="text-sm font-medium text-text-primary">Correo</label>
+            <label for="create-email" class="text-sm font-medium text-text-primary">{{ t('analitica.clientes.email') }}</label>
             <input
               id="create-email"
               v-model="form.email"
@@ -107,7 +107,7 @@
             @click="close"
             class="min-h-[44px] px-4 text-sm font-medium text-text-secondary border-2 border-border rounded-lg hover:bg-surface-secondary"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -116,7 +116,7 @@
             class="min-h-[44px] px-5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             <UiLoadingDots v-if="isSaving" size="9px" />
-            <span v-else>Crear cliente</span>
+            <span v-else>{{ t('analitica.clientes.createSubmit') }}</span>
           </button>
         </div>
       </div>
@@ -126,6 +126,8 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch, ref } from 'vue'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface CreatedCustomer {
   id: string
@@ -194,7 +196,7 @@ const handleSubmit = async () => {
       close()
     }
   } catch (e: any) {
-    apiError.value = e?.data?.detail || e?.message || 'Error al crear el cliente'
+    apiError.value = e?.data?.detail || e?.message || t('analitica.clientes.createError')
   } finally {
     isSaving.value = false
   }

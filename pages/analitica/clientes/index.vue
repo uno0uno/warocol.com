@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('analitica.head.clientes') })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core'
-import { es } from 'date-fns/locale';
+import { enUS, es } from 'date-fns/locale';
 import { formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 
@@ -17,7 +17,8 @@ const lastUpdate = ref<Date>(new Date());
 // ── Filters ──────────────────────────────────────────────────────────────
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone } = useTenantTimezone()
-const { formatCalendarDate, formatDate: formatTenantDate } = useFormatters()
+const { formatCalendarDate, formatDate: formatTenantDate, formatCurrency, formatNumber } = useFormatters()
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // ── Search ────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
@@ -128,7 +129,7 @@ watch(customers, (list) => {
 })
 
 // ── Table columns ─────────────────────────────────────────────────────────
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'name', title: t('analitica.clientes.customer'), sortable: false },
   { key: 'phone', title: t('analitica.clientes.phone'), sortable: false },
   { key: 'order_count', title: t('analitica.clientes.orders'), sortable: false },
@@ -138,18 +139,20 @@ const tableColumns = [
   { key: 'waros_balance', title: t('analitica.clientes.waros'), sortable: false },
   { key: 'credit_balance', title: t('analitica.clientes.debt'), sortable: false },
   { key: 'actions', title: '', sortable: false },
-]
+])
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value || 0)
-
 const formatDate = (isoDate: string) => {
   if (!isoDate) return '-'
   return /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
     ? formatCalendarDate(isoDate)
     : formatTenantDate(isoDate)
 }
+
+const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractionDigits: 0 })
+
+const formatOrderCount = (count: number) =>
+  t(count === 1 ? 'analitica.clientes.orderCountOne' : 'analitica.clientes.orderCountMany', { count })
 
 const router = useRouter()
 const showCreateModal = ref(false)
@@ -173,7 +176,7 @@ const clearFilters = () => {
 
 const hasFilters = computed(() => !!dateRangeDates.value || !!searchQuery.value)
 
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 const handleRefresh = async () => {
   await refetch()
@@ -215,9 +218,9 @@ onUnmounted(() => {
     <div v-else class="flex flex-col gap-3 md:gap-4 pb-20">
       <!-- Summary Cards -->
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <MetricCard title="Clientes únicos" :value="totalCustomers" format="number" variant="primary" />
-        <MetricCard title="Total comprado" :value="totalRevenue" format="currency" variant="primary" />
-        <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
+        <MetricCard :title="t('analitica.clientes.unique')" :value="totalCustomers" format="number" variant="primary" />
+        <MetricCard :title="t('analitica.clientes.totalBought')" :value="totalRevenue" format="currency" variant="primary" />
+        <MetricCard :title="t('analitica.clientes.avgTicket')" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
       </div>
 
       <!-- Filters Bar -->
@@ -229,8 +232,8 @@ onUnmounted(() => {
               range
               :preset-dates="presetDates"
               :enable-time-picker="false"
-              :locale="es"
-              placeholder="Rango de fechas"
+              :locale="dateFnsLocale"
+              :placeholder="t('analitica.common.dateRange')"
               auto-apply
               :teleport="true"
               :timezone="timezone"
@@ -244,16 +247,16 @@ onUnmounted(() => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Buscar cliente..."
-            aria-label="Buscar cliente por nombre o teléfono"
+            :placeholder="t('analitica.clientes.search')"
+            :aria-label="t('analitica.clientes.searchLong')"
             class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
           />
           <button
             v-if="hasFilters"
             @click="clearFilters"
             class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-            title="Limpiar filtros"
-            aria-label="Limpiar filtros"
+            :title="t('analitica.common.clearFilters')"
+            :aria-label="t('analitica.common.clearFilters')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -261,9 +264,9 @@ onUnmounted(() => {
             type="button"
             @click="showCreateModal = true"
             class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0 whitespace-nowrap"
-            aria-label="Crear nuevo cliente"
+            :aria-label="t('analitica.clientes.createNew')"
           >
-            + Nuevo cliente
+            {{ t('analitica.clientes.new') }}
           </button>
         </div>
       </ClientOnly>
@@ -278,8 +281,8 @@ onUnmounted(() => {
           row-size="sm"
           :columns="tableColumns"
           :data="customers"
-          empty-message="No hay clientes para mostrar"
-          empty-sub-message="Crea un cliente con + Nuevo cliente o registra ventas en el POS"
+          :empty-message="t('analitica.clientes.empty')"
+          :empty-sub-message="t('analitica.clientes.emptySub')"
           variant="default"
         >
           <template #card="{ item, index }">
@@ -291,13 +294,13 @@ onUnmounted(() => {
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.phone || t('analitica.clientes.noPhone') }} · {{ item.order_count }} pedidos<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
+                  {{ item.phone || t('analitica.clientes.noPhone') }} · {{ formatOrderCount(item.order_count) }}<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
                 <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
                 <span v-if="!isLoadingBalances" class="text-xs font-medium text-primary tabular-nums">
-                  {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
+                  {{ formatWaros(warosBalances[item.customer_id] ?? 0) }} {{ t('analitica.clientes.waros') }}
                 </span>
                 <span
                   v-if="!isLoadingCreditBalances"
@@ -309,9 +312,9 @@ onUnmounted(() => {
                   ]"
                 >
                   <template v-if="(creditBalances[item.customer_id]?.amount ?? 0) > 0">
-                    {{ formatCurrency(creditBalances[item.customer_id].amount) }} deuda
+                    {{ t('analitica.clientes.debtAmount', { amount: formatCurrency(creditBalances[item.customer_id].amount) }) }}
                   </template>
-                  <template v-else>Sin deuda</template>
+                  <template v-else>{{ t('analitica.clientes.noDebt') }}</template>
                 </span>
               </div>
             </NuxtLink>
@@ -344,7 +347,7 @@ onUnmounted(() => {
           <template #cell-waros_balance="{ row }">
             <span v-if="isLoadingBalances" class="text-sm text-text-secondary">—</span>
             <span v-else class="text-sm font-medium text-primary">
-              {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
+              {{ formatWaros(warosBalances[row.customer_id] ?? 0) }}
             </span>
           </template>
 
@@ -366,8 +369,8 @@ onUnmounted(() => {
               <NuxtLink
                 :to="`/analitica/clientes/${row.customer_id}`"
                 class="text-text-secondary hover:text-primary transition-colors"
-                title="Ver detalle"
-                aria-label="Ver detalle del cliente"
+                :title="t('analitica.clientes.viewDetail')"
+                :aria-label="t('analitica.clientes.viewCustomer')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -382,17 +385,16 @@ onUnmounted(() => {
           <div class="flex-1 flex justify-between sm:hidden">
             <button @click="previousPage" :disabled="!canGoPrevious"
               :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-              Anterior
+              {{ t('analitica.clientes.prev') }}
             </button>
             <button @click="nextPage" :disabled="!canGoNext"
               :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-              Siguiente
+              {{ t('analitica.clientes.next') }}
             </button>
           </div>
           <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <p class="text-sm text-titan-700">
-              Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span>
-              de <span class="font-medium">{{ totalCustomers }}</span> clientes
+              {{ t('analitica.clientes.showingRange', { start: startItem, end: endItem, total: totalCustomers }) }}
             </p>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
               <button @click="previousPage" :disabled="!canGoPrevious"
