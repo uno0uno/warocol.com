@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'

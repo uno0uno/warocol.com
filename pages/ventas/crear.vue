@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
 useHead({ title: () => t('ventas.head.crear') })

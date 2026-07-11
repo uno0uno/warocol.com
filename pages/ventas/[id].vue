@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, nextTick, watch } from 'vue'
 import QRCode from 'qrcode'
 import { useQueryCache } from '@pinia/colada'

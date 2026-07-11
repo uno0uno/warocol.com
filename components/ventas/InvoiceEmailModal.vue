@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { computed, h, ref, watch } from 'vue'
 import {
   EnvelopeIcon,
