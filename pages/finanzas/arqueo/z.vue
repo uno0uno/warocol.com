@@ -32,7 +32,7 @@
             </div>
 
             <h2 id="cierre-success-title" class="text-xl font-bold leading-tight text-text-primary">
-              {{ t('finanzas.arqueo.registeredSuccess') }}
+              {{ cashCloseSuccessLabels.registeredSuccess }}
             </h2>
             <p class="mt-1 text-sm text-text-secondary">
               {{ formatPeriod(periodStart, periodEnd) }}
@@ -40,19 +40,19 @@
 
             <div class="mt-4 rounded-lg border border-border bg-background p-3 text-left">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
+                <span class="text-text-secondary">{{ cashCloseSuccessLabels.totalSales }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalSales) }}</span>
               </div>
               <div v-if="hasCapturedTips(successData)" class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalCharged') }}</span>
+                <span class="text-text-secondary">{{ cashCloseSuccessLabels.totalCharged }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalCharged) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashCounted') }}</span>
+                <span class="text-text-secondary">{{ cashCloseSuccessLabels.cashCounted }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.cashCounted) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
-                <span class="text-text-secondary">{{ t('finanzas.common.difference') }}</span>
+                <span class="text-text-secondary">{{ cashCloseSuccessLabels.difference }}</span>
                 <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
                   {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
                 </span>
@@ -64,14 +64,14 @@
                 to="/finanzas/arqueo"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary"
               >
-                {{ t('finanzas.arqueo.viewHistory') }}
+                {{ cashCloseSuccessLabels.viewHistory }}
               </NuxtLink>
               <NuxtLink
                 v-if="successData?.id"
                 :to="`/finanzas/arqueo/${successData.id}`"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-action-primary-bg px-4 py-2.5 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg"
               >
-                {{ t('finanzas.common.viewDetail') }}
+                {{ cashCloseSuccessLabels.viewDetail }}
               </NuxtLink>
             </div>
           </div>
@@ -1070,6 +1070,27 @@ const {
 const { formatCalendarDate, formatCurrency: formatMoneyValue, formatNumber } = useFormatters()
 const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : dateFnsEs)
 
+const cashCloseSuccessLabels = computed(() => locale.value === 'en'
+  ? {
+      registeredSuccess: 'Cash count recorded',
+      totalSales: 'Total sales',
+      totalCharged: 'Total collected',
+      cashCounted: 'Cash counted',
+      difference: 'Difference',
+      viewHistory: 'View history',
+      viewDetail: 'View details',
+    }
+  : {
+      registeredSuccess: 'Arqueo registrado',
+      totalSales: 'Total ventas',
+      totalCharged: 'Total cobrado',
+      cashCounted: 'Efectivo contado',
+      difference: 'Diferencia',
+      viewHistory: 'Ver historial',
+      viewDetail: 'Ver detalle',
+    },
+)
+
 type ArqueoWindowMode = 'template' | 'custom'
 interface ShiftTemplateOption {
   id: string
@@ -1410,13 +1431,13 @@ const goToStep1 = () => {
 }
 
 // ── Wizard state ──────────────────────────────────────────────────────────
-const wizardSteps = [
+const wizardSteps = computed(() => [
   { n: 1, label: t('finanzas.arqueo.accounts') },
   { n: 2, label: t('finanzas.common.cash') },
-  { n: 3, label: 'Otros métodos' },
-  { n: 4, label: 'Resumen' },
+  { n: 3, label: t('finanzas.arqueo.otherMethods') },
+  { n: 4, label: t('finanzas.arqueo.summary') },
   { n: 5, label: t('finanzas.common.close') },
-]
+])
 
 const currentStep     = ref(0)
 const confirmArmed    = ref(false)
