@@ -200,7 +200,18 @@
       "windowLabel": "Ventana: {date} · {time}",
       "remainingDayWindow": "Día restante · {time}",
       "denominationCountAria": "Cantidad de billetes de {amount}",
-      "coinsAmountAria": "Monto total en monedas"
+      "coinsAmountAria": "Monto total en monedas",
+      "closeSales": "Ventas a cerrar",
+      "closeOrders": "Órdenes a cerrar",
+      "selectedPeriod": "Período: {date}",
+      "stepOf": "Paso {step} de {total}",
+      "closeOpenTables": "Cierra todas las {tables} en el POS antes de registrar el arqueo.",
+      "tableWithOpenAccount": "{count} {table} con cuenta abierta",
+      "goToPos": "Ir al POS",
+      "verifyAgain": "Verificar de nuevo",
+      "selectDate": "Seleccionar fecha...",
+      "irreversibilityWarning": "Esta acción no se puede deshacer",
+      "restaurant": "Restaurante"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",

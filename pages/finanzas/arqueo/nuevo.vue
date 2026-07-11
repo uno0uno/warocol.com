@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Registrando arqueo..."
-      hint="Estamos guardando el cierre y consolidando el resumen del periodo."
+      :label="t('finanzas.arqueo.registeringClose')"
+      :hint="t('finanzas.arqueo.registeringCloseHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -32,7 +32,7 @@
             </div>
 
             <h2 id="cierre-success-title" class="text-xl font-bold leading-tight text-text-primary">
-              Arqueo registrado
+              {{ t('finanzas.arqueo.registeredSuccess') }}
             </h2>
             <p class="mt-1 text-sm text-text-secondary">
               {{ formatPeriod(periodStart, periodEnd) }}
@@ -40,19 +40,19 @@
 
             <div class="mt-4 rounded-lg border border-border bg-background p-3 text-left">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Total ventas</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalSales) }}</span>
               </div>
               <div v-if="hasCapturedTips(successData)" class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Total cobrado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.totalCharged') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.totalCharged) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span class="text-text-secondary">Efectivo contado</span>
+                <span class="text-text-secondary">{{ t('finanzas.arqueo.cashCounted') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(successData?.cashCounted) }}</span>
               </div>
               <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
-                <span class="text-text-secondary">Diferencia</span>
+                <span class="text-text-secondary">{{ t('finanzas.common.difference') }}</span>
                 <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
                   {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
                 </span>
@@ -64,14 +64,14 @@
                 to="/finanzas/arqueo"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary"
               >
-                Ver historial
+                {{ t('finanzas.arqueo.viewHistory') }}
               </NuxtLink>
               <NuxtLink
                 v-if="successData?.id"
                 :to="`/finanzas/arqueo/${successData.id}`"
                 class="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-action-primary-bg px-4 py-2.5 text-sm font-semibold text-action-primary-text transition-colors hover:bg-action-primary-hover-bg"
               >
-                Ver detalle
+                {{ t('finanzas.common.viewDetail') }}
               </NuxtLink>
             </div>
           </div>
@@ -92,7 +92,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Período</p>
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.common.period') }}</p>
                 <p class="text-base font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
                 <p class="text-xs font-mono text-text-secondary mt-0.5">{{ dayWindowDisplayLabel }}</p>
               </div>
@@ -106,7 +106,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Restaurante</p>
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.restaurant') }}</p>
                 <p class="text-base font-semibold text-text-primary">{{ currentTenant?.name ?? '—' }}</p>
               </div>
             </div>
@@ -119,8 +119,8 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Estado</p>
-                <p class="text-base font-semibold text-text-primary">Paso {{ currentStep }} de 5</p>
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.common.status') }}</p>
+                <p class="text-base font-semibold text-text-primary">{{ t('finanzas.arqueo.stepOf', { step: currentStep, total: 5 }) }}</p>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ [t('finanzas.common.period'),t('finanzas.common.cash'),'Otros métodos','Resumen',t('finanzas.common.close')][currentStep - 1] }}
+            {{ [t('finanzas.common.period'),t('finanzas.common.cash'),t('finanzas.arqueo.otherMethodsDetail'),t('finanzas.arqueo.breakdown'),t('finanzas.common.close')][currentStep - 1] }}
           </span>
         </div>
 
@@ -205,7 +205,7 @@
             v-if="activePreset === null"
             class="h-10 px-3 rounded-lg border-2 border-primary/30 bg-primary/5 text-sm font-medium text-primary flex items-center flex-shrink-0 tabular-nums"
           >
-            Período: {{ formatSingleDate(selectedDate) }}
+            {{ t('finanzas.arqueo.selectedPeriod', { date: formatSingleDate(selectedDate) }) }}
           </span>
           <ClientOnly>
             <div
@@ -216,9 +216,9 @@
             >
               <VueDatePicker
                 v-model="selectedDate"
-                :time-config="{ enableTimePicker: false }" :locale="es"
+                :time-config="{ enableTimePicker: false }" :locale="locale"
                 auto-apply :teleport="true" :timezone="timezone" :max-date="maxDate" :format="formatSingleDate"
-                placeholder="Seleccionar fecha..."
+                :placeholder="t('finanzas.arqueo.selectDate')"
                 input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
                 @update:model-value="onDatePicked"
               />
@@ -232,37 +232,37 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <!-- Ventas -->
             <div class="bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas a cerrar</h3></div>
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.closeSales') }}</h3></div>
               <div class="divide-y divide-border">
-                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
-                <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
-                <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Impuesto propina</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
-                <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Total cobrado</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes a cerrar</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.totalSales') }}</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+                <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.common.tips') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
+                <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
+                <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.closeOrders') }}</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
               </div>
             </div>
             <!-- Caja -->
             <div class="bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.drawerState') }}</h3></div>
               <div class="divide-y divide-border">
-                <div v-if="step1OpeningCash > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(step1OpeningCash) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
-                <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
-                <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Compras directas efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+                <div v-if="step1OpeningCash > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.openingFloat') }}</span><span class="font-medium">+ {{ formatCurrency(step1OpeningCash) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashReceived') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+                <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashTips') }}</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpensesLong') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+                <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashPurchases') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               </div>
             </div>
             <!-- Desglose -->
             <div v-if="(xPreviewData.breakdown ?? []).length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Movimiento neto por método</h3></div>
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.netMovementByMethod') }}</h3></div>
               <div class="overflow-x-auto">
                 <div class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
-                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
-                  <span class="px-3 py-2 text-right">Neto</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.inflow') }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.outflow') }}</span>
+                  <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
                 </div>
                 <div
                   v-for="(row, index) in (xPreviewData.breakdown ?? [])"
@@ -270,8 +270,8 @@
                   class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
                   :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
                 >
-                  <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-semibold text-data-table-cell-text">{{ row.method_name }}</span>
-                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ GROUP_LABELS[row.group_slug] ?? row.group_slug }}</span>
+                  <span class="min-w-0 truncate border-r border-dashed border-data-table-border/60 px-3 py-2.5 font-semibold text-data-table-cell-text">{{ methodDisplayName(row) }}</span>
+                  <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-data-table-cell-muted">{{ groupLabel(row.group_slug) }}</span>
                   <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right text-data-table-cell-text tabular-nums">{{ formatCurrency(rowGrossInflows(row)) }}</span>
                   <span class="border-r border-dashed border-data-table-border/60 px-3 py-2.5 text-right tabular-nums" :class="rowOutflows(row) > 0 ? 'text-destructive' : 'text-data-table-cell-muted'">
                     {{ rowOutflows(row) > 0 ? `− ${formatCurrency(rowOutflows(row))}` : formatCurrency(0) }}
@@ -292,16 +292,16 @@
               </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-state-warning-text">{{ xPreviewData.openTablesCount }} {{ xPreviewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta</p>
-              <p class="text-xs text-state-warning-text/90 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
+              <p class="text-sm font-semibold text-state-warning-text">{{ t('finanzas.arqueo.tableWithOpenAccount', { count: xPreviewData.openTablesCount, table: xPreviewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }) }}</p>
+              <p class="text-xs text-state-warning-text/90 mt-0.5">{{ t('finanzas.arqueo.closeOpenTables', { tables: tablePlural.toLowerCase() }) }}</p>
               <div class="flex flex-wrap gap-2 mt-3">
                 <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-action-warning-bg text-action-warning-text text-xs font-semibold hover:bg-action-warning-hover-bg transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                  Ir al POS
+                  {{ t('finanzas.arqueo.goToPos') }}
                 </NuxtLink>
                 <button @click="refetchXPreview()" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-state-warning-border bg-state-warning-bg text-state-warning-text text-xs font-medium hover:bg-state-warning-bg/80 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                  Verificar de nuevo
+                  {{ t('finanzas.arqueo.verifyAgain') }}
                 </button>
               </div>
             </div>
@@ -853,7 +853,7 @@
           </svg>
           <div>
             <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-state-warning-text'">
-              {{ confirmArmed ? t('finanzas.arqueo.confirmClose') : 'Esta acción no se puede deshacer' }}
+              {{ confirmArmed ? t('finanzas.arqueo.confirmClose') : t('finanzas.arqueo.irreversibilityWarning') }}
             </p>
             <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-state-warning-text/90'">
               El cierre Z quedará registrado y el período se bloqueará.
@@ -907,15 +907,14 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import { es } from 'date-fns/locale'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Nuevo arqueo de caja - Warocol' })
+const { t, locale } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('finanzas.head.z') })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -926,10 +925,8 @@ const { addDaysISO, dateAtNoon, isoFromDate, timeHHMMFromISO, timezone, todayISO
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
-const formatIsoDateLong = (iso: string) => {
-  const [year, month, day] = iso.split('-')
-  return `${day}/${month}/${year}`
-}
+const { formatCalendarDate, formatCurrency: formatMoneyValue, formatDateTime: _fmtDateTime, formatNumber } = useFormatters()
+const formatIsoDateLong = (iso: string) => formatCalendarDate(iso)
 const initStart = (route.query.start as string) || today
 
 // ── Último cierre ──────────────────────────────────────────────────────────
@@ -980,7 +977,7 @@ const buildPresets = (): Preset[] => {
   const todayNoon = dateAtNoon(today)
   const yesterdayNoon = dateAtNoon(addDaysISO(today, -1))
   return [
-    { key: 'today',     label: 'Hoy',  date: todayNoon },
+    { key: 'today',     label: t('finanzas.common.today'),  date: todayNoon },
     { key: 'yesterday', label: t('finanzas.common.yesterday'), date: yesterdayNoon },
   ]
 }
@@ -1058,9 +1055,11 @@ const buildPreviewParams = (completedOnly: boolean) => ({
   ...(completedOnly ? { completed_only: true } : {}),
 })
 const dayWindowDisplayLabel = computed(() => {
-  if (dayWindowLoading.value) return 'Resolviendo ventana...'
+  if (dayWindowLoading.value) return t('finanzas.arqueo.resolvingDay')
   if (effectivePeriodStartTime.value && effectivePeriodEndTime.value) {
-    return `Día restante · ${timeHHMMFromISO(effectivePeriodStartTime.value)} – ${timeHHMMFromISO(effectivePeriodEndTime.value)}`
+    return t('finanzas.arqueo.remainingDayWindow', {
+      time: `${timeHHMMFromISO(effectivePeriodStartTime.value)} – ${timeHHMMFromISO(effectivePeriodEndTime.value)}`,
+    })
   }
   return t('finanzas.arqueo.fullDayWindow')
 })
@@ -1114,8 +1113,8 @@ watch(
 const wizardSteps = [
   { n: 1, label: t('finanzas.common.period') },
   { n: 2, label: t('finanzas.common.cash') },
-  { n: 3, label: 'Otros métodos' },
-  { n: 4, label: 'Resumen' },
+  { n: 3, label: t('finanzas.arqueo.otherMethodsDetail') },
+  { n: 4, label: t('finanzas.arqueo.breakdown') },
   { n: 5, label: t('finanzas.common.close') },
 ]
 
@@ -1172,8 +1171,15 @@ registerProgressiveLoading(isRefreshing)
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
-const GROUP_LABELS: Record<string, string> = {
-  cash: t('finanzas.common.cash'), card: t('finanzas.common.card'), digital: t('finanzas.common.digital'), credit: t('finanzas.common.credit'),
+const groupLabel = (slug: string) => {
+  const labels: Record<string, string> = {
+    cash: t('finanzas.common.cash'),
+    card: t('finanzas.common.card'),
+    digital: t('finanzas.common.digital'),
+    credit: t('finanzas.common.credit'),
+    untracked: t('finanzas.arqueo.untrackedPaymentGroup'),
+  }
+  return labels[slug] ?? slug
 }
 
 const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
@@ -1206,7 +1212,7 @@ const breakdownGroups = computed<BreakdownGroup[]>(() => {
     if (!map.has(row.group_slug)) {
       map.set(row.group_slug, {
         slug:  row.group_slug,
-        label: GROUP_LABELS[row.group_slug] ?? row.group_slug,
+        label: groupLabel(row.group_slug),
         total: 0,
       })
     }
@@ -1241,7 +1247,7 @@ const nonCashMethods = computed<BreakdownMethod[]>(() => {
         key:        `${r.group_slug}__${r.method_name}`,
         groupSlug:  r.group_slug,
         label:      r.method_name,
-        groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
+        groupLabel: groupLabel(r.group_slug),
         total:      r.total,
         grossInflowsAmount: r.grossInflowsAmount ?? r.gross_inflows_amount ?? r.total,
         expenseOutflowsAmount: r.expenseOutflowsAmount ?? r.expense_outflows_amount ?? 0,
@@ -1290,6 +1296,11 @@ const rowGrossInflows = (row: BreakdownRowRaw) =>
 const rowOutflows = (row: BreakdownRowRaw) =>
   Number(row.expenseOutflowsAmount ?? row.expense_outflows_amount ?? 0)
   + Number(row.purchaseOutflowsAmount ?? row.purchase_outflows_amount ?? 0)
+
+const methodDisplayName = (row: BreakdownRowRaw) =>
+  row.group_slug === 'untracked'
+    ? t('finanzas.arqueo.untrackedPaymentGroup')
+    : row.method_name
 
 const paymentBreakdownReported = computed(() =>
   nonCashMethods.value
@@ -1370,7 +1381,7 @@ const formatMoneyParts = (value: string, allowNegative = false): string => {
   const negative = allowNegative && value.trim().startsWith('-')
   const digits = value.replace(/\D/g, '').replace(/^0+(?=\d)/, '')
   if (!digits) return negative ? '-' : ''
-  const formatted = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Number(digits))
+  const formatted = formatNumber(Number(digits), { maximumFractionDigits: 0 })
   return negative ? `-${formatted}` : formatted
 }
 const formatMoneyInput = (e: Event): string => {
@@ -1451,13 +1462,11 @@ onMounted(() => {
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+const formatCurrency = (value?: number | null) => formatMoneyValue(value ?? 0)
 
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
-const { formatDateTime: _fmtDateTime } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
   const fmt = (d: string) => formatIsoDateLong(d)

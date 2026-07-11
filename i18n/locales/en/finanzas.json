@@ -200,7 +200,18 @@
       "windowLabel": "Window: {date} · {time}",
       "remainingDayWindow": "Remaining day · {time}",
       "denominationCountAria": "Quantity of bills for {amount}",
-      "coinsAmountAria": "Total coin amount"
+      "coinsAmountAria": "Total coin amount",
+      "closeSales": "Sales to close",
+      "closeOrders": "Orders to close",
+      "selectedPeriod": "Period: {date}",
+      "stepOf": "Step {step} of {total}",
+      "closeOpenTables": "Close all {tables} in POS before recording the cash count.",
+      "tableWithOpenAccount": "{count} {table} with an open account",
+      "goToPos": "Go to POS",
+      "verifyAgain": "Check again",
+      "selectDate": "Select date...",
+      "irreversibilityWarning": "This action cannot be undone",
+      "restaurant": "Restaurant"
     },
     "cartera": {
       "totalReceivable": "Total receivable",
