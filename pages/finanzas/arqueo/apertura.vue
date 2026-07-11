@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Abriendo turno..."
-      hint="Registrando el fondo de caja para este turno."
+      :label="t('finanzas.arqueo.opening')"
+      :hint="t('finanzas.arqueo.registeringOpening')"
       variant="glass"
       indicator="matrix"
     />
@@ -43,8 +43,8 @@
               </div>
 
               <div class="mt-5">
-                <p id="open-shift-success-title" class="text-xl font-semibold text-text-primary">Turno abierto</p>
-                <p class="mt-1 text-sm text-text-secondary">Fondo registrado: {{ formatCurrency(successOpeningCash) }}</p>
+                <p id="open-shift-success-title" class="text-xl font-semibold text-text-primary">{{ t('finanzas.arqueo.shiftOpened') }}</p>
+                <p class="mt-1 text-sm text-text-secondary">{{ t('finanzas.arqueo.openingRegistered', { amount: formatCurrency(successOpeningCash) }) }}</p>
               </div>
 
               <div class="mt-6 flex flex-col gap-2 sm:flex-row">
@@ -52,7 +52,7 @@
                   to="/finanzas/arqueo"
                   class="min-h-[44px] flex-1 rounded-lg border-2 border-border px-5 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
                 >
-                  Volver al arqueo
+                  {{ t('finanzas.arqueo.backToArqueo') }}
                 </NuxtLink>
                 <NuxtLink
                   v-if="closeLink"
@@ -69,20 +69,20 @@
     </Teleport>
 
       <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4 p-3 sm:p-4">
-        <h1 class="text-lg font-semibold text-text-primary">Abrir turno</h1>
+        <h1 class="text-lg font-semibold text-text-primary">{{ t('finanzas.arqueo.openShift') }}</h1>
         <p class="text-sm text-text-secondary mt-1">
-          Declara el efectivo en caja (fondo para cambio) antes de operar o cerrar el turno.
+          {{ t('finanzas.arqueo.openingHint') }}
         </p>
       </div>
 
       <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4 flex flex-col gap-4">
         <div v-if="aperturaMode === 'template'">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Turno</label>
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.shift') }}</label>
           <select
             v-model="selectedTemplateId"
             class="mt-1.5 w-full h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
-            <option :value="DAY_SHIFT_KEY">Día completo</option>
+            <option :value="DAY_SHIFT_KEY">{{ t('finanzas.common.fullDay') }}</option>
             <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
               {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
             </option>
@@ -90,13 +90,13 @@
         </div>
 
         <div v-if="aperturaMode === 'day'">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Día</label>
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.day') }}</label>
           <VueDatePicker
             v-model="anchorDate"
             :teleport="true"
             :enable-time-picker="false"
             :formats="dateOnlyFormats"
-            :locale="es"
+            :locale="locale"
             auto-apply
             :timezone="timezone"
             :max-date="maxDate"
@@ -111,14 +111,14 @@
         </div>
 
         <div v-else-if="aperturaMode === 'custom'" class="rounded-lg border border-border bg-background px-3 py-2.5">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Ventana personalizada</label>
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.customWindow') }}</label>
           <VueDatePicker
             v-model="customDateRangeDates"
             range
             :teleport="true"
             :enable-time-picker="false"
             :formats="dateOnlyFormats"
-            :locale="es"
+            :locale="locale"
             auto-apply
             :timezone="timezone"
             :max-date="maxDate"
@@ -132,13 +132,13 @@
 
         <template v-if="aperturaMode === 'template'">
           <div>
-            <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Día</label>
+            <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.day') }}</label>
             <VueDatePicker
               v-model="anchorDate"
               :teleport="true"
               :enable-time-picker="false"
               :formats="dateOnlyFormats"
-              :locale="es"
+              :locale="locale"
               auto-apply
               :timezone="timezone"
               :max-date="maxDate"
@@ -150,10 +150,10 @@
           </div>
 
           <p v-if="isDayShiftSelected" class="text-sm font-mono text-text-secondary">
-            Ventana: {{ formatTemplateDateOnly() }} · {{ dayWindowDisplayLabel }}
+            {{ t('finanzas.arqueo.windowLabel', { date: formatTemplateDateOnly(), time: dayWindowDisplayLabel }) }}
           </p>
           <p v-else-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
-            Ventana: {{ formatTemplateDateOnly() }} · {{ templateHoursLabel }}
+            {{ t('finanzas.arqueo.windowLabel', { date: formatTemplateDateOnly(), time: templateHoursLabel }) }}
           </p>
         </template>
 
@@ -161,8 +161,8 @@
           v-if="isShiftOpen(existingShift)"
           class="rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2.5 text-sm text-state-success-text"
         >
-          Este turno ya está abierto con fondo {{ formatCurrency(existingShift.openingCash) }}.
-          <NuxtLink v-if="closeLink" :to="closeLink" class="font-semibold underline ml-1">Ir al cierre</NuxtLink>
+          {{ t('finanzas.arqueo.shiftAlreadyOpen') }} {{ t('finanzas.arqueo.openingFloatAmount', { amount: formatCurrency(existingShift.openingCash) }) }}.
+          <NuxtLink v-if="closeLink" :to="closeLink" class="font-semibold underline ml-1">{{ t('finanzas.arqueo.goToClose') }}</NuxtLink>
         </div>
 
         <p v-if="stepError" class="text-sm text-destructive">{{ stepError }}</p>
@@ -172,7 +172,7 @@
             to="/finanzas/arqueo"
             class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </NuxtLink>
           <button
             type="button"
@@ -180,40 +180,40 @@
             :disabled="!canProceedToCount"
             @click="goToCount"
           >
-            Contar efectivo →
+            {{ t('finanzas.arqueo.countCashNext') }}
           </button>
         </div>
       </div>
 
       <div v-else class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h2 class="text-sm font-semibold text-text-primary mb-1">Fondo de caja</h2>
-        <p class="text-xs text-text-secondary mb-3">Cuenta billetes y monedas que hay en el cajón al iniciar:</p>
+        <h2 class="text-sm font-semibold text-text-primary mb-1">{{ t('finanzas.arqueo.openingCash') }}</h2>
+        <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.countCashHint') }}</p>
 
         <div
           v-if="isPastAnchorDate"
           class="rounded-lg border border-state-info-border bg-state-info-bg px-3 py-2.5 text-sm text-state-info-text mb-3"
         >
-          Período pasado: puedes registrar fondo en $0 si no hay dato del día. El esperado en caja no incluirá fondo inicial.
+          {{ t('finanzas.arqueo.pastPeriodOpeningHint') }}
         </div>
 
         <div
           v-if="suggestedOpeningCash > 0"
           class="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-text-primary mb-3 flex flex-wrap items-center gap-2"
         >
-          Sugerido del cierre anterior: {{ formatCurrency(suggestedOpeningCash) }}
+          {{ t('finanzas.arqueo.previousCloseSuggested', { amount: formatCurrency(suggestedOpeningCash) }) }}
           <button
             type="button"
             class="text-xs font-semibold text-primary hover:underline"
             @click="applySuggestedOpening"
           >
-            Usar sugerido
+            {{ t('finanzas.arqueo.useSuggested') }}
           </button>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
-              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Billetes y monedas</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.billsCoins') }}</span>
             </div>
             <div class="divide-y divide-border">
               <div
@@ -231,11 +231,12 @@
                   class="w-14 px-2 py-1 rounded-md border border-border bg-surface text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
                   @input="counts[denom] = sanitizeInt($event)"
                   @keydown.enter.prevent="focusNext(idx)"
+                  :aria-label="t('finanzas.arqueo.denominationCountAria', { amount: formatCurrency(denom) })"
                 />
                 <span class="text-sm flex-1 text-right">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
               </div>
               <div class="flex items-center gap-2 px-3 py-2">
-                <span class="text-sm w-24 text-right">Monedas</span>
+                <span class="text-sm w-24 text-right">{{ t('finanzas.arqueo.coins') }}</span>
                 <span class="text-transparent text-xs">×</span>
                 <input
                   v-model="monedasAmount"
@@ -243,6 +244,7 @@
                   inputmode="numeric"
                   class="w-14 px-2 py-1 rounded-md border border-border bg-surface text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
                   @input="monedasAmount = sanitizeIntStr($event)"
+                  :aria-label="t('finanzas.arqueo.coinsAmountAria')"
                 />
                 <span class="text-sm flex-1 text-right">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
               </div>
@@ -251,13 +253,13 @@
 
           <div class="flex flex-col gap-3">
             <div class="bg-background rounded-lg border border-border p-4">
-              <p class="text-xs text-text-secondary uppercase tracking-wide">Total fondo</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.totalOpening') }}</p>
               <p class="text-2xl font-bold text-primary mt-1">{{ formatCurrency(totalCounted) }}</p>
             </div>
             <p v-if="submitError" class="text-sm text-destructive">{{ submitError }}</p>
             <div class="flex gap-3 mt-auto">
               <button type="button" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm" @click="currentStep = 1">
-                ← Atrás
+                ← {{ t('finanzas.common.back') }}
               </button>
               <button
                 type="button"
@@ -265,7 +267,7 @@
                 :disabled="isSubmitting || !canSubmitOpening"
                 @click="submitOpening"
               >
-                Abrir turno
+                {{ t('finanzas.arqueo.openShift') }}
               </button>
             </div>
           </div>
@@ -275,15 +277,14 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed, watch } from 'vue'
-import { es } from 'date-fns/locale'
 import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
+const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.apertura') })
 
 type AperturaMode = 'template' | 'day' | 'custom'
@@ -300,15 +301,12 @@ interface ShiftTemplateOption {
 const route = useRoute()
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
-const { formatCurrency } = useFormatters()
+const { formatCalendarDate, formatCurrency } = useFormatters()
 const { combineDateAndTimeISO, dateAtNoon, isoFromDate, timeHHMMFromISO, timezone, todayISO } = useTenantTimezone()
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
-const formatIsoDateLong = (iso: string) => {
-  const [year, month, day] = iso.split('-')
-  return `${day}/${month}/${year}`
-}
+const formatIsoDateLong = (iso: string) => formatCalendarDate(iso)
 const initStart = (route.query.start as string) || today
 const initEnd = (route.query.end as string) || initStart
 const initTemplate = (route.query.template as string) || ''
@@ -343,7 +341,14 @@ const isSubmitting = ref(false)
 const openSuccess = ref(false)
 const successOpeningCash = ref(0)
 
-const dateOnlyFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
+const formatDateRange = (dates: Date[]) => {
+  if (!dates?.[0]) return ''
+  const from = formatIsoDateLong(isoFromDate(dates[0]))
+  if (!dates[1]) return from
+  const to = formatIsoDateLong(isoFromDate(dates[1]))
+  return from === to ? from : `${from} – ${to}`
+}
+const dateOnlyFormats = { input: formatDateRange, preview: formatDateRange }
 
 const {
   denominations, counts, monedasAmount, setDenomRef,
@@ -453,7 +458,9 @@ const templateHoursLabel = computed(() => {
 const dayWindowDisplayLabel = computed(() => {
   if (dayWindowLoading.value) return t('finanzas.arqueo.resolvingDay')
   if (usesDayWindow.value && resolvedPeriodStartTime.value && resolvedPeriodEndTime.value) {
-    return `Día restante · ${timeHHMMFromISO(resolvedPeriodStartTime.value)} – ${timeHHMMFromISO(resolvedPeriodEndTime.value)}`
+    return t('finanzas.arqueo.remainingDayWindow', {
+      time: `${timeHHMMFromISO(resolvedPeriodStartTime.value)} – ${timeHHMMFromISO(resolvedPeriodEndTime.value)}`,
+    })
   }
   return t('finanzas.arqueo.fullDayWindow')
 })

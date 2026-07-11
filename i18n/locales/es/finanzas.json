@@ -191,7 +191,16 @@
       "openShiftBeforeCloseInline": "Debes abrir el turno y declarar el fondo de caja antes de cerrar.",
       "notEntered": "Sin ingresar",
       "cashDifference": "Diferencia caja",
-      "cashLeftInDrawer": "Efectivo que queda en caja"
+      "cashLeftInDrawer": "Efectivo que queda en caja",
+      "openingHint": "Declara el efectivo en caja (fondo para cambio) antes de operar o cerrar el turno.",
+      "shiftOpened": "Turno abierto",
+      "openingRegistered": "Fondo registrado: {amount}",
+      "previousCloseSuggested": "Sugerido del cierre anterior: {amount}",
+      "pastPeriodOpeningHint": "Período pasado: puedes registrar fondo en $0 si no hay dato del día. El esperado en caja no incluirá fondo inicial.",
+      "windowLabel": "Ventana: {date} · {time}",
+      "remainingDayWindow": "Día restante · {time}",
+      "denominationCountAria": "Cantidad de billetes de {amount}",
+      "coinsAmountAria": "Monto total en monedas"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",

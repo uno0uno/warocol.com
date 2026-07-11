@@ -191,7 +191,16 @@
       "openShiftBeforeCloseInline": "You must open the shift and declare the opening float before closing.",
       "notEntered": "Not entered",
       "cashDifference": "Cash difference",
-      "cashLeftInDrawer": "Cash left in drawer"
+      "cashLeftInDrawer": "Cash left in drawer",
+      "openingHint": "Declare the cash in the drawer (change float) before operating or closing the shift.",
+      "shiftOpened": "Shift opened",
+      "openingRegistered": "Registered float: {amount}",
+      "previousCloseSuggested": "Suggested from previous close: {amount}",
+      "pastPeriodOpeningHint": "Past period: you can record a $0 float if there is no data for the day. Expected cash will not include an opening float.",
+      "windowLabel": "Window: {date} · {time}",
+      "remainingDayWindow": "Remaining day · {time}",
+      "denominationCountAria": "Quantity of bills for {amount}",
+      "coinsAmountAria": "Total coin amount"
     },
     "cartera": {
       "totalReceivable": "Total receivable",
