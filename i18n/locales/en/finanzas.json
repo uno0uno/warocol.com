@@ -381,7 +381,15 @@
       "changeDeleted": "Deleted",
       "changeAttachmentAdded": "File +",
       "changeAttachmentRemoved": "File -",
-      "fieldEndDate": "End date"
+      "fieldEndDate": "End date",
+      "infoTitle": "Expense information",
+      "registering": "Recording expense...",
+      "expenseType": "Expense type",
+      "typeLabel": "Type:",
+      "recurringCreateHelp": "Mark this option if the expense repeats periodically.",
+      "docsDescription": "Attach invoices, receipts, or other documents related to this expense.",
+      "removeNamedFile": "Remove {name}",
+      "noPaymentMethod": "No method"
     },
     "pagos": {
       "title": "Payment management",

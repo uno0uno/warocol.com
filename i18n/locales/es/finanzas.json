@@ -381,7 +381,15 @@
       "changeDeleted": "Eliminado",
       "changeAttachmentAdded": "Archivo +",
       "changeAttachmentRemoved": "Archivo -",
-      "fieldEndDate": "Fecha Fin"
+      "fieldEndDate": "Fecha Fin",
+      "infoTitle": "Información del gasto",
+      "registering": "Registrando gasto...",
+      "expenseType": "Tipo de gasto",
+      "typeLabel": "Tipo:",
+      "recurringCreateHelp": "Marca esta opción si el gasto se repite periódicamente.",
+      "docsDescription": "Adjunta facturas, recibos u otros documentos relacionados con este gasto.",
+      "removeNamedFile": "Eliminar {name}",
+      "noPaymentMethod": "Sin método"
     },
     "pagos": {
       "title": "Gestión de Pagos",

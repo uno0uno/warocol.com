@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Registrando gasto..."
-      hint="Estamos guardando el gasto y actualizando su registro financiero."
+      :label="t('finanzas.gastos.registering')"
+      :hint="t('finanzas.gastos.savingBody')"
       variant="glass"
       indicator="matrix"
     />
@@ -15,11 +15,11 @@
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <div class="xl:col-span-2 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
-          <UiFormSection title="Información del gasto">
+          <UiFormSection :title="t('finanzas.gastos.infoTitle')">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Fecha del gasto *
+                  {{ t('finanzas.gastos.dateReq') }}
                 </label>
                 <input
                   v-model="form.transactionDate"
@@ -31,14 +31,14 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Categoría *
+                  {{ t('finanzas.gastos.categoryReq') }}
                 </label>
                 <select
                   v-model="form.expenseCategoryId"
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="" disabled>Seleccionar categoría...</option>
+                  <option value="" disabled>{{ t('finanzas.gastos.selectCategory') }}</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                     {{ cat.categoryName || cat.name }}
                   </option>
@@ -47,20 +47,20 @@
 
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Descripción *
+                  {{ t('finanzas.gastos.descReq') }}
                 </label>
                 <input
                   v-model="form.description"
                   type="text"
                   required
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej. reparación de tubería"
+                  :placeholder="t('finanzas.gastos.descPlaceholder')"
                 />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Monto *
+                  {{ t('finanzas.gastos.amountReq') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -78,7 +78,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Método de pago *
+                  {{ t('finanzas.gastos.methodReq') }}
                 </label>
                 <select
                   v-model="form.paymentMethod"
@@ -96,21 +96,21 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Tipo de gasto
+                  {{ t('finanzas.gastos.expenseType') }}
                 </label>
                 <select v-model="form.expenseType" class="input-base w-full px-4 py-2">
-                  <option value="">Sin clasificar</option>
-                  <option value="cogs">Costo de ventas</option>
-                  <option value="admin_expense">Gasto administrativo</option>
-                  <option value="sales_expense">Gasto de ventas</option>
-                  <option value="financial_expense">Gasto financiero</option>
-                  <option value="other_expense">Otro gasto</option>
+                  <option value="">{{ t('finanzas.gastos.unclassified') }}</option>
+                  <option value="cogs">{{ t('finanzas.gastos.typeCogs') }}</option>
+                  <option value="admin_expense">{{ t('finanzas.gastos.typeAdmin') }}</option>
+                  <option value="sales_expense">{{ t('finanzas.gastos.typeSales') }}</option>
+                  <option value="financial_expense">{{ t('finanzas.gastos.typeFinancial') }}</option>
+                  <option value="other_expense">{{ t('finanzas.gastos.typeOther') }}</option>
                 </select>
               </div>
             </div>
           </UiFormSection>
 
-          <UiFormSection title="Recurrencia">
+          <UiFormSection :title="t('finanzas.gastos.recurrence')">
             <div class="space-y-4">
               <label class="flex items-start gap-3 cursor-pointer group">
                 <input
@@ -120,10 +120,10 @@
                 />
                 <span>
                   <span class="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">
-                    Gasto recurrente
+                    {{ t('finanzas.gastos.recurringToggle') }}
                   </span>
                   <span class="block text-xs text-text-secondary mt-1">
-                    Marca esta opción si el gasto se repite periódicamente.
+                    {{ t('finanzas.gastos.recurringCreateHelp') }}
                   </span>
                 </span>
               </label>
@@ -131,25 +131,25 @@
               <div v-if="form.isRecurring" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-4 border-primary pl-4 sm:pl-5">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Frecuencia *
+                    {{ t('finanzas.gastos.freqReq') }}
                   </label>
                   <select
                     v-model="form.frequency"
                     :required="form.isRecurring"
                     class="input-base w-full px-4 py-2"
                   >
-                    <option value="" disabled>Seleccionar frecuencia...</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="biweekly">Quincenal</option>
-                    <option value="monthly">Mensual</option>
-                    <option value="quarterly">Trimestral</option>
-                    <option value="yearly">Anual</option>
+                    <option value="" disabled>{{ t('finanzas.gastos.selectFrequency') }}</option>
+                    <option value="weekly">{{ t('finanzas.gastos.weekly') }}</option>
+                    <option value="biweekly">{{ t('finanzas.gastos.biweekly') }}</option>
+                    <option value="monthly">{{ t('finanzas.gastos.monthly') }}</option>
+                    <option value="quarterly">{{ t('finanzas.gastos.quarterly') }}</option>
+                    <option value="yearly">{{ t('finanzas.gastos.yearly') }}</option>
                   </select>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Fecha de finalización
+                    {{ t('finanzas.gastos.endDate') }}
                   </label>
                   <input
                     v-model="form.recurringEndDate"
@@ -158,16 +158,16 @@
                     class="input-base w-full px-4 py-2"
                   />
                   <p class="text-xs text-text-secondary mt-1">
-                    Deja vacío si no tiene fecha de fin.
+                    {{ t('finanzas.gastos.leaveEmptyNoEnd') }}
                   </p>
                 </div>
               </div>
             </div>
           </UiFormSection>
 
-          <UiFormSection title="Documentos de soporte">
+          <UiFormSection :title="t('finanzas.gastos.docs')">
             <p class="text-sm text-text-secondary mb-4">
-              Adjunta facturas, recibos u otros documentos relacionados con este gasto.
+              {{ t('finanzas.gastos.docsDescription') }}
             </p>
 
             <div class="border-2 border-dashed border-border rounded-lg p-5 sm:p-6 text-center bg-background">
@@ -184,13 +184,13 @@
                 <svg class="mx-auto h-10 w-10 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p class="mt-2 text-sm text-text-secondary">Agrega documentos opcionales</p>
+                <p class="mt-2 text-sm text-text-secondary">{{ t('finanzas.gastos.docsHint') }}</p>
                 <button
                   type="button"
                   class="mt-3 btn-secondary px-4 py-2 rounded-lg text-sm"
                   @click="fileInput?.click()"
                 >
-                  Seleccionar archivos
+                  {{ t('finanzas.gastos.selectFiles') }}
                 </button>
               </div>
 
@@ -212,7 +212,7 @@
                   <button
                     type="button"
                     class="min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
-                    :aria-label="`Eliminar ${file.name}`"
+                    :aria-label="t('finanzas.gastos.removeNamedFile', { name: file.name })"
                     @click="removeFile(index)"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -226,7 +226,7 @@
                   class="btn-secondary px-4 py-2 rounded-lg text-sm w-full"
                   @click="fileInput?.click()"
                 >
-                  Agregar más archivos
+                  {{ t('finanzas.gastos.addFiles') }}
                 </button>
               </div>
             </div>
@@ -236,35 +236,35 @@
 
       <aside class="xl:col-span-1">
         <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm xl:sticky xl:top-6">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('finanzas.common.summary') }}</h3>
 
           <div class="space-y-3">
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Fecha:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.dateLabel') }}</span>
               <span class="font-semibold text-text-primary text-right">{{ formatCalendarDate(form.transactionDate) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Categoría:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.categoryLabel') }}</span>
               <span class="font-semibold text-text-primary text-right truncate">{{ getCategoryName(form.expenseCategoryId) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Monto:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.amountLabel') }}</span>
               <span class="font-semibold text-primary text-right">{{ formatCurrency(form.amount) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Método:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.methodLabel') }}</span>
               <span class="font-semibold text-text-primary text-right truncate">{{ paymentMethodLabel }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Tipo:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.typeLabel') }}</span>
               <span class="font-semibold text-text-primary text-right">{{ expenseTypeLabel }}</span>
             </div>
             <div v-if="form.isRecurring" class="flex justify-between gap-3 text-sm pt-3 border-t border-border">
-              <span class="text-text-secondary">Recurrencia:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.recurrenceLabel') }}</span>
               <span class="font-semibold text-text-primary text-right">{{ formatFrequency(form.frequency) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
-              <span class="text-text-secondary">Documentos:</span>
+              <span class="text-text-secondary">{{ t('finanzas.gastos.docsLabel') }}</span>
               <span class="font-semibold text-text-primary text-right">{{ selectedFiles.length }}</span>
             </div>
           </div>
@@ -285,7 +285,7 @@
               to="/finanzas/gastos"
               class="btn-secondary w-full min-h-[44px] px-4 py-2 rounded-lg flex items-center justify-center"
             >
-              Cancelar
+              {{ t('common.cancel') }}
             </NuxtLink>
           </div>
         </div>
@@ -295,18 +295,18 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
-useHead({ title: 'Registrar Gasto' })
+useHead({ title: () => t('finanzas.gastos.createTitle') })
 
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
-const { formatCalendarDate } = useFormatters()
+const { formatCalendarDate, formatCurrency } = useFormatters()
 const cache = useQueryCache()
 
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
@@ -396,18 +396,9 @@ const isFormValid = computed(() => {
 })
 
 const getCategoryName = (categoryId: string) => {
-  if (!categoryId) return 'Sin categoría'
+  if (!categoryId) return t('finanzas.common.noCategory')
   const category = categories.value.find((c: any) => c.id === categoryId)
-  return category?.categoryName || category?.name || 'Sin categoría'
-}
-
-const formatCurrency = (value: number | null) => {
-  if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
+  return category?.categoryName || category?.name || t('finanzas.common.noCategory')
 }
 
 const expenseTypeLabels: Record<string, string> = {
@@ -418,17 +409,17 @@ const expenseTypeLabels: Record<string, string> = {
   other_expense: t('finanzas.gastos.typeOther')
 }
 
-const expenseTypeLabel = computed(() => expenseTypeLabels[form.expenseType] || 'Sin clasificar')
+const expenseTypeLabel = computed(() => expenseTypeLabels[form.expenseType] || t('finanzas.gastos.unclassified'))
 
 const formatFrequency = (frequency: string) => {
   const frequencies: Record<string, string> = {
-    weekly: 'Semanal',
+    weekly: t('finanzas.gastos.weekly'),
     biweekly: t('finanzas.gastos.biweekly'),
     monthly: t('finanzas.gastos.monthly'),
-    quarterly: 'Trimestral',
-    yearly: t('finanzas.gastos.annual')
+    quarterly: t('finanzas.gastos.quarterly'),
+    yearly: t('finanzas.gastos.yearly')
   }
-  return frequencies[frequency] || 'Sin frecuencia'
+  return frequencies[frequency] || t('finanzas.gastos.noFrequency')
 }
 
 const paymentMethodLabel = computed(() => {
@@ -437,14 +428,14 @@ const paymentMethodLabel = computed(() => {
     const method = group.methods?.find((m: any) => m.id === form.paymentMethod)
     if (method) return method.name
   }
-  return form.paymentMethod || 'Sin método'
+  return form.paymentMethod || t('finanzas.gastos.noPaymentMethod')
 })
 
 const extractErrorMessage = (error: any) => {
   if (error?.data?.detail) {
     if (typeof error.data.detail === 'string') return error.data.detail
     if (Array.isArray(error.data.detail)) {
-      return error.data.detail.map((e: any) => e.msg || e.message || 'Revisa los datos del gasto.').join(', ')
+      return error.data.detail.map((e: any) => e.msg || e.message || t('finanzas.gastos.reviewExpenseData')).join(', ')
     }
     return error.data.detail.message
       || error.data.detail.msg
