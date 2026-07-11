@@ -19,13 +19,13 @@
               ? 'bg-success/30 text-success border-2 border-success'
               : 'bg-success/10 text-success'
           ]">
-            {{ payment.isHighlighted ? '✓ Pagado' : 'Pagado' }}
+            {{ payment.isHighlighted ? t('finanzas.pagos.paidShortHighlighted') : t('finanzas.pagos.paid') }}
           </span>
         </div>
 
         <!-- Invoice Info -->
         <div v-if="payment.factura" class="mb-3 pb-3 mt-4 border-b border-border">
-          <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Factura</p>
+          <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colInvoice') }}</p>
           <p class="text-sm font-normal text-text-primary opacity-65">{{ payment.factura }}</p>
           <p class="text-sm font-normal text-text-primary opacity-65">{{ payment.fechaFactura }}</p>
         </div>
@@ -34,19 +34,19 @@
         <div class="space-y-3">
           <div class="flex items-end justify-between pt-3 mt-4 border-t border-border">
             <div>
-              <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Monto Pagado</p>
+              <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colPaid') }}</p>
               <p class="text-[34px] font-bold text-text-primary leading-none">{{ formatCurrency(payment.montoPagado) }}</p>
             </div>
             <div class="text-right">
-              <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Fecha de Pago</p>
+              <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colPaymentDate') }}</p>
               <p class="text-sm font-medium text-text-primary opacity-65">{{ payment.fechaPago }}</p>
             </div>
           </div>
 
           <!-- Payment Method -->
           <div v-if="payment.metodo" class="pt-3 border-t border-border">
-            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Método de Pago</p>
-            <p class="text-sm font-medium text-text-primary opacity-65 capitalize">{{ payment.metodo }}</p>
+            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colMethod') }}</p>
+            <p class="text-sm font-medium text-text-primary opacity-65">{{ payment.metodo }}</p>
           </div>
         </div>
       </div>
@@ -73,12 +73,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 </script>

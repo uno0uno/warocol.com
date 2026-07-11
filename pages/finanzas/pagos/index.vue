@@ -23,18 +23,18 @@
           <select
             v-model="selectedSupplierFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por proveedor"
+            :aria-label="t('finanzas.pagos.filterProvider')"
           >
-            <option value="">Proveedor</option>
+            <option value="">{{ t('finanzas.pagos.colProvider') }}</option>
             <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
 
           <select
             v-model="selectedDateFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por período"
+            :aria-label="t('finanzas.pagos.filterPeriod')"
           >
-            <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            <option v-for="opt in localizedPurchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -44,9 +44,9 @@
         <!-- Header -->
         <div class="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border">
           <div>
-            <h3 class="text-lg font-semibold text-text-primary">Órdenes Pendientes de Pago</h3>
+            <h3 class="text-lg font-semibold text-text-primary">{{ t('finanzas.pagos.pendingTab') }}</h3>
             <p v-if="selectedPurchases.length > 0" class="text-sm text-text-secondary mt-1">
-              {{ selectedPurchases.length }} orden(es) seleccionada(s)
+              {{ t('finanzas.pagos.selectedOrders', { count: selectedPurchases.length }) }}
             </p>
           </div>
           <button v-if="selectedPurchases.length > 0" @click="navigateToPayment(selectedPurchases)"
@@ -55,15 +55,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Registrar Pago ({{ selectedPurchases.length }})</span>
+            <span>{{ t('finanzas.pagos.registerWithCount', { count: selectedPurchases.length }) }}</span>
           </button>
         </div>
 
         <!-- Mobile: Cards -->
         <div class="md:hidden p-4">
           <div v-if="filteredPendingTableData.length === 0" class="text-center py-12">
-            <p class="text-text-primary font-medium">No hay pagos pendientes</p>
-            <p class="text-muted-foreground text-sm mt-1">Todas las órdenes verificadas han sido pagadas.</p>
+            <p class="text-text-primary font-medium">{{ t('finanzas.pagos.emptyPendingTitle') }}</p>
+            <p class="text-muted-foreground text-sm mt-1">{{ t('finanzas.pagos.emptyPendingSub') }}</p>
           </div>
           <div v-else class="grid grid-cols-1 gap-3">
             <PaymentsPendingPaymentCard v-for="payment in filteredPendingTableData" :key="payment.purchaseData.id"
@@ -75,7 +75,7 @@
         <!-- Desktop: Table -->
         <div class="hidden md:block">
           <UiDataTable :columns="pendingColumns" :data="filteredPendingTableData" variant="default"
-            empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas."
+            :empty-message="t('finanzas.pagos.emptyPendingMessage')"
             :show-title="false"
             :sort-field="sortField"
             :sort-direction="sortDirection"
@@ -83,14 +83,14 @@
             <template #header-proveedor>
               <UiTableHeaderFilter
                 v-model="selectedSupplierFilter"
-                title="Proveedor"
+                :title="t('finanzas.pagos.colProvider')"
                 column-key="proveedor"
                 sortable
                 :sort-field="sortField"
                 :sort-direction="sortDirection"
                 filter-type="select"
                 :options="supplierHeaderOptions"
-                all-label="Proveedor"
+                :all-label="t('finanzas.pagos.colProvider')"
                 align="left"
                 @sort="handleSort"
               />
@@ -122,7 +122,7 @@
 
             <template #cell-acciones="{ row }">
               <button @click="navigateToPayment([row.purchaseData])" class="btn-secondary px-4 py-2 rounded-lg text-sm">
-                Pago Individual
+                {{ t('finanzas.pagos.individual') }}
               </button>
             </template>
           </UiDataTable>
@@ -133,14 +133,14 @@
       <div class="bg-surface rounded-lg">
         <!-- Header -->
         <div class="p-4 md:p-6 border-b border-border">
-          <h3 class="text-lg font-semibold text-text-primary">Órdenes Pagadas</h3>
+          <h3 class="text-lg font-semibold text-text-primary">{{ t('finanzas.pagos.paidTab') }}</h3>
         </div>
 
         <!-- Mobile: Cards -->
         <div class="md:hidden p-4">
           <div v-if="filteredPaidTableData.length === 0" class="text-center py-12">
-            <p class="text-text-primary font-medium">No hay pagos registrados</p>
-            <p class="text-muted-foreground text-sm mt-1">Aún no se han registrado pagos a proveedores.</p>
+            <p class="text-text-primary font-medium">{{ t('finanzas.pagos.emptyPaidTitle') }}</p>
+            <p class="text-muted-foreground text-sm mt-1">{{ t('finanzas.pagos.emptyPaidSub') }}</p>
           </div>
           <div v-else class="grid grid-cols-1 gap-3">
             <PaymentsPaidPaymentCard v-for="payment in filteredPaidTableData" :key="payment.purchaseData.id"
@@ -151,21 +151,21 @@
         <!-- Desktop: Table -->
         <div class="hidden md:block">
           <UiDataTable :columns="paidColumns" :data="filteredPaidTableData" variant="default"
-            empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false"
+            :empty-message="t('finanzas.pagos.emptyPaidMessage')" :show-title="false"
             :sort-field="sortField"
             :sort-direction="sortDirection"
             @sort="handleSort">
             <template #header-proveedor>
               <UiTableHeaderFilter
                 v-model="selectedSupplierFilter"
-                title="Proveedor"
+                :title="t('finanzas.pagos.colProvider')"
                 column-key="proveedor"
                 sortable
                 :sort-field="sortField"
                 :sort-direction="sortDirection"
                 filter-type="select"
                 :options="supplierHeaderOptions"
-                all-label="Proveedor"
+                :all-label="t('finanzas.pagos.colProvider')"
                 align="left"
                 @sort="handleSort"
               />
@@ -188,7 +188,7 @@
             </template>
 
             <template #cell-metodo="{ row }">
-              <span class="text-sm text-text-secondary capitalize">{{ row.metodo || '-' }}</span>
+              <span class="text-sm text-text-secondary">{{ row.metodo || '-' }}</span>
             </template>
 
             <template #cell-estado="{ row }">
@@ -198,7 +198,7 @@
                   ? 'bg-success/30 text-success border-2 border-success animate-pulse'
                   : 'bg-success/10 text-success'
               ]">
-                {{ row.isHighlighted ? '✓ Pagado (desde compra)' : t('finanzas.pagos.paid') }}
+                {{ row.isHighlighted ? t('finanzas.pagos.paidFromPurchase') : t('finanzas.pagos.paid') }}
               </span>
             </template>
           </UiDataTable>
@@ -210,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, inject, onMounted } from 'vue'
 import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useFormatters } from '~/composables/useFormatters'
@@ -249,17 +249,34 @@ selectedDateFilter.value = (route.query.date_filter as string) || ''
 const sortField = ref('')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 
-const searchFields = [
-  { label: 'N° Orden', value: 'purchase_number' },
-  { label: 'N° Factura', value: 'invoice_number' },
-  { label: 'Proveedor', value: 'supplier_name' }
-]
+const searchFields = computed(() => [
+  { label: t('finanzas.pagos.searchOrderNumber'), value: 'purchase_number' },
+  { label: t('finanzas.pagos.searchInvoiceNumber'), value: 'invoice_number' },
+  { label: t('finanzas.pagos.colProvider'), value: 'supplier_name' }
+])
 
 const statusOptions = [
-  { label: 'Pendiente', value: 'pending' },
-  { label: 'Vencido', value: 'overdue' },
-  { label: 'Vence esta semana', value: 'due_this_week' }
+  { label: t('finanzas.pagos.pending'), value: 'pending' },
+  { label: t('finanzas.pagos.overdue'), value: 'overdue' },
+  { label: t('finanzas.pagos.dueThisWeek'), value: 'due_this_week' }
 ]
+
+const dateFilterLabelMap: Record<string, string> = {
+  '': 'finanzas.pagos.period',
+  today: 'finanzas.common.today',
+  yesterday: 'finanzas.common.yesterday',
+  last_week: 'finanzas.pagos.lastWeek',
+  '15_days': 'finanzas.pagos.last15Days',
+  '1_month': 'finanzas.pagos.lastMonth',
+  '3_months': 'finanzas.pagos.last3Months',
+}
+
+const localizedPurchaseDateFilterOptions = computed(() =>
+  purchaseDateFilterOptions.map(option => ({
+    value: option.value,
+    label: t(dateFilterLabelMap[option.value] || option.label),
+  })),
+)
 
 const hasActiveFilters = computed(
   () =>
@@ -361,7 +378,7 @@ const paidPurchases = computed(() => {
 
 
 // Table columns configuration
-const pendingColumns = [
+const pendingColumns = computed(() => [
   { key: 'seleccion', title: '', sortable: false, align: 'center' as const, class: 'font-normal' },
   { key: 'orden', title: t('finanzas.pagos.colOrder'), sortable: true, align: 'left' as const, class: 'font-bold' },
   { key: 'fechaOrden', title: t('finanzas.pagos.colOrderDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
@@ -371,9 +388,9 @@ const pendingColumns = [
   { key: 'monto', title: t('finanzas.pagos.colAmount'), sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
   { key: 'vencimiento', title: t('finanzas.pagos.colDue'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'acciones', title: t('finanzas.common.actions'), sortable: false, align: 'center' as const, class: 'font-normal' }
-]
+])
 
-const paidColumns = [
+const paidColumns = computed(() => [
   { key: 'orden', title: t('finanzas.pagos.colOrder'), sortable: true, align: 'left' as const, class: 'font-bold' },
   { key: 'fechaOrden', title: t('finanzas.pagos.colOrderDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
@@ -383,12 +400,13 @@ const paidColumns = [
   { key: 'fechaPago', title: t('finanzas.pagos.colPaymentDate'), sortable: true, align: 'left' as const, format: 'text' as const, class: 'font-normal' },
   { key: 'metodo', title: t('finanzas.pagos.colMethod'), sortable: false, align: 'left' as const, class: 'font-normal' },
   { key: 'estado', title: t('finanzas.pagos.colStatus'), sortable: false, align: 'center' as const, class: 'font-normal' }
-]
+])
 
 // Transform pending purchases data for table
 const pendingTableData = computed(() => {
   return pendingPurchases.value.map(purchase => ({
     orden: purchase.purchase_number,
+    fecha: formatDate(purchase.purchase_date),
     fechaOrden: formatDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
     factura: purchase.invoice_number || '-',
@@ -404,13 +422,14 @@ const pendingTableData = computed(() => {
 const paidTableData = computed(() => {
   return paidPurchases.value.map(purchase => ({
     orden: purchase.purchase_number,
+    fecha: formatDate(purchase.purchase_date),
     fechaOrden: formatDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
     factura: purchase.invoice_number || '-',
     fechaFactura: formatDate(purchase.invoice_date),
     montoPagado: parseFloat(purchase.payment_amount || purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     fechaPago: formatDate(purchase.payment_date_final || purchase.payment_date || purchase.paid_at),
-    metodo: purchase.payment_method_final || purchase.payment_method,
+    metodo: formatPaymentMethod(purchase.payment_method_final || purchase.payment_method),
     purchaseData: purchase,
     isHighlighted: highlightId.value === purchase.id
   }))
@@ -502,20 +521,24 @@ function getSupplierName(purchase: any): string {
     return purchase.supplier_name
   }
   const supplier = suppliers.value.find(s => s.id === purchase.supplier_id)
-  return supplier?.name || 'N/A'
+  return supplier?.name || t('common.nA')
 }
 
-const { formatDate: _fmtDate } = useFormatters()
+const { formatDate: _fmtDate, formatCurrency } = useFormatters()
 function formatDate(dateString: string | null | undefined): string {
   return _fmtDate(dateString)
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
+function formatPaymentMethod(method: string | null | undefined): string {
+  if (!method) return ''
+  const normalized = String(method).trim().toLowerCase()
+  const defaults: Record<string, string> = {
+    cash: t('finanzas.metodosPago.cash'),
+    efectivo: t('finanzas.metodosPago.cash'),
+    check: t('finanzas.pagos.methodCheck'),
+    cheque: t('finanzas.pagos.methodCheck'),
+  }
+  return defaults[normalized] || method
 }
 
 function isOverdue(dueDate: string | null | undefined): boolean {

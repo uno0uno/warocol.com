@@ -24,16 +24,16 @@
 
           <!-- Overdue Badge -->
           <span v-if="payment.estaVencido" class="flex-shrink-0 px-3 py-1 rounded-md text-xs font-medium bg-destructive/10 text-destructive">
-            Vencido
+            {{ t('finanzas.pagos.overdue') }}
           </span>
           <span v-else-if="payment.vencimiento !== '-'" class="flex-shrink-0 px-3 py-1 rounded-md text-xs font-medium bg-warning/10 text-warning">
-            Por vencer
+            {{ t('finanzas.pagos.dueSoon') }}
           </span>
         </div>
 
         <!-- Invoice Info -->
         <div v-if="payment.factura" class="mb-3 pb-3 mt-4 border-b border-border">
-          <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Factura</p>
+          <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colInvoice') }}</p>
           <p class="text-sm font-normal text-text-primary opacity-65">{{ payment.factura }}</p>
           <p class="text-sm font-normal text-text-primary opacity-65">{{ payment.fechaFactura }}</p>
         </div>
@@ -41,11 +41,11 @@
         <!-- Amount and Due Date -->
         <div class="flex items-end justify-between pt-3 mt-4 border-t border-border">
           <div>
-            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Monto</p>
+            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colAmount') }}</p>
             <p class="text-[34px] font-bold text-text-primary leading-none">{{ formatCurrency(payment.monto) }}</p>
           </div>
           <div class="text-right">
-            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">Vencimiento</p>
+            <p class="text-[13px] font-medium text-text-primary opacity-70 mb-1.5">{{ t('finanzas.pagos.colDue') }}</p>
             <p class="text-sm font-medium" :class="payment.estaVencido ? 'text-destructive' : 'text-text-primary opacity-65'">
               {{ payment.vencimiento }}
             </p>
@@ -58,7 +58,7 @@
         @click="$emit('pay', payment.purchaseData)"
         class="w-full btn-secondary px-4 py-3.5 rounded-lg text-base font-semibold text-center"
       >
-        Registrar Pago
+        {{ t('finanzas.pagos.register') }}
       </button>
     </div>
   </div>
@@ -89,12 +89,6 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 </script>
