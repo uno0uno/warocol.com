@@ -9,33 +9,33 @@
     <template v-else>
       <section class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 mb-6">
         <MetricCard
-          title="Ingredientes"
+          :title="t('analitica.ingredientes.ingredients')"
           :value="summary.totalIngredients"
           format="number"
           variant="primary"
           :subtitle="summary.periodLabel"
         />
         <MetricCard
-          title="Costo estimado"
+          :title="t('analitica.ingredientes.estCost')"
           :value="summary.estimatedCostLabel"
           format="text"
           variant="primary"
           :subtitle="t('analitica.ingredientes.movementsCount', { count: summary.movementCount })"
         />
         <MetricCard
-          title="Con consumo"
+          :title="t('analitica.ingredientes.withConsumption')"
           :value="summary.recordedRows"
           format="number"
           variant="primary"
           :subtitle="t('analitica.ingredientes.coveragePct', { pct: summary.coveragePct })"
         />
         <MetricCard
-          title="Variación costo"
+          :title="t('analitica.ingredientes.costVar')"
           :value="summary.avgCostVariationPct"
           format="percentage"
           :precision="1"
           variant="primary"
-          subtitle="Último vs promedio base"
+          :subtitle="t('analitica.ingredientes.lastVsAvg')"
         />
       </section>
 
@@ -54,9 +54,9 @@
           <select
             v-model="ingredientFilter"
             :class="[filterSelectClass, 'w-full sm:w-52 md:hidden']"
-            aria-label="Filtrar por ingrediente"
+            :aria-label="t('analitica.ingredientes.filterIngredient')"
           >
-            <option value="">Ingrediente</option>
+            <option value="">{{ t('analitica.ingredientes.ingredient') }}</option>
             <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
               {{ ingredient.name }}
             </option>
@@ -65,9 +65,9 @@
           <select
             v-model="categoryFilter"
             :class="[filterSelectClass, 'w-full sm:w-40 md:hidden']"
-            aria-label="Filtrar por categoría"
+            :aria-label="t('analitica.ingredientes.filterCategory')"
           >
-            <option value="">Categoría</option>
+            <option value="">{{ t('analitica.ingredientes.category') }}</option>
             <option v-for="category in categories" :key="category" :value="category">
               {{ category }}
             </option>
@@ -76,9 +76,9 @@
           <select
             v-model="unitFilter"
             :class="[filterSelectClass, 'w-full sm:w-32 md:hidden']"
-            aria-label="Filtrar por unidad"
+            :aria-label="t('analitica.ingredientes.filterUnit')"
           >
-            <option value="">Unidad</option>
+            <option value="">{{ t('analitica.ingredientes.unit') }}</option>
             <option v-for="unit in units" :key="unit" :value="unit">
               {{ formatUnitLabel(unit) }}
             </option>
@@ -91,8 +91,8 @@
             min="0"
             step="any"
             :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
-            placeholder="Mín."
-            aria-label="Cantidad mínima"
+            :placeholder="t('analitica.ingredientes.min')"
+            :aria-label="t('analitica.ingredientes.minQty')"
           />
 
           <input
@@ -102,14 +102,14 @@
             min="0"
             step="any"
             :class="[filterSelectClass, 'w-full sm:w-28 md:hidden']"
-            placeholder="Máx."
-            aria-label="Cantidad máxima"
+            :placeholder="t('analitica.ingredientes.max')"
+            :aria-label="t('analitica.ingredientes.maxQty')"
           />
 
           <select
             v-model="sortOption"
             :class="[filterSelectClass, 'w-full sm:w-56 md:hidden']"
-            aria-label="Ordenar ingredientes"
+            :aria-label="t('analitica.ingredientes.sort')"
           >
             <option v-for="option in sortOptions" :key="option.value" :value="option.value">
               {{ option.label }}
@@ -123,8 +123,8 @@
         :columns="ingredientTableColumns"
         :data="displayRows"
         item-key="ingredient_id"
-        empty-message="No hay consumo de ingredientes"
-        empty-sub-message="No se encontraron movimientos de consumo o compras para el periodo seleccionado"
+        :empty-message="t('analitica.ingredientes.empty')"
+        :empty-sub-message="t('analitica.ingredientes.emptySub')"
         :sort-field="tableSortField"
         :sort-direction="tableSortDirection"
         variant="default"
@@ -170,14 +170,14 @@
         <template #header-ingredient_name>
           <UiTableHeaderFilter
             v-model="ingredientFilter"
-            title="Ingrediente"
+            :title="t('analitica.ingredientes.ingredient')"
             column-key="ingredient_name"
             sortable
             :sort-field="tableSortField"
             :sort-direction="tableSortDirection"
             filter-type="select"
             :options="ingredientHeaderOptions"
-            all-label="Ingrediente"
+            :all-label="t('analitica.ingredientes.ingredient')"
             align="left"
             @sort="handleTableSort"
           />
@@ -186,17 +186,17 @@
         <template #header-category>
           <UiTableHeaderFilter
             v-model="categoryFilter"
-            title="Categoría"
+            :title="t('analitica.ingredientes.category')"
             filter-type="select"
             :options="categoryHeaderOptions"
-            all-label="Categoría"
+            :all-label="t('analitica.ingredientes.category')"
             align="left"
           />
         </template>
 
         <template #header-consumed_quantity>
           <UiTableHeaderFilter
-            title="Consumo"
+            :title="t('analitica.ingredientes.consumption')"
             column-key="consumed_quantity"
             sortable
             :sort-field="tableSortField"
@@ -214,17 +214,17 @@
         <template #header-unit>
           <UiTableHeaderFilter
             v-model="unitFilter"
-            title="Unidad"
+            :title="t('analitica.ingredientes.unit')"
             filter-type="select"
             :options="unitHeaderOptions"
-            all-label="Unidad"
+            :all-label="t('analitica.ingredientes.unit')"
             align="center"
           />
         </template>
 
         <template #header-estimated_consumed_cost>
           <UiTableHeaderFilter
-            title="Costo estimado"
+            :title="t('analitica.ingredientes.estCost')"
             column-key="estimated_consumed_cost"
             sortable
             :sort-field="tableSortField"
@@ -314,7 +314,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'
 import { FileText } from 'lucide-vue-next'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -345,7 +345,8 @@ type DisplayRow = IngredientAnalyticsRow & {
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
-const { formatCurrency } = useFormatters()
+const { locale } = useI18n({ useScope: 'global' })
+const { formatCalendarDate, formatCurrency } = useFormatters()
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const ingredientAnalyticsFiltersStore = useIngredientAnalyticsFiltersStore()
 const tenantId = computed(() => currentTenant.value?.id ?? null)
@@ -368,13 +369,13 @@ const quantityMaxFilter = ref('')
 const sortOption = ref('estimated_consumed_cost_desc')
 const lastUpdate = ref<Date>(new Date())
 
-const sortOptions = [
-  { value: 'estimated_consumed_cost_desc', label: 'Mayor costo estimado' },
-  { value: 'consumed_quantity_desc', label: 'Mayor consumo' },
-  { value: 'latest_cost_per_unit_desc', label: 'Mayor ultimo costo' },
-  { value: 'weighted_avg_cost_per_unit_desc', label: 'Mayor costo promedio' },
-  { value: 'ingredient_name_asc', label: 'Ingrediente A-Z' },
-]
+const sortOptions = computed(() => [
+  { value: 'estimated_consumed_cost_desc', label: t('analitica.ingredientes.sortEstimatedCostDesc') },
+  { value: 'consumed_quantity_desc', label: t('analitica.ingredientes.sortConsumptionDesc') },
+  { value: 'latest_cost_per_unit_desc', label: t('analitica.ingredientes.sortLatestCostDesc') },
+  { value: 'weighted_avg_cost_per_unit_desc', label: t('analitica.ingredientes.sortAvgCostDesc') },
+  { value: 'ingredient_name_asc', label: t('analitica.ingredientes.sortIngredientAsc') },
+])
 
 const SORT_TO_TABLE: Record<string, { field: string; direction: 'asc' | 'desc' }> = {
   estimated_consumed_cost_desc: { field: 'estimated_consumed_cost', direction: 'desc' },
@@ -499,7 +500,8 @@ const rows = computed<IngredientAnalyticsRow[]>(() => ((analyticsData.value as a
 const period = computed(() => (analyticsData.value as any)?.data?.period ?? null)
 const isLoading = computed(() => queryStatus.value === 'pending' && !analyticsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && analyticsData.value != null)
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 const tableSortState = computed(() => SORT_TO_TABLE[sortOption.value] ?? SORT_TO_TABLE.consumed_quantity_desc)
 const tableSortField = computed(() => tableSortState.value.field)
 const tableSortDirection = computed(() => tableSortState.value.direction)
@@ -525,8 +527,11 @@ const summary = computed(() => {
     .map((value) => Math.abs(value))
 
   const periodLabel = period.value?.from && period.value?.to
-    ? `${period.value.from} a ${period.value.to}`
-    : 'Período actual'
+    ? t('analitica.ingredientes.periodRange', {
+        from: formatCalendarDate(period.value.from),
+        to: formatCalendarDate(period.value.to),
+      })
+    : t('analitica.ingredientes.currentPeriod')
 
   return {
     totalIngredients,
@@ -575,7 +580,7 @@ const clearFilters = () => {
   sortOption.value = 'estimated_consumed_cost_desc'
 }
 
-const ingredientTableColumns = [
+const ingredientTableColumns = computed(() => [
   { key: 'ingredient_name', title: t('analitica.ingredientes.ingredient'), sortable: false, format: 'text', align: 'left' },
   { key: 'category', title: t('analitica.ingredientes.category'), sortable: false, format: 'text', align: 'left' },
   { key: 'consumed_quantity', title: t('analitica.ingredientes.consumption'), sortable: false, format: 'text', align: 'right' },
@@ -584,10 +589,10 @@ const ingredientTableColumns = [
   { key: 'weighted_avg_cost_per_unit', title: t('analitica.ingredientes.avgCost'), sortable: false, format: 'text', align: 'right' },
   { key: 'latest_cost_per_unit', title: t('analitica.ingredientes.lastCost'), sortable: false, format: 'text', align: 'right' },
   { key: 'cost_trend', title: t('analitica.ingredientes.trend'), sortable: false, format: 'text', align: 'right' },
-  { key: 'movement_count', title: 'Mov.', sortable: false, format: 'text', align: 'right' },
+  { key: 'movement_count', title: t('analitica.ingredientes.mov'), sortable: false, format: 'text', align: 'right' },
   { key: 'data_coverage', title: t('analitica.ingredientes.coverage'), sortable: false, format: 'text', align: 'center' },
   { key: 'actions', title: '', sortable: false, format: 'text', align: 'center' },
-] as const
+])
 
 function ingredientReportPath(ingredientId: string): string {
   const path = `/analitica/ingredientes/${encodeURIComponent(ingredientId)}`
@@ -665,7 +670,7 @@ function costTrendClass(value: number | null): string {
 }
 
 function coverageLabel(value: string): string {
-  return value === 'recorded_movements' ? 'Registrado' : t('analitica.ingredientes.noConsumption')
+  return value === 'recorded_movements' ? t('analitica.ingredientes.recorded') : t('analitica.ingredientes.noConsumption')
 }
 
 function coverageVariant(value: string): 'success' | 'warning' {
