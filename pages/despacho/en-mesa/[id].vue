@@ -82,6 +82,7 @@ const formatRequestDateTime = (value: string | null | undefined) =>
 const isPending = computed(() => request.value?.status === 'pending')
 const isLoading = computed(() => !requestResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestResponse.value != null)
+const paymentLabel = computed(() => request.value ? formatTableQrPayment(request.value, { t }) : '—')
 
 const isWorking = ref(false)
 const actionError = ref<string | null>(null)
@@ -287,7 +288,7 @@ async function printQrComanda() {
 
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.payment') }}</p>
-          <p class="text-lg font-bold text-text-primary">{{ formatTableQrPayment(request) }}</p>
+          <p class="text-lg font-bold text-text-primary">{{ paymentLabel }}</p>
         </div>
 
         <div class="bg-surface border-2 border-primary rounded-xl p-4">

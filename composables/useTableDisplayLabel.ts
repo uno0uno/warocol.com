@@ -3,7 +3,6 @@ const DEFAULT_BAR_NAME_RE = /^Barra$/i
 
 export function useTableDisplayLabel() {
   const { t } = useI18n({ useScope: 'global' })
-  const { singular: tableSingular } = useTableLabel()
 
   const tableDisplayLabel = (value: unknown): string => {
     const raw = String(value ?? '').trim()
@@ -12,7 +11,8 @@ export function useTableDisplayLabel() {
     const tableMatch = raw.match(DEFAULT_TABLE_NAME_RE)
     if (tableMatch) {
       const suffix = tableMatch[1]?.trim()
-      return suffix ? `${tableSingular.value} ${suffix}` : tableSingular.value
+      const tableLabel = t('despacho.common.table')
+      return suffix ? `${tableLabel} ${suffix}` : tableLabel
     }
 
     if (DEFAULT_BAR_NAME_RE.test(raw)) return t('despacho.common.bar')

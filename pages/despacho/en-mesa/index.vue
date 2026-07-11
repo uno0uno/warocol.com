@@ -164,6 +164,8 @@ const columns = computed<Column[]>(() => [
 const itemCountLabel = (count: number) =>
   t(count === 1 ? 'despacho.enMesa.itemCountOne' : 'despacho.enMesa.itemCountMany', { count })
 
+const paymentLabel = (row: TableQrRequestRow) => formatTableQrPayment(row, { t })
+
 function syncTableQuery() {
   const query = { ...route.query }
   if (tableFilterId.value) {
@@ -274,7 +276,7 @@ const viewRequest = (request: TableQrRequestRow) => {
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ itemCountLabel(item.item_count) }}
                   · {{ formatRequestDateTime(item.created_at) }}
-                  <span v-if="formatTableQrPayment(item) !== '—'"> · {{ formatTableQrPayment(item) }}</span>
+                  <span v-if="paymentLabel(item) !== '—'"> · {{ paymentLabel(item) }}</span>
                 </p>
               </div>
               <span class="text-sm font-bold text-primary flex-shrink-0">
@@ -293,7 +295,7 @@ const viewRequest = (request: TableQrRequestRow) => {
             <span class="text-sm text-text-secondary">{{ value }}</span>
           </template>
           <template #cell-payment_method="{ item }">
-            <span class="text-sm text-text-secondary">{{ formatTableQrPayment(item) }}</span>
+            <span class="text-sm text-text-secondary">{{ paymentLabel(item) }}</span>
           </template>
           <template #cell-total_amount="{ value }">
             <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
