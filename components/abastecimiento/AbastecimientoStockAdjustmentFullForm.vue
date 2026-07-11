@@ -384,8 +384,9 @@ import {
   TECHNICAL_UNIT_COST_PRECISION,
   useInventoryAdjustment,
 } from '~/composables/useInventoryAdjustment'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Props {
   cancelRedirectUrl: string

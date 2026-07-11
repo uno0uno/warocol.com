@@ -11,7 +11,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar por ingrediente o referencia..."
+        :search-placeholder="t('abastecimiento.movimientos.invSearchPlaceholder')"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -23,9 +23,9 @@
           <select
             v-model="ingredientFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por ingrediente"
+            :aria-label="t('abastecimiento.movimientos.filterIngredientAria')"
           >
-            <option value="">Ingrediente</option>
+            <option value="">{{ t('abastecimiento.common.ingrediente') }}</option>
             <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
               {{ ingredient.name }}
             </option>
@@ -34,13 +34,13 @@
           <select
             v-model="movementTypeFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por tipo de movimiento"
+            :aria-label="t('abastecimiento.movimientos.filterTypeAria')"
           >
-            <option value="">Tipo</option>
-            <option value="purchase">Compras</option>
-            <option value="consumption">Consumo</option>
-            <option value="adjustment">Ajustes</option>
-            <option value="loss">Pérdidas</option>
+            <option value="">{{ t('abastecimiento.common.tipo') }}</option>
+            <option value="purchase">{{ t('abastecimiento.common.compras') }}</option>
+            <option value="consumption">{{ t('abastecimiento.common.consumo') }}</option>
+            <option value="adjustment">{{ t('abastecimiento.common.ajustes') }}</option>
+            <option value="loss">{{ t('abastecimiento.common.perdidas') }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -53,8 +53,8 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay movimientos registrados"
-        empty-sub-message="Los movimientos aparecerán cuando se registren compras o ventas"
+        :empty-message="t('abastecimiento.movimientos.empty')"
+        :empty-sub-message="t('abastecimiento.movimientos.emptySub')"
         variant="default"
       >
         <!-- Mobile Card -->
@@ -141,8 +141,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+const { t } = useI18n()
 
-useHead({ title: 'Movimientos de Inventario' })
+useHead({ title: () => t('abastecimiento.head.inventarioMovimientos') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -268,63 +269,63 @@ const clearFilters = () => {
 const movementsTableColumns = [
   {
     key: 'created_at',
-    title: 'Fecha',
+    title: t('abastecimiento.common.fecha'),
     sortable: true,
     format: 'date',
     align: 'left'
   },
   {
     key: 'ingredient_name',
-    title: 'Ingrediente',
+    title: t('abastecimiento.common.ingrediente'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'unit',
-    title: 'Unidad',
+    title: t('abastecimiento.common.unidad'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'movement_type',
-    title: 'Tipo',
+    title: t('abastecimiento.common.tipo'),
     sortable: true,
     format: 'badge',
     align: 'center'
   },
   {
     key: 'quantity_change',
-    title: 'Cantidad',
+    title: t('abastecimiento.common.cantidad'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'previous_stock',
-    title: 'Stock Ant.',
+    title: t('abastecimiento.common.stockAnt'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'new_stock',
-    title: 'Stock Nuevo',
+    title: t('abastecimiento.common.stockNuevo'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'reference_number',
-    title: 'Referencia',
+    title: t('abastecimiento.common.referencia'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'created_by_name',
-    title: 'Usuario',
+    title: t('abastecimiento.common.usuario'),
     sortable: true,
     format: 'text',
     align: 'left'
@@ -333,12 +334,12 @@ const movementsTableColumns = [
 
 const getMovementTypeLabel = (type: string) => {
   const labels = {
-    'purchase': 'Compra',
-    'consumption': 'Consumo',
-    'adjustment': 'Ajuste',
-    'loss': 'Pérdida',
+    'purchase': t('abastecimiento.common.compra'),
+    'consumption': t('abastecimiento.common.consumo'),
+    'adjustment': t('abastecimiento.common.ajuste'),
+    'loss': t('abastecimiento.common.perdidas'),
     'transfer': 'Transferencia',
-    'return': 'Devolución'
+    'return': t('abastecimiento.common.devoluciones')
   }
   return labels[type] || type
 }

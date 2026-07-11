@@ -14,7 +14,7 @@
         <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           :search-fields="[]"
-          search-placeholder="Buscar recetas..."
+          :search-placeholder="t('menu.recetas.searchPlaceholder')"
           :show-date-range="false"
           :show-clear="hasActiveRecetasFilters"
           @search="performSearch"
@@ -25,8 +25,8 @@
               to="/menu/recetas/crear"
               class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
             >
-              <span class="hidden sm:inline">+ Nueva Receta Base</span>
-              <span class="sm:hidden">+ Nueva</span>
+              <span class="hidden sm:inline">{{ t('menu.recetas.newRecipe') }}</span>
+              <span class="sm:hidden">{{ t('menu.recetas.newShort') }}</span>
             </NuxtLink>
           </template>
         </UiAdvancedFiltersBar>
@@ -35,8 +35,8 @@
         <UiResponsiveDataView
           :columns="recetasTableColumns"
           :data="recetas"
-          empty-message="No hay recetas base registradas"
-          empty-sub-message="Crea una nueva receta base para comenzar"
+          :empty-message="t('menu.recetas.empty')"
+          :empty-sub-message="t('menu.recetas.emptySub')"
           variant="default"
           row-size="xs"
         >
@@ -254,18 +254,19 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity, normalizeDomainNumber } from '~/utils/domainNumberFormat'
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
   module: 'menu',
 })
 
-useHead({ title: 'Recetas' })
+useHead({ title: () => t('menu.head.recetas')})
 
 const { currentTenant } = useTenantReactive()
 
@@ -391,7 +392,7 @@ const nextPage = () => {
 const recetasTableColumns = [
   {
     key: 'producto_name',
-    title: 'Nombre de Receta',
+    title: t('menu.recetas.nameCol'),
     sortable: true,
     format: 'text',
     align: 'left'
@@ -405,21 +406,21 @@ const recetasTableColumns = [
   },
   {
     key: 'costo_total',
-    title: 'Costo',
+    title: t('abastecimiento.common.costo'),
     sortable: true,
     format: 'currency',
     align: 'right'
   },
   {
     key: 'is_active',
-    title: 'Estado',
+    title: t('menu.common.estado'),
     sortable: true,
     format: 'text',
     align: 'center'
   },
   {
     key: 'actions',
-    title: 'Acciones',
+    title: t('menu.common.acciones'),
     sortable: false,
     format: 'text',
     align: 'center'

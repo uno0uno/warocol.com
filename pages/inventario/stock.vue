@@ -41,7 +41,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
-useHead({ title: 'Stock' })
+const { t } = useI18n()
+useHead({ title: () => t('abastecimiento.head.stock') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -71,18 +72,18 @@ watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 const sortField = ref('current_stock')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
-const stockCopy = {
-  statsTotal: 'Total Ingredientes',
-  searchPlaceholder: 'Buscar ingredientes...',
-  emptyMessage: 'No hay ingredientes en inventario',
-  ingredientColumn: 'Ingrediente',
-}
+const stockCopy = computed(() => ({
+  statsTotal: t('abastecimiento.stock.invStatsTotal'),
+  searchPlaceholder: t('abastecimiento.stock.invSearchPlaceholder'),
+  emptyMessage: t('abastecimiento.stock.invEmptyMessage'),
+  ingredientColumn: t('abastecimiento.stock.invIngredientColumn'),
+}))
 
-const stockStatusOptions = [
-  { value: 'critical', label: 'Crítico', variant: 'destructive' },
-  { value: 'low', label: 'Bajo', variant: 'warning' },
-  { value: 'ok', label: 'Normal', variant: 'success' },
-]
+const stockStatusOptions = computed(() => [
+  { value: 'critical', label: t('abastecimiento.common.critico'), variant: 'destructive' },
+  { value: 'low', label: t('abastecimiento.common.bajo'), variant: 'warning' },
+  { value: 'ok', label: t('abastecimiento.common.normal'), variant: 'success' },
+])
 
 const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'stock', currentTenant.value?.id, {

@@ -43,11 +43,11 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Crear nuevo
+                  {{ t('menu.chooser.createNew') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <template v-if="initialName.trim()">
-                    “{{ initialName.trim() }}” no aparece en la búsqueda
+                    {{ t('menu.chooser.notInSearch', { name: initialName.trim() }) }}
                   </template>
                   <template v-else>
                     {{ WAREHOUSE_COPY.createChooserSubtitle }}
@@ -57,7 +57,7 @@
             </div>
             <button
               type="button"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               class="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
               @click="onCancel"
             >
@@ -70,13 +70,13 @@
 
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <p class="text-sm text-text-secondary">
-            ¿Qué quieres crear?
+            {{ t('menu.chooser.whatCreate') }}
           </p>
 
-          <div class="flex flex-col gap-3" role="group" aria-label="Tipo de ítem">
+          <div class="flex flex-col gap-3" role="group" :aria-label="t('menu.chooser.itemTypeAria')">
             <UiSelectionOptionCard
               :title="WAREHOUSE_COPY.warehouseItem"
-              description="Abastecimiento y recetas · gr, ml, und"
+              :description="t('menu.chooser.warehouseDesc')"
               :selected="selectedIntent === 'supply'"
               @click="selectAndConfirm('supply')"
             >
@@ -117,13 +117,15 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   resolveCreationIntent,
   shouldShowCreationChooser,
   type CatalogCreationContext,
   type CatalogCreationIntent,
 } from '@/composables/useCatalogEntityCreation'
+
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Props {
   modelValue: boolean

@@ -14,7 +14,7 @@
         v-model:search="localSearchTerm"
         v-model:search-field="apiSearchField"
         :search-fields="searchFields"
-        search-placeholder="Buscar proveedor..."
+        :search-placeholder="t('abastecimiento.proveedores.searchPlaceholder')"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
         @search="performSearch"
@@ -24,7 +24,7 @@
           <select
             v-model="statusFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por estado"
+            :aria-label="t('abastecimiento.proveedores.filterStatusAria')"
             @change="onStatusFilterChange"
           >
             <option value="">Estado</option>
@@ -35,7 +35,7 @@
           <select
             v-model="paymentTermsFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por plazo de pago"
+            :aria-label="t('abastecimiento.proveedores.filterPaymentAria')"
             @change="onPaymentTermsChange"
           >
             <option value="">Plazo de pago</option>
@@ -59,8 +59,8 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay proveedores registrados"
-        empty-sub-message="Crea un nuevo proveedor para comenzar"
+        :empty-message="t('abastecimiento.proveedores.empty')"
+        :empty-sub-message="t('abastecimiento.proveedores.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -130,11 +130,11 @@
         </template>
 
         <template #cell-email="{ value }">
-          <span class="text-sm text-text-primary">{{ value || 'No especificado' }}</span>
+          <span class="text-sm text-text-primary">{{ value || t('abastecimiento.common.noEspecificado') }}</span>
         </template>
 
         <template #cell-phone="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || 'No especificado' }}</span>
+          <span class="text-sm text-text-secondary">{{ value || t('abastecimiento.common.noEspecificado') }}</span>
         </template>
 
         <template #cell-is_active="{ value }">
@@ -204,35 +204,23 @@
 </template>
 
 <script setup lang="ts">
-
 import {
-
   PlusIcon,
-
   MagnifyingGlassIcon,
-
   CheckCircleIcon,
-
   XCircleIcon,
-
   CurrencyDollarIcon,
-
   TruckIcon,
-
   PencilIcon,
-
   EyeIcon,
-
   EyeSlashIcon,
-
   ChevronLeftIcon,
-
-  ChevronRightIcon
-
+  ChevronRightIcon,
 } from '@heroicons/vue/24/outline'
-
 import { ref, computed, watch, inject, onMounted } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+
+const { t } = useI18n()
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -253,15 +241,15 @@ const statusFilter = ref('')
 const paymentTermsFilter = ref('')
 
 const searchFields = [
-  { label: 'Proveedor', value: 'name' },
-  { label: 'NIT', value: 'tax_id' },
-  { label: 'Email', value: 'email' },
-  { label: 'Teléfono', value: 'phone' },
+  { label: t('abastecimiento.common.proveedor'), value: 'name' },
+  { label: t('abastecimiento.common.nit'), value: 'tax_id' },
+  { label: t('abastecimiento.common.email'), value: 'email' },
+  { label: t('abastecimiento.common.telefono'), value: 'phone' },
 ]
 
 const supplierStatusOptions = [
-  { value: 'active', label: 'Activo' },
-  { value: 'inactive', label: 'Inactivo' },
+  { value: 'active', label: t('abastecimiento.common.activo') },
+  { value: 'inactive', label: t('abastecimiento.common.inactivo') },
 ]
 
 const apiIsActive = ref<boolean | null>(null)
@@ -434,35 +422,35 @@ const handleSort = (field) => {
 const proveedoresTableColumns = [
   {
     key: 'name',
-    title: 'Proveedor',
+    title: t('abastecimiento.common.proveedor'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'tax_id',
-    title: 'NIT',
+    title: t('abastecimiento.common.nit'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'email',
-    title: 'Email',
+    title: t('abastecimiento.common.email'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'phone',
-    title: 'Teléfono',
+    title: t('abastecimiento.common.telefono'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'is_active',
-    title: 'Estado',
+    title: t('abastecimiento.common.estado'),
 
     sortable: true,
 
@@ -476,7 +464,7 @@ const proveedoresTableColumns = [
 
     key: 'actions',
 
-    title: 'Acciones',
+    title: t('abastecimiento.common.acciones'),
 
     sortable: false,
 
@@ -586,10 +574,6 @@ const toggleStatus = (proveedor) => {
 
 
 
-useHead({
-
-  title: 'Proveedores - Abastecimiento'
-
-})
+useHead({ title: () => t('abastecimiento.head.proveedores') })
 
 </script>

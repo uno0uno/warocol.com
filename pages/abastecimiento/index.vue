@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
-useHead({ title: 'Abastecimiento' })
+useHead({ title: () => t('abastecimiento.head.hub') })
 </script>
 
 <template>

@@ -89,8 +89,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Ingredient {
   id: string

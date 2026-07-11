@@ -22,14 +22,14 @@
           <select
             v-model="movementTypeFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por tipo de movimiento"
+            :aria-label="t('abastecimiento.movimientos.filterTypeAria')"
           >
-            <option value="">Tipo</option>
-            <option value="purchase">Compras</option>
-            <option value="consumption">Consumo</option>
-            <option value="adjustment">Ajustes</option>
-            <option value="return">Devoluciones</option>
-            <option value="loss">Pérdidas</option>
+            <option value="">{{ t('abastecimiento.common.tipo') }}</option>
+            <option value="purchase">{{ t('abastecimiento.common.compras') }}</option>
+            <option value="consumption">{{ t('abastecimiento.common.consumo') }}</option>
+            <option value="adjustment">{{ t('abastecimiento.common.ajustes') }}</option>
+            <option value="return">{{ t('abastecimiento.common.devoluciones') }}</option>
+            <option value="loss">{{ t('abastecimiento.common.perdidas') }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -41,8 +41,8 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay movimientos registrados"
-        empty-sub-message="Los movimientos aparecerán cuando se registren compras o ventas"
+        :empty-message="t('abastecimiento.movimientos.empty')"
+        :empty-sub-message="t('abastecimiento.movimientos.emptySub')"
         variant="default"
       >
         <template #header-movement_type>
@@ -148,10 +148,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
-useHead({ title: 'Movimientos' })
+useHead({ title: () => t('abastecimiento.head.movimientos') })
 
 const route = useRoute()
 const { currentTenant } = useTenantReactive()
@@ -162,11 +163,11 @@ const ingredientFilter = ref('')
 const movementTypeFilter = ref('')
 
 const movementTypeOptions = [
-  { value: 'purchase', label: 'Compras' },
-  { value: 'consumption', label: 'Consumo' },
-  { value: 'adjustment', label: 'Ajustes' },
-  { value: 'return', label: 'Devoluciones' },
-  { value: 'loss', label: 'Pérdidas' },
+  { value: 'purchase', label: t('abastecimiento.common.compras') },
+  { value: 'consumption', label: t('abastecimiento.common.consumo') },
+  { value: 'adjustment', label: t('abastecimiento.common.ajustes') },
+  { value: 'return', label: t('abastecimiento.common.devoluciones') },
+  { value: 'loss', label: t('abastecimiento.common.perdidas') },
 ]
 
 const hasActiveFilters = computed(
@@ -260,25 +261,25 @@ const clearFilters = () => {
 }
 
 const movementsTableColumns = [
-  { key: 'created_at', title: 'Fecha', sortable: true, format: 'date', align: 'left' },
+  { key: 'created_at', title: t('abastecimiento.common.fecha'), sortable: true, format: 'date', align: 'left' },
   { key: 'ingredient_name', title: WAREHOUSE_COPY.warehouseItemColumn, sortable: true, format: 'text', align: 'left' },
-  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' },
-  { key: 'movement_type', title: 'Tipo', sortable: true, format: 'badge', align: 'center' },
-  { key: 'quantity_change', title: 'Cantidad', sortable: true, format: 'number', align: 'right' },
-  { key: 'previous_stock', title: 'Stock Ant.', sortable: true, format: 'number', align: 'right' },
-  { key: 'new_stock', title: 'Stock Nuevo', sortable: true, format: 'number', align: 'right' },
-  { key: 'reference_number', title: 'Referencia', sortable: true, format: 'text', align: 'left' },
-  { key: 'created_by_name', title: 'Usuario', sortable: true, format: 'text', align: 'left' },
+  { key: 'unit', title: t('abastecimiento.common.unidad'), sortable: false, format: 'text', align: 'left' },
+  { key: 'movement_type', title: t('abastecimiento.common.tipo'), sortable: true, format: 'badge', align: 'center' },
+  { key: 'quantity_change', title: t('abastecimiento.common.cantidad'), sortable: true, format: 'number', align: 'right' },
+  { key: 'previous_stock', title: t('abastecimiento.common.stockAnt'), sortable: true, format: 'number', align: 'right' },
+  { key: 'new_stock', title: t('abastecimiento.common.stockNuevo'), sortable: true, format: 'number', align: 'right' },
+  { key: 'reference_number', title: t('abastecimiento.common.referencia'), sortable: true, format: 'text', align: 'left' },
+  { key: 'created_by_name', title: t('abastecimiento.common.usuario'), sortable: true, format: 'text', align: 'left' },
 ]
 
 const getMovementTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    purchase: 'Compra',
-    consumption: 'Consumo',
-    adjustment: 'Ajuste',
-    loss: 'Pérdida',
+    purchase: t('abastecimiento.common.compra'),
+    consumption: t('abastecimiento.common.consumo'),
+    adjustment: t('abastecimiento.common.ajuste'),
+    loss: t('abastecimiento.common.perdidas'),
     transfer: 'Transferencia',
-    return: 'Devolución',
+    return: t('abastecimiento.common.devoluciones'),
   }
   return labels[type] || type
 }

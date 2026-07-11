@@ -7,17 +7,17 @@
         icon="beaker"
       />
       <UiStatsCard
-        label="Stock Bajo"
+        :label="t('abastecimiento.common.stockBajo')"
         :value="stats.low_stock_count"
         icon="exclamation"
       />
       <UiStatsCard
-        label="Stock Crítico"
+        :label="t('abastecimiento.common.stockCritico')"
         :value="stats.critical_count"
         icon="exclamation-circle"
       />
       <UiStatsCard
-        label="Valor Total"
+        :label="t('abastecimiento.common.valorTotal')"
         :value="formatCurrency(stats.total_inventory_value)"
         icon="currency-dollar"
       />
@@ -37,10 +37,10 @@
         <select
           :value="categoryFilter"
           :class="[filterSelectClass, 'md:hidden']"
-          aria-label="Filtrar por categoría"
+          :aria-label="t('abastecimiento.stock.filterCategoryAria')"
           @change="$emit('update:categoryFilter', ($event.target as HTMLSelectElement).value)"
         >
-          <option value="">Categoría</option>
+          <option value="">{{ t('abastecimiento.common.categoria') }}</option>
           <option v-for="category in categories" :key="category" :value="category">
             {{ category }}
           </option>
@@ -49,10 +49,10 @@
         <select
           :value="statusFilter"
           :class="[filterSelectClass, 'md:hidden']"
-          aria-label="Filtrar por estado"
+          :aria-label="t('abastecimiento.stock.filterStatusAria')"
           @change="$emit('update:statusFilter', ($event.target as HTMLSelectElement).value)"
         >
-          <option value="all">Estado</option>
+          <option value="all">{{ t('abastecimiento.common.estado') }}</option>
           <option v-for="option in statusOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -61,10 +61,10 @@
         <select
           :value="unitFilter"
           :class="[filterSelectClass, 'md:hidden']"
-          aria-label="Filtrar por unidad"
+          :aria-label="t('abastecimiento.stock.filterUnitAria')"
           @change="$emit('update:unitFilter', ($event.target as HTMLSelectElement).value)"
         >
-          <option value="">Unidad</option>
+          <option value="">{{ t('abastecimiento.common.unidad') }}</option>
           <option v-for="unit in units" :key="unit" :value="unit">
             {{ unit }}
           </option>
@@ -81,35 +81,35 @@
       :sort-field="sortField"
       :sort-direction="sortDirection"
       :empty-message="copy.emptyMessage"
-      empty-sub-message="Comienza recibiendo compras en Abastecimiento"
+      :empty-sub-message="t('abastecimiento.stock.emptySub')"
       variant="default"
       @sort="$emit('sort', $event)"
     >
         <template #header-unit>
           <UiTableHeaderFilter
-            title="Unidad"
+            :title="t('abastecimiento.common.unidad')"
             filter-type="select"
             :model-value="unitFilter"
             :options="unitHeaderOptions"
-            all-label="Todas"
+            :all-label="t('abastecimiento.common.todas')"
             @update:model-value="$emit('update:unitFilter', typeof $event === 'string' ? $event : '')"
           />
         </template>
 
         <template #header-category>
           <UiTableHeaderFilter
-            title="Categoría"
+            :title="t('abastecimiento.common.categoria')"
             filter-type="select"
             :model-value="categoryFilter"
             :options="categoryHeaderOptions"
-            all-label="Todas"
+            :all-label="t('abastecimiento.common.todas')"
             @update:model-value="$emit('update:categoryFilter', typeof $event === 'string' ? $event : '')"
           />
         </template>
 
         <template #header-status>
           <UiTableHeaderFilter
-            title="Estado"
+            :title="t('abastecimiento.common.estado')"
             column-key="status"
             sortable
             :sort-field="sortField"
@@ -117,7 +117,7 @@
             filter-type="select"
             :model-value="headerStatusFilter"
             :options="stockStatusHeaderOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             align="center"
             @sort="$emit('sort', $event)"
             @update:model-value="updateHeaderStatusFilter"
@@ -286,6 +286,8 @@
 <script setup lang="ts">
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
+const { t } = useI18n()
+
 interface StockStats {
   total_ingredients: number
   critical_count: number
@@ -400,70 +402,70 @@ const stockTableColumns = computed(() => [
   },
   {
     key: 'unit',
-    title: 'Unidad',
+    title: t('abastecimiento.common.unidad'),
     sortable: false,
     format: 'text',
     align: 'left',
   },
   {
     key: 'category',
-    title: 'Categoría',
+    title: t('abastecimiento.common.categoria'),
     sortable: false,
     format: 'text',
     align: 'left',
   },
   {
     key: 'current_stock',
-    title: 'Stock Actual',
+    title: t('abastecimiento.common.stockActual'),
     sortable: true,
     format: 'number',
     align: 'right',
   },
   {
     key: 'minimum_stock',
-    title: 'Stock Mín',
+    title: t('abastecimiento.common.stockMin'),
     sortable: true,
     format: 'number',
     align: 'right',
   },
   {
     key: 'maximum_stock',
-    title: 'Stock Máx',
+    title: t('abastecimiento.common.stockMax'),
     sortable: true,
     format: 'number',
     align: 'right',
   },
   {
     key: 'stock_percentage',
-    title: '% Stock',
+    title: t('abastecimiento.common.pctStock'),
     sortable: false,
     format: 'custom',
     align: 'center',
   },
   {
     key: 'unit_cost',
-    title: 'Costo Unit.',
+    title: t('abastecimiento.common.costoUnit'),
     sortable: true,
     format: 'currency',
     align: 'right',
   },
   {
     key: 'total_value',
-    title: 'Valor Total',
+    title: t('abastecimiento.common.valorTotal'),
     sortable: true,
     format: 'currency',
     align: 'right',
   },
   {
     key: 'status',
-    title: 'Estado',
+    title: t('abastecimiento.common.estado'),
     sortable: true,
     format: 'badge',
     align: 'center',
   },
   {
     key: 'actions',
-    title: 'Acciones',
+    title: t('abastecimiento.common.acciones'),
     sortable: false,
     format: 'custom',
     align: 'center',
@@ -488,9 +490,9 @@ const mobileSubtitle = (item: StockItem) => {
   if (!props.showMobileStockLimits) return item.unit
 
   const maxLabel = item.maximum_stock
-    ? ` · máx ${formatNumber(item.maximum_stock)}`
+    ? ` · ${t('abastecimiento.stock.maxShort')} ${formatNumber(item.maximum_stock)}`
     : ''
-  return `${item.unit} · mín ${formatNumber(item.minimum_stock)}${maxLabel}`
+  return `${item.unit} · ${t('abastecimiento.stock.minShort')} ${formatNumber(item.minimum_stock)}${maxLabel}`
 }
 
 const navigateToAdjustment = (ingredientId: string) => {

@@ -14,7 +14,7 @@
         <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           :search-fields="[]"
-          search-placeholder="Buscar categoría..."
+          :search-placeholder="t('menu.categorias.searchPlaceholder')"
           :show-date-range="false"
           :show-clear="hasActiveFilters"
           @search="performSearch"
@@ -24,11 +24,11 @@
             <select
               v-model="tipoFilter"
               :class="[filterSelectClass, 'md:hidden']"
-              aria-label="Filtrar por tipo"
+              :aria-label="t('menu.categorias.filterTypeAria')"
             >
-              <option value="">Tipo</option>
-              <option value="global">Global</option>
-              <option value="own">Propia</option>
+              <option value="">{{ t('menu.common.tipo') }}</option>
+              <option value="global">{{ t('menu.categorias.global') }}</option>
+              <option value="own">{{ t('menu.categorias.own') }}</option>
             </select>
           </template>
           <template #trailing>
@@ -37,8 +37,8 @@
               class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
               @click="openCreatePanel"
             >
-              <span class="hidden sm:inline">+ Nueva categoría</span>
-              <span class="sm:hidden">+ Nueva</span>
+              <span class="hidden sm:inline">{{ t('menu.categorias.newCategory') }}</span>
+              <span class="sm:hidden">{{ t('menu.categorias.newShort') }}</span>
             </button>
           </template>
         </UiAdvancedFiltersBar>
@@ -47,18 +47,18 @@
         <UiResponsiveDataView
           :columns="columns"
           :data="categories"
-          empty-message="No hay categorías"
-          empty-sub-message="Crea la primera para organizar tu menú."
+          :empty-message="t('menu.categorias.empty')"
+          :empty-sub-message="t('menu.categorias.emptySub')"
           variant="default"
           row-size="xs"
         >
           <template #header-tipo>
             <UiTableHeaderFilter
               v-model="tipoFilter"
-              title="Tipo"
+              :title="t('menu.common.tipo')"
               filter-type="select"
               :options="tipoHeaderOptions"
-              all-label="Todos"
+              :all-label="t('menu.common.todos')"
               align="left"
             />
           </template>
@@ -175,6 +175,7 @@
 
 <script setup lang="ts">
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+const { t } = useI18n()
 
 definePageMeta({
   // layout: 'dashboard' — inherited from parent menu.vue
@@ -182,7 +183,7 @@ definePageMeta({
   module: 'menu',
 })
 
-useHead({ title: 'Categorías' })
+useHead({ title: () => t('menu.head.categorias') })
 
 interface Category {
   id: string

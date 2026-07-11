@@ -48,7 +48,7 @@
           <select
             v-model="adjustmentTypeFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por tipo de ajuste"
+            :aria-label="t('abastecimiento.ajustes.filterTypeAria')"
           >
             <option value="">Tipo ajuste</option>
             <option value="positive">Incrementos</option>
@@ -64,8 +64,8 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay ajustes registrados"
-        empty-sub-message="Para registrar un ajuste manual, ve a Stock → Ajustar stock"
+        :empty-message="t('abastecimiento.ajustes.empty')"
+        :empty-sub-message="t('abastecimiento.ajustes.emptySubAbs')"
         variant="default"
         row-size="sm"
       >
@@ -159,9 +159,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
-useHead({ title: 'Historial de ajustes' })
+useHead({ title: () => t('abastecimiento.head.historialAjustes') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -172,8 +173,8 @@ const ingredientFilter = ref('')
 const adjustmentTypeFilter = ref('')
 
 const adjustmentTypeOptions = [
-  { value: 'positive', label: 'Incrementos' },
-  { value: 'negative', label: 'Decrementos' },
+  { value: 'positive', label: t('abastecimiento.common.incrementos') },
+  { value: 'negative', label: t('abastecimiento.common.decrementos') },
 ]
 
 const hasActiveFilters = computed(
@@ -306,7 +307,7 @@ const clearFilters = () => {
 const adjustmentsTableColumns = [
   {
     key: 'created_at',
-    title: 'Fecha',
+    title: t('abastecimiento.common.fecha'),
     sortable: true,
     format: 'date',
     align: 'left'
@@ -320,42 +321,42 @@ const adjustmentsTableColumns = [
   },
   {
     key: 'unit',
-    title: 'Unidad',
+    title: t('abastecimiento.common.unidad'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'adjustment_type',
-    title: 'Tipo',
+    title: t('abastecimiento.common.tipo'),
     sortable: false,
     format: 'badge',
     align: 'center'
   },
   {
     key: 'quantity_change',
-    title: 'Cantidad',
+    title: t('abastecimiento.common.cantidad'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'previous_stock',
-    title: 'Stock Ant.',
+    title: t('abastecimiento.common.stockAnt'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'new_stock',
-    title: 'Stock Nuevo',
+    title: t('abastecimiento.common.stockNuevo'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'created_by_name',
-    title: 'Usuario',
+    title: t('abastecimiento.common.usuario'),
     sortable: true,
     format: 'text',
     align: 'left'

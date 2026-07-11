@@ -58,8 +58,8 @@
                   : 'bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:ring-shell-cta-focus-ring'"
                 @click="onToggleEditMode"
               >
-                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
-                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
+                <span class="hidden sm:inline">{{ editMode ? t('menu.productos.viewCatalog') : t('menu.productos.editMode') }}</span>
+                <span class="sm:hidden">{{ editMode ? t('menu.productos.viewShort') : t('menu.productos.editShort') }}</span>
               </button>
               <NuxtLink
                 to="/menu/productos/crear"
@@ -365,7 +365,7 @@
                       Precio al vender en el POS · sin categoría de menú
                     </template>
                     <template v-else>
-                      {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
+                      {{ item.category_name || t('menu.common.sinCategoria') }} · {{ formatCurrency(item.price) }}
                     </template>
                   </p>
                   <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
@@ -405,7 +405,7 @@
                 />
                 <UiStatusBadge
                   v-else
-                  :value="item.is_available ? 'Disponible' : 'No disponible'"
+                  :value="item.is_available ? t('menu.common.disponible') : t('menu.common.noDisponible')"
                   format="text"
                   :variant="item.is_available ? 'success' : 'secondary'"
                   size="sm"
@@ -496,7 +496,7 @@
               size="sm"
               class="whitespace-nowrap"
             />
-            <span v-else class="text-sm text-text-secondary whitespace-nowrap">{{ value || 'Sin categoría' }}</span>
+            <span v-else class="text-sm text-text-secondary whitespace-nowrap">{{ value || t('menu.common.sinCategoria') }}</span>
           </template>
 
           <template #cell-price="{ value, item }">
@@ -606,7 +606,7 @@
               />
               <UiStatusBadge
                 v-else
-                :value="value ? 'Disponible' : 'No disponible'"
+                :value="value ? t('menu.common.disponible') : t('menu.common.noDisponible')"
                 format="text"
                 :variant="value ? 'success' : 'secondary'"
                 size="sm"
@@ -631,7 +631,7 @@
                 role="switch"
                 :aria-checked="row.is_available_online"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
-                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                :title="row.is_available_online ? t('menu.productos.disableDelivery') : t('menu.productos.enableDelivery')"
                 class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 :class="row.is_available_online ? 'bg-success' : 'bg-titan-300'"
                 @click="toggleDraftOnline(row)"
@@ -649,7 +649,7 @@
                 :aria-checked="row.is_available_online"
                 :disabled="togglingIds.has(row.id)"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
-                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                :title="row.is_available_online ? t('menu.productos.disableDelivery') : t('menu.productos.enableDelivery')"
                 class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 :class="[
                   row.is_available_online ? 'bg-success' : 'bg-titan-300',
@@ -888,6 +888,7 @@ import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
+const { t } = useI18n()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -906,12 +907,12 @@ const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
 
 const productTypeHeaderOptions: { label: string; value: ProductTypeFilter }[] = [
   { label: 'Menú', value: 'menu' },
-  { label: 'Reventa', value: 'resale' },
+  { label: t('menu.common.reventa'), value: 'resale' },
 ]
 
 const statusHeaderOptions = [
-  { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' },
+  { label: t('menu.common.disponible'), value: 'true' },
+  { label: t('menu.common.noDisponible'), value: 'false' },
 ]
 
 const TABLE_SORT_TO_API: Record<string, { asc: string; desc: string }> = {
@@ -960,7 +961,7 @@ const {
   hasActiveFilters,
 } = useMenuCatalogFilters()
 
-useHead({ title: 'Productos' })
+useHead({ title: () => t('menu.head.productos') })
 
 let syncingProductTypeRoute = false
 
@@ -1003,13 +1004,13 @@ const onCatalogSearch = () => applyCatalogSearch(() => { currentPage.value = 1 }
 const onCatalogClear = () => { currentPage.value = 1 }
 
 const emptyMessage = computed(() =>
-  hasActiveFilters.value ? 'Ningún producto coincide con los filtros' : 'No hay productos registrados',
+  hasActiveFilters.value ? t('menu.productos.emptyFiltered') : t('menu.productos.empty'),
 )
 
 const emptySubMessage = computed(() =>
   hasActiveFilters.value
-    ? 'Prueba ajustar o limpiar los filtros'
-    : 'Crea un nuevo producto para comenzar',
+    ? t('menu.productos.emptySubFiltered')
+    : t('menu.productos.emptySub'),
 )
 
 // Pagination
@@ -1231,18 +1232,18 @@ const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
 const isResaleProduct = (row: { is_resale?: boolean }) => !!row.is_resale
 
 const productTipoLabel = (row: { is_resale?: boolean }) =>
-  isResaleProduct(row) ? 'Reventa' : 'Menú'
+  isResaleProduct(row) ? t('menu.common.reventa') : t('menu.common.menuTipo')
 
 const isSubmitting = ref(false)
 
 const availabilityBulkOptions = [
-  { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' },
+  { label: t('menu.common.disponible'), value: 'true' },
+  { label: t('menu.common.noDisponible'), value: 'false' },
 ]
 
 const channelBulkOptions = [
-  { label: 'Habilitar', value: 'true' },
-  { label: 'Deshabilitar', value: 'false' },
+  { label: t('menu.productos.enable'), value: 'true' },
+  { label: t('menu.productos.disable'), value: 'false' },
 ]
 
 const {
@@ -1388,8 +1389,8 @@ async function executeBulkCatalogApply() {
     await refetch()
     clearSelection()
     toastCatalogBulkResult(result, toast, {
-      title: 'Listo',
-      errorMessage: 'No se pudo actualizar ningún producto',
+      title: t('menu.common.listo'),
+      errorMessage: t('menu.productos.updateNoneError'),
     })
   } finally {
     isSubmitting.value = false
@@ -1434,8 +1435,8 @@ async function saveChanges() {
       toast.error(syncWarnings.slice(0, 3).join('\n'), {
         title:
           syncWarnings.length > 1
-            ? 'Algunos insumos no se renombraron'
-            : 'Insumo no sincronizado',
+            ? t('menu.productos.someIngredientsNotRenamed')
+            : t('menu.productos.ingredientNotSynced'),
         duration: 6000,
       })
     }
@@ -1447,8 +1448,8 @@ async function saveChanges() {
     clearSelection()
 
     toastCatalogBulkResult(result, toast, {
-      title: 'Guardado',
-      emptySuccessMessage: 'Catálogo actualizado',
+      title: t('menu.common.guardado'),
+      emptySuccessMessage: t('menu.productos.catalogUpdated'),
     })
   } finally {
     isSubmitting.value = false
@@ -1490,9 +1491,9 @@ const confirmBulkDelete = async () => {
   } else if (result.ok > 0) {
     toastCatalogDeleteResult({ ...result, archived }, toast)
   } else {
-    bulkDeleteError.value = 'No se pudo eliminar ningún producto'
+    bulkDeleteError.value = t('menu.productos.bulkDeleteError')
     showBulkDeleteModal.value = true
-    toast.error('Error al eliminar', { title: 'Error' })
+    toast.error(t('menu.productos.deleteErrorTitle'), { title: t('menu.common.error') })
   }
 }
 
@@ -1552,14 +1553,14 @@ const productosTableColumns = computed(() => {
     { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
     {
       key: 'name',
-      title: 'Producto',
+      title: t('menu.common.producto'),
       sortable: true,
       format: 'text',
       align: 'left'
     },
     {
       key: 'tipo',
-      title: 'Tipo',
+      title: t('menu.common.tipo'),
       sortable: false,
       align: 'left',
       width: '5.5rem',
@@ -1570,21 +1571,21 @@ const productosTableColumns = computed(() => {
   cols.push(
     {
       key: 'category_name',
-      title: 'Categoría',
+      title: t('menu.common.categoria'),
       sortable: false,
       format: 'text',
       align: 'left'
     },
     {
       key: 'price',
-      title: 'Precio',
+      title: t('menu.common.precio'),
       sortable: true,
       format: 'currency',
       align: 'right'
     },
     {
       key: 'costo_percibido',
-      title: 'Mi costo',
+      title: t('menu.productos.miCosto'),
       sortable: false,
       format: 'currency',
       align: 'right'
