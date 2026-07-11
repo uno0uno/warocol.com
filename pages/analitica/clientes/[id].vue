@@ -104,6 +104,13 @@ const formatDate = (isoDate: string) => {
 const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractionDigits: 0 })
 const formatProductCount = (count: number) =>
   t(count === 1 ? 'analitica.customerDetail.productCountOne' : 'analitica.customerDetail.productCountMany', { count })
+const formatManualWarosDescription = (description: string | null | undefined) => {
+  const value = (description || '').trim()
+  if (!value) return t('analitica.customerDetail.waros.manualAssignment')
+  if (value === 'Asignación manual de Waros') return t('analitica.customerDetail.waros.manualCredit')
+  if (value === 'Deducción manual de Waros') return t('analitica.customerDetail.waros.manualDebit')
+  return value
+}
 
 const statusLabel = (status: string) =>
   ['completed', 'cancelled', 'pending'].includes(status)
@@ -998,7 +1005,7 @@ onUnmounted(() => {
             >
               <div class="min-w-0">
                 <p class="text-xs text-text-secondary mb-0.5">{{ formatWarosDate(tx.created_at) }}</p>
-                <p class="text-sm text-text-primary truncate">{{ tx.description || t('analitica.customerDetail.waros.manualAssignment') }}</p>
+                <p class="text-sm text-text-primary truncate">{{ formatManualWarosDescription(tx.description) }}</p>
               </div>
               <span
                 :class="[

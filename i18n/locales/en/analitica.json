@@ -217,7 +217,9 @@
         "manual": "Manual",
         "manualAssignments": "Manual assignments",
         "noManualAssignments": "No manual assignments",
-        "manualAssignment": "Manual assignment"
+        "manualAssignment": "Manual assignment",
+        "manualCredit": "Manual Waros assignment",
+        "manualDebit": "Manual Waros deduction"
       },
       "wallet": {
         "title": "COP wallet",
