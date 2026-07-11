@@ -471,6 +471,44 @@
       "coveragePct": "{pct}% con movimientos",
       "movementsCount": "{count} movimientos",
       "noCategory": "Sin categoría"
+    },
+    "kali": {
+      "emptyTitle": "Listo para conversar",
+      "processingSince": "Procesando desde hace {elapsed}",
+      "loadingAria": "Kali está cargando",
+      "messageLabel": "Mensaje para Kali",
+      "placeholder": "Pregunta sobre ventas, precios de platos o tu restaurante",
+      "retry": "Reintentar",
+      "cancelResponse": "Cancelar respuesta",
+      "sendMessage": "Enviar mensaje",
+      "loadingPhrases": {
+        "queryingData": "Consultando datos",
+        "validatingMetrics": "Validando métricas",
+        "preparingAnswer": "Preparando respuesta"
+      },
+      "progress": {
+        "cancelled": "Solicitud cancelada",
+        "ready": "Respuesta lista",
+        "error": "Error en la respuesta",
+        "start": "Inicio",
+        "router": "Router",
+        "querying": "Consultando",
+        "dataReady": "Datos listos",
+        "writing": "Redactando"
+      },
+      "streamDetails": {
+        "dataReceived": "Datos recibidos",
+        "queryCompleted": "Consulta completada"
+      },
+      "errors": {
+        "incomplete": "No se pudo completar la respuesta.",
+        "emptyAssistant": "No pude completar esta respuesta.",
+        "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión para usar Kali.",
+        "forbidden": "Kali no está habilitado para este tenant o módulo.",
+        "serviceUnavailable": "El servicio de Kali no respondió. Intenta de nuevo en unos segundos.",
+        "startFailed": "No se pudo iniciar la conversación con Kali.",
+        "streamFailed": "Kali no pudo completar esta respuesta."
+      }
     }
   }
 }

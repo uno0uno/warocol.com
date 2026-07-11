@@ -7,7 +7,7 @@
             <div v-if="messages.length === 0" class="flex min-h-[360px] items-center justify-center px-5 py-8">
               <div class="flex max-w-md flex-col items-center gap-6 text-center">
                 <p class="font-serif text-3xl font-bold leading-tight text-text-primary md:text-4xl">
-                  Listo para conversar
+                  {{ t('analitica.kali.emptyTitle') }}
                 </p>
                 <SparklesIcon class="h-32 w-32 text-slate-700" aria-hidden="true" />
               </div>
@@ -32,8 +32,8 @@
                     aria-live="polite"
                   >
                     <div class="inline-flex items-center gap-2 text-sm">
-                      <span>Procesando desde hace {{ processingElapsedLabel }}</span>
-                      <CommonsInlineDots :size="5" color="currentColor" aria-label="Kali esta cargando" />
+                      <span>{{ t('analitica.kali.processingSince', { elapsed: processingElapsedLabel }) }}</span>
+                      <CommonsInlineDots :size="5" color="currentColor" :aria-label="t('analitica.kali.loadingAria')" />
                     </div>
                     <p class="mt-3 text-sm leading-6 text-text-secondary">{{ kaliLoadingPhrase }}</p>
                     <ol v-if="visibleProgressEvents.length" class="mt-5 space-y-3 border-t border-stone-200 pt-5">
@@ -43,9 +43,9 @@
                         class="activity-row flex min-w-0 items-center gap-2"
                       >
                         <component
-                          :is="progressIcon(event.title)"
+                          :is="progressIcon(event.kind)"
                           class="h-4 w-4 shrink-0"
-                          :class="progressIconClass(event.title)"
+                          :class="progressIconClass(event.kind)"
                           aria-hidden="true"
                         />
                         <span class="truncate text-xs font-medium text-text-secondary">{{ event.title }}</span>
@@ -72,7 +72,7 @@
             </div>
 
             <form class="pointer-events-auto flex flex-col gap-2" @submit.prevent="sendMessage">
-              <label class="sr-only" for="kali-message">Mensaje para Kali</label>
+              <label class="sr-only" for="kali-message">{{ t('analitica.kali.messageLabel') }}</label>
               <div class="flex items-center gap-2 rounded-xl border border-card-border bg-white px-4 py-3 shadow-sm transition focus-within:border-primary">
                 <input
                   id="kali-message"
@@ -80,7 +80,7 @@
                   type="text"
                   maxlength="2000"
                   class="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm leading-6 text-text-primary outline-none ring-0 placeholder:text-text-tertiary focus:border-transparent focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
-                  placeholder="Pregunta sobre ventas, precios de platos o tu restaurante"
+                  :placeholder="t('analitica.kali.placeholder')"
                   :disabled="isStreaming"
                   @keydown.enter.exact.prevent="sendMessage"
                 />
@@ -92,13 +92,13 @@
                   @click="retryLastPrompt"
                 >
                   <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
-                  Reintentar
+                  {{ t('analitica.kali.retry') }}
                 </button>
                 <button
                   v-if="isStreaming"
                   type="button"
                   class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-status-error-text transition hover:bg-status-error-bg disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-status-error-border/60 active:scale-[0.96]"
-                  aria-label="Cancelar respuesta"
+                  :aria-label="t('analitica.kali.cancelResponse')"
                   @click="cancelStream"
                 >
                   <StopIcon class="h-5 w-5" aria-hidden="true" />
@@ -108,7 +108,7 @@
                   type="submit"
                   class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-primary transition hover:bg-primary/8 disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.96]"
                   :disabled="!canSend"
-                  aria-label="Enviar mensaje"
+                  :aria-label="t('analitica.kali.sendMessage')"
                 >
                   <PaperAirplaneIcon class="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -161,6 +161,7 @@ interface ProgressEvent {
   id: string
   title: string
   detail?: string
+  kind?: string
 }
 
 interface ParsedSseEvent {
@@ -169,6 +170,7 @@ interface ParsedSseEvent {
 }
 
 const AGENT_ENDPOINT = '/api/ai/sales/messages/stream'
+const { t } = useI18n({ useScope: 'global' })
 const draft = ref('')
 const messages = ref<ChatMessage[]>([])
 const progressEvents = ref<ProgressEvent[]>([])
@@ -197,14 +199,15 @@ const processingElapsedLabel = computed(() => {
   return formatElapsed(processingNow.value - processingStartedAt.value)
 })
 const {
-  currentPhrase: kaliLoadingPhrase,
+  currentPhrase: kaliLoadingPhraseKey,
   start: startKaliLoadingPhrases,
   stop: stopKaliLoadingPhrases,
 } = useLoadingPhrases([
-  'Consultando datos',
-  'Validando metricas',
-  'Preparando respuesta',
+  'queryingData',
+  'validatingMetrics',
+  'preparingAnswer',
 ])
+const kaliLoadingPhrase = computed(() => t(`analitica.kali.loadingPhrases.${kaliLoadingPhraseKey.value}`))
 
 watch(isStreaming, (loading) => {
   if (loading) {
@@ -235,7 +238,7 @@ function cancelStream() {
   activeController?.abort()
   activeController = null
   streamStatus.value = 'cancelled'
-  addProgress('Solicitud cancelada')
+  addProgress(t('analitica.kali.progress.cancelled'), undefined, 'cancelled')
 }
 
 async function startStream(prompt: string, options: { appendUserMessage?: boolean } = {}) {
@@ -360,7 +363,7 @@ function handleSseEvent(parsed: ParsedSseEvent, assistantMessageId: string) {
     }
     fillEmptyAssistantFromSummary(assistantMessageId, parsed.data)
     streamStatus.value = 'completed'
-    addProgress('Respuesta lista', progressDetail(parsed.data))
+    addProgress(t('analitica.kali.progress.ready'), progressDetail(parsed.data), 'final')
     return
   }
 
@@ -368,7 +371,7 @@ function handleSseEvent(parsed: ParsedSseEvent, assistantMessageId: string) {
     throw new Error(streamErrorMessage(parsed.data))
   }
 
-  addProgress(progressTitle(eventName), progressDetail(parsed.data))
+  addProgress(progressTitle(eventName), progressDetail(parsed.data), eventName)
 }
 
 function appendAssistantText(messageId: string, text: string) {
@@ -391,15 +394,15 @@ function markStreamFailed(err: unknown, prompt: string, assistantMessageId: stri
   streamStatus.value = 'error'
   lastFailedPrompt.value = prompt
   lastFailedAssistantId.value = assistantMessageId
-  errorMessage.value = err instanceof Error ? err.message : 'No se pudo completar la respuesta.'
+  errorMessage.value = err instanceof Error ? err.message : t('analitica.kali.errors.incomplete')
   fillEmptyAssistantWithError(assistantMessageId)
-  addProgress('Error en la respuesta', errorMessage.value)
+  addProgress(t('analitica.kali.progress.error'), errorMessage.value, 'error')
 }
 
 function fillEmptyAssistantWithError(messageId: string) {
   const message = messages.value.find((item) => item.id === messageId)
   if (message && !message.content.trim()) {
-    message.content = 'No pude completar esta respuesta.'
+    message.content = t('analitica.kali.errors.emptyAssistant')
   }
 }
 
@@ -410,19 +413,19 @@ function removeMessage(messageId: string) {
 
 function progressTitle(eventName: string) {
   const titles: Record<string, string> = {
-    run_started: 'Inicio',
-    step_started: 'Router',
-    tool_started: 'Consultando',
-    tool_finished: 'Datos listos',
-    llm_started: 'Redactando',
+    run_started: t('analitica.kali.progress.start'),
+    step_started: t('analitica.kali.progress.router'),
+    tool_started: t('analitica.kali.progress.querying'),
+    tool_finished: t('analitica.kali.progress.dataReady'),
+    llm_started: t('analitica.kali.progress.writing'),
   }
   return titles[eventName] ?? eventName
 }
 
 function progressDetail(data: Record<string, unknown>) {
   const resultSummary = typeof data.result_summary === 'string' ? data.result_summary : ''
-  if (resultSummary.startsWith('Returned data object')) return 'Datos recibidos'
-  if (resultSummary.startsWith('Returned')) return 'Consulta completada'
+  if (resultSummary.startsWith('Returned data object')) return t('analitica.kali.streamDetails.dataReceived')
+  if (resultSummary.startsWith('Returned')) return t('analitica.kali.streamDetails.queryCompleted')
 
   const fields = [
     data.tool_name,
@@ -435,28 +438,28 @@ function progressDetail(data: Record<string, unknown>) {
   return fields.find((field): field is string => typeof field === 'string' && field.length > 0)
 }
 
-function addProgress(title: string, detail?: string) {
+function addProgress(title: string, detail?: string, kind?: string) {
   progressEvents.value = [
     ...progressEvents.value,
-    { id: createId(), title, detail },
+    { id: createId(), title, detail, kind },
   ].slice(-24)
   void scrollToBottom()
 }
 
-function progressIcon(title: string) {
-  if (title.toLowerCase().includes('error')) return ExclamationTriangleIcon
-  if (title === 'Router') return ArrowsRightLeftIcon
-  if (title === 'Consultando') return WrenchScrewdriverIcon
-  if (title === 'Datos listos') return CircleStackIcon
-  if (title === 'Redactando') return ChatBubbleLeftRightIcon
-  if (title === 'Respuesta lista') return CheckCircleIcon
+function progressIcon(kind = '') {
+  if (kind.toLowerCase().includes('error')) return ExclamationTriangleIcon
+  if (kind === 'step_started') return ArrowsRightLeftIcon
+  if (kind === 'tool_started') return WrenchScrewdriverIcon
+  if (kind === 'tool_finished') return CircleStackIcon
+  if (kind === 'llm_started') return ChatBubbleLeftRightIcon
+  if (kind === 'final') return CheckCircleIcon
   return SparklesIcon
 }
 
-function progressIconClass(title: string) {
-  if (title.toLowerCase().includes('error')) return 'text-status-error-text'
-  if (['Respuesta lista', 'Datos listos'].includes(title)) return 'text-status-success-text'
-  if (['Consultando', 'Redactando', 'Router'].includes(title)) return 'text-primary activity-icon-active'
+function progressIconClass(kind = '') {
+  if (kind.toLowerCase().includes('error')) return 'text-status-error-text'
+  if (['final', 'tool_finished'].includes(kind)) return 'text-status-success-text'
+  if (['tool_started', 'llm_started', 'step_started'].includes(kind)) return 'text-primary activity-icon-active'
   return 'text-text-tertiary'
 }
 
@@ -466,10 +469,10 @@ function renderMarkdown(content: string) {
 }
 
 function setupErrorMessage(status: number) {
-  if (status === 401) return 'Tu sesion expiro. Vuelve a iniciar sesion para usar Kali.'
-  if (status === 403) return 'Kali no esta habilitado para este tenant o modulo.'
-  if (status >= 500) return 'El servicio de Kali no respondio. Intenta de nuevo en unos segundos.'
-  return 'No se pudo iniciar la conversacion con Kali.'
+  if (status === 401) return t('analitica.kali.errors.sessionExpired')
+  if (status === 403) return t('analitica.kali.errors.forbidden')
+  if (status >= 500) return t('analitica.kali.errors.serviceUnavailable')
+  return t('analitica.kali.errors.startFailed')
 }
 
 function streamErrorMessage(data: Record<string, unknown>) {
@@ -478,7 +481,7 @@ function streamErrorMessage(data: Record<string, unknown>) {
     const message = (error as { message?: unknown }).message
     if (typeof message === 'string' && message) return message
   }
-  return 'Kali no pudo completar esta respuesta.'
+  return t('analitica.kali.errors.streamFailed')
 }
 
 function createId() {

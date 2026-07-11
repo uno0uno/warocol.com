@@ -471,6 +471,44 @@
       "coveragePct": "{pct}% with movements",
       "movementsCount": "{count} movements",
       "noCategory": "No category"
+    },
+    "kali": {
+      "emptyTitle": "Ready to chat",
+      "processingSince": "Processing for {elapsed}",
+      "loadingAria": "Kali is loading",
+      "messageLabel": "Message for Kali",
+      "placeholder": "Ask about sales, dish prices, or your restaurant",
+      "retry": "Retry",
+      "cancelResponse": "Cancel response",
+      "sendMessage": "Send message",
+      "loadingPhrases": {
+        "queryingData": "Querying data",
+        "validatingMetrics": "Validating metrics",
+        "preparingAnswer": "Preparing answer"
+      },
+      "progress": {
+        "cancelled": "Request cancelled",
+        "ready": "Answer ready",
+        "error": "Response error",
+        "start": "Start",
+        "router": "Router",
+        "querying": "Querying",
+        "dataReady": "Data ready",
+        "writing": "Writing"
+      },
+      "streamDetails": {
+        "dataReceived": "Data received",
+        "queryCompleted": "Query completed"
+      },
+      "errors": {
+        "incomplete": "The answer could not be completed.",
+        "emptyAssistant": "I could not complete this answer.",
+        "sessionExpired": "Your session expired. Sign in again to use Kali.",
+        "forbidden": "Kali is not enabled for this tenant or module.",
+        "serviceUnavailable": "The Kali service did not respond. Try again in a few seconds.",
+        "startFailed": "The conversation with Kali could not be started.",
+        "streamFailed": "Kali could not complete this answer."
+      }
     }
   }
 }
