@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Star, Shield, Puzzle, AlertTriangle, Info } from 'lucide-vue-next'
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 
 interface MenuProfitabilityItem {
   id: string
@@ -36,9 +38,9 @@ const props = withDefaults(defineProps<{
   emptyMessage?: string
   emptySubMessage?: string
 }>(), {
-  title: 'Rentabilidad por producto',
-  emptyMessage: 'No hay productos para analizar',
-  emptySubMessage: 'Los productos aparecerán aquí cuando haya ventas en el período seleccionado',
+  title: undefined,
+  emptyMessage: undefined,
+  emptySubMessage: undefined,
 })
 
 const menuItems = computed(() => props.items || [])
@@ -49,40 +51,32 @@ const {
   formatCostCell: formatCostCellValue,
 } = useProductMargins()
 
-const tableColumns: MatrixColumn[] = [
-  { key: 'name', title: 'Producto', sortable: false, align: 'left', format: 'text' },
-  { key: 'classification', title: 'Clasificación', sortable: false, align: 'center', format: 'text' },
-  { key: 'total_units_sold', title: 'Unidades', sortable: false, align: 'right', format: 'number' },
-  { key: 'estimated_cost', title: 'Costo real', sortable: false, align: 'right', format: 'text' },
-  { key: 'costo_percibido', title: 'Mi costo', sortable: false, align: 'right', format: 'text' },
-  { key: 'price', title: 'Precio', sortable: false, align: 'right', format: 'text' },
-  { key: 'profit_margin_real_pct', title: 'Margen real', sortable: false, align: 'right', format: 'text' },
-  { key: 'profit_margin_operativo_pct', title: 'Margen op.', sortable: false, align: 'right', format: 'text' },
-  { key: 'total_revenue', title: 'Ingresos', sortable: false, align: 'right', format: 'text' },
-  { key: 'total_profit', title: 'Ganancia', sortable: false, align: 'right', format: 'text' },
-]
+const tableColumns = computed<MatrixColumn[]>(() => [
+  { key: 'name', title: t('analitica.rentabilidad.product'), sortable: false, align: 'left', format: 'text' },
+  { key: 'classification', title: t('analitica.rentabilidad.classification'), sortable: false, align: 'center', format: 'text' },
+  { key: 'total_units_sold', title: t('analitica.rentabilidad.units'), sortable: false, align: 'right', format: 'number' },
+  { key: 'estimated_cost', title: t('analitica.rentabilidad.realCost'), sortable: false, align: 'right', format: 'text' },
+  { key: 'costo_percibido', title: t('analitica.rentabilidad.myCost'), sortable: false, align: 'right', format: 'text' },
+  { key: 'price', title: t('analitica.rentabilidad.price'), sortable: false, align: 'right', format: 'text' },
+  { key: 'profit_margin_real_pct', title: t('analitica.rentabilidad.realMargin'), sortable: false, align: 'right', format: 'text' },
+  { key: 'profit_margin_operativo_pct', title: t('analitica.rentabilidad.operatingMarginShort'), sortable: false, align: 'right', format: 'text' },
+  { key: 'total_revenue', title: t('analitica.rentabilidad.revenue'), sortable: false, align: 'right', format: 'text' },
+  { key: 'total_profit', title: t('analitica.rentabilidad.profit'), sortable: false, align: 'right', format: 'text' },
+])
 
 const getCategoryStyles = (category: string) => {
   switch (category) {
     case 'Star':
-      return { bg: 'bg-state-success-bg', text: 'text-state-success-text', icon: Star, label: 'Excelente' }
+      return { bg: 'bg-state-success-bg', text: 'text-state-success-text', icon: Star, label: t('analitica.rentabilidad.classStar') }
     case 'Plowhorse':
-      return { bg: 'bg-state-info-bg', text: 'text-state-info-text', icon: Shield, label: 'Popular' }
+      return { bg: 'bg-state-info-bg', text: 'text-state-info-text', icon: Shield, label: t('analitica.rentabilidad.classPlowhorse') }
     case 'Puzzle':
-      return { bg: 'bg-state-warning-bg', text: 'text-state-warning-text', icon: Puzzle, label: 'Potencial' }
+      return { bg: 'bg-state-warning-bg', text: 'text-state-warning-text', icon: Puzzle, label: t('analitica.rentabilidad.classPuzzle') }
     case 'Dog':
-      return { bg: 'bg-state-danger-bg', text: 'text-state-danger-text', icon: AlertTriangle, label: 'Crítico' }
+      return { bg: 'bg-state-danger-bg', text: 'text-state-danger-text', icon: AlertTriangle, label: t('analitica.rentabilidad.classDog') }
     default:
-      return { bg: 'bg-status-chip-bg', text: 'text-status-chip-text', icon: Star, label: 'Unknown' }
+      return { bg: 'bg-status-chip-bg', text: 'text-status-chip-text', icon: Star, label: t('analitica.rentabilidad.classUnknown') }
   }
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
 }
 
 const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
@@ -126,16 +120,19 @@ const totals = computed(() => {
     >
       <Info :size="14" class="flex-shrink-0 mt-0.5" aria-hidden="true" />
       <span>
-        La matriz BCG usa <strong>mi costo del plato</strong> cuando está configurado; si no, costo real del sistema.
-        <strong>Costo real</strong> = inventario/compras; <strong>mi costo</strong> = referencia operativa que tú defines.
+        <i18n-t keypath="analitica.rentabilidad.matrixHelp" tag="span">
+          <template #myCost><strong>{{ t('analitica.rentabilidad.myCostLower') }}</strong></template>
+          <template #realCost><strong>{{ t('analitica.rentabilidad.realCost') }}</strong></template>
+          <template #myCostShort><strong>{{ t('analitica.rentabilidad.myCostLowerShort') }}</strong></template>
+        </i18n-t>
       </span>
     </p>
 
     <UiResponsiveDataView
       :columns="tableColumns"
       :data="menuItems"
-      :empty-message="emptyMessage"
-      :empty-sub-message="emptySubMessage"
+      :empty-message="emptyMessage || t('analitica.rentabilidad.emptyProducts')"
+      :empty-sub-message="emptySubMessage || t('analitica.rentabilidad.emptyProductsSub')"
       variant="default"
       row-size="sm"
     >
@@ -158,11 +155,11 @@ const totals = computed(() => {
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
             <p class="text-xs text-text-secondary mt-0.5">
-              {{ item.total_units_sold || 0 }} uds · {{ getCategoryStyles(item.classification).label }}
+              {{ t('analitica.rentabilidad.unitsShort', { count: item.total_units_sold || 0 }) }} · {{ getCategoryStyles(item.classification).label }}
             </p>
             <p class="text-xs text-text-tertiary">
-              Real: {{ formatCostCell(item.estimated_cost) }}
-              · Mi costo: {{ formatCostCell(item.costo_percibido) }}
+              {{ t('analitica.rentabilidad.realShort') }}: {{ formatCostCell(item.estimated_cost) }}
+              · {{ t('analitica.rentabilidad.myCost') }}: {{ formatCostCell(item.costo_percibido) }}
             </p>
           </div>
 
@@ -173,7 +170,7 @@ const totals = computed(() => {
               format="percentage"
               :variant="(marginRealPct(marginRow(item)) ?? 0) >= 0 ? 'success' : 'secondary'"
               size="sm"
-              title="Margen real"
+              :title="t('analitica.rentabilidad.realMargin')"
             />
             <UiStatusBadge
               v-if="marginOperativoPct(marginRow(item)) !== null"
@@ -181,7 +178,7 @@ const totals = computed(() => {
               format="percentage"
               variant="secondary"
               size="sm"
-              title="Margen operativo"
+              :title="t('analitica.rentabilidad.operatingMargin')"
             />
             <span class="text-xs text-text-secondary">
               {{ item.total_profit ? formatCurrency(item.total_profit) : '—' }}
@@ -248,11 +245,11 @@ const totals = computed(() => {
 
       <template #header-total_revenue>
         <div class="flex items-center justify-end gap-1">
-          <span>Ingresos</span>
+          <span>{{ t('analitica.rentabilidad.revenue') }}</span>
           <span
             class="text-text-secondary cursor-default"
-            title="Los ingresos reflejan el precio neto después de descuentos aplicados"
-            aria-label="Los ingresos reflejan el precio neto después de descuentos aplicados"
+            :title="t('analitica.rentabilidad.revenueTooltip')"
+            :aria-label="t('analitica.rentabilidad.revenueTooltip')"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>

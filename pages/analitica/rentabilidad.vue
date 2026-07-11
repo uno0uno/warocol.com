@@ -2,16 +2,18 @@
 const { t } = useI18n()
 useHead({ title: () => t('analitica.head.rentabilidad') })
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import { formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { locale } = useI18n({ useScope: 'global' })
 
 const lastUpdate = ref<Date>(new Date())
-const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone } = useTenantTimezone()
@@ -79,35 +81,38 @@ const avgMarginVariant = computed(() => {
 const foodCostSubtitle = computed(() => {
   const previous = foodCostPrevious.value?.food_cost_pct
   const change = foodCostComparison.value?.change_pct
-  if (previous == null || change == null) return 'Rango saludable: 28%-35%'
+  if (previous == null || change == null) return t('analitica.rentabilidad.healthyRange')
 
   const direction = change > 0 ? '+' : change < 0 ? '-' : ''
-  return `Anterior: ${previous.toFixed(1)}% · ${direction}${Math.abs(change).toFixed(1)} pp`
+  return t('analitica.rentabilidad.previousChange', {
+    previous: previous.toFixed(1),
+    change: `${direction}${Math.abs(change).toFixed(1)}`,
+  })
 })
 
 const operativeFoodCostSubtitle = computed(() => {
   const operative = foodCostCurrent.value?.food_cost_operativo_pct
   if (operative == null) return ''
-  return `Mi costo vs ventas netas: ${operative.toFixed(1)}%`
+  return t('analitica.rentabilidad.operatingCostVsSales', { pct: operative.toFixed(1) })
 })
 
 const totalItemsSubtitle = computed(() => {
   const total = menuSummary.value.total_items ?? 0
-  return total === 1 ? '1 producto con ventas' : `${total} productos con ventas`
+  return t(total === 1 ? 'analitica.rentabilidad.productsWithSalesOne' : 'analitica.rentabilidad.productsWithSalesMany', { count: total })
 })
 
 const starsSubtitle = computed(() => {
   const total = menuSummary.value.total_items ?? 0
   const stars = menuSummary.value.stars ?? 0
-  if (!total) return 'Sin datos del período'
-  return `${Math.round((stars / total) * 100)}% del menú analizado`
+  if (!total) return t('analitica.rentabilidad.noPeriodData')
+  return t('analitica.rentabilidad.menuAnalyzedPct', { pct: Math.round((stars / total) * 100) })
 })
 
 const dogsSubtitle = computed(() => {
   const total = menuSummary.value.total_items ?? 0
   const dogs = menuSummary.value.dogs ?? 0
-  if (!total) return 'Sin datos del período'
-  return `${Math.round((dogs / total) * 100)}% del menú analizado`
+  if (!total) return t('analitica.rentabilidad.noPeriodData')
+  return t('analitica.rentabilidad.menuAnalyzedPct', { pct: Math.round((dogs / total) * 100) })
 })
 
 const handleRefresh = async () => {
@@ -152,7 +157,7 @@ onUnmounted(() => {
       <section>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', hasOperativeFoodCost ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard
-            title="Food Cost Real"
+            :title="t('analitica.rentabilidad.foodCostReal')"
             :value="foodCostCurrent?.food_cost_pct ?? 0"
             format="percentage"
             :precision="1"
@@ -161,7 +166,7 @@ onUnmounted(() => {
           />
           <MetricCard
             v-if="hasOperativeFoodCost"
-            title="Food Cost Operativo"
+            :title="t('analitica.rentabilidad.foodCostOp')"
             :value="foodCostCurrent?.food_cost_operativo_pct ?? 0"
             format="percentage"
             :precision="1"
@@ -169,7 +174,7 @@ onUnmounted(() => {
             :subtitle="operativeFoodCostSubtitle"
           />
           <MetricCard
-            title="Margen Promedio"
+            :title="t('analitica.rentabilidad.avgMargin')"
             :value="menuSummary.avg_profit_margin_pct ?? 0"
             format="percentage"
             :precision="1"
@@ -177,14 +182,14 @@ onUnmounted(() => {
             :subtitle="totalItemsSubtitle"
           />
           <MetricCard
-            title="Productos Estrella"
+            :title="t('analitica.rentabilidad.starProducts')"
             :value="menuSummary.stars ?? 0"
             format="number"
             variant="success"
             :subtitle="starsSubtitle"
           />
           <MetricCard
-            title="Productos Críticos"
+            :title="t('analitica.rentabilidad.criticalProducts')"
             :value="menuSummary.dogs ?? 0"
             format="number"
             variant="destructive"
@@ -200,8 +205,8 @@ onUnmounted(() => {
               range
               :preset-dates="presetDates"
               :enable-time-picker="false"
-              :locale="es"
-              placeholder="Rango de fechas"
+              :locale="dateFnsLocale"
+              :placeholder="t('analitica.common.dateRange')"
               auto-apply
               :teleport="true"
               :timezone="timezone"
@@ -215,7 +220,8 @@ onUnmounted(() => {
               v-if="dateRangeDates"
               @click="dateRangeDates = null"
               class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-              title="Limpiar filtro"
+              :title="t('analitica.rentabilidad.clearFilter')"
+              :aria-label="t('analitica.rentabilidad.clearFilter')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
