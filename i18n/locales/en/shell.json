@@ -109,7 +109,7 @@
     "myOrders": "My orders",
     "customerEmailPrompt": "Enter your email to check the status of your orders",
     "emailFieldLabel": "Email",
-    "emailPlaceholder": "you@email.com",
+    "emailPlaceholder": "you{'@'}email.com",
     "sendCode": "Send code",
     "enterCode": "Enter the code",
     "codeSentTo": "We sent a code to {email}",
