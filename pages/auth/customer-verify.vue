@@ -22,22 +22,22 @@
         <!-- Step 1: Email input -->
         <div v-if="step === 'email'" class="space-y-5">
           <div class="text-center mb-2">
-            <h1 class="text-2xl font-bold mb-1" style="color: hsl(250, 30%, 16%);">Mis Pedidos</h1>
+            <h1 class="text-2xl font-bold mb-1" style="color: hsl(250, 30%, 16%);">{{ t('auth.myOrders') }}</h1>
             <p class="text-base" style="color: hsl(220, 13%, 28%);">
-              Ingresa tu correo para ver el estado de tus pedidos
+              {{ t('auth.customerEmailPrompt') }}
             </p>
           </div>
 
           <div class="space-y-1">
             <label for="email-input" class="block text-sm font-medium" style="color: hsl(250, 30%, 16%);">
-              Correo electrónico
+              {{ t('auth.emailFieldLabel') }}
             </label>
             <input
               id="email-input"
               v-model="email"
               type="email"
               autocomplete="email"
-              placeholder="tu@correo.com"
+              :placeholder="t('auth.emailPlaceholder')"
               class="w-full h-11 px-3 rounded-lg border transition-colors outline-none text-base"
               style="border-color: hsl(220, 13%, 80%); color: hsl(250, 30%, 16%);"
               :class="{ 'border-red-500': emailError }"
@@ -56,8 +56,8 @@
             :disabled="!email || otpStore.isLoading"
             @click="handleSendOTP"
           >
-            <span v-if="otpStore.isLoading">Enviando...</span>
-            <span v-else>Enviar código</span>
+            <span v-if="otpStore.isLoading">{{ t('auth.sending') }}</span>
+            <span v-else>{{ t('auth.sendCode') }}</span>
           </button>
         </div>
 
@@ -72,14 +72,14 @@
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
               </svg>
             </div>
-            <h1 class="text-xl font-bold mb-1" style="color: hsl(250, 30%, 16%);">Ingresa el código</h1>
+            <h1 class="text-xl font-bold mb-1" style="color: hsl(250, 30%, 16%);">{{ t('auth.enterCode') }}</h1>
             <p class="text-sm" style="color: hsl(220, 13%, 28%);">
-              Enviamos un código a <strong>{{ email }}</strong>
+              {{ t('auth.codeSentTo', { email }) }}
             </p>
           </div>
 
           <div v-if="countdown > 0" class="text-center text-sm font-medium" style="color: hsl(35, 90%, 45%);">
-            Reenviar en {{ countdown }}s
+            {{ t('auth.resendIn', { n: countdown }) }}
           </div>
 
           <OTPInput
@@ -100,8 +100,8 @@
               :disabled="otpStore.isLoading"
               @click="handleManualVerify"
             >
-              <span v-if="otpStore.isLoading">Verificando...</span>
-              <span v-else>Verificar</span>
+              <span v-if="otpStore.isLoading">{{ t('auth.verifying') }}</span>
+              <span v-else>{{ t('auth.verify') }}</span>
             </button>
 
             <button
@@ -112,7 +112,7 @@
               :disabled="countdown > 0 || otpStore.isLoading"
               @click="handleResendOTP"
             >
-              Reenviar código
+              {{ t('auth.resendCode') }}
             </button>
           </div>
 
@@ -121,7 +121,7 @@
             style="color: hsl(220, 13%, 55%);"
             @click="step = 'email'"
           >
-            Cambiar correo
+            {{ t('auth.changeEmail') }}
           </button>
         </div>
 
@@ -132,8 +132,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">¡Verificado!</h1>
-          <p class="text-base" style="color: hsl(220, 13%, 28%);">Redirigiendo a tus pedidos...</p>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.verified') }}</h1>
+          <p class="text-base" style="color: hsl(220, 13%, 28%);">{{ t('auth.redirectingOrders') }}</p>
         </div>
       </div>
     </div>
@@ -145,7 +145,9 @@ import OTPInput from '~/components/online/OTPInput.vue'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 
 definePageMeta({ layout: false, robots: 'noindex, nofollow' })
-useHead({ title: 'Verificar identidad — WARO' })
+
+const { t } = useI18n()
+useHead({ title: () => t('auth.customerVerifyTitle') })
 
 const route = useRoute()
 const otpStore = useOtpAuthStore()
@@ -172,11 +174,11 @@ onUnmounted(() => {
 const handleSendOTP = async () => {
   const trimmed = email.value.trim()
   if (!trimmed) {
-    emailError.value = 'Ingresa tu correo electrónico'
+    emailError.value = t('auth.emailRequired')
     return
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-    emailError.value = 'Ingresa un correo válido'
+    emailError.value = t('auth.emailInvalid')
     return
   }
 
@@ -184,7 +186,7 @@ const handleSendOTP = async () => {
     await otpStore.sendOTPPortal(trimmed)
     step.value = 'otp'
   } catch (error: any) {
-    emailError.value = error.message || 'Error al enviar el código'
+    emailError.value = error.message || t('auth.sendCodeError')
   }
 }
 
@@ -207,7 +209,7 @@ const verifyCode = async (code: string) => {
     const redirect = (route.query.redirect as string) || '/mis-pedidos'
     await navigateTo(redirect)
   } catch (error: any) {
-    otpError.value = error.message || 'Código incorrecto'
+    otpError.value = error.message || t('auth.wrongCode')
     otpInputRef.value?.clear()
     pendingCode.value = ''
   }
@@ -221,7 +223,7 @@ const handleResendOTP = async () => {
     otpInputRef.value?.clear()
     pendingCode.value = ''
   } catch (error: any) {
-    otpError.value = error.message || 'Error al reenviar el código'
+    otpError.value = error.message || t('auth.resendCodeError')
   }
 }
 

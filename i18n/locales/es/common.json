@@ -1,0 +1,21 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "loading": "Cargando...",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "apply": "Aplicar",
+    "retry": "Reintentar",
+    "yes": "Sí",
+    "no": "No",
+    "notSpecified": "No especificada",
+    "nA": "N/A"
+  }
+}

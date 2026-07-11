@@ -27,8 +27,8 @@
             <div class="w-8 h-8 animate-spin rounded-full border-2 border-t-transparent"
               style="border-color: hsl(250, 30%, 16%); border-top-color: transparent;"></div>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">Aceptando invitación</h1>
-          <p class="text-base" style="color: hsl(220, 13%, 28%);">Por favor espera mientras validamos tu invitación...</p>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.acceptingInvite') }}</h1>
+          <p class="text-base" style="color: hsl(220, 13%, 28%);">{{ t('auth.acceptingInviteHint') }}</p>
         </div>
 
         <!-- Invitación aceptada exitosamente -->
@@ -38,12 +38,12 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">¡Bienvenido al equipo!</h1>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.welcomeTeam') }}</h1>
           <p class="text-base mb-2" style="color: hsl(220, 13%, 28%);">
-            Hola <strong>{{ userName }}</strong>, tu invitación ha sido aceptada correctamente.
+            {{ t('auth.inviteAcceptedHello', { name: userName }) }}
           </p>
           <p class="text-sm mb-6" style="color: hsl(220, 13%, 28%);">
-            Serás redirigido al dashboard en unos segundos...
+            {{ t('auth.redirectDashboardSoon') }}
           </p>
           <div class="w-full rounded-full h-2" style="background-color: hsl(220, 14%, 90%);">
             <div class="h-2 rounded-full transition-all duration-300"
@@ -59,7 +59,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">Error de invitación</h1>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.inviteErrorTitle') }}</h1>
           <p class="text-base mb-6" style="color: hsl(220, 13%, 28%);">{{ errorMessage }}</p>
 
           <div class="space-y-3">
@@ -74,7 +74,7 @@
             </NuxtLink>
 
             <p class="text-xs" style="color: hsl(220, 13%, 28%);">
-              Si el problema persiste, contacta al administrador que te envió la invitación
+              {{ t('auth.inviteErrorPersist') }}
             </p>
           </div>
         </div>
@@ -96,7 +96,8 @@ definePageMeta({
   robots: 'noindex, nofollow'
 });
 
-useHead({ title: 'Aceptar Invitación' })
+const { t } = useI18n()
+useHead({ title: () => t('auth.acceptInviteTitle') })
 
 const route = useRoute()
 const router = useRouter()
@@ -108,7 +109,7 @@ const success = ref(false)
 const error = ref(false)
 const errorMessage = ref('')
 const errorActionTo = ref('/auth/login')
-const errorActionLabel = ref('Ir al inicio de sesión')
+const errorActionLabel = ref('')
 const redirectProgress = ref(0)
 const userName = ref('')
 
@@ -178,7 +179,7 @@ let resizeObserver = null
 const acceptInvitation = async () => {
   try {
     if (!token) {
-      throw new Error('Token de invitación faltante en la URL')
+      throw new Error('INVITE_MISSING_TOKEN')
     }
 
     // Llamar al endpoint de aceptar invitación
@@ -191,11 +192,11 @@ const acceptInvitation = async () => {
     })
 
     if (!response.success) {
-      throw new Error(response.message || 'Error al aceptar la invitación')
+      throw new Error(response.message || t('auth.inviteAcceptFailed'))
     }
 
     // Guardar nombre del usuario para mostrar en mensaje de bienvenida
-    userName.value = response.user?.name || 'Usuario'
+    userName.value = response.user?.name || t('auth.defaultUserName')
     await accessStore.load()
     const redirectUrl = getAccessAwareRedirect(undefined, accessStore, router)
 
@@ -222,21 +223,21 @@ const acceptInvitation = async () => {
     verifying.value = false
     error.value = true
     errorActionTo.value = '/auth/login'
-    errorActionLabel.value = 'Ir al inicio de sesión'
+    errorActionLabel.value = t('auth.goToLogin')
 
     // Determinar mensaje de error específico
     if (isInternalAccessDeniedError(err)) {
       errorMessage.value = getInternalAccessDeniedMessage()
       errorActionTo.value = CUSTOMER_PORTAL_LOGIN
-      errorActionLabel.value = 'Ir al portal de clientes'
+      errorActionLabel.value = t('auth.customerPortal')
+    } else if (err.message === 'INVITE_MISSING_TOKEN' || err.message?.includes('faltante')) {
+      errorMessage.value = t('auth.inviteLinkIncomplete')
     } else if (err.message?.includes('expirada') || err.message?.includes('expired')) {
-      errorMessage.value = 'La invitación ha expirado. Solicita una nueva invitación al administrador.'
+      errorMessage.value = t('auth.inviteExpired')
     } else if (err.message?.includes('inválida') || err.message?.includes('invalid')) {
-      errorMessage.value = 'La invitación es inválida o ya fue utilizada.'
-    } else if (err.message?.includes('faltante')) {
-      errorMessage.value = 'El enlace de invitación está incompleto.'
+      errorMessage.value = t('auth.inviteInvalid')
     } else {
-      errorMessage.value = err.data?.message || err.message || 'Error al aceptar la invitación. Inténtalo nuevamente.'
+      errorMessage.value = err.data?.message || err.message || t('auth.inviteAcceptError')
     }
   }
 }
