@@ -495,16 +495,16 @@
 
       <!-- Step 3: Otros métodos -->
       <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-1">Otros métodos de pago</h3>
-        <p class="text-xs text-text-secondary mb-3">Ingresa el monto contado para cada método:</p>
+        <h3 class="text-sm font-semibold text-text-primary mb-1">{{ t('finanzas.arqueo.otherMethodsDetail') }}</h3>
+        <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.countEachMethodHint') }}</p>
 
         <div v-if="previewLoading" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[620px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Contado</span>
-            <span class="px-3 py-2 text-right">Diferencia</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
+            <span class="px-3 py-2 text-right">{{ t('finanzas.common.difference') }}</span>
           </div>
           <div class="animate-pulse">
             <div
@@ -523,12 +523,12 @@
         </div>
         <div v-else-if="nonCashMethods.length > 0" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Método</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">Tipo</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Entró</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Salió</span>
-            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">Neto</span>
-            <span class="px-3 py-2 text-right">Contado</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.inflow') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.outflow') }}</span>
+            <span class="border-r border-dashed border-data-table-border/60 px-3 py-2 text-right">{{ t('finanzas.arqueo.net') }}</span>
+            <span class="px-3 py-2 text-right">{{ t('finanzas.arqueo.counted') }}</span>
           </div>
           <div
             v-for="(method, index) in nonCashMethods"
@@ -555,18 +555,18 @@
                 :class="hasMethodAmount(method)
                   ? 'border-border bg-surface font-semibold'
                   : 'border-border bg-background'"
-                :aria-label="`Monto contado para ${method.label}`"
+                :aria-label="t('finanzas.arqueo.countedAmountForMethod', { method: method.label })"
               />
             </div>
           </div>
         </div>
         <div v-else class="text-sm text-text-secondary mb-3 py-6 text-center bg-background rounded-lg border border-border">
-          No hay otros métodos de pago registrados para este período.
+          {{ t('finanzas.arqueo.noPaymentMethods') }}
         </div>
 
         <div class="flex gap-3">
           <button @click="currentStep = 2" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
-            ← Atrás
+            ← {{ t('finanzas.common.back') }}
           </button>
           <button
             @click="currentStep = 4"

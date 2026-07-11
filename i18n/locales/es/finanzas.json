@@ -212,7 +212,9 @@
       "selectDate": "Seleccionar fecha...",
       "irreversibilityWarning": "Esta acción no se puede deshacer",
       "restaurant": "Restaurante",
-      "cashCountInstruction": "Ingresa los billetes y monedas en caja:"
+      "cashCountInstruction": "Ingresa los billetes y monedas en caja:",
+      "countEachMethodHint": "Ingresa el monto contado para cada método:",
+      "countedAmountForMethod": "Monto contado para {method}"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",

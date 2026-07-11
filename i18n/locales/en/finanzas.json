@@ -212,7 +212,9 @@
       "selectDate": "Select date...",
       "irreversibilityWarning": "This action cannot be undone",
       "restaurant": "Restaurant",
-      "cashCountInstruction": "Enter the bills and coins in the drawer:"
+      "cashCountInstruction": "Enter the bills and coins in the drawer:",
+      "countEachMethodHint": "Enter the counted amount for each method:",
+      "countedAmountForMethod": "Counted amount for {method}"
     },
     "cartera": {
       "totalReceivable": "Total receivable",
