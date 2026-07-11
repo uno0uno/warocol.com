@@ -23,7 +23,6 @@ const requestId = computed(() => route.params.id as string)
 const { formatCurrency, numberLocaleTag } = useFormatters()
 const { timezone } = useTenantTimezone()
 const { businessProfile, currentTenant } = useTenantReactive()
-const { tableDisplayLabel } = useTableDisplayLabel()
 
 interface TableQrItem {
   product_id: string
@@ -111,7 +110,7 @@ async function dismissTableQrNotification(reqId: string) {
 
 async function acceptRequest() {
   if (!request.value || isWorking.value || !isPending.value) return
-  const acceptedTableName = tableDisplayLabel(request.value.table_name)
+  const acceptedTableName = request.value.table_name
   isWorking.value = true
   actionError.value = null
   try {
@@ -232,7 +231,7 @@ const comandaPrintPayload = computed<ComandaPrintPayload[]>(() => {
     id: req.id,
     comanda_number: `QR-${req.id.slice(0, 8)}`,
     station_name: t('despacho.detail.tableQrStation'),
-    table_display_name: tableDisplayLabel(req.table_name),
+    table_display_name: req.table_name,
     fired_at: req.created_at,
     items: req.items.map(item => ({
       kitchen_name: itemDisplayName(item),
@@ -278,7 +277,7 @@ async function printQrComanda() {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.table') }}</p>
-          <p class="text-lg font-bold text-text-primary">{{ tableDisplayLabel(request.table_name) }}</p>
+          <p class="text-lg font-bold text-text-primary">{{ request.table_name }}</p>
         </div>
 
         <div class="bg-surface border border-border rounded-xl p-4">
