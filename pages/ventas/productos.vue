@@ -9,6 +9,7 @@ useHead({ title: () => t('ventas.head.productos') })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { formatCurrency } = useFormatters()
 
 const lastUpdate = ref<Date>(new Date())
 
@@ -48,7 +49,7 @@ const emptyMessage = computed(() =>
 
 const emptySubMessage = computed(() =>
   hasActiveFilters.value
-    ? 'Prueba ajustar o limpiar los filtros'
+    ? t('ventas.productos.emptyFilterHint')
     : t('ventas.productos.emptySub'),
 )
 
@@ -152,9 +153,6 @@ const tableColumns = [
   { key: 'total_revenue', title: t('ventas.productos.revenue'), sortable: true },
 ]
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value || 0)
-
 // ── Layout actions ───────────────────────────────────────────────────────
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
@@ -193,7 +191,7 @@ onUnmounted(() => {
       <!-- Summary cards -->
       <div class="grid grid-cols-2 gap-3 md:gap-4">
         <MetricCard
-          title="Unidades vendidas"
+          :title="t('ventas.productos.unitsSold')"
           :value="totals.quantity_sold"
           format="number"
           variant="primary"
@@ -209,13 +207,13 @@ onUnmounted(() => {
       <NuxtLink
         :to="ingredientAnalyticsLink"
         class="flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm transition-colors hover:border-primary hover:bg-surface-secondary sm:flex-row sm:items-center sm:justify-between"
-        aria-label="Ver consumo y costo por ingrediente"
+        :aria-label="t('ventas.productos.ingredientsLinkAria')"
       >
         <span>
           <span class="font-semibold text-text-primary">{{ t('ventas.productos.soldTitle') }}</span>
-          <span class="text-text-secondary"> muestran mix e ingresos; ingredientes muestra consumo y costo.</span>
+          <span class="text-text-secondary">{{ t('ventas.productos.ingredientsInsight') }}</span>
         </span>
-        <span class="font-semibold text-primary whitespace-nowrap">Ver ingredientes</span>
+        <span class="font-semibold text-primary whitespace-nowrap">{{ t('ventas.productos.viewIngredients') }}</span>
       </NuxtLink>
 
       <!-- Filters bar -->
@@ -246,9 +244,9 @@ onUnmounted(() => {
             :aria-label="t('ventas.productos.sortBy')"
             :class="[filterSelectClass, 'md:hidden']"
           >
-            <option value="qty_desc">Más vendidos</option>
-            <option value="revenue_desc">Más ingresos</option>
-            <option value="name_asc">Nombre A–Z</option>
+            <option value="qty_desc">{{ t('ventas.productos.sortQtyDesc') }}</option>
+            <option value="revenue_desc">{{ t('ventas.productos.sortRevenueDesc') }}</option>
+            <option value="name_asc">{{ t('ventas.productos.sortNameAsc') }}</option>
           </select>
 
           <select
@@ -256,7 +254,7 @@ onUnmounted(() => {
             :aria-label="t('ventas.productos.filterChannel')"
             :class="filterSelectClass"
           >
-            <option :value="null">Canal</option>
+            <option :value="null">{{ t('ventas.productos.channel') }}</option>
             <option value="pos">POS</option>
             <option value="mesa">Mesa</option>
             <option value="online">Online</option>
@@ -344,7 +342,7 @@ onUnmounted(() => {
             </div>
             <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_revenue) }}</span>
-              <span class="text-xs text-text-secondary">{{ item.quantity_sold }} uds.</span>
+              <span class="text-xs text-text-secondary">{{ item.quantity_sold }} {{ t('ventas.productos.unitsAbbr') }}</span>
             </div>
           </div>
         </template>
@@ -374,7 +372,7 @@ onUnmounted(() => {
       >
         <span class="text-text-secondary">{{ products.length === 1 ? t('ventas.productos.totalProducts', { count: products.length }) : t('ventas.productos.totalProducts_plural', { count: products.length }) }}</span>
         <div class="flex items-center gap-6">
-          <span class="text-text-primary">{{ totals.quantity_sold }} uds.</span>
+          <span class="text-text-primary">{{ totals.quantity_sold }} {{ t('ventas.productos.unitsAbbr') }}</span>
           <span class="text-primary">{{ formatCurrency(totals.total_revenue) }}</span>
         </div>
       </div>
