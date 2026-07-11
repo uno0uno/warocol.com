@@ -258,8 +258,18 @@ export default defineNuxtConfig({
     // product routes (/pos, /ventas, …) stay stable. Files live under i18n/ (v9).
     restructureDir: 'i18n',
     locales: [
-      { code: 'es', language: 'es-CO', name: 'Español', file: 'es/shell.json' },
-      { code: 'en', language: 'en-US', name: 'English', file: 'en/shell.json' },
+      {
+        code: 'es',
+        language: 'es-CO',
+        name: 'Español',
+        files: ['es/shell.json', 'es/common.json'],
+      },
+      {
+        code: 'en',
+        language: 'en-US',
+        name: 'English',
+        files: ['en/shell.json', 'en/common.json'],
+      },
     ],
     lazy: true,
     langDir: 'locales',

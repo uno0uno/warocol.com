@@ -27,8 +27,8 @@
             <div class="w-8 h-8 animate-spin rounded-full border-2 border-t-transparent"
               style="border-color: hsl(250, 30%, 16%); border-top-color: transparent;"></div>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">Verificando acceso</h1>
-          <p class="text-base" style="color: hsl(220, 13%, 28%);">Por favor espera mientras verificamos tu magic link...</p>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.verifyingAccess') }}</h1>
+          <p class="text-base" style="color: hsl(220, 13%, 28%);">{{ t('auth.verifyingMagicLinkHint') }}</p>
         </div>
 
         <!-- Verificación exitosa -->
@@ -38,8 +38,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">¡Acceso autorizado!</h1>
-          <p class="text-base mb-6" style="color: hsl(220, 13%, 28%);">Tu sesión se ha iniciado correctamente. Serás redirigido en unos segundos...</p>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.accessAuthorized') }}</h1>
+          <p class="text-base mb-6" style="color: hsl(220, 13%, 28%);">{{ t('auth.sessionStartedRedirect') }}</p>
           <div class="w-full rounded-full h-2" style="background-color: hsl(220, 14%, 90%);">
             <div class="h-2 rounded-full transition-all duration-300"
               style="background-color: hsl(250, 30%, 16%);"
@@ -54,7 +54,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">Error de verificación</h1>
+          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.verifyErrorTitle') }}</h1>
           <p class="text-base mb-6" style="color: hsl(220, 13%, 28%);">{{ errorMessage }}</p>
 
           <div class="space-y-3">
@@ -69,7 +69,7 @@
             </NuxtLink>
 
             <p class="text-xs" style="color: hsl(220, 13%, 28%);">
-              Si el problema persiste, solicita un nuevo magic link
+              {{ t('auth.verifyErrorPersist') }}
             </p>
           </div>
         </div>
@@ -92,7 +92,8 @@ definePageMeta({
   robots: 'noindex, nofollow'
 });
 
-useHead({ title: 'Verificando Acceso' })
+const { t } = useI18n()
+useHead({ title: () => t('auth.verifyAccessTitle') })
 
 const route = useRoute()
 const router = useRouter()
@@ -103,7 +104,7 @@ const success = ref(false)
 const error = ref(false)
 const errorMessage = ref('')
 const errorActionTo = ref('/auth/login')
-const errorActionLabel = ref('Intentar nuevamente')
+const errorActionLabel = ref('')
 const redirectProgress = ref(0)
 
 // Obtener parámetros de la URL
@@ -175,7 +176,7 @@ let resizeObserver = null
 const verifyToken = async () => {
   try {
     if (!token || !email) {
-      throw new Error('Token o email faltante en la URL')
+      throw new Error('VERIFY_MISSING_PARAMS')
     }
 
     // Llamar al endpoint de verificación
@@ -218,19 +219,19 @@ const verifyToken = async () => {
     verifying.value = false
     error.value = true
     errorActionTo.value = '/auth/login'
-    errorActionLabel.value = 'Intentar nuevamente'
+    errorActionLabel.value = t('auth.tryAgain')
 
     // Determinar mensaje de error específico
     if (isInternalAccessDeniedError(err)) {
       errorMessage.value = getInternalAccessDeniedMessage()
       errorActionTo.value = CUSTOMER_PORTAL_LOGIN
-      errorActionLabel.value = 'Ir al portal de clientes'
-    } else if (err.message?.includes('Token inválido') || err.message?.includes('expirado')) {
-      errorMessage.value = 'El magic link ha expirado o es inválido. Solicita uno nuevo.'
-    } else if (err.message?.includes('faltante')) {
-      errorMessage.value = 'El enlace de verificación está incompleto.'
+      errorActionLabel.value = t('auth.customerPortal')
+    } else if (err.message === 'VERIFY_MISSING_PARAMS' || err.message?.includes('faltante')) {
+      errorMessage.value = t('auth.verifyLinkIncomplete')
+    } else if (err.message?.includes('Token inválido') || err.message?.includes('expirado') || err.message?.includes('expired') || err.message?.includes('invalid')) {
+      errorMessage.value = t('auth.magicLinkExpired')
     } else {
-      errorMessage.value = err.message || 'Error al verificar el magic link. Inténtalo nuevamente.'
+      errorMessage.value = err.message || t('auth.verifyMagicLinkError')
     }
   }
 }
