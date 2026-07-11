@@ -11,7 +11,7 @@
       aria-autocomplete="list"
       aria-controls="ingredient-search-results"
       class="w-full px-3 py-2 pl-8 pr-8 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       autocomplete="off"
     />
     <!-- Search icon (left) -->
@@ -114,13 +114,18 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: WAREHOUSE_COPY.menuSearchPlaceholder,
+  // defineProps defaults are hoisted — cannot call useWarehouseCopy()/t() here
+  placeholder: undefined,
   initialValue: '',
   allowCreate: false,
   baseOnly: false,
 })
 
 const emit = defineEmits<Emits>()
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder || WAREHOUSE_COPY.menuSearchPlaceholder,
+)
 
 const anchorRef = ref<HTMLElement | null>(null)
 const searchTerm = ref(props.initialValue)
