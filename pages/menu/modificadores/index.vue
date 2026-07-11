@@ -10,7 +10,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         :search-fields="[]"
-        search-placeholder="Buscar grupo o producto..."
+        :search-placeholder="t('menu.modificadores.searchPlaceholder')"
         :show-date-range="false"
         :show-clear="hasActiveModificadoresFilters"
         @search="performSearch"
@@ -30,8 +30,8 @@
       <UiResponsiveDataView
         :columns="gruposTableColumns"
         :data="modifierGroups"
-        empty-message="No hay grupos de modificadores registrados"
-        empty-sub-message="Crea un nuevo grupo para comenzar"
+        :empty-message="t('menu.modificadores.empty')"
+        :empty-sub-message="t('menu.modificadores.emptySub')"
         variant="default"
         row-size="xs"
       >
@@ -285,13 +285,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+const { t } = useI18n()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
   module: 'menu',
 })
 
-useHead({ title: 'Modificadores' })
+useHead({ title: () => t('menu.head.modificadores') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
@@ -396,49 +397,49 @@ const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && gro
 const gruposTableColumns = [
   {
     key: 'name',
-    title: 'Grupo',
+    title: t('menu.modificadores.group'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'products',
-    title: 'Productos',
+    title: t('menu.modificadores.productos'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'opciones',
-    title: 'Opciones',
+    title: t('menu.modificadores.opciones'),
     sortable: true,
     format: 'number',
     align: 'center'
   },
   {
     key: 'min_qty',
-    title: 'Mín',
+    title: t('menu.modificadores.min'),
     sortable: true,
     format: 'number',
     align: 'center'
   },
   {
     key: 'max_qty',
-    title: 'Máx',
+    title: t('menu.modificadores.max'),
     sortable: true,
     format: 'number',
     align: 'center'
   },
   {
     key: 'tipo',
-    title: 'Tipo',
+    title: t('menu.common.tipo'),
     sortable: true,
     format: 'text',
     align: 'center'
   },
   {
     key: 'actions',
-    title: 'Acciones',
+    title: t('menu.common.acciones'),
     sortable: false,
     format: 'text',
     align: 'center'

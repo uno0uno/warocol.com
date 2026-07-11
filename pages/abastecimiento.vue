@@ -13,9 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
-
 const route = useRoute()
+const { t } = useI18n()
 const lastAbastecimientoPath = useState<string | null>('abastecimiento-last-path', () => null)
 
 definePageMeta({
@@ -27,25 +26,25 @@ watch(
   () => route.fullPath,
   (_currentPath, previousPath) => {
     lastAbastecimientoPath.value = previousPath ?? null
-  }
+  },
 )
 
 // Navigation configuration
-const navigationItems = [
-  { to: '/abastecimiento/proveedores', label: 'Proveedores' },
-  { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/abastecimiento/compras-directas' },
-  { to: '/abastecimiento/stock', label: 'Stock' },
-  { to: '/abastecimiento/movimientos', label: 'Movimientos' },
-  { to: '/abastecimiento/ajustes', label: 'Historial de ajustes', matchPath: '/abastecimiento/ajustes' },
-  { to: '/abastecimiento/ingredientes-propios', label: WAREHOUSE_COPY.warehouseCatalog },
-  { to: '/abastecimiento/calidad-datos', label: 'Calidad de Datos' }
-]
+const navigationItems = computed(() => [
+  { to: '/abastecimiento/proveedores', label: t('abastecimiento.nav.proveedores') },
+  { to: '/abastecimiento/compras-directas', label: t('abastecimiento.nav.compraDirecta'), matchPath: '/abastecimiento/compras-directas' },
+  { to: '/abastecimiento/stock', label: t('abastecimiento.nav.stock') },
+  { to: '/abastecimiento/movimientos', label: t('abastecimiento.nav.movimientos') },
+  { to: '/abastecimiento/ajustes', label: t('abastecimiento.nav.historialAjustes'), matchPath: '/abastecimiento/ajustes' },
+  { to: '/abastecimiento/ingredientes-propios', label: t('abastecimiento.nav.catalogo') },
+  { to: '/abastecimiento/calidad-datos', label: t('abastecimiento.nav.calidadDatos') },
+])
 
 // Meta tags
 useHead({
-  title: 'Abastecimiento - Warocol',
+  title: () => t('abastecimiento.head.module'),
   meta: [
-    { name: 'description', content: 'Módulo de abastecimiento para Warocol' }
-  ]
+    { name: 'description', content: () => t('abastecimiento.head.moduleDesc') },
+  ],
 })
 </script>

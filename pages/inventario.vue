@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const { t } = useI18n()
 
 definePageMeta({
   layout: 'dashboard',
@@ -19,17 +20,17 @@ definePageMeta({
 })
 
 // Navigation configuration
-const navigationItems = [
-  { to: '/inventario/stock', label: 'Stock' },
-  { to: '/inventario/movimientos', label: 'Movimientos' },
-  { to: '/inventario/ajustes', label: 'Ajustes' }
-]
+const navigationItems = computed(() => [
+  { to: '/inventario/stock', label: t('abastecimiento.nav.stock') },
+  { to: '/inventario/movimientos', label: t('abastecimiento.nav.movimientos') },
+  { to: '/inventario/ajustes', label: t('abastecimiento.nav.ajustes') },
+])
 
 // Meta tags
 useHead({
-  title: 'Inventario - Warocol',
+  title: () => t('abastecimiento.head.inventarioModule'),
   meta: [
-    { name: 'description', content: 'Gestión de inventario y control de stock para Warocol' }
-  ]
+    { name: 'description', content: () => t('abastecimiento.head.inventarioDesc') },
+  ],
 })
 </script>

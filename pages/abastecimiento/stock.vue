@@ -41,14 +41,14 @@
       <template #filter-actions>
         <button
           type="button"
-          title="Ajustar stock"
+          :title="t('abastecimiento.stock.adjustStock')"
           class="min-h-[44px] h-10 px-3 inline-flex items-center gap-1.5 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors flex-shrink-0"
           @click="showAdjustmentPanel = true"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
-          <span class="hidden sm:inline">Ajustar stock</span>
+          <span class="hidden sm:inline">{{ t('abastecimiento.stock.adjustStock') }}</span>
         </button>
       </template>
     </InventarioStockInventoryView>
@@ -65,9 +65,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
-useHead({ title: 'Stock' })
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
+useHead({ title: () => t('abastecimiento.head.stock') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -101,24 +102,24 @@ const cache = useQueryCache()
 const onAdjustmentSaved = () => {
   // Invalidate the inventory query so the table reflects the new stock.
   cache.invalidateQueries({ key: ['inventory'] })
-  toast.success('Ajuste registrado', { title: 'Stock actualizado' })
+  toast.success(t('abastecimiento.stock.ajustadoOk'), { title: t('abastecimiento.stock.stockUpdated') })
 }
 
 const sortField = ref('current_stock')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
-const stockCopy = {
+const stockCopy = computed(() => ({
   statsTotal: WAREHOUSE_COPY.stockStatsTotal,
   searchPlaceholder: WAREHOUSE_COPY.stockSearchPlaceholder,
   emptyMessage: WAREHOUSE_COPY.stockEmptyMessage,
   ingredientColumn: WAREHOUSE_COPY.warehouseItemColumn,
-}
+}))
 
-const stockStatusOptions = [
-  { value: 'negative', label: 'Crítico', variant: 'destructive' },
-  { value: 'low', label: 'Bajo', variant: 'warning' },
-  { value: 'ok', label: 'Normal', variant: 'success' },
-]
+const stockStatusOptions = computed(() => [
+  { value: 'negative', label: t('abastecimiento.common.critico'), variant: 'destructive' },
+  { value: 'low', label: t('abastecimiento.common.bajo'), variant: 'warning' },
+  { value: 'ok', label: t('abastecimiento.common.normal'), variant: 'success' },
+])
 
 const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'stock', currentTenant.value?.id, {

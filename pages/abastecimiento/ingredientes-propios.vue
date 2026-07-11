@@ -26,7 +26,7 @@
           <select
             v-model="typeFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por tipo"
+            :aria-label="t('abastecimiento.common.tipo')"
             @change="currentPage = 1"
           >
             <option value="">Tipo</option>
@@ -131,7 +131,7 @@
 
         <template #cell-costo_unitario="{ value }">
           <UiStatusBadge
-            :value="value ? `$${Number(value).toLocaleString('es-CO')}` : 'Sin costo'"
+            :value="value ? `$${Number(value).toLocaleString('es-CO')}` : t('abastecimiento.common.sinCosto')"
             format="text"
             :variant="value ? 'info' : 'secondary'"
             size="sm"
@@ -248,9 +248,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
 
-useHead({ title: WAREHOUSE_COPY.warehouseCatalog })
+useHead({ title: () => WAREHOUSE_COPY.warehouseCatalog })
 
 const { currentTenant } = useTenantReactive()
 
@@ -431,12 +432,12 @@ const clearFilters = () => {
 }
 
 const tableColumns = [
-  { key: 'name',         title: 'Nombre',   sortable: true,  format: 'custom', align: 'left' },
-  { key: 'unit',         title: 'Unidad',   sortable: false, format: 'custom', align: 'left' },
-  { key: 'unit_weight_gr',title: 'Gr/und',  sortable: false, format: 'custom', align: 'left' },
-  { key: 'type',                       title: 'Tipo',          sortable: false, format: 'custom', align: 'left' },
-  { key: 'costo_unitario',             title: 'Costo',         sortable: true,  format: 'custom', align: 'left' },
-  { key: 'category',                   title: 'Categoría',     sortable: false, format: 'custom', align: 'left' },
+  { key: 'name',         title: t('abastecimiento.common.nombre'),   sortable: true,  format: 'custom', align: 'left' },
+  { key: 'unit',         title: t('abastecimiento.common.unidad'),   sortable: false, format: 'custom', align: 'left' },
+  { key: 'unit_weight_gr',title: t('abastecimiento.common.grUnd'),  sortable: false, format: 'custom', align: 'left' },
+  { key: 'type',                       title: t('abastecimiento.common.tipo'),          sortable: false, format: 'custom', align: 'left' },
+  { key: 'costo_unitario',             title: t('abastecimiento.common.costo'),         sortable: true,  format: 'custom', align: 'left' },
+  { key: 'category',                   title: t('abastecimiento.common.categoria'),     sortable: false, format: 'custom', align: 'left' },
   { key: 'actions',                    title: '',              sortable: false, format: 'custom', align: 'center' },
 ]
 

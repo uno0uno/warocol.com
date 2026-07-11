@@ -17,7 +17,7 @@ const props = withDefaults(
     tableHeaderFilters?: boolean
   }>(),
   {
-    searchPlaceholder: 'Buscar productos...',
+    searchPlaceholder: undefined,
     showStation: false,
     showQr: false,
     showOnline: false,
@@ -34,6 +34,7 @@ const emit = defineEmits<{
   'filter-change': []
 }>()
 
+const { t } = useI18n()
 const { currentTenant, businessProfile } = useTenantReactive()
 
 const {
@@ -55,33 +56,37 @@ const {
   hasActiveFilters,
 } = useMenuCatalogFilters()
 
-const searchFields = [
-  { label: 'Nombre', value: 'name' },
-  { label: 'Descripción', value: 'description' },
-  { label: 'Nombre cocina', value: 'kitchen_name' },
-]
+const resolvedSearchPlaceholder = computed(
+  () => props.searchPlaceholder || t('menu.filters.searchPlaceholder'),
+)
 
-const statusOptions = [
-  { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' },
-]
+const searchFields = computed(() => [
+  { label: t('menu.filters.searchFieldsName'), value: 'name' },
+  { label: t('menu.filters.searchFieldsDescription'), value: 'description' },
+  { label: t('menu.filters.searchFieldsKitchen'), value: 'kitchen_name' },
+])
 
-const sortOptions = [
-  { label: 'Más recientes', value: 'created_at_desc' },
-  { label: 'Más antiguos', value: 'created_at_asc' },
-  { label: 'Nombre A-Z', value: 'name_asc' },
-  { label: 'Nombre Z-A', value: 'name_desc' },
-  { label: 'Precio menor', value: 'price_asc' },
-  { label: 'Precio mayor', value: 'price_desc' },
-  { label: 'Margen menor', value: 'margin_asc' },
-  { label: 'Margen mayor', value: 'margin_desc' },
-]
+const statusOptions = computed(() => [
+  { label: t('menu.filters.disponible'), value: 'true' },
+  { label: t('menu.filters.noDisponible'), value: 'false' },
+])
 
-const productTypeOptions: { label: string; value: ProductTypeFilter }[] = [
-  { label: 'Todos', value: 'all' },
-  { label: 'Menú', value: 'menu' },
-  { label: 'Reventa', value: 'resale' },
-]
+const sortOptions = computed(() => [
+  { label: t('menu.filters.sortNewest'), value: 'created_at_desc' },
+  { label: t('menu.filters.sortOldest'), value: 'created_at_asc' },
+  { label: t('menu.filters.sortNameAsc'), value: 'name_asc' },
+  { label: t('menu.filters.sortNameDesc'), value: 'name_desc' },
+  { label: t('menu.filters.sortPriceAsc'), value: 'price_asc' },
+  { label: t('menu.filters.sortPriceDesc'), value: 'price_desc' },
+  { label: t('menu.filters.sortMarginAsc'), value: 'margin_asc' },
+  { label: t('menu.filters.sortMarginDesc'), value: 'margin_desc' },
+])
+
+const productTypeOptions = computed((): { label: string; value: ProductTypeFilter }[] => [
+  { label: t('menu.filters.typeAll'), value: 'all' },
+  { label: t('menu.filters.typeMenu'), value: 'menu' },
+  { label: t('menu.filters.typeResale'), value: 'resale' },
+])
 
 const columnFilterFallbackClass = computed(() => props.tableHeaderFilters ? 'md:hidden' : '')
 
@@ -139,7 +144,7 @@ watch(
     v-model:search="localSearchTerm"
     v-model:search-field="apiSearchField"
     :search-fields="searchFields"
-    :search-placeholder="searchPlaceholder"
+    :search-placeholder="resolvedSearchPlaceholder"
     :show-date-range="false"
     :show-clear="hasActiveFilters"
     @search="onSearch"
@@ -149,7 +154,7 @@ watch(
       <div
         v-if="showProductTypeFilter"
         role="group"
-        aria-label="Tipo de producto"
+        :aria-label="t('menu.filters.productTypeAria')"
         :class="['flex flex-wrap items-center gap-2', columnFilterFallbackClass]"
       >
         <button
@@ -166,16 +171,16 @@ watch(
 
       <UiFilterSelect
         v-model="categoryFilter"
-        placeholder="Categoría"
-        aria-label="Filtrar por categoría"
+        :placeholder="t('menu.filters.categoryPlaceholder')"
+        :aria-label="t('menu.filters.categoryAria')"
         :options="categories.map(c => ({ label: c.name, value: c.id }))"
         :class="columnFilterFallbackClass"
       />
 
       <UiFilterSelect
         v-model="statusFilter"
-        placeholder="Estado"
-        aria-label="Filtrar por estado"
+        :placeholder="t('menu.filters.statusPlaceholder')"
+        :aria-label="t('menu.filters.statusAria')"
         :options="statusOptions"
         :class="columnFilterFallbackClass"
       />
@@ -183,15 +188,15 @@ watch(
       <UiFilterSelect
         v-if="showStation && showComandasStations"
         v-model="stationFilter"
-        placeholder="Estación"
-        aria-label="Filtrar por estación de cocina"
+        :placeholder="t('menu.filters.stationPlaceholder')"
+        :aria-label="t('menu.filters.stationAria')"
         :options="stations.map(s => ({ label: s.name, value: s.id }))"
       />
 
       <UiFilterSelect
         v-model="sortFilter"
-        placeholder="Ordenar"
-        aria-label="Ordenar productos"
+        :placeholder="t('menu.filters.sortPlaceholder')"
+        :aria-label="t('menu.filters.sortAria')"
         :options="sortOptions"
         always-active
         hide-placeholder
@@ -199,28 +204,28 @@ watch(
       />
 
       <label v-if="showOnline" :class="[filterChipClass(onlineOnly), columnFilterFallbackClass]">
-        <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en domicilios" />
-        <span class="font-semibold">Domicilios</span>
+        <input v-model="onlineOnly" type="checkbox" class="sr-only" :aria-label="t('menu.filters.onlineOnlyAria')" />
+        <span class="font-semibold">{{ t('menu.filters.onlineOnly') }}</span>
       </label>
 
       <label v-if="showQr" :class="[filterChipClass(qrOnly), columnFilterFallbackClass]">
-        <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
-        <span class="font-semibold">QR mesa</span>
+        <input v-model="qrOnly" type="checkbox" class="sr-only" :aria-label="t('menu.filters.qrOnlyAria')" />
+        <span class="font-semibold">{{ t('menu.filters.qrOnly') }}</span>
       </label>
 
       <label v-if="showNoRecipe" :class="filterChipClass(noRecipeOnly)">
-        <input v-model="noRecipeOnly" type="checkbox" class="sr-only" aria-label="Solo productos sin receta" />
-        <span class="font-semibold">Sin receta</span>
+        <input v-model="noRecipeOnly" type="checkbox" class="sr-only" :aria-label="t('menu.filters.noRecipeAria')" />
+        <span class="font-semibold">{{ t('menu.filters.noRecipe') }}</span>
       </label>
 
       <label :class="[filterChipClass(marginNegativeOnly), columnFilterFallbackClass]">
-        <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
-        <span class="font-semibold">Margen negativo</span>
+        <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" :aria-label="t('menu.filters.marginNegativeAria')" />
+        <span class="font-semibold">{{ t('menu.filters.marginNegative') }}</span>
       </label>
 
       <label v-if="showCostDrift" :class="filterChipClass(costDriftOnly)">
-        <input v-model="costDriftOnly" type="checkbox" class="sr-only" aria-label="Solo desfase de costo" />
-        <span class="font-semibold">Desfase costo</span>
+        <input v-model="costDriftOnly" type="checkbox" class="sr-only" :aria-label="t('menu.filters.costDriftAria')" />
+        <span class="font-semibold">{{ t('menu.filters.costDrift') }}</span>
       </label>
     </template>
 

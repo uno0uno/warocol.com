@@ -14,7 +14,7 @@
       <!-- Filters Bar -->
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
-        search-placeholder="Buscar compras directas..."
+        :search-placeholder="t('abastecimiento.comprasDirectas.searchPlaceholder')"
         :search-fields="[]"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
@@ -25,7 +25,7 @@
           <select
             v-model="proveedorFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por proveedor"
+            :aria-label="t('abastecimiento.comprasDirectas.filterSupplierAria')"
             @change="currentPage = 1"
           >
             <option value="">Proveedor</option>
@@ -35,7 +35,7 @@
           <select
             v-model="statusFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por estado"
+            :aria-label="t('abastecimiento.comprasDirectas.filterStatusAria')"
             @change="currentPage = 1"
           >
             <option value="">Estado</option>
@@ -45,7 +45,7 @@
           <select
             v-model="dateFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por período"
+            :aria-label="t('abastecimiento.comprasDirectas.filterPeriodAria')"
             @change="currentPage = 1"
           >
             <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -78,8 +78,8 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         @row-click="viewPurchase"
-        empty-message="No hay compras directas para mostrar"
-        empty-sub-message="Crea una nueva compra directa para comenzar"
+        :empty-message="t('abastecimiento.comprasDirectas.empty')"
+        :empty-sub-message="t('abastecimiento.comprasDirectas.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -129,7 +129,7 @@
                 <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.supplier_name || 'Sin proveedor' }} · {{ item.items_count || 0 }} items
+                {{ item.supplier_name || t('abastecimiento.common.sinProveedor') }} · {{ item.items_count || 0 }} items
               </p>
               <p class="text-xs text-text-tertiary mt-0.5">
                 Pago: {{ getPaymentDateLabel(item) }}
@@ -153,7 +153,7 @@
         </template>
 
         <template #cell-supplier_name="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ value || 'Sin proveedor' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value || t('abastecimiento.common.sinProveedor') }}</span>
         </template>
 
         <template #cell-purchase_date="{ value }">
@@ -184,7 +184,7 @@
         </template>
 
         <template #cell-invoice_number="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || 'Sin factura' }}</span>
+          <span class="text-sm text-text-secondary">{{ value || t('abastecimiento.common.sinFactura') }}</span>
         </template>
 
         <template #cell-actions="{ row }">
@@ -268,9 +268,10 @@ import { onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
+const { t } = useI18n()
 
 useHead({
-  title: 'Compras Directas - Abastecimiento'
+  title: () => t('abastecimiento.head.comprasDirectas')
 })
 
 // Scan quota
@@ -346,21 +347,21 @@ const supplierHeaderOptions = computed(() =>
 
 // Status options
 const statusOptions = [
-  { value: 'received', label: 'Recibida' },
-  { value: 'invoiced', label: 'Facturada' },
-  { value: 'paid', label: 'Pagada' }
+  { value: 'received', label: t('abastecimiento.common.recibida') },
+  { value: 'invoiced', label: t('abastecimiento.common.facturada') },
+  { value: 'paid', label: t('abastecimiento.common.pagada') }
 ]
 
 // Table columns
 const tableColumns = [
-  { key: 'purchase_number', title: 'Numero', sortable: true },
-  { key: 'supplier_name', title: 'Proveedor', sortable: true },
-  { key: 'purchase_date', title: 'Fecha', sortable: true },
-  { key: 'payment_date', title: 'Fecha pago', sortable: true },
-  { key: 'total_amount', title: 'Total', sortable: true },
-  { key: 'items_count', title: 'Items', sortable: false },
-  { key: 'status', title: 'Estado', sortable: true },
-  { key: 'invoice_number', title: 'Factura', sortable: false },
+  { key: 'purchase_number', title: t('abastecimiento.common.numero'), sortable: true },
+  { key: 'supplier_name', title: t('abastecimiento.common.proveedor'), sortable: true },
+  { key: 'purchase_date', title: t('abastecimiento.common.fecha'), sortable: true },
+  { key: 'payment_date', title: t('abastecimiento.common.fechaPago'), sortable: true },
+  { key: 'total_amount', title: t('abastecimiento.common.total'), sortable: true },
+  { key: 'items_count', title: t('abastecimiento.common.items'), sortable: false },
+  { key: 'status', title: t('abastecimiento.common.estado'), sortable: true },
+  { key: 'invoice_number', title: t('abastecimiento.common.factura'), sortable: false },
   { key: 'actions', title: '', sortable: false }
 ]
 
@@ -406,7 +407,7 @@ const getPaymentDateValue = (purchase: any) => {
 
 const getPaymentDateLabel = (purchase: any) => {
   const value = getPaymentDateValue(purchase)
-  return value ? formatDate(value) : 'Sin pago'
+  return value ? formatDate(value) : t('abastecimiento.common.sinPago')
 }
 
 const formatCurrency = (value: number) => {

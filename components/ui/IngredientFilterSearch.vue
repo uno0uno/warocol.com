@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 const props = defineProps<{
   modelValue: string

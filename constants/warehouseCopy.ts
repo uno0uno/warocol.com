@@ -1,12 +1,15 @@
 /**
- * Warehouse vs menu UI copy — single source of truth for the copy epic.
+ * Warehouse vs menu UI copy.
  *
  * Glossary table: https://github.com/uno0uno/warocol.com/issues/1113
- * Batches #1115–#1118 should import from here instead of inline Spanish strings.
  *
- * `supply` creation intent (bodega path) is not the same as `ingredients.type === 'supply'`.
+ * - `WAREHOUSE_COPY` — static Spanish fallback for non-i18n surfaces (e.g. guest proveedor).
+ * - `useWarehouseCopy()` — locale-aware operator UI via `abastecimiento.glossary.*` (#1611).
+ *
+ * `supply` creation intent (bodega path) is not the same as `ingredients.type === \'supply\'`.
  * @see composables/useCatalogEntityCreation.ts
  */
+
 export const WAREHOUSE_COPY = {
   warehouseItem: 'Artículo de bodega',
   warehouseCatalog: 'Catálogo de bodega',
@@ -20,10 +23,8 @@ export const WAREHOUSE_COPY = {
   catalogSearchPlaceholder: 'Buscar en catálogo de bodega...',
   catalogStatsTotal: 'Total en catálogo',
   catalogEmptyTitle: 'Aún no tienes artículos en tu catálogo de bodega',
-  catalogEmptySub:
-    'Crea tu primer artículo de bodega desde aquí o desde cualquier receta o modificador',
-  catalogHubDescription:
-    'Artículos de bodega de tu restaurante, creados para tus recetas específicas',
+  catalogEmptySub: 'Crea tu primer artículo de bodega desde aquí o desde cualquier receta o modificador',
+  catalogHubDescription: 'Artículos de bodega de tu restaurante, creados para tus recetas específicas',
   newWarehouseItemDefault: '+ Nuevo artículo de bodega',
   newFood: '+ Nuevo alimento',
   newSupply: '+ Nuevo insumo',
@@ -39,18 +40,15 @@ export const WAREHOUSE_COPY = {
   panelCreateAria: 'Crear artículo de bodega personalizado',
   panelNewSubtitle: 'Artículo de bodega de tu restaurante',
   panelArchived: 'Artículo archivado',
-  panelTypeHelper:
-    'Para recetas y costos. Distinto de producto de menú (reventa en POS).',
+  panelTypeHelper: 'Para recetas y costos. Distinto de producto de menú (reventa en POS).',
   createWarehouseItem: 'Crear artículo de bodega',
   archiveWarehouseItem: 'Archivar artículo de bodega',
   restoreWarehouseItem: 'Restaurar artículo de bodega',
   linkingWarehouseItem: 'Vinculando artículo de bodega…',
   creatingWarehouseItem: 'Creando artículo de bodega…',
-  linkingWarehouseItemHint:
-    'Se agregará a la fila y se actualizará el catálogo de bodega.',
+  linkingWarehouseItemHint: 'Se agregará a la fila y se actualizará el catálogo de bodega.',
   duplicateWarehouseItemName: 'Ya existe un artículo de bodega con ese nombre',
-  resaleWarehouseItemMustBeUnd:
-    'Los artículos de bodega de reventa deben tener unidad "und" (pieza).',
+  resaleWarehouseItemMustBeUnd: 'Los artículos de bodega de reventa deben tener unidad "und" (pieza).',
   menuSearchPlaceholder: 'Buscar artículo de bodega o reventa...',
   menuFilterPlaceholder: 'Artículo de bodega...',
   menuFilterClearAria: 'Quitar filtro de artículo de bodega',
@@ -70,12 +68,9 @@ export const WAREHOUSE_COPY = {
   linkedWarehouseItemLoading: 'Cargando artículo de bodega vinculado…',
   linkedWarehouseItemHelp: '1 und por venta · costo desde compras del artículo de bodega.',
   linkedWarehouseItemNotFound: 'Artículo de bodega no encontrado. Revisa en Abastecimiento.',
-  linkedWarehouseItemNotFoundCatalog:
-    'No se encontró el artículo de bodega vinculado. Revísalo en Abastecimiento → Catálogo de bodega.',
-  resaleLinkedStockHelp:
-    'Este producto descuenta stock del artículo de bodega vinculado (1 und por venta). El costo real se calcula desde compras de ese artículo, no desde una receta editable aquí.',
-  recipeCostLinesSectionHelp:
-    'Artículos de bodega o productos de reventa que descuentan inventario al vender este plato',
+  linkedWarehouseItemNotFoundCatalog: 'No se encontró el artículo de bodega vinculado. Revísalo en Abastecimiento → Catálogo de bodega.',
+  resaleLinkedStockHelp: 'Este producto descuenta stock del artículo de bodega vinculado (1 und por venta). El costo real se calcula desde compras de ese artículo, no desde una receta editable aquí.',
+  recipeCostLinesSectionHelp: 'Artículos de bodega o productos de reventa que descuentan inventario al vender este plato',
   addRecipeCostLinesHelp: 'Agrega artículos de bodega o productos de reventa para calcular el costo',
   completeRecipeCostLinesError: 'Completa todos los artículos de bodega con cantidad mayor a 0.',
   allRecipeCostLinesNeedQuantity: 'Todos los artículos de bodega deben tener una cantidad mayor a 0.',
@@ -84,16 +79,13 @@ export const WAREHOUSE_COPY = {
   completeModifiersWarehouseItem: 'Completa todos los modificadores con artículo de bodega o reventa.',
   allOptionsNeedWarehouseItem: 'Todas las opciones deben tener un artículo de bodega o reventa.',
   inventoryRecipeHelp: 'Configura receta o artículos de bodega abajo.',
-  defineRecipeInventoryHelp:
-    'Define la receta del producto. Cada venta descontará los artículos de bodega del inventario.',
+  defineRecipeInventoryHelp: 'Define la receta del producto. Cada venta descontará los artículos de bodega del inventario.',
   recipeBaseLinesHelp: 'Selecciona una o más recetas base para usar sus líneas predefinidas.',
   resaleLineSummaryLabel: 'Artículo de bodega:',
-  linkedWarehouseItemUpdateFailed:
-    'Producto guardado, pero no se pudo actualizar el artículo de bodega vinculado',
+  linkedWarehouseItemUpdateFailed: 'Producto guardado, pero no se pudo actualizar el artículo de bodega vinculado',
   linkedWarehouseItemUpdateFailedDetail: 'Producto guardado, pero el artículo de bodega no se actualizó:',
   linkedWarehouseItemNotSynced: 'Artículo de bodega no sincronizado',
-  cookedWithWarehouseItemsDescription:
-    'Cocina con artículos de bodega y recetas base. Cada venta descuenta inventario.',
+  cookedWithWarehouseItemsDescription: 'Cocina con artículos de bodega y recetas base. Cada venta descuenta inventario.',
   stockStatsTotal: 'Total artículos de bodega',
   stockSearchPlaceholder: 'Buscar artículos de bodega...',
   stockEmptyMessage: 'No hay artículos de bodega en inventario',
@@ -106,8 +98,7 @@ export const WAREHOUSE_COPY = {
   selectWarehouseItemShort: 'Primero artículo de bodega',
   warehouseItemUnknown: 'Artículo de bodega desconocido',
   purchaseUnitsPanelHint: 'Configúralas en el panel de artículo de bodega.',
-  purchaseCompleteItemsError:
-    'Completa todos los ítems con artículo de bodega, cantidad, unidad y costo.',
+  purchaseCompleteItemsError: 'Completa todos los ítems con artículo de bodega, cantidad, unidad y costo.',
   movementsSearchPlaceholder: 'Buscar por artículo de bodega o referencia...',
   adjustmentsStatsLabel: 'Artículos ajustados',
   adjustmentsSearchPlaceholder: 'Buscar por artículo de bodega o motivo...',
@@ -118,8 +109,7 @@ export const WAREHOUSE_COPY = {
   warehouseItemPlural: 'artículos de bodega',
   stockAdjustmentSelectPrompt: 'Selecciona un artículo de bodega',
   stockAdjustmentSectionTitle: 'Información del artículo de bodega',
-  stockAdjustmentWeightedCostHint:
-    'Si lo especificas, actualiza el costo promedio ponderado del artículo de bodega.',
+  stockAdjustmentWeightedCostHint: 'Si lo especificas, actualiza el costo promedio ponderado del artículo de bodega.',
   stockAdjustmentStartPrompt: 'Selecciona un artículo de bodega para comenzar',
   selectWarehouseItemOption: 'Seleccionar artículo de bodega...',
   legacyCatalogLoadError: 'Error al cargar los artículos de bodega.',
@@ -143,8 +133,12 @@ export const WAREHOUSE_COPY = {
   waroTemplateNoVariants: 'Esta plantilla no tiene variantes asignadas en la jerarquía.',
   waroTemplateCreated: 'Plantilla creada',
   waroTemplateCreateError: 'Error al crear la plantilla',
-  waroTemplateBaseAlreadyAssigned:
-    'Esta plantilla ya tiene un base asignado. Quítalo primero.',
+  waroTemplateBaseAlreadyAssigned: 'Esta plantilla ya tiene un base asignado. Quítalo primero.',
 } as const
 
 export type WarehouseCopyKey = keyof typeof WAREHOUSE_COPY
+
+/** i18n key path for a warehouse glossary entry */
+export function warehouseCopyKey(key: WarehouseCopyKey): string {
+  return `abastecimiento.glossary.${key}`
+}

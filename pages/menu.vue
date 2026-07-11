@@ -17,6 +17,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { t } = useI18n()
 const lastMenuPath = useState<string | null>('menu-last-path', () => null)
 
 // Key based on section only (/menu/recetas, /menu/productos, etc.)
@@ -27,21 +28,21 @@ watch(
   () => route.fullPath,
   (_currentPath, previousPath) => {
     lastMenuPath.value = previousPath ?? null
-  }
+  },
 )
 
-const navigationItems = [
-  { to: '/menu/recetas', label: 'Recetas', matchPath: '/menu/recetas' },
-  { to: '/menu/productos', label: 'Productos', matchPath: '/menu/productos' },
-  { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/menu/modificadores' },
-  { to: '/menu/categorias', label: 'Categorías', matchPath: '/menu/categorias' },
-]
+const navigationItems = computed(() => [
+  { to: '/menu/recetas', label: t('menu.nav.recetas'), matchPath: '/menu/recetas' },
+  { to: '/menu/productos', label: t('menu.nav.productos'), matchPath: '/menu/productos' },
+  { to: '/menu/modificadores', label: t('menu.nav.modificadores'), matchPath: '/menu/modificadores' },
+  { to: '/menu/categorias', label: t('menu.nav.categorias'), matchPath: '/menu/categorias' },
+])
 
 // Meta tags
 useHead({
-  title: 'Menú - Warocol',
+  title: () => t('menu.head.module'),
   meta: [
-    { name: 'description', content: 'Gestión de productos, recetas y modificadores' }
-  ]
+    { name: 'description', content: () => t('menu.head.moduleDesc') },
+  ],
 })
 </script>

@@ -388,7 +388,6 @@ import {
 import {
   useIngredientPurchaseUnits,
 } from '~/composables/useIngredientPurchaseUnits'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   useInventoryAdjustment,
   ADJUSTMENT_REASONS,
@@ -397,6 +396,8 @@ import {
   type SelectedIngredient,
 } from '~/composables/useInventoryAdjustment'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Props {
   modelValue: boolean

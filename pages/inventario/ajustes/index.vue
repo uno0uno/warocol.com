@@ -38,7 +38,7 @@
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
         :search-fields="[]"
-        search-placeholder="Buscar por ingrediente o motivo..."
+        :search-placeholder="t('abastecimiento.ajustes.invSearchPlaceholder')"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
         :show-clear="hasActiveFilters"
@@ -49,7 +49,7 @@
           <select
             v-model="ingredientFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por ingrediente"
+            :aria-label="t('abastecimiento.ajustes.filterIngredientAria')"
           >
             <option value="">Ingrediente</option>
             <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
@@ -60,7 +60,7 @@
           <select
             v-model="adjustmentTypeFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por tipo de ajuste"
+            :aria-label="t('abastecimiento.ajustes.filterTypeAria')"
           >
             <option value="">Tipo ajuste</option>
             <option value="positive">Incrementos</option>
@@ -78,8 +78,8 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         title="Historial de Ajustes"
-        empty-message="No hay ajustes registrados"
-        empty-sub-message="Los ajustes se realizan desde la página de Stock de Inventario"
+        :empty-message="t('abastecimiento.ajustes.empty')"
+        :empty-sub-message="t('abastecimiento.ajustes.emptySubInv')"
         variant="default"
       >
         <!-- Mobile Card -->
@@ -187,8 +187,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+const { t } = useI18n()
 
-useHead({ title: 'Ajustes de Inventario' })
+useHead({ title: () => t('abastecimiento.head.inventarioAjustes') })
 
 const { currentTenant } = useTenantReactive()
 
@@ -344,63 +345,63 @@ const clearFilters = () => {
 const adjustmentsTableColumns = [
   {
     key: 'created_at',
-    title: 'Fecha',
+    title: t('abastecimiento.common.fecha'),
     sortable: true,
     format: 'date',
     align: 'left'
   },
   {
     key: 'ingredient_name',
-    title: 'Ingrediente',
+    title: t('abastecimiento.common.ingrediente'),
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
     key: 'unit',
-    title: 'Unidad',
+    title: t('abastecimiento.common.unidad'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'adjustment_type',
-    title: 'Tipo',
+    title: t('abastecimiento.common.tipo'),
     sortable: false,
     format: 'badge',
     align: 'center'
   },
   {
     key: 'quantity_change',
-    title: 'Cantidad',
+    title: t('abastecimiento.common.cantidad'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'previous_stock',
-    title: 'Stock Ant.',
+    title: t('abastecimiento.common.stockAnt'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'new_stock',
-    title: 'Stock Nuevo',
+    title: t('abastecimiento.common.stockNuevo'),
     sortable: true,
     format: 'number',
     align: 'right'
   },
   {
     key: 'reason',
-    title: 'Motivo',
+    title: t('abastecimiento.common.motivo'),
     sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'created_by_name',
-    title: 'Usuario',
+    title: t('abastecimiento.common.usuario'),
     sortable: true,
     format: 'text',
     align: 'left'
