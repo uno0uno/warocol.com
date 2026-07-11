@@ -608,6 +608,7 @@
       "ticketMany": "comandas"
     },
     "printTicket": {
+      "title": "COMANDA POS",
       "comanda": "Comanda #{numbers}",
       "station": "Estación: {name}",
       "noStation": "Sin cocina asignada",

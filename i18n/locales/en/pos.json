@@ -608,6 +608,7 @@
       "ticketMany": "tickets"
     },
     "printTicket": {
+      "title": "KITCHEN TICKET",
       "comanda": "Ticket #{numbers}",
       "station": "Station: {name}",
       "noStation": "No kitchen station",

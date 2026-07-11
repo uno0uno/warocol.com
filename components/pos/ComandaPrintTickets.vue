@@ -2,21 +2,21 @@
 const { t } = useI18n({ useScope: 'global' })
 import { computed } from 'vue'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
-import { formatComandaModifierLabel, formatComandaPrintTime } from '~/composables/useComandaPrint'
+import { formatComandaModifierLabel } from '~/composables/useComandaPrint'
 
 const props = defineProps<{
   comandas: ComandaPrintPayload[]
   businessName?: string
 }>()
 
-const { timezone } = useTenantTimezone()
+const { formatCurrency, formatDateTime } = useFormatters()
 
 function modifierLines(item: ComandaPrintPayload['items'][0]) {
   return item.modifiers_snapshot ?? []
 }
 
 function formatTicketTime(firedAt?: string | null) {
-  return formatComandaPrintTime(firedAt, timezone.value)
+  return formatDateTime(firedAt ?? new Date().toISOString())
 }
 
 const printTicket = computed(() => {
@@ -66,7 +66,7 @@ const printTicket = computed(() => {
         class="comanda-ticket"
       >
         <div class="receipt-header">{{ businessName || 'WARO' }}</div>
-        <div class="receipt-row receipt-small">*** COMANDA POS ***</div>
+        <div class="receipt-row receipt-small">*** {{ t('pos.printTicket.title') }} ***</div>
         <div class="receipt-row receipt-small">{{ formatTicketTime(printTicket.firedAt) }}</div>
         <div v-if="printTicket.tableDisplayName" class="receipt-row receipt-small">
           {{ printTicket.tableDisplayName }}
@@ -94,7 +94,7 @@ const printTicket = computed(() => {
               :key="`${section.key}-${i}-${mi}`"
               class="receipt-row receipt-small item-detail"
             >
-              ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
+              ↳ {{ formatComandaModifierLabel(mod, { includePrice: true, formatPrice: formatCurrency }) }}
             </div>
             <div v-if="item.notes" class="receipt-row receipt-small item-detail">
               {{ t('pos.printTicket.specialNotes') }}: {{ item.notes }}

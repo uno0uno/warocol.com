@@ -3,6 +3,7 @@
  */
 
 import { DEFAULT_TENANT_TIMEZONE, normalizeTimezone } from '~/utils/bogotaDate'
+import { normalizeUiLocale, toNumberLocaleTag, type UiLocale } from '~/utils/parseLocaleDecimal'
 
 export type ComandaModifierSnapshot = {
   name: string
@@ -17,22 +18,16 @@ export type ComandaPrintItem = {
   notes?: string | null
 }
 
-const comandaPrintCurrency = new Intl.NumberFormat('es-CO', {
-  style: 'currency',
-  currency: 'COP',
-  minimumFractionDigits: 0,
-})
-
 export function formatComandaModifierLabel(
   mod: ComandaModifierSnapshot,
-  options?: { includePrice?: boolean },
+  options?: { includePrice?: boolean; formatPrice?: (amount: number) => string },
 ): string {
   const qty = Number(mod.quantity) || 1
   let label = mod.name
   if (qty > 1) label += ` ×${qty}`
   if (options?.includePrice && mod.price != null) {
     const lineTotal = Number(mod.price) * qty
-    label += ` · ${comandaPrintCurrency.format(lineTotal)}`
+    label += ` · ${options.formatPrice ? options.formatPrice(lineTotal) : String(lineTotal)}`
   }
   return label
 }
@@ -49,10 +44,12 @@ export type ComandaPrintPayload = {
 export function formatComandaPrintTime(
   firedAt?: string | null,
   timezone = DEFAULT_TENANT_TIMEZONE,
+  locale: UiLocale | string = 'es',
 ): string {
   const timeZone = normalizeTimezone(timezone)
+  const localeTag = toNumberLocaleTag(normalizeUiLocale(locale))
   if (!firedAt) {
-    return new Intl.DateTimeFormat('es-CO', {
+    return new Intl.DateTimeFormat(localeTag, {
       dateStyle: 'short',
       timeStyle: 'short',
       timeZone,
@@ -60,7 +57,7 @@ export function formatComandaPrintTime(
   }
   const d = new Date(firedAt)
   if (Number.isNaN(d.getTime())) return firedAt
-  return new Intl.DateTimeFormat('es-CO', {
+  return new Intl.DateTimeFormat(localeTag, {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone,
