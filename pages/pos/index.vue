@@ -852,6 +852,7 @@ const isTabItemFired = (orderItemId: string) => {
 }
 
 const destructiveModalTitle = computed(() => {
+  void locale.value
   const flow = destructiveFlow.value
   if (!flow) return ''
   switch (flow.kind) {
@@ -873,6 +874,7 @@ const destructiveModalTitle = computed(() => {
 })
 
 const destructiveModalMessage = computed(() => {
+  void locale.value
   const flow = destructiveFlow.value
   if (!flow) return ''
   switch (flow.kind) {
@@ -915,22 +917,23 @@ const destructiveModalMessage = computed(() => {
 })
 
 const destructiveModalConfirmLabel = computed(() => {
+  void locale.value
   const flow = destructiveFlow.value
-  if (!flow) return t('pos.banner.confirm')
+  if (!flow) return t('pos.destructive.confirm')
   switch (flow.kind) {
     case 'remove-tab-item':
     case 'remove-cart-item':
-      return t('pos.banner.yesDelete')
+      return t('pos.destructive.yesDelete')
     case 'decrease-tab-item':
-      return t('pos.banner.yesReduce')
+      return t('pos.destructive.yesReduce')
     case 'clear-cart':
-      return t('pos.banner.yesClear')
+      return t('pos.destructive.yesClear')
     case 'release-table':
       return t('pos.destructive.yesRelease', { table: tableSingularLower.value })
     case 'clear-bar-tab':
-      return t('pos.banner.yesClear')
+      return t('pos.destructive.yesClear')
     default:
-      return t('pos.banner.confirm')
+      return t('pos.destructive.confirm')
   }
 })
 

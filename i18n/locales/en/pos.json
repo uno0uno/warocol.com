@@ -171,7 +171,10 @@
       "updateQtyError": "Error updating quantity",
       "releaseError": "Error releasing {table}",
       "clearBarError": "Error clearing the bar",
-      "clearCartError": "Error clearing the cart"
+      "clearCartError": "Error clearing the cart",
+      "yesDelete": "Yes, delete",
+      "yesReduce": "Yes, reduce",
+      "yesClear": "Yes, clear"
     },
     "floor": {
       "minCovered": "Minimum cover met",
@@ -310,6 +313,10 @@
       "comanda": "Ticket #{numbers}",
       "station": "Station: {name}",
       "noStation": "No kitchen station"
+    },
+    "glossary": {
+      "table": "Table",
+      "tables": "Tables"
     }
   }
 }
