@@ -21,7 +21,7 @@
         v-if="open"
         role="dialog"
         aria-modal="true"
-        aria-label="Recargar billetera del cliente"
+        :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl border-border
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l"
@@ -42,13 +42,13 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-lg font-bold text-text-primary leading-tight">Recargar billetera</h2>
+                <h2 class="text-lg font-bold text-text-primary leading-tight">{{ t('analitica.customerDetail.wallet.rechargeTitle') }}</h2>
                 <p class="text-sm text-text-secondary mt-0.5 truncate">{{ customerName }}</p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               @click="close"
             >
@@ -61,12 +61,12 @@
 
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div class="rounded-xl bg-primary/5 border border-primary/15 px-4 py-3">
-            <p class="text-sm text-text-secondary font-medium">Saldo actual</p>
+            <p class="text-sm text-text-secondary font-medium">{{ t('analitica.customerDetail.wallet.currentBalance') }}</p>
             <p class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(currentBalance) }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="wallet-amount" class="text-sm font-medium text-text-primary">Monto (COP)</label>
+            <label for="wallet-amount" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.wallet.amount') }}</label>
             <input
               id="wallet-amount"
               v-model.number="amount"
@@ -82,14 +82,14 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="wallet-payment" class="text-sm font-medium text-text-primary">Forma de pago</label>
+            <label for="wallet-payment" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.paymentMethod') }}</label>
             <select
               id="wallet-payment"
               v-model="paymentSelection"
               class="h-10 px-3 text-sm border-2 border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               :disabled="isSubmitting"
             >
-              <option value="" disabled>Seleccionar método</option>
+              <option value="" disabled>{{ t('analitica.customerDetail.wallet.selectMethod') }}</option>
               <template v-for="group in paymentGroups" :key="group.id">
                 <option v-if="!(group.methods?.length)" :value="group.slug">{{ group.name }}</option>
                 <optgroup v-else :label="group.name">
@@ -101,13 +101,13 @@
 
           <div class="flex flex-col gap-1.5">
             <label for="wallet-notes" class="text-sm font-medium text-text-primary">
-              Nota <span class="text-text-secondary font-normal">(opcional)</span>
+              {{ t('analitica.customerDetail.note') }} <span class="text-text-secondary font-normal">{{ t('analitica.customerDetail.optional') }}</span>
             </label>
             <textarea
               id="wallet-notes"
               v-model="notes"
               rows="2"
-              placeholder="Ej. Recarga en efectivo..."
+              :placeholder="t('analitica.customerDetail.wallet.notesPlaceholder')"
               class="px-3 py-2 text-sm border-2 border-border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
               :disabled="isSubmitting"
             />
@@ -122,7 +122,7 @@
             @click="close"
             class="min-h-[44px] px-4 text-sm font-medium text-text-secondary border-2 border-border rounded-lg hover:bg-surface-secondary"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -131,7 +131,7 @@
             class="min-h-[44px] px-5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             <UiLoadingDots v-if="isSubmitting" size="9px" />
-            <span v-else>Registrar recarga</span>
+            <span v-else>{{ t('analitica.customerDetail.wallet.submitRecharge') }}</span>
           </button>
         </div>
       </div>
@@ -169,6 +169,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const { show: showToast } = useToast()
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 
 const open = computed({
   get: () => props.modelValue,
@@ -199,13 +201,6 @@ function resolvePaymentSelection(value: string): { slug: string; payment_method_
   return { slug: value }
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value || 0)
-
 watch(() => props.modelValue, (v) => {
   if (v) {
     amount.value = null
@@ -234,7 +229,7 @@ watch(
 
 const validationError = computed(() => {
   if (!amount.value || amount.value <= 0) return null
-  if (!Number.isFinite(amount.value)) return 'Monto inválido'
+  if (!Number.isFinite(amount.value)) return t('analitica.customerDetail.wallet.invalidAmount')
   return null
 })
 
@@ -262,11 +257,11 @@ const handleSubmit = async () => {
       notes.value.trim() || undefined,
       payment_method_id,
     )
-    showToast('Recarga registrada correctamente', 'success')
+    showToast(t('analitica.customerDetail.wallet.success'), 'success')
     emit('recharged')
     close()
   } catch (e: any) {
-    localError.value = e?.data?.detail || e?.message || 'Error al registrar la recarga'
+    localError.value = e?.data?.detail || e?.message || t('analitica.customerDetail.wallet.error')
   } finally {
     isSubmitting.value = false
   }

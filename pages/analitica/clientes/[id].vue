@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, inject, onMounted, onUnmounted, watch } from 'vue';
-import { es } from 'date-fns/locale';
+import { enUS, es } from 'date-fns/locale';
 import MetricCard from '~/components/shared/MetricCard.vue';
-import type { WaroTransaction } from '~/composables/useWarosCliente';
 import { resolvePaymentSelection } from '~/composables/usePaymentSelectValue';
 import {
   PAYMENT_DEFAULTS,
@@ -16,6 +15,7 @@ definePageMeta({ layout: 'dashboard', module: 'analitica' })
 const route = useRoute()
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const customerId = computed(() => route.params.id as string)
 
@@ -45,7 +45,8 @@ const goBack = () => router.push('/analitica/clientes')
 // ── Filters ───────────────────────────────────────────────────────────────
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone } = useTenantTimezone()
-const { formatCalendarDate, formatDate: formatTenantDate } = useFormatters()
+const { formatCalendarDate, formatDate: formatTenantDate, formatCurrency, formatNumber } = useFormatters()
+const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // ── Pagination ────────────────────────────────────────────────────────────
 const currentPage = ref(1)
@@ -90,9 +91,6 @@ const startItem = computed(() => totalOrders.value === 0 ? 0 : (currentPage.valu
 const endItem = computed(() => Math.min(currentPage.value * perPage, totalOrders.value))
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value || 0)
-
 const formatDate = (isoDate: string) => {
   if (!isoDate) return '-'
   try {
@@ -103,11 +101,25 @@ const formatDate = (isoDate: string) => {
   catch { return isoDate }
 }
 
+const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractionDigits: 0 })
+const formatProductCount = (count: number) =>
+  t(count === 1 ? 'analitica.customerDetail.productCountOne' : 'analitica.customerDetail.productCountMany', { count })
 
-const statusLabels: Record<string, string> = {
-  completed: 'Completado',
-  cancelled: 'Cancelado',
-  pending: 'Pendiente',
+const statusLabel = (status: string) =>
+  ['completed', 'cancelled', 'pending'].includes(status)
+    ? t(`analitica.customerDetail.status.${status}`)
+    : status
+const creditStatusLabel = (isOverdue: boolean) =>
+  t(isOverdue ? 'analitica.customerDetail.credit.overdue' : 'analitica.customerDetail.credit.current')
+const paymentStatusLabel = (status: string) =>
+  status === 'partial'
+    ? t('analitica.customerDetail.paymentStatus.partial')
+    : t('analitica.customerDetail.paymentStatus.credit')
+const walletMovementLabel = (type: string) => {
+  if (type === 'recharge') return t('analitica.customerDetail.wallet.movementRecharge')
+  if (type === 'redeem') return t('analitica.customerDetail.wallet.movementRedeem')
+  if (type === 'refund') return t('analitica.customerDetail.wallet.movementRefund')
+  return type
 }
 const statusColors: Record<string, string> = {
   completed: 'bg-green-100 text-green-800',
@@ -123,17 +135,28 @@ const clearFilters = () => { dateRangeDates.value = null; currentPage.value = 1 
 watch(dateRangeDates, () => { currentPage.value = 1 })
 
 // ── Table columns ─────────────────────────────────────────────────────────
-const tableColumns = [
-  { key: 'order_number', title: '# Pedido', sortable: false },
-  { key: 'date', title: 'Fecha', sortable: false },
-  { key: 'items_count', title: '# Productos', sortable: false },
-  { key: 'total', title: 'Total', sortable: false },
-  { key: 'payment_method', title: 'Forma de pago', sortable: false },
-  { key: 'payment_status', title: 'Crédito', sortable: false },
-  { key: 'invoice', title: 'Factura', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false },
-  { key: 'waros_earned', title: 'Waros', sortable: false },
-]
+const tableColumns = computed(() => [
+  { key: 'order_number', title: t('analitica.customerDetail.orderNumber'), sortable: false },
+  { key: 'date', title: t('analitica.common.date'), sortable: false },
+  { key: 'items_count', title: t('analitica.customerDetail.productsCount'), sortable: false },
+  { key: 'total', title: t('analitica.customerDetail.total'), sortable: false },
+  { key: 'payment_method', title: t('analitica.customerDetail.paymentMethod'), sortable: false },
+  { key: 'payment_status', title: t('analitica.customerDetail.credit.title'), sortable: false },
+  { key: 'invoice', title: t('analitica.customerDetail.invoice'), sortable: false },
+  { key: 'status', title: t('analitica.customerDetail.status.title'), sortable: false },
+  { key: 'waros_earned', title: t('analitica.clientes.waros'), sortable: false },
+])
+
+const carteraColumns = computed(() => [
+  { key: 'order_number', title: t('analitica.customerDetail.orderNumberAlt'), sortable: false },
+  { key: 'date', title: t('analitica.common.date'), sortable: false },
+  { key: 'total_amount', title: t('analitica.customerDetail.total'), sortable: false },
+  { key: 'credit_paid_amount', title: t('analitica.customerDetail.credit.paid'), sortable: false },
+  { key: 'remaining', title: t('analitica.customerDetail.credit.remaining'), sortable: false },
+  { key: 'due_date', title: t('analitica.customerDetail.credit.due'), sortable: false },
+  { key: 'status_badge', title: t('analitica.customerDetail.status.title'), sortable: false },
+  { key: 'cartera_actions', title: '', sortable: false },
+])
 
 // Invoice slideover state
 const showInvoicePanel = ref(false)
@@ -203,7 +226,7 @@ const saveEdit = async () => {
     showEditForm.value = false
     await refresh()
   } catch (err: any) {
-    editError.value = err?.data?.detail || 'Error al guardar los cambios'
+    editError.value = err?.data?.detail || t('analitica.customerDetail.editError')
   } finally {
     isSavingEdit.value = false
   }
@@ -238,12 +261,6 @@ const walletPaymentGroups = computed(() => {
 })
 
 const walletMovementLabel = (type: string) => {
-  if (type === 'recharge') return 'Recarga'
-  if (type === 'redeem') return 'Uso en pedido'
-  if (type === 'refund') return 'Devolución'
-  return type
-}
-
 const onWalletRecharged = async () => {
   await refetchWallet()
 }
@@ -262,12 +279,6 @@ const formatWarosDate = (isoDate: string) => {
   if (!isoDate) return '-'
   try { return formatTenantDate(isoDate) }
   catch { return isoDate }
-}
-
-const txTypeLabel = (type: string) => {
-  if (type === 'earned') return 'Compra'
-  if (type === 'manual') return 'Manual'
-  return type
 }
 
 // ── Cartera ───────────────────────────────────────────────────────────────
@@ -368,7 +379,7 @@ const submitPayment = async () => {
     showPaymentPanel.value = false
     await fetchCartera()
   } catch (err: any) {
-    paymentError.value = err?.data?.detail || 'Error al registrar el pago'
+    paymentError.value = err?.data?.detail || t('analitica.customerDetail.credit.paymentError')
   } finally {
     isSubmittingPayment.value = false
   }
@@ -396,10 +407,10 @@ onUnmounted(() => {
 
     <!-- 404 / Error -->
     <div v-else-if="fetchError || (!isLoading && !customer)" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <p class="text-xl font-semibold text-text-primary">Cliente no encontrado</p>
-      <p class="text-sm text-text-secondary">{{ (fetchError as any)?.message || 'Este cliente no existe o no tiene pedidos en tu restaurante.' }}</p>
+      <p class="text-xl font-semibold text-text-primary">{{ t('analitica.customerDetail.notFound') }}</p>
+      <p class="text-sm text-text-secondary">{{ (fetchError as any)?.message || t('analitica.customerDetail.notFoundSub') }}</p>
       <button @click="goBack" class="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors min-h-[44px]">
-        ← Volver a Clientes
+        {{ t('analitica.customerDetail.backToCustomers') }}
       </button>
     </div>
 
@@ -418,18 +429,18 @@ onUnmounted(() => {
               </div>
               <div class="min-w-0">
                 <h2 class="text-xl font-bold text-text-primary truncate">{{ customer.name }}</h2>
-                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Cliente POS</p>
+                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">{{ t('analitica.customerDetail.posCustomer') }}</p>
               </div>
             </div>
-            <!-- Total comprado + edit button -->
+            <!-- Total purchased + edit button -->
             <div class="flex items-center gap-3 flex-shrink-0">
               <div class="text-left sm:text-right">
                 <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
-                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Total comprado</p>
+                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">{{ t('analitica.clientes.totalBought') }}</p>
               </div>
               <button
                 type="button"
-                aria-label="Editar datos del cliente"
+                :aria-label="t('analitica.customerDetail.editCustomer')"
                 @click="openEditForm"
                 class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
@@ -443,21 +454,21 @@ onUnmounted(() => {
 
         <!-- Edit form (inline, shows on edit button click) -->
         <div v-if="showEditForm" class="border-t border-border bg-surface px-5 py-4">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-3">Editar datos del cliente</p>
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-3">{{ t('analitica.customerDetail.editCustomer') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="flex flex-col gap-1">
-              <label for="edit-name" class="text-xs font-medium text-text-secondary">Nombre</label>
+              <label for="edit-name" class="text-xs font-medium text-text-secondary">{{ t('analitica.clientes.name') }}</label>
               <input
                 id="edit-name"
                 v-model="editForm.name"
                 type="text"
-                placeholder="Nombre completo"
+                :placeholder="t('analitica.clientes.fullName')"
                 :disabled="isSavingEdit"
                 class="w-full px-3 py-2.5 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
               />
             </div>
             <div class="flex flex-col gap-1">
-              <label for="edit-phone" class="text-xs font-medium text-text-secondary">Teléfono</label>
+              <label for="edit-phone" class="text-xs font-medium text-text-secondary">{{ t('analitica.clientes.phone') }}</label>
               <input
                 id="edit-phone"
                 v-model="editForm.phone_number"
@@ -468,7 +479,7 @@ onUnmounted(() => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <label for="edit-email" class="text-xs font-medium text-text-secondary">Correo electrónico</label>
+              <label for="edit-email" class="text-xs font-medium text-text-secondary">{{ t('analitica.customerDetail.emailAddress') }}</label>
               <input
                 id="edit-email"
                 v-model="editForm.email"
@@ -487,7 +498,7 @@ onUnmounted(() => {
               :disabled="isSavingEdit"
               class="min-h-[44px] px-5 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isSavingEdit ? 'Guardando...' : 'Guardar' }}
+              {{ isSavingEdit ? t('analitica.customerDetail.saving') : t('common.save') }}
             </button>
             <button
               type="button"
@@ -495,7 +506,7 @@ onUnmounted(() => {
               :disabled="isSavingEdit"
               class="min-h-[44px] px-5 py-2 bg-surface border border-border text-sm font-medium text-text-secondary rounded-lg hover:bg-surface-secondary active:scale-95 transition-all disabled:opacity-50"
             >
-              Cancelar
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -508,7 +519,7 @@ onUnmounted(() => {
               <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Teléfono</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.clientes.phone') }}</p>
             </div>
             <p class="text-sm font-semibold text-text-primary">{{ customer.phone || '-' }}</p>
           </div>
@@ -518,27 +529,27 @@ onUnmounted(() => {
               <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Email</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.clientes.email') }}</p>
             </div>
             <p class="text-sm font-semibold text-text-primary truncate">{{ realEmail || '-' }}</p>
           </div>
-          <!-- Primera compra -->
+          <!-- First purchase -->
           <div class="p-4 border-r border-border">
             <div class="flex items-center gap-1.5 mb-1.5">
               <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Primera compra</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.customerDetail.firstPurchase') }}</p>
             </div>
             <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.first_purchase) }}</p>
           </div>
-          <!-- Última compra -->
+          <!-- Last purchase -->
           <div class="p-4">
             <div class="flex items-center gap-1.5 mb-1.5">
               <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Última compra</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.customerDetail.lastPurchase') }}</p>
             </div>
             <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
           </div>
@@ -548,27 +559,27 @@ onUnmounted(() => {
         <div class="border-t border-border px-5 py-4">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Puntos Waros</p>
-              <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">Cargando...</p>
-              <p v-else class="text-sm font-semibold text-amber-700">{{ warosBalance.toLocaleString('es-CO') }}</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.waros.points') }}</p>
+              <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</p>
+              <p v-else class="text-sm font-semibold text-amber-700">{{ formatWaros(warosBalance) }}</p>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <button
                 v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
                 type="button"
-                aria-label="Ver asignaciones manuales de Waros"
+                :aria-label="t('analitica.customerDetail.waros.viewManualAria')"
                 @click="showManualPanel = true"
                 class="min-h-[44px] px-3 text-sm font-medium rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
-                Ver manuales
+                {{ t('analitica.customerDetail.waros.viewManual') }}
               </button>
               <button
                 type="button"
-                aria-label="Asignar o quitar Waros a este cliente"
+                :aria-label="t('analitica.customerDetail.waros.assignAria')"
                 @click="showWarosModal = true"
                 class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/50"
               >
-                + Asignar puntos
+                {{ t('analitica.customerDetail.waros.assign') }}
               </button>
             </div>
           </div>
@@ -578,18 +589,18 @@ onUnmounted(() => {
         <div class="border-t border-border px-5 py-4">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Billetera COP</p>
-              <p v-if="isLoadingWallet" class="text-sm font-semibold text-text-secondary">Cargando...</p>
-              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">No se pudo cargar</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.wallet.title') }}</p>
+              <p v-if="isLoadingWallet" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</p>
+              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
               <p v-else class="text-sm font-semibold text-primary">{{ formatCurrency(walletBalance) }}</p>
             </div>
             <button
               type="button"
-              aria-label="Recargar billetera del cliente"
+              :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
               @click="showWalletRechargeModal = true"
               class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
             >
-              + Recargar
+              {{ t('analitica.customerDetail.wallet.recharge') }}
             </button>
           </div>
           <div v-if="walletMovements.length" class="mt-3 space-y-2 max-h-40 overflow-y-auto">
@@ -617,8 +628,8 @@ onUnmounted(() => {
 
       <!-- Stats -->
       <div class="grid grid-cols-2 gap-4">
-        <MetricCard title="Total pedidos" :value="customer.total_orders" format="number" variant="primary" />
-        <MetricCard title="Ticket promedio" :value="avgTicket" format="currency" variant="primary" />
+        <MetricCard :title="t('analitica.customerDetail.totalOrders')" :value="customer.total_orders" format="number" variant="primary" />
+        <MetricCard :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
       <!-- Cartera Section -->
@@ -629,33 +640,33 @@ onUnmounted(() => {
             <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Cartera</h3>
+            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
           </div>
           <div class="flex items-center gap-3">
             <span class="text-lg font-bold text-red-600">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
             <button
               @click="openGlobalPaymentPanel"
               class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Abonar a la cartera total del cliente"
+              :aria-label="t('analitica.customerDetail.credit.payAllAria')"
             >
-              Abonar a cartera
+              {{ t('analitica.customerDetail.credit.payAll') }}
             </button>
           </div>
         </div>
         <!-- Summary strip -->
         <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
           <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Órdenes</p>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.orders') }}</p>
             <p class="text-sm font-semibold text-text-primary">{{ carteraData.summary.order_count }}</p>
           </div>
           <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Vencidas</p>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overduePlural') }}</p>
             <p class="text-sm font-semibold" :class="carteraData.summary.overdue_count > 0 ? 'text-red-600' : 'text-text-secondary'">
               {{ carteraData.summary.overdue_count }}
             </p>
           </div>
           <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Monto vencido</p>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overdueAmount') }}</p>
             <p class="text-sm font-semibold" :class="carteraData.summary.overdue_amount > 0 ? 'text-red-600' : 'text-text-secondary'">
               {{ formatCurrency(carteraData.summary.overdue_amount) }}
             </p>
@@ -664,18 +675,9 @@ onUnmounted(() => {
         <!-- Credit orders list -->
         <UiResponsiveDataView
           row-size="sm"
-          :columns="[
-            { key: 'order_number', title: '# Orden', sortable: false },
-            { key: 'date', title: 'Fecha', sortable: false },
-            { key: 'total_amount', title: 'Total', sortable: false },
-            { key: 'credit_paid_amount', title: 'Pagado', sortable: false },
-            { key: 'remaining', title: 'Resta', sortable: false },
-            { key: 'due_date', title: 'Vence', sortable: false },
-            { key: 'status_badge', title: 'Estado', sortable: false },
-            { key: 'cartera_actions', title: '', sortable: false },
-          ]"
+          :columns="carteraColumns"
           :data="carteraData.orders || []"
-          empty-message="Sin órdenes en crédito"
+          :empty-message="t('analitica.customerDetail.credit.empty')"
           variant="default"
         >
           <!-- Mobile card -->
@@ -689,19 +691,18 @@ onUnmounted(() => {
                 <span :class="[
                   'text-xs px-2 py-1 rounded-full font-medium',
                   item.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                ]">{{ item.is_overdue ? 'Vencida' : 'Al día' }}</span>
+                ]">{{ creditStatusLabel(item.is_overdue) }}</span>
               </div>
               <div class="text-sm text-text-secondary mb-3">
-                Resta <span class="font-bold text-text-primary">{{ formatCurrency(item.remaining) }}</span>
-                de {{ formatCurrency(item.total_amount) }}
-                <span v-if="item.due_date"> · Vence {{ formatDate(item.due_date) }}</span>
+                {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
+                <span v-if="item.due_date"> · {{ t('analitica.customerDetail.credit.dueOn', { date: formatDate(item.due_date) }) }}</span>
               </div>
               <button
                 @click="openPaymentPanel(item)"
                 class="w-full min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-                :aria-label="`Registrar pago para orden #${item.order_number}`"
+                :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: item.order_number })"
               >
-                Registrar pago
+                {{ t('analitica.customerDetail.credit.registerPayment') }}
               </button>
             </div>
           </template>
@@ -716,15 +717,15 @@ onUnmounted(() => {
             <span :class="[
               'text-xs px-2 py-1 rounded-full font-medium',
               row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-            ]">{{ row.is_overdue ? 'Vencida' : 'Al día' }}</span>
+            ]">{{ creditStatusLabel(row.is_overdue) }}</span>
           </template>
           <template #cell-cartera_actions="{ row }">
             <button
               @click="openPaymentPanel(row)"
               class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              :aria-label="`Registrar pago para orden #${row.order_number}`"
+              :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: row.order_number })"
             >
-              Pagar
+              {{ t('analitica.customerDetail.credit.pay') }}
             </button>
           </template>
         </UiResponsiveDataView>
@@ -738,8 +739,8 @@ onUnmounted(() => {
             range
             :preset-dates="presetDates"
             :enable-time-picker="false"
-            :locale="es"
-            placeholder="Filtrar por período"
+            :locale="dateFnsLocale"
+            :placeholder="t('analitica.customerDetail.filterPeriod')"
             auto-apply
             :teleport="true"
             :timezone="timezone"
@@ -753,8 +754,8 @@ onUnmounted(() => {
             v-if="dateRangeDates"
             @click="clearFilters"
             class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors"
-            title="Limpiar filtro"
-            aria-label="Limpiar filtro de fechas"
+            :title="t('analitica.common.clearFilters')"
+            :aria-label="t('analitica.customerDetail.clearDateFilter')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -766,15 +767,15 @@ onUnmounted(() => {
         row-size="sm"
         :columns="tableColumns"
         :data="orders"
-        title="Historial de pedidos"
-        empty-message="Sin pedidos en este período"
-        empty-sub-message="Prueba cambiando el rango de fechas"
+        :title="t('analitica.customerDetail.history.title')"
+        :empty-message="t('analitica.customerDetail.history.empty')"
+        :empty-sub-message="t('analitica.customerDetail.history.emptySub')"
         variant="default"
       >
         <template #header>
           <h3 class="text-base font-bold text-text-primary">
-            Historial de pedidos
-            <span v-if="totalOrders > 0" class="ml-2 text-sm font-normal text-text-secondary">({{ totalOrders }} total)</span>
+            {{ t('analitica.customerDetail.history.title') }}
+            <span v-if="totalOrders > 0" class="ml-2 text-sm font-normal text-text-secondary">{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
           </h3>
         </template>
 
@@ -787,11 +788,11 @@ onUnmounted(() => {
                 <p class="text-sm text-text-secondary">{{ formatDate(item.date) }}</p>
               </div>
               <span :class="['text-xs px-2 py-1 rounded-full font-medium', statusColors[item.status] || 'bg-gray-100 text-gray-800']">
-                {{ statusLabels[item.status] || item.status }}
+                {{ statusLabel(item.status) }}
               </span>
             </div>
             <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">{{ item.items_count }} productos · {{ resolveLabel(item.payment_method) }}</span>
+              <span class="text-text-secondary">{{ formatProductCount(item.items_count) }} · {{ resolveLabel(item.payment_method) }}</span>
               <span class="font-bold text-text-primary">{{ formatCurrency(item.total) }}</span>
             </div>
           </div>
@@ -825,7 +826,7 @@ onUnmounted(() => {
               row.payment_status === 'partial' ? 'bg-amber-100 text-amber-800' :
               row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
             ]">
-              {{ row.payment_status === 'partial' ? 'Parcial' : 'Crédito' }}
+              {{ paymentStatusLabel(row.payment_status) }}
             </span>
           </template>
           <span v-else class="text-sm text-text-secondary">—</span>
@@ -833,7 +834,7 @@ onUnmounted(() => {
 
         <template #cell-status="{ value }">
           <span :class="['text-xs px-2 py-1 rounded-full font-medium', statusColors[value] || 'bg-gray-100 text-gray-800']">
-            {{ statusLabels[value] || value }}
+            {{ statusLabel(value) }}
           </span>
         </template>
 
@@ -842,25 +843,25 @@ onUnmounted(() => {
             v-if="row.invoice_status === 'accepted'"
             @click.stop="openInvoicePanel(row)"
             class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-            :aria-label="`Ver factura ${row.invoice_prefix}-${row.invoice_number}`"
+            :aria-label="t('analitica.customerDetail.invoiceViewAria', { invoice: `${row.invoice_prefix}-${row.invoice_number}` })"
           >
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
             {{ row.invoice_prefix }}-{{ row.invoice_number }}
           </button>
           <span v-else-if="row.invoice_status === 'pending'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
             <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            Procesando
+            {{ t('analitica.customerDetail.invoiceStatus.processing') }}
           </span>
-          <span v-else-if="row.invoice_status === 'rejected'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700" :title="row.error_message || 'Rechazada por DIAN'">
+          <span v-else-if="row.invoice_status === 'rejected'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700" :title="row.error_message || t('analitica.customerDetail.invoiceStatus.rejectedByDian')">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-            Rechazada
+            {{ t('analitica.customerDetail.invoiceStatus.rejected') }}
           </span>
           <span v-else class="text-sm text-text-tertiary">—</span>
         </template>
 
         <template #cell-waros_earned="{ value }">
           <span v-if="value > 0" class="text-sm font-semibold text-amber-700">
-            +{{ value.toLocaleString('es-CO') }}
+            +{{ formatWaros(value) }}
           </span>
           <span v-else class="text-sm text-text-secondary">—</span>
         </template>
@@ -871,17 +872,16 @@ onUnmounted(() => {
         <div class="flex-1 flex justify-between sm:hidden">
           <button @click="previousPage" :disabled="!canGoPrevious"
             :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            Anterior
+            {{ t('analitica.clientes.prev') }}
           </button>
           <button @click="nextPage" :disabled="!canGoNext"
             :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            Siguiente
+            {{ t('analitica.clientes.next') }}
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p class="text-sm text-titan-700">
-            Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span>
-            de <span class="font-medium">{{ totalOrders }}</span> pedidos
+            {{ t('analitica.customerDetail.history.showingRange', { start: startItem, end: endItem, total: totalOrders }) }}
           </p>
           <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
             <button @click="previousPage" :disabled="!canGoPrevious"
@@ -943,7 +943,7 @@ onUnmounted(() => {
           v-if="showManualPanel"
           role="dialog"
           aria-modal="true"
-          aria-label="Asignaciones manuales de Waros"
+          :aria-label="t('analitica.customerDetail.waros.manualAssignments')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                  md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -963,14 +963,14 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <h2 class="text-base font-bold text-text-primary leading-tight">Asignaciones manuales</h2>
+                  <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('analitica.customerDetail.waros.manualAssignments') }}</h2>
                   <p class="text-xs text-text-secondary leading-snug mt-0.5">{{ customer?.name }}</p>
                 </div>
               </div>
               <button
                 @click="showManualPanel = false"
                 type="button"
-                aria-label="Cerrar panel"
+                :aria-label="t('analitica.customerDetail.closePanel')"
                 class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -989,7 +989,7 @@ onUnmounted(() => {
               <svg class="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p class="text-sm font-medium">Sin asignaciones manuales</p>
+              <p class="text-sm font-medium">{{ t('analitica.customerDetail.waros.noManualAssignments') }}</p>
             </div>
             <div
               v-for="tx in warosSummary?.manual_transactions"
@@ -998,7 +998,7 @@ onUnmounted(() => {
             >
               <div class="min-w-0">
                 <p class="text-xs text-text-secondary mb-0.5">{{ formatWarosDate(tx.created_at) }}</p>
-                <p class="text-sm text-text-primary truncate">{{ tx.description || 'Asignación manual' }}</p>
+                <p class="text-sm text-text-primary truncate">{{ tx.description || t('analitica.customerDetail.waros.manualAssignment') }}</p>
               </div>
               <span
                 :class="[
@@ -1006,7 +1006,7 @@ onUnmounted(() => {
                   tx.waros_amount > 0 ? 'text-green-600' : 'text-red-600',
                 ]"
               >
-                {{ tx.waros_amount > 0 ? '+' : '' }}{{ tx.waros_amount.toLocaleString('es-CO') }}
+                {{ tx.waros_amount > 0 ? '+' : '' }}{{ formatWaros(Math.abs(tx.waros_amount)) }}
               </span>
             </div>
           </div>
@@ -1034,7 +1034,7 @@ onUnmounted(() => {
           v-if="showPaymentPanel"
           role="dialog"
           aria-modal="true"
-          aria-label="Registrar pago"
+          :aria-label="t('analitica.customerDetail.credit.registerPayment')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                  md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -1055,14 +1055,14 @@ onUnmounted(() => {
                 </div>
                 <div class="min-w-0">
                   <h2 class="text-base font-bold text-text-primary leading-tight">
-                    {{ isGlobalPayment ? 'Abonar a cartera' : 'Registrar pago' }}
+                    {{ isGlobalPayment ? t('analitica.customerDetail.credit.payAll') : t('analitica.customerDetail.credit.registerPayment') }}
                   </h2>
                   <p class="text-xs text-text-secondary leading-snug mt-0.5">
                     <template v-if="isGlobalPayment">
-                      Total pendiente · {{ formatCurrency(carteraData?.summary?.total_outstanding) }}
+                      {{ t('analitica.customerDetail.credit.totalPending', { amount: formatCurrency(carteraData?.summary?.total_outstanding) }) }}
                     </template>
                     <template v-else>
-                      Orden #{{ selectedOrder?.order_number }} · Resta {{ formatCurrency(selectedOrder?.remaining) }}
+                      {{ t('analitica.customerDetail.credit.orderRemaining', { order: selectedOrder?.order_number, amount: formatCurrency(selectedOrder?.remaining) }) }}
                     </template>
                   </p>
                 </div>
@@ -1070,7 +1070,7 @@ onUnmounted(() => {
               <button
                 @click="showPaymentPanel = false"
                 type="button"
-                aria-label="Cerrar panel"
+                :aria-label="t('analitica.customerDetail.closePanel')"
                 class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1087,12 +1087,12 @@ onUnmounted(() => {
               <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-xs text-blue-700">El monto se distribuye automáticamente a las órdenes más antiguas primero.</p>
+              <p class="text-xs text-blue-700">{{ t('analitica.customerDetail.credit.fifoNote') }}</p>
             </div>
 
             <!-- Amount -->
             <div class="flex flex-col gap-1.5">
-              <label for="payment-amount" class="text-sm font-medium text-text-primary">Monto a abonar</label>
+              <label for="payment-amount" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.credit.amountToPay') }}</label>
               <input
                 id="payment-amount"
                 v-model.number="paymentForm.amount"
@@ -1107,7 +1107,7 @@ onUnmounted(() => {
 
             <!-- Payment method -->
             <div class="flex flex-col gap-1.5">
-              <label for="payment-method" class="text-sm font-medium text-text-primary">Forma de pago</label>
+              <label for="payment-method" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.paymentMethod') }}</label>
               <select
                 id="payment-method"
                 v-model="paymentSelectValue"
@@ -1132,14 +1132,14 @@ onUnmounted(() => {
             <!-- Notes -->
             <div class="flex flex-col gap-1.5">
               <label for="payment-notes" class="text-sm font-medium text-text-primary">
-                Notas <span class="text-text-secondary font-normal">(opcional)</span>
+                {{ t('analitica.customerDetail.notes') }} <span class="text-text-secondary font-normal">{{ t('analitica.customerDetail.optional') }}</span>
               </label>
               <textarea
                 id="payment-notes"
                 v-model="paymentForm.notes"
                 rows="3"
                 class="px-3 py-2 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
-                placeholder="Ej: Pago parcial acordado..."
+                :placeholder="t('analitica.customerDetail.credit.notesPlaceholder')"
               />
             </div>
 
@@ -1161,8 +1161,8 @@ onUnmounted(() => {
                      hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30
                      disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span v-if="isSubmittingPayment">Registrando...</span>
-              <span v-else>Confirmar pago</span>
+              <span v-if="isSubmittingPayment">{{ t('analitica.customerDetail.registering') }}</span>
+              <span v-else>{{ t('analitica.customerDetail.credit.confirmPayment') }}</span>
             </button>
           </div>
         </div>
@@ -1179,12 +1179,12 @@ onUnmounted(() => {
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-border">
             <h3 class="text-lg font-bold text-text-primary">
-              Factura {{ selectedInvoice?.prefix }}-{{ selectedInvoice?.number }}
+              {{ t('analitica.customerDetail.invoiceTitle', { invoice: `${selectedInvoice?.prefix}-${selectedInvoice?.number}` }) }}
             </h3>
             <button
               @click="showInvoicePanel = false"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg hover:bg-surface-secondary transition-colors"
-              aria-label="Cerrar panel de factura"
+              :aria-label="t('analitica.customerDetail.invoiceClosePanel')"
             >
               <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -1200,7 +1200,7 @@ onUnmounted(() => {
                 <button
                   @click="copyCufe(selectedInvoice.cufe)"
                   class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border hover:bg-surface-secondary transition-colors shrink-0"
-                  :aria-label="copiedCufe ? 'CUFE copiado' : 'Copiar CUFE'"
+                  :aria-label="copiedCufe ? t('analitica.customerDetail.cufeCopied') : t('analitica.customerDetail.copyCufe')"
                 >
                   <svg v-if="!copiedCufe" class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
                   <svg v-else class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
@@ -1219,10 +1219,10 @@ onUnmounted(() => {
                 :src="invoicePdfUrl"
                 class="w-full rounded-lg border border-border"
                 style="height: 500px;"
-                title="Vista previa PDF factura"
+                :title="t('analitica.customerDetail.invoicePdfPreview')"
               ></iframe>
               <div v-else class="text-sm text-text-secondary text-center py-8">
-                PDF no disponible
+                {{ t('analitica.customerDetail.invoicePdfUnavailable') }}
               </div>
             </div>
           </div>
@@ -1237,13 +1237,13 @@ onUnmounted(() => {
               class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-              Abrir en nueva pestaña
+              {{ t('analitica.customerDetail.openNewTab') }}
             </a>
             <button
               @click="showInvoicePanel = false"
               class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors"
             >
-              Cerrar
+              {{ t('common.close') }}
             </button>
           </div>
         </div>
