@@ -181,7 +181,7 @@ const submitTarget = computed<'ready' | 'delivered'>(() =>
 const submitLabel = computed(() => {
   const n = selectedIds.value.size
   if (n === 0) {
-    return activeTab.value === 'preparing' ? t('pos.comandasPanel.markReady') : 'Marcar como entregadas'
+    return activeTab.value === 'preparing' ? t('pos.comandasPanel.markReady') : t('pos.comandasPanel.markDelivered')
   }
   if (activeTab.value === 'preparing') return `Marcar ${n} como ${n === 1 ? 'lista' : 'listas'}`
   return `Marcar ${n} como ${n === 1 ? 'entregada' : 'entregadas'}`
@@ -210,7 +210,7 @@ const submit = async () => {
     await fetchComandas()
     emit('success')
   } catch (err: any) {
-    toast.error(err?.data?.detail || err?.message || t('pos.comandasPanel.updateError'), { title: 'Error' })
+    toast.error(err?.data?.detail || err?.message || t('pos.comandasPanel.updateError'), { title: t('pos.banner.error') })
   } finally {
     submitting.value = false
   }

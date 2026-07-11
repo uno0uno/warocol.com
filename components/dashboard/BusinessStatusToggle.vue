@@ -4,7 +4,7 @@
     <button
       @click="openModal"
       :disabled="isUpdating"
-      :aria-label="businessProfile.is_currently_open ? 'Restaurante abierto — click para cerrar' : 'Restaurante cerrado — click para abrir'"
+      :aria-label="businessProfile.is_currently_open ? t('shell.businessOpenAria') : t('shell.businessClosedAria')"
       class="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
       :class="businessProfile.is_currently_open
         ? 'bg-status-success-bg border-status-success-text text-status-success-text hover:opacity-80'
@@ -17,7 +17,7 @@
         aria-hidden="true"
       />
       <span class="text-sm font-medium hidden sm:inline">
-        {{ businessProfile.is_currently_open ? 'Abierto' : 'Cerrado' }}
+        {{ businessProfile.is_currently_open ? t('shell.businessOpen') : t('shell.businessClosed') }}
       </span>
       <!-- Spinner when updating -->
       <span
@@ -103,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { getCurrentInstance } from 'vue'
 
 const tenantsStore = useTenantsStore()
@@ -132,7 +133,7 @@ const confirmToggle = async () => {
     await tenantsStore.fetchBusinessProfile()
     toast.success(
       newState ? 'El restaurante está abierto.' : 'El restaurante está cerrado.',
-      { title: newState ? 'Abierto' : 'Cerrado' }
+      { title: newState ? t('shell.businessOpen') : t('shell.businessClosed') }
     )
     closeModal()
   } catch {
