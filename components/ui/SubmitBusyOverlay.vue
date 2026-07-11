@@ -13,12 +13,14 @@ const props = withDefaults(defineProps<{
   indicator?: OverlayIndicator
 }>(), {
   busy: false,
-  label: 'Procesando...',
+  label: '',
   hint: '',
   fullscreen: true,
   variant: 'glass',
   indicator: 'matrix',
 })
+
+const { t } = useI18n({ useScope: 'global' })
 
 const overlayPositionClass = computed(() =>
   props.fullscreen
@@ -32,8 +34,10 @@ const panelClass = computed(() =>
     : 'soft-panel border-border/80 bg-surface/95'
 )
 
-const labelId = computed(() => `submit-busy-${props.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'state'}`)
-const hintId = computed(() => props.hint ? `${labelId.value}-hint` : undefined)
+const displayLabel = computed(() => props.label || t('common.processing'))
+const displayHint = computed(() => props.hint || '')
+const labelId = computed(() => `submit-busy-${displayLabel.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'state'}`)
+const hintId = computed(() => displayHint.value ? `${labelId.value}-hint` : undefined)
 </script>
 
 <template>
@@ -63,7 +67,7 @@ const hintId = computed(() => props.hint ? `${labelId.value}-hint` : undefined)
             <div
               class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary"
             >
-              Submit busy
+              {{ t('common.submitBusy') }}
             </div>
 
             <CommonsTheCustomLoader
@@ -80,14 +84,14 @@ const hintId = computed(() => props.hint ? `${labelId.value}-hint` : undefined)
 
             <div class="space-y-1.5">
               <p :id="labelId" class="text-lg font-semibold text-text-primary sm:text-xl">
-                {{ label }}
+                {{ displayLabel }}
               </p>
               <p
-                v-if="hint"
+                v-if="displayHint"
                 :id="hintId"
                 class="mx-auto max-w-md text-sm leading-relaxed text-text-secondary"
               >
-                {{ hint }}
+                {{ displayHint }}
               </p>
             </div>
           </div>

@@ -35,6 +35,8 @@
     "pagination": {
       "showingRange": "Showing {start} to {end} of {total} results",
       "pageOf": "Page {page} of {total}"
-    }
+    },
+    "submitBusy": "Submitting changes",
+    "processing": "Processing..."
   }
 }
