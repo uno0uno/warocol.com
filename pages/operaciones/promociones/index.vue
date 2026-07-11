@@ -42,7 +42,7 @@
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-:placeholder="t('operaciones.promociones.searchPlaceholder')"
+        :search-placeholder="t('operaciones.promociones.searchPlaceholder')"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"

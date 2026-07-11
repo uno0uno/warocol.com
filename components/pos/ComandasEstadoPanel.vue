@@ -201,7 +201,7 @@ const submit = async () => {
     const failed = (res.failed ?? []).length
     if (failed === 0) {
       toast.success(`${ok} ${ok === 1 ? 'comanda actualizada' : 'comandas actualizadas'}`, {
-        title: 't('pos.comandasPanel.statusUpdated')',
+        title: t('pos.comandasPanel.statusUpdated'),
       })
     } else {
       toast.success(`${ok} actualizadas · ${failed} fallaron`, { title: 'Resultado parcial' })
