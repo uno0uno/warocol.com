@@ -346,21 +346,13 @@ const handleSort = (event: string | { field: string; direction?: 'asc' | 'desc' 
   currentPage.value = 1
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const { formatDateTime: formatDate } = useFormatters()
+const { formatDateTime: formatDate, formatCurrency } = useFormatters()
 
 const getPaymentStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    'paid': 'Pagado',
+    'paid': t('ventas.common.pagado'),
     'credit': t('ventas.common.credito'),
-    'partial': 'Parcial'
+    'partial': t('ventas.common.parcial')
   }
   return labels[status] ?? status
 }
@@ -416,6 +408,13 @@ const paymentHeaderFilter = computed({
 })
 
 const { formatDateTime: formatDateCompact } = useFormatters()
+
+const getOrderSourceLabel = (order: any) => {
+  if (order?.is_delivery) return t('ventas.common.domicilio')
+  if (order?.source === 'barra') return t('ventas.common.barra')
+  if (order?.source === 'mesa') return tableSingular.value
+  return t('ventas.common.pos')
+}
 
 const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)
@@ -481,7 +480,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <option :value="null">{{ t('ventas.common.metodoPagoShort') }}</option>
           <template v-for="group in paymentGroups">
             <optgroup v-if="group.methods?.length" :key="`g-${group.slug}`" :label="group.name">
-              <option :value="`g:${group.slug}`">{{ group.name }} (todos)</option>
+              <option :value="`g:${group.slug}`">{{ t('ventas.ordenes.allInGroup', { name: group.name }) }}</option>
               <option v-for="m in group.methods" :key="m.id" :value="`m:${m.id}`">{{ m.name }}</option>
             </optgroup>
             <option v-else :key="group.slug" :value="`g:${group.slug}`">{{ group.name }}</option>
@@ -495,9 +494,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           :class="[filterSelectClass, 'md:hidden']"
         >
           <option :value="null">{{ t('ventas.ordenes.filterEstado') }}</option>
-          <option value="completed">Completadas</option>
-          <option value="cancelled">Canceladas</option>
-          <option value="pending">Pendientes</option>
+          <option value="completed">{{ t('ventas.common.completadas') }}</option>
+          <option value="cancelled">{{ t('ventas.common.canceladas') }}</option>
+          <option value="pending">{{ t('ventas.common.pendientes') }}</option>
         </select>
 
         <!-- Delivery-only filter chip -->
@@ -511,10 +510,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-model="deliveryOnly"
             type="checkbox"
             class="sr-only"
-            aria-label="Mostrar solo domicilios"
+            :aria-label="t('ventas.ordenes.deliveryOnlyAria')"
             @change="() => { currentPage.value = 1 }"
           />
-          <span class="text-sm font-semibold">Solo domicilios</span>
+          <span class="text-sm font-semibold">{{ t('ventas.ordenes.deliveryOnly') }}</span>
         </label>
         </template>
 
@@ -533,7 +532,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span>{{ isExporting ? 'Enviando...' : 'Exportar' }}</span>
+          <span>{{ isExporting ? t('ventas.ordenes.sending') : t('ventas.ordenes.export') }}</span>
         </button>
 
         <!-- Nueva Venta Button (Desktop only) -->
@@ -545,7 +544,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Manual</span>
+          <span>{{ t('ventas.ordenes.manual') }}</span>
         </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -556,8 +555,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
       >
           <div class="flex items-center gap-2 flex-shrink-0">
-            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.length }} seleccionada(s)</span>
-            <button type="button" @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">deseleccionar</button>
+            <span class="text-sm font-semibold text-text-primary">{{ t('ventas.ordenes.selectedCount', { count: selectedIds.length }) }}</span>
+            <button type="button" @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">{{ t('ventas.ordenes.deselect') }}</button>
           </div>
 
           <div class="flex-1" />
@@ -566,10 +565,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-model="bulkStatus"
             :class="filterSelectClass"
           >
-            <option value="">Cambiar estado...</option>
-            <option value="completed">Completada</option>
-            <option value="pending">Pendiente</option>
-            <option value="cancelled">Cancelada</option>
+            <option value="">{{ t('ventas.ordenes.changeStatus') }}</option>
+            <option value="completed">{{ t('ventas.common.completada') }}</option>
+            <option value="pending">{{ t('ventas.common.pendiente') }}</option>
+            <option value="cancelled">{{ t('ventas.common.cancelada') }}</option>
           </select>
 
           <select
@@ -577,7 +576,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-model="bulkPaymentSelectValue"
             :class="filterSelectClass"
           >
-            <option value="">Método de pago...</option>
+            <option value="">{{ t('ventas.ordenes.paymentMethodPlaceholder') }}</option>
             <template v-for="group in paymentGroups" :key="group.id">
               <option :value="`${group.slug}:`">{{ group.name }}</option>
               <optgroup v-if="group.methods?.length" :label="group.name">
@@ -594,11 +593,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <UiLoadingDots v-if="isBulkUpdating" size="12px" />
-            <span v-else>Aplicar</span>
+            <span v-else>{{ t('ventas.common.aplicar') }}</span>
           </button>
 
           <button @click="clearSelection" class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors">
-            Cancelar
+            {{ t('ventas.common.cancelar') }}
           </button>
         </div>
 
@@ -648,9 +647,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ getInvoiceLabel(item) }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? tableSingular : 'POS') }}
+                {{ getInvoiceLabel(item) }} · {{ item.items_count }} {{ t('ventas.common.items') }} · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ getOrderSourceLabel(item) }}
               </p>
-              <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento manual: -{{ formatCurrency(item.discount_amount) }}</p>
+              <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">{{ t('ventas.ordenes.manualDiscountLine', { amount: formatCurrency(item.discount_amount) }) }}</p>
             </div>
 
             <!-- Right: monto + badge -->
@@ -676,9 +675,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #header-source>
           <UiTableHeaderFilter
             v-model="deliveryOnly"
-            title="Origen"
+            :title="t('ventas.ordenes.colSource')"
             filter-type="toggle"
-            toggle-label="Solo domicilios"
+            :toggle-label="t('ventas.ordenes.deliveryOnly')"
             align="center"
           />
         </template>
@@ -686,14 +685,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #header-payment_method>
           <UiTableHeaderFilter
             v-model="paymentHeaderFilter"
-            title="Método Pago"
+            :title="t('ventas.common.metodoPago')"
             column-key="payment_method"
             sortable
             :sort-field="sortField"
             :sort-direction="sortDirection"
             filter-type="select"
             :options="paymentHeaderOptions"
-            all-label="Método pago"
+            :all-label="t('ventas.common.metodoPagoShort')"
             align="left"
             @sort="handleSort"
           />
@@ -702,10 +701,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #header-status>
           <UiTableHeaderFilter
             v-model="statusHeaderFilter"
-            title="Estado"
+            :title="t('ventas.common.estado')"
             filter-type="select"
             :options="statusHeaderOptions"
-            all-label="Estado"
+            :all-label="t('ventas.common.estado')"
             align="center"
           />
         </template>
@@ -763,7 +762,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400'
               : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
-            {{ row?.is_delivery ? 'Domicilio' : (value === 'barra' ? 'Barra' : value === 'mesa' ? tableSingular : 'POS') }}
+            {{ getOrderSourceLabel(row) }}
           </span>
         </template>
 

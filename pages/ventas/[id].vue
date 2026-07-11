@@ -424,7 +424,7 @@ const effectiveWaroBreakdown = computed(() => {
 })
 const orderWaroLineLabel = (line: { reward_name?: string | null }) => {
   const name = line.reward_name
-  return name ? `WaRo: ${name}` : 'Canje WaRo'
+  return name ? `WaRo: ${name}` : t('ventas.detail.waroRedemption')
 }
 
 const hasOrderTotalsBreakdown = computed(() => {
@@ -455,7 +455,7 @@ const productHeaderOptions = computed(() => {
   const products = new Map<string, string>()
   items.value.forEach((item: any) => {
     const id = String(item.product?.id || item.product_id || item.id || '')
-    const name = item.product?.name || item.name || 'Producto'
+    const name = item.product?.name || item.name || t('ventas.detail.productFallback')
     if (id && !products.has(id)) products.set(id, name)
   })
   return Array.from(products.entries())
@@ -498,15 +498,7 @@ const hasChanges = computed(() => {
     Array.from(modifiersToDelete.value.values()).some(set => set.size > 0)
 })
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const { formatDateTime: formatDate } = useFormatters()
+const { formatDateTime: formatDate, formatCurrency } = useFormatters()
 
 type SaleReceiptModifier = {
   id?: string | number | null
@@ -548,7 +540,7 @@ const saleReceiptItems = computed(() =>
     return {
       id: item.id,
       productId: item.product?.id ?? item.product_id ?? null,
-      name: item.product?.name || item.name || 'Producto',
+      name: item.product?.name || item.name || t('ventas.detail.productFallback'),
       quantity,
       unitPrice: total / quantity,
       total,
@@ -562,7 +554,7 @@ const saleReceiptItems = computed(() =>
       taxCategory: item.tax_category ?? null,
       modifiers: (item.modifiers ?? []).map((modifier: any) => ({
         id: modifier.id,
-        name: modifier.name || 'Adicion',
+        name: modifier.name || t('ventas.detail.additionFallback'),
         quantity: modifier.quantity ?? 1,
         price: Number(modifier.price) || 0,
         total: itemModifierTotal(modifier),
@@ -576,25 +568,25 @@ const saleReceiptPromoBreakdown = computed(() => {
   if (breakdown.length > 0) return breakdown
   const savings = Number(order.value?.promo_savings) || 0
   if (savings <= 0) return []
-  return [{ promotion_name: 'Promocion', savings }]
+  return [{ promotion_name: t('ventas.detail.promotionFallback'), savings }]
 })
 
 const saleReceiptWaroDiscountLabel = computed(() => {
   const firstLine = effectiveWaroBreakdown.value.find((line: any) => Number(line.cop_discount) > 0)
-  return firstLine ? orderWaroLineLabel(firstLine) : 'Canje WaRo'
+  return firstLine ? orderWaroLineLabel(firstLine) : t('ventas.detail.waroRedemption')
 })
 
 const saleReceiptLocationLabel = computed(() => {
   const o = order.value
   if (!o) return null
-  if (o.is_delivery) return 'Domicilio'
-  if (o.source === 'barra') return 'Barra'
+  if (o.is_delivery) return t('ventas.common.domicilio')
+  if (o.source === 'barra') return t('ventas.common.barra')
   if (o.source === 'mesa') {
     const tableName = o.table_display_name || o.table_name || o.table?.name || null
     const tableCode = o.table_code || o.table?.code || null
     return [tableSingular.value, tableCode, tableName].filter(Boolean).join(' ')
   }
-  return 'Mostrador'
+  return t('ventas.detail.counter')
 })
 
 const saleReceiptSoldAt = computed(() => {
@@ -635,7 +627,7 @@ const saleReceiptInvoiceTaxLines = computed(() => {
       amount: Number(o.standard_tax) || 0,
     },
     {
-      label: 'IVA licores',
+      label: t('ventas.detail.liquorVat'),
       rate: 5,
       amount: Number(o.liquor_tax) || 0,
     },
@@ -685,7 +677,16 @@ const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     'completed': t('ventas.common.completada'),
     'cancelled': t('ventas.common.cancelada'),
-    'pending': 'Pendiente'
+    'pending': t('ventas.common.pendiente')
+  }
+  return labels[status] || status
+}
+
+const getInvoiceStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    accepted: t('ventas.detail.acceptedStatus'),
+    pending: t('ventas.detail.pendingStatus'),
+    rejected: t('ventas.detail.rejectedStatus'),
   }
   return labels[status] || status
 }
@@ -951,7 +952,7 @@ onUnmounted(() => {
         <!-- Customer Name -->
         <div class="bg-surface border border-border rounded-xl p-4">
           <div class="mb-2 flex items-start justify-between gap-3">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Cliente</p>
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">{{ t('ventas.common.cliente') }}</p>
             <button
               v-if="canAssociateOrderCustomer"
               type="button"
@@ -970,7 +971,7 @@ onUnmounted(() => {
 
         <!-- Customer Phone -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Teléfono</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.telefono') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ order.customer_phone }}</p>
         </div>
 
@@ -979,12 +980,12 @@ onUnmounted(() => {
           v-if="order.served_by_member_id"
           class="bg-surface border border-border rounded-xl p-4"
         >
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Mesero</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.mesero') }}</p>
           <NuxtLink
             :to="`/equipo/miembros/${order.served_by_member_id}`"
             class="text-lg font-bold text-primary hover:underline"
           >
-            {{ order.served_by_member_name || 'Asignado' }}
+            {{ order.served_by_member_name || t('ventas.detail.assigned') }}
           </NuxtLink>
         </div>
 
@@ -994,11 +995,11 @@ onUnmounted(() => {
           :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
           @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
           :aria-label="order.split_payments && order.split_payments.length > 0 ? t('ventas.detail.viewSplitDetail') : undefined">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Método de Pago</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
           <div class="flex items-center justify-between gap-2">
             <p class="text-lg font-bold text-info leading-tight">
               <template v-if="order.split_payments && order.split_payments.length > 0">
-                Cobro dividido · {{ order.split_payments.length }} pagos
+                {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
               </template>
               <template v-else>
                 {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : t('ventas.common.sinRegistrar') }}
@@ -1017,9 +1018,9 @@ onUnmounted(() => {
           @click="openFinalizeSalePanel"
           class="bg-status-success-bg border-2 border-status-success-text/30 rounded-xl p-4 text-left w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
         >
-          <p class="text-xs font-semibold uppercase tracking-wider mb-2">Acción pendiente</p>
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
           <div class="flex items-center justify-between gap-3">
-            <span class="text-lg font-bold leading-tight">Finalizar venta</span>
+            <span class="text-lg font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
             <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
@@ -1028,7 +1029,7 @@ onUnmounted(() => {
 
         <!-- Source / Origin -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Origen</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.ordenes.colSource') }}</p>
           <span class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full" :class="{
             'bg-emerald-100 text-emerald-700': order.is_delivery,
             'bg-amber-100 text-amber-700': !order.is_delivery && order.source === 'barra',
@@ -1051,7 +1052,7 @@ onUnmounted(() => {
                   d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </template>
-            {{ order.is_delivery ? 'Domicilio' : order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? tableSingular : 'POS' }}
+            {{ saleReceiptLocationLabel || t('ventas.common.pos') }}
           </span>
         </div>
 
@@ -1061,14 +1062,14 @@ onUnmounted(() => {
       <div v-if="order.is_delivery" class="bg-surface border border-border rounded-2xl overflow-hidden">
         <!-- Header -->
         <div class="px-5 py-4 border-b border-border">
-          <h2 class="text-base sm:text-lg font-bold text-text-primary">Información de entrega</h2>
+          <h2 class="text-base sm:text-lg font-bold text-text-primary">{{ t('ventas.detail.deliveryInfo') }}</h2>
         </div>
 
         <!-- Body — 2 column grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
           <!-- Address column -->
           <div class="px-5 py-5">
-            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Dirección</p>
+            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">{{ t('ventas.detail.deliveryAddress') }}</p>
             <template v-if="order.delivery_address">
               <p class="text-base font-semibold text-text-primary leading-snug">
                 {{ order.delivery_address.address_line1 }}
@@ -1081,7 +1082,7 @@ onUnmounted(() => {
               </p>
               <div v-if="order.delivery_address.delivery_notes"
                 class="mt-3 px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
-                <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-1">Notas de la dirección</p>
+                <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-1">{{ t('ventas.detail.addressNotes') }}</p>
                 <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_address.delivery_notes }}</p>
               </div>
               <a v-if="order.delivery_address.latitude && order.delivery_address.longitude"
@@ -1092,27 +1093,27 @@ onUnmounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Ver en mapa
+                {{ t('ventas.detail.viewMap') }}
               </a>
             </template>
             <p v-else class="text-sm text-text-tertiary italic flex items-center gap-2">
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
               </svg>
-              Dirección eliminada
+              {{ t('ventas.detail.addressRemoved') }}
             </p>
           </div>
 
           <!-- Schedule + instructions column -->
           <div class="px-5 py-5">
-            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Hora de entrega</p>
+            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">{{ t('ventas.detail.deliveryTime') }}</p>
             <p class="text-base font-semibold text-text-primary leading-snug">
-              {{ order.scheduled_time ? formatDate(order.scheduled_time) : 'Inmediato' }}
+              {{ order.scheduled_time ? formatDate(order.scheduled_time) : t('ventas.detail.immediate') }}
             </p>
-            <p v-if="!order.scheduled_time" class="text-xs text-text-secondary mt-0.5">Apenas se cobre, listo para despachar</p>
+            <p v-if="!order.scheduled_time" class="text-xs text-text-secondary mt-0.5">{{ t('ventas.detail.dispatchAfterPayment') }}</p>
 
             <template v-if="order.delivery_instructions">
-              <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 mt-5">Notas para el repartidor</p>
+              <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 mt-5">{{ t('ventas.detail.courierNotes') }}</p>
               <div class="px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
                 <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_instructions }}</p>
               </div>
@@ -1168,8 +1169,7 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
               </svg>
-              {{ invoiceData.status === 'accepted' ? 'Aceptada' : invoiceData.status === 'pending' ? 'Pendiente' :
-                'Rechazada' }}
+              {{ getInvoiceStatusLabel(invoiceData.status) }}
             </span>
           </div>
 
@@ -1177,16 +1177,16 @@ onUnmounted(() => {
           <div class="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-border">
             <!-- Col 1: Información -->
             <div class="p-5">
-              <h3 class="text-sm font-bold text-text-primary mb-4">Información</h3>
+              <h3 class="text-sm font-bold text-text-primary mb-4">{{ t('ventas.detail.information') }}</h3>
               <div class="space-y-4">
                 <div>
-                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">Número</p>
+                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">{{ t('ventas.detail.number') }}</p>
                   <p class="text-2xl font-extrabold text-text-primary tracking-tight tabular-nums">
                     {{ invoiceData.prefix }}-{{ invoiceData.invoice_number }}
                   </p>
                 </div>
                 <div v-if="invoiceData.emitted_at">
-                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">Emitida</p>
+                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">{{ t('ventas.detail.issued') }}</p>
                   <p class="text-sm text-text-secondary">{{ useFormatters().formatDate(invoiceData.emitted_at) }}</p>
                 </div>
               </div>
@@ -1208,7 +1208,7 @@ onUnmounted(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                       d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Descargar PDF
+                  {{ t('ventas.detail.downloadPdfCta') }}
                 </a>
                 <button v-if="invoiceData.status === 'accepted'"
                   type="button"
@@ -1218,10 +1218,10 @@ onUnmounted(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                       d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                   </svg>
-                  Enviar por correo
+                  {{ t('ventas.detail.emailInvoiceCta') }}
                 </button>
                 <p v-else class="text-xs text-text-tertiary">
-                  Disponible cuando la factura esté aceptada.
+                  {{ t('ventas.detail.invoiceAcceptedOnly') }}
                 </p>
               </div>
             </div>
@@ -1261,8 +1261,7 @@ onUnmounted(() => {
               </p>
               <p class="text-xs text-amber-700/90 dark:text-amber-400 mt-1 leading-relaxed">
                 {{ t('ventas.detail.invoiceValidatedBody') }}
-                Contacta soporte para reconciliar el documento — no la vuelvas a emitir, eso consumiría
-                otro número de la resolución sin éxito.
+                {{ t('ventas.detail.invoiceReconcileSupport') }}
               </p>
             </div>
           </div>
@@ -1295,7 +1294,7 @@ onUnmounted(() => {
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                Reintentando…
+                {{ t('ventas.detail.retrying') }}
               </template>
               <template v-else>
                 {{ t('ventas.detail.retryEmit') }}
@@ -1349,7 +1348,7 @@ onUnmounted(() => {
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                Generando…
+                {{ t('ventas.detail.generating') }}
               </template>
               <template v-else>
                 {{ t('ventas.detail.emitCta') }}
@@ -1386,7 +1385,7 @@ onUnmounted(() => {
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
-          <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">Actualizar estado</h2>
+          <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">{{ t('ventas.detail.changeStatus') }}</h2>
         </div>
 
         <!-- Status cards -->
@@ -1409,7 +1408,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">Pendiente</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">{{ t('ventas.common.pendiente') }}</span>
           </button>
 
           <!-- Completada -->
@@ -1461,7 +1460,7 @@ onUnmounted(() => {
         <!-- Payment method (only when completing) -->
         <Transition name="slide-down">
           <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
-            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método de pago</p>
+            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{{ t('ventas.common.metodoPago') }}</p>
             <div class="flex flex-wrap gap-2">
               <button v-for="group in paymentGroups" :key="group.slug" type="button"
                 @click="selectedPaymentMethod = selectedPaymentMethod === group.slug ? '' : group.slug"
@@ -1489,7 +1488,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-            Confirmar cambio
+            {{ t('ventas.detail.confirmChange') }}
           </template>
         </button>
       </div>
@@ -1497,7 +1496,7 @@ onUnmounted(() => {
       <!-- Order Items -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
         <div class="p-6 border-b border-border flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-text-primary">Items de la Orden ({{ order.items_count }})</h2>
+          <h2 class="text-lg font-semibold text-text-primary">{{ t('ventas.detail.orderItemsTitle', { count: order.items_count }) }}</h2>
 
           <!-- Edit/Save Buttons -->
           <div class="flex gap-2">
@@ -1508,13 +1507,13 @@ onUnmounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Editar Venta
+                {{ t('ventas.detail.editSale') }}
               </button>
             </template>
             <template v-else>
               <button @click="cancelEdit"
                 class="px-4 py-2 border border-border text-text-secondary hover:bg-surface-secondary rounded-lg text-sm font-medium transition-colors">
-                Cancelar
+                {{ t('ventas.common.cancelar') }}
               </button>
               <button @click="saveChanges" :disabled="!hasChanges || isSaving"
                 class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1528,7 +1527,7 @@ onUnmounted(() => {
                 <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                {{ isSaving ? t('ventas.common.guardando') : t('common.save') }}
+                {{ isSaving ? t('ventas.common.guardando') : t('ventas.common.guardar') }}
               </button>
             </template>
           </div>
@@ -1542,9 +1541,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span><strong>Modo Edición:</strong> Haz clic en la X para eliminar productos o adiciones. Los ingredientes
-              se
-              devolverán al stock al guardar.</span>
+            <span><strong>{{ t('ventas.detail.editModeTitle') }}</strong> {{ t('ventas.detail.editModeHint') }}</span>
           </p>
         </div>
 
@@ -1562,30 +1559,30 @@ onUnmounted(() => {
                 <th class="px-6 py-3 text-left">
                   <UiTableHeaderFilter
                     v-model="productFilter"
-                    title="Producto"
+                    :title="t('ventas.common.producto')"
                     filter-type="select"
                     :options="productHeaderOptions"
-                    all-label="Producto"
+                    :all-label="t('ventas.common.producto')"
                     align="left"
                   />
                 </th>
                 <th class="px-6 py-3 text-center">
                   <UiTableHeaderFilter
-                    title="Cant."
+                    :title="t('ventas.detail.quantityShort')"
                     filter-type="none"
                     align="center"
                   />
                 </th>
                 <th class="px-6 py-3 text-right">
                   <UiTableHeaderFilter
-                    title="Precio"
+                    :title="t('ventas.detail.price')"
                     filter-type="none"
                     align="right"
                   />
                 </th>
                 <th class="px-6 py-3 text-right">
                   <UiTableHeaderFilter
-                    title="Subtotal"
+                    :title="t('ventas.common.subtotal')"
                     filter-type="none"
                     align="right"
                   />
@@ -1599,7 +1596,7 @@ onUnmounted(() => {
                   <td v-if="isEditMode" class="px-4 py-4">
                     <button @click="markItemForDeletion(item.id)"
                       class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
-                      title="Eliminar producto">
+                      :title="t('ventas.detail.deleteProduct')">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M6 18L18 6M6 6l12 12" />
@@ -1639,7 +1636,7 @@ onUnmounted(() => {
                     <td v-if="isEditMode" class="px-4 py-2">
                       <button @click="markModifierForDeletion(item.id, modifier.id)"
                         class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ml-2"
-                        title="Eliminar adición">
+                        :title="t('ventas.detail.deleteAddition')">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 18L18 6M6 6l12 12" />
@@ -1669,7 +1666,7 @@ onUnmounted(() => {
                   :colspan="isEditMode ? 5 : 4"
                   class="px-6 py-12 text-center text-sm text-text-secondary"
                 >
-                  No hay productos con el filtro seleccionado
+                  {{ t('ventas.detail.noProductsForFilter') }}
                 </td>
               </tr>
             </tbody>
@@ -1677,7 +1674,7 @@ onUnmounted(() => {
               <tr>
                 <td v-if="isEditMode"></td>
                 <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
-                  Total de la Orden:
+                  {{ t('ventas.detail.orderTotalLabel') }}
                 </td>
                 <td class="px-6 py-4 text-right">
                   <span class="text-xl font-bold text-primary">
@@ -1695,7 +1692,7 @@ onUnmounted(() => {
           >
             <div class="flex flex-col gap-2 min-w-[220px]">
               <div class="flex items-center justify-between gap-10">
-                <span class="text-sm text-text-secondary">Subtotal</span>
+                <span class="text-sm text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
                 <span class="text-sm text-text-secondary tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
               </div>
               <div
@@ -1713,10 +1710,10 @@ onUnmounted(() => {
               </div>
               <div v-if="order.discount_amount > 0" class="flex items-center justify-between gap-10">
                 <span class="flex items-center gap-1.5 text-sm text-destructive">
-                  Descuento manual
+                  {{ t('ventas.common.descuentoManual') }}
                   <span
                     class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
-                    {{ order.discount_type === 'percent' ? `${order.discount_value}%` : 'Fijo' }}
+                    {{ order.discount_type === 'percent' ? `${order.discount_value}%` : t('ventas.detail.fixedDiscount') }}
                   </span>
                 </span>
                 <span class="text-sm font-semibold text-destructive tabular-nums">-{{
@@ -1741,7 +1738,7 @@ onUnmounted(() => {
                 <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.standard_tax) }}</span>
               </div>
               <div v-if="order.liquor_tax > 0" class="flex items-center justify-between gap-10">
-                <span class="text-sm text-text-secondary">IVA licores 5%</span>
+                <span class="text-sm text-text-secondary">{{ t('ventas.detail.liquorVat') }}</span>
                 <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.liquor_tax) }}</span>
               </div>
               <div
@@ -1769,7 +1766,7 @@ onUnmounted(() => {
               </div>
               <div class="flex items-center justify-between gap-10 pt-2 border-t border-border">
                 <span class="text-sm font-bold text-text-primary">
-                  {{ order.tip_amount && order.tip_amount > 0 ? 'Total orden' : 'Total' }}
+                  {{ order.tip_amount && order.tip_amount > 0 ? t('ventas.detail.orderTotal') : t('ventas.common.total') }}
                 </span>
                 <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount)
                 }}</span>
@@ -1778,7 +1775,7 @@ onUnmounted(() => {
                 v-if="orderAdvanceApplied > 0"
                 class="flex items-center justify-between gap-10"
               >
-                <span class="text-sm text-state-success-text">Anticipo mesa</span>
+                <span class="text-sm text-state-success-text">{{ t('ventas.detail.tableAdvance') }}</span>
                 <span class="text-sm font-semibold text-state-success-text tabular-nums">
                   -{{ formatCurrency(orderAdvanceApplied) }}
                 </span>
@@ -1814,7 +1811,7 @@ onUnmounted(() => {
       </Transition>
 
       <Transition name="panel">
-        <div v-if="showFinalizeSalePanel" role="dialog" aria-modal="true" aria-label="Finalizar venta pendiente"
+        <div v-if="showFinalizeSalePanel" role="dialog" aria-modal="true" :aria-label="t('ventas.detail.finalizePendingSale')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                  md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
@@ -1825,12 +1822,12 @@ onUnmounted(() => {
           <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Finalizar venta</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('ventas.detail.finalizeSale') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  Orden #{{ order.order_number }} · {{ formatCurrency(order.total_amount) }}
+                  {{ t('ventas.detail.orderNumber', { number: order.order_number }) }} · {{ formatCurrency(order.total_amount) }}
                 </p>
               </div>
-              <button @click="closeFinalizeSalePanel" type="button" aria-label="Cerrar panel"
+              <button @click="closeFinalizeSalePanel" type="button" :aria-label="t('ventas.common.cerrarPanel')"
                 class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1841,7 +1838,7 @@ onUnmounted(() => {
 
           <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
             <div>
-              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Método de pago</p>
+              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
               <PaymentsPaymentMethodSelector
                 v-model="finalizePaymentSelection"
                 :groups="paymentGroups"
@@ -1862,7 +1859,7 @@ onUnmounted(() => {
               class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isFinalizingSale" size="9px" />
-              <span v-else>Finalizar venta</span>
+              <span v-else>{{ t('ventas.detail.finalizeSale') }}</span>
             </button>
           </div>
         </div>
@@ -1881,7 +1878,7 @@ onUnmounted(() => {
 
       <!-- Panel -->
       <Transition name="panel">
-        <div v-if="showSplitPaymentsPanel" role="dialog" aria-modal="true" aria-label="Detalle de cobro dividido"
+        <div v-if="showSplitPaymentsPanel" role="dialog" aria-modal="true" :aria-label="t('ventas.detail.splitPaymentAria')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                  md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
@@ -1902,13 +1899,13 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <h2 class="text-base font-bold text-text-primary leading-tight">Cobro dividido</h2>
+                  <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('ventas.detail.splitPaymentTitle') }}</h2>
                   <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                    {{ order.split_payments.length }} pagos · {{ formatCurrency(order.total_amount) }}
+                    {{ t('ventas.detail.splitPaymentSummary', { count: order.split_payments.length, amount: formatCurrency(order.total_amount) }) }}
                   </p>
                 </div>
               </div>
-              <button @click="showSplitPaymentsPanel = false" type="button" aria-label="Cerrar panel"
+              <button @click="showSplitPaymentsPanel = false" type="button" :aria-label="t('ventas.common.cerrarPanel')"
                 class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1930,7 +1927,7 @@ onUnmounted(() => {
                 </svg>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-xs text-text-secondary">Pago #{{ Number(idx) + 1 }}</p>
+                <p class="text-xs text-text-secondary">{{ t('ventas.detail.paymentIndex', { number: Number(idx) + 1 }) }}</p>
                 <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id)
                 }}
                 </p>
