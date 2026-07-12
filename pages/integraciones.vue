@@ -15,7 +15,7 @@
         <svg class="w-4 h-4 text-status-info-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="text-xs text-status-info-text">Usa tu API Key con el header <code class="font-mono font-medium">Authorization: Bearer waro_sk_...</code></p>
+        <p class="text-xs text-status-info-text">{{ t('integraciones.authHint') }} <code class="font-mono font-medium">Authorization: Bearer waro_sk_...</code></p>
       </div>
 
       <div class="flex flex-wrap items-center justify-end gap-2">
@@ -23,8 +23,8 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span class="hidden sm:inline">Crear API Key</span>
-          <span class="sm:hidden">+ Nueva</span>
+          <span class="hidden sm:inline">{{ t('integraciones.createApiKey') }}</span>
+          <span class="sm:hidden">{{ t('integraciones.newShort') }}</span>
         </button>
       </div>
 
@@ -32,8 +32,8 @@
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="activeTokens"
-        empty-message="No tienes API keys activas"
-        empty-sub-message="Crea una para comenzar a integrar"
+        :empty-message="t('integraciones.empty')"
+        :empty-sub-message="t('integraciones.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -53,21 +53,21 @@
             <!-- Name + prefix + expiry -->
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
-              <p class="text-xs text-text-secondary font-mono truncate">{{ item.keyPrefix }}... · {{ item.expiresAt ? formatDate(item.expiresAt) : 'Sin expiración' }}</p>
+              <p class="text-xs text-text-secondary font-mono truncate">{{ item.keyPrefix }}... · {{ item.expiresAt ? formatDate(item.expiresAt) : t('integraciones.noExpiration') }}</p>
             </div>
 
             <!-- Actions -->
             <div class="flex items-center gap-0.5 flex-shrink-0">
               <button @click="openRevokeModal(item)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-status-warning-text hover:bg-status-warning-bg transition-colors"
-                title="Revocar">
+                :title="t('integraciones.revoke')">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                 </svg>
               </button>
               <button @click="openDeleteModal(item)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-                title="Eliminar">
+                :title="t('integraciones.delete')">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -91,29 +91,29 @@
         </template>
 
         <template #cell-status="{ row }">
-          <UiStatusBadge value="Activa" variant="success" size="sm" />
+          <UiStatusBadge :value="t('integraciones.active')" variant="success" size="sm" />
         </template>
 
         <template #cell-expiresAt="{ value }">
           <span class="text-sm text-text-secondary">
-            {{ value ? formatDate(value) : 'Sin expiracion' }}
+            {{ value ? formatDate(value) : t('integraciones.noExpiration') }}
           </span>
         </template>
 
         <template #cell-lastUsedAt="{ value }">
           <span class="text-sm text-text-secondary">
-            {{ value ? formatDate(value) : 'Nunca' }}
+            {{ value ? formatDate(value) : t('integraciones.neverUsed') }}
           </span>
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1">
-            <button @click="openRevokeModal(row)" class="text-status-warning-text hover:text-status-warning-text/80 p-2" title="Revocar">
+            <button @click="openRevokeModal(row)" class="text-status-warning-text hover:text-status-warning-text/80 p-2" :title="t('integraciones.revoke')">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             </button>
-            <button @click="openDeleteModal(row)" class="text-destructive hover:text-destructive/80 p-2" title="Eliminar">
+            <button @click="openDeleteModal(row)" class="text-destructive hover:text-destructive/80 p-2" :title="t('integraciones.delete')">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -132,12 +132,12 @@
           <div v-if="creating" class="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
             <div class="flex flex-col items-center gap-3">
               <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p class="text-sm font-medium text-text-secondary">Creando API Key...</p>
+              <p class="text-sm font-medium text-text-secondary">{{ t('integraciones.creating') }}</p>
             </div>
           </div>
 
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-text-primary">Crear API Key</h2>
+            <h2 class="text-xl font-bold text-text-primary">{{ t('integraciones.createApiKey') }}</h2>
             <button @click="closeCreateModal" :disabled="creating" class="text-text-secondary hover:text-text-primary disabled:opacity-50">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -147,26 +147,26 @@
 
           <form @submit.prevent="createToken" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Nombre</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('integraciones.name') }}</label>
               <input v-model="createForm.name" type="text" required :disabled="creating"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-                placeholder="Ej: App movil, Integracion POS" />
+                :placeholder="t('integraciones.namePlaceholder')" />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Expiracion</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('integraciones.expiration') }}</label>
               <select v-model="createForm.expiresInDays" :disabled="creating"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100">
-                <option :value="null">Sin expiracion</option>
-                <option :value="30">30 dias</option>
-                <option :value="90">90 dias</option>
-                <option :value="365">1 ano</option>
+                <option :value="null">{{ t('integraciones.noExpiration') }}</option>
+                <option :value="30">{{ t('integraciones.days', { count: 30 }) }}</option>
+                <option :value="90">{{ t('integraciones.days', { count: 90 }) }}</option>
+                <option :value="365">{{ t('integraciones.year') }}</option>
               </select>
             </div>
 
             <div class="bg-gray-50 rounded-lg p-3">
               <p class="text-sm text-text-secondary">
-                <strong class="text-text-primary">Permisos:</strong> Esta API key tendra acceso completo (lectura, escritura y eliminacion) a todos los recursos del tenant.
+                <strong class="text-text-primary">{{ t('integraciones.permissions') }}</strong> {{ t('integraciones.permissionsDescription') }}
               </p>
             </div>
 
@@ -175,11 +175,11 @@
             <div class="flex gap-3 pt-2">
               <button type="button" @click="closeCreateModal" :disabled="creating"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50 disabled:opacity-50">
-                Cancelar
+                {{ t('integraciones.cancel') }}
               </button>
               <button type="submit" :disabled="creating || !createForm.name.trim()"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50">
-                {{ creating ? 'Creando...' : 'Crear API Key' }}
+                {{ creating ? t('integraciones.creatingShort') : t('integraciones.createApiKey') }}
               </button>
             </div>
           </form>
@@ -198,8 +198,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary mb-2">API Key creada</h3>
-            <p class="text-sm text-text-secondary mb-4">Guarda tu API key. No podras verla de nuevo.</p>
+            <h3 class="text-lg font-bold text-text-primary mb-2">{{ t('integraciones.createdTitle') }}</h3>
+            <p class="text-sm text-text-secondary mb-4">{{ t('integraciones.createdDescription') }}</p>
 
             <div class="bg-gray-100 rounded-lg p-4 mb-4">
               <div class="flex items-center justify-between gap-2">
@@ -216,10 +216,10 @@
             </div>
 
             <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-              <p class="text-sm text-amber-800"><strong>Importante:</strong> Esta es la unica vez que veras esta key.</p>
+              <p class="text-sm text-amber-800"><strong>{{ t('integraciones.important') }}:</strong> {{ t('integraciones.secretWarning') }}</p>
             </div>
 
-            <button @click="closeSecretModal" class="btn-primary px-6 py-2 rounded-lg">Entendido</button>
+            <button @click="closeSecretModal" class="btn-primary px-6 py-2 rounded-lg">{{ t('integraciones.understood') }}</button>
           </div>
         </div>
       </div>
@@ -236,14 +236,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary mb-2">Revocar API Key</h3>
+            <h3 class="text-lg font-bold text-text-primary mb-2">{{ t('integraciones.revokeTitle') }}</h3>
             <p class="text-sm text-text-secondary mb-6">
-              ¿Revocar <strong>{{ tokenToRevoke?.name }}</strong>? Las integraciones dejaran de funcionar.
+              {{ t('integraciones.revokeDescription', { name: tokenToRevoke?.name }) }}
             </p>
             <div class="flex gap-3">
-              <button @click="closeRevokeModal" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+              <button @click="closeRevokeModal" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{{ t('integraciones.cancel') }}</button>
               <button @click="revokeToken" :disabled="revoking" class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50">
-                {{ revoking ? 'Revocando...' : 'Revocar' }}
+                {{ revoking ? t('integraciones.revoking') : t('integraciones.revoke') }}
               </button>
             </div>
           </div>
@@ -260,7 +260,7 @@
           <div v-if="deleting" class="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
             <div class="flex flex-col items-center gap-3">
               <div class="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-              <p class="text-sm font-medium text-text-secondary">Eliminando API Key...</p>
+              <p class="text-sm font-medium text-text-secondary">{{ t('integraciones.deleting') }}</p>
             </div>
           </div>
 
@@ -270,12 +270,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary mb-2">Eliminar API Key</h3>
-            <p class="text-sm text-text-secondary mb-6">¿Eliminar <strong>{{ tokenToDelete?.name }}</strong>? No se puede deshacer.</p>
+            <h3 class="text-lg font-bold text-text-primary mb-2">{{ t('integraciones.deleteTitle') }}</h3>
+            <p class="text-sm text-text-secondary mb-6">{{ t('integraciones.deleteDescription', { name: tokenToDelete?.name }) }}</p>
             <div class="flex gap-3">
-              <button @click="closeDeleteModal" :disabled="deleting" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancelar</button>
+              <button @click="closeDeleteModal" :disabled="deleting" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">{{ t('integraciones.cancel') }}</button>
               <button @click="deleteToken" :disabled="deleting" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
-                {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+                {{ deleting ? t('integraciones.deletingShort') : t('integraciones.delete') }}
               </button>
             </div>
           </div>
@@ -289,20 +289,21 @@
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'integraciones' })
-useHead({ title: 'Integraciones - API Keys' })
+const { t } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('integraciones.pageTitle') })
 
 const toast = useToast()
 const { currentTenant } = useTenantReactive()
 
 // Table columns configuration
-const tableColumns = [
-  { key: 'name', title: 'Nombre', sortable: true },
-  { key: 'keyPrefix', title: 'API Key', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false },
-  { key: 'expiresAt', title: 'Expiracion', sortable: true },
-  { key: 'lastUsedAt', title: 'Ultimo uso', sortable: true },
+const tableColumns = computed(() => [
+  { key: 'name', title: t('integraciones.name'), sortable: true },
+  { key: 'keyPrefix', title: t('integraciones.apiKey'), sortable: false },
+  { key: 'status', title: t('integraciones.status'), sortable: false },
+  { key: 'expiresAt', title: t('integraciones.expiration'), sortable: true },
+  { key: 'lastUsedAt', title: t('integraciones.lastUsed'), sortable: true },
   { key: 'actions', title: '', sortable: false }
-]
+])
 
 // Todos los permisos por defecto
 const allScopes = ['read', 'write', 'orders:read', 'orders:write', 'products:read', 'products:write', 'inventory:read', 'inventory:write', 'customers:read', 'customers:write']
@@ -324,7 +325,7 @@ const {
 const activeTokens = computed(() => tokensData.value?.data?.filter(t => t.isActive) || [])
 const isLoading = computed(() => !tokensData.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && tokensData.value != null)
-const error = computed(() => fetchError.value ? 'Error al cargar los API tokens' : null)
+const error = computed(() => fetchError.value ? t('integraciones.loadError') : null)
 
 // Create Modal
 const showCreateModal = ref(false)
@@ -377,10 +378,10 @@ const createToken = async () => {
       showSecretModal.value = true
       refresh()
     } else {
-      createError.value = response.message || 'Error al crear'
+      createError.value = response.message || t('integraciones.createError')
     }
   } catch (err) {
-    createError.value = err.data?.message || 'Error al crear el token'
+    createError.value = err.data?.message || t('integraciones.createTokenError')
   } finally {
     creating.value = false
   }
@@ -396,9 +397,9 @@ const copyToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(createdSecret.value)
     copied.value = true
-    toast.success('Copiado')
+    toast.success(t('integraciones.copied'))
     setTimeout(() => { copied.value = false }, 2000)
-  } catch { toast.error('Error al copiar') }
+  } catch { toast.error(t('integraciones.copyError')) }
 }
 
 const openRevokeModal = (token) => { tokenToRevoke.value = token; showRevokeModal.value = true }
@@ -408,11 +409,11 @@ const revokeToken = async () => {
   revoking.value = true
   try {
     await $fetch(`/api/api-tokens/${tokenToRevoke.value.id}/revoke`, { method: 'POST' })
-    toast.success('API Key revocada')
+    toast.success(t('integraciones.revoked'))
     closeRevokeModal()
     refresh()
   } catch (err) {
-    toast.error(err.data?.message || 'Error')
+    toast.error(err.data?.message || t('integraciones.actionError'))
   } finally {
     revoking.value = false
   }
@@ -425,11 +426,11 @@ const deleteToken = async () => {
   deleting.value = true
   try {
     await $fetch(`/api/api-tokens/${tokenToDelete.value.id}`, { method: 'DELETE' })
-    toast.success('API Key eliminada')
+    toast.success(t('integraciones.deleted'))
     closeDeleteModal()
     refresh()
   } catch (err) {
-    toast.error(err.data?.message || 'Error')
+    toast.error(err.data?.message || t('integraciones.actionError'))
   } finally {
     deleting.value = false
   }
