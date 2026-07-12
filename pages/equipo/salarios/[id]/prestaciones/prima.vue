@@ -6,7 +6,7 @@
       <!-- Employee Info Card -->
       <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
         <div class="mb-8 pb-6 border-b border-border">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Empleado</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.common.employee') }}</h3>
           <div v-if="!employee" class="flex items-center gap-4 bg-background rounded-lg p-4 animate-pulse">
             <div class="w-12 h-12 rounded-full bg-titan-200 flex-shrink-0" />
             <div class="space-y-2 flex-1">
@@ -39,32 +39,31 @@
                 d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
           </div>
-          <p class="font-semibold text-amber-900 mb-1">No elegible para prima de servicios</p>
+          <p class="font-semibold text-amber-900 mb-1">{{ t('equipo.prima.notEligible') }}</p>
           <p class="text-sm text-amber-700">
-            La prima de servicios aplica únicamente a empleados con contrato laboral.
-            Este trabajador tiene tipo de contrato
-            <strong>{{ employee.employment_type === 'daily' ? 'jornalero' : 'prestación de servicios' }}</strong>.
+            {{ t('equipo.prima.notEligibleDescription') }}
+            <strong>{{ employee.employment_type === 'daily' ? t('equipo.salarios.dayLaborer') : t('equipo.salarios.contractor') }}</strong>.
           </p>
           <NuxtLink
             :to="`/equipo/salarios/${employeeId}`"
             class="mt-4 inline-block px-4 py-2 rounded-lg border border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors text-sm font-medium"
           >
-            Volver al detalle
+            {{ t('equipo.common.back') }}
           </NuxtLink>
         </div>
 
         <!-- Prima form — only for employees -->
         <form v-else-if="employee" @submit.prevent="handleSubmit" novalidate>
           <div class="space-y-6">
-            <h3 class="text-lg font-semibold text-text-primary">Registro de Prima de Servicios</h3>
+            <h3 class="text-lg font-semibold text-text-primary">{{ t('equipo.prima.title') }}</h3>
 
             <!-- Salary info banner -->
             <div v-if="employee.calculated_salary" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p class="text-sm text-blue-800">
-                <strong>Salario base configurado:</strong>
+                <strong>{{ t('equipo.prima.configuredSalary') }}</strong>
                 {{ formatCurrency(Number(employee.calculated_salary)) }}
                 <span class="text-blue-600 ml-1">
-                  ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? 'Por horas' : 'Monto fijo' }})
+                  ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? t('equipo.salarios.hourly') : t('equipo.salarios.fixedAmount') }})
                 </span>
               </p>
             </div>
@@ -73,7 +72,7 @@
               <!-- Semestre selector -->
               <div>
                 <label for="semestre" class="block text-sm font-medium text-text-primary mb-2">
-                  Semestre *
+                  {{ t('equipo.prima.semesterReq') }}
                 </label>
                 <select
                   id="semestre"
@@ -82,27 +81,27 @@
                   class="input-base w-full px-4 py-2"
                   :class="paidSemestres.includes(form.semestre) ? 'border-red-300 bg-red-50' : ''"
                 >
-                  <option value="" disabled>Seleccionar semestre</option>
+                  <option value="" disabled>{{ t('equipo.prima.selectSemester') }}</option>
                   <option
                     v-for="opt in semestreOptions"
                     :key="opt.value"
                     :value="opt.value"
                   >
-                    {{ opt.label }}{{ paidSemestres.includes(opt.value) ? ' — YA PAGADO' : '' }}
+                    {{ opt.label }}{{ paidSemestres.includes(opt.value) ? ` — ${t('equipo.prima.alreadyPaid')}` : '' }}
                   </option>
                 </select>
                 <p v-if="paidSemestres.includes(form.semestre)" class="text-xs text-red-600 mt-1">
-                  Este semestre ya tiene una prima registrada para este empleado.
+                  {{ t('equipo.prima.alreadyPaidMessage') }}
                 </p>
                 <p v-else class="text-xs text-text-tertiary mt-1">
-                  S1 = Ene–Jun (pagar antes del 30 Jun) · S2 = Jul–Dic (pagar antes del 20 Dic)
+                  {{ t('equipo.prima.semesterHelp') }}
                 </p>
               </div>
 
               <!-- Gross salary -->
               <div>
                 <label for="gross_salary" class="block text-sm font-medium text-text-primary mb-2">
-                  Salario base del semestre *
+                  {{ t('equipo.prima.semesterSalaryReq') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -115,10 +114,10 @@
                     required
                     class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
                     placeholder="0"
-                    aria-label="Salario base del semestre"
+                    :aria-label="t('equipo.prima.semesterSalaryReq')"
                   />
                 </div>
-                <p class="text-xs text-text-tertiary mt-1">Pre-llenado con el salario configurado — editable</p>
+                <p class="text-xs text-text-tertiary mt-1">{{ t('equipo.prima.salaryHelp') }}</p>
               </div>
             </div>
 
@@ -126,7 +125,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label for="days_worked" class="block text-sm font-medium text-text-primary mb-2">
-                  Dias trabajados en el semestre
+                  {{ t('equipo.prima.daysWorkedSemester') }}
                 </label>
                 <input
                   id="days_worked"
@@ -137,20 +136,20 @@
                   step="1"
                   class="input-base w-full px-4 py-2"
                   placeholder="180"
-                  aria-label="Días trabajados en el semestre"
+                  :aria-label="t('equipo.prima.daysWorkedSemester')"
                 />
-                <p class="text-xs text-text-tertiary mt-1">180 = semestre completo (defecto)</p>
+                <p class="text-xs text-text-tertiary mt-1">{{ t('equipo.prima.daysHelp') }}</p>
               </div>
 
               <!-- Prima preview -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Prima calculada
+                  {{ t('equipo.prima.calculated') }}
                 </label>
                 <div class="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <span class="text-xl font-bold text-emerald-700">{{ formatCurrency(primaPreview) }}</span>
                   <p class="text-xs text-emerald-600 mt-0.5">
-                    {{ form.gross_salary ? `$${form.gross_salary.toLocaleString('es-CO')} ÷ 180 × ${form.days_worked || 180} días` : 'Ingrese el salario base' }}
+                    {{ form.gross_salary ? `${formatCurrency(form.gross_salary)} ÷ 180 × ${form.days_worked || 180} ${t('equipo.prima.daysShort')}` : t('equipo.prima.enterSalary') }}
                   </p>
                 </div>
               </div>
@@ -158,7 +157,7 @@
 
             <!-- Payment method -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-3">Metodo de Pago *</label>
+              <label class="block text-sm font-medium text-text-primary mb-3">{{ t('equipo.prima.paymentMethodReq') }}</label>
               <div v-if="isLoadingMethods" class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div
                   v-for="i in 4"
@@ -197,7 +196,7 @@
             <!-- Payment date -->
             <div>
               <label for="payment_date" class="block text-sm font-medium text-text-primary mb-2">
-                Fecha de Pago *
+                {{ t('equipo.prima.paymentDateReq') }}
               </label>
               <input
                 id="payment_date"
@@ -205,21 +204,21 @@
                 type="date"
                 required
                 class="input-base w-full px-4 py-2"
-                aria-label="Fecha de pago de la prima"
+                :aria-label="t('equipo.prima.paymentDateReq')"
               />
             </div>
 
             <!-- Notes -->
             <div>
               <label for="notes" class="block text-sm font-medium text-text-primary mb-2">
-                Notas
+                {{ t('equipo.prima.notes') }}
               </label>
               <textarea
                 id="notes"
                 v-model="form.notes"
                 class="input-base w-full px-4 py-2 min-h-[80px]"
-                placeholder="Notas adicionales sobre este pago (opcional)"
-                aria-label="Notas adicionales"
+                :placeholder="t('equipo.prima.notesPlaceholder')"
+                :aria-label="t('equipo.prima.notes')"
               ></textarea>
             </div>
 
@@ -236,13 +235,13 @@
                 class="flex-1 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20 min-h-[44px]"
               >
                 <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
-                <span>{{ isSubmitting ? 'Registrando...' : 'Registrar Prima' }}</span>
+                <span>{{ isSubmitting ? t('equipo.prima.registering') : t('equipo.prima.register') }}</span>
               </button>
               <NuxtLink
                 :to="`/equipo/salarios/${employeeId}`"
                 class="px-6 py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium text-center min-h-[44px] flex items-center"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </NuxtLink>
             </div>
           </div>
@@ -258,7 +257,7 @@
 
       <!-- History Section -->
       <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Historial de Primas</h3>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.prima.history') }}</h3>
 
         <div v-if="isLoadingHistory" class="space-y-3 animate-pulse">
           <div v-for="i in 3" :key="i" class="h-14 rounded bg-titan-200" />
@@ -269,8 +268,8 @@
           :data="primaHistory"
           :columns="historyColumns"
           item-key="id"
-          empty-message="Sin pagos de prima registrados"
-          empty-sub-message="Los pagos de prima de servicios aparecerán aquí"
+          :empty-message="t('equipo.prima.emptyHistory')"
+          :empty-sub-message="t('equipo.prima.emptyHistorySub')"
         >
           <!-- Desktop cell slots -->
           <template #cell-semestre="{ item }">
@@ -286,7 +285,7 @@
             <span class="text-text-secondary text-sm capitalize">{{ item.payment_method || '—' }}</span>
           </template>
           <template #cell-days_worked="{ item }">
-            <span class="text-text-secondary text-sm">{{ item.days_worked }} días</span>
+            <span class="text-text-secondary text-sm">{{ item.days_worked }} {{ t('equipo.prima.daysShort') }}</span>
           </template>
 
           <!-- Mobile card -->
@@ -299,7 +298,7 @@
               <div class="flex items-center gap-4 text-sm text-text-secondary">
                 <span>{{ formatDate(item.payment_date) }}</span>
                 <span v-if="item.payment_method">· {{ item.payment_method }}</span>
-                <span>· {{ item.days_worked }} días</span>
+                <span>· {{ item.days_worked }} {{ t('equipo.prima.daysShort') }}</span>
               </div>
               <p v-if="item.notes" class="text-xs text-text-tertiary">{{ item.notes }}</p>
             </div>
@@ -311,47 +310,45 @@
     <!-- Right Column: Summary -->
     <div class="xl:col-span-1">
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.prima.summary') }}</h3>
 
         <div class="bg-background rounded-lg p-4 border border-border space-y-3">
           <div>
-            <p class="text-sm text-text-secondary mb-1">Empleado</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.employee') }}</p>
             <p class="font-medium text-text-primary">{{ employee?.name || '—' }}</p>
           </div>
           <div>
-            <p class="text-sm text-text-secondary mb-1">Semestre</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.prima.semester') }}</p>
             <p class="font-medium text-text-primary">
-              {{ form.semestre ? formatSemestre(form.semestre) : 'Sin seleccionar' }}
+              {{ form.semestre ? formatSemestre(form.semestre) : t('equipo.salaryModal.notSelected') }}
             </p>
           </div>
           <div>
-            <p class="text-sm text-text-secondary mb-1">Metodo de Pago</p>
-            <p class="font-medium text-text-primary">{{ selectedMethodLabel || 'Sin seleccionar' }}</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.method') }}</p>
+            <p class="font-medium text-text-primary">{{ selectedMethodLabel || t('equipo.salaryModal.notSelected') }}</p>
           </div>
           <div>
-            <p class="text-sm text-text-secondary mb-1">Fecha</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.date') }}</p>
             <p class="font-medium text-text-primary">
-              {{ form.payment_date ? formatDate(form.payment_date) : 'Sin seleccionar' }}
+              {{ form.payment_date ? formatDate(form.payment_date) : t('equipo.salaryModal.notSelected') }}
             </p>
           </div>
           <div>
-            <p class="text-sm text-text-secondary mb-1">Dias trabajados</p>
-            <p class="font-medium text-text-primary">{{ form.days_worked || 180 }} dias</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.prima.daysWorked') }}</p>
+            <p class="font-medium text-text-primary">{{ form.days_worked || 180 }} {{ t('equipo.prima.daysShort') }}</p>
           </div>
           <div class="pt-3 border-t border-border">
-            <p class="text-sm text-text-secondary mb-1">Prima a Pagar</p>
+            <p class="text-sm text-text-secondary mb-1">{{ t('equipo.prima.amountToPay') }}</p>
             <p class="text-2xl font-bold text-emerald-600">{{ formatCurrency(primaPreview) }}</p>
-            <p class="text-xs text-text-tertiary mt-0.5">Asiento: DR 2620 / CR Bancos</p>
+            <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.prima.journalEntry') }}</p>
           </div>
         </div>
 
         <!-- Info box -->
         <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p class="text-xs text-blue-800 font-medium mb-1">Prima de servicios (Ley colombiana)</p>
+          <p class="text-xs text-blue-800 font-medium mb-1">{{ t('equipo.prima.legalTitle') }}</p>
           <p class="text-xs text-blue-700">
-            15 días de salario por semestre trabajado.
-            Primer pago: antes del 30 de junio.
-            Segundo pago: antes del 20 de diciembre.
+            {{ t('equipo.prima.legalDescription') }}
           </p>
         </div>
       </div>
@@ -360,6 +357,7 @@
 </template>
 
 <script setup lang="ts">
+const { t, locale } = useI18n({ useScope: 'global' })
 import { computed, reactive, ref } from 'vue'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
@@ -371,7 +369,7 @@ const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id as string
 
-useHead({ title: 'Prima de Servicios - Equipo' })
+useHead({ title: () => t('equipo.prima.pageTitle') })
 
 const { formatDate } = useFormatters()
 
@@ -401,10 +399,10 @@ const semestreOptions = computed(() => {
   const year = now.getFullYear()
   const prevYear = year - 1
   return [
-    { value: `${year}-S1`,     label: `${year} — Primer semestre (Ene–Jun)` },
-    { value: `${year}-S2`,     label: `${year} — Segundo semestre (Jul–Dic)` },
-    { value: `${prevYear}-S1`, label: `${prevYear} — Primer semestre (Ene–Jun)` },
-    { value: `${prevYear}-S2`, label: `${prevYear} — Segundo semestre (Jul–Dic)` },
+    { value: `${year}-S1`,     label: `${year} — ${t('equipo.prima.firstSemester')} (${t('equipo.prima.janJun')})` },
+    { value: `${year}-S2`,     label: `${year} — ${t('equipo.prima.secondSemester')} (${t('equipo.prima.julDec')})` },
+    { value: `${prevYear}-S1`, label: `${prevYear} — ${t('equipo.prima.firstSemester')} (${t('equipo.prima.janJun')})` },
+    { value: `${prevYear}-S2`, label: `${prevYear} — ${t('equipo.prima.secondSemester')} (${t('equipo.prima.julDec')})` },
   ]
 })
 
@@ -474,11 +472,11 @@ const primaPreview = computed(() => {
 
 // History table columns
 const historyColumns = [
-  { key: 'semestre',       label: 'Semestre',        sortable: false },
-  { key: 'prima_amount',   label: 'Prima pagada',     sortable: false },
-  { key: 'payment_date',   label: 'Fecha de pago',    sortable: false },
-  { key: 'payment_method', label: 'Metodo',           sortable: false },
-  { key: 'days_worked',    label: 'Dias trabajados',  sortable: false },
+  { key: 'semestre',       label: t('equipo.prima.semester'),        sortable: false },
+  { key: 'prima_amount',   label: t('equipo.prima.paidAmount'),      sortable: false },
+  { key: 'payment_date',   label: t('equipo.prima.paymentDate'),     sortable: false },
+  { key: 'payment_method', label: t('equipo.prima.method'),          sortable: false },
+  { key: 'days_worked',    label: t('equipo.prima.daysWorked'),      sortable: false },
 ]
 
 // Selected payment method label
@@ -499,7 +497,7 @@ const isFormValid = computed(() => {
 
 // Formatters
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', {
+  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -510,8 +508,8 @@ const formatSemestre = (semestre: string) => {
   if (!semestre) return semestre
   const [year, half] = semestre.split('-')
   return half === 'S1'
-    ? `${year} — Primer semestre`
-    : `${year} — Segundo semestre`
+    ? `${year} — ${t('equipo.prima.firstSemester')}`
+    : `${year} — ${t('equipo.prima.secondSemester')}`
 }
 
 // Submit
@@ -535,7 +533,7 @@ const handleSubmit = async () => {
       body: payload,
     })
 
-    toast.success('Prima de servicios registrada correctamente')
+    toast.success(t('equipo.prima.success'))
     await refreshHistory()
     // Reset form to a clean state (keep defaults)
     form.notes = ''
@@ -544,9 +542,9 @@ const handleSubmit = async () => {
   } catch (err: any) {
     const status = err?.status || err?.response?.status
     if (status === 409) {
-      errorMessage.value = `La prima del semestre ${formatSemestre(form.semestre)} ya fue registrada para este empleado.`
+      errorMessage.value = t('equipo.prima.alreadyPaidError', { semester: formatSemestre(form.semestre) })
     } else {
-      errorMessage.value = err?.data?.detail || 'Error al registrar la prima de servicios'
+      errorMessage.value = err?.data?.detail || t('equipo.prima.error')
     }
     console.error('Error recording prima:', err)
   } finally {
