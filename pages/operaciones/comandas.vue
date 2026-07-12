@@ -11,7 +11,7 @@
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <div class="flex items-center gap-2 mb-5">
         <FireIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary">Comandas y Cocina</h3>
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary">{{ t('operaciones.comandas.title') }}</h3>
       </div>
 
       <div
@@ -26,7 +26,7 @@
           <UiToggleSwitch
             :checked="businessProfile?.comandas_enabled"
             :loading="isTogglingComandas"
-            aria-label="Activar comandas"
+            :aria-label="t('operaciones.comandas.enableComandas')"
             @change="handleToggleComandas"
           />
         </div>
@@ -35,15 +35,15 @@
           <!-- Inline disable-warning banner -->
           <div class="rounded-xl border border-state-warning-border bg-state-warning-bg p-3 flex items-start justify-between gap-3">
             <p class="text-xs text-state-warning-text leading-relaxed">
-              Las comandas activas no serán afectadas. Los nuevos pedidos no generarán comandas mientras esté desactivado.
+              {{ t('operaciones.comandas.disableWarning') }}
             </p>
             <div class="flex items-center gap-2 flex-shrink-0">
-              <button @click="showDisableComandasWarning = false" class="text-xs text-state-warning-text font-medium hover:underline">Cancelar</button>
+              <button @click="showDisableComandasWarning = false" class="text-xs text-state-warning-text font-medium hover:underline">{{ t('operaciones.comandas.cancel') }}</button>
               <button
                 @click="confirmDisableComandas"
                 class="text-xs font-bold text-state-warning-action-text bg-state-warning-action-bg hover:bg-state-warning-action-bg/90 px-3 py-1 rounded-lg transition-colors min-h-[32px]"
               >
-                Sí, desactivar
+                {{ t('operaciones.comandas.confirmDisable') }}
               </button>
             </div>
           </div>
@@ -57,7 +57,7 @@
           <UiToggleSwitch
             :checked="businessProfile?.kds_enabled"
             :loading="isTogglingKds"
-            aria-label="Activar pantallas KDS"
+            :aria-label="t('operaciones.comandas.enableKds')"
             @change="handleToggleKds"
           />
         </div>
@@ -70,7 +70,7 @@
           <UiToggleSwitch
             :checked="businessProfile?.expediter_enabled"
             :loading="isTogglingExpediter"
-            aria-label="Mesero avanza estado desde POS"
+            :aria-label="t('operaciones.comandas.waiterAdvances')"
             @change="handleToggleExpediter"
           />
         </div>
@@ -78,7 +78,7 @@
         <div class="space-y-4 px-4 py-3">
           <div class="flex min-h-[40px] items-center justify-between gap-4">
             <div class="min-w-0">
-              <p class="text-sm font-semibold leading-snug text-text-primary">Consumo mínimo por mesa</p>
+              <p class="text-sm font-semibold leading-snug text-text-primary">{{ t('operaciones.comandas.minimumConsumption') }}</p>
             </div>
             <UiToggleSwitch
               v-model:checked="draftMinimumConsumptionEnabled"
@@ -90,7 +90,7 @@
           <div class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(180px,240px)_minmax(190px,230px)_auto] lg:items-end">
             <div class="space-y-1">
               <label for="minimum-consumption-amount" class="text-xs font-medium text-text-secondary">
-                Monto COP
+                {{ t('operaciones.comandas.amountCop') }}
               </label>
               <input
                 id="minimum-consumption-amount"
@@ -110,11 +110,11 @@
               class="flex min-h-[44px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:border-primary/40"
               :class="isSavingMinimumConsumption ? 'opacity-50 pointer-events-none' : ''"
             >
-              <span class="text-sm font-medium text-text-primary">Modo restrictivo</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('operaciones.comandas.restrictiveMode') }}</span>
               <UiToggleSwitch
                 v-model:checked="draftMinimumConsumptionRestrictive"
                 :disabled="isSavingMinimumConsumption || !draftMinimumConsumptionEnabled"
-                aria-label="Modo restrictivo"
+                :aria-label="t('operaciones.comandas.restrictiveMode')"
               />
             </label>
 
@@ -125,12 +125,12 @@
               @click="saveMinimumConsumptionConfig"
             >
               <UiLoadingDots v-if="isSavingMinimumConsumption" size="8px" color="currentColor" />
-              <span v-else>Guardar</span>
+              <span v-else>{{ t('operaciones.comandas.save') }}</span>
             </button>
           </div>
 
           <p v-if="minimumConsumptionAmountInvalid" class="text-xs text-state-danger-text">
-            El monto debe ser un número mayor o igual a 0.
+            {{ t('operaciones.comandas.amountInvalid') }}
           </p>
         </div>
 
@@ -142,7 +142,7 @@
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
           <QueueListIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          <h3 class="text-base sm:text-lg font-semibold text-text-primary">Estaciones de preparación</h3>
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary">{{ t('operaciones.comandas.stationsTitle') }}</h3>
         </div>
         <button
           type="button"
@@ -153,7 +153,7 @@
           :class="isActiveKitchenQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-action-primary-bg' : ''"
         >
           <PlusIcon class="w-3.5 h-3.5" />
-          Nueva
+          {{ t('operaciones.comandas.newStation') }}
         </button>
       </div>
       <p
@@ -186,7 +186,7 @@
                   :disabled="generatingToken === cardStation.id"
                   class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
                   :aria-label="t('operaciones.comandas.generateKdsQr')"
-                  title="Generar QR"
+                  :title="t('operaciones.comandas.generateQrTitle')"
                 >
                   <UiLoadingDots v-if="generatingToken === cardStation.id" size="7px" color="currentColor" />
                   <QrCodeIcon v-else class="w-4 h-4" />
@@ -196,7 +196,7 @@
                     @click="copyKdsUrl(cardStation.id)"
                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
                     :aria-label="t('operaciones.comandas.copyKdsLink')"
-                    title="Copiar enlace"
+                    :title="t('operaciones.comandas.copyLinkTitle')"
                   >
                     <ClipboardIcon class="w-4 h-4" />
                   </button>
@@ -205,7 +205,7 @@
                     :disabled="revokingToken === cardStation.id"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
                     :aria-label="t('operaciones.comandas.revokeKdsLink')"
-                    title="Revocar enlace"
+                    :title="t('operaciones.comandas.revokeLinkTitle')"
                   >
                     <UiLoadingDots v-if="revokingToken === cardStation.id" size="7px" color="currentColor" />
                     <XMarkIcon v-else class="w-4 h-4" />
@@ -214,7 +214,7 @@
                     @click="downloadKdsQrPng(cardStation.id, cardStation.name)"
                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
                     :aria-label="t('operaciones.comandas.downloadKdsQr')"
-                    title="Descargar QR"
+                    :title="t('operaciones.comandas.downloadQrTitle')"
                   >
                     <ArrowDownTrayIcon class="w-4 h-4" />
                   </button>
@@ -236,7 +236,7 @@
         <template #cell-status="{ item: st }">
           <UiStatusBadge
             :variant="st.is_active ? 'success' : 'secondary'"
-            :value="st.is_active ? 'Activa' : 'Inactiva'"
+            :value="st.is_active ? t('operaciones.comandas.active') : t('operaciones.comandas.inactive')"
             format="text"
             size="sm"
           />
@@ -252,7 +252,7 @@
               :disabled="generatingToken === st.id"
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors disabled:opacity-50"
               :aria-label="t('operaciones.comandas.generateKdsQr')"
-              title="Generar QR"
+              :title="t('operaciones.comandas.generateQrTitle')"
             >
               <UiLoadingDots v-if="generatingToken === st.id" size="7px" color="currentColor" />
               <QrCodeIcon v-else class="w-4 h-4" />
@@ -262,7 +262,7 @@
                 @click="copyKdsUrl(st.id)"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
                 :aria-label="t('operaciones.comandas.copyKdsLink')"
-                title="Copiar enlace"
+                :title="t('operaciones.comandas.copyLinkTitle')"
               >
                 <ClipboardIcon class="w-4 h-4" />
               </button>
@@ -271,7 +271,7 @@
                 :disabled="revokingToken === st.id"
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-state-danger-text hover:bg-state-danger-bg transition-colors disabled:opacity-50"
                 :aria-label="t('operaciones.comandas.revokeKdsLink')"
-                title="Revocar enlace"
+                :title="t('operaciones.comandas.revokeLinkTitle')"
               >
                 <UiLoadingDots v-if="revokingToken === st.id" size="7px" color="currentColor" />
                 <XMarkIcon v-else class="w-4 h-4" />
@@ -280,7 +280,7 @@
                 @click="downloadKdsQrPng(st.id, st.name)"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-badge-primary-border bg-badge-primary-bg text-badge-primary-text hover:bg-badge-primary-hover-bg transition-colors"
                 :aria-label="t('operaciones.comandas.downloadKdsQr')"
-                title="Descargar QR"
+                :title="t('operaciones.comandas.downloadQrTitle')"
               >
                 <ArrowDownTrayIcon class="w-4 h-4" />
               </button>
@@ -293,7 +293,7 @@
             <button
               @click="openEditStation(st)"
               class="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors"
-              :aria-label="`Editar estación ${st.name}`"
+              :aria-label="t('operaciones.comandas.editStationAria', { name: st.name })"
             >
               <PencilSquareIcon class="w-4 h-4" />
             </button>
@@ -304,7 +304,7 @@
               :class="st.is_active ? 'text-state-warning-text hover:bg-state-warning-bg border border-state-warning-border' : 'text-state-success-text hover:bg-state-success-bg border border-state-success-border'"
             >
               <UiLoadingDots v-if="togglingStationId === st.id" size="7px" color="currentColor" />
-              <span v-else>{{ st.is_active ? 'Desactivar' : 'Activar' }}</span>
+              <span v-else>{{ st.is_active ? t('operaciones.comandas.deactivate') : t('operaciones.comandas.activate') }}</span>
             </button>
           </div>
         </template>
@@ -315,10 +315,10 @@
     <div v-if="businessProfile?.comandas_enabled" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <div class="flex items-center gap-2 mb-1">
         <ArrowsRightLeftIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary">Routing de categorías</h3>
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary">{{ t('operaciones.comandas.routingTitle') }}</h3>
       </div>
       <p class="text-xs text-text-secondary mb-4">
-        Define a qué estación deben enviarse los productos de cada categoría. Sin estación asignada = no genera comanda.
+        {{ t('operaciones.comandas.routingHelp') }}
       </p>
       <UiResponsiveDataView
         :data="mappedCategories"
@@ -361,7 +361,7 @@
               {{ stations.find((s: any) => s.id === cat.station_id)?.name }}
             </span>
           </template>
-          <span v-else class="text-xs text-text-tertiary italic">Sin asignar</span>
+          <span v-else class="text-xs text-text-tertiary italic">{{ t('operaciones.comandas.unassigned') }}</span>
         </template>
         <template #cell-assign="{ item: cat }">
           <div class="flex justify-end">
@@ -371,7 +371,7 @@
               :disabled="isAssigningCategoryId === cat.id"
               class="min-w-[130px] px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-primary disabled:opacity-50"
             >
-              <option value="">(Sin asignar)</option>
+              <option value="">({{ t('operaciones.comandas.unassigned') }})</option>
               <option v-for="st in stations" :key="st.id" :value="st.id">{{ st.name }}</option>
             </select>
           </div>
@@ -412,7 +412,7 @@
                     <ExclamationTriangleIcon class="w-5 h-5 text-state-warning-icon" />
                   </div>
                   <div class="min-w-0 flex-1 pt-0.5">
-                    <h3 class="text-base font-bold text-text-primary leading-tight">Desactivar estación</h3>
+                    <h3 class="text-base font-bold text-text-primary leading-tight">{{ t('operaciones.comandas.deactivateStationTitle') }}</h3>
                     <div class="flex items-center gap-1.5 mt-1">
                       <span
                         class="inline-block w-2 h-2 rounded-full flex-shrink-0"
@@ -425,7 +425,7 @@
                 <button
                   type="button"
                   @click="deactivateModalOpen = false"
-                  aria-label="Cerrar"
+                  :aria-label="t('operaciones.comandas.close')"
                   class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
                 >
                   <XMarkIcon class="w-4 h-4" />
@@ -435,7 +435,7 @@
               <div class="px-5 py-4 flex flex-col gap-4">
                 <div v-if="isLoadingDeactivateInfo" class="flex flex-col items-center justify-center py-8 gap-3">
                   <UiLoadingDots size="10px" />
-                  <p class="text-xs text-text-tertiary">Verificando estado...</p>
+                  <p class="text-xs text-text-tertiary">{{ t('operaciones.comandas.verifyingStatus') }}</p>
                 </div>
 
                 <template v-else-if="deactivateInfo">
@@ -445,9 +445,9 @@
                         <ExclamationTriangleIcon class="w-4 h-4 text-state-danger-icon" />
                       </div>
                       <div>
-                        <p class="text-sm font-semibold text-state-danger-text leading-snug">No se puede desactivar ahora</p>
+                      <p class="text-sm font-semibold text-state-danger-text leading-snug">{{ t('operaciones.comandas.cannotDeactivate') }}</p>
                         <p class="text-xs text-state-danger-text/80 mt-1 leading-relaxed">
-                          Hay <strong>{{ deactivateInfo.active_comandas_count }} comanda{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }} activa{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }}</strong> en esta estación. Resuélvelas antes de desactivarla.
+                          {{ t('operaciones.comandas.activeTicketsMessage', { count: deactivateInfo.active_comandas_count }) }}
                         </p>
                       </div>
                     </div>
@@ -455,10 +455,10 @@
 
                   <div v-if="deactivateInfo.affected_categories.length > 0" class="rounded-xl bg-state-warning-bg border border-state-warning-border p-4">
                     <p class="text-xs font-bold text-state-warning-text uppercase tracking-wider mb-2">
-                      {{ deactivateInfo.affected_categories.length }} categoría{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }} afectada{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }}
+                      {{ t('operaciones.comandas.affectedCategories', { count: deactivateInfo.affected_categories.length, suffix: deactivateInfo.affected_categories.length === 1 ? '' : 's' }) }}
                     </p>
                     <p class="text-xs text-state-warning-text/80 leading-relaxed mb-3">
-                      Sus productos dejarán de generar comandas mientras la estación esté inactiva.
+                      {{ t('operaciones.comandas.affectedCategoriesHelp') }}
                     </p>
                     <div class="flex flex-wrap gap-1.5">
                       <span
@@ -476,7 +476,7 @@
                     <div class="w-7 h-7 rounded-full bg-state-success-bg flex items-center justify-center flex-shrink-0">
                       <svg class="w-3.5 h-3.5 text-state-success-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <p class="text-sm text-state-success-text leading-snug">Sin impacto activo. Se puede desactivar de forma segura.</p>
+                    <p class="text-sm text-state-success-text leading-snug">{{ t('operaciones.comandas.noActiveImpact') }}</p>
                   </div>
                 </template>
               </div>
@@ -487,7 +487,7 @@
                   @click="deactivateModalOpen = false"
                   class="flex-1 min-h-[44px] rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary hover:border-border/80 transition-colors"
                 >
-                  Cancelar
+                  {{ t('operaciones.comandas.cancel') }}
                 </button>
                 <button
                   v-if="deactivateInfo"
@@ -498,7 +498,7 @@
                 >
                   <UiLoadingDots v-if="isConfirmingDeactivate" size="8px" color="currentColor" />
                   <template v-else>
-                    <span>Desactivar</span>
+                    <span>{{ t('operaciones.comandas.deactivate') }}</span>
                   </template>
                 </button>
               </div>
@@ -521,7 +521,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import {
   FireIcon,
   QueueListIcon,
@@ -611,9 +611,9 @@ const saveMinimumConsumptionConfig = async () => {
       },
     })
     await invalidateContextCaches()
-    toast.success(t('operaciones.comandas.minConsumptionSaved'), { title: 'Guardado' })
+    toast.success(t('operaciones.comandas.minConsumptionSaved'), { title: t('operaciones.comandas.savedTitle') })
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.comandas.minConsumptionError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.minConsumptionError'), { title: t('operaciones.comandas.error') })
   } finally {
     isSavingMinimumConsumption.value = false
   }
@@ -754,9 +754,9 @@ const handleToggleComandas = async (event: Event) => {
   try {
     await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
     await invalidateContextCaches()
-    toast.success(t('operaciones.comandas.moduleOn'), { title: 'Activado' })
+    toast.success(t('operaciones.comandas.moduleOn'), { title: t('operaciones.comandas.activatedTitle') })
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.comandas.activateError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.activateError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingComandas.value = false
   }
@@ -769,9 +769,9 @@ const confirmDisableComandas = async () => {
   try {
     await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: false } })
     await invalidateContextCaches()
-    toast.success(t('operaciones.comandas.moduleOff'), { title: 'Desactivado' })
+    toast.success(t('operaciones.comandas.moduleOff'), { title: t('operaciones.comandas.deactivatedTitle') })
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.comandas.deactivateError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.deactivateError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingComandas.value = false
   }
@@ -786,10 +786,10 @@ const handleToggleKds = async (event: Event) => {
     await invalidateContextCaches()
     toast.success(
       newState ? t('operaciones.comandas.kdsOn') : t('operaciones.comandas.kdsOff'),
-      { title: newState ? 'Activado' : 'Desactivado' }
+      { title: newState ? t('operaciones.comandas.activatedTitle') : t('operaciones.comandas.deactivatedTitle') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.comandas.kdsToggleError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.kdsToggleError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingKds.value = false
   }
@@ -808,10 +808,10 @@ const handleToggleExpediter = async (event: Event) => {
       newState
         ? t('operaciones.comandas.expeditorWaiter')
         : t('operaciones.comandas.expeditorKitchen'),
-      { title: newState ? 'Activado' : 'Desactivado' }
+      { title: newState ? t('operaciones.comandas.activatedTitle') : t('operaciones.comandas.deactivatedTitle') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.comandas.expeditorError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.comandas.expeditorError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingExpediter.value = false
   }
@@ -874,7 +874,7 @@ const copyKdsUrl = (stationId: string) => {
 
 const downloadKdsQrPng = async (stationId: string, stationName: string) => {
   if (!kdsTokens.value[stationId]) {
-    toast.error('Genera el enlace KDS primero', { title: 'Sin enlace' })
+    toast.error(t('operaciones.comandas.generateLinkFirst'), { title: t('operaciones.comandas.noLink') })
     return
   }
 
@@ -885,25 +885,25 @@ const downloadKdsQrPng = async (stationId: string, stationName: string) => {
     anchor.href = dataUrl
     anchor.download = `qr-kds-${safeName}.png`
     anchor.click()
-    toast.success('QR KDS descargado', { title: 'Listo' })
+    toast.success(t('operaciones.comandas.qrDownloaded'), { title: t('operaciones.comandas.ready') })
   } catch {
-    toast.error('No se pudo generar el código QR', { title: 'Error' })
+    toast.error(t('operaciones.comandas.qrError'), { title: t('operaciones.comandas.error') })
   }
 }
 
 // ─── Station CRUD ───
 const stationColumns = [
-  { key: 'name', title: 'Nombre', sortable: false },
-  { key: 'monitor', title: 'Monitor', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false },
-  { key: 'thresholds', title: 'Alertas', sortable: false },
-  { key: 'kds', title: 'Enlace KDS', sortable: false },
+  { key: 'name', title: t('menu.categorias.name'), sortable: false },
+  { key: 'monitor', title: t('operaciones.comandas.monitor'), sortable: false },
+  { key: 'status', title: t('menu.common.estado'), sortable: false },
+  { key: 'thresholds', title: t('operaciones.comandas.alerts'), sortable: false },
+  { key: 'kds', title: t('operaciones.comandas.kdsLink'), sortable: false },
   { key: 'actions', title: '', sortable: false },
 ]
 
 const categoryColumns = [
-  { key: 'name', title: 'Categoría', sortable: false },
-  { key: 'station', title: 'Estación asignada', sortable: false },
+  { key: 'name', title: t('operaciones.comandas.category'), sortable: false },
+  { key: 'station', title: t('operaciones.comandas.categoryStation'), sortable: false },
   { key: 'assign', title: '', sortable: false },
 ]
 
@@ -922,7 +922,7 @@ const isConfirmingDeactivate = ref(false)
 const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
 
 const showActiveKitchenQuotaBlocked = () => {
-  toast.warning(activeKitchenQuotaMessage.value, { title: 'Cupo de cocinas agotado' })
+  toast.warning(activeKitchenQuotaMessage.value, { title: t('operaciones.comandas.quotaTitle') })
 }
 
 const openCreateStation = () => {
@@ -951,7 +951,11 @@ const quotaExceededMessageFromError = (err: any) => {
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 
   if (used !== null && limit !== null) {
-    return `Alcanzaste el límite de cocinas activas de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} cocinas. Revisa Mi Plan para ampliar tu cupo.`
+    const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+    return t('operaciones.comandas.quotaMessage', {
+      used: used.toLocaleString(numberLocale),
+      limit: limit.toLocaleString(numberLocale),
+    })
   }
 
   return typeof detail === 'string' ? detail : activeKitchenQuotaMessage.value
@@ -972,10 +976,10 @@ const handleSaveStation = async (formData: any) => {
   try {
     if (editingStation.value) {
       await $fetch(`/api/api/stations/${editingStation.value.id}`, { method: 'PATCH', body: formData })
-      toast.success('Estación actualizada', { title: 'Guardado' })
+      toast.success(t('operaciones.comandas.stationUpdated'), { title: t('operaciones.comandas.savedTitle') })
     } else {
       await $fetch('/api/api/stations', { method: 'POST', body: formData })
-      toast.success('Estación creada', { title: 'Creado' })
+      toast.success(t('operaciones.comandas.stationCreated'), { title: t('operaciones.comandas.createdTitle') })
     }
     stationModalOpen.value = false
     if (editingStation.value) {
@@ -984,7 +988,7 @@ const handleSaveStation = async (formData: any) => {
       await refreshStationsAndBilling()
     }
   } catch (e: any) {
-    toast.error(stationErrorMessage(e, 'Error al guardar la estación'), { title: 'Error' })
+    toast.error(stationErrorMessage(e, t('operaciones.comandas.stationSaveError')), { title: t('operaciones.comandas.error') })
   } finally {
     isSavingStation.value = false
   }
@@ -1001,10 +1005,10 @@ const handleToggleStation = async (station: any) => {
     togglingStationId.value = station.id
     try {
       await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: true } })
-      toast.success('Estación activada')
+      toast.success(t('operaciones.comandas.active'))
       await refreshStationsAndBilling()
     } catch (e: any) {
-      toast.error(stationErrorMessage(e, 'Error al activar la estación'), { title: 'Error' })
+      toast.error(stationErrorMessage(e, t('operaciones.comandas.stationActivateError')), { title: t('operaciones.comandas.error') })
     } finally {
       togglingStationId.value = null
     }
@@ -1022,10 +1026,10 @@ const handleToggleStation = async (station: any) => {
       return
     }
     await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: false } })
-    toast.success('Estación desactivada')
+    toast.success(t('operaciones.comandas.deactivatedTitle'))
     await refreshStationsAndBilling()
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
+    toast.error(e.data?.detail || t('operaciones.comandas.stationDeactivateError'), { title: t('operaciones.comandas.error') })
   } finally {
     togglingStationId.value = null
   }
@@ -1039,11 +1043,11 @@ const confirmDeactivateStation = async () => {
       method: 'PATCH',
       body: { is_active: false },
     })
-    toast.success('Estación desactivada')
+    toast.success(t('operaciones.comandas.deactivatedTitle'))
     deactivateModalOpen.value = false
     await refreshStationsAndBilling()
   } catch (e: any) {
-    toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
+    toast.error(e.data?.detail || t('operaciones.comandas.stationDeactivateError'), { title: t('operaciones.comandas.error') })
   } finally {
     isConfirmingDeactivate.value = false
   }
@@ -1056,11 +1060,11 @@ const handleAssignCategory = async (categoryId: string, stationId: string | null
       method: 'POST',
       body: { station_id: stationId },
     })
-    toast.success('Asignación actualizada')
+    toast.success(t('operaciones.comandas.assignmentUpdated'))
     await refetchCategoryStations()
   } catch (e: any) {
     const detail = e.data?.detail || e.message
-    toast.error(`Error al asignar categoría: ${detail}`, { title: 'Error' })
+    toast.error(t('operaciones.comandas.assignmentError', { detail }), { title: t('operaciones.comandas.error') })
   } finally {
     isAssigningCategoryId.value = null
   }

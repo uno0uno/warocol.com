@@ -166,7 +166,80 @@
       "tokenError": "Error al generar token",
       "kdsLinkRevoked": "Enlace KDS revocado",
       "revokeError": "Error al revocar token",
-      "kdsCopied": "Enlace KDS copiado al portapapeles"
+      "kdsCopied": "Enlace KDS copiado al portapapeles",
+      "title": "Comandas y Cocina",
+      "disableWarning": "Las comandas activas no serán afectadas. Los nuevos pedidos no generarán comandas mientras esté desactivado.",
+      "cancel": "Cancelar",
+      "confirmDisable": "Sí, desactivar",
+      "minimumConsumption": "Consumo mínimo por mesa",
+      "amountCop": "Monto COP",
+      "restrictiveMode": "Modo restrictivo",
+      "save": "Guardar",
+      "saveBusy": "Guardando...",
+      "amountInvalid": "El monto debe ser un número mayor o igual a 0.",
+      "stationsTitle": "Estaciones de preparación",
+      "newStation": "Nueva",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "editStationAria": "Editar estación {name}",
+      "generateQrTitle": "Generar QR",
+      "copyLinkTitle": "Copiar enlace",
+      "revokeLinkTitle": "Revocar enlace",
+      "downloadQrTitle": "Descargar QR",
+      "routingTitle": "Routing de categorías",
+      "routingHelp": "Define a qué estación deben enviarse los productos de cada categoría. Sin estación asignada = no genera comanda.",
+      "unassigned": "Sin asignar",
+      "deactivateStationTitle": "Desactivar estación",
+      "close": "Cerrar",
+      "checkingStatus": "Verificando estado...",
+      "cannotDeactivate": "No se puede desactivar ahora",
+      "activeTicketsMessage": "Hay {count} comanda(s) activa(s) en esta estación. Resuélvelas antes de desactivarla.",
+      "affectedCategories": "{count} categoría(s) afectada(s)",
+      "affectedCategoriesHelp": "Sus productos dejarán de generar comandas mientras la estación esté inactiva.",
+      "noActiveImpact": "Sin impacto activo. Se puede desactivar de forma segura.",
+      "activatedTitle": "Activado",
+      "deactivatedTitle": "Desactivado",
+      "savedTitle": "Guardado",
+      "createdTitle": "Creado",
+      "stationUpdated": "Estación actualizada",
+      "stationCreated": "Estación creada",
+      "stationSaveError": "Error al guardar la estación",
+      "stationActivateError": "Error al activar la estación",
+      "stationDeactivateError": "Error al desactivar la estación",
+      "assignmentUpdated": "Asignación actualizada",
+      "assignmentError": "Error al asignar categoría: {detail}",
+      "quotaMessage": "Alcanzaste el límite de cocinas activas de tu plan. Uso actual: {used} de {limit} cocinas. Revisa Mi Plan para ampliar tu cupo.",
+      "quotaTitle": "Cupo de cocinas agotado",
+      "generateLinkFirst": "Genera el enlace KDS primero",
+      "noLink": "Sin enlace",
+      "qrDownloaded": "QR KDS descargado",
+      "ready": "Listo",
+      "qrError": "No se pudo generar el código QR",
+      "error": "Error",
+      "verifyingStatus": "Verificando estado...",
+      "activeImpactHelp": "Resuélvelas antes de desactivarla.",
+      "categoryStation": "Estación asignada",
+      "category": "Categoría",
+      "station": "Estación",
+      "monitor": "Monitor",
+      "alerts": "Alertas",
+      "kdsLink": "Enlace KDS"
+      ,"editStation": "Editar estación"
+      ,"newStationTitle": "Nueva estación"
+      ,"stationName": "Nombre de la estación"
+      ,"stationNamePlaceholder": "Ej: Cocina Principal, Bar, Parrilla"
+      ,"monitorName": "Nombre del monitor (opcional)"
+      ,"monitorPlaceholder": "Ej: K1, BAR-01"
+      ,"color": "Color"
+      ,"order": "Orden"
+      ,"alertThresholds": "Umbrales de alerta (minutos)"
+      ,"yellowAlert": "Aviso amarillo"
+      ,"redAlert": "Aviso rojo"
+      ,"saveChanges": "Guardar cambios"
+      ,"createStationButton": "Crear estación"
+      ,"categoryLabel": "Categoría"
     },
     "promociones": {
       "itemOptOutOn": "Exclusión por ítem activada",

@@ -31,7 +31,7 @@
         <button
           class="p-1.5 rounded-lg text-text-tertiary hover:text-primary hover:bg-primary/5 transition-colors"
           @click="$emit('edit', station)"
-          title="Editar Estación"
+          :title="t('operaciones.comandas.editStation')"
         >
           <PencilIcon class="w-4 h-4" />
         </button>
@@ -42,7 +42,7 @@
           @click="$emit('toggle', station)"
         >
           <UiLoadingDots v-if="isToggling" size="7px" color="currentColor" />
-          <span v-else>{{ station.is_active ? 'Desactivar' : 'Activar' }}</span>
+          <span v-else>{{ station.is_active ? t('operaciones.comandas.deactivate') : t('operaciones.comandas.activate') }}</span>
         </button>
       </div>
     </div>
@@ -51,7 +51,7 @@
     <div class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
       <UiStatusBadge
         :variant="station.is_active ? 'success' : 'secondary'"
-        :value="station.is_active ? 'Activa' : 'Inactiva'"
+        :value="station.is_active ? t('operaciones.comandas.active') : t('operaciones.comandas.inactive')"
         format="text"
         size="sm"
       />
@@ -65,6 +65,8 @@
 
 <script setup lang="ts">
 import { PencilIcon } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Station {
   id: string

@@ -6,7 +6,7 @@
       </div>
       <div>
         <p class="text-sm font-bold text-text-primary">{{ category.name }}</p>
-        <p class="text-[10px] text-text-tertiary font-medium uppercase tracking-wider">Categoría</p>
+        <p class="text-[10px] text-text-tertiary font-medium uppercase tracking-wider">{{ t('operaciones.comandas.categoryLabel') }}</p>
       </div>
     </div>
 
@@ -30,7 +30,7 @@
         class="min-w-[120px] px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-primary"
         :disabled="loading"
       >
-        <option value="">(Sin asignar)</option>
+        <option value="">({{ t('operaciones.comandas.unassigned') }})</option>
         <option
           v-for="st in stations"
           :key="st.id"
@@ -45,6 +45,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Station {
   id: string

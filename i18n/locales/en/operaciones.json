@@ -166,7 +166,80 @@
       "tokenError": "Error generating token",
       "kdsLinkRevoked": "KDS link revoked",
       "revokeError": "Error revoking token",
-      "kdsCopied": "KDS link copied to clipboard"
+      "kdsCopied": "KDS link copied to clipboard",
+      "title": "Tickets & Kitchen",
+      "disableWarning": "Active tickets will not be affected. New orders will not generate tickets while disabled.",
+      "cancel": "Cancel",
+      "confirmDisable": "Yes, disable",
+      "minimumConsumption": "Minimum consumption per table",
+      "amountCop": "Amount COP",
+      "restrictiveMode": "Restrictive mode",
+      "save": "Save",
+      "saveBusy": "Saving...",
+      "amountInvalid": "The amount must be a number greater than or equal to 0.",
+      "stationsTitle": "Preparation stations",
+      "newStation": "New",
+      "active": "Active",
+      "inactive": "Inactive",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "editStationAria": "Edit station {name}",
+      "generateQrTitle": "Generate QR",
+      "copyLinkTitle": "Copy link",
+      "revokeLinkTitle": "Revoke link",
+      "downloadQrTitle": "Download QR",
+      "routingTitle": "Category routing",
+      "routingHelp": "Choose which station receives products from each category. No assigned station means no ticket is generated.",
+      "unassigned": "Unassigned",
+      "deactivateStationTitle": "Deactivate station",
+      "close": "Close",
+      "checkingStatus": "Checking status...",
+      "cannotDeactivate": "Cannot deactivate now",
+      "activeTicketsMessage": "There are {count} active ticket(s) at this station. Resolve them before deactivating it.",
+      "affectedCategories": "{count} affected categor{suffix}",
+      "affectedCategoriesHelp": "Their products will stop generating tickets while the station is inactive.",
+      "noActiveImpact": "No active impact. It can be safely deactivated.",
+      "activatedTitle": "Activated",
+      "deactivatedTitle": "Deactivated",
+      "savedTitle": "Saved",
+      "createdTitle": "Created",
+      "stationUpdated": "Station updated",
+      "stationCreated": "Station created",
+      "stationSaveError": "Error saving station",
+      "stationActivateError": "Error activating station",
+      "stationDeactivateError": "Error deactivating station",
+      "assignmentUpdated": "Assignment updated",
+      "assignmentError": "Error assigning category: {detail}",
+      "quotaMessage": "You reached your plan's active kitchen limit. Current usage: {used} of {limit} kitchens. Check My Plan to increase your limit.",
+      "quotaTitle": "Kitchen limit reached",
+      "generateLinkFirst": "Generate the KDS link first",
+      "noLink": "No link",
+      "qrDownloaded": "KDS QR downloaded",
+      "ready": "Ready",
+      "qrError": "Could not generate the QR code",
+      "error": "Error",
+      "verifyingStatus": "Verifying status...",
+      "activeImpactHelp": "Resolve them before deactivating it.",
+      "categoryStation": "Assigned station",
+      "category": "Category",
+      "station": "Station",
+      "monitor": "Monitor",
+      "alerts": "Alerts",
+      "kdsLink": "KDS link"
+      ,"editStation": "Edit station"
+      ,"newStationTitle": "New station"
+      ,"stationName": "Station name"
+      ,"stationNamePlaceholder": "E.g. Main kitchen, Bar, Grill"
+      ,"monitorName": "Monitor name (optional)"
+      ,"monitorPlaceholder": "E.g. K1, BAR-01"
+      ,"color": "Color"
+      ,"order": "Order"
+      ,"alertThresholds": "Alert thresholds (minutes)"
+      ,"yellowAlert": "Yellow alert"
+      ,"redAlert": "Red alert"
+      ,"saveChanges": "Save changes"
+      ,"createStationButton": "Create station"
+      ,"categoryLabel": "Category"
     },
     "promociones": {
       "itemOptOutOn": "Per-item exclusion enabled",
