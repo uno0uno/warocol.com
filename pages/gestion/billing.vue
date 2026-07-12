@@ -9,9 +9,10 @@
 definePageMeta({ layout: 'dashboard', module: 'mi_plan' })
 
 const route = useRoute()
+const { t } = useI18n({ useScope: 'global' })
 
-const navigationItems = [
-  { to: '/gestion/billing', label: 'Historial', exact: true },
-  { to: '/gestion/billing/uso', label: 'Uso restante' },
-]
+const navigationItems = computed(() => [
+  { to: '/gestion/billing', label: t('billing.history'), exact: true },
+  { to: '/gestion/billing/uso', label: t('billing.remainingUsage') },
+])
 </script>

@@ -11,7 +11,8 @@ interface Column {
 }
 
 definePageMeta({})
-useHead({ title: 'Historial de pagos — WaRo Admin' })
+const { t, locale } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('billing.paymentHistoryTitle') })
 
 const {
   plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
@@ -42,14 +43,24 @@ interface QuotaDisplayConfig {
 }
 
 const quotaDisplayConfig: QuotaDisplayConfig[] = [
-  { key: 'admin_users', label: 'Usuarios administrativos', unit: 'usuarios administrativos' },
-  { key: 'active_sessions_per_admin_user', label: 'Sesiones activas por usuario administrativo', unit: 'sesiones' },
-  { key: 'active_kitchens', label: 'Cocinas activas', unit: 'cocinas' },
-  { key: 'active_tables_including_bar', label: 'Mesas activas, incluida barra', unit: 'mesas' },
-  { key: 'active_qr_tables', label: 'Mesas con QR activo', unit: 'mesas QR' },
-  { key: 'completed_online_orders_per_month', label: 'Pedidos en línea completados/mes', unit: 'pedidos/mes' },
-  { key: 'electronic_invoices_per_period', label: 'Facturas electrónicas/periodo', unit: 'facturas/periodo', zeroLabel: 'No incluido' },
+  { key: 'admin_users', label: '', unit: '' },
+  { key: 'active_sessions_per_admin_user', label: '', unit: '' },
+  { key: 'active_kitchens', label: '', unit: '' },
+  { key: 'active_tables_including_bar', label: '', unit: '' },
+  { key: 'active_qr_tables', label: '', unit: '' },
+  { key: 'completed_online_orders_per_month', label: '', unit: '' },
+  { key: 'electronic_invoices_per_period', label: '', unit: '', zeroLabel: '' },
 ]
+
+const quotaLabels = computed<Record<string, { label: string; unit: string; zeroLabel?: string }>>(() => ({
+  admin_users: { label: t('billing.quotaAdminUsers'), unit: t('billing.unitAdminUsers') },
+  active_sessions_per_admin_user: { label: t('billing.quotaSessions'), unit: t('billing.unitSessions') },
+  active_kitchens: { label: t('billing.quotaKitchens'), unit: t('billing.unitKitchens') },
+  active_tables_including_bar: { label: t('billing.quotaTables'), unit: t('billing.unitTables') },
+  active_qr_tables: { label: t('billing.quotaQrTables'), unit: t('billing.unitQrTables') },
+  completed_online_orders_per_month: { label: t('billing.quotaOnlineOrders'), unit: t('billing.unitOnlineOrders') },
+  electronic_invoices_per_period: { label: t('billing.quotaInvoices'), unit: t('billing.unitInvoices'), zeroLabel: t('billing.notIncluded') },
+}))
 
 // ── Pagination ───────────────────────────────────────────────────
 const PAGE_SIZE = 20
@@ -93,10 +104,11 @@ const quotaRowsForPlan = (plan: BillingPlan) =>
       if (!Number.isFinite(limit)) return null
       return {
         ...config,
+        ...(quotaLabels.value[config.key] ?? {}),
         limit,
         value: limit <= 0
           ? config.zeroLabel ?? 'No incluido'
-          : `${limit.toLocaleString('es-CO')} ${config.unit}`,
+          : `${limit.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${quotaLabels.value[config.key]?.unit ?? config.unit}`,
       }
     })
     .filter((row): row is QuotaDisplayConfig & { limit: number; value: string } => row !== null)
@@ -181,7 +193,7 @@ const redirectToTermsAcceptance = async () => {
 
 const ensureTermsAcceptedForCheckout = async () => {
   if (!currentTenantId.value) {
-    setBillingFlowError('Selecciona un establecimiento antes de comprar un plan.')
+    setBillingFlowError(t('billing.selectTenantBeforePurchase'))
     return false
   }
 
@@ -194,7 +206,7 @@ const ensureTermsAcceptedForCheckout = async () => {
   } catch (err) {
     setBillingFlowError(apiErrorMessage(
       err,
-      'No pudimos validar la aceptación de Términos y Condiciones. Intenta de nuevo.'
+      t('billing.termsValidationError')
     ))
     return false
   }
@@ -209,7 +221,7 @@ const restoreBillingIntent = async () => {
   clearBillingIntent()
 
   if (!plan) {
-    subscribeError.value = 'El plan seleccionado ya no está disponible. Elige un plan nuevamente.'
+    subscribeError.value = t('billing.planUnavailable')
     showModal.value = true
     wizardStep.value = 1
     return
@@ -245,7 +257,7 @@ const selectPlan = (plan: BillingPlan) => {
 
 const handleSubscribe = async () => {
   if (!payerEmail.value || !payerEmail.value.includes('@')) {
-    subscribeError.value = 'Ingresa un correo electrónico válido.'
+    subscribeError.value = t('billing.validEmailRequired')
     return
   }
   if (!selectedPlan.value) return
@@ -261,7 +273,7 @@ const handleSubscribe = async () => {
   try {
     const result = await subscribeOrThrow(selectedPlan.value.id, 'annual', payerEmail.value)
     if (!result?.checkout_url) {
-      subscribeError.value = 'No se pudo iniciar el pago. Intenta de nuevo.'
+      subscribeError.value = t('billing.paymentStartError')
       return
     }
     clearBillingIntent()
@@ -271,7 +283,7 @@ const handleSubscribe = async () => {
       await redirectToTermsAcceptance()
       return
     }
-    subscribeError.value = apiErrorMessage(err, 'No se pudo iniciar el pago. Intenta de nuevo.')
+    subscribeError.value = apiErrorMessage(err, t('billing.paymentStartError'))
   } finally {
     subscribing.value = false
   }
@@ -310,14 +322,14 @@ const canSubscribe = computed(() => {
     (isAccessBlocked.value && !subscription.value.checkout_url)
 })
 const primaryBillingActionLabel = computed(() => {
-  if (!subscription.value) return 'Suscribirse'
-  if (isAccessBlocked.value) return 'Reactivar'
-  return 'Reactivar'
+  if (!subscription.value) return t('billing.subscribe')
+  if (isAccessBlocked.value) return t('billing.reactivate')
+  return t('billing.reactivate')
 })
 const recoveryActionLabel = computed(() => {
-  if (requiresTermsAcceptance.value) return 'Aceptar términos y condiciones'
-  if (hasExistingCheckout.value) return 'Pagar ahora'
-  return subscription.value ? 'Reactivar' : 'Suscribirse'
+  if (requiresTermsAcceptance.value) return t('billing.acceptTerms')
+  if (hasExistingCheckout.value) return t('billing.payNow')
+  return subscription.value ? t('billing.reactivate') : t('billing.subscribe')
 })
 const handleRecoveryAction = async () => {
   billingActionError.value = null
@@ -334,12 +346,12 @@ const handleRecoveryAction = async () => {
 
 // ── Table columns ────────────────────────────────────────────────
 
-const columns: Column[] = [
-  { key: 'created_at', title: 'Fecha',      sortable: false },
-  { key: 'event_type', title: 'Tipo',       sortable: false },
-  { key: 'amount',     title: 'Monto',      sortable: false },
-  { key: 'metadata',   title: 'Referencia', sortable: false },
-]
+const columns = computed<Column[]>(() => [
+  { key: 'created_at', title: t('billing.date'), sortable: false },
+  { key: 'event_type', title: t('billing.type'), sortable: false },
+  { key: 'amount', title: t('billing.amount'), sortable: false },
+  { key: 'metadata', title: t('billing.reference'), sortable: false },
+])
 
 // ── Slide-over ────────────────────────────────────────────────────
 const selectedEvent = ref<any>(null)
@@ -384,8 +396,8 @@ const eventReference = (item: any): string => {
   }
   // Gift events
   if (meta.label) return String(meta.label)
-  if (meta.months) return `${meta.months} meses`
-  if (meta.days) return `${meta.days} días`
+  if (meta.months) return t('billing.months', { count: meta.months })
+  if (meta.days) return t('billing.days', { count: meta.days })
   return '—'
 }
 
@@ -404,11 +416,11 @@ const loadAll = async () => {
 const { formatDate, formatDateTime } = useFormatters()
 
 const formatCOP = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 
 const cycleLabel = computed(() => {
-  if (subscription.value?.billing_cycle === 'monthly') return 'Mensual'
-  if (subscription.value?.billing_cycle === 'annual')  return 'Anual'
+  if (subscription.value?.billing_cycle === 'monthly') return t('billing.monthly')
+  if (subscription.value?.billing_cycle === 'annual')  return t('billing.annual')
   return '—'
 })
 
@@ -419,17 +431,17 @@ const statusStyle = (status: string, accessLevel?: string | null) => {
     return {
       badge: 'bg-status-critical-bg text-status-critical-text',
       dot: 'bg-status-critical-text',
-      label: 'Bloqueado',
+      label: t('billing.blocked'),
     }
   }
 
   const map: Record<string, { badge: string; dot: string; label: string }> = {
-    active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: 'Activo' },
-    pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: 'Pendiente' },
-    past_due:  { badge: 'bg-status-warning-bg text-status-warning-text',   dot: 'bg-status-warning-text',   label: 'Gracia' },
-    blocked:   { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Bloqueado' },
-    cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: 'Cancelado' },
-    expired:   { badge: 'bg-surface-secondary text-text-secondary',        dot: 'bg-text-secondary',         label: 'Expirado' },
+    active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: t('billing.active') },
+    pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: t('billing.pending') },
+    past_due:  { badge: 'bg-status-warning-bg text-status-warning-text',   dot: 'bg-status-warning-text',   label: t('billing.grace') },
+    blocked:   { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: t('billing.blocked') },
+    cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: t('billing.cancelled') },
+    expired:   { badge: 'bg-surface-secondary text-text-secondary',        dot: 'bg-text-secondary',         label: t('billing.expired') },
   }
   return map[status] ?? { badge: 'bg-surface-secondary text-text-secondary', dot: 'bg-text-secondary', label: status }
 }
@@ -447,9 +459,9 @@ const pastDueAlert = computed(() => {
     return {
       bg: 'bg-status-critical-bg/40',
       icon: 'text-status-critical-text',
-      title: 'Tu suscripción está vencida',
+      title: t('billing.subscriptionExpired'),
       titleClass: 'text-status-critical-text',
-      message: accessStatus.value?.message || 'Renueva para recuperar el acceso.',
+      message: accessStatus.value?.message || t('billing.renewForAccess'),
     }
   }
 
@@ -457,34 +469,34 @@ const pastDueAlert = computed(() => {
     return {
       bg: 'bg-status-warning-bg/40',
       icon: 'text-status-warning-text',
-      title: 'Funciones IA suspendidas',
+      title: t('billing.aiSuspended'),
       titleClass: 'text-status-warning-text',
-      message: accessStatus.value?.message || 'Renueva para recuperar el acceso completo.',
+      message: accessStatus.value?.message || t('billing.renewForFullAccess'),
     }
   }
 
   return {
     bg: 'bg-status-warning-bg/40',
     icon: 'text-status-warning-text',
-    title: 'Tienes un pago pendiente',
+    title: t('billing.paymentPending'),
     titleClass: 'text-status-warning-text',
-    message: accessStatus.value?.message || 'Tu acceso está en período de gracia.',
+    message: accessStatus.value?.message || t('billing.accessGracePeriod'),
   }
 })
 
 const eventStyle = (type: string) => {
   const map: Record<string, { badge: string; label: string }> = {
-    subscribe_initiated:    { badge: 'bg-surface-secondary text-text-secondary',        label: 'Intento de pago' },
-    gift_granted:           { badge: 'bg-status-info-bg text-status-info-text',         label: 'Período de cortesía' },
-    subscription_created:   { badge: 'bg-status-info-bg text-status-info-text',         label: 'Suscripción creada' },
-    subscription_renewed:   { badge: 'bg-status-success-bg text-status-success-text',   label: 'Renovación' },
-    subscription_cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', label: 'Cancelación' },
-    subscription_expired:   { badge: 'bg-surface-secondary text-text-secondary',        label: 'Expiración' },
-    payment_approved:       { badge: 'bg-status-success-bg text-status-success-text',   label: 'Pago aprobado' },
-    payment_rejected:       { badge: 'bg-status-critical-bg text-status-critical-text', label: 'Pago rechazado' },
-    payment_failed:         { badge: 'bg-status-critical-bg text-status-critical-text', label: 'Pago fallido' },
-    payment_pending:        { badge: 'bg-status-warning-bg text-status-warning-text',   label: 'Pago pendiente' },
-    plan_changed:           { badge: 'bg-status-info-bg text-status-info-text',         label: 'Cambio de plan' },
+    subscribe_initiated:    { badge: 'bg-surface-secondary text-text-secondary',        label: t('billing.eventSubscribeInitiated') },
+    gift_granted:           { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventGiftGranted') },
+    subscription_created:   { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventSubscriptionCreated') },
+    subscription_renewed:   { badge: 'bg-status-success-bg text-status-success-text',   label: t('billing.eventRenewal') },
+    subscription_cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', label: t('billing.eventCancellation') },
+    subscription_expired:   { badge: 'bg-surface-secondary text-text-secondary',        label: t('billing.eventExpiration') },
+    payment_approved:       { badge: 'bg-status-success-bg text-status-success-text',   label: t('billing.eventPaymentApproved') },
+    payment_rejected:       { badge: 'bg-status-critical-bg text-status-critical-text', label: t('billing.eventPaymentRejected') },
+    payment_failed:         { badge: 'bg-status-critical-bg text-status-critical-text', label: t('billing.eventPaymentFailed') },
+    payment_pending:        { badge: 'bg-status-warning-bg text-status-warning-text',   label: t('billing.eventPaymentPending') },
+    plan_changed:           { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventPlanChanged') },
   }
   return map[type] ?? { badge: 'bg-surface-secondary text-text-secondary', label: type }
 }
@@ -528,9 +540,9 @@ watch(() => currentTenant.value?.id, async () => {
               </svg>
             </div>
             <div class="min-w-0">
-              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest leading-none mb-1">Plan actual</p>
+              <p class="text-xs font-medium text-text-secondary uppercase tracking-widest leading-none mb-1">{{ t('billing.currentPlan') }}</p>
               <p class="text-2xl font-bold text-text-primary leading-tight truncate">
-                {{ subscription?.plan_name ?? 'Sin plan' }}
+                {{ subscription?.plan_name ?? t('billing.noPlan') }}
               </p>
             </div>
           </div>
@@ -562,7 +574,7 @@ watch(() => currentTenant.value?.id, async () => {
               @click="handleExistingCheckout(subscription.checkout_url)"
               class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              {{ checkoutRedirecting ? 'Validando...' : 'Completar pago' }}
+              {{ checkoutRedirecting ? t('billing.validating') : t('billing.completePayment') }}
             </button>
           </div>
         </div>
@@ -574,11 +586,11 @@ watch(() => currentTenant.value?.id, async () => {
         <!-- Metrics grid (only when subscription exists) -->
         <div v-if="subscription" class="grid grid-cols-2 divide-x divide-border border-b border-border">
           <div class="px-6 py-4">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">Ciclo de pago</p>
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">{{ t('billing.paymentCycle') }}</p>
             <p class="text-base font-semibold text-text-primary">{{ cycleLabel }}</p>
           </div>
           <div class="px-6 py-4">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">Próxima renovación</p>
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">{{ t('billing.nextRenewal') }}</p>
             <p class="text-base font-semibold text-text-primary">
               {{ subscription.current_period_end ? formatDate(subscription.current_period_end) : '—' }}
             </p>
@@ -587,8 +599,8 @@ watch(() => currentTenant.value?.id, async () => {
 
         <!-- No subscription placeholder -->
         <div v-if="!subscription" class="px-6 py-8 text-center">
-          <p class="text-sm text-text-secondary mb-1">No tienes una suscripción activa.</p>
-          <p class="text-xs text-text-secondary">Elige un plan para comenzar.</p>
+          <p class="text-sm text-text-secondary mb-1">{{ t('billing.noActiveSubscription') }}</p>
+          <p class="text-xs text-text-secondary">{{ t('billing.choosePlanToStart') }}</p>
         </div>
 
         <!-- Alert: past_due -->
@@ -610,7 +622,7 @@ watch(() => currentTenant.value?.id, async () => {
               @click="handleRecoveryAction"
               class="shrink-0 min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
             >
-              {{ checkoutRedirecting ? 'Validando...' : recoveryActionLabel }}
+              {{ checkoutRedirecting ? t('billing.validating') : recoveryActionLabel }}
             </button>
           </div>
         </div>
@@ -625,8 +637,8 @@ watch(() => currentTenant.value?.id, async () => {
         v-if="eventsTotal > 0"
         :columns="columns"
         :data="events"
-        empty-message="No hay pagos registrados aún"
-        empty-sub-message="Los eventos de facturación aparecerán aquí"
+        :empty-message="t('billing.emptyPayments')"
+        :empty-sub-message="t('billing.emptyPaymentsSub')"
         variant="default"
         @row-click="openEventDetail"
       >
@@ -673,23 +685,23 @@ watch(() => currentTenant.value?.id, async () => {
         <div class="flex items-center gap-1">
           <button :disabled="currentPage <= 1" @click="goToPage(1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Primera página">
+            :aria-label="t('billing.firstPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
           </button>
           <button :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página anterior">
+            :aria-label="t('billing.previousPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
           <button :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página siguiente">
+            :aria-label="t('billing.nextPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
           </button>
           <button :disabled="currentPage >= totalPages" @click="goToPage(totalPages)"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Última página">
+            :aria-label="t('billing.lastPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
           </button>
         </div>
@@ -704,7 +716,7 @@ watch(() => currentTenant.value?.id, async () => {
       class="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      :aria-label="wizardStep === 1 ? 'Seleccionar plan' : 'Confirmar pago'"
+      :aria-label="wizardStep === 1 ? t('billing.selectPlan') : t('billing.confirmPayment')"
     >
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-overlay-backdrop/50 backdrop-blur-sm" @click="showModal = false" />
@@ -720,7 +732,7 @@ watch(() => currentTenant.value?.id, async () => {
               v-if="wizardStep === 2"
               @click="wizardStep = 1"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-text-secondary hover:bg-surface-secondary transition-colors"
-              aria-label="Volver"
+              :aria-label="t('billing.back')"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -728,17 +740,17 @@ watch(() => currentTenant.value?.id, async () => {
             </button>
             <div>
               <h2 class="text-lg font-bold text-text-primary">
-                {{ wizardStep === 1 ? 'Elige tu plan' : 'Confirma tu correo' }}
+                {{ wizardStep === 1 ? t('billing.choosePlan') : t('billing.confirmEmail') }}
               </h2>
               <p class="text-sm text-text-secondary mt-0.5">
-                {{ wizardStep === 1 ? 'Sin permanencia · Cancela cuando quieras' : 'Paso 2 de 2' }}
+                {{ wizardStep === 1 ? t('billing.cancelAnytime') : t('billing.stepTwoOfTwo') }}
               </p>
             </div>
           </div>
           <button
             @click="showModal = false"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-text-secondary hover:bg-surface-secondary transition-colors"
-            aria-label="Cerrar"
+            :aria-label="t('billing.close')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -751,7 +763,7 @@ watch(() => currentTenant.value?.id, async () => {
           <!-- ── STEP 1: Plan selection ── -->
           <template v-if="wizardStep === 1">
             <p class="text-sm text-text-secondary text-center leading-relaxed">
-              Suscripción anual · Pago único por año
+              {{ t('billing.annualSubscription') }}
             </p>
 
             <!-- Plans loading -->
@@ -782,10 +794,10 @@ watch(() => currentTenant.value?.id, async () => {
                     <span class="text-3xl font-bold text-text-primary">
                       {{ formatCOP(plan.price_annual) }}
                     </span>
-                    <span class="text-sm text-text-secondary mb-1">/ año</span>
+                    <span class="text-sm text-text-secondary mb-1">{{ t('billing.perYear') }}</span>
                   </div>
                   <p v-if="savings(plan) > 0" class="text-sm text-status-success-text font-medium mt-0.5">
-                    Ahorras {{ formatCOP(savings(plan)) }} vs. 12 meses al precio mensual
+                    {{ t('billing.youSave', { amount: formatCOP(savings(plan)) }) }}
                   </p>
                 </div>
 
@@ -794,7 +806,7 @@ watch(() => currentTenant.value?.id, async () => {
                     <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    {{ plan.scan_limit.toLocaleString('es-CO') }} escaneos/mes
+                    {{ plan.scan_limit.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }} {{ t('billing.scansPerMonth') }}
                   </li>
                   <li
                     v-for="feature in featureEntries(plan)"
@@ -825,14 +837,14 @@ watch(() => currentTenant.value?.id, async () => {
                   @click="selectPlan(plan)"
                   class="w-full min-h-[44px] px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  Elegir este plan
+                  {{ t('billing.chooseThisPlan') }}
                 </button>
               </div>
             </div>
 
             <!-- No plans -->
             <div v-else class="text-center py-8">
-              <p class="text-sm text-text-secondary">No hay planes disponibles en este momento.</p>
+              <p class="text-sm text-text-secondary">{{ t('billing.noPlansAvailable') }}</p>
             </div>
           </template>
 
@@ -845,15 +857,15 @@ watch(() => currentTenant.value?.id, async () => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p class="text-sm text-text-secondary">Ingresa tu correo para recibir el comprobante de pago.</p>
+              <p class="text-sm text-text-secondary">{{ t('billing.emailReceiptHint') }}</p>
             </div>
 
             <!-- Plan summary -->
             <div class="bg-surface-secondary rounded-xl p-4">
               <div class="flex justify-between items-center gap-4">
                 <div>
-                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · Anual</p>
-                  <p class="text-xs text-text-secondary mt-0.5">Pago único · Vigencia 12 meses</p>
+                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · {{ t('billing.annual') }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('billing.oneTimeTwelveMonths') }}</p>
                 </div>
                 <p class="text-xl font-bold text-text-primary">
                   {{ formatCOP(selectedPlan.price_annual) }}
@@ -874,7 +886,7 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Email field -->
             <div class="space-y-1.5">
               <label for="payer-email" class="block text-sm font-medium text-text-primary">
-                Correo electrónico
+                {{ t('billing.email') }}
               </label>
               <input
                 id="payer-email"
@@ -902,7 +914,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <span>{{ subscribing ? 'Procesando...' : 'Ir a pagar con Wompi' }}</span>
+              <span>{{ subscribing ? t('billing.processing') : t('billing.payWithWompi') }}</span>
             </button>
 
             <!-- Security note -->
@@ -910,7 +922,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Pago seguro procesado por Wompi
+              {{ t('billing.secureWompiPayment') }}
             </div>
           </template>
 
@@ -939,7 +951,7 @@ watch(() => currentTenant.value?.id, async () => {
         v-if="showEventDetail && selectedEvent"
         role="dialog"
         aria-modal="true"
-        aria-label="Detalle del pago"
+        :aria-label="t('billing.paymentDetail')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -981,7 +993,7 @@ watch(() => currentTenant.value?.id, async () => {
             <button
               @click="showEventDetail = false"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('billing.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -991,7 +1003,7 @@ watch(() => currentTenant.value?.id, async () => {
           </div>
           <!-- Status badge row -->
           <div class="flex items-center justify-between mt-4 pt-3 border-t border-border/60">
-            <span class="text-sm font-medium text-text-primary">Estado</span>
+            <span class="text-sm font-medium text-text-primary">{{ t('billing.status') }}</span>
             <span :class="['text-xs font-semibold px-2.5 py-1 rounded-full', eventStyle(selectedEvent.event_type).badge]">
               {{ eventStyle(selectedEvent.event_type).label }}
             </span>
@@ -1003,12 +1015,12 @@ watch(() => currentTenant.value?.id, async () => {
 
           <!-- Amount block -->
           <div class="bg-surface-secondary/50 border border-primary/10 rounded-xl p-4">
-            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Monto</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">{{ t('billing.amount') }}</p>
             <p class="text-3xl font-bold text-text-primary leading-none">
               {{ eventAmount(selectedEvent) ?? '—' }}
             </p>
-            <p v-if="selectedEvent.amount || selectedEvent.metadata?.amount" class="text-xs text-text-secondary mt-1.5">COP · Procesado por Wompi</p>
-            <p v-else-if="selectedEvent.event_type === 'gift_granted'" class="text-xs text-text-secondary mt-1.5">Sin costo · Período de cortesía</p>
+            <p v-if="selectedEvent.amount || selectedEvent.metadata?.amount" class="text-xs text-text-secondary mt-1.5">{{ t('billing.processedByWompi') }}</p>
+            <p v-else-if="selectedEvent.event_type === 'gift_granted'" class="text-xs text-text-secondary mt-1.5">{{ t('billing.noCostCourtesy') }}</p>
           </div>
 
           <!-- Detail rows -->
@@ -1017,7 +1029,7 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Gift: período otorgado -->
             <div v-if="selectedEvent.metadata?.label || selectedEvent.metadata?.months || selectedEvent.metadata?.days" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">Período otorgado</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.grantedPeriod') }}</p>
                 <p class="text-sm font-semibold text-text-primary">
                   {{ selectedEvent.metadata.label ?? (selectedEvent.metadata.months ? `${selectedEvent.metadata.months} meses` : `${selectedEvent.metadata.days} días`) }}
                 </p>
@@ -1027,7 +1039,7 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Gift: nota -->
             <div v-if="selectedEvent.metadata?.note" class="flex items-center gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">Nota</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.note') }}</p>
                 <p class="text-sm text-text-primary">{{ selectedEvent.metadata.note }}</p>
               </div>
             </div>
@@ -1035,12 +1047,12 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Transaction ID -->
             <div v-if="selectedEvent.metadata?.wompi_transaction_id" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">ID transacción</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.transactionId') }}</p>
                 <p class="text-sm font-mono text-text-primary truncate">{{ selectedEvent.metadata.wompi_transaction_id }}</p>
               </div>
               <button
                 @click="copyToClipboard(String(selectedEvent.metadata.wompi_transaction_id), 'txn')"
-                :aria-label="copiedField === 'txn' ? 'Copiado' : 'Copiar ID'"
+                :aria-label="copiedField === 'txn' ? t('billing.copied') : t('billing.copyId')"
                 class="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               >
                 <svg v-if="copiedField === 'txn'" class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1055,12 +1067,12 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Gateway reference -->
             <div v-if="selectedEvent.metadata?.gateway_reference" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">Enlace Wompi</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.wompiReference') }}</p>
                 <p class="text-sm font-mono text-text-primary truncate">{{ selectedEvent.metadata.gateway_reference }}</p>
               </div>
               <button
                 @click="copyToClipboard(String(selectedEvent.metadata.gateway_reference), 'ref')"
-                :aria-label="copiedField === 'ref' ? 'Copiado' : 'Copiar referencia'"
+                :aria-label="copiedField === 'ref' ? t('billing.copied') : t('billing.copyReference')"
                 class="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               >
                 <svg v-if="copiedField === 'ref'" class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1075,14 +1087,14 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Checkout URL -->
             <div v-if="selectedEvent.metadata?.checkout_url" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">Enlace de pago</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.paymentLink') }}</p>
                 <p class="text-xs font-mono text-text-secondary truncate">{{ selectedEvent.metadata.checkout_url }}</p>
               </div>
               <a
                 :href="String(selectedEvent.metadata.checkout_url)"
                 target="_blank"
                 rel="noopener"
-                aria-label="Abrir enlace de pago"
+                :aria-label="t('billing.openPaymentLink')"
                 class="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1101,7 +1113,7 @@ watch(() => currentTenant.value?.id, async () => {
             type="button"
             class="w-full h-11 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            Cerrar
+            {{ t('billing.close') }}
           </button>
         </div>
       </div>
