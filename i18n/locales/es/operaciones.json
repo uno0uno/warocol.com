@@ -187,6 +187,19 @@
       "enablePreselect": "Activar pre-selección",
       "saveChanges": "Guardar cambios",
       "addPercent": "Agregar porcentaje"
+      ,"enabledHelp": "Cuando está activado, los clientes ven sugerencias de propina al cobrar (POS y online). La propina es voluntaria y se asigna al mesero de la orden."
+      ,"taxableHelp": "En el checkout el cajero puede cambiar por venta. Si está activo, se aplica IVA o INC a la propina según la configuración fiscal."
+      ,"distributionWarning": "En este momento las propinas se asignan directamente al mesero de la orden. La distribución entre el equipo (cocina, auxiliares, etc.) es responsabilidad del dueño."
+      ,"suggestedHelp": "Hasta 5 opciones, cada una entre 0 y 100. Se muestran como chips en el checkout, calculados sobre el subtotal (antes de impuestos)."
+      ,"removePreset": "Quitar {value}"
+      ,"noPresetsHelp": "Sin presets — agrega al menos uno para que el checkout muestre sugerencias."
+      ,"addPlaceholder": "Ej: 12.5"
+      ,"add": "Agregar"
+      ,"preselectTitle": "Pre-seleccionar primer preset"
+      ,"preselectHelp": "Recomendado: <strong>desactivado</strong>. La Ley 1935 establece que la propina es voluntaria. Solo aplica en <strong>pedidos online</strong>; en el POS el cajero siempre elige la propina de forma explícita."
+      ,"saveHelp": "Los cambios en los porcentajes y la pre-selección se aplican al guardar."
+      ,"history": "Ver historial de propinas →"
+      ,"needPreset": "Necesitas al menos un preset."
     },
     "personalizar": {
       "tablesDefault": "Mesas (predeterminado)",

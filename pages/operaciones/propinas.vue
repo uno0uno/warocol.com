@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
@@ -63,7 +63,7 @@ const toggleTipTaxableDefault = async () => {
       { title: newState ? t('operaciones.propinas.taxedDefault') : t('operaciones.propinas.untaxedDefault') },
     )
   } catch (error: any) {
-    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingTaxable.value = false
   }
@@ -86,7 +86,7 @@ const toggleTipEnabled = async () => {
       { title: newState ? t('operaciones.propinas.enabled') : t('operaciones.propinas.disabled') },
     )
   } catch (error: any) {
-    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.configError'), { title: t('operaciones.comandas.error') })
   } finally {
     isToggling.value = false
   }
@@ -167,7 +167,7 @@ const isSavingConfig = ref(false)
 const saveConfig = async () => {
   if (!hasChanges.value || isSavingConfig.value) return
   if (draftPresets.value.length === 0) {
-    toast.error('Necesitas al menos un preset.', { title: t('operaciones.propinas.noPresets') })
+    toast.error(t('operaciones.propinas.needPreset'), { title: t('operaciones.propinas.noPresets') })
     return
   }
   isSavingConfig.value = true
@@ -180,9 +180,9 @@ const saveConfig = async () => {
       },
     })
     await invalidateContextCaches()
-    toast.success(t('operaciones.propinas.saved'), { title: 'Guardado' })
+    toast.success(t('operaciones.propinas.saved'), { title: t('operaciones.comandas.savedTitle') })
   } catch (error: any) {
-    toast.error(error?.data?.detail || t('operaciones.propinas.saveError'), { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.propinas.saveError'), { title: t('operaciones.comandas.error') })
   } finally {
     isSavingConfig.value = false
   }
@@ -208,7 +208,7 @@ const saveConfig = async () => {
             {{ businessProfile.tip_enabled ? t('operaciones.propinas.enabled') : t('operaciones.propinas.disabled') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            Cuando está activado, los clientes ven sugerencias de propina al cobrar (POS y online). La propina es voluntaria y se asigna al mesero de la orden.
+            {{ t('operaciones.propinas.enabledHelp') }}
           </p>
         </div>
         <label
@@ -238,7 +238,7 @@ const saveConfig = async () => {
               {{ businessProfile.tip_taxable_default ? t('operaciones.propinas.taxedDefault') : t('operaciones.propinas.untaxedDefault') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              En el checkout el cajero puede cambiar por venta. Si está activo, se aplica IVA o INC a la propina según la configuración fiscal.
+              {{ t('operaciones.propinas.taxableHelp') }}
             </p>
           </div>
           <label
@@ -261,7 +261,7 @@ const saveConfig = async () => {
         <div class="rounded-xl border border-state-warning-border bg-state-warning-bg px-4 py-3 flex gap-3">
           <span aria-hidden="true" class="text-state-warning-text mt-0.5">⚠</span>
           <p class="text-sm text-state-warning-text leading-snug">
-            En este momento las propinas se asignan directamente al mesero de la orden. La distribución entre el equipo (cocina, auxiliares, etc.) es responsabilidad del dueño.
+            {{ t('operaciones.propinas.distributionWarning') }}
           </p>
         </div>
 
@@ -270,7 +270,7 @@ const saveConfig = async () => {
           <div class="flex flex-col gap-1">
             <p class="text-sm font-semibold text-text-primary">{{ t('operaciones.propinas.suggestedPercents') }}</p>
             <p class="text-xs leading-snug text-text-secondary">
-              Hasta 5 opciones, cada una entre 0 y 100. Se muestran como chips en el checkout, calculados sobre el subtotal (antes de impuestos).
+              {{ t('operaciones.propinas.suggestedHelp') }}
             </p>
           </div>
 
@@ -285,14 +285,14 @@ const saveConfig = async () => {
               <button
                 type="button"
                 class="text-primary/70 hover:text-primary"
-                :aria-label="`Quitar ${formatPreset(p)}`"
+                :aria-label="t('operaciones.propinas.removePreset', { value: formatPreset(p) })"
                 @click="removePreset(i)"
               >
                 ×
               </button>
             </div>
             <p v-if="draftPresets.length === 0" class="text-xs text-text-secondary self-center">
-              Sin presets — agrega al menos uno para que el checkout muestre sugerencias.
+              {{ t('operaciones.propinas.noPresetsHelp') }}
             </p>
           </div>
 
@@ -305,7 +305,7 @@ const saveConfig = async () => {
                 v-model="newPresetInput"
                 type="text"
                 inputmode="decimal"
-                placeholder="Ej: 12.5"
+                :placeholder="t('operaciones.propinas.addPlaceholder')"
                 maxlength="6"
                 :disabled="draftPresets.length >= 5"
                 class="input-base w-full sm:w-40 px-4 py-2 min-h-[44px]"
@@ -319,7 +319,7 @@ const saveConfig = async () => {
               class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border bg-background text-text-primary text-sm font-medium hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
               @click="addPreset"
             >
-              Agregar
+              {{ t('operaciones.propinas.add') }}
             </button>
           </div>
         </div>
@@ -328,10 +328,10 @@ const saveConfig = async () => {
         <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              Pre-seleccionar primer preset
+              {{ t('operaciones.propinas.preselectTitle') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              Recomendado: <strong>desactivado</strong>. La Ley 1935 establece que la propina es voluntaria. Solo aplica en <strong>pedidos online</strong>; en el POS el cajero siempre elige la propina de forma explícita.
+              <span v-html="t('operaciones.propinas.preselectHelp')" />
             </p>
           </div>
           <label
@@ -352,7 +352,7 @@ const saveConfig = async () => {
         <!-- ── Save bar ── -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-surface border-2 border-border px-4 py-3">
           <p class="text-xs text-text-secondary">
-            Los cambios en los porcentajes y la pre-selección se aplican al guardar.
+            {{ t('operaciones.propinas.saveHelp') }}
           </p>
           <button
             type="button"
@@ -365,7 +365,7 @@ const saveConfig = async () => {
         </div>
 
         <NuxtLink to="/ventas/propinas" class="text-sm text-primary hover:underline self-start">
-          Ver historial de propinas →
+          {{ t('operaciones.propinas.history') }}
         </NuxtLink>
       </template>
     </div>

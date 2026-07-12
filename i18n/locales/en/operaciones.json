@@ -187,6 +187,19 @@
       "enablePreselect": "Enable pre-selection",
       "saveChanges": "Save changes",
       "addPercent": "Add percentage"
+      ,"enabledHelp": "When enabled, customers see tip suggestions at checkout (POS and online). Tips are voluntary and assigned to the order's waiter."
+      ,"taxableHelp": "At checkout the cashier can change this per sale. When enabled, VAT or consumption tax applies to the tip according to fiscal settings."
+      ,"distributionWarning": "Tips are currently assigned directly to the order's waiter. Distribution among the team (kitchen, assistants, etc.) is the owner's responsibility."
+      ,"suggestedHelp": "Up to 5 options, each between 0 and 100. They appear as chips at checkout, calculated on the subtotal before taxes."
+      ,"removePreset": "Remove {value}"
+      ,"noPresetsHelp": "No presets — add at least one for checkout suggestions to appear."
+      ,"addPlaceholder": "E.g. 12.5"
+      ,"add": "Add"
+      ,"preselectTitle": "Pre-select first preset"
+      ,"preselectHelp": "Recommended: <strong>off</strong>. Law 1935 establishes that tips are voluntary. Applies only to <strong>online orders</strong>; in POS the cashier always chooses the tip explicitly."
+      ,"saveHelp": "Percentage and pre-selection changes apply when saved."
+      ,"history": "View tip history →"
+      ,"needPreset": "You need at least one preset."
     },
     "personalizar": {
       "tablesDefault": "Tables (default)",
