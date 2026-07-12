@@ -152,7 +152,7 @@
               </div>
               <button
                 type="button"
-                title="Ajustar stock"
+                :title="t('abastecimiento.stock.adjustAction')"
                 class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
                 @click.stop="navigateToAdjustment(item.ingredient_id)"
               >
@@ -228,8 +228,8 @@
             <button
               v-if="movementsPath"
               type="button"
-              title="Ver movimientos"
-              aria-label="Ver movimientos"
+              :title="t('abastecimiento.stock.viewMovements')"
+              :aria-label="t('abastecimiento.stock.viewMovements')"
               class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
               @click="navigateTo(`${movementsPath}?ingredient_id=${row.ingredient_id}`)"
             >
@@ -239,8 +239,8 @@
             </button>
             <button
               type="button"
-              title="Ajustar stock"
-              aria-label="Ajustar stock"
+              :title="t('abastecimiento.stock.adjustAction')"
+              :aria-label="t('abastecimiento.stock.adjustAction')"
               class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-primary"
               @click="navigateToAdjustment(row.ingredient_id)"
             >
@@ -257,9 +257,7 @@
       class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
     >
       <p class="text-sm text-titan-700">
-        Mostrando <span class="font-medium">{{ startItem }}</span> a
-        <span class="font-medium">{{ endItem }}</span> de
-        <span class="font-medium">{{ total }}</span>
+        {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total }) }}
       </p>
       <div class="flex gap-2">
         <button
@@ -268,7 +266,7 @@
           class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
           @click="$emit('previous-page')"
         >
-          Anterior
+          {{ t('common.previous') }}
         </button>
         <button
           type="button"
@@ -276,7 +274,7 @@
           class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
           @click="$emit('next-page')"
         >
-          Siguiente
+          {{ t('common.next') }}
         </button>
       </div>
     </div>
@@ -286,7 +284,7 @@
 <script setup lang="ts">
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 interface StockStats {
   total_ingredients: number
@@ -500,7 +498,7 @@ const navigateToAdjustment = (ingredientId: string) => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,

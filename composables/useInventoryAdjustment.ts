@@ -58,6 +58,7 @@ interface FormState {
 }
 
 export function useInventoryAdjustment() {
+  const { t } = useI18n({ useScope: 'global' })
   const form = reactive<FormState>({
     ingredientId: '',
     adjustmentType: '',
@@ -169,7 +170,7 @@ export function useInventoryAdjustment() {
       errorMessage.value =
         e?.data?.detail ||
         e?.message ||
-        'No se pudo cargar el stock actual. Reintentá antes de registrar el ajuste.'
+        t('abastecimiento.stock.stockLoadError')
       throw e
     } finally {
       isLoadingStock.value = false
@@ -243,7 +244,7 @@ export function useInventoryAdjustment() {
       } else if (typeof detail === 'string') {
         errorMessage.value = detail
       } else {
-        errorMessage.value = e?.message || 'No se pudo registrar el ajuste.'
+        errorMessage.value = e?.message || t('abastecimiento.stock.registerError')
       }
       throw e
     } finally {
