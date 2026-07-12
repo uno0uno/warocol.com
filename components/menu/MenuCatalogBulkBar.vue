@@ -35,12 +35,16 @@ const props = withDefaults(
     stations: () => [],
     availabilityOptions: () => [],
     channelOptions: () => [],
-    inCatalogOptions: () => [
-      { label: t('menu.bulk.inCatalog'), value: 'true' },
-      { label: t('menu.bulk.outOfCatalog'), value: 'false' },
-    ],
+    inCatalogOptions: () => [],
   },
 )
+
+const resolvedInCatalogOptions = computed(() => props.inCatalogOptions.length > 0
+  ? props.inCatalogOptions
+  : [
+      { label: t('menu.bulk.inCatalog'), value: 'true' },
+      { label: t('menu.bulk.outOfCatalog'), value: 'false' },
+    ])
 
 const bulkCategoryId = defineModel<string>('bulkCategoryId', { default: '' })
 const bulkAvailability = defineModel<string>('bulkAvailability', { default: '' })
@@ -103,7 +107,7 @@ function onCancel() {
       v-model="bulkInCatalog"
       :placeholder="`${t('menu.bulk.catalogPlaceholder')}...`"
       :aria-label="t('menu.bulk.catalogAria')"
-      :options="inCatalogOptions"
+      :options="resolvedInCatalogOptions"
     />
 
     <UiFilterSelect
