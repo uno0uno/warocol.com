@@ -331,7 +331,10 @@ const saveConfig = async () => {
               {{ t('operaciones.propinas.preselectTitle') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              <span v-html="t('operaciones.propinas.preselectHelp')" />
+              <i18n-t keypath="operaciones.propinas.preselectHelp" tag="span">
+                <template #status><strong>{{ t('operaciones.propinas.preselectOff') }}</strong></template>
+                <template #onlineOrders><strong>{{ t('operaciones.propinas.onlineOrders') }}</strong></template>
+              </i18n-t>
             </p>
           </div>
           <label
