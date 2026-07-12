@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 const { formatDate, formatDateTime } = useFormatters()
@@ -21,7 +22,7 @@ const fetchHistory = async () => {
     history.value = response || []
   } catch (err: any) {
     console.error('Error fetching history:', err)
-    error.value = err.data?.detail || 'Error al cargar el historial'
+    error.value = err.data?.detail || t('equipo.salarios.historyLoadError')
   } finally {
     loading.value = false
   }
@@ -43,12 +44,12 @@ onMounted(() => {
 // Helper functions
 function getChangeTypeText(changeType: string): string {
   const types: Record<string, string> = {
-    'field_update': 'Actualización',
-    'created': 'Creado',
-    'deleted': 'Eliminado',
-    'status_change': 'Cambio Estado',
-    'attachment_added': 'Archivo +',
-    'attachment_removed': 'Archivo -'
+    'field_update': t('equipo.salarios.changeTypes.fieldUpdate'),
+    'created': t('equipo.salarios.changeTypes.created'),
+    'deleted': t('equipo.salarios.changeTypes.deleted'),
+    'status_change': t('equipo.salarios.changeTypes.statusChange'),
+    'attachment_added': t('equipo.salarios.changeTypes.attachmentAdded'),
+    'attachment_removed': t('equipo.salarios.changeTypes.attachmentRemoved')
   }
   return types[changeType] || changeType
 }
@@ -67,12 +68,12 @@ function getChangeTypeBadgeClass(changeType: string): string {
 
 function getFieldDisplayName(field: string): string {
   const fieldNames: Record<string, string> = {
-    'payment_amount': 'Monto',
-    'payment_date': 'Fecha de Pago',
-    'payment_method': 'Método de Pago',
-    'payment_reference': 'Referencia',
-    'notes': 'Notas',
-    'status': 'Estado'
+    'payment_amount': t('equipo.salarios.changeFields.paymentAmount'),
+    'payment_date': t('equipo.salarios.changeFields.paymentDate'),
+    'payment_method': t('equipo.salarios.changeFields.paymentMethod'),
+    'payment_reference': t('equipo.salarios.changeFields.paymentReference'),
+    'notes': t('equipo.salarios.changeFields.notes'),
+    'status': t('equipo.salarios.changeFields.status')
   }
   return fieldNames[field] || field
 }
@@ -93,7 +94,7 @@ function formatFieldValue(field: string, value: any): string {
   if (field === 'payment_amount') {
     const amount = typeof parsedValue === 'object' ? parsedValue.payment_amount : parsedValue
     if (!amount || isNaN(Number(amount))) return '-'
-    return new Intl.NumberFormat('es-CO', {
+    return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0
@@ -111,9 +112,9 @@ function formatFieldValue(field: string, value: any): string {
   if (field === 'status') {
     const status = typeof parsedValue === 'object' ? parsedValue.status : parsedValue
     const statuses: Record<string, string> = {
-      'pending': 'Pendiente',
-      'paid': 'Pagado',
-      'cancelled': 'Cancelado'
+      'pending': t('equipo.salarios.pending'),
+      'paid': t('equipo.salarios.paid'),
+      'cancelled': t('equipo.salarios.canceled')
     }
     return statuses[status] || status || '-'
   }
@@ -130,7 +131,7 @@ function formatFieldValue(field: string, value: any): string {
 
 <template>
   <div class="bg-surface border-2 border-border rounded-lg p-4 md:p-6">
-    <h3 class="text-lg font-bold text-text-primary mb-4">Historial de Cambios</h3>
+    <h3 class="text-lg font-bold text-text-primary mb-4">{{ t('equipo.salarios.historyTitle') }}</h3>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center py-8">
@@ -141,13 +142,13 @@ function formatFieldValue(field: string, value: any): string {
     <div v-else-if="error" class="text-center py-8">
       <p class="text-sm text-red-500">{{ error }}</p>
       <button @click="fetchHistory" class="mt-4 text-sm text-primary hover:underline">
-        Reintentar
+        {{ t('equipo.salarios.retry') }}
       </button>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="history.length === 0" class="text-center py-8">
-      <p class="text-sm text-text-secondary">No hay cambios registrados</p>
+      <p class="text-sm text-text-secondary">{{ t('equipo.salarios.noHistory') }}</p>
     </div>
 
     <!-- Table -->
@@ -155,13 +156,13 @@ function formatFieldValue(field: string, value: any): string {
       <table class="w-full">
         <thead>
           <tr class="border-b border-border">
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Fecha</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Tipo</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Campo</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Antes</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Después</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Usuario</th>
-            <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Detalles</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyDate') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyType') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyField') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyBefore') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyAfter') }}</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyUser') }}</th>
+            <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.historyDetails') }}</th>
           </tr>
         </thead>
         <tbody>

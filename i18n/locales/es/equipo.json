@@ -206,6 +206,20 @@
       ,"viewPaymentDetails": "Ver detalles del pago"
       ,"benefitsDescription": "Registro de pagos de beneficios legales: prima, cesantías, intereses y vacaciones."
       ,"compensation": "Compensación"
+      ,"annualRate": "12% anual"
+      ,"historyTitle": "Historial de cambios"
+      ,"noHistory": "No hay cambios registrados"
+      ,"retry": "Reintentar"
+      ,"historyDate": "Fecha"
+      ,"historyType": "Tipo"
+      ,"historyField": "Campo"
+      ,"historyBefore": "Antes"
+      ,"historyAfter": "Después"
+      ,"historyUser": "Usuario"
+      ,"historyDetails": "Detalles"
+      ,"changeTypes": {"fieldUpdate": "Actualización", "created": "Creado", "deleted": "Eliminado", "statusChange": "Cambio de estado", "attachmentAdded": "Archivo agregado", "attachmentRemoved": "Archivo eliminado"}
+      ,"changeFields": {"paymentAmount": "Monto", "paymentDate": "Fecha de pago", "paymentMethod": "Método de pago", "paymentReference": "Referencia", "notes": "Notas", "status": "Estado"}
+      ,"historyLoadError": "Error al cargar el historial"
     },
     "salaryModal": {
       "configTitle": "Configurar Salario",

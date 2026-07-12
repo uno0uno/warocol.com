@@ -178,8 +178,8 @@
       "updateError": "Error updating",
       "markPaidError": "Error marking as paid",
       "benefits": "Social benefits",
-      "prima": "Prima",
-      "cesantias": "Cesantías",
+      "prima": "Service bonus",
+      "cesantias": "Severance",
       "intCesantias": "Cesantías interest",
       "vacaciones": "Vacation pay",
       "horasExtras": "Overtime",
@@ -206,6 +206,20 @@
       ,"viewPaymentDetails": "View payment details"
       ,"benefitsDescription": "Record payments for legal benefits: bonus, severance, interest, and vacation pay."
       ,"compensation": "Compensation"
+      ,"annualRate": "12% annually"
+      ,"historyTitle": "Change history"
+      ,"noHistory": "No changes recorded"
+      ,"retry": "Retry"
+      ,"historyDate": "Date"
+      ,"historyType": "Type"
+      ,"historyField": "Field"
+      ,"historyBefore": "Before"
+      ,"historyAfter": "After"
+      ,"historyUser": "User"
+      ,"historyDetails": "Details"
+      ,"changeTypes": {"fieldUpdate": "Updated", "created": "Created", "deleted": "Deleted", "statusChange": "Status change", "attachmentAdded": "File added", "attachmentRemoved": "File removed"}
+      ,"changeFields": {"paymentAmount": "Amount", "paymentDate": "Payment date", "paymentMethod": "Payment method", "paymentReference": "Reference", "notes": "Notes", "status": "Status"}
+      ,"historyLoadError": "Error loading history"
     },
     "salaryModal": {
       "configTitle": "Configure salary",
