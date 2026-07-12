@@ -793,7 +793,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
-              <span class="text-xs font-medium text-text-primary">{{ { primaS1: t('equipo.nomina.primaS1'), primaS2: t('equipo.nomina.primaS2'), cesantias: t('equipo.nomina.cesantias'), intCesantias: 'Int. Ces.', vacaciones: t('equipo.nomina.vacaciones'), dotacion: t('equipo.nomina.dotacion'), horasExtras: t('equipo.nomina.hExtras') }[col] }}</span>
+              <span class="text-xs font-medium text-text-primary">{{ { primaS1: t('equipo.nomina.primaS1'), primaS2: t('equipo.nomina.primaS2'), cesantias: t('equipo.nomina.cesantias'), intCesantias: t('equipo.nomina.intCesantiasShort'), vacaciones: t('equipo.nomina.vacaciones'), dotacion: t('equipo.nomina.dotacion'), horasExtras: t('equipo.nomina.hExtras') }[col] }}</span>
             </label>
           </template>
 
