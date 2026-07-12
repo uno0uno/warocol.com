@@ -52,6 +52,7 @@
       "compras": "Compras",
       "consumo": "Consumo",
       "ajuste": "Ajuste",
+      "transferencia": "Transferencia",
       "ajustes": "Ajustes",
       "devoluciones": "Devoluciones",
       "perdidas": "Pérdidas",
@@ -180,7 +181,10 @@
       "emptySub": "Los movimientos aparecerán cuando se registren compras o ventas",
       "filterTypeAria": "Filtrar por tipo de movimiento",
       "filterIngredientAria": "Filtrar por ingrediente",
-      "invSearchPlaceholder": "Buscar por ingrediente o referencia..."
+      "invSearchPlaceholder": "Buscar por ingrediente o referencia...",
+      "typeFilter": "Tipo",
+      "system": "Sistema",
+      "noReference": "Sin referencia"
     },
     "ajustes": {
       "empty": "No hay ajustes registrados",

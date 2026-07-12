@@ -52,6 +52,7 @@
       "compras": "Purchases",
       "consumo": "Consumption",
       "ajuste": "Adjustment",
+      "transferencia": "Transfer",
       "ajustes": "Adjustments",
       "devoluciones": "Returns",
       "perdidas": "Losses",
@@ -180,7 +181,10 @@
       "emptySub": "Movements will appear when purchases or sales are recorded",
       "filterTypeAria": "Filter by movement type",
       "filterIngredientAria": "Filter by ingredient",
-      "invSearchPlaceholder": "Search by ingredient or reference..."
+      "invSearchPlaceholder": "Search by ingredient or reference...",
+      "typeFilter": "Type",
+      "system": "System",
+      "noReference": "No reference"
     },
     "ajustes": {
       "empty": "No adjustments recorded",

@@ -24,7 +24,7 @@
             :class="[filterSelectClass, 'md:hidden']"
             :aria-label="t('abastecimiento.movimientos.filterTypeAria')"
           >
-            <option value="">{{ t('abastecimiento.common.tipo') }}</option>
+            <option value="">{{ t('abastecimiento.movimientos.typeFilter') }}</option>
             <option value="purchase">{{ t('abastecimiento.common.compras') }}</option>
             <option value="consumption">{{ t('abastecimiento.common.consumo') }}</option>
             <option value="adjustment">{{ t('abastecimiento.common.ajustes') }}</option>
@@ -47,7 +47,7 @@
       >
         <template #header-movement_type>
           <UiTableHeaderFilter
-            title="Tipo"
+            :title="t('abastecimiento.movimientos.typeFilter')"
             column-key="movement_type"
             sortable
             :sort-field="sortField"
@@ -55,7 +55,7 @@
             filter-type="select"
             :model-value="movementTypeFilter"
             :options="movementTypeOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             align="center"
             @sort="handleSort"
             @update:model-value="movementTypeFilter = typeof $event === 'string' ? $event : ''"
@@ -133,11 +133,11 @@
 
         <template #cell-reference_number="{ value }">
           <span v-if="value" class="text-sm text-primary font-medium">{{ value }}</span>
-          <span v-else class="text-sm text-text-secondary">-</span>
+          <span v-else class="text-sm text-text-secondary">{{ t('abastecimiento.movimientos.noReference') }}</span>
         </template>
 
         <template #cell-created_by_name="{ value }">
-          <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
+          <span class="text-sm text-text-primary">{{ value || t('abastecimiento.movimientos.system') }}</span>
         </template>
       </UiResponsiveDataView>
     </div>
@@ -149,7 +149,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 useHead({ title: () => t('abastecimiento.head.movimientos') })
@@ -162,13 +162,13 @@ const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange 
 const ingredientFilter = ref('')
 const movementTypeFilter = ref('')
 
-const movementTypeOptions = [
+const movementTypeOptions = computed(() => [
   { value: 'purchase', label: t('abastecimiento.common.compras') },
   { value: 'consumption', label: t('abastecimiento.common.consumo') },
   { value: 'adjustment', label: t('abastecimiento.common.ajustes') },
   { value: 'return', label: t('abastecimiento.common.devoluciones') },
   { value: 'loss', label: t('abastecimiento.common.perdidas') },
-]
+])
 
 const hasActiveFilters = computed(
   () =>
@@ -260,7 +260,7 @@ const clearFilters = () => {
   movementTypeFilter.value = ''
 }
 
-const movementsTableColumns = [
+const movementsTableColumns = computed(() => [
   { key: 'created_at', title: t('abastecimiento.common.fecha'), sortable: true, format: 'date', align: 'left' },
   { key: 'ingredient_name', title: WAREHOUSE_COPY.warehouseItemColumn, sortable: true, format: 'text', align: 'left' },
   { key: 'unit', title: t('abastecimiento.common.unidad'), sortable: false, format: 'text', align: 'left' },
@@ -270,7 +270,7 @@ const movementsTableColumns = [
   { key: 'new_stock', title: t('abastecimiento.common.stockNuevo'), sortable: true, format: 'number', align: 'right' },
   { key: 'reference_number', title: t('abastecimiento.common.referencia'), sortable: true, format: 'text', align: 'left' },
   { key: 'created_by_name', title: t('abastecimiento.common.usuario'), sortable: true, format: 'text', align: 'left' },
-]
+])
 
 const getMovementTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
@@ -278,7 +278,7 @@ const getMovementTypeLabel = (type: string) => {
     consumption: t('abastecimiento.common.consumo'),
     adjustment: t('abastecimiento.common.ajuste'),
     loss: t('abastecimiento.common.perdidas'),
-    transfer: 'Transferencia',
+    transfer: t('abastecimiento.common.transferencia'),
     return: t('abastecimiento.common.devoluciones'),
   }
   return labels[type] || type
@@ -297,7 +297,7 @@ const getMovementTypeVariant = (type: string) => {
 }
 
 const formatNumber = (value: number) => {
-  return formatDomainQuantity(value, 6)
+  return formatDomainQuantity(value, 6, locale.value === 'en' ? 'en-US' : 'es-CO')
 }
 
 const { formatDate } = useFormatters()
