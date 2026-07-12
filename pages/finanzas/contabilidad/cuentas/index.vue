@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { enUS, es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -12,7 +11,6 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
 const { formatCalendarDate, formatCurrency } = useFormatters()
 const formatCOP = (v: number) => formatCurrency(v ?? 0)
-const datePickerLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const showAll = ref(false)
@@ -261,7 +259,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           range
           :preset-dates="presetDates"
           :enable-time-picker="false"
-          :locale="datePickerLocale"
+          :locale="locale"
           :placeholder="t('finanzas.common.dateRange')"
           auto-apply
           :teleport="true"

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { enUS, es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -13,7 +12,6 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
 const { formatCalendarDate, formatCurrency } = useFormatters()
 const formatCOP = (v: number) => formatCurrency(v ?? 0)
-const datePickerLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // Truncate a long description to keep table rows compact.
 // Click on the row opens the slide-over with the full text.
@@ -531,7 +529,7 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <!-- Date range picker (same pattern as ordenes) -->
         <VueDatePicker v-model="dateRangeDates" range :preset-dates="presetDates" :enable-time-picker="false"
-          :locale="datePickerLocale" :placeholder="t('finanzas.common.dateRange')" auto-apply :teleport="true" :timezone="timezone"
+          :locale="locale" :placeholder="t('finanzas.common.dateRange')" auto-apply :teleport="true" :timezone="timezone"
           :max-date="maxDate" :format="formatDateRange" input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell" @update:model-value="page = 1" />
 
