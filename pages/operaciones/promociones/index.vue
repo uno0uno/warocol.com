@@ -17,7 +17,7 @@
             {{ opsProfile.allow_promo_line_opt_out ? t('operaciones.promociones.itemOptOutOn') : t('operaciones.promociones.itemOptOutOff') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            Permitir excluir promoción por ítem en checkout — el cajero puede desactivar la promoción en una línea sin quitar el producto.
+            {{ t('operaciones.promociones.optOutHelp') }}
           </p>
         </div>
         <label
@@ -52,20 +52,20 @@
             v-model="statusFilter"
             :class="filterSelectClassFor(statusFilter)"
             class="md:hidden"
-            aria-label="Filtrar por estado"
+            :aria-label="t('operaciones.promociones.filterStatus')"
           >
-            <option value="">Estado</option>
-            <option value="active">Activas</option>
-            <option value="inactive">Inactivas</option>
+            <option value="">{{ t('operaciones.promociones.status') }}</option>
+            <option value="active">{{ t('operaciones.promociones.active') }}</option>
+            <option value="inactive">{{ t('operaciones.promociones.inactive') }}</option>
           </select>
 
           <select
             v-model="promoTypeFilter"
             :class="filterSelectClassFor(promoTypeFilter)"
             class="md:hidden"
-            aria-label="Filtrar por tipo"
+            :aria-label="t('operaciones.promociones.filterType')"
           >
-            <option value="">Tipo</option>
+            <option value="">{{ t('operaciones.promociones.filterType') }}</option>
             <option value="percent_off">% descuento</option>
             <option value="fixed_off">Descuento fijo</option>
             <option value="bogo">2×1 / BOGO</option>
@@ -77,7 +77,7 @@
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap min-h-[44px]"
             @click="openPanel(null)"
           >
-            + Nueva promoción
+            {{ t('operaciones.promociones.newPromotion') }}
           </button>
         </template>
       </UiAdvancedFiltersBar>
@@ -94,10 +94,10 @@
           <template #header-promo_type>
             <UiTableHeaderFilter
               v-model="promoTypeFilter"
-              title="Tipo"
+              :title="t('operaciones.promociones.filterType')"
               filter-type="select"
               :options="promoTypeHeaderOptions"
-              all-label="Todos"
+              :all-label="t('operaciones.promociones.all')"
               align="center"
             />
           </template>
@@ -105,10 +105,10 @@
           <template #header-status>
             <UiTableHeaderFilter
               v-model="statusFilter"
-              title="Estado"
+              :title="t('operaciones.promociones.status')"
               filter-type="select"
               :options="statusHeaderOptions"
-              all-label="Todos"
+              :all-label="t('operaciones.promociones.all')"
               align="center"
             />
           </template>
@@ -123,14 +123,14 @@
                 <div class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                   <UiStatusBadge
-                    :value="formatPromoTypeLabel(item.promo_type)"
+                    :value="formatPromoTypeLabel(item.promo_type, locale)"
                     format="text"
                     variant="secondary"
                     size="sm"
                   />
                   <UiStatusBadge
                     v-if="(item.priority ?? 0) > 0"
-                    :value="`Prioridad ${item.priority}`"
+                    :value="t('operaciones.promociones.priorityLabel', { value: item.priority })"
                     format="text"
                     variant="warning"
                     size="sm"
@@ -144,7 +144,7 @@
                   v-if="isScopeClickable(item)"
                   type="button"
                   class="text-xs text-left text-primary hover:underline truncate max-w-full min-h-[44px]"
-                  :aria-label="`Ver alcance de ${item.name}`"
+                  :aria-label="t('operaciones.promociones.viewScopeAria', { name: item.name })"
                   @click.stop="openScopePopover(item)"
                 >
                   {{ rowScope(item) }}
@@ -161,8 +161,8 @@
               </div>
               <button
                 type="button"
-                :aria-label="`Editar ${item.name}`"
-                title="Editar"
+                :aria-label="t('operaciones.promociones.editAria', { name: item.name })"
+                :title="t('operaciones.promociones.editAria', { name: item.name })"
                 class="group flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary focus:outline-none transition-colors"
                 @click.stop="openEdit(item)"
               >
@@ -171,8 +171,8 @@
               </button>
               <button
                 type="button"
-                :aria-label="`Eliminar ${item.name}`"
-                title="Eliminar"
+                :aria-label="t('operaciones.promociones.deleteAria', { name: item.name })"
+                :title="t('operaciones.promociones.deleteAria', { name: item.name })"
                 class="group flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="deletingPromotionId === item.id"
                 @click.stop="openDeletePromotion(item)"
@@ -193,7 +193,7 @@
           <template #cell-promo_type="{ item }">
             <UiStatusBadge
               v-if="item"
-              :value="formatPromoTypeLabel(item.promo_type)"
+              :value="formatPromoTypeLabel(item.promo_type, locale)"
               format="text"
               variant="secondary"
               size="sm"
@@ -213,7 +213,7 @@
               v-if="item && isScopeClickable(item)"
               type="button"
               class="text-sm text-left text-primary hover:underline min-h-[44px]"
-              :aria-label="`Ver alcance de ${item.name}`"
+              :aria-label="t('operaciones.promociones.viewScopeAria', { name: item.name })"
               @click.stop="openScopePopover(item)"
             >
               {{ rowScope(item) }}
@@ -246,8 +246,8 @@
             <div v-if="item" class="flex items-center justify-end gap-0.5">
               <button
                 type="button"
-                :aria-label="`Editar ${item.name}`"
-                title="Editar"
+                :aria-label="t('operaciones.promociones.editAria', { name: item.name })"
+                :title="t('operaciones.promociones.editAria', { name: item.name })"
                 class="group min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary focus:outline-none transition-colors"
                 @click.stop="openEdit(item)"
               >
@@ -256,8 +256,8 @@
               </button>
               <button
                 type="button"
-                :aria-label="`Eliminar ${item.name}`"
-                title="Eliminar"
+                :aria-label="t('operaciones.promociones.deleteAria', { name: item.name })"
+                :title="t('operaciones.promociones.deleteAria', { name: item.name })"
                 class="group min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="deletingPromotionId === item.id"
                 @click.stop="openDeletePromotion(item)"
@@ -292,7 +292,7 @@
       :title="deleteModalTitle"
       :message="deleteModalMessage"
       :confirm-label="t('operaciones.promociones.yesDelete')"
-      reason-placeholder="Ej: promoción vencida, regla duplicada, campaña finalizada"
+      :reason-placeholder="t('operaciones.promociones.deleteReasonPlaceholder')"
       :loading="!!deletingPromotionId"
       :error="deleteError"
       @confirm="confirmDeletePromotion"
@@ -302,7 +302,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { PencilIcon as PencilOutlineIcon, TrashIcon as TrashOutlineIcon } from '@heroicons/vue/24/outline'
@@ -316,7 +316,7 @@ import {
 } from '~/utils/promotionPreview'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
-useHead({ title: 'Promociones' })
+useHead({ title: () => t('operaciones.nav.promociones') })
 
 interface PromotionRow {
   id: string
@@ -397,7 +397,7 @@ const deleteModalOpen = computed({
 })
 const deleteModalTitle = computed(() =>
   deletePromotionTarget.value
-    ? `¿Eliminar ${deletePromotionTarget.value.name}?`
+    ? t('operaciones.promociones.deleteQuestion', { name: deletePromotionTarget.value.name })
     : t('operaciones.promociones.deleteConfirmTitle'),
 )
 const deleteModalMessage = computed(() =>
@@ -409,14 +409,14 @@ const deleteModalMessage = computed(() =>
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const statusFilter = ref<'' | 'active' | 'inactive'>('')
 const promoTypeFilter = ref<'' | 'percent_off' | 'fixed_off' | 'bogo'>('')
-const statusHeaderOptions = [
-  { value: 'active', label: 'Activas' },
-  { value: 'inactive', label: 'Inactivas' },
-]
+const statusHeaderOptions = computed(() => [
+  { value: 'active', label: t('operaciones.promociones.active') },
+  { value: 'inactive', label: t('operaciones.promociones.inactive') },
+])
 const promoTypeHeaderOptions = [
   { value: 'percent_off', label: t('operaciones.promociones.percentDiscount') },
   { value: 'fixed_off', label: t('operaciones.promociones.fixedDiscount') },
-  { value: 'bogo', label: '2x1 / BOGO' },
+  { value: 'bogo', label: '2×1 / BOGO' },
 ]
 
 const hasActiveFilters = computed(
@@ -436,13 +436,13 @@ function clearFilters() {
 }
 
 const columns: Column[] = [
-  { key: 'name', title: 'Nombre', sortable: false },
-  { key: 'promo_type', title: 'Tipo', sortable: false },
-  { key: 'value', title: 'Valor', sortable: false },
-  { key: 'schedule', title: 'Horario', sortable: false },
-  { key: 'scope', title: 'Alcance', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false },
-  { key: 'priority', title: 'Prioridad', sortable: false },
+  { key: 'name', title: t('operaciones.promociones.name'), sortable: false },
+  { key: 'promo_type', title: t('operaciones.promociones.filterType'), sortable: false },
+  { key: 'value', title: t('operaciones.promociones.value'), sortable: false },
+  { key: 'schedule', title: t('operaciones.promociones.schedule'), sortable: false },
+  { key: 'scope', title: t('operaciones.promociones.scope'), sortable: false },
+  { key: 'status', title: t('operaciones.promociones.status'), sortable: false },
+  { key: 'priority', title: t('operaciones.promociones.priority'), sortable: false },
   { key: 'actions', title: '', align: 'right' as const },
 ]
 
@@ -492,9 +492,9 @@ function scopeLabelsFor(item: PromotionRow) {
   }
 }
 
-const rowValue = (item: PromotionRow) => formatPromoValue(item.promo_type, item.value_json)
+const rowValue = (item: PromotionRow) => formatPromoValue(item.promo_type, item.value_json, locale.value)
 
-const rowSchedule = (item: PromotionRow) => formatScheduleWindows(item.schedules ?? [])
+const rowSchedule = (item: PromotionRow) => formatScheduleWindows(item.schedules ?? [], locale.value)
 
 const rowScope = (item: PromotionRow) => {
   const { categoryNames, productNames, categoryCount, productCount } = scopeLabelsFor(item)
@@ -502,7 +502,7 @@ const rowScope = (item: PromotionRow) => {
     categoryCount,
     productCount,
     countOnlyThreshold: 5,
-  })
+  }, locale.value)
 }
 
 function isScopeClickable(item: PromotionRow): boolean {
@@ -651,10 +651,10 @@ watch(showPanel, (open) => {
 watch(() => route.query, openFromQuery)
 
 const statusBadgeLabel = (item: PromotionRow) => {
-  if (!item.is_active) return 'Desactivada'
-  if (item.is_currently_active === true) return 'Activa ahora'
+  if (!item.is_active) return t('operaciones.promociones.statusInactive')
+  if (item.is_currently_active === true) return t('operaciones.promociones.statusActiveNow')
   if (item.is_currently_active === false) return t('operaciones.promociones.outsideHours')
-  return 'Activa'
+  return t('operaciones.promociones.statusActive')
 }
 
 type StatusVariant = 'success' | 'warning' | 'secondary' | 'destructive'

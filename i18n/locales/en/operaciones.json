@@ -294,6 +294,28 @@
       "deleted": "Promotion deleted",
       "deleteError": "Could not delete promotion",
       "outsideHours": "Outside hours"
+      ,"optOutHelp": "Allow cashiers to disable a promotion on one checkout line without removing the product."
+      ,"filterStatus": "Filter by status"
+      ,"filterType": "Filter by type"
+      ,"all": "All"
+      ,"active": "Active"
+      ,"inactive": "Inactive"
+      ,"newPromotion": "+ New promotion"
+      ,"name": "Name"
+      ,"value": "Value"
+      ,"schedule": "Schedule"
+      ,"scope": "Scope"
+      ,"status": "Status"
+      ,"priority": "Priority"
+      ,"priorityLabel": "Priority {value}"
+      ,"viewScopeAria": "View scope of {name}"
+      ,"editAria": "Edit {name}"
+      ,"deleteAria": "Delete {name}"
+      ,"deleteReasonPlaceholder": "e.g. expired promotion, duplicate rule, campaign ended"
+      ,"statusActiveNow": "Active now"
+      ,"statusActive": "Active"
+      ,"statusInactive": "Inactive"
+      ,"deleteQuestion": "Delete {name}?"
     },
     "mesaAssign": {
       "unassigned": "Unassigned"

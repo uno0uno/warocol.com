@@ -17,10 +17,12 @@ const DAY_BITS = [
   { bit: 64, short: 'dom' },
 ] as const
 
-export function formatDaysBitmask(mask: number): string {
-  const days = DAY_BITS.filter((d) => mask & d.bit).map((d) => d.short)
-  if (days.length === 0) return 'sin días'
-  if (days.length === 7) return 'todos los días'
+export function formatDaysBitmask(mask: number, locale = 'es'): string {
+  const days = DAY_BITS.filter((d) => mask & d.bit).map((d) => locale === 'en'
+    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.log2(d.bit)]
+    : d.short)
+  if (days.length === 0) return locale === 'en' ? 'no days' : 'sin días'
+  if (days.length === 7) return locale === 'en' ? 'every day' : 'todos los días'
   return days.join('–')
 }
 
@@ -29,8 +31,8 @@ function formatTimeHHMM(t: string): string {
   return t.slice(0, 5)
 }
 
-export function formatScheduleWindow(sched: PromotionScheduleRow): string {
-  const days = formatDaysBitmask(sched.days_of_week)
+export function formatScheduleWindow(sched: PromotionScheduleRow, locale = 'es'): string {
+  const days = formatDaysBitmask(sched.days_of_week, locale)
   const start = formatTimeHHMM(sched.start_time)
   const end = formatTimeHHMM(sched.end_time)
   if (!start && !end) return days
@@ -38,17 +40,17 @@ export function formatScheduleWindow(sched: PromotionScheduleRow): string {
 }
 
 /** Join all schedule rows for list/preview copy (warocol.com#983). */
-export function formatScheduleWindows(schedules: PromotionScheduleRow[]): string {
-  if (schedules.length === 0) return 'sin horario'
-  return schedules.map(formatScheduleWindow).join('; ')
+export function formatScheduleWindows(schedules: PromotionScheduleRow[], locale = 'es'): string {
+  if (schedules.length === 0) return locale === 'en' ? 'no schedule' : 'sin horario'
+  return schedules.map((schedule) => formatScheduleWindow(schedule, locale)).join('; ')
 }
 
-export function formatPromoTypeLabel(promoType: string): string {
+export function formatPromoTypeLabel(promoType: string, locale = 'es'): string {
   switch (promoType) {
     case 'percent_off':
-      return '% descuento'
+      return locale === 'en' ? '% discount' : '% descuento'
     case 'fixed_off':
-      return 'Descuento fijo'
+      return locale === 'en' ? 'Fixed discount' : 'Descuento fijo'
     case 'bogo':
       return '2×1 / BOGO'
     default:
@@ -60,6 +62,7 @@ export function formatPromoTypeLabel(promoType: string): string {
 export function formatPromoValue(
   promoType: string,
   valueJson?: Record<string, unknown> | null,
+  locale = 'es',
 ): string {
   const v = valueJson ?? {}
   switch (promoType) {
@@ -70,7 +73,7 @@ export function formatPromoValue(
     case 'fixed_off': {
       const amount = Number(v.amount_cop)
       if (!Number.isFinite(amount)) return '—'
-      return new Intl.NumberFormat('es-CO', {
+      return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'es-CO', {
         style: 'currency',
         currency: 'COP',
         maximumFractionDigits: 0,
@@ -81,7 +84,9 @@ export function formatPromoValue(
       const get = Number(v.get_qty)
       if (!Number.isFinite(buy) || !Number.isFinite(get)) return '—'
       if (buy < 1 || get < 1) return '—'
-      return `Compra ${buy} · ${get} gratis (mín. ${buy + get})`
+      return locale === 'en'
+        ? `Buy ${buy} · ${get} free (min. ${buy + get})`
+        : `Compra ${buy} · ${get} gratis (mín. ${buy + get})`
     }
     default:
       return '—'
@@ -95,14 +100,14 @@ export type ScopeLabelCounts = {
   countOnlyThreshold?: number
 }
 
-export function formatScopeTypeLabel(scopeType: string): string {
+export function formatScopeTypeLabel(scopeType: string, locale = 'es'): string {
   switch (scopeType) {
     case 'categories':
-      return 'Categorías'
+      return locale === 'en' ? 'Categories' : 'Categorías'
     case 'products':
-      return 'Productos'
+      return locale === 'en' ? 'Products' : 'Productos'
     case 'all_products':
-      return 'Todos los productos'
+      return locale === 'en' ? 'All products' : 'Todos los productos'
     default:
       return scopeType
   }
@@ -113,34 +118,35 @@ export function formatScopeLabel(
   categoryNames: string[],
   productNames: string[],
   counts?: ScopeLabelCounts,
+  locale = 'es',
 ): string {
   const threshold = counts?.countOnlyThreshold ?? 5
-  if (scopeType === 'all_products') return 'Todos los productos'
+  if (scopeType === 'all_products') return locale === 'en' ? 'All products' : 'Todos los productos'
   if (scopeType === 'categories') {
     const n = counts?.categoryCount ?? categoryNames.length
-    if (n > threshold) return `${n} categorías`
+    if (n > threshold) return locale === 'en' ? `${n} categories` : `${n} categorías`
     if (categoryNames.length === 1) return categoryNames[0]
     if (categoryNames.length > 1) {
       const head = categoryNames.slice(0, 2).join(', ')
       const extra = categoryNames.length - 2
       return extra > 0 ? `${head} +${extra}` : head
     }
-    if (n === 1) return '1 categoría'
-    if (n > 1) return `${n} categorías`
-    return 'Categorías (sin seleccionar)'
+    if (n === 1) return locale === 'en' ? '1 category' : '1 categoría'
+    if (n > 1) return locale === 'en' ? `${n} categories` : `${n} categorías`
+    return locale === 'en' ? 'Categories (none selected)' : 'Categorías (sin seleccionar)'
   }
   if (scopeType === 'products') {
     const n = counts?.productCount ?? productNames.length
-    if (n > threshold) return `${n} productos`
+    if (n > threshold) return locale === 'en' ? `${n} products` : `${n} productos`
     if (productNames.length === 1) return productNames[0]
     if (productNames.length > 1) {
       const head = productNames.slice(0, 2).join(', ')
       const extra = productNames.length - 2
       return extra > 0 ? `${head} +${extra}` : head
     }
-    if (n === 1) return '1 producto'
-    if (n > 1) return `${n} productos`
-    return 'Productos (sin seleccionar)'
+    if (n === 1) return locale === 'en' ? '1 product' : '1 producto'
+    if (n > 1) return locale === 'en' ? `${n} products` : `${n} productos`
+    return locale === 'en' ? 'Products (none selected)' : 'Productos (sin seleccionar)'
   }
   return scopeType
 }

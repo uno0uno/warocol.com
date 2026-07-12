@@ -294,6 +294,28 @@
       "deleted": "Promoción eliminada",
       "deleteError": "No se pudo eliminar la promoción",
       "outsideHours": "Fuera de horario"
+      ,"optOutHelp": "Permitir excluir promoción por ítem en checkout — el cajero puede desactivar la promoción en una línea sin quitar el producto."
+      ,"filterStatus": "Filtrar por estado"
+      ,"filterType": "Filtrar por tipo"
+      ,"all": "Todos"
+      ,"active": "Activas"
+      ,"inactive": "Inactivas"
+      ,"newPromotion": "+ Nueva promoción"
+      ,"name": "Nombre"
+      ,"value": "Valor"
+      ,"schedule": "Horario"
+      ,"scope": "Alcance"
+      ,"status": "Estado"
+      ,"priority": "Prioridad"
+      ,"priorityLabel": "Prioridad {value}"
+      ,"viewScopeAria": "Ver alcance de {name}"
+      ,"editAria": "Editar {name}"
+      ,"deleteAria": "Eliminar {name}"
+      ,"deleteReasonPlaceholder": "Ej: promoción vencida, regla duplicada, campaña finalizada"
+      ,"statusActiveNow": "Activa ahora"
+      ,"statusActive": "Activa"
+      ,"statusInactive": "Desactivada"
+      ,"deleteQuestion": "¿Eliminar {name}?"
     },
     "mesaAssign": {
       "unassigned": "Sin asignar"
