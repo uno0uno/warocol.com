@@ -585,6 +585,8 @@
       "createSubaccount": "Crear subcuenta",
       "createSubaccountError": "Error al crear la subcuenta",
       "creating": "Creando…",
+      "subaccountName": "Nombre de la subcuenta",
+      "subaccountNamePlaceholder": "Ej: Nequi, Daviplata, caja menor…",
       "associatePaymentMethod": "Asociar a método de pago",
       "noAssociation": "Sin asociar",
       "paymentMethodAssociationHelp": "Las ventas con ese método debitarán esta subcuenta",

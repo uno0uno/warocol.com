@@ -585,6 +585,8 @@
       "createSubaccount": "Create subaccount",
       "createSubaccountError": "Error creating subaccount",
       "creating": "Creating…",
+      "subaccountName": "Subaccount name",
+      "subaccountNamePlaceholder": "e.g. Nequi, Daviplata, petty cash…",
       "associatePaymentMethod": "Associate payment method",
       "noAssociation": "No association",
       "paymentMethodAssociationHelp": "Sales with that method will debit this subaccount",

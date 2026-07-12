@@ -400,7 +400,7 @@ const onAdjustSuccess = async () => {
   toast.success(t('finanzas.contabilidad.balanceUpdated'), { title: t('finanzas.contabilidad.entryCreated') })
 }
 
-// ── Issue #531 — Detalle del asiento (slide-over) ─────────────────────────
+// ── Issue #531 — Journal entry detail slide-over ──────────────────────────
 const showEntryDetailPanel = ref(false)
 const selectedEntryId = ref<string | null>(null)
 const openEntryDetail = (entry: { id: string }) => {
@@ -771,9 +771,9 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Nombre -->
           <div class="flex flex-col gap-1.5">
             <label for="create-name" class="text-sm font-medium text-text-primary">
-              {{ t('finanzas.contabilidad.name') }} <span class="text-destructive" aria-hidden="true">*</span>
+              {{ t('finanzas.contabilidad.subaccountName') }} <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <input id="create-name" v-model="createName" type="text" :placeholder="t('finanzas.metodosPago.methodPlaceholder')"
+            <input id="create-name" v-model="createName" type="text" :placeholder="t('finanzas.contabilidad.subaccountNamePlaceholder')"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
               @keydown.enter="saveSubAccount" @keydown.escape="closeCreatePanel" />
           </div>
@@ -795,7 +795,7 @@ const openEntryDetail = (entry: { id: string }) => {
             <p class="text-xs text-text-secondary">{{ t('finanzas.contabilidad.paymentMethodAssociationHelp') }}</p>
           </div>
 
-          <!-- Tipo de cuenta -->
+          <!-- Account type -->
           <div class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-text-primary">{{ t('finanzas.contabilidad.type') }}</span>
             <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('finanzas.contabilidad.accountType')">
@@ -872,7 +872,7 @@ const openEntryDetail = (entry: { id: string }) => {
   <FinanzasContabilidadAjustarSaldoPanel v-model="showAdjustPanel" :account="account" :book-balance="closingBalance"
     :all-accounts="allAccountsForPanel" @success="onAdjustSuccess" />
 
-  <!-- Issue #531 — Detalle del asiento (slide-over) -->
+  <!-- Issue #531 — Journal entry detail slide-over -->
   <FinanzasContabilidadAsientoDetailPanel v-model="showEntryDetailPanel" :entry-id="selectedEntryId"
     :all-accounts="allAccountsForPanel" />
 </template>
