@@ -48,54 +48,30 @@ const emit = defineEmits<{
 }>()
 
 const close = () => emit('update:modelValue', false)
-const { formatCalendarDate, formatDateTime } = useFormatters()
-
-const formatCOP = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(v ?? 0)
+const { t } = useI18n({ useScope: 'global' })
+const { formatCalendarDate, formatDateTime, formatCurrency } = useFormatters()
+const formatCOP = (v: number) => formatCurrency(v ?? 0)
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
   return formatCalendarDate(iso)
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  ventas: 'Ventas',
-  gastos: 'Gastos',
-  nomina: 'Nómina',
-  nomina_provision: 'Nómina — provisión',
-  nomina_ss: 'Nómina — seguridad social',
-  nomina_prima: 'Nómina — prima',
-  nomina_cesantias: 'Nómina — cesantías',
-  nomina_int_cesantias: 'Nómina — int. cesantías',
-  nomina_vacaciones: 'Nómina — vacaciones',
-  nomina_dotacion: 'Nómina — dotación',
-  nomina_pila: 'Nómina — PILA',
-  nomina_horas_extras: 'Nómina — horas extras',
-  nomina_liquidacion: 'Nómina — liquidación',
-  inventario: 'Inventario',
-  cartera: 'Cartera',
-  arqueo: 'Arqueo',
-  manual: 'Manual',
-  manual_balance_adjustment: 'Ajuste de saldo',
-  system: 'Sistema',
-  orden: 'Orden',
-  orden_cogs: 'Orden (CMV)',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Borrador',
-  posted: 'Publicado',
-  voided: 'Anulado',
-}
-
 const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'secondary'> = {
   draft: 'warning',
   posted: 'success',
   voided: 'secondary',
+}
+const sourceLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const key = value.replace(/-/g, '_')
+  const label = t(`finanzas.contabilidad.sources.${key}`)
+  return label === `finanzas.contabilidad.sources.${key}` ? value : label
+}
+const statusLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const label = t(`finanzas.contabilidad.status.${value}`)
+  return label === `finanzas.contabilidad.status.${value}` ? value : label
 }
 
 // ── Fetch entry detail ──────────────────────────────────────────────────────
@@ -132,7 +108,7 @@ const handlePost = async () => {
     await fetchEntry(entry.value.id)
     emit('updated')
   } catch (err: any) {
-    postError.value = err?.data?.detail || err?.data?.message || 'Error al publicar el asiento'
+    postError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.postEntryError')
   } finally {
     posting.value = false
   }
@@ -148,7 +124,7 @@ const fetchEntry = async (id: string) => {
     )
     if (res.success) entry.value = res.data
   } catch (err: any) {
-    error.value = err?.data?.detail || err?.message || 'Error al cargar el asiento'
+    error.value = err?.data?.detail || err?.message || t('finanzas.contabilidad.loadEntryError')
   } finally {
     loading.value = false
   }
@@ -187,7 +163,7 @@ watch(
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Detalle del asiento contable"
+        :aria-label="t('finanzas.contabilidad.entryDetail')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
@@ -207,7 +183,7 @@ watch(
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Asiento contable
+                  {{ t('finanzas.contabilidad.entryTitle') }}
                 </h2>
                 <p v-if="entry" class="text-xs text-text-secondary leading-snug mt-0.5">
                   {{ formatDate(entry.entryDate) }}
@@ -216,7 +192,7 @@ watch(
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('finanzas.common.closePanel')"
               class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="close"
             >
@@ -244,14 +220,14 @@ watch(
             <!-- Status + module + pending_review badges -->
             <div class="flex flex-wrap items-center gap-2">
               <UiStatusBadge
-                :value="STATUS_LABELS[entry.status] || entry.status"
+                :value="statusLabel(entry.status)"
                 format="text"
                 :variant="STATUS_VARIANTS[entry.status] || 'secondary'"
                 size="sm"
               />
               <UiStatusBadge
                 v-if="entry.sourceModule"
-                :value="SOURCE_LABELS[entry.sourceModule] || entry.sourceModule"
+                :value="sourceLabel(entry.sourceModule)"
                 format="text"
                 variant="secondary"
                 size="sm"
@@ -263,14 +239,14 @@ watch(
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                Pendiente de revisar
+                {{ t('finanzas.contabilidad.pendingReview') }}
               </span>
             </div>
 
             <!-- Description -->
             <div>
               <p class="text-xs uppercase tracking-wider text-text-secondary font-medium mb-1">
-                Descripción
+                {{ t('finanzas.common.description') }}
               </p>
               <NuxtLink
                 v-if="entryLink"
@@ -285,7 +261,7 @@ watch(
             <!-- Reference -->
             <div v-if="entry.reference">
               <p class="text-xs uppercase tracking-wider text-text-secondary font-medium mb-1">
-                Referencia
+                {{ t('finanzas.contabilidad.reference') }}
               </p>
               <p class="text-sm font-mono text-text-primary">{{ entry.reference }}</p>
             </div>
@@ -293,13 +269,13 @@ watch(
             <!-- Lines table -->
             <div>
               <p class="text-xs uppercase tracking-wider text-text-secondary font-medium mb-2">
-                Movimientos ({{ entry.lines.length }})
+                {{ t('finanzas.contabilidad.movementsCount', { count: entry.lines.length }) }}
               </p>
               <div class="rounded-xl border border-border overflow-hidden">
                 <div class="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2 bg-surface-secondary/40 text-xs font-semibold text-text-secondary">
-                  <span>Cuenta</span>
-                  <span class="text-right">Débito</span>
-                  <span class="text-right">Crédito</span>
+                  <span>{{ t('finanzas.contabilidad.account') }}</span>
+                  <span class="text-right">{{ t('finanzas.contabilidad.debit') }}</span>
+                  <span class="text-right">{{ t('finanzas.contabilidad.credit') }}</span>
                 </div>
                 <div
                   v-for="(line, idx) in entry.lines"
@@ -310,7 +286,7 @@ watch(
                   <div class="min-w-0">
                     <p class="font-medium text-text-primary truncate">
                       <span class="font-mono text-text-secondary mr-1.5">{{ accountById[line.accountId]?.code || '?' }}</span>
-                      {{ accountById[line.accountId]?.name || 'Cuenta desconocida' }}
+                      {{ accountById[line.accountId]?.name || t('finanzas.contabilidad.unknownAccount') }}
                     </p>
                     <p v-if="line.description" class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
                       {{ line.description }}
@@ -325,7 +301,7 @@ watch(
                 </div>
                 <!-- Totals -->
                 <div class="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2.5 bg-surface-secondary/60 border-t-2 border-border text-sm font-bold">
-                  <span class="text-text-primary">Totales</span>
+                  <span class="text-text-primary">{{ t('finanzas.contabilidad.totals') }}</span>
                   <span class="text-primary font-mono tabular-nums text-right">{{ formatCOP(entry.totalDebit) }}</span>
                   <span class="text-text-secondary font-mono tabular-nums text-right">{{ formatCOP(entry.totalCredit) }}</span>
                 </div>
@@ -335,10 +311,10 @@ watch(
             <!-- Timestamps -->
             <div class="text-xs text-text-secondary space-y-1 pt-2 border-t border-border/50">
               <p v-if="entry.postedAt">
-                <span class="font-medium">Publicado:</span> {{ formatDateTime(entry.postedAt) }}
+                <span class="font-medium">{{ t('finanzas.contabilidad.postedAt') }}:</span> {{ formatDateTime(entry.postedAt) }}
               </p>
               <p v-if="entry.voidedAt">
-                <span class="font-medium text-destructive">Anulado:</span> {{ formatDateTime(entry.voidedAt) }}
+                <span class="font-medium text-destructive">{{ t('finanzas.contabilidad.voidedAt') }}:</span> {{ formatDateTime(entry.voidedAt) }}
               </p>
             </div>
 
@@ -356,7 +332,7 @@ watch(
               class="min-h-[44px] px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="close"
             >
-              Cerrar
+              {{ t('finanzas.common.close') }}
             </button>
             <div class="flex-1" />
             <button
@@ -370,7 +346,7 @@ watch(
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              <span>{{ posting ? 'Publicando...' : 'Publicar' }}</span>
+              <span>{{ posting ? t('finanzas.contabilidad.posting') : t('finanzas.contabilidad.post') }}</span>
             </button>
             <button
               v-if="entry.status === 'posted'"
@@ -378,7 +354,7 @@ watch(
               class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-destructive/50 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors"
               @click="emit('void-request')"
             >
-              Anular
+              {{ t('finanzas.contabilidad.void') }}
             </button>
           </div>
           <button
@@ -387,7 +363,7 @@ watch(
             class="w-full min-h-[44px] rounded-lg border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             @click="close"
           >
-            Cerrar
+            {{ t('finanzas.common.close') }}
           </button>
         </div>
       </div>

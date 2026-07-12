@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -8,11 +8,12 @@ definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const route = useRoute()
 const accountId = computed(() => route.params.id as string)
 const { currentTenant } = useTenantReactive()
+const { t, locale } = useI18n({ useScope: 'global' })
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
-const { formatCalendarDate } = useFormatters()
-const formatCOP = (v: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
+const { formatCalendarDate, formatCurrency } = useFormatters()
+const formatCOP = (v: number) => formatCurrency(v ?? 0)
+const datePickerLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // Truncate a long description to keep table rows compact.
 // Click on the row opens the slide-over with the full text.
@@ -25,8 +26,12 @@ const truncateDescription = (text: string | null | undefined, maxWords = 4): str
 
 // ── Labels & variants ──────────────────────────────────────────────────────
 const CLASS_SHORT: Record<string, string> = {
-  '1': 'Activos', '2': 'Pasivos', '3': 'Patrimonio',
-  '4': 'Ingresos', '5': 'Gastos', '6': 'Costos',
+  '1': t('finanzas.contabilidad.classes.assets'),
+  '2': t('finanzas.contabilidad.classes.liabilities'),
+  '3': t('finanzas.contabilidad.classes.equity'),
+  '4': t('finanzas.contabilidad.classes.income'),
+  '5': t('finanzas.contabilidad.classes.expenses'),
+  '6': t('finanzas.contabilidad.classes.costs'),
 }
 const CLASS_BG: Record<string, string> = {
   '1': 'bg-primary/10', '2': 'bg-state-warning-bg', '3': 'bg-status-chip-bg',
@@ -46,26 +51,31 @@ const ACCOUNT_CLASS_CHIP: Record<string, string> = {
 }
 const pucLevel = (code: string) => {
   const len = code.length
-  if (len === 1) return { label: 'Clase', variant: 'primary' }
-  if (len === 2) return { label: 'Grupo', variant: 'secondary' }
-  if (len === 4) return { label: 'Cuenta', variant: 'warning' }
-  return { label: 'Subcuenta', variant: 'success' }
-}
-const SOURCE_LABELS: Record<string, string> = {
-  ventas: 'Ventas', gastos: 'Gastos', nomina: 'Nómina',
-  inventario: 'Inventario', arqueo: 'Arqueo',
-  manual: 'Manual', system: 'Sistema',
+  if (len === 1) return { label: t('finanzas.contabilidad.class'), variant: 'primary' }
+  if (len === 2) return { label: t('finanzas.contabilidad.group'), variant: 'secondary' }
+  if (len === 4) return { label: t('finanzas.contabilidad.account'), variant: 'warning' }
+  return { label: t('finanzas.contabilidad.subaccount'), variant: 'success' }
 }
 const SOURCE_VARIANTS: Record<string, string> = {
   ventas: 'success', gastos: 'destructive', nomina: 'warning',
   inventario: 'primary', arqueo: 'secondary',
   manual: 'secondary', system: 'secondary',
-}
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Borrador', posted: 'Publicado', void: 'Anulado',
+  orden: 'success', orden_cogs: 'success',
 }
 const STATUS_VARIANTS: Record<string, string> = {
   draft: 'warning', posted: 'success', void: 'secondary',
+}
+const sourceLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const key = value.replace(/-/g, '_')
+  const label = t(`finanzas.contabilidad.sources.${key}`)
+  return label === `finanzas.contabilidad.sources.${key}` ? value : label
+}
+const statusLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const key = value === 'void' ? 'voided' : value
+  const label = t(`finanzas.contabilidad.status.${key}`)
+  return label === `finanzas.contabilidad.status.${key}` ? value : label
 }
 
 // ── Account data (from cached list) ───────────────────────────────────────
@@ -93,7 +103,7 @@ const accountClassChipClass = computed(() =>
   account.value ? (ACCOUNT_CLASS_CHIP[account.value.accountClass] || 'bg-[rgba(62,68,81,0.10)] text-[#3e4451]') : ''
 )
 const accountBalanceLabel = computed(() =>
-  account.value?.normalBalance === 'debit' ? 'Débito' : 'Crédito'
+  account.value?.normalBalance === 'debit' ? t('finanzas.contabilidad.debit') : t('finanzas.contabilidad.credit')
 )
 
 // Sub-accounts: direct children of this account
@@ -104,7 +114,7 @@ const subAccounts = computed<TenantAccount[]>(() =>
 )
 
 useHead(() => ({
-  title: account.value ? `${account.value.code} · ${account.value.name}` : 'Cuenta contable',
+  title: account.value ? `${account.value.code} · ${account.value.name}` : t('finanzas.contabilidad.accountTitle'),
 }))
 
 // ── Toggle active ──────────────────────────────────────────────────────────
@@ -119,7 +129,7 @@ const toggleActive = async () => {
     })
     await refetchAccounts()
   } catch (err: any) {
-    alert(err?.data?.detail || 'Error al actualizar la cuenta')
+    alert(err?.data?.detail || t('finanzas.contabilidad.updateError'))
   } finally {
     togglingActive.value = false
   }
@@ -231,7 +241,7 @@ const saveSubAccount = async () => {
     closeCreatePanel()
     await refetchAccounts()
   } catch (err: any) {
-    createError.value = err?.data?.detail || 'Error al crear la subcuenta'
+    createError.value = err?.data?.detail || t('finanzas.contabilidad.createSubaccountError')
   } finally {
     creating.value = false
   }
@@ -244,12 +254,12 @@ const maxDate = computed(() => dateAtNoon(todayISO()))
 const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
-  { label: 'Hoy', value: [dateAtNoon(today), dateAtNoon(today)] },
-  { label: 'Ayer', value: [dateAtNoon(addDaysISO(today, -1)), dateAtNoon(addDaysISO(today, -1))] },
-  { label: 'Esta semana', value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
-  { label: 'Este mes', value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
-  { label: 'Último mes', value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
-  { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
+  { label: t('finanzas.common.today'), value: [dateAtNoon(today), dateAtNoon(today)] },
+  { label: t('finanzas.common.yesterday'), value: [dateAtNoon(addDaysISO(today, -1)), dateAtNoon(addDaysISO(today, -1))] },
+  { label: t('finanzas.contabilidad.thisWeek'), value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.thisMonth'), value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.lastMonth'), value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.last90Days'), value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
 
 const formatDateRange = (dates: Date[]) => {
@@ -349,16 +359,16 @@ const closingBalance = computed(() => {
 })
 
 // ── Table columns ──────────────────────────────────────────────────────────
-const tableColumns = [
-  { key: 'entryDate', title: 'Fecha', sortable: false },
-  { key: 'description', title: 'Descripción', sortable: false },
-  { key: 'sourceModule', title: 'Módulo', sortable: false },
-  { key: 'reference', title: 'Referencia', sortable: false },
-  { key: 'totalDebit', title: 'Débito', sortable: false },
-  { key: 'totalCredit', title: 'Crédito', sortable: false },
-  { key: 'runningBalance', title: 'Saldo', sortable: false },
-  { key: 'status', title: 'Estado', sortable: false },
-]
+const tableColumns = computed(() => [
+  { key: 'entryDate', title: t('finanzas.common.date'), sortable: false },
+  { key: 'description', title: t('finanzas.common.description'), sortable: false },
+  { key: 'sourceModule', title: t('finanzas.contabilidad.module'), sortable: false },
+  { key: 'reference', title: t('finanzas.contabilidad.reference'), sortable: false },
+  { key: 'totalDebit', title: t('finanzas.contabilidad.debit'), sortable: false },
+  { key: 'totalCredit', title: t('finanzas.contabilidad.credit'), sortable: false },
+  { key: 'runningBalance', title: t('finanzas.contabilidad.balance'), sortable: false },
+  { key: 'status', title: t('finanzas.common.status'), sortable: false },
+])
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
@@ -381,7 +391,7 @@ registerProgressiveLoading(isRefreshing)
 onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
-// ── Issue #531 — Actualizar saldo real ────────────────────────────────────
+// ── Issue #531 — Real balance adjustment ──────────────────────────────────
 const showAdjustPanel = ref(false)
 const toast = useToast()
 const allAccountsForPanel = computed(() => {
@@ -389,7 +399,7 @@ const allAccountsForPanel = computed(() => {
 })
 const onAdjustSuccess = async () => {
   await refetch()
-  toast.success('Saldo actualizado correctamente', { title: 'Asiento contable creado' })
+  toast.success(t('finanzas.contabilidad.balanceUpdated'), { title: t('finanzas.contabilidad.entryCreated') })
 }
 
 // ── Issue #531 — Detalle del asiento (slide-over) ─────────────────────────
@@ -424,7 +434,7 @@ const openEntryDetail = (entry: { id: string }) => {
               </span>
               <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs leading-4 font-semibold"
                 :class="account.isActive ? 'bg-[rgba(0,79,0,0.10)] text-[#004f00]' : 'bg-[rgba(62,68,81,0.10)] text-[#3e4451]'">
-                {{ account.isActive ? 'Activa' : 'Inactiva' }}
+                {{ account.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne') }}
               </span>
             </div>
             <div class="min-w-0 lg:min-h-[48px] flex flex-col justify-center">
@@ -434,7 +444,7 @@ const openEntryDetail = (entry: { id: string }) => {
                   {{ account.name }}
                 </h2>
                 <svg v-if="account.isSystem" class="mt-1.5 h-4 w-4 flex-shrink-0 text-[#3e4451]/70" fill="none"
-                  stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
+                  stroke="currentColor" viewBox="0 0 24 24" :aria-label="t('finanzas.contabilidad.systemAccount')">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -443,7 +453,7 @@ const openEntryDetail = (entry: { id: string }) => {
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
               <div class="inline-flex h-4 items-center gap-2 whitespace-nowrap">
                 <span class="text-xs leading-4 font-semibold uppercase tracking-[0.04em] text-[#3e4451]">
-                  Cuenta PUC
+                  {{ t('finanzas.contabilidad.pucAccount') }}
                 </span>
                 <span class="font-mono text-sm leading-5 font-bold text-[#211d35]">
                   {{ account.code }}
@@ -454,35 +464,35 @@ const openEntryDetail = (entry: { id: string }) => {
           <div class="flex flex-shrink-0 flex-wrap items-center gap-2 lg:justify-end">
             <button v-if="account.code.length < 6" type="button"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#7c3bed] px-4 text-sm font-semibold leading-5 text-white transition-colors hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/30 active:scale-[0.98]"
-              aria-label="Crear subcuenta" @click="openCreatePanel">
+              :aria-label="t('finanzas.contabilidad.createSubaccount')" @click="openCreatePanel">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Subcuenta</span>
+              <span>{{ t('finanzas.contabilidad.subaccount') }}</span>
             </button>
 
             <button type="button"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#d6d8dc] px-3.5 text-sm font-semibold leading-5 text-[#3e4451] transition-colors hover:border-[#c4c7ce] hover:bg-[#f7f7f8] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/20 disabled:cursor-not-allowed disabled:opacity-50"
-              :disabled="togglingActive" :aria-label="account.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
+              :disabled="togglingActive" :aria-label="account.isActive ? t('finanzas.contabilidad.deactivateAccount') : t('finanzas.contabilidad.activateAccount')"
               @click="toggleActive">
               <svg v-if="togglingActive" class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"
                 aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              <span>{{ account.isActive ? 'Desactivar' : 'Activar' }}</span>
+              <span>{{ account.isActive ? t('finanzas.contabilidad.deactivate') : t('finanzas.contabilidad.activate') }}</span>
             </button>
 
             <button
               v-if="account.isDetail && account.accountClass === '1' && account.normalBalance === 'debit' && account.isActive"
               type="button"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#7c3bed] px-3.5 text-sm font-semibold leading-5 text-[#7c3bed] transition-colors hover:bg-[rgba(124,59,237,0.08)] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/25 active:scale-[0.98]"
-              :aria-label="`Actualizar saldo real de ${account.name}`" @click="showAdjustPanel = true">
+              :aria-label="t('finanzas.contabilidad.updateRealBalanceOf', { name: account.name })" @click="showAdjustPanel = true">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Actualizar saldo</span>
+              <span>{{ t('finanzas.contabilidad.updateBalance') }}</span>
             </button>
           </div>
         </div>
@@ -491,13 +501,13 @@ const openEntryDetail = (entry: { id: string }) => {
 
     <!-- Sub-accounts strip -->
     <div v-if="subAccounts.length" class="flex flex-col gap-1.5">
-      <p class="text-xs font-medium text-text-secondary uppercase tracking-wider">Subcuentas</p>
+      <p class="text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('finanzas.contabilidad.subaccounts') }}</p>
       <div class="flex flex-wrap gap-2">
         <NuxtLink v-for="sub in subAccounts" :key="sub.id" :to="`/finanzas/contabilidad/cuentas/${sub.id}`"
           class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group">
           <span class="text-xs font-mono font-medium text-text-primary">{{ sub.code }}</span>
           <span class="text-xs text-text-secondary truncate max-w-[160px]">{{ sub.name }}</span>
-          <UiStatusBadge :value="sub.isActive ? 'Activa' : 'Inactiva'" format="text"
+          <UiStatusBadge :value="sub.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne')" format="text"
             :variant="sub.isActive ? 'success' : 'secondary'" size="sm" />
           <svg class="w-3.5 h-3.5 text-text-secondary group-hover:text-primary transition-colors flex-shrink-0"
             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -521,34 +531,34 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <!-- Date range picker (same pattern as ordenes) -->
         <VueDatePicker v-model="dateRangeDates" range :preset-dates="presetDates" :enable-time-picker="false"
-          :locale="es" placeholder="Rango de fechas" auto-apply :teleport="true" :timezone="timezone"
+          :locale="datePickerLocale" :placeholder="t('finanzas.common.dateRange')" auto-apply :teleport="true" :timezone="timezone"
           :max-date="maxDate" :format="formatDateRange" input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell" @update:model-value="page = 1" />
 
         <select v-model="statusFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           @change="page = 1">
-          <option :value="null">Estado</option>
-          <option value="draft">Borrador</option>
-          <option value="posted">Publicado</option>
-          <option value="void">Anulado</option>
+          <option :value="null">{{ t('finanzas.common.status') }}</option>
+          <option value="draft">{{ t('finanzas.contabilidad.status.draft') }}</option>
+          <option value="posted">{{ t('finanzas.contabilidad.status.posted') }}</option>
+          <option value="void">{{ t('finanzas.contabilidad.status.voided') }}</option>
         </select>
 
         <select v-model="sourceFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           @change="page = 1">
-          <option :value="null">Módulo</option>
-          <option value="ventas">Ventas</option>
-          <option value="gastos">Gastos</option>
-          <option value="nomina">Nómina</option>
-          <option value="inventario">Inventario</option>
-          <option value="arqueo">Arqueo</option>
-          <option value="manual">Manual</option>
+          <option :value="null">{{ t('finanzas.contabilidad.module') }}</option>
+          <option value="ventas">{{ t('finanzas.contabilidad.sources.ventas') }}</option>
+          <option value="gastos">{{ t('finanzas.contabilidad.sources.gastos') }}</option>
+          <option value="nomina">{{ t('finanzas.contabilidad.sources.nomina') }}</option>
+          <option value="inventario">{{ t('finanzas.contabilidad.sources.inventario') }}</option>
+          <option value="arqueo">{{ t('finanzas.contabilidad.sources.arqueo') }}</option>
+          <option value="manual">{{ t('finanzas.contabilidad.sources.manual') }}</option>
         </select>
 
         <button v-if="hasActiveFilters" type="button"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          aria-label="Limpiar filtros" @click="clearFilters">
+          :aria-label="t('finanzas.common.clearFilters')" @click="clearFilters">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -561,37 +571,37 @@ const openEntryDetail = (entry: { id: string }) => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Nuevo asiento
+          {{ t('finanzas.contabilidad.newEntry') }}
         </NuxtLink>
       </div>
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-        <MetricCard title="Saldo inicial" :value="openingBalance" format="currency"
+        <MetricCard :title="t('finanzas.contabilidad.openingBalance')" :value="openingBalance" format="currency"
           :variant="openingBalance >= 0 ? 'primary' : 'destructive'" />
-        <MetricCard title="Débitos período" :value="periodDebits" format="currency" variant="primary" />
-        <MetricCard title="Créditos período" :value="periodCredits" format="currency" variant="primary" />
-        <MetricCard title="Saldo cierre" :value="closingBalance" format="currency"
+        <MetricCard :title="t('finanzas.contabilidad.debitsPeriod')" :value="periodDebits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.creditsPeriod')" :value="periodCredits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.closingBalance')" :value="closingBalance" format="currency"
           :variant="closingBalance >= 0 ? 'primary' : 'destructive'" />
       </div>
 
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
       <div class="[&_td]:!py-1 [&_th]:!py-1.5">
         <UiResponsiveDataView row-size="sm" :columns="tableColumns" :data="entriesWithBalance"
-          empty-message="Sin asientos para esta cuenta en el período"
-          empty-sub-message="Selecciona otro rango de fechas o crea un nuevo asiento" variant="default"
+          :empty-message="t('finanzas.contabilidad.emptyAccountEntries')"
+          :empty-sub-message="t('finanzas.contabilidad.emptyAccountEntriesSub')" variant="default"
           @row-click="openEntryDetail">
           <!-- Mobile card -->
           <template #card="{ item, index }">
             <button type="button"
               class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-left hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-              :aria-label="`Ver detalle del asiento ${item.reference || item.description}`"
+              :aria-label="t('finanzas.contabilidad.viewEntryNamed', { name: item.reference || item.description })"
               @click="openEntryDetail(item)">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
-                  <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_LABELS[item.sourceModule] || item.sourceModule"
+                  <UiStatusBadge v-if="item.sourceModule" :value="sourceLabel(item.sourceModule)"
                     format="text" :variant="SOURCE_VARIANTS[item.sourceModule] || 'secondary'" size="sm" />
                 </div>
                 <p class="text-sm font-medium text-text-primary mt-0.5" :title="item.description">{{
@@ -619,7 +629,7 @@ const openEntryDetail = (entry: { id: string }) => {
           </template>
 
           <template #cell-sourceModule="{ value }">
-            <UiStatusBadge v-if="value" :value="SOURCE_LABELS[value] || value" format="text"
+            <UiStatusBadge v-if="value" :value="sourceLabel(value)" format="text"
               :variant="SOURCE_VARIANTS[value] || 'secondary'" size="sm" />
             <span v-else class="text-xs text-text-secondary">—</span>
           </template>
@@ -647,7 +657,7 @@ const openEntryDetail = (entry: { id: string }) => {
           </template>
 
           <template #cell-status="{ value }">
-            <UiStatusBadge :value="STATUS_LABELS[value] || value" format="text"
+            <UiStatusBadge :value="statusLabel(value)" format="text"
               :variant="STATUS_VARIANTS[value] || 'secondary'" size="sm" />
           </template>
         </UiResponsiveDataView>
@@ -658,14 +668,14 @@ const openEntryDetail = (entry: { id: string }) => {
         <div class="flex items-center gap-1">
           <button :disabled="page <= 1" @click="page = 1"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Primera página">
+            :aria-label="t('finanzas.contabilidad.firstPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
           <button :disabled="page <= 1" @click="page--"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Anterior">
+            :aria-label="t('finanzas.contabilidad.prevPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
@@ -673,14 +683,14 @@ const openEntryDetail = (entry: { id: string }) => {
           <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ page }} / {{ totalPages }}</span>
           <button :disabled="page >= totalPages" @click="page++"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Siguiente">
+            :aria-label="t('finanzas.contabilidad.nextPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
           <button :disabled="page >= totalPages" @click="page = totalPages"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Última página">
+            :aria-label="t('finanzas.contabilidad.lastPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
             </svg>
@@ -701,7 +711,7 @@ const openEntryDetail = (entry: { id: string }) => {
     </Transition>
 
     <Transition name="cuenta-panel">
-      <div v-if="showCreatePanel" role="dialog" aria-modal="true" aria-label="Crear subcuenta"
+      <div v-if="showCreatePanel" role="dialog" aria-modal="true" :aria-label="t('finanzas.contabilidad.createSubaccount')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
@@ -722,13 +732,13 @@ const openEntryDetail = (entry: { id: string }) => {
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Crear subcuenta</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('finanzas.contabilidad.createSubaccount') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 font-mono">
                   {{ account?.code }} · {{ account?.name }}
                 </p>
               </div>
             </div>
-            <button type="button" aria-label="Cerrar panel"
+            <button type="button" :aria-label="t('finanzas.common.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="closeCreatePanel">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -744,7 +754,7 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Código -->
           <div class="flex flex-col gap-1.5">
             <label for="create-code" class="text-sm font-medium text-text-primary">
-              Código PUC <span class="text-destructive" aria-hidden="true">*</span>
+              {{ t('finanzas.contabilidad.pucCode') }} <span class="text-destructive" aria-hidden="true">*</span>
             </label>
             <div class="flex items-center rounded-lg bg-background overflow-hidden">
               <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code
@@ -755,7 +765,7 @@ const openEntryDetail = (entry: { id: string }) => {
                 @keydown.escape="closeCreatePanel" />
             </div>
             <p class="text-xs text-text-secondary">
-              Código completo:
+              {{ t('finanzas.contabilidad.fullCode') }}:
               <span class="font-mono font-medium text-text-primary">{{ createFullCode || (account?.code + '…') }}</span>
             </p>
           </div>
@@ -763,9 +773,9 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Nombre -->
           <div class="flex flex-col gap-1.5">
             <label for="create-name" class="text-sm font-medium text-text-primary">
-              Nombre <span class="text-destructive" aria-hidden="true">*</span>
+              {{ t('finanzas.contabilidad.name') }} <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <input id="create-name" v-model="createName" type="text" placeholder="ej: Nequi, Daviplata…"
+            <input id="create-name" v-model="createName" type="text" :placeholder="t('finanzas.metodosPago.methodPlaceholder')"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
               @keydown.enter="saveSubAccount" @keydown.escape="closeCreatePanel" />
           </div>
@@ -773,24 +783,24 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Asociar a método de pago (opcional) -->
           <div v-if="availableMethods.length" class="flex flex-col gap-1.5">
             <label for="create-method" class="text-sm font-medium text-text-primary">
-              Asociar a método de pago
-              <span class="text-text-secondary font-normal">(opcional)</span>
+              {{ t('finanzas.contabilidad.associatePaymentMethod') }}
+              <span class="text-text-secondary font-normal">{{ t('finanzas.common.optional') }}</span>
             </label>
             <select id="create-method" v-model="createMethodId"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="">— Sin asociar —</option>
+              <option value="">— {{ t('finanzas.contabilidad.noAssociation') }} —</option>
               <option v-for="m in availableMethods" :key="m.id" :value="m.id">
                 {{ m.name }}
                 <template v-if="m.glAccountCode"> · {{ m.glAccountCode }}</template>
               </option>
             </select>
-            <p class="text-xs text-text-secondary">Las ventas con ese método debitarán esta subcuenta</p>
+            <p class="text-xs text-text-secondary">{{ t('finanzas.contabilidad.paymentMethodAssociationHelp') }}</p>
           </div>
 
           <!-- Tipo de cuenta -->
           <div class="flex flex-col gap-1.5">
-            <span class="text-sm font-medium text-text-primary">Tipo</span>
-            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de cuenta">
+            <span class="text-sm font-medium text-text-primary">{{ t('finanzas.contabilidad.type') }}</span>
+            <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('finanzas.contabilidad.accountType')">
               <button type="button" :class="[
                 'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
                 createIsDetail
@@ -802,10 +812,10 @@ const openEntryDetail = (entry: { id: string }) => {
                   <path stroke-linecap="round" stroke-linejoin="round"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
-                <span class="text-xs font-bold tracking-wide">Detalle</span>
+                <span class="text-xs font-bold tracking-wide">{{ t('finanzas.contabilidad.detail') }}</span>
                 <span
                   :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
-                  registra movimientos
+                  {{ t('finanzas.contabilidad.recordsMovements') }}
                 </span>
               </button>
               <button type="button" :class="[
@@ -818,10 +828,10 @@ const openEntryDetail = (entry: { id: string }) => {
                   aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h4" />
                 </svg>
-                <span class="text-xs font-bold tracking-wide">Agrupadora</span>
+                <span class="text-xs font-bold tracking-wide">{{ t('finanzas.contabilidad.grouping') }}</span>
                 <span
                   :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', !createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
-                  solo agrupa saldos
+                  {{ t('finanzas.contabilidad.groupsBalances') }}
                 </span>
               </button>
             </div>
@@ -848,19 +858,19 @@ const openEntryDetail = (entry: { id: string }) => {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            {{ creating ? 'Creando…' : 'Crear subcuenta' }}
+            {{ creating ? t('finanzas.contabilidad.creating') : t('finanzas.contabilidad.createSubaccount') }}
           </button>
           <button
             class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
             @click="closeCreatePanel">
-            Cancelar
+            {{ t('finanzas.common.cancel') }}
           </button>
         </div>
       </div>
     </Transition>
   </Teleport>
 
-  <!-- Issue #531 — Actualizar saldo real -->
+  <!-- Issue #531 — Real balance adjustment -->
   <FinanzasContabilidadAjustarSaldoPanel v-model="showAdjustPanel" :account="account" :book-balance="closingBalance"
     :all-accounts="allAccountsForPanel" @success="onAdjustSuccess" />
 

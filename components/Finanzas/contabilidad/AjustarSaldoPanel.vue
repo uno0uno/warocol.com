@@ -30,21 +30,18 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   success: []
 }>()
+const { t } = useI18n({ useScope: 'global' })
 const { todayISO } = useTenantTimezone()
+const { formatCurrency } = useFormatters()
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const formatCOP = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(v ?? 0)
+const formatCOP = (v: number) => formatCurrency(v ?? 0)
 
 const close = () => emit('update:modelValue', false)
 
 // ── Form state ───────────────────────────────────────────────────────────────
 const targetBalanceInput = ref<string>('')
-const motivoCode = ref<string>('')
+const reasonCode = ref<string>('')
 const submitting = ref(false)
 const submitError = ref('')
 
@@ -69,99 +66,85 @@ const sign = computed<'positive' | 'negative' | 'zero'>(() => {
 const canSubmit = computed(() =>
   Number.isFinite(targetBalance.value)
   && diferencia.value !== 0
-  && motivoCode.value !== ''
+  && reasonCode.value !== ''
   && !submitting.value,
 )
 
 // ── Motivos catalog (UX-facing) ──────────────────────────────────────────────
-// Each motivo maps to a contraparte PUC code. The sign field decides which
-// motivos are available based on whether saldo real > or < saldo libro.
+// Each reason maps to a counterpart PUC code. The sign field decides which
+// options are available based on whether real balance is above or below books.
 interface Motivo {
   code: string
-  label: string
-  description: string
   contraparteCode: string
   pendingReview: boolean
   sign: 'positive' | 'negative'
 }
 
-const MOTIVOS: Motivo[] = [
-  // Positive — saldo real > saldo libro (entró plata)
+const REASONS: Motivo[] = [
+  // Positive: real balance > book balance.
   {
     code: 'capital_aporte',
-    label: 'Aporte de socio / capital',
-    description: 'Un socio puso plata en la empresa',
     contraparteCode: '3105',
     pendingReview: false,
     sign: 'positive',
   },
   {
     code: 'prestamo',
-    label: 'Préstamo recibido',
-    description: 'Un banco o tercero le prestó al negocio',
     contraparteCode: '2105',
     pendingReview: false,
     sign: 'positive',
   },
   {
     code: 'saldo_historico',
-    label: 'Saldo histórico que no había registrado',
-    description: 'Plata que ya estaba antes de empezar a usar la plataforma',
     contraparteCode: '3705',
     pendingReview: false,
     sign: 'positive',
   },
   {
     code: 'cliente_directo',
-    label: 'Cliente pagó directo al banco',
-    description: 'Un cliente transfirió o consignó sin pasar por el POS',
     contraparteCode: '1305',
     pendingReview: false,
     sign: 'positive',
   },
   {
     code: 'no_seguro_positivo',
-    label: 'No estoy seguro',
-    description: 'Entró plata pero no sé exactamente de dónde — un contador lo revisará después',
     contraparteCode: '4295',
     pendingReview: true,
     sign: 'positive',
   },
-  // Negative — saldo real < saldo libro (salió plata)
+  // Negative: real balance < book balance.
   {
     code: 'comision_bancaria',
-    label: 'Comisión bancaria / GMF (4×1000)',
-    description: 'El banco cobró comisiones, retención o GMF',
     contraparteCode: '5305',
     pendingReview: false,
     sign: 'negative',
   },
   {
     code: 'no_seguro_negativo',
-    label: 'No estoy seguro',
-    description: 'Salió plata pero no sé exactamente a dónde — un contador lo revisará después',
     contraparteCode: '5395',
     pendingReview: true,
     sign: 'negative',
   },
 ]
 
-const availableMotivos = computed<Motivo[]>(() =>
-  sign.value === 'zero' ? [] : MOTIVOS.filter(m => m.sign === sign.value),
+const availableReasons = computed<Motivo[]>(() =>
+  sign.value === 'zero' ? [] : REASONS.filter(m => m.sign === sign.value),
 )
 
-const selectedMotivo = computed<Motivo | null>(
-  () => MOTIVOS.find(m => m.code === motivoCode.value) ?? null,
+const selectedReason = computed<Motivo | null>(
+  () => REASONS.find(m => m.code === reasonCode.value) ?? null,
 )
+const reasonLabel = (code: string) => t(`finanzas.contabilidad.balanceAdjust.reasons.${code}.label`)
+const reasonDescription = (code: string) => t(`finanzas.contabilidad.balanceAdjust.reasons.${code}.description`)
 
-// Reset motivo when sign changes (otherwise an invalid motivo could remain selected)
-watch(sign, () => { motivoCode.value = '' })
+// Reset reason when sign changes, otherwise an invalid option could remain selected.
+watch(sign, () => { reasonCode.value = '' })
 
 // Reset entire form when panel closes/opens
 watch(() => props.modelValue, (open) => {
   if (open) {
     targetBalanceInput.value = ''
-    motivoCode.value = ''
+    reasonCode.value = ''
     submitError.value = ''
   }
 })
@@ -183,27 +166,35 @@ const stripOnFocus = () => {
 //   - diferencia < 0 → DR contraparte / CR X (con monto = abs(diferencia))
 //
 const submit = async () => {
-  if (!canSubmit.value || !props.account || !selectedMotivo.value) return
+  if (!canSubmit.value || !props.account || !selectedReason.value) return
 
-  const contraparte = props.allAccounts.find(a => a.code === selectedMotivo.value!.contraparteCode)
+  const contraparte = props.allAccounts.find(a => a.code === selectedReason.value!.contraparteCode)
   if (!contraparte) {
-    submitError.value = `No se encontró la cuenta contraparte ${selectedMotivo.value.contraparteCode} en tu plan de cuentas. Contacta a soporte.`
+    submitError.value = t('finanzas.contabilidad.balanceAdjust.counterpartNotFound', { code: selectedReason.value.contraparteCode })
     return
   }
 
   const monto = Math.abs(diferencia.value)
   const lines = sign.value === 'positive'
     ? [
-        { accountId: props.account.id, debit: monto, credit: 0, description: 'Ajuste saldo (incremento)' },
-        { accountId: contraparte.id,    debit: 0,     credit: monto, description: 'Contraparte ajuste saldo' },
+        { accountId: props.account.id, debit: monto, credit: 0, description: t('finanzas.contabilidad.balanceAdjust.lineIncrease') },
+        { accountId: contraparte.id,    debit: 0,     credit: monto, description: t('finanzas.contabilidad.balanceAdjust.lineCounterpart') },
       ]
     : [
-        { accountId: contraparte.id,    debit: monto, credit: 0, description: 'Contraparte ajuste saldo' },
-        { accountId: props.account.id,  debit: 0,     credit: monto, description: 'Ajuste saldo (decremento)' },
+        { accountId: contraparte.id,    debit: monto, credit: 0, description: t('finanzas.contabilidad.balanceAdjust.lineCounterpart') },
+        { accountId: props.account.id,  debit: 0,     credit: monto, description: t('finanzas.contabilidad.balanceAdjust.lineDecrease') },
       ]
 
   const today = todayISO()
-  const description = `Ajuste saldo ${props.account.code} ${props.account.name}: ${sign.value === 'positive' ? 'aumento' : 'disminución'} de ${formatCOP(monto)} — motivo: ${selectedMotivo.value.label}`
+  const description = t('finanzas.contabilidad.balanceAdjust.entryDescription', {
+    code: props.account.code,
+    name: props.account.name,
+    direction: sign.value === 'positive'
+      ? t('finanzas.contabilidad.balanceAdjust.increase')
+      : t('finanzas.contabilidad.balanceAdjust.decrease'),
+    amount: formatCOP(monto),
+    reason: reasonLabel(selectedReason.value.code),
+  })
 
   submitting.value = true
   submitError.value = ''
@@ -220,7 +211,7 @@ const submit = async () => {
           lines,
           sourceModule: 'manual_balance_adjustment',
           sourceId: props.account.id,
-          pendingReview: selectedMotivo.value.pendingReview,
+          pendingReview: selectedReason.value.pendingReview,
         },
       },
     )
@@ -235,7 +226,7 @@ const submit = async () => {
     emit('success')
     close()
   } catch (err: any) {
-    submitError.value = err?.data?.detail || err?.data?.message || err?.message || 'Error al actualizar el saldo'
+    submitError.value = err?.data?.detail || err?.data?.message || err?.message || t('finanzas.contabilidad.balanceAdjust.updateError')
   } finally {
     submitting.value = false
   }
@@ -267,7 +258,7 @@ const submit = async () => {
         v-if="modelValue && account"
         role="dialog"
         aria-modal="true"
-        :aria-label="`Actualizar saldo real de ${account?.name}`"
+        :aria-label="t('finanzas.contabilidad.updateRealBalanceOf', { name: account?.name })"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -288,7 +279,7 @@ const submit = async () => {
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Actualizar saldo real
+                  {{ t('finanzas.contabilidad.updateRealBalance') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
                   {{ account.code }} · {{ account.name }}
@@ -297,7 +288,7 @@ const submit = async () => {
             </div>
             <button
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('finanzas.common.closePanel')"
               class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="close"
             >
@@ -311,10 +302,10 @@ const submit = async () => {
         <!-- Body -->
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-          <!-- Saldo en libros (read-only) -->
+          <!-- Book balance (read-only) -->
           <div class="rounded-xl border border-border bg-surface-secondary/30 px-4 py-3">
             <p class="text-xs uppercase tracking-wider text-text-secondary font-medium mb-1">
-              Saldo en libros (actual)
+              {{ t('finanzas.contabilidad.balanceAdjust.bookBalance') }}
             </p>
             <p class="text-xl font-bold text-text-primary">{{ formatCOP(bookBalance) }}</p>
           </div>
@@ -322,7 +313,7 @@ const submit = async () => {
           <!-- Saldo real input -->
           <div class="flex flex-col gap-1.5">
             <label for="target-balance-input" class="text-sm font-semibold text-text-primary">
-              ¿Cuánto tienes ahora mismo en esta cuenta?
+              {{ t('finanzas.contabilidad.balanceAdjust.targetQuestion') }}
             </label>
             <input
               id="target-balance-input"
@@ -337,11 +328,11 @@ const submit = async () => {
               @focus="stripOnFocus"
             />
             <p class="text-xs text-text-secondary leading-snug">
-              Escribe el valor exacto que ves hoy en tu extracto, app del banco o conteo de caja.
+              {{ t('finanzas.contabilidad.balanceAdjust.targetHelp') }}
             </p>
           </div>
 
-          <!-- Diferencia calculated -->
+          <!-- Calculated difference -->
           <div
             v-if="sign !== 'zero'"
             class="rounded-xl px-4 py-3 border-2"
@@ -351,7 +342,7 @@ const submit = async () => {
           >
             <p class="text-xs uppercase tracking-wider font-medium mb-1"
                :class="sign === 'positive' ? 'text-state-success-text' : 'text-state-warning-text'">
-              Diferencia
+              {{ t('finanzas.common.difference') }}
             </p>
             <p class="text-2xl font-bold flex items-center gap-2"
                :class="sign === 'positive' ? 'text-state-success-text' : 'text-state-warning-text'">
@@ -366,64 +357,64 @@ const submit = async () => {
             <p class="text-xs leading-snug mt-1"
                :class="sign === 'positive' ? 'text-state-success-text/80' : 'text-state-warning-text/80'">
               {{ sign === 'positive'
-                ? 'Tu cuenta tiene más plata que lo que dicen los libros.'
-                : 'Tu cuenta tiene menos plata que lo que dicen los libros.' }}
+                ? t('finanzas.contabilidad.balanceAdjust.moreThanBooks')
+                : t('finanzas.contabilidad.balanceAdjust.lessThanBooks') }}
             </p>
           </div>
 
           <!-- Motivo selector (only when sign known) -->
           <fieldset v-if="sign !== 'zero'" class="flex flex-col gap-2">
             <legend class="text-sm font-semibold text-text-primary mb-1">
-              ¿Cuál fue el motivo?
+              {{ t('finanzas.contabilidad.balanceAdjust.reasonQuestion') }}
             </legend>
             <label
-              v-for="m in availableMotivos"
+              v-for="m in availableReasons"
               :key="m.code"
               class="flex items-start gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-colors"
-              :class="motivoCode === m.code
+              :class="reasonCode === m.code
                 ? 'border-primary bg-primary/5'
                 : 'border-border bg-surface hover:border-primary/40 hover:bg-primary/5'"
             >
               <input
-                v-model="motivoCode"
+                v-model="reasonCode"
                 type="radio"
-                name="motivo"
+                name="reason"
                 :value="m.code"
                 :disabled="submitting"
                 class="mt-1 h-4 w-4 text-primary focus:ring-2 focus:ring-primary/30"
               />
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-text-primary leading-snug">
-                  {{ m.label }}
+                  {{ reasonLabel(m.code) }}
                 </p>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ m.description }}
+                  {{ reasonDescription(m.code) }}
                 </p>
               </div>
             </label>
           </fieldset>
 
-          <!-- Soft confirmation banner (when motivo selected) -->
+          <!-- Soft confirmation banner (when a reason is selected) -->
           <div
-            v-if="selectedMotivo"
+            v-if="selectedReason"
             class="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"
           >
             <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1.5">
-              Confirmación
+              {{ t('finanzas.contabilidad.confirmation') }}
             </p>
             <p class="text-sm text-text-primary leading-relaxed">
-              Vas a dejar el saldo de <strong>{{ account?.name }}</strong> en
-              <strong>{{ formatCOP(targetBalance) }}</strong>. Esta acción crea un asiento contable.
-              Para corregirlo deberás anularlo y crear uno nuevo.
+              {{ t('finanzas.contabilidad.balanceAdjust.confirmPrefix') }} <strong>{{ account?.name }}</strong>
+              {{ t('finanzas.contabilidad.balanceAdjust.confirmMiddle') }}
+              <strong>{{ formatCOP(targetBalance) }}</strong>. {{ t('finanzas.contabilidad.balanceAdjust.confirmSuffix') }}
             </p>
             <p
-              v-if="selectedMotivo.pendingReview"
+              v-if="selectedReason.pendingReview"
               class="text-xs text-state-warning-text leading-snug mt-2 flex items-start gap-1.5"
             >
               <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <span>Marcaré este ajuste para que un contador lo revise. Si no tienes contador, revísalo antes de la próxima declaración fiscal.</span>
+              <span>{{ t('finanzas.contabilidad.balanceAdjust.reviewWarning') }}</span>
             </p>
           </div>
 
@@ -441,7 +432,7 @@ const submit = async () => {
             :disabled="submitting"
             @click="close"
           >
-            Cancelar
+            {{ t('finanzas.common.cancel') }}
           </button>
           <button
             type="button"
@@ -450,7 +441,7 @@ const submit = async () => {
             @click="submit"
           >
             <UiLoadingDots v-if="submitting" size="8px" color="currentColor" />
-            <template v-else>Actualizar saldo</template>
+            <template v-else>{{ t('finanzas.contabilidad.updateBalance') }}</template>
           </button>
         </div>
       </div>
