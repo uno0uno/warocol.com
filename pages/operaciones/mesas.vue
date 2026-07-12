@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
@@ -64,11 +64,11 @@ const tables = computed(() => tablesData.value?.data ?? [])
 const searchTerm = ref('')
 const statusFilter = ref('')
 
-const statusOptions = [
-  { value: 'free', label: 'Libre' },
-  { value: 'open', label: 'Ocupada' },
-  { value: 'bill_requested', label: 'Pidiendo cuenta' },
-]
+const statusOptions = computed(() => [
+  { value: 'free', label: t('pos.floor.free') },
+  { value: 'open', label: t('pos.floor.occupied') },
+  { value: 'bill_requested', label: t('operaciones.mesas.billRequested') },
+])
 
 const hasActiveTableFilters = computed(() =>
   !!(searchTerm.value || statusFilter.value)
@@ -118,7 +118,7 @@ const tableColumns = computed(() => {
   if (businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled) {
     cols.push({ key: 'qr', title: 'QR' })
   }
-  cols.push({ key: 'status', title: 'Estado' })
+  cols.push({ key: 'status', title: t('menu.common.estado') })
   cols.push({ key: 'actions', title: '' })
   return cols
 })
@@ -173,9 +173,9 @@ const isTableDragDisabled = computed(() =>
 
 const tableDragDisabledReason = computed(() => {
   if (hasActiveTableFilters.value) return t('operaciones.mesas.reorderHint')
-  if (activeRegularTables.value.length < 2) return `Necesitas al menos 2 ${pluralLower.value} activas`
+  if (activeRegularTables.value.length < 2) return t('operaciones.mesas.needTwoTables', { tables: pluralLower.value })
   if (isSavingTableOrder.value) return t('operaciones.mesas.savingOrder')
-  return `Arrastra para ordenar ${pluralLower.value} en POS`
+  return t('operaciones.mesas.dragToOrder', { tables: pluralLower.value })
 })
 
 const activeTableRowClass = (index: number) =>
@@ -308,9 +308,9 @@ const confirmDelete = async () => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusLabel = (status: string) => {
-  if (status === 'open') return 'Ocupada'
-  if (status === 'bill_requested') return 'Pidiendo cuenta'
-  return 'Libre'
+  if (status === 'open') return t('pos.floor.occupied')
+  if (status === 'bill_requested') return t('operaciones.mesas.billRequested')
+  return t('pos.floor.free')
 }
 
 const badgeVariant = (status: string) => {
@@ -325,11 +325,14 @@ const activeTableQuotaMessage = computed(() => {
   const quota = activeTableQuota.value
   const metric = quota.metric
 
-  if (!metric || metric.limit === null) return quota.message
+  if (!metric || metric.limit === null) return t('operaciones.mesas.quotaFull')
 
-  const used = metric.used.toLocaleString('es-CO')
-  const limit = metric.limit.toLocaleString('es-CO')
-  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+  const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+  return t('operaciones.mesas.activeQuotaMessage', {
+    tables: pluralLower.value,
+    used: metric.used.toLocaleString(numberLocale),
+    limit: metric.limit.toLocaleString(numberLocale),
+  })
 })
 
 const showActiveTableQuotaBlocked = () => {
@@ -342,11 +345,14 @@ const activeQrQuotaMessage = computed(() => {
   const quota = activeQrQuota.value
   const metric = quota.metric
 
-  if (!metric || metric.limit === null) return quota.message
+  if (!metric || metric.limit === null) return t('operaciones.mesas.qrQuotaMessage')
 
-  const used = metric.used.toLocaleString('es-CO')
-  const limit = metric.limit.toLocaleString('es-CO')
-  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
+  const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+  return t('operaciones.mesas.activeQuotaMessage', {
+    tables: pluralLower.value,
+    used: metric.used.toLocaleString(numberLocale),
+    limit: metric.limit.toLocaleString(numberLocale),
+  })
 })
 
 const isQuotaExceededError = (err: any) => {
@@ -365,7 +371,12 @@ const quotaExceededMessageFromError = (err: any) => {
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 
   if (used !== null && limit !== null) {
-    return `Alcanzaste el límite de mesas activas de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} mesas. Revisa Mi Plan para ampliar tu cupo.`
+    const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+    return t('operaciones.mesas.activeQuotaMessage', {
+      tables: pluralLower.value,
+      used: used.toLocaleString(numberLocale),
+      limit: limit.toLocaleString(numberLocale),
+    })
   }
 
   return typeof detail === 'string' ? detail : activeTableQuotaMessage.value
@@ -400,7 +411,7 @@ const toggleTablesEnabled = async () => {
     await invalidateContextCaches()
     posStore.tablesEnabled = newState
     toast.success(
-      newState ? `Gestión de ${pluralLower.value} activada para el POS` : `Gestión de ${pluralLower.value} desactivada`,
+      newState ? t('operaciones.mesas.moduleAvailable', { tables: pluralLower.value }) : t('operaciones.mesas.moduleInactive', { tables: pluralLower.value }),
       { title: newState ? t('operaciones.mesas.moduleOn') : t('operaciones.mesas.moduleOff') }
     )
   } catch (error: any) {
@@ -499,19 +510,19 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               class="text-sm font-semibold leading-snug"
               :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-state-warning-text'"
             >
-              {{ businessProfile.tables_enabled ? `Gestión de ${pluralLower} activa` : `Gestión de ${pluralLower} desactivada` }}
+              {{ businessProfile.tables_enabled ? t('operaciones.mesas.moduleActive', { tables: pluralLower }) : t('operaciones.mesas.moduleInactive', { tables: pluralLower }) }}
             </p>
             <p
               class="text-xs mt-0.5 leading-snug"
               :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-state-warning-text/80'"
             >
-              {{ businessProfile.tables_enabled ? `El flujo de ${pluralLower} está disponible en el punto de venta` : `Actívala para usar el flujo de ${pluralLower} en el punto de venta` }}
+              {{ businessProfile.tables_enabled ? t('operaciones.mesas.moduleAvailable', { tables: pluralLower }) : t('operaciones.mesas.moduleEnableHelp', { tables: pluralLower }) }}
             </p>
           </div>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.tables_enabled ? `Desactivar gestión de ${pluralLower}` : `Activar gestión de ${pluralLower}`"
+            :aria-label="businessProfile.tables_enabled ? t('operaciones.mesas.moduleInactive', { tables: pluralLower }) : t('operaciones.mesas.moduleActive', { tables: pluralLower })"
           >
             <input
               type="checkbox"
@@ -528,17 +539,16 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              {{ `Asignar mesero por ${singularLower}` }}
+              {{ t('operaciones.mesas.assignWaiterTitle', { table: singularLower }) }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              {{ `Cada ${singularLower} puede tener un mesero por defecto. Se puede cambiar al abrir la sesión o por orden.` }}
-              El historial se preserva incluso si el miembro se elimina.
+              {{ t('operaciones.mesas.assignWaiterHelp', { table: singularLower }) }}
             </p>
           </div>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingWaiterAttribution ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.waiter_attribution_enabled ? `Desactivar asignación de meseros por ${singularLower}` : `Activar asignación de meseros por ${singularLower}`"
+            :aria-label="businessProfile.waiter_attribution_enabled ? t('operaciones.mesas.waiterAssignOff') : t('operaciones.mesas.waiterAssignOn')"
           >
             <input
               type="checkbox"
@@ -555,10 +565,10 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              Pedido por QR en mesa
+              {{ t('operaciones.mesas.qrTitle') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              Enlace estático por {{ singularLower }} para que el comensal pida desde el celular.
+              {{ t('operaciones.mesas.qrHelp', { table: singularLower }) }}
             </p>
           </div>
           <label
@@ -581,7 +591,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       <!-- Filters -->
       <UiAdvancedFiltersBar
         v-model:search="searchTerm"
-        :search-placeholder="`Buscar ${singularLower}...`"
+        :search-placeholder="t('operaciones.mesas.searchPlaceholder', { table: singularLower })"
         :show-date-range="false"
         :show-clear="hasActiveTableFilters"
         @clear="clearTableFilters"
@@ -591,31 +601,31 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             v-model="statusFilter"
             :placeholder="t('operaciones.mesas.allStatuses')"
             :options="statusOptions"
-            aria-label="Estado"
+            :aria-label="t('menu.common.estado')"
           />
         </template>
         <template #trailing>
           <button
             type="button"
             :disabled="isActiveTableQuotaBlocked"
-            :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Crear ${singularLower}`"
+            :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : t('operaciones.mesas.newTable', { table: singularLower })"
             class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
             :class="isActiveTableQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-primary' : ''"
             @click="openPanel(null)"
           >
-            <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
-            <span class="sm:hidden">+ Nueva</span>
+            <span class="hidden sm:inline">{{ t('operaciones.mesas.newTable', { table: singularLower }) }}</span>
+            <span class="sm:hidden">{{ t('operaciones.mesas.newShort') }}</span>
           </button>
         </template>
       </UiAdvancedFiltersBar>
 
       <div
         v-if="isActiveTableQuotaBlocked"
-        class="rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
+        class="flex min-w-0 items-center gap-3 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
       >
-        <p>{{ activeTableQuotaMessage }}</p>
-        <NuxtLink to="/gestion/billing/uso" class="mt-1 inline-flex font-semibold underline underline-offset-2">
-          Ver Mi Plan
+        <p class="min-w-0 flex-1 truncate" :title="activeTableQuotaMessage">{{ activeTableQuotaMessage }}</p>
+        <NuxtLink to="/gestion/billing/uso" class="inline-flex flex-shrink-0 font-semibold underline underline-offset-2">
+          {{ t('operaciones.mesas.viewPlan') }}
         </NuxtLink>
       </div>
 
@@ -629,7 +639,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               {{ plural }}
             </h2>
             <p class="mt-0.5 text-xs text-text-secondary leading-snug">
-              Arrastra el asa para ordenar cómo se verán en el POS.
+              {{ t('operaciones.mesas.dragHint') }}
             </p>
           </div>
           <p class="text-xs font-semibold text-text-tertiary">
@@ -637,20 +647,20 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               v-if="isSavingTableOrder"
               class="inline-flex min-h-7 items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-primary"
             >
-              <span>Guardando orden</span>
+              <span>{{ t('operaciones.mesas.savingOrderBusy') }}</span>
               <UiLoadingDots size="7px" color="currentColor" aria-hidden="true" />
             </span>
             <span
               v-else-if="hasActiveTableFilters"
               class="inline-flex min-h-7 items-center rounded-full border border-state-warning-border bg-state-warning-bg px-2.5 py-1 text-state-warning-text"
             >
-              Limpia filtros para reordenar
+              {{ t('operaciones.mesas.clearFiltersHint') }}
             </span>
             <span
               v-else
               class="inline-flex min-h-7 items-center rounded-full border border-status-chip-border bg-status-chip-bg px-2.5 py-1 text-status-chip-text"
             >
-              Orden guardado automáticamente
+              {{ t('operaciones.mesas.savedAutomatically') }}
             </span>
           </p>
         </div>
@@ -660,8 +670,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         </div>
 
         <div v-if="activeTables.length === 0" class="px-4 py-8 text-center">
-          <p class="text-sm font-semibold text-text-primary">{{ `No hay ${pluralLower} configuradas` }}</p>
-          <p class="mt-1 text-xs text-text-secondary">{{ `Crea tu primera ${singularLower} para empezar a gestionar el salón` }}</p>
+          <p class="text-sm font-semibold text-text-primary">{{ t('operaciones.mesas.noTables', { tables: pluralLower }) }}</p>
+          <p class="mt-1 text-xs text-text-secondary">{{ t('operaciones.mesas.createFirstTable', { table: singularLower }) }}</p>
         </div>
 
         <Draggable
@@ -728,7 +738,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               </div>
 
               <span class="hidden text-sm text-text-secondary md:block">
-                {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : '—' }}
+                {{ table.capacity ? t('operaciones.mesas.peopleCount', { count: table.capacity }) : '—' }}
               </span>
               <span
                 v-if="businessProfile?.waiter_attribution_enabled"
@@ -744,7 +754,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   v-else
                   class="inline-flex items-center rounded-md border border-border bg-surface-secondary px-2 py-0.5 text-[11px] font-semibold text-text-tertiary"
                 >
-                  Sin asignar
+                  {{ t('operaciones.mesas.unassigned') }}
                 </span>
               </span>
               <div
@@ -818,11 +828,11 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               </p>
             </div>
             <span class="hidden text-sm text-text-secondary md:block">
-              {{ table.capacity ? `${table.capacity} persona${table.capacity !== 1 ? 's' : ''}` : '—' }}
+              {{ table.capacity ? t('operaciones.mesas.peopleCount', { count: table.capacity }) : '—' }}
             </span>
             <span v-if="businessProfile?.waiter_attribution_enabled" class="hidden min-w-0 md:block">
               <span v-if="table.assigned_member_name" class="inline-flex max-w-full items-center gap-1.5 truncate rounded-md border border-status-chip-border bg-status-chip-bg px-2 py-0.5 text-[11px] font-semibold text-status-chip-text">{{ table.assigned_member_name }}</span>
-              <span v-else class="inline-flex items-center rounded-md border border-border bg-surface-secondary px-2 py-0.5 text-[11px] font-semibold text-text-tertiary">Sin asignar</span>
+              <span v-else class="inline-flex items-center rounded-md border border-border bg-surface-secondary px-2 py-0.5 text-[11px] font-semibold text-text-tertiary">{{ t('operaciones.mesas.unassigned') }}</span>
             </span>
             <div v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled" class="hidden md:block">
               <MesasTableQrControls
