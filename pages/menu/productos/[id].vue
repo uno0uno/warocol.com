@@ -17,25 +17,24 @@
           </div>
           <div>
             <h2 class="text-lg font-semibold text-text-primary">
-              {{ productData.data.name }} — venta libre
+              {{ productData.data.name }} — {{ t('menu.productos.openSale') }}
             </h2>
             <p class="text-sm text-text-secondary mt-1">
-              Este producto es el contenedor del POS para cobrar montos que no están en el menú.
-              No tiene categoría ni precio fijo de catálogo; el cajero define el valor al vender.
+              {{ t('menu.productos.openSaleDescription') }}
             </p>
           </div>
         </div>
         <ul class="text-sm text-text-secondary space-y-1 list-disc list-inside">
-          <li>Activa o desactiva la función en <strong class="text-text-primary">Operaciones → Personalizar</strong>.</li>
-          <li>No aparece en la grilla del POS como producto normal.</li>
-          <li>Los toggles de domicilios, QR en mesa y receta no aplican aquí.</li>
+          <li>{{ t('menu.productos.openSaleToggleHelp') }}</li>
+          <li>{{ t('menu.productos.openSaleGridHelp') }}</li>
+          <li>{{ t('menu.productos.openSaleUnavailableHelp') }}</li>
         </ul>
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
           <UiButton type="button" variant="default" class="flex-1 bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring" @click="goToOpenSaleSettings">
-            Ir a Personalizar
+            {{ t('menu.productos.goToCustomize') }}
           </UiButton>
           <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" @click="router.push('/menu/productos')">
-            Volver al catálogo
+            {{ t('menu.productos.backToCatalog') }}
           </UiButton>
         </div>
       </div>
@@ -46,11 +45,11 @@
       <div class="xl:col-span-2 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
           <!-- Información Básica -->
-          <UiFormSection title="Datos del producto">
+          <UiFormSection :title="t('menu.productos.detailTitle')">
             <template #badge>
               <UiStatusBadge
                 v-if="isResaleProduct"
-                value="Reventa"
+                :value="t('menu.common.reventa')"
                 format="text"
                 variant="primary"
                 size="sm"
@@ -62,39 +61,39 @@
                 <div class="space-y-4 min-w-0">
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Nombre *
+                      {{ t('menu.productos.nameRequired') }}
                     </label>
                     <input
                       v-model="form.name"
                       type="text"
                       required
                       class="input-base w-full px-4 py-2"
-                      placeholder="Ej. hamburguesa clásica"
+                      :placeholder="t('menu.productos.namePlaceholder')"
                     />
                   </div>
 
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                    {{ t('menu.productos.description') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                     </label>
                     <textarea
                       v-model="form.description"
                       rows="3"
                       class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem] sm:min-h-[6.5rem]"
-                      placeholder="Breve descripción para el menú"
+                      :placeholder="t('menu.productos.descriptionPlaceholder')"
                     ></textarea>
                   </div>
                 </div>
 
                 <div class="flex flex-col gap-2 sm:w-[7.5rem] flex-shrink-0">
                   <label class="text-sm font-medium text-text-primary">
-                    Foto
+                    {{ t('menu.productos.photo') }}
                   </label>
                   <div class="w-[5.5rem] h-[5.5rem] sm:w-full sm:aspect-square rounded-lg border border-dashed border-border/80 bg-surface-secondary/50 overflow-hidden flex items-center justify-center">
                     <img
                       v-if="form.image_url"
                       :src="form.image_url"
-                      :alt="form.name || 'Imagen del producto'"
+                      :alt="form.name || t('menu.productos.imageAlt')"
                       class="w-full h-full object-cover"
                       loading="lazy"
                     />
@@ -108,7 +107,7 @@
                       @click="showImageModal = true"
                       class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring whitespace-nowrap"
                     >
-                      {{ form.image_url ? 'Cambiar' : 'Subir foto' }}
+                      {{ form.image_url ? t('menu.productos.changePhoto') : t('menu.productos.uploadPhoto') }}
                     </button>
                     <button
                       v-if="form.image_url"
@@ -116,7 +115,7 @@
                       @click="form.image_url = ''"
                       class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
                     >
-                      Eliminar
+                      {{ t('common.delete') }}
                     </button>
                   </div>
                 </div>
@@ -125,12 +124,12 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div :class="businessProfile?.comandas_enabled ? 'sm:col-span-2' : ''">
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Categoría *
+                    {{ t('menu.productos.categoryRequired') }}
                   </label>
                   <UiCategorySearchInput
                     :allow-create="true"
                     :initial-value="selectedCategoryName"
-                    placeholder="Buscar categoría..."
+                    :placeholder="t('menu.productos.categorySearchPlaceholder')"
                     @select="onCategorySelected"
                     @create="onCategoryCreateRequested"
                   />
@@ -139,22 +138,22 @@
                 <!-- Inherited kitchen station (read-only, comandas only) -->
                 <div v-if="businessProfile?.comandas_enabled">
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Cocina
+                    {{ t('menu.productos.kitchen') }}
                   </label>
                   <div class="flex items-center gap-2 min-h-[42px] px-3 py-2 rounded-lg bg-surface-secondary/60 border border-border/60 text-sm">
                     <template v-if="inheritedStation">
                       <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
                       <span class="font-medium text-text-primary truncate">{{ inheritedStation.name }}</span>
-                      <span class="text-text-tertiary text-xs flex-shrink-0">desde categoría</span>
+                      <span class="text-text-tertiary text-xs flex-shrink-0">{{ t('menu.productos.fromCategory') }}</span>
                     </template>
                     <template v-else>
-                      <span class="text-text-tertiary text-xs leading-snug flex-1">Sin comanda en categoría</span>
+                      <span class="text-text-tertiary text-xs leading-snug flex-1">{{ t('menu.productos.noKitchenCategory') }}</span>
                       <button
                         type="button"
                         @click="showNewStationModal = true"
                         class="min-h-[32px] px-2 py-1 text-xs font-medium rounded-md bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring flex-shrink-0"
                       >
-                        Crear estación
+                        {{ t('menu.productos.createStation') }}
                       </button>
                     </template>
                   </div>
@@ -162,7 +161,7 @@
 
                 <div v-if="!isResaleProduct">
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Preparación (min)
+                    {{ t('menu.productos.preparationTime') }}
                   </label>
                   <input
                     v-model.number="form.preparation_time"
@@ -177,11 +176,11 @@
           </UiFormSection>
 
           <!-- Precios -->
-          <UiFormSection title="Precio">
+          <UiFormSection :title="t('menu.productos.priceSection')">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Precio de Venta *
+                  {{ t('menu.productos.salePriceRequired') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -198,7 +197,7 @@
 
               <div v-if="tracksInventory || isResaleProduct">
                 <label class="block text-sm font-medium text-text-secondary mb-2">
-                  Costo real (sistema)
+                  {{ t('menu.productos.realCostSystem') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -211,16 +210,16 @@
                   />
                 </div>
                 <p v-if="showRecipeCostPreview" class="text-xs text-status-warning mt-1">
-                  Vista previa con receta actual: {{ formatCurrency(calculatedCost!) }} (se confirma al guardar)
+                  {{ t('menu.productos.recipeCostPreview', { amount: formatCurrency(calculatedCost!) }) }}
                 </p>
                 <p v-else class="text-xs text-text-tertiary mt-1">
-                  Calculado por el sistema desde receta y compras.
+                  {{ t('menu.productos.calculatedFromRecipePurchases') }}
                 </p>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Mi costo del plato
+                  {{ t('menu.productos.dishCost') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -229,11 +228,11 @@
                     :precision="0"
                     :min="0"
                     class="input-base w-full pl-8 pr-4 py-2"
-                    placeholder="Opcional"
+                    :placeholder="t('menu.productos.optional')"
                   />
                 </div>
                 <p class="text-xs text-text-tertiary mt-1">
-                  Costo operativo que tú defines; no lo cambia el sistema.
+                  {{ t('menu.productos.operationalCostHelp') }}
                 </p>
               </div>
             </div>
@@ -244,7 +243,7 @@
               class="mt-4 p-4 bg-surface-secondary rounded-lg space-y-3"
             >
               <div v-if="displayRealCost !== null && displayRealCost > 0" class="flex items-center justify-between">
-                <span class="text-sm font-medium text-text-primary">Margen real</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.realMargin') }}</span>
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-text-primary">
                     {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
@@ -260,7 +259,7 @@
                 v-if="form.costo_percibido != null && form.costo_percibido > 0"
                 class="flex items-center justify-between"
               >
-                <span class="text-sm font-medium text-text-primary">Margen operativo</span>
+                <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.operatingMargin') }}</span>
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-text-primary">
                     {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
@@ -276,8 +275,8 @@
           </UiFormSection>
 
           <!-- Categoría de Impuesto — solo visible cuando el tenant tiene impuestos activos -->
-          <UiFormSection v-if="hasTaxes" title="Impuesto">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Categoría de impuesto">
+          <UiFormSection v-if="hasTaxes" :title="t('menu.productos.taxCategory')">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" :aria-label="t('menu.productos.taxCategory')">
               <button
                 type="button"
                 @click="form.tax_category = 'standard'"
@@ -288,8 +287,8 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-sm font-semibold">Alimento / Bebida</span>
-                <span class="text-xs leading-snug">INC 8% o IVA 19%</span>
+                <span class="text-sm font-semibold">{{ t('menu.productos.foodBeverage') }}</span>
+                <span class="text-xs leading-snug">{{ t('menu.productos.incVatRates') }}</span>
               </button>
               <button
                 type="button"
@@ -301,8 +300,8 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-sm font-semibold">Licor para llevar</span>
-                <span class="text-xs leading-snug">IVA licores 5%</span>
+                <span class="text-sm font-semibold">{{ t('menu.productos.takeawayLiquor') }}</span>
+                <span class="text-xs leading-snug">{{ t('menu.productos.liquorVat') }}</span>
               </button>
               <button
                 type="button"
@@ -314,14 +313,14 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-sm font-semibold">Exento</span>
-                <span class="text-xs leading-snug">Sin impuesto</span>
+                <span class="text-sm font-semibold">{{ t('menu.productos.exempt') }}</span>
+                <span class="text-xs leading-snug">{{ t('menu.productos.noTax') }}</span>
               </button>
             </div>
           </UiFormSection>
 
           <!-- Reventa: equivalencia gr/ml + insumo vinculado (sin receta libre) -->
-          <UiFormSection v-if="isResaleProduct" title="Inventario">
+          <UiFormSection v-if="isResaleProduct" :title="t('menu.productos.inventoryPurchases')">
             <div class="space-y-4">
             <MenuProductResaleCreateForm
               v-model:unit-weight-gr="resaleUnitWeightGr"
@@ -331,7 +330,7 @@
               @clear-error="resaleWeightError = false"
             />
             <div class="p-4 rounded-xl border border-border bg-surface-secondary/40 space-y-2">
-              <p class="text-sm font-medium text-text-primary">Inventario y compras</p>
+              <p class="text-sm font-medium text-text-primary">{{ t('menu.productos.inventoryPurchases') }}</p>
               <p class="text-xs text-text-secondary">
                 {{ WAREHOUSE_COPY.resaleLinkedStockHelp }}
               </p>
@@ -362,7 +361,7 @@
             :label="inlineCatalogBusyLabel"
             :hint="inlineCatalogBusyHint"
           >
-          <UiFormSection title="Inventario">
+          <UiFormSection :title="t('menu.productos.inventoryPurchases')">
           <div class="flex items-start gap-3 p-4 bg-surface-secondary border border-border rounded-lg">
             <button
               type="button"
@@ -383,13 +382,13 @@
               />
             </button>
             <div class="flex-1">
-              <p class="text-sm font-semibold text-text-primary">Este producto controla inventario</p>
+              <p class="text-sm font-semibold text-text-primary">{{ t('menu.productos.controlsInventory') }}</p>
               <p class="text-xs text-text-secondary mt-1">
                 <template v-if="tracksInventory">
                   {{ WAREHOUSE_COPY.defineRecipeInventoryHelp }}
                 </template>
                 <template v-else>
-                  No se descontará nada del inventario al venderlo. Útil para servicios, propinas, promos o productos sin trazabilidad de costo.
+                  {{ t('menu.productos.noInventoryOnSale') }}
                 </template>
               </p>
             </div>
@@ -400,9 +399,9 @@
             v-if="canConvertToResale && !showConvertResalePanel"
             class="mt-4 p-4 rounded-xl border border-primary/25 bg-primary/5"
           >
-            <p class="text-sm font-medium text-text-primary">¿Se vende tal cual (gaseosa, snack)?</p>
+            <p class="text-sm font-medium text-text-primary">{{ t('menu.productos.directSaleQuestion') }}</p>
             <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-              Actívalo como venta directa: el sistema creará el artículo de bodega vinculado y descontará 1 und por venta.
+              {{ t('menu.productos.directSaleDescription') }}
             </p>
             <UiButton
               type="button"
@@ -411,7 +410,7 @@
               class="mt-3 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               @click="openConvertResalePanel"
             >
-              Activar como venta directa (reventa)
+              {{ t('menu.productos.activateResale') }}
             </UiButton>
           </div>
 
@@ -420,9 +419,9 @@
             class="mt-4 p-4 rounded-xl border border-border bg-surface-secondary/40 space-y-4"
           >
             <div>
-              <h4 class="text-sm font-semibold text-text-primary">Convertir a venta directa</h4>
+              <h4 class="text-sm font-semibold text-text-primary">{{ t('menu.productos.convertDirectSale') }}</h4>
               <p class="text-xs text-text-secondary mt-1">
-                Esta acción no se puede deshacer desde aquí. El producto pasará a reventa y dejará de admitir modificadores.
+                {{ t('menu.productos.convertDirectSaleHelp') }}
               </p>
             </div>
             <MenuProductResaleCreateForm
@@ -443,7 +442,7 @@
                 @click="confirmConvertToResale"
               >
                 <Icon v-if="isConvertingToResale" name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-                {{ isConvertingToResale ? 'Convirtiendo...' : 'Confirmar conversión' }}
+                {{ isConvertingToResale ? t('menu.productos.converting') : t('menu.productos.confirmConversion') }}
               </UiButton>
               <UiButton
                 type="button"
@@ -452,7 +451,7 @@
                 :disabled="isConvertingToResale"
                 @click="cancelConvertResalePanel"
               >
-                Cancelar
+                {{ t('common.cancel') }}
               </UiButton>
             </div>
           </div>
@@ -460,14 +459,14 @@
 
           <!-- Recetas Base (Opcional) -->
           <template v-if="tracksInventory">
-          <UiFormSection title="Recetas base">
+          <UiFormSection :title="t('menu.productos.baseRecipes')">
             <template #actions>
               <button
                 type="button"
                 @click="addRecipeBase"
                 class="min-h-[32px] px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
               >
-                + Agregar
+                + {{ t('common.add') }}
               </button>
             </template>
             <p v-if="duplicateRecipeBaseError" class="text-sm text-destructive flex items-center gap-1 mb-3">
@@ -488,9 +487,9 @@
                       v-model="link.recipe_base_id"
                       class="input-base flex-1 min-h-[44px] px-3 py-2 text-sm"
                       @change="onRecipeBaseChange"
-                      :aria-label="`Receta base ${index + 1}`"
+                      :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                     >
-                      <option value="">Seleccionar receta base...</option>
+                      <option value="">{{ t('menu.productos.selectBaseRecipe') }}</option>
                       <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
                         {{ recipe.name }}
                       </option>
@@ -501,10 +500,10 @@
                         :min="0"
                         :precision="6"
                         class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
-                        :aria-label="`Cantidad de la receta ${index + 1}`"
-                        :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
+                        :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
+                        :title="t('menu.productos.recipeQuantityHelp')"
                       />
-                      <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
+                      <span class="text-xs text-text-secondary whitespace-nowrap">{{ t('menu.productos.recipeUnit') }}</span>
                     </div>
                   </div>
 
@@ -526,7 +525,7 @@
                   type="button"
                   @click="removeRecipeBase(index)"
                   class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
-                  :aria-label="`Eliminar receta base ${index + 1}`"
+                  :aria-label="t('menu.productos.removeRecipe', { index: index + 1 })"
                 >
                   <Icon name="heroicons:trash" class="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -535,8 +534,8 @@
 
             <!-- Empty state -->
             <div v-else class="text-center py-5 text-text-secondary border border-dashed border-border/80 rounded-lg">
-              <p class="text-sm">Sin recetas base</p>
-              <p class="text-xs mt-1">Usa + Agregar para vincular una</p>
+              <p class="text-sm">{{ t('menu.productos.noBaseRecipes') }}</p>
+              <p class="text-xs mt-1">{{ t('menu.productos.linkBaseRecipe') }}</p>
             </div>
           </UiFormSection>
 
@@ -550,7 +549,7 @@
 
             <!-- Lista de ingredientes -->
             <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
-              <p class="text-sm font-medium">Sin líneas adicionales</p>
+              <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
               <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
             </div>
 
@@ -575,7 +574,7 @@
                       v-model="ingredient.quantity"
                       :min="0.01"
                       :precision="6"
-                      placeholder="Cantidad"
+                      :placeholder="t('menu.productos.quantity')"
                       required
                       class="input-base w-full px-3 py-2 text-sm"
                     />
@@ -624,14 +623,14 @@
               @click="addIngredient"
             >
               <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
-              Agregar línea
+              {{ t('menu.recetas.form.addLine') }}
             </UiButton>
           </UiFormSection>
           </template>
           </MenuCatalogInlineCreateBusyOverlay>
 
           <!-- Configuración -->
-          <UiFormSection title="Configuración">
+          <UiFormSection :title="t('menu.productos.configuration')">
             <div class="space-y-4">
               <!-- REMOVED: Controla Stock - ALL products now automatically control inventory -->
 
@@ -644,10 +643,10 @@
                 />
                 <div>
                   <label for="is_available" class="text-sm font-medium text-text-primary block">
-                    Disponible
+                    {{ t('menu.productos.available') }}
                   </label>
                   <p class="text-xs text-text-secondary mt-1">
-                    El producto aparece en el menú y se puede vender
+                    {{ t('menu.productos.availableHelp') }}
                   </p>
                 </div>
               </div>
@@ -661,10 +660,10 @@
                 />
                 <div>
                   <label for="is_available_online" class="text-sm font-medium text-text-primary block">
-                    Disponible para domicilios
+                    {{ t('menu.productos.onlineAvailable') }}
                   </label>
                   <p class="text-xs text-text-secondary mt-1">
-                    El producto aparece en el menú de pedidos online (delivery/pickup)
+                    {{ t('menu.productos.onlineHelp') }}
                   </p>
                 </div>
               </div>
@@ -678,10 +677,10 @@
                 />
                 <div>
                   <label for="is_available_table_qr" class="text-sm font-medium text-text-primary block">
-                    Pedido en mesa (QR)
+                    {{ t('menu.productos.tableQr') }}
                   </label>
                   <p class="text-xs text-text-secondary mt-1">
-                    Independiente de domicilios. Solo aparece en el menú QR de la mesa.
+                    {{ t('menu.productos.tableQrHelp') }}
                   </p>
                 </div>
               </div>
@@ -695,30 +694,30 @@
       <div class="xl:col-span-1 space-y-6">
         <!-- Summary Card -->
         <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('menu.productos.summary') }}</h3>
 
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Precio:</span>
+              <span class="text-text-secondary">{{ t('menu.productos.priceLabel') }}</span>
               <span class="font-semibold text-text-primary">{{ formatCurrency(form.price) }}</span>
             </div>
 
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Costo real:</span>
+              <span class="text-text-secondary">{{ t('menu.productos.realCostLabel') }}</span>
               <span class="font-semibold text-text-primary">
                 {{ displayRealCost === null ? '—' : formatCurrency(displayRealCost) }}
               </span>
             </div>
 
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Mi costo:</span>
+              <span class="text-text-secondary">{{ t('menu.productos.myCostSummary') }}</span>
               <span class="font-semibold text-text-primary">
                 {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
               </span>
             </div>
 
             <div class="flex justify-between text-sm pt-3 border-t border-border">
-              <span class="text-text-secondary">Margen real:</span>
+              <span class="text-text-secondary">{{ t('menu.productos.realMarginLabel') }}</span>
               <span class="font-semibold text-primary">
                 {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
               </span>
@@ -751,7 +750,7 @@
             >
               <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
               <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-              {{ isSubmitting ? 'Guardando...' : 'Actualizar Producto' }}
+              {{ isSubmitting ? t('menu.productos.saving') : t('menu.productos.updateProduct') }}
             </UiButton>
 
             <UiButton
@@ -762,7 +761,7 @@
               @click="cancel"
               :disabled="isSubmitting"
             >
-              Cancelar
+              {{ t('common.cancel') }}
             </UiButton>
 
             <UiButton
@@ -774,7 +773,7 @@
               :disabled="isSubmitting"
             >
               <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
-              Eliminar Producto
+              {{ t('menu.productos.deleteProduct') }}
             </UiButton>
           </div>
         </div>
@@ -782,18 +781,15 @@
     </form>
 
     <!-- Delete confirmation modal -->
-    <UiModal v-model="showDeleteModal" title="Eliminar producto">
+    <UiModal v-model="showDeleteModal" :title="t('menu.productos.deleteModalTitle')">
       <div class="p-6">
         <div class="flex items-start gap-4">
           <div class="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
             <Icon name="heroicons:trash" class="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <p class="text-sm text-text-primary font-medium mb-1">¿Eliminar este producto?</p>
-            <p class="text-sm text-text-secondary">
-              Si tiene ventas registradas, se archivará: dejará de venderse en POS y domicilios, pero se conserva el historial.
-              Si nunca se vendió, se elimina permanentemente.
-            </p>
+            <p class="text-sm text-text-primary font-medium mb-1">{{ t('menu.productos.deleteQuestion') }}</p>
+            <p class="text-sm text-text-secondary">{{ t('menu.productos.deleteDescription') }}</p>
           </div>
         </div>
         <div v-if="deleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
@@ -801,11 +797,11 @@
         </div>
         <div class="flex gap-3 mt-6">
           <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" @click="showDeleteModal = false" :disabled="isSubmitting">
-            Cancelar
+            {{ t('common.cancel') }}
           </UiButton>
           <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" @click="confirmDelete" :disabled="isSubmitting">
             <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
-            <span>{{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}</span>
+            <span>{{ isSubmitting ? t('menu.productos.deletingProduct') : t('menu.productos.confirmDeleteProduct') }}</span>
           </UiButton>
         </div>
       </div>
@@ -843,7 +839,6 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -869,8 +864,9 @@ definePageMeta({
   },
   middleware: defineNuxtRouteMiddleware((to, from) => {
     const backButton = useState('backButton')
+    const { $i18n } = useNuxtApp()
     backButton.value = {
-      label: 'Volver a Productos',
+      label: ($i18n as { t: (key: string) => string }).t('menu.productos.backToCatalog'),
       action: () => navigateTo('/menu/productos')
     }
   }),
@@ -881,6 +877,8 @@ const route = useRoute()
 const router = useRouter()
 const cache = useQueryCache()
 const toast = useToast()
+const { t, locale } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
 const { currentTenant, businessProfile } = useTenantReactive()
 
 // Tax config — only show selector when tenant has taxes enabled
@@ -1147,8 +1145,8 @@ const showNewStationModal = ref(false)
 
 function onStationCreated(station: { id: string; name: string }) {
   toast.success(
-    `Estación "${station.name}" creada. Asígnala a una categoría desde Operaciones › Comandas.`,
-    { title: 'Estación creada' }
+    `${t('menu.productos.stationCreated')}: ${station.name}`,
+    { title: t('menu.productos.stationCreated') }
   )
   cache.invalidateQueries({ key: ['tenant', 'stations', currentTenant.value?.id] })
   cache.invalidateQueries({ key: ['tenant', 'category-stations', currentTenant.value?.id] })
@@ -1390,10 +1388,10 @@ async function confirmConvertToResale() {
     cancelConvertResalePanel()
     cache.invalidateQueries()
     await refresh()
-    toast.success('Producto convertido a venta directa', { title: 'Reventa activada' })
+    toast.success(t('menu.productos.conversionSuccess'), { title: t('menu.productos.resaleActivated') })
   } catch (err: unknown) {
     const e = err as { data?: { detail?: string }; message?: string }
-    convertResaleError.value = e?.data?.detail ?? e?.message ?? 'No se pudo convertir el producto'
+    convertResaleError.value = e?.data?.detail ?? e?.message ?? t('menu.productos.conversionError')
   } finally {
     isConvertingToResale.value = false
   }
@@ -1479,12 +1477,12 @@ const handleSubmit = async () => {
     const seenIds = new Set<string>()
     for (const link of validLinks) {
       if (seenIds.has(link.recipe_base_id)) {
-        duplicateRecipeBaseError.value = 'No puedes agregar la misma receta base más de una vez.'
+        duplicateRecipeBaseError.value = t('menu.productos.duplicateRecipeError')
         isSubmitting.value = false
         return
       }
       if (!Number.isFinite(Number(link.quantity)) || Number(link.quantity) <= 0) {
-        quantityError.value = 'La cantidad de cada receta debe ser mayor que 0.'
+        quantityError.value = t('menu.productos.recipeQuantityError')
         isSubmitting.value = false
         return
       }
@@ -1573,10 +1571,10 @@ const handleSubmit = async () => {
 
     cache.invalidateQueries()
     await refresh()
-    toast.success('Producto actualizado correctamente', { title: 'Guardado' })
+    toast.success(t('menu.productos.updatedToast'), { title: t('menu.productos.saved') })
   } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)
-    submitError.value = `Error al actualizar el producto: ${error.data?.detail || error.message}`
+    submitError.value = t('menu.productos.updateErrorDetail', { detail: error.data?.detail || error.message })
   } finally {
     isSubmitting.value = false
   }
@@ -1606,7 +1604,7 @@ const confirmDelete = async () => {
     }
   } catch (error: any) {
     console.error('❌ Error al eliminar producto:', error)
-    deleteError.value = error.data?.detail || error.message || 'Error al eliminar el producto'
+    deleteError.value = error.data?.detail || error.message || t('menu.productos.deleteError')
   } finally {
     isSubmitting.value = false
   }
@@ -1618,7 +1616,7 @@ const cancel = () => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -1626,7 +1624,9 @@ const formatCurrency = (value: number) => {
 }
 
 useHead({
-  title: computed(() => productData.value?.data ? `Editar ${productData.value.data.name} - Menú` : 'Editar Producto')
+  title: computed(() => productData.value?.data
+    ? `${t('menu.productos.editProductFor', { name: productData.value.data.name })} - ${t('menu.head.module')}`
+    : t('menu.productos.editProduct'))
 })
 
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
