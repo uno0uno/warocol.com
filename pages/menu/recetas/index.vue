@@ -43,10 +43,10 @@
           <template #header-is_active>
             <UiTableHeaderFilter
               v-model="statusFilter"
-              title="Estado"
+              :title="t('menu.common.estado')"
               filter-type="select"
               :options="statusHeaderOptions"
-              all-label="Todos"
+              :all-label="t('menu.common.todos')"
               align="center"
             />
           </template>
@@ -75,7 +75,7 @@
           <template #cell-is_active="{ row }">
             <div class="flex justify-center">
               <UiStatusBadge
-                :value="row.is_active ? 'Activa' : 'Inactiva'"
+                :value="row.is_active ? t('menu.common.active') : t('menu.common.inactive')"
                 format="text"
                 :variant="row.is_active ? 'success' : 'secondary'"
                 size="sm"
@@ -87,7 +87,8 @@
             <div class="flex justify-center">
               <button
                 class="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-text-secondary transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
-                title="Editar receta"
+                :title="t('menu.recetas.editRecipe')"
+                :aria-label="t('menu.recetas.editRecipe')"
                 @click="$router.push(`/menu/recetas/${row.id}`)"
               >
                 <Icon name="heroicons:pencil-square" class="h-4 w-4" />
@@ -107,7 +108,7 @@
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.ingredientes.length }} {{ WAREHOUSE_COPY.recipeLinesCountSuffix }} · {{ formatCurrency(item.costo_total) }}</p>
               </div>
               <UiStatusBadge
-                :value="item.is_active ? 'Activa' : 'Inactiva'"
+                :value="item.is_active ? t('menu.common.active') : t('menu.common.inactive')"
                 format="text"
                 :variant="item.is_active ? 'success' : 'secondary'"
                 size="sm"
@@ -126,7 +127,7 @@
                 'relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
-              Anterior
+              {{ t('menu.recetas.previous') }}
             </button>
             <button
               @click="nextPage"
@@ -135,7 +136,7 @@
                 'ml-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
-              Siguiente
+              {{ t('menu.recetas.next') }}
             </button>
           </div>
           <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-end">
@@ -147,7 +148,7 @@
                     'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                     canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
                   ]">
-                  <span class="sr-only">Anterior</span>
+                  <span class="sr-only">{{ t('menu.recetas.previous') }}</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
@@ -160,7 +161,7 @@
                     'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                     canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
                   ]">
-                  <span class="sr-only">Siguiente</span>
+                  <span class="sr-only">{{ t('menu.recetas.next') }}</span>
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                   </svg>
@@ -176,7 +177,7 @@
           class="hidden md:block bg-surface border border-border rounded-lg p-4 -mt-3"
         >
           <h4 class="text-sm font-semibold text-text-primary mb-3">
-            Composición de {{ recipe.producto_name }}
+            {{ t('menu.recetas.compositionOf', { name: recipe.producto_name }) }}
           </h4>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -186,16 +187,16 @@
                     {{ WAREHOUSE_COPY.recipeCompositionTableHeader }}
                   </th>
                   <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                    Control Stock
+                    {{ t('menu.recetas.stockControl') }}
                   </th>
                   <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
-                    Cantidad
+                    {{ t('menu.recetas.quantity') }}
                   </th>
                   <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
-                    Costo Unitario
+                    {{ t('menu.recetas.unitCost') }}
                   </th>
                   <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
-                    Costo Total
+                    {{ t('menu.recetas.totalCost') }}
                   </th>
                 </tr>
               </thead>
@@ -211,14 +212,14 @@
                   <td class="py-3 px-2 text-center">
                     <UiStatusBadge
                       v-if="ing.controla_inventario"
-                      value="Sí"
+                      :value="t('common.yes')"
                       format="text"
                       variant="success"
                       size="sm"
                     />
                     <UiStatusBadge
                       v-else
-                      value="No"
+                      :value="t('common.no')"
                       format="text"
                       variant="secondary"
                       size="sm"
@@ -238,7 +239,7 @@
               <tfoot>
                 <tr class="border-t-2 border-border font-semibold">
                   <td colspan="4" class="py-3 px-2 text-sm text-text-primary text-right">
-                    Total:
+                    {{ t('menu.recetas.total') }}
                   </td>
                   <td class="py-3 px-2 text-sm text-text-primary text-right">
                     {{ formatCurrency(recipe.costo_total) }}
@@ -260,6 +261,7 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity, normalizeDomainNumber } from '~/utils/domainNumberFormat'
 const { t } = useI18n()
 const WAREHOUSE_COPY = useWarehouseCopy()
+const { formatCurrency } = useFormatters()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -282,8 +284,8 @@ const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 const statusFilter = ref<'active' | 'inactive' | ''>('')
 const statusHeaderOptions = [
-  { label: 'Activa', value: 'active' },
-  { label: 'Inactiva', value: 'inactive' },
+  { label: t('menu.common.active'), value: 'active' },
+  { label: t('menu.common.inactive'), value: 'inactive' },
 ]
 const isActiveFilter = computed(() => {
   if (statusFilter.value === 'active') return true
@@ -426,14 +428,6 @@ const recetasTableColumns = [
     align: 'center'
   }
 ]
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
 
 const formatQuantity = (value: number) => formatDomainQuantity(value, 6)
 

@@ -47,17 +47,17 @@
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <template v-if="initialName.trim()">
-                    “{{ initialName.trim() }}” — bodega / recetas
+                    {{ t('abastecimiento.glossary.typeChooserNamedSubtitle', { name: initialName.trim() }) }}
                   </template>
                   <template v-else>
-                    Alimento, insumo o servicio para recetas y costos
+                    {{ t('abastecimiento.glossary.typeChooserDefaultSubtitle') }}
                   </template>
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Cerrar"
+              :aria-label="t('common.close')"
               class="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
               @click="onCancel"
             >
@@ -76,7 +76,7 @@
           <div class="flex flex-col gap-3" role="group" :aria-label="WAREHOUSE_COPY.typeChooserGroupAria">
             <UiSelectionOptionCard
               :title="WAREHOUSE_COPY.typeFood"
-              description="Peso o volumen · gr, ml, kg"
+              :description="WAREHOUSE_COPY.typeFoodDescription"
               :selected="selectedType === 'food'"
               @click="selectAndConfirm('food')"
             >
@@ -89,7 +89,7 @@
             </UiSelectionOptionCard>
             <UiSelectionOptionCard
               :title="WAREHOUSE_COPY.typeSupply"
-              description="Unidad fija · und (caja, paquete…)"
+              :description="WAREHOUSE_COPY.typeSupplyDescription"
               :selected="selectedType === 'supply'"
               @click="selectAndConfirm('supply')"
             >
@@ -121,7 +121,7 @@
             class="w-full min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 transition-all"
             @click="onCancel"
           >
-            Volver
+            {{ t('common.back') }}
           </button>
         </div>
       </div>
@@ -130,8 +130,10 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import type { IngredientDbType } from '@/composables/useCatalogInlineCreate'
+
+const { t } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 const props = withDefaults(
   defineProps<{

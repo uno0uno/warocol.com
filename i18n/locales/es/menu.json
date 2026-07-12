@@ -31,7 +31,9 @@
       "todos": "Todos",
       "error": "Error",
       "listo": "Listo",
-      "guardado": "Guardado"
+      "guardado": "Guardado",
+      "active": "Activa",
+      "inactive": "Inactiva"
     },
     "productos": {
       "editMode": "Modo edición",
@@ -60,7 +62,16 @@
       "emptySub": "Crea una nueva receta base para comenzar",
       "newRecipe": "+ Nueva Receta Base",
       "newShort": "+ Nueva",
-      "nameCol": "Nombre de Receta"
+      "nameCol": "Nombre de Receta",
+      "editRecipe": "Editar receta",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "compositionOf": "Composición de {name}",
+      "stockControl": "Control stock",
+      "quantity": "Cantidad",
+      "unitCost": "Costo unitario",
+      "totalCost": "Costo total",
+      "total": "Total:"
     },
     "modificadores": {
       "searchPlaceholder": "Buscar grupo o producto...",

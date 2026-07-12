@@ -31,7 +31,9 @@
       "todos": "All",
       "error": "Error",
       "listo": "Done",
-      "guardado": "Saved"
+      "guardado": "Saved",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "productos": {
       "editMode": "Edit mode",
@@ -60,7 +62,16 @@
       "emptySub": "Create a new base recipe to get started",
       "newRecipe": "+ New base recipe",
       "newShort": "+ New",
-      "nameCol": "Recipe name"
+      "nameCol": "Recipe name",
+      "editRecipe": "Edit recipe",
+      "previous": "Previous",
+      "next": "Next",
+      "compositionOf": "Composition of {name}",
+      "stockControl": "Stock control",
+      "quantity": "Quantity",
+      "unitCost": "Unit cost",
+      "totalCost": "Total cost",
+      "total": "Total:"
     },
     "modificadores": {
       "searchPlaceholder": "Search group or product...",
