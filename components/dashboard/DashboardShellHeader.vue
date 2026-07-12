@@ -3,9 +3,8 @@
     <div class="flex min-w-0 items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-2 sm:gap-4">
         <NuxtLink
-          v-if="!hideLogo"
           to="/financiero"
-          class="dashboard-header-logo hidden xl:flex h-12 w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
+          class="dashboard-header-logo hidden xl:flex h-12 w-fit min-w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
           :aria-label="t('shell.goToDashboardHome')"
         >
           <img
@@ -21,7 +20,7 @@
       <TransitionGroup
         name="header-actions"
         tag="div"
-        class="dashboard-header-actions relative flex min-w-0 max-w-full flex-1 items-center justify-end gap-1.5 overflow-x-auto md:gap-2 lg:flex-none lg:overflow-visible"
+          class="dashboard-header-actions relative flex w-fit min-w-0 max-w-full flex-shrink-0 items-center justify-end gap-1.5 overflow-x-auto md:gap-2 lg:overflow-visible"
       >
         <NotificationsNotificationBell key="notifications-bell" class="hidden lg:flex" />
 
@@ -32,18 +31,18 @@
           :title="t('shell.uploadInvoiceAi')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></svg>
-          <span class="hidden lg:inline">{{ t('shell.uploadInvoiceAi') }}</span>
+          <span class="hidden lg:inline text-base">{{ t('shell.uploadInvoiceAi') }}</span>
         </NuxtLink>
 
         <button
           key="pos-link"
           type="button"
-          class="flex flex-shrink-0 items-center gap-1 md:gap-2 h-11 bg-shell-action-bg border-2 border-shell-action-border text-shell-action-text px-2 lg:px-4 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+          class="flex flex-shrink-0 items-center gap-1 md:gap-2 h-11 bg-shell-action-bg border-2 border-shell-action-border text-shell-action-text px-2 lg:px-4 rounded-lg text-base font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
           :title="t('shell.posSale')"
           @click="$emit('navigate-pos')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-          <span class="hidden lg:inline">{{ t('shell.posSale') }}</span>
+          <span class="hidden lg:inline text-base">{{ t('shell.posSale') }}</span>
         </button>
 
         <div key="portal-actions" id="dashboard-header-actions" class="flex items-center" />
@@ -120,7 +119,6 @@ defineProps<{
   headerAction?: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void }
   isRefreshing?: boolean
   isProgressiveLoading?: boolean
-  hideLogo?: boolean
 }>()
 
 defineEmits<{
