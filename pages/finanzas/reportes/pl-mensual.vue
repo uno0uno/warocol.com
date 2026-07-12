@@ -1,6 +1,7 @@
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed } from 'vue'
+
+const { t } = useI18n({ useScope: 'global' })
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.head.plMensual') })
@@ -20,16 +21,11 @@ const month = ref<number>(
 )
 
 // ── Navigation helpers ────────────────────────────────────────────────────────
-const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-]
-
-const monthName = (m: number): string => MONTH_NAMES[m - 1] ?? ''
+const monthName = (m: number): string => t(`finanzas.pl.months.${m}`)
 
 const periodLabel = computed(() => `${monthName(month.value)} ${year.value}`)
 
-const pageTitle = computed(() => `Estado de Resultados — ${periodLabel.value}`)
+const pageTitle = computed(() => t('finanzas.pl.pageTitle', { period: periodLabel.value }))
 
 const isCurrentMonth = computed(() => {
   return year.value === tenantYear.value && month.value === tenantMonth.value
@@ -70,7 +66,7 @@ const goToNext = () => {
         <button
           type="button"
           class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-          aria-label="Mes anterior"
+          :aria-label="t('finanzas.pl.prevMonth')"
           @click="goToPrev"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -86,7 +82,7 @@ const goToNext = () => {
           type="button"
           class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="isCurrentMonth"
-          aria-label="Mes siguiente"
+          :aria-label="t('finanzas.pl.nextMonth')"
           @click="goToNext"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

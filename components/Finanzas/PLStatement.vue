@@ -1,6 +1,8 @@
 <script setup lang="ts">
-const { t } = useI18n()
 import { ref, computed } from 'vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency: formatTenantCurrency } = useFormatters()
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = withDefaults(defineProps<{
@@ -95,17 +97,9 @@ const hasPrevious = computed(() => showComparison.value && previous.value != nul
 // ── Formatters ────────────────────────────────────────────────────────────────
 const formatCurrency = (value: number): string => {
   if (value < 0) {
-    return `(${new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(Math.abs(value))})`
+    return `(${formatTenantCurrency(Math.abs(value))})`
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return formatTenantCurrency(value)
 }
 
 const formatPct = (pct: number): string => `${pct.toFixed(1)}%`
@@ -113,20 +107,15 @@ const formatPct = (pct: number): string => `${pct.toFixed(1)}%`
 const isNegative = (value: number) => value < 0
 
 // ── Month label helper ────────────────────────────────────────────────────────
-const MONTH_NAMES = [
-  t('finanzas.pl.months.1'), t('finanzas.pl.months.2'), t('finanzas.pl.months.3'), t('finanzas.pl.months.4'), t('finanzas.pl.months.5'), t('finanzas.pl.months.6'),
-  t('finanzas.pl.months.7'), t('finanzas.pl.months.8'), t('finanzas.pl.months.9'), t('finanzas.pl.months.10'), t('finanzas.pl.months.11'), t('finanzas.pl.months.12'),
-]
-
 const periodLabel = computed(() => {
-  const name = MONTH_NAMES[props.month - 1] ?? ''
+  const name = t(`finanzas.pl.months.${props.month}`)
   return `${name} ${props.year}`
 })
 
 const prevPeriodLabel = computed(() => {
   if (!previous.value) return ''
   const [y, m] = previous.value.period.split('-').map(Number)
-  return `${MONTH_NAMES[(m ?? 1) - 1] ?? ''} ${y}`
+  return `${t(`finanzas.pl.months.${m ?? 1}`)} ${y}`
 })
 </script>
 
@@ -147,8 +136,8 @@ const prevPeriodLabel = computed(() => {
     <svg class="w-12 h-12 text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
-    <p class="text-sm font-medium text-text-primary">Sin actividad registrada en este período</p>
-    <p class="text-xs text-text-secondary mt-1">No hay datos de P&amp;L para {{ periodLabel }}.</p>
+    <p class="text-sm font-medium text-text-primary">{{ t('finanzas.pl.emptyTitle') }}</p>
+    <p class="text-xs text-text-secondary mt-1">{{ t('finanzas.pl.emptyBody', { period: periodLabel }) }}</p>
   </div>
 
   <!-- ── Compact mode ─────────────────────────────────────────────────────── -->
@@ -158,7 +147,7 @@ const prevPeriodLabel = computed(() => {
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <!-- Ingresos -->
       <div class="flex flex-col gap-1 p-3 rounded-xl border border-border bg-surface">
-        <span class="text-xs font-medium text-text-secondary">Ingresos</span>
+        <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.pl.income') }}</span>
         <span
           class="text-base font-bold tabular-nums"
           :class="isNegative(current.revenue.total) ? 'text-destructive' : 'text-text-primary'"
@@ -169,7 +158,7 @@ const prevPeriodLabel = computed(() => {
 
       <!-- Margen bruto -->
       <div class="flex flex-col gap-1 p-3 rounded-xl border border-border bg-surface">
-        <span class="text-xs font-medium text-text-secondary">Margen bruto</span>
+        <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.pl.grossMargin') }}</span>
         <span
           class="text-base font-bold tabular-nums"
           :class="isNegative(current.grossMarginPct) ? 'text-destructive' : 'text-text-primary'"
@@ -191,7 +180,7 @@ const prevPeriodLabel = computed(() => {
 
       <!-- Ingreso neto -->
       <div class="flex flex-col gap-1 p-3 rounded-xl border border-border bg-surface">
-        <span class="text-xs font-medium text-text-secondary">Ingreso neto</span>
+        <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.pl.netIncome') }}</span>
         <span
           class="text-base font-bold tabular-nums"
           :class="isNegative(current.netIncome) ? 'text-destructive' : 'text-text-primary'"
@@ -204,9 +193,9 @@ const prevPeriodLabel = computed(() => {
     <!-- Prime Cost card -->
     <div class="flex flex-col gap-2 p-4 rounded-xl border border-border bg-surface">
       <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Prime Cost</span>
+        <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.pl.primeCost') }}</span>
         <UiStatusBadge
-          :value="current.primeCost.status === 'ok' ? 'OK' : 'Atención'"
+          :value="current.primeCost.status === 'ok' ? t('finanzas.pl.ok') : t('finanzas.pl.attention')"
           format="text"
           :variant="current.primeCost.status === 'ok' ? 'success' : 'warning'"
           size="sm"
@@ -214,17 +203,17 @@ const prevPeriodLabel = computed(() => {
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm">
         <div class="flex items-center gap-1">
-          <span class="text-text-secondary">Alimentos:</span>
+          <span class="text-text-secondary">{{ t('finanzas.pl.foodLabel') }}</span>
           <span class="font-semibold text-text-primary tabular-nums">{{ formatPct(current.primeCost.foodCostPct) }}</span>
         </div>
         <div class="w-px h-4 bg-border" aria-hidden="true" />
         <div class="flex items-center gap-1">
-          <span class="text-text-secondary">Nómina:</span>
+          <span class="text-text-secondary">{{ t('finanzas.pl.payrollLabel') }}</span>
           <span class="font-semibold text-text-primary tabular-nums">{{ formatPct(current.primeCost.laborPct) }}</span>
         </div>
         <div class="w-px h-4 bg-border" aria-hidden="true" />
         <div class="flex items-center gap-1">
-          <span class="text-text-secondary">Total:</span>
+          <span class="text-text-secondary">{{ t('finanzas.pl.total') }}</span>
           <span
             class="font-bold tabular-nums"
             :class="current.primeCost.status === 'ok' ? 'text-state-success-text' : 'text-state-warning-text'"
@@ -234,7 +223,7 @@ const prevPeriodLabel = computed(() => {
         </div>
       </div>
       <p class="text-xs text-text-secondary">
-        Benchmark: {{ formatPct(current.primeCost.benchmarkPct) }}
+        {{ t('finanzas.pl.benchmark') }}: {{ formatPct(current.primeCost.benchmarkPct) }}
       </p>
     </div>
 
@@ -242,9 +231,9 @@ const prevPeriodLabel = computed(() => {
     <NuxtLink
       :to="`/finanzas/reportes/pl-mensual?year=${year}&month=${month}`"
       class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
-      aria-label="Ver reporte completo de P&amp;L"
+      :aria-label="t('finanzas.pl.viewFullReportAria')"
     >
-      Ver reporte completo
+      {{ t('finanzas.pl.viewFullReport') }}
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
       </svg>
@@ -258,7 +247,7 @@ const prevPeriodLabel = computed(() => {
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h2 class="text-sm font-semibold text-text-primary">
-          Estado de Resultados
+          {{ t('finanzas.pl.title') }}
           <span class="font-normal text-text-secondary ml-1">{{ periodLabel }}</span>
         </h2>
         <p v-if="asyncStatus === 'loading'" class="text-xs text-text-secondary mt-0.5 flex items-center gap-1">
@@ -266,7 +255,7 @@ const prevPeriodLabel = computed(() => {
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          Actualizando...
+          {{ t('finanzas.pl.updating') }}
         </p>
       </div>
 
@@ -279,10 +268,10 @@ const prevPeriodLabel = computed(() => {
           ? 'border-primary bg-primary text-white'
           : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
         :aria-pressed="showComparison"
-        :aria-label="showComparison ? 'Ocultar mes anterior' : t('finanzas.pl.comparePrev')"
+        :aria-label="showComparison ? t('finanzas.pl.hidePrevious') : t('finanzas.pl.comparePrev')"
         @click="showComparison = !showComparison"
       >
-        Comparar mes anterior
+        {{ t('finanzas.pl.comparePrev') }}
       </button>
     </div>
 
@@ -291,7 +280,7 @@ const prevPeriodLabel = computed(() => {
 
       <!-- Column headers (when comparing) -->
       <div v-if="hasPrevious" class="flex items-center bg-surface-secondary/60 border-b border-border px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-wider">
-        <span class="flex-1">Concepto</span>
+        <span class="flex-1">{{ t('finanzas.pl.concept') }}</span>
         <span class="w-36 text-right">{{ periodLabel }}</span>
         <span class="w-36 text-right">{{ prevPeriodLabel }}</span>
       </div>
@@ -299,12 +288,12 @@ const prevPeriodLabel = computed(() => {
       <!-- ── Revenue ──────────────────────────────────────────────────────── -->
       <div class="border-b border-border">
         <div class="flex items-center gap-2 px-4 py-2 bg-surface-secondary/60">
-          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">Ingresos</span>
+          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">{{ t('finanzas.pl.income') }}</span>
         </div>
         <div class="divide-y divide-border/60">
           <!-- Ventas alimentos/bebidas -->
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Ventas alimentos / bebidas</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.foodBevSales') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.revenue.foodBeverageSales) ? 'text-destructive' : 'text-text-primary'"
@@ -320,7 +309,7 @@ const prevPeriodLabel = computed(() => {
           </div>
           <!-- Total ingresos -->
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
-            <span class="flex-1 text-text-primary">Total ingresos</span>
+            <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalIncome') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.revenue.total) ? 'text-destructive' : 'text-text-primary'"
@@ -340,11 +329,11 @@ const prevPeriodLabel = computed(() => {
       <!-- ── COGS ─────────────────────────────────────────────────────────── -->
       <div class="border-b border-border">
         <div class="flex items-center gap-2 px-4 py-2 bg-surface-secondary/60">
-          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">COGS — Costo de ventas</span>
+          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">{{ t('finanzas.pl.cogs') }}</span>
         </div>
         <div class="divide-y divide-border/60">
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Costo de alimentos</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.foodCost') }}</span>
             <span class="w-36 text-right tabular-nums text-destructive">
               {{ formatCurrency(current.cogs.foodCost) }}
             </span>
@@ -356,7 +345,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
-            <span class="flex-1 text-text-primary">Total COGS</span>
+            <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalCogs') }}</span>
             <span class="w-36 text-right tabular-nums text-destructive">
               {{ formatCurrency(current.cogs.total) }}
             </span>
@@ -373,7 +362,7 @@ const prevPeriodLabel = computed(() => {
       <!-- ── Utilidad bruta ────────────────────────────────────────────────── -->
       <div class="border-b border-border">
         <div class="flex items-center px-4 py-3 text-sm font-bold bg-surface-secondary/40">
-          <span class="flex-1 text-text-primary">Utilidad bruta</span>
+          <span class="flex-1 text-text-primary">{{ t('finanzas.pl.grossProfit') }}</span>
           <div class="w-36 flex flex-col items-end">
             <span
               class="tabular-nums"
@@ -393,11 +382,11 @@ const prevPeriodLabel = computed(() => {
       <!-- ── Gastos operativos ──────────────────────────────────────────────── -->
       <div class="border-b border-border">
         <div class="flex items-center gap-2 px-4 py-2 bg-surface-secondary/60">
-          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">Gastos operativos</span>
+          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">{{ t('finanzas.pl.opex') }}</span>
         </div>
         <div class="divide-y divide-border/60">
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Nómina</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.payroll') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.payroll) ? 'text-destructive' : 'text-text-primary'"
@@ -409,7 +398,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Arriendo</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.rent') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.rent) ? 'text-destructive' : 'text-text-primary'"
@@ -421,7 +410,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Servicios públicos</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.utilities') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.utilities) ? 'text-destructive' : 'text-text-primary'"
@@ -433,7 +422,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Mantenimiento</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.maintenance') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.maintenance) ? 'text-destructive' : 'text-text-primary'"
@@ -445,7 +434,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Otros</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.other') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.other) ? 'text-destructive' : 'text-text-primary'"
@@ -457,7 +446,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
-            <span class="flex-1 text-text-primary">Total gastos operativos</span>
+            <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalOpex') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.operatingExpenses.total) ? 'text-destructive' : 'text-text-primary'"
@@ -494,11 +483,11 @@ const prevPeriodLabel = computed(() => {
       <!-- ── Provisiones ────────────────────────────────────────────────────── -->
       <div class="border-b border-border">
         <div class="flex items-center gap-2 px-4 py-2 bg-surface-secondary/60">
-          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">Provisiones</span>
+          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">{{ t('finanzas.pl.provisions') }}</span>
         </div>
         <div class="divide-y divide-border/60">
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Cesantías</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.cesantias') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.provisions.cesantias) ? 'text-destructive' : 'text-text-primary'"
@@ -510,7 +499,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Prima de servicios</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.prima') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.provisions.prima) ? 'text-destructive' : 'text-text-primary'"
@@ -522,7 +511,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Vacaciones</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.vacaciones') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.provisions.vacaciones) ? 'text-destructive' : 'text-text-primary'"
@@ -534,7 +523,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
-            <span class="flex-1 text-text-secondary">Intereses cesantías</span>
+            <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.intCesantias') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.provisions.interesesCesantias) ? 'text-destructive' : 'text-text-primary'"
@@ -546,7 +535,7 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
-            <span class="flex-1 text-text-primary">Total provisiones</span>
+            <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalProvisions') }}</span>
             <span
               class="w-36 text-right tabular-nums"
               :class="isNegative(current.provisions.total) ? 'text-destructive' : 'text-text-primary'"
@@ -562,7 +551,7 @@ const prevPeriodLabel = computed(() => {
 
       <!-- ── Ingreso neto ───────────────────────────────────────────────────── -->
       <div class="flex items-center px-4 py-4 bg-surface-secondary/60 border-b border-border">
-        <span class="flex-1 text-base font-bold text-text-primary">Ingreso neto</span>
+        <span class="flex-1 text-base font-bold text-text-primary">{{ t('finanzas.pl.netIncome') }}</span>
         <span
           class="w-36 text-right tabular-nums text-base font-bold"
           :class="isNegative(current.netIncome) ? 'text-destructive' : 'text-state-success-text'"
@@ -581,9 +570,9 @@ const prevPeriodLabel = computed(() => {
       <!-- ── Prime Cost ─────────────────────────────────────────────────────── -->
       <div class="px-4 py-4 flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">Prime Cost</span>
+          <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">{{ t('finanzas.pl.primeCost') }}</span>
           <UiStatusBadge
-            :value="current.primeCost.status === 'ok' ? 'OK' : 'Atención'"
+            :value="current.primeCost.status === 'ok' ? t('finanzas.pl.ok') : t('finanzas.pl.attention')"
             format="text"
             :variant="current.primeCost.status === 'ok' ? 'success' : 'warning'"
             size="sm"
@@ -591,17 +580,17 @@ const prevPeriodLabel = computed(() => {
         </div>
         <div class="flex flex-wrap items-center gap-4 text-sm">
           <div class="flex items-center gap-1.5">
-            <span class="text-text-secondary">Alimentos:</span>
+            <span class="text-text-secondary">{{ t('finanzas.pl.foodLabel') }}</span>
             <span class="font-semibold text-text-primary tabular-nums">{{ formatPct(current.primeCost.foodCostPct) }}</span>
           </div>
           <div class="w-px h-4 bg-border" aria-hidden="true" />
           <div class="flex items-center gap-1.5">
-            <span class="text-text-secondary">Nómina:</span>
+            <span class="text-text-secondary">{{ t('finanzas.pl.payrollLabel') }}</span>
             <span class="font-semibold text-text-primary tabular-nums">{{ formatPct(current.primeCost.laborPct) }}</span>
           </div>
           <div class="w-px h-4 bg-border" aria-hidden="true" />
           <div class="flex items-center gap-1.5">
-            <span class="text-text-secondary">Total:</span>
+            <span class="text-text-secondary">{{ t('finanzas.pl.total') }}</span>
             <span
               class="font-bold tabular-nums"
               :class="current.primeCost.status === 'ok' ? 'text-state-success-text' : 'text-state-warning-text'"
@@ -610,20 +599,20 @@ const prevPeriodLabel = computed(() => {
             </span>
           </div>
           <div class="w-px h-4 bg-border" aria-hidden="true" />
-          <span class="text-xs text-text-secondary">Benchmark: {{ formatPct(current.primeCost.benchmarkPct) }}</span>
+          <span class="text-xs text-text-secondary">{{ t('finanzas.pl.benchmark') }}: {{ formatPct(current.primeCost.benchmarkPct) }}</span>
         </div>
 
         <!-- Previous period prime cost (when comparing) -->
         <div v-if="hasPrevious" class="flex flex-wrap items-center gap-4 text-sm text-text-secondary pt-1 border-t border-border/60">
           <span class="text-xs font-medium">{{ prevPeriodLabel }}:</span>
           <div class="flex items-center gap-1">
-            <span>Alimentos: {{ formatPct(previous!.primeCost.foodCostPct) }}</span>
+            <span>{{ t('finanzas.pl.foodLabel') }} {{ formatPct(previous!.primeCost.foodCostPct) }}</span>
           </div>
           <div class="flex items-center gap-1">
-            <span>Nómina: {{ formatPct(previous!.primeCost.laborPct) }}</span>
+            <span>{{ t('finanzas.pl.payrollLabel') }} {{ formatPct(previous!.primeCost.laborPct) }}</span>
           </div>
           <div class="flex items-center gap-1">
-            <span>Total: {{ formatPct(previous!.primeCost.totalPct) }}</span>
+            <span>{{ t('finanzas.pl.total') }} {{ formatPct(previous!.primeCost.totalPct) }}</span>
           </div>
         </div>
       </div>
