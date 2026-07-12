@@ -20,19 +20,6 @@
             <span class="base-sidebar-menu-line" />
           </button>
 
-          <NuxtLink
-            v-if="isExpanded"
-            to="/financiero"
-            class="base-sidebar-overlay-logo"
-            aria-label="Ir al inicio del dashboard"
-            @click="closeOverlay"
-          >
-            <img
-              :src="logoSrc"
-              alt="Waro Colombia"
-              class="h-9 w-full object-contain"
-            />
-          </NuxtLink>
         </div>
 
         <!-- Logo -->
@@ -260,16 +247,6 @@ function closeOverlay() {
   gap: 0.625rem;
 }
 
-.base-sidebar-overlay-logo {
-  display: flex;
-  height: 2.75rem;
-  width: 9.5rem;
-  flex-shrink: 0;
-  align-items: center;
-  overflow: hidden;
-  padding-inline: 0.125rem;
-}
-
 .base-sidebar-menu-button {
   display: inline-flex;
   width: 3rem;
@@ -329,9 +306,6 @@ function closeOverlay() {
     min-height: 2.75rem;
   }
 
-  .base-sidebar-overlay-logo {
-    height: 2.5rem;
-  }
 }
 
 @media (max-height: 700px) {
@@ -353,8 +327,5 @@ function closeOverlay() {
     min-height: 2.5rem;
   }
 
-  .base-sidebar-overlay-logo {
-    height: 2.25rem;
-  }
 }
 </style>
