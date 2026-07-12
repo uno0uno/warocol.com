@@ -2,31 +2,31 @@
   <div class="border border-border rounded-lg p-3 sm:p-4 bg-background space-y-3">
     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-3">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Tipo *</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.optionTypeRequired') }}</label>
         <select
           :value="modifier.option_type"
           class="input-base w-full px-3 py-2 text-sm"
           @change="onTypeChange(($event.target as HTMLSelectElement).value)"
         >
-          <option value="INGREDIENT">Ingrediente / reventa</option>
-          <option value="RECIPE">Receta base</option>
-          <option value="PRODUCT">Producto del menú</option>
-          <option value="NONE">Solo precio</option>
+          <option value="INGREDIENT">{{ t('menu.modificadores.ingredientOrResale') }}</option>
+          <option value="RECIPE">{{ t('menu.modificadores.baseRecipe') }}</option>
+          <option value="PRODUCT">{{ t('menu.modificadores.menuProduct') }}</option>
+          <option value="NONE">{{ t('menu.modificadores.priceOnly') }}</option>
         </select>
       </div>
 
       <div class="md:col-span-3">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Nombre *</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.optionNameRequired') }}</label>
         <input
           v-model="modifier.name"
           type="text"
-          placeholder="Nombre en caja"
+          :placeholder="t('menu.modificadores.cashierNamePlaceholder')"
           class="input-base w-full px-3 py-2 text-sm"
         />
       </div>
 
       <div class="md:col-span-2">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Precio venta</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.salePrice') }}</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
           <UiDecimalInput
@@ -38,7 +38,7 @@
       </div>
 
       <div class="md:col-span-1">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Máx</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.maxShort') }}</label>
         <input
           v-model.number="modifier.max_limit"
           type="number"
@@ -48,7 +48,7 @@
       </div>
 
       <div class="md:col-span-1">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Orden</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.order') }}</label>
         <input
           v-model.number="modifier.sort_order"
           type="number"
@@ -61,7 +61,7 @@
         <button
           type="button"
           class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
-          title="Eliminar opción"
+          :title="t('menu.modificadores.removeOption')"
           @click="$emit('remove')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +73,7 @@
 
     <div v-if="modifier.option_type === 'INGREDIENT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-5">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.ingredientOrResaleRequired') }}</label>
         <UiIngredientSearchInput
           :key="`modifier-ing-${modifier.ingredient_id ?? index}`"
           :initial-value="ingredientSearchLabel"
@@ -83,7 +83,7 @@
         />
       </div>
       <div class="md:col-span-2">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.quantity') }}</label>
         <UiDecimalInput
           v-model="modifier.ingredient_quantity"
           :min="0.01"
@@ -92,7 +92,7 @@
         />
       </div>
       <div class="md:col-span-3">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.unit') }}</label>
         <select
           v-model="modifier.ingredient_unit"
           :disabled="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id)"
@@ -106,27 +106,27 @@
         </select>
       </div>
       <div class="md:col-span-2 flex items-end">
-        <p class="text-xs text-text-secondary pb-2">Costo unit.: {{ ingredientCostLabel }}</p>
+        <p class="text-xs text-text-secondary pb-2">{{ t('menu.modificadores.unitCost') }} {{ ingredientCostLabel }}</p>
       </div>
     </div>
 
     <div v-else-if="modifier.option_type === 'RECIPE'" class="space-y-2">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
         <div class="md:col-span-6">
-          <label class="block text-xs font-medium text-text-secondary mb-1">Receta base *</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.baseRecipeRequired') }}</label>
           <select
             v-model="modifier.recipe_base_type_id"
             class="input-base w-full px-3 py-2 text-sm"
             @change="onRecipeBaseChange"
           >
-            <option value="">Elegir receta…</option>
+            <option value="">{{ t('menu.modificadores.chooseRecipe') }}</option>
             <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
               {{ recipe.name }}
             </option>
           </select>
         </div>
         <div class="md:col-span-3">
-          <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad × receta</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.recipeQuantity') }}</label>
           <UiDecimalInput
             v-model="modifier.recipe_base_quantity"
             :min="0.01"
@@ -135,7 +135,7 @@
           />
         </div>
         <div class="md:col-span-3 flex items-end">
-          <p class="text-xs text-text-secondary pb-2">Costo unit.: {{ recipeCostLabel }}</p>
+          <p class="text-xs text-text-secondary pb-2">{{ t('menu.modificadores.unitCost') }} {{ recipeCostLabel }}</p>
         </div>
       </div>
       <div
@@ -157,7 +157,7 @@
 
     <div v-else-if="modifier.option_type === 'PRODUCT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-6">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Producto del menú *</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.menuProductRequired') }}</label>
         <UiProductSearchInput
           :key="`modifier-prod-${modifier.linked_product_id ?? index}`"
           :input-id="`modifier-option-product-${index}`"
@@ -167,7 +167,7 @@
         />
       </div>
       <div class="md:col-span-3">
-        <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad × producto</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.productQuantity') }}</label>
         <UiDecimalInput
           v-model="modifier.linked_product_quantity"
           :min="0.01"
@@ -176,22 +176,22 @@
         />
       </div>
       <div class="md:col-span-3 flex items-end">
-        <p class="text-xs text-text-secondary pb-2">Costo unit.: {{ productCostLabel }}</p>
+        <p class="text-xs text-text-secondary pb-2">{{ t('menu.modificadores.unitCost') }} {{ productCostLabel }}</p>
       </div>
     </div>
 
     <p v-else-if="modifier.option_type === 'NONE'" class="text-xs text-text-tertiary">
-      Opción sin composición de inventario; solo aplica el precio de venta.
+      {{ t('menu.modificadores.noInventoryComposition') }}
     </p>
 
     <div class="flex flex-wrap gap-4 text-sm">
       <label class="flex items-center gap-2 cursor-pointer">
         <input v-model="modifier.is_default" type="checkbox" class="w-4 h-4 text-primary border-border rounded focus:ring-primary" />
-        <span class="text-text-secondary">Por defecto</span>
+        <span class="text-text-secondary">{{ t('menu.modificadores.default') }}</span>
       </label>
       <label class="flex items-center gap-2 cursor-pointer">
         <input v-model="modifier.is_available" type="checkbox" class="w-4 h-4 text-primary border-border rounded focus:ring-primary" />
-        <span class="text-text-secondary">Disponible</span>
+        <span class="text-text-secondary">{{ t('menu.modificadores.available') }}</span>
       </label>
     </div>
   </div>
@@ -207,6 +207,8 @@ import {
   type ModifierOptionType,
 } from '~/composables/useModifierOptionForm'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps<{
   modifier: ModifierFormRow

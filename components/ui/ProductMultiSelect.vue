@@ -2,7 +2,7 @@
   <div class="space-y-2">
     <UiProductSearchInput
       :input-id="inputId"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       :include-all-types="includeAllTypes"
       :exclude-ids="modelValue.map((p) => p.id)"
       @select="onSelect"
@@ -18,7 +18,7 @@
         <button
           type="button"
           class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
-          :aria-label="`Quitar ${product.name}`"
+          :aria-label="t('menu.modificadores.removeProduct', { name: product.name })"
           @click="removeProduct(product.id)"
         >
           ×
@@ -33,16 +33,16 @@
         class="text-sm text-primary font-medium min-h-[44px] px-1"
         @click="pickerOpen = true"
       >
-        Ver / editar lista
+        {{ t('menu.modificadores.editProductList') }}
       </button>
     </div>
 
     <p class="text-xs text-text-tertiary">
       <template v-if="modelValue.length === 0">
-        Busca y agrega productos uno a uno
+        {{ t('menu.modificadores.searchAndAddProducts') }}
       </template>
       <template v-else>
-        {{ modelValue.length }} producto(s) seleccionado(s)
+        {{ t('menu.modificadores.selectedProductsCount', { count: modelValue.length }) }}
       </template>
     </p>
 
@@ -59,6 +59,8 @@
 import type { ProductRow } from '~/composables/useProductSearch'
 import { formatScopeLabel } from '~/utils/promotionPreview'
 
+const { t } = useI18n({ useScope: 'global' })
+
 export interface ProductSelection {
   id: string
   name: string
@@ -74,7 +76,7 @@ const props = withDefaults(defineProps<{
   chipThreshold?: number
 }>(), {
   inputId: 'product-multi-select',
-  placeholder: 'Buscar producto…',
+  placeholder: undefined,
   includeAllTypes: true,
   chipThreshold: CHIP_THRESHOLD,
 })
@@ -84,6 +86,8 @@ const emit = defineEmits<{
 }>()
 
 const pickerOpen = ref(false)
+
+const resolvedPlaceholder = computed(() => props.placeholder || t('menu.modificadores.searchProduct'))
 
 const showChips = computed(
   () => props.modelValue.length > 0 && props.modelValue.length <= props.chipThreshold,
