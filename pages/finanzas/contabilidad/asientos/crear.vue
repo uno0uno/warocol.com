@@ -3,10 +3,12 @@ import { ref, computed } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Nuevo asiento contable - Warocol' })
+const { t } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('finanzas.contabilidad.createEntryHead') })
 
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
+const { formatCurrency } = useFormatters()
 const router = useRouter()
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -75,18 +77,18 @@ const formErrors = ref<string[]>([])
 
 const validate = (requireBalanced: boolean): boolean => {
   const errs: string[] = []
-  if (!entryDate.value) errs.push('La fecha es requerida.')
-  if (!description.value.trim()) errs.push('La descripción es requerida.')
+  if (!entryDate.value) errs.push(t('finanzas.contabilidad.validation.dateRequired'))
+  if (!description.value.trim()) errs.push(t('finanzas.contabilidad.validation.descriptionRequired'))
   const validLines = lines.value.filter(l => l.accountId)
-  if (validLines.length < 2) errs.push('Se requieren al menos 2 líneas con cuenta.')
+  if (validLines.length < 2) errs.push(t('finanzas.contabilidad.validation.minLines'))
   for (const l of validLines) {
     const d = parseFloat(l.debit) || 0
     const c = parseFloat(l.credit) || 0
-    if (d === 0 && c === 0) errs.push('Cada línea debe tener un valor en débito o crédito.')
-    if (d > 0 && c > 0) errs.push('Una línea no puede tener débito y crédito al mismo tiempo.')
+    if (d === 0 && c === 0) errs.push(t('finanzas.contabilidad.validation.lineNeedsAmount'))
+    if (d > 0 && c > 0) errs.push(t('finanzas.contabilidad.validation.lineOneSide'))
   }
   if (requireBalanced && !isBalanced.value)
-    errs.push(`El asiento no cuadra. Diferencia: ${formatCurrency(difference.value)}`)
+    errs.push(t('finanzas.contabilidad.validation.unbalanced', { amount: formatCurrency(difference.value) }))
   formErrors.value = errs
   return errs.length === 0
 }
@@ -95,9 +97,6 @@ const validate = (requireBalanced: boolean): boolean => {
 const saving = ref(false)
 const posting = ref(false)
 const submitError = ref<string | null>(null)
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 
 const buildPayload = () => ({
   entryDate: entryDate.value,
@@ -122,7 +121,7 @@ const handleSaveDraft = async () => {
     await $fetch('/api/accounting/journal-entries', { method: 'POST', body: buildPayload() })
     router.push('/finanzas/contabilidad/asientos')
   } catch (err: any) {
-    submitError.value = err?.data?.detail || err?.data?.message || 'Error al guardar el asiento'
+    submitError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.saveEntryError')
   } finally {
     saving.value = false
   }
@@ -139,7 +138,7 @@ const handlePost = async () => {
     await $fetch(`/api/accounting/journal-entries/${res.data.id}/post`, { method: 'POST' })
     router.push('/finanzas/contabilidad/asientos')
   } catch (err: any) {
-    submitError.value = err?.data?.detail || err?.data?.message || 'Error al publicar el asiento'
+    submitError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.postEntryError')
   } finally {
     posting.value = false
   }
@@ -162,11 +161,12 @@ const onCreditInput = (line: EntryLine) => {
       <NuxtLink
         to="/finanzas/contabilidad/asientos"
         class="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        :aria-label="t('finanzas.contabilidad.backToEntries')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Asientos
+        {{ t('finanzas.nav.asientos') }}
       </NuxtLink>
     </div>
 
@@ -174,12 +174,12 @@ const onCreditInput = (line: EntryLine) => {
 
       <!-- Summary cards -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-        <MetricCard title="Líneas" :value="lines.filter(l => l.accountId).length" format="number" variant="primary" />
-        <MetricCard title="Total débito" :value="totalDebits" format="currency" variant="primary" />
-        <MetricCard title="Total crédito" :value="totalCredits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.lines')" :value="lines.filter(l => l.accountId).length" format="number" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.totalDebit')" :value="totalDebits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.totalCredit')" :value="totalCredits" format="currency" variant="primary" />
         <MetricCard
-          title="Estado"
-          :value="isBalanced ? 'Cuadrado' : difference"
+          :title="t('finanzas.common.status')"
+          :value="isBalanced ? t('finanzas.contabilidad.balanced') : difference"
           :format="isBalanced ? 'text' : 'currency'"
           :variant="isBalanced ? 'success' : 'warning'"
         />
@@ -187,10 +187,10 @@ const onCreditInput = (line: EntryLine) => {
 
       <!-- Header fields -->
       <div class="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3">
-        <h2 class="text-sm font-semibold text-text-primary">Encabezado</h2>
+        <h2 class="text-sm font-semibold text-text-primary">{{ t('finanzas.contabilidad.header') }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="flex flex-col gap-1">
-            <label for="entry-date" class="text-xs font-medium text-text-secondary">Fecha <span class="text-destructive">*</span></label>
+            <label for="entry-date" class="text-xs font-medium text-text-secondary">{{ t('finanzas.common.date') }} <span class="text-destructive">*</span></label>
             <input
               id="entry-date"
               v-model="entryDate"
@@ -200,29 +200,29 @@ const onCreditInput = (line: EntryLine) => {
             />
           </div>
           <div class="flex flex-col gap-1 sm:col-span-2">
-            <label for="entry-description" class="text-xs font-medium text-text-secondary">Descripción <span class="text-destructive">*</span></label>
+            <label for="entry-description" class="text-xs font-medium text-text-secondary">{{ t('finanzas.common.description') }} <span class="text-destructive">*</span></label>
             <input
               id="entry-description"
               v-model="description"
               type="text"
-              placeholder="Ej: Pago de nómina enero 2025"
+              :placeholder="t('finanzas.contabilidad.descriptionPlaceholder')"
               class="h-9 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label for="entry-reference" class="text-xs font-medium text-text-secondary">Referencia <span class="text-text-secondary font-normal">(opcional)</span></label>
+            <label for="entry-reference" class="text-xs font-medium text-text-secondary">{{ t('finanzas.contabilidad.reference') }} <span class="text-text-secondary font-normal">{{ t('finanzas.common.optional') }}</span></label>
             <input
               id="entry-reference"
               v-model="reference"
               type="text"
-              placeholder="Ej: FAC-001, NOM-2025-01"
+              :placeholder="t('finanzas.contabilidad.referencePlaceholder')"
               class="h-9 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-text-secondary">Módulo</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.contabilidad.module') }}</span>
             <div class="h-9 px-3 flex items-center rounded-lg border-2 border-border bg-surface-secondary text-sm text-text-secondary select-none">
-              Manual
+              {{ t('finanzas.contabilidad.sources.manual') }}
             </div>
           </div>
         </div>
@@ -231,16 +231,17 @@ const onCreditInput = (line: EntryLine) => {
       <!-- Lines -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-text-primary">Líneas del asiento</h2>
+          <h2 class="text-sm font-semibold text-text-primary">{{ t('finanzas.contabilidad.entryLines') }}</h2>
           <button
             type="button"
             class="h-8 px-3 flex items-center gap-1.5 rounded-lg border border-primary text-primary text-xs font-medium hover:bg-primary/10 transition-colors"
+            :aria-label="t('finanzas.contabilidad.addLine')"
             @click="addLine"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            Agregar línea
+            {{ t('finanzas.contabilidad.addLine') }}
           </button>
         </div>
 
@@ -255,10 +256,10 @@ const onCreditInput = (line: EntryLine) => {
           <!-- Column headers (desktop) -->
           <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary">
             <span class="text-xs font-medium text-text-secondary">#</span>
-            <span class="text-xs font-medium text-text-secondary">Cuenta</span>
-            <span class="text-xs font-medium text-text-secondary text-right">Débito</span>
-            <span class="text-xs font-medium text-text-secondary text-right">Crédito</span>
-            <span class="text-xs font-medium text-text-secondary">Descripción</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.contabilidad.account') }}</span>
+            <span class="text-xs font-medium text-text-secondary text-right">{{ t('finanzas.contabilidad.debit') }}</span>
+            <span class="text-xs font-medium text-text-secondary text-right">{{ t('finanzas.contabilidad.credit') }}</span>
+            <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.common.description') }}</span>
             <span />
           </div>
 
@@ -273,13 +274,13 @@ const onCreditInput = (line: EntryLine) => {
 
             <!-- Account -->
             <div class="flex flex-col gap-0.5">
-              <span class="text-xs text-text-secondary sm:hidden">Cuenta</span>
+              <span class="text-xs text-text-secondary sm:hidden">{{ t('finanzas.contabilidad.account') }}</span>
               <select
                 v-model="line.accountId"
                 class="h-10 min-w-0 w-full pl-3 pr-8 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                :aria-label="`Cuenta de la línea ${idx + 1}`"
+                :aria-label="t('finanzas.contabilidad.lineAccountOf', { number: idx + 1 })"
               >
-                <option value="">Seleccionar cuenta...</option>
+                <option value="">{{ t('finanzas.contabilidad.selectAccount') }}</option>
                 <option v-for="acc in detailAccounts" :key="acc.id" :value="acc.id">
                   {{ acc.code }} · {{ acc.name }}
                 </option>
@@ -288,7 +289,7 @@ const onCreditInput = (line: EntryLine) => {
 
             <!-- Debit -->
             <div class="flex flex-col gap-0.5">
-              <span class="text-xs text-text-secondary sm:hidden">Débito</span>
+              <span class="text-xs text-text-secondary sm:hidden">{{ t('finanzas.contabilidad.debit') }}</span>
               <input
                 v-model="line.debit"
                 type="number"
@@ -296,14 +297,14 @@ const onCreditInput = (line: EntryLine) => {
                 step="1"
                 placeholder="0"
                 class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-                :aria-label="`Débito línea ${idx + 1}`"
+                :aria-label="t('finanzas.contabilidad.lineDebitOf', { number: idx + 1 })"
                 @input="onDebitInput(line)"
               />
             </div>
 
             <!-- Credit -->
             <div class="flex flex-col gap-0.5">
-              <span class="text-xs text-text-secondary sm:hidden">Crédito</span>
+              <span class="text-xs text-text-secondary sm:hidden">{{ t('finanzas.contabilidad.credit') }}</span>
               <input
                 v-model="line.credit"
                 type="number"
@@ -311,20 +312,20 @@ const onCreditInput = (line: EntryLine) => {
                 step="1"
                 placeholder="0"
                 class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-                :aria-label="`Crédito línea ${idx + 1}`"
+                :aria-label="t('finanzas.contabilidad.lineCreditOf', { number: idx + 1 })"
                 @input="onCreditInput(line)"
               />
             </div>
 
             <!-- Description -->
             <div class="flex flex-col gap-0.5">
-              <span class="text-xs text-text-secondary sm:hidden">Descripción (opcional)</span>
+              <span class="text-xs text-text-secondary sm:hidden">{{ t('finanzas.contabilidad.descriptionOptional') }}</span>
               <input
                 v-model="line.description"
                 type="text"
-                placeholder="Descripción (opcional)"
+                :placeholder="t('finanzas.contabilidad.descriptionOptional')"
                 class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-                :aria-label="`Descripción línea ${idx + 1}`"
+                :aria-label="t('finanzas.contabilidad.lineDescriptionOf', { number: idx + 1 })"
               />
             </div>
 
@@ -333,7 +334,7 @@ const onCreditInput = (line: EntryLine) => {
               type="button"
               :disabled="lines.length <= 2"
               class="h-10 w-10 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:text-destructive hover:border-destructive transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              :aria-label="`Eliminar línea ${idx + 1}`"
+              :aria-label="t('finanzas.contabilidad.removeLineOf', { number: idx + 1 })"
               @click="removeLine(line._id)"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -345,7 +346,7 @@ const onCreditInput = (line: EntryLine) => {
           <!-- Totals row -->
           <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary border-t-2 border-border">
             <span />
-            <span class="text-xs font-semibold text-text-primary">Total</span>
+            <span class="text-xs font-semibold text-text-primary">{{ t('finanzas.common.total') }}</span>
             <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalDebits) }}</span>
             <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalCredits) }}</span>
             <span />
@@ -377,33 +378,36 @@ const onCreditInput = (line: EntryLine) => {
         <NuxtLink
           to="/finanzas/contabilidad/asientos"
           class="min-h-[44px] px-5 flex items-center rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+          :aria-label="t('finanzas.common.cancel')"
         >
-          Cancelar
+          {{ t('finanzas.common.cancel') }}
         </NuxtLink>
         <div class="flex-1" />
         <button
           type="button"
           :disabled="saving || posting"
           class="min-h-[44px] px-5 rounded-lg border-2 border-border text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          :aria-label="saving ? t('finanzas.contabilidad.savingDraft') : t('finanzas.contabilidad.saveDraft')"
           @click="handleSaveDraft"
         >
           <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          {{ saving ? 'Guardando...' : 'Guardar borrador' }}
+          {{ saving ? t('finanzas.contabilidad.savingDraft') : t('finanzas.contabilidad.saveDraft') }}
         </button>
         <button
           type="button"
           :disabled="saving || posting"
           class="min-h-[44px] px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          :aria-label="posting ? t('finanzas.contabilidad.posting') : t('finanzas.contabilidad.createAndPost')"
           @click="handlePost"
         >
           <svg v-if="posting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          {{ posting ? 'Publicando...' : 'Crear y publicar' }}
+          {{ posting ? t('finanzas.contabilidad.posting') : t('finanzas.contabilidad.createAndPost') }}
         </button>
       </div>
 
