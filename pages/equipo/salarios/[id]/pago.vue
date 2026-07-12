@@ -5,7 +5,7 @@
       <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
         <!-- Empleado Info -->
         <div class="mb-8 pb-6 border-b border-border">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Empleado</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.salarios.employee') }}</h3>
           <!-- Skeleton -->
           <div v-if="!employeeData" class="flex items-center gap-4 bg-background rounded-lg p-4 animate-pulse">
             <div class="w-12 h-12 rounded-full bg-titan-200 flex-shrink-0" />
@@ -29,26 +29,26 @@
 
         <!-- Información del Pago -->
         <div class="space-y-6">
-          <h3 class="text-lg font-semibold text-text-primary">Informacion del Pago</h3>
+          <h3 class="text-lg font-semibold text-text-primary">{{ t('equipo.salaryModal.paymentTitle') }}</h3>
 
           <!-- Salario configurado info -->
           <div v-if="employee.employment_type === 'daily' && employee.daily_rate" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p class="text-sm text-blue-800">
-              <strong>Tarifa diaria:</strong>
-              {{ formatCurrency(employee.daily_rate) }} / día
+              <strong>{{ t('equipo.salarios.dailyRate') }}:</strong>
+              {{ formatCurrency(employee.daily_rate) }} / {{ t('equipo.salaryModal.day') }}
             </p>
           </div>
           <div v-else-if="employee.salary_type && employee.employment_type !== 'daily'" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p class="text-sm text-blue-800">
-              <strong>Salario configurado:</strong>
+              <strong>{{ t('equipo.salaryModal.configured') }}:</strong>
               <span v-if="employee.salary_type === 'hourly'">
-                {{ formatCurrency(employee.hourly_rate || 0) }} / hora
+                {{ formatCurrency(employee.hourly_rate || 0) }} / {{ t('equipo.salarios.hourlyRate') }}
               </span>
               <span v-else>
                 {{ formatCurrency(employee.calculated_salary || 0) }}
               </span>
               <span class="text-blue-600">
-                ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? 'Pago por horas' : 'Monto fijo' }})
+                ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? t('equipo.salaryModal.hourlyPayment') : t('equipo.salaryModal.fixedAmount') }})
               </span>
             </p>
           </div>
@@ -56,7 +56,7 @@
           <!-- Días Trabajados (jornaleros) -->
           <div v-if="employee.employment_type === 'daily'">
             <label class="block text-sm font-medium text-text-primary mb-2">
-              Días trabajados *
+              {{ t('equipo.salaryModal.daysWorkedReq') }}
             </label>
             <input
               v-model.number="daysWorked"
@@ -66,17 +66,17 @@
               step="1"
               required
               class="input-base w-full px-4 py-3"
-              placeholder="Ej: 15"
+              :placeholder="t('equipo.salaryModal.daysPlaceholder')"
             />
             <p v-if="daysWorked" class="text-xs text-text-tertiary mt-1">
-              {{ daysWorked }} días × {{ formatCurrency(employee.daily_rate) }} = {{ formatCurrency(form.payment_amount) }}
+              {{ daysWorked }} {{ t('equipo.salaryModal.days') }} × {{ formatCurrency(employee.daily_rate) }} = {{ formatCurrency(form.payment_amount) }}
             </p>
           </div>
 
           <!-- Días Trabajados (contratistas con honorario fijo) -->
           <div v-if="isContractor && employee.salary_type === 'fixed' && employee.calculated_salary">
             <label class="block text-sm font-medium text-text-primary mb-2">
-              Días trabajados <span class="text-text-tertiary font-normal">(opcional — calcula el monto proporcional)</span>
+              {{ t('equipo.salaryModal.daysWorked') }} <span class="text-text-tertiary font-normal">({{ t('equipo.salaryModal.optionalProportional') }})</span>
             </label>
             <input
               v-model.number="contractorDays"
@@ -85,11 +85,11 @@
               max="31"
               step="1"
               class="input-base w-full px-4 py-3"
-              placeholder="Ej: 15"
+              :placeholder="t('equipo.salaryModal.daysPlaceholder')"
             />
             <p v-if="contractorDays" class="text-xs text-text-tertiary mt-1">
-              {{ formatCurrency(employee.calculated_salary) }} ÷ 30 × {{ contractorDays }} días = {{ formatCurrency(contractorProportional) }}
-              <span class="text-blue-600 ml-1">— aplicado al monto (editable)</span>
+              {{ formatCurrency(employee.calculated_salary) }} ÷ 30 × {{ contractorDays }} {{ t('equipo.salaryModal.days') }} = {{ formatCurrency(contractorProportional) }}
+              <span class="text-blue-600 ml-1">— {{ t('equipo.salaryModal.appliedEditable') }}</span>
             </p>
           </div>
 
@@ -97,11 +97,11 @@
             <!-- Monto del Pago -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
-                Monto del Pago *
+                {{ t('equipo.salaryModal.amountReq') }}
               </label>
               <div v-if="employee.employment_type === 'daily'" class="px-4 py-2 bg-titan-100 border border-titan-300 rounded-lg">
                 <span class="text-lg font-semibold text-text-primary">{{ formatCurrency(form.payment_amount || 0) }}</span>
-                <p class="text-xs text-text-tertiary mt-0.5">Calculado automáticamente</p>
+                <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.salaryModal.calculatedAutomatically') }}</p>
               </div>
               <div v-else class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -118,7 +118,7 @@
             <!-- Fecha del Pago -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
-                Fecha del Pago *
+                {{ t('equipo.salaryModal.dateReq') }}
               </label>
               <input
                 v-model="form.payment_date"
@@ -133,8 +133,8 @@
           <div v-if="isContractor" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div class="flex items-start justify-between gap-4 mb-3">
               <div>
-                <p class="text-sm font-medium text-amber-900">Retención en la fuente</p>
-                <p class="text-xs text-amber-700 mt-0.5">Aplica para pagos de honorarios a contratistas (cuenta 2367)</p>
+                <p class="text-sm font-medium text-amber-900">{{ t('equipo.salaryModal.withholding') }}</p>
+                <p class="text-xs text-amber-700 mt-0.5">{{ t('equipo.salaryModal.withholdingHelp') }}</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
                 <input type="checkbox" v-model="form.withholding_enabled" class="sr-only peer" />
@@ -143,7 +143,7 @@
             </div>
             <div v-if="form.withholding_enabled" class="space-y-3">
               <div class="flex items-center gap-3">
-                <label class="text-sm text-amber-800 flex-shrink-0">Tarifa (%):</label>
+                <label class="text-sm text-amber-800 flex-shrink-0">{{ t('equipo.salaryModal.rate') }}:</label>
                 <input
                   v-model.number="form.withholding_rate"
                   type="number"
@@ -155,11 +155,11 @@
               </div>
               <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="bg-white rounded p-2 border border-amber-200">
-                  <p class="text-xs text-amber-700">Retenido (2367)</p>
+                  <p class="text-xs text-amber-700">{{ t('equipo.salaryModal.withheld') }} (2367)</p>
                   <p class="font-semibold text-amber-900">{{ formatCurrency(withholdingAmount) }}</p>
                 </div>
                 <div class="bg-white rounded p-2 border border-amber-200">
-                  <p class="text-xs text-amber-700">Neto a pagar</p>
+                  <p class="text-xs text-amber-700">{{ t('equipo.salaryModal.netPay') }}</p>
                   <p class="font-semibold text-amber-900">{{ formatCurrency(netAmount) }}</p>
                 </div>
               </div>
@@ -170,8 +170,8 @@
           <div v-if="!isContractor" class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
             <div class="flex items-start justify-between gap-4 mb-3">
               <div>
-                <p class="text-sm font-medium text-indigo-900">Seguridad Social y Parafiscales</p>
-                <p class="text-xs text-indigo-700 mt-0.5">Calcula deducciones empleado (EPS+AFP) y aportes empleador (EPS+AFP+ARL+Caja)</p>
+                <p class="text-sm font-medium text-indigo-900">{{ t('equipo.salaryModal.socialSecurity') }}</p>
+                <p class="text-xs text-indigo-700 mt-0.5">{{ t('equipo.salaryModal.socialSecurityHelp') }}</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
                 <input type="checkbox" v-model="form.ss_enabled" class="sr-only peer" />
@@ -181,7 +181,7 @@
             <div v-if="form.ss_enabled" class="space-y-3">
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-xs text-indigo-800 block mb-1">ARL % (clase riesgo)</label>
+                    <label class="text-xs text-indigo-800 block mb-1">{{ t('equipo.salaryModal.arlRate') }}</label>
                   <UiDecimalInput
                     v-model="form.arl_rate_pct"
                     :min="0"
@@ -192,7 +192,7 @@
                   />
                 </div>
                 <div>
-                  <label class="text-xs text-indigo-800 block mb-1">Caja Compensación %</label>
+                    <label class="text-xs text-indigo-800 block mb-1">{{ t('equipo.salaryModal.compensationFundRate') }}</label>
                   <UiDecimalInput
                     v-model="form.caja_rate_pct"
                     :min="0"
@@ -205,19 +205,19 @@
               </div>
               <div class="grid grid-cols-3 gap-2 text-sm">
                 <div class="bg-white rounded p-2 border border-indigo-200">
-                  <p class="text-xs text-indigo-700">Cargo empleado</p>
+                  <p class="text-xs text-indigo-700">{{ t('equipo.salaryModal.employeeCharge') }}</p>
                   <p class="font-semibold text-indigo-900">{{ formatCurrency(ssEmployeeTotal) }}</p>
-                  <p class="text-xs text-indigo-600 mt-0.5">EPS 4% + AFP 4%</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">{{ t('equipo.salaryModal.employeeBreakdown') }}</p>
                 </div>
                 <div class="bg-white rounded p-2 border border-indigo-200">
-                  <p class="text-xs text-indigo-700">Cargo empleador</p>
+                  <p class="text-xs text-indigo-700">{{ t('equipo.salaryModal.employerCharge') }}</p>
                   <p class="font-semibold text-indigo-900">{{ formatCurrency(ssEmployerTotal) }}</p>
-                  <p class="text-xs text-indigo-600 mt-0.5">EPS 8.5%+AFP 12%+ARL+Caja</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">{{ t('equipo.salaryModal.employerBreakdown') }}</p>
                 </div>
                 <div class="bg-indigo-100 rounded p-2 border border-indigo-300">
-                  <p class="text-xs text-indigo-800 font-medium">Neto al banco</p>
+                  <p class="text-xs text-indigo-800 font-medium">{{ t('equipo.salaryModal.netToBank') }}</p>
                   <p class="font-bold text-indigo-900">{{ formatCurrency(ssNetPay) }}</p>
-                  <p class="text-xs text-indigo-600 mt-0.5">Bruto − cargo empleado</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">{{ t('equipo.salaryModal.grossLessEmployee') }}</p>
                 </div>
               </div>
             </div>
@@ -225,7 +225,7 @@
 
           <!-- Método de Pago -->
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-3">Metodo de Pago *</label>
+            <label class="block text-sm font-medium text-text-primary mb-3">{{ t('equipo.salaryModal.methodReq') }}</label>
             <!-- Skeleton -->
             <div v-if="isLoadingMethods" class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div
@@ -263,23 +263,23 @@
           <!-- Referencia de Pago -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">
-              Referencia del Pago
+              {{ t('equipo.salaryModal.reference') }}
             </label>
             <input
               v-model="form.payment_reference"
               type="text"
               class="input-base w-full px-4 py-2"
-              placeholder="Ej: TRF-123456, Comprobante #789"
+              :placeholder="t('equipo.salaryModal.referencePlaceholder')"
             />
             <p class="text-xs text-text-tertiary mt-1">
-              Numero de transferencia, comprobante o referencia del banco
+              {{ t('equipo.salaryModal.referenceHelp') }}
             </p>
           </div>
 
           <!-- Periodo del Pago -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">
-              Periodo del Pago *
+              {{ t('equipo.salaryModal.periodReq') }}
             </label>
             <input
               v-model="form.period_month"
@@ -288,33 +288,31 @@
               class="input-base w-full px-4 py-2"
             />
             <p class="text-xs text-text-tertiary mt-1">
-              Mes y ano al que corresponde este pago de salario
+              {{ t('equipo.salaryModal.periodHelp') }}
             </p>
           </div>
         </div>
 
         <!-- Comprobante PILA / Aportes (solo empleados y jornaleros) -->
         <div v-if="employee.employment_type && employee.employment_type !== 'contractor'" class="mt-8">
-          <h3 class="text-lg font-semibold text-text-primary mb-1">Comprobante PILA / Aportes</h3>
-          <p class="text-sm text-text-secondary mb-4">
-            Adjunta el comprobante de pago de seguridad social (salud, pensión, ARL) generado en PILA o Aportes en Línea para este período.
-          </p>
+          <h3 class="text-lg font-semibold text-text-primary mb-1">{{ t('equipo.salaryModal.pilaReceipt') }}</h3>
+          <p class="text-sm text-text-secondary mb-4">{{ t('equipo.salaryModal.pilaReceiptHelp') }}</p>
           <PurchasesAttachmentUploader v-model="pilaFiles" />
         </div>
 
         <!-- Comprobantes -->
         <div class="mt-8">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Comprobantes</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.salaryModal.receipts') }}</h3>
           <PurchasesAttachmentUploader v-model="form.attachments" />
         </div>
 
         <!-- Notas -->
         <div class="mt-8">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Notas</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.common.notes') }}</h3>
           <textarea
             v-model="form.notes"
             class="input-base w-full px-4 py-2 min-h-[80px]"
-            placeholder="Notas adicionales sobre este pago (opcional)"
+            :placeholder="t('equipo.salaryModal.notesExtra')"
           ></textarea>
         </div>
       </div>
@@ -323,42 +321,42 @@
     <!-- Right Column: Summary & Actions -->
     <div class="xl:col-span-1">
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen del Pago</h3>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('equipo.salaryModal.paymentSummary') }}</h3>
 
         <div class="bg-background rounded-lg p-4 border border-border mb-6">
           <div class="space-y-3">
             <div>
-              <p class="text-sm text-text-secondary mb-1">Empleado</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.salarios.employee') }}</p>
               <p class="font-medium text-text-primary">{{ employee.name }}</p>
             </div>
             <div>
-              <p class="text-sm text-text-secondary mb-1">Metodo de Pago</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.method') }}</p>
               <p class="font-medium text-text-primary">
-                {{ selectedMethodLabel || 'Sin seleccionar' }}
+                {{ selectedMethodLabel || t('equipo.salaryModal.notSelected') }}
               </p>
             </div>
             <div>
-              <p class="text-sm text-text-secondary mb-1">Fecha</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.date') }}</p>
               <p class="font-medium text-text-primary">
-                {{ form.payment_date ? formatDate(form.payment_date) : 'Sin seleccionar' }}
+                {{ form.payment_date ? formatDate(form.payment_date) : t('equipo.salaryModal.notSelected') }}
               </p>
             </div>
             <div>
-              <p class="text-sm text-text-secondary mb-1">Periodo</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.common.period') }}</p>
               <p class="font-medium text-text-primary">
-                {{ form.period_month ? formatPeriod(form.period_month) : 'Sin seleccionar' }}
+                {{ form.period_month ? formatPeriod(form.period_month) : t('equipo.salaryModal.notSelected') }}
               </p>
             </div>
             <div v-if="employee.employment_type === 'daily' && daysWorked">
-              <p class="text-sm text-text-secondary mb-1">Días trabajados</p>
-              <p class="font-medium text-text-primary">{{ daysWorked }} días</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.salaryModal.daysWorked') }}</p>
+              <p class="font-medium text-text-primary">{{ daysWorked }} {{ t('equipo.salaryModal.days') }}</p>
             </div>
             <div v-if="isContractor && contractorDays">
-              <p class="text-sm text-text-secondary mb-1">Días trabajados</p>
-              <p class="font-medium text-text-primary">{{ contractorDays }} días</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.salaryModal.daysWorked') }}</p>
+              <p class="font-medium text-text-primary">{{ contractorDays }} {{ t('equipo.salaryModal.days') }}</p>
             </div>
             <div v-if="form.attachments.length > 0">
-              <p class="text-sm text-text-secondary mb-1">Comprobantes</p>
+              <p class="text-sm text-text-secondary mb-1">{{ t('equipo.salaryModal.receipts') }}</p>
               <p class="font-medium text-text-primary">{{ form.attachments.length }} archivo(s)</p>
             </div>
             <div v-if="isContractor && form.withholding_enabled && withholdingAmount > 0">
@@ -366,7 +364,7 @@
               <p class="font-medium text-amber-600">- {{ formatCurrency(withholdingAmount) }}</p>
             </div>
             <div class="pt-3 border-t border-border">
-              <p class="text-sm text-text-secondary mb-1">{{ isContractor && form.withholding_enabled ? 'Neto a Pagar' : 'Monto a Pagar' }}</p>
+              <p class="text-sm text-text-secondary mb-1">{{ isContractor && form.withholding_enabled ? t('equipo.salaryModal.netPay') : t('equipo.salaryModal.amountToPay') }}</p>
               <p class="text-2xl font-bold text-primary">{{ formatCurrency(isContractor && form.withholding_enabled ? netAmount : (form.payment_amount || 0)) }}</p>
             </div>
           </div>
@@ -380,14 +378,14 @@
             class="w-full py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20"
           >
             <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
-            <span>{{ isSubmitting ? 'Registrando...' : 'Registrar Pago' }}</span>
+            <span>{{ isSubmitting ? t('equipo.salaryModal.registering') : t('equipo.salaryModal.registerPayment') }}</span>
           </button>
 
           <NuxtLink
             :to="`/equipo/salarios/${employeeId}`"
             class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium block text-center"
           >
-            Cancelar
+            {{ t('equipo.common.cancel') }}
           </NuxtLink>
         </div>
       </div>
@@ -396,6 +394,7 @@
 </template>
 
 <script setup lang="ts">
+const { t, locale } = useI18n({ useScope: 'global' })
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 import { computed, reactive, ref, watch } from 'vue'
@@ -403,7 +402,7 @@ const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id
 
-useHead({ title: 'Registrar Pago - Equipo' })
+useHead({ title: () => t('equipo.salaryModal.paymentTitle') })
 
 // Payment methods
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
@@ -515,7 +514,7 @@ const { data: employeeData } = useAsyncData(
 )
 
 const employee = computed(() => employeeData.value || {
-  name: 'Cargando...',
+  name: t('equipo.common.loading'),
   email: '',
   initials: '...',
   color: '#ccc',
@@ -557,7 +556,7 @@ const isFormValid = computed(() => {
 
 // Formatters
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -571,7 +570,7 @@ const formatPeriod = (periodString: string) => {
   if (!periodString) return ''
   const [year, month] = periodString.split('-')
   const date = new Date(Number(year), Number(month) - 1)
-  return date.toLocaleDateString('es-CO', {
+  return date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-CO', {
     month: 'long',
     year: 'numeric'
   })
@@ -633,7 +632,7 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
-        toast.error('Pago registrado, pero hubo un error al subir los archivos')
+        toast.error(t('equipo.salaryModal.uploadError'))
       }
     }
 
@@ -652,17 +651,17 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading PILA files:', fileError)
-        toast.error('Pago registrado, pero hubo un error al subir el comprobante PILA')
+        toast.error(t('equipo.salaryModal.pilaUploadError'))
       }
     }
 
-    toast.success('Pago registrado correctamente')
+    toast.success(t('equipo.salaryModal.paymentRegistered'))
     clearNuxtData(`employee-salary-detail-${employeeId}`)
     clearNuxtData(`employees-salaries-*`)
     await navigateTo(`/equipo/salarios/${employeeId}`)
   } catch (err) {
     console.error('Error recording payment:', err)
-    toast.error((err as any).data?.detail || 'Error al registrar el pago')
+    toast.error((err as any).data?.detail || t('equipo.salaryModal.paymentError'))
   } finally {
     isSubmitting.value = false
   }
