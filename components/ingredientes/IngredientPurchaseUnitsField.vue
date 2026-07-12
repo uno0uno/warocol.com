@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-1.5">
-    <p class="text-sm font-medium text-text-primary">Unidades de compra</p>
+    <p class="text-sm font-medium text-text-primary">{{ t('abastecimiento.glossary.purchaseUnits') }}</p>
 
     <!-- Create: draft list -->
     <template v-if="mode === 'create'">
@@ -21,9 +21,9 @@
               class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
               @click="setDraftDefault(index)"
             >
-              Predeterminar
+              {{ t('abastecimiento.glossary.setDefault') }}
             </button>
-            <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
+            <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">{{ t('abastecimiento.glossary.default') }}</span>
           </div>
           <span class="text-xs text-text-tertiary font-mono flex-shrink-0">
             {{ formatConversionFactor(u.conversion_factor) }} {{ baseUnit }}
@@ -31,7 +31,7 @@
           <button
             v-if="draftUnits.length > 1"
             type="button"
-            :aria-label="`Eliminar unidad ${u.purchase_unit_label}`"
+            :aria-label="t('abastecimiento.glossary.removeUnit', { name: u.purchase_unit_label })"
             class="text-text-tertiary hover:text-destructive transition-colors flex-shrink-0"
             @click="removeDraftUnit(index)"
           >
@@ -43,10 +43,10 @@
       </div>
 
       <div class="flex flex-col gap-2 mt-1 rounded-xl border border-border px-3 py-3 bg-surface-secondary/20">
-        <p class="text-xs font-medium text-text-secondary">Agregar unidad</p>
+        <p class="text-xs font-medium text-text-secondary">{{ t('abastecimiento.glossary.addUnit') }}</p>
         <div class="flex gap-2">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-xs text-text-tertiary font-medium">Nombre</label>
+            <label class="text-xs text-text-tertiary font-medium">{{ t('abastecimiento.glossary.unitName') }}</label>
             <input
               v-model="newUnit.purchase_unit_label"
               type="text"
@@ -56,7 +56,7 @@
             />
           </div>
           <div class="flex flex-col gap-1 w-32">
-            <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
+            <label class="text-xs text-text-tertiary font-medium">{{ t('abastecimiento.glossary.quantityBaseUnit', { unit: baseUnit }) }}</label>
             <UiDecimalInput
               v-model="newUnit.conversion_factor"
               :min="0.000001"
@@ -70,7 +70,7 @@
         <div class="flex items-center justify-between gap-2">
           <p class="text-xs text-text-tertiary">
             <template v-if="newUnit.purchase_unit_label && newUnit.conversion_factor">
-              1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ baseUnit }}
+              {{ t('abastecimiento.glossary.unitPackageHint', { name: newUnit.purchase_unit_label, quantity: newUnit.conversion_factor, unit: baseUnit }) }}
             </template>
             <template v-else>
               {{ emptyAddHint }}
@@ -81,7 +81,7 @@
             class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors flex-shrink-0"
             @click="addDraftUnit"
           >
-            Agregar
+            {{ t('abastecimiento.glossary.addUnit') }}
           </button>
         </div>
         <p v-if="formError" class="text-xs text-destructive">{{ formError }}</p>
@@ -107,15 +107,15 @@
               class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
               @click="setDefaultUnit(u.id)"
             >
-              Predeterminar
+              {{ t('abastecimiento.glossary.setDefault') }}
             </button>
-            <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
+            <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">{{ t('abastecimiento.glossary.default') }}</span>
           </div>
           <span class="text-xs text-text-tertiary font-mono flex-shrink-0">{{ formatConversionFactor(u.conversion_factor) }} {{ baseUnit }}</span>
           <button
             type="button"
             :disabled="deletingUnitId === u.id"
-            :aria-label="`Eliminar unidad ${u.purchase_unit_label}`"
+            :aria-label="t('abastecimiento.glossary.removeUnit', { name: u.purchase_unit_label })"
             class="text-text-tertiary hover:text-destructive transition-colors disabled:opacity-40 flex-shrink-0"
             @click="deleteUnit(u.id)"
           >
@@ -130,32 +130,32 @@
         <div v-for="(s, i) in pendingSuggestions" :key="i" class="flex items-center justify-between px-3 py-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-sm text-text-primary">{{ s.label }}</span>
-            <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
+            <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">{{ t('abastecimiento.glossary.default') }}</span>
           </div>
           <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">{{ formatConversionFactor(s.conversion_factor) }} {{ baseUnit }}</span>
         </div>
       </div>
 
       <div class="flex flex-col gap-2 mt-1 rounded-xl border border-border px-3 py-3 bg-surface-secondary/20">
-        <p class="text-xs font-medium text-text-secondary">Nueva unidad de compra</p>
+        <p class="text-xs font-medium text-text-secondary">{{ t('abastecimiento.glossary.newPurchaseUnit') }}</p>
         <div class="flex gap-2">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-xs text-text-tertiary font-medium">Nombre</label>
+            <label class="text-xs text-text-tertiary font-medium">{{ t('abastecimiento.glossary.unitName') }}</label>
             <input
               v-model="newUnit.purchase_unit_label"
               type="text"
-              placeholder="Ej: Caja, Docena..."
+              :placeholder="t('abastecimiento.glossary.packageNamePlaceholder')"
               :class="inputClass"
               @keyup.enter="addPurchaseUnit"
             />
           </div>
           <div class="flex flex-col gap-1 w-32">
-            <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
+            <label class="text-xs text-text-tertiary font-medium">{{ t('abastecimiento.glossary.quantityBaseUnit', { unit: baseUnit }) }}</label>
             <UiDecimalInput
               v-model="newUnit.conversion_factor"
               :min="0.000001"
               :precision="CONVERSION_PRECISION"
-              placeholder="Ej: 12"
+              :placeholder="t('abastecimiento.glossary.unitFactorPlaceholder')"
               :class="inputClass"
               @keyup.enter="addPurchaseUnit"
             />
@@ -164,10 +164,10 @@
         <div class="flex items-center justify-between gap-2">
           <p class="text-xs text-text-tertiary">
             <template v-if="newUnit.purchase_unit_label && newUnit.conversion_factor">
-              1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ baseUnit }}
+              {{ t('abastecimiento.glossary.unitPackageHint', { name: newUnit.purchase_unit_label, quantity: newUnit.conversion_factor, unit: baseUnit }) }}
             </template>
             <template v-else>
-              Und por empaque
+              {{ t('abastecimiento.glossary.emptyUnitHint') }}
             </template>
           </p>
           <button
@@ -176,7 +176,7 @@
             class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors flex-shrink-0"
             @click="addPurchaseUnit"
           >
-            {{ savingUnit ? 'Guardando…' : 'Agregar' }}
+            {{ savingUnit ? t('abastecimiento.glossary.savingUnit') : t('abastecimiento.glossary.addUnit') }}
           </button>
         </div>
         <p v-if="formError" class="text-xs text-destructive">{{ formError }}</p>
@@ -188,6 +188,8 @@
 <script setup lang="ts">
 import type { DraftPurchaseUnit, PurchaseUnitSuggestion } from '@/composables/useIngredientPurchaseUnitsDraft'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+
+const { t } = useI18n({ useScope: 'global' })
 
 const CONVERSION_PRECISION = 6
 
@@ -204,16 +206,13 @@ const props = withDefaults(defineProps<{
 const draftUnits = defineModel<DraftPurchaseUnit[]>('draftUnits', { default: () => [] })
 
 const namePlaceholder = computed(() => {
-  if (props.baseUnit === 'hr') return 'Ej. Paquete mensual'
-  if (props.baseUnit === 'und') return 'Ej. paquete × 6'
-  return 'Ej. Caja, Docena...'
+  return t('abastecimiento.glossary.packageNamePlaceholder')
 })
 
-const factorPlaceholder = computed(() => (props.baseUnit === 'hr' ? 'Ej: 8' : 'Ej: 6'))
+const factorPlaceholder = computed(() => t('abastecimiento.glossary.unitFactorPlaceholder'))
 
 const emptyAddHint = computed(() => {
-  if (props.baseUnit === 'hr') return 'Horas incluidas en el paquete'
-  return 'Und por empaque'
+  return t('abastecimiento.glossary.emptyUnitHint')
 })
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
@@ -242,11 +241,11 @@ function addDraftUnit() {
   formError.value = ''
   const label = newUnit.value.purchase_unit_label.trim()
   if (!label) {
-    formError.value = 'Escribe una etiqueta'
+    formError.value = t('abastecimiento.glossary.writeLabel')
     return
   }
   if (!newUnit.value.conversion_factor || newUnit.value.conversion_factor <= 0) {
-    formError.value = 'El factor debe ser mayor que 0'
+    formError.value = t('abastecimiento.glossary.factorPositive')
     return
   }
   const units = [...draftUnits.value]
@@ -289,11 +288,11 @@ async function addPurchaseUnit() {
   formError.value = ''
   const label = newUnit.value.purchase_unit_label.trim()
   if (!label) {
-    formError.value = 'Escribe una etiqueta'
+    formError.value = t('abastecimiento.glossary.writeLabel')
     return
   }
   if (!newUnit.value.conversion_factor || newUnit.value.conversion_factor <= 0) {
-    formError.value = 'El factor debe ser mayor que 0'
+    formError.value = t('abastecimiento.glossary.factorPositive')
     return
   }
   if (!props.ingredientId) return
@@ -314,7 +313,7 @@ async function addPurchaseUnit() {
     resetNewUnitForm()
     await refreshPurchaseUnits()
   } catch (err: any) {
-    formError.value = err?.data?.detail ?? 'Error al guardar'
+    formError.value = err?.data?.detail ?? t('abastecimiento.glossary.saveError')
   } finally {
     savingUnit.value = false
   }

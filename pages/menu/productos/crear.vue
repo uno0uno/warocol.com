@@ -2,8 +2,8 @@
   <div>
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Creando producto..."
-      hint="Estamos guardando la configuración del producto y preparando su catálogo."
+      :label="t('menu.productos.createBusy')"
+      :hint="t('menu.productos.createBusyHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -16,15 +16,15 @@
       <!-- Tipo de producto — siempre visible -->
       <div class="bg-surface border-2 border-border rounded-xl shadow-sm p-4 sm:p-6">
         <h2 class="text-base sm:text-lg font-semibold text-text-primary mb-1">
-          ¿Cómo se prepara este producto?
+          {{ t('menu.productos.productTypeQuestion') }}
         </h2>
         <p class="text-sm text-text-secondary leading-relaxed mb-4 sm:mb-5">
-          Elige si lleva receta en cocina o se vende tal cual (reventa).
+          {{ t('menu.productos.productTypeHelp') }}
         </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" :aria-label="t('menu.productos.productTypeQuestion')">
           <UiSelectionOptionCard
-            title="Con receta"
-            :description="WAREHOUSE_COPY.cookedWithWarehouseItemsDescription"
+            :title="t('menu.productos.recipeMode')"
+            :description="t('menu.productos.recipeModeDescription')"
             :selected="productCreateMode === 'recipe'"
             @click="setProductCreateMode('recipe')"
           >
@@ -35,8 +35,8 @@
             </template>
           </UiSelectionOptionCard>
           <UiSelectionOptionCard
-            title="Venta directa"
-            description="Reventa por pieza (und). Equivalencia en gr o ml para stock."
+            :title="t('menu.productos.resaleMode')"
+            :description="t('menu.productos.resaleModeDescription')"
             :selected="productCreateMode === 'resale-direct'"
             @click="setProductCreateMode('resale-direct')"
           >
@@ -52,11 +52,11 @@
       <form @submit.prevent="submitProduct" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
         <div class="xl:col-span-2 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
-            <UiFormSection title="Datos del producto">
+            <UiFormSection :title="t('menu.productos.detailTitle')">
               <template #badge>
                 <UiStatusBadge
                   v-if="isResaleDirectMode"
-                  value="Reventa"
+                  :value="t('menu.common.reventa')"
                   format="text"
                   variant="primary"
                   size="sm"
@@ -69,7 +69,7 @@
                   <div class="space-y-4 min-w-0">
                     <div>
                       <label class="block text-sm font-medium text-text-primary mb-1">
-                        Nombre *
+                        {{ t('menu.productos.nameRequired') }}
                       </label>
                       <input
                         v-model="form.name"
@@ -77,7 +77,7 @@
                         required
                         class="input-base w-full px-4 py-2"
                         :class="nameError ? 'border-destructive focus:ring-destructive' : ''"
-                        placeholder="Ej. hamburguesa clásica"
+                        :placeholder="t('menu.productos.namePlaceholder')"
                         @input="nameError = ''"
                       />
                       <p v-if="nameError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
@@ -88,26 +88,26 @@
 
                     <div>
                       <label class="block text-sm font-medium text-text-primary mb-1">
-                        Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                        {{ t('menu.productos.description') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                       </label>
                       <textarea
                         v-model="form.description"
                         rows="3"
                         class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem] sm:min-h-[6.5rem]"
-                        placeholder="Breve descripción para el menú"
+                        :placeholder="t('menu.productos.descriptionPlaceholder')"
                       />
                     </div>
                   </div>
 
                   <div class="flex flex-col gap-2 sm:w-[7.5rem] flex-shrink-0">
                     <label class="text-sm font-medium text-text-primary">
-                      Foto
+                      {{ t('menu.productos.photo') }}
                     </label>
                     <div class="w-[5.5rem] h-[5.5rem] sm:w-full sm:aspect-square rounded-lg border border-dashed border-border/80 bg-surface-secondary/50 overflow-hidden flex items-center justify-center">
                       <img
                         v-if="form.image_url"
                         :src="form.image_url"
-                        :alt="form.name || 'Imagen del producto'"
+                        :alt="form.name || t('menu.productos.imageAlt')"
                         class="w-full h-full object-cover"
                         loading="lazy"
                       />
@@ -121,7 +121,7 @@
                         @click="showImageModal = true"
                         class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring whitespace-nowrap"
                       >
-                        {{ form.image_url ? 'Cambiar' : 'Subir foto' }}
+                        {{ form.image_url ? t('menu.productos.changePhoto') : t('menu.productos.uploadPhoto') }}
                       </button>
                       <button
                         v-if="form.image_url"
@@ -129,7 +129,7 @@
                         @click="form.image_url = ''"
                         class="min-h-[40px] px-3 py-1.5 text-sm font-medium rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
                       >
-                        Eliminar
+                        {{ t('common.delete') }}
                       </button>
                     </div>
                   </div>
@@ -138,12 +138,12 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div :class="businessProfile?.comandas_enabled ? 'sm:col-span-2' : ''">
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Categoría *
+                      {{ t('menu.productos.categoryRequired') }}
                     </label>
                     <UiCategorySearchInput
                       :allow-create="true"
                       :initial-value="selectedCategoryName"
-                      placeholder="Buscar categoría..."
+                      :placeholder="t('menu.productos.categorySearchPlaceholder')"
                       @select="onCategorySelected"
                       @create="onCategoryCreateRequested"
                     />
@@ -151,27 +151,27 @@
 
                   <div v-if="businessProfile?.comandas_enabled">
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Cocina
+                      {{ t('menu.productos.kitchen') }}
                     </label>
                     <div class="flex items-center gap-2 min-h-[42px] px-3 py-2 rounded-lg bg-surface-secondary/60 border border-border/60 text-sm">
                       <template v-if="isAssigningInheritedStation">
                         <UiLoadingDots size="8px" color="var(--color-primary)" />
-                        <span class="text-text-secondary">Asignando…</span>
+                        <span class="text-text-secondary">{{ t('menu.productos.assigning') }}</span>
                       </template>
                       <template v-else-if="inheritedStation">
                         <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
                         <span class="font-medium text-text-primary truncate">{{ inheritedStation.name }}</span>
-                        <span class="text-text-tertiary text-xs flex-shrink-0">desde categoría</span>
+                        <span class="text-text-tertiary text-xs flex-shrink-0">{{ t('menu.productos.fromCategory') }}</span>
                       </template>
                       <template v-else>
-                        <span class="text-text-tertiary text-xs leading-snug flex-1">Sin comanda en categoría</span>
+                        <span class="text-text-tertiary text-xs leading-snug flex-1">{{ t('menu.productos.noKitchenCategory') }}</span>
                         <button
                           type="button"
                           :disabled="isAssigningInheritedStation"
                           @click="showNewStationModal = true"
                           class="min-h-[32px] px-2 py-1 text-xs font-medium rounded-md bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring flex-shrink-0 disabled:opacity-50"
                         >
-                          Crear estación
+                          {{ t('menu.productos.createStation') }}
                         </button>
                       </template>
                     </div>
@@ -179,7 +179,7 @@
 
                   <div v-if="!isResaleDirectMode">
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Preparación (min)
+                      {{ t('menu.productos.preparationTime') }}
                     </label>
                     <input
                       v-model.number="form.preparation_time"
@@ -193,11 +193,11 @@
               </div>
             </UiFormSection>
 
-            <UiFormSection title="Precio">
+            <UiFormSection :title="t('menu.productos.priceSection')">
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Precio *
+                    {{ t('menu.productos.salePriceRequired') }}
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -214,7 +214,7 @@
 
                 <div v-if="!isResaleDirectMode">
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Costo calculado
+                    {{ t('menu.productos.calculatedCost') }}
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -227,13 +227,13 @@
                     />
                   </div>
                   <p class="text-xs text-text-tertiary mt-1">
-                    Estimado al guardar; desde receta y compras.
+                    {{ t('menu.productos.estimatedCostHelp') }}
                   </p>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Tu costo <span class="text-text-tertiary font-normal">(opcional)</span>
+                    {{ t('menu.productos.dishCost') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -242,11 +242,11 @@
                       :precision="0"
                       :min="0"
                       class="input-base w-full pl-8 pr-4 py-2"
-                      placeholder="Referencia interna"
+                      :placeholder="t('menu.productos.referenceInternal')"
                     />
                   </div>
                   <p class="text-xs text-text-tertiary mt-1">
-                    No modifica el costo calculado.
+                    {{ t('menu.productos.referenceHelp') }}
                   </p>
                 </div>
               </div>
@@ -256,7 +256,7 @@
                 class="mt-4 p-3.5 bg-surface-secondary/70 rounded-lg border border-border/60 space-y-2.5"
               >
                 <div v-if="calculatedCost > 0" class="flex items-center justify-between gap-3">
-                  <span class="text-sm font-medium text-text-primary">Margen real</span>
+                  <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.realMargin') }}</span>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-text-primary tabular-nums">
                       {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
@@ -272,7 +272,7 @@
                   v-if="form.costo_percibido != null && form.costo_percibido > 0"
                   class="flex items-center justify-between gap-3"
                 >
-                  <span class="text-sm font-medium text-text-primary">Margen operativo</span>
+                  <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.operatingMargin') }}</span>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-text-primary tabular-nums">
                       {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
@@ -289,9 +289,9 @@
 
             <UiFormSection
               v-if="hasTaxes"
-              title="Impuesto"
+              :title="t('menu.productos.taxCategory')"
             >
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Categoría de impuesto">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" :aria-label="t('menu.productos.taxCategory')">
                 <button
                   type="button"
                   @click="form.tax_category = 'standard'"
@@ -302,8 +302,8 @@
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                   ]"
                 >
-                  <span class="text-sm font-semibold">Alimento / Bebida</span>
-                  <span class="text-xs leading-snug">INC 8% o IVA 19%</span>
+                  <span class="text-sm font-semibold">{{ t('menu.productos.foodBeverage') }}</span>
+                  <span class="text-xs leading-snug">{{ t('menu.productos.incVatRates') }}</span>
                 </button>
                 <button
                   type="button"
@@ -315,8 +315,8 @@
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                   ]"
                 >
-                  <span class="text-sm font-semibold">Licor para llevar</span>
-                  <span class="text-xs leading-snug">IVA licores 5%</span>
+                  <span class="text-sm font-semibold">{{ t('menu.productos.takeawayLiquor') }}</span>
+                  <span class="text-xs leading-snug">{{ t('menu.productos.liquorVat') }}</span>
                 </button>
                 <button
                   type="button"
@@ -328,15 +328,15 @@
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                   ]"
                 >
-                  <span class="text-sm font-semibold">Exento</span>
-                  <span class="text-xs leading-snug">Sin impuesto</span>
+                  <span class="text-sm font-semibold">{{ t('menu.productos.exempt') }}</span>
+                  <span class="text-xs leading-snug">{{ t('menu.productos.noTax') }}</span>
                 </button>
               </div>
             </UiFormSection>
 
             <UiFormSection
               v-if="isResaleDirectMode"
-              title="Inventario"
+              :title="t('menu.productos.resaleInventory')"
             >
               <MenuProductResaleCreateForm
                 v-model:unit-weight-gr="resaleUnitWeightGr"
@@ -354,14 +354,14 @@
               :label="inlineCatalogBusyLabel"
               :hint="inlineCatalogBusyHint"
             >
-              <UiFormSection title="Recetas base">
+                <UiFormSection :title="t('menu.productos.baseRecipes')">
                 <template #actions>
                   <button
                     type="button"
                     @click="addRecipeBase"
                     class="min-h-[32px] px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                   >
-                    + Agregar
+                    + {{ t('common.add') }}
                   </button>
                 </template>
 
@@ -377,9 +377,9 @@
                           v-model="link.recipe_base_id"
                           class="input-base flex-1 min-h-[44px] px-3 py-2 text-sm"
                           @change="onRecipeBaseChange"
-                          :aria-label="`Receta base ${index + 1}`"
+                          :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                         >
-                          <option value="">Elegir receta…</option>
+                          <option value="">{{ t('menu.productos.chooseRecipe') }}</option>
                           <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
                             {{ recipe.name }}
                           </option>
@@ -390,10 +390,10 @@
                             :min="0"
                             :precision="6"
                             class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
-                            :aria-label="`Cantidad de la receta ${index + 1}`"
+                            :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                             :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
                           />
-                          <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
+                            <span class="text-xs text-text-secondary whitespace-nowrap">{{ t('menu.productos.recipeUnit') }}</span>
                         </div>
                       </div>
 
@@ -424,8 +424,8 @@
                 </div>
 
                 <div v-else class="text-center py-5 text-text-secondary border border-dashed border-border/80 rounded-lg">
-                  <p class="text-sm">Sin recetas base</p>
-                  <p class="text-xs mt-1">Usa + Agregar para vincular una</p>
+                    <p class="text-sm">{{ t('menu.productos.noBaseRecipes') }}</p>
+                    <p class="text-xs mt-1">{{ t('menu.productos.linkBaseRecipe') }}</p>
                 </div>
               </UiFormSection>
 
@@ -433,7 +433,7 @@
                 <MenuIngredientProductHint class="mb-3" />
 
                 <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
-                  <p class="text-sm font-medium">Sin líneas adicionales</p>
+                    <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
                   <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
                 </div>
 
@@ -457,7 +457,7 @@
                         <UiDecimalInput
                           v-model="ingredient.quantity"
                           :min="0.01"
-                          placeholder="Cantidad"
+                          :placeholder="t('menu.productos.quantity')"
                           :precision="6"
                           class="input-base w-full px-3 py-2 text-sm"
                         />
@@ -507,12 +507,12 @@
                   @click="addIngredient"
                 >
                   <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
-                  Agregar línea
+                    {{ t('menu.recetas.form.addLine') }}
                 </UiButton>
               </UiFormSection>
             </MenuCatalogInlineCreateBusyOverlay>
 
-            <UiFormSection title="Configuración">
+            <UiFormSection :title="t('menu.productos.configuration')">
               <div class="space-y-3">
                 <div class="flex items-start space-x-3">
                   <input
@@ -523,10 +523,10 @@
                   />
                   <div>
                     <label for="is_available" class="text-sm font-medium text-text-primary block">
-                      Disponible
+                      {{ t('menu.productos.available') }}
                     </label>
                     <p class="text-xs text-text-secondary mt-1">
-                      Visible en menú y POS
+                      {{ t('menu.productos.availableHelp') }}
                     </p>
                   </div>
                 </div>
@@ -540,10 +540,10 @@
                   />
                   <div>
                     <label for="is_available_online" class="text-sm font-medium text-text-primary block">
-                      Domicilios
+                      {{ t('menu.productos.onlineAvailable') }}
                     </label>
                     <p class="text-xs text-text-secondary mt-1">
-                      Pedidos online
+                      {{ t('menu.productos.onlineHelp') }}
                     </p>
                   </div>
                 </div>
@@ -557,10 +557,10 @@
                   />
                   <div>
                     <label for="is_available_table_qr" class="text-sm font-medium text-text-primary block">
-                      QR en mesa
+                      {{ t('menu.productos.tableQr') }}
                     </label>
                     <p class="text-xs text-text-secondary mt-1">
-                      Menú de mesa, aparte de domicilios
+                      {{ t('menu.productos.tableQrHelp') }}
                     </p>
                   </div>
                 </div>
@@ -571,11 +571,11 @@
 
         <div class="xl:col-span-1 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('menu.productos.summary') }}</h3>
 
             <div class="space-y-3">
               <div class="flex justify-between text-sm gap-2">
-                <span class="text-text-secondary flex-shrink-0">Tipo:</span>
+                <span class="text-text-secondary flex-shrink-0">{{ t('menu.productos.typeLabel') }}</span>
                 <UiStatusBadge
                   :value="productTypeLabel"
                   format="text"
@@ -585,19 +585,19 @@
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Precio:</span>
+                <span class="text-text-secondary">{{ t('menu.productos.priceLabel') }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(form.price) }}</span>
               </div>
 
               <div v-if="!isResaleDirectMode" class="flex justify-between text-sm">
-                <span class="text-text-secondary">Costo real:</span>
+                <span class="text-text-secondary">{{ t('menu.productos.realCostLabel') }}</span>
                 <span class="font-semibold text-text-primary">
                   {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
                 </span>
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Mi costo:</span>
+                <span class="text-text-secondary">{{ t('menu.productos.myCostSummary') }}</span>
                 <span class="font-semibold text-text-primary">
                   {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
                 </span>
@@ -607,7 +607,7 @@
                 v-if="!isResaleDirectMode && form.price > 0 && calculatedCost !== null && calculatedCost > 0"
                 class="flex justify-between text-sm pt-3 border-t border-border"
               >
-                <span class="text-text-secondary">Margen real:</span>
+                <span class="text-text-secondary">{{ t('menu.productos.realMarginLabel') }}</span>
                 <span class="font-semibold text-primary">
                   {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
                 </span>
@@ -615,7 +615,7 @@
 
               <div class="flex justify-between text-sm gap-2">
                 <span class="text-text-secondary flex-shrink-0">
-                  {{ isResaleDirectMode ? 'Equivalencia:' : 'Líneas receta:' }}
+                  {{ isResaleDirectMode ? `${t('menu.productos.equivalence')}:` : t('menu.productos.recipeLines') }}
                 </span>
                 <span class="font-semibold text-text-primary text-right truncate">
                   <template v-if="isResaleDirectMode">
@@ -642,7 +642,7 @@
               >
                 <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
                 <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-                {{ isSubmitting ? 'Creando...' : 'Crear producto' }}
+                {{ isSubmitting ? t('menu.productos.creatingProduct') : t('menu.productos.createProduct') }}
               </UiButton>
 
               <UiButton
@@ -653,7 +653,7 @@
                 :disabled="isSubmitting"
                 @click="router.push('/menu/productos')"
               >
-                Cancelar
+                {{ t('common.cancel') }}
               </UiButton>
             </div>
           </div>
@@ -693,7 +693,6 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -712,7 +711,10 @@ definePageMeta({
   module: 'menu',
 })
 
-useHead({ title: 'Crear Producto' })
+const { t, locale } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
+
+useHead({ title: t('menu.recetas.form.createTitle') })
 
 const route = useRoute()
 const router = useRouter()
@@ -742,7 +744,7 @@ const productCreateMode = ref<ProductCreateMode>(
 )
 const isResaleDirectMode = computed(() => productCreateMode.value === 'resale-direct')
 const productTypeLabel = computed(() =>
-  isResaleDirectMode.value ? 'Venta directa' : 'Con receta',
+  isResaleDirectMode.value ? t('menu.productos.resaleMode') : t('menu.productos.recipeMode'),
 )
 
 const resaleUnitWeightGr = ref<number | null>(null)
@@ -1019,15 +1021,15 @@ async function validateForm(): Promise<boolean> {
   resaleWeightError.value = false
 
   if (!form.value.name?.trim()) {
-    nameError.value = 'El nombre es obligatorio.'
+    nameError.value = t('menu.productos.nameRequiredError')
     return false
   }
   if (!form.value.category_id) {
-    submitError.value = 'Selecciona una categoría.'
+    submitError.value = t('menu.productos.categoryRequiredError')
     return false
   }
   if (!form.value.price || form.value.price <= 0) {
-    submitError.value = 'Indica un precio de venta mayor a 0.'
+    submitError.value = t('menu.productos.priceRequiredError')
     return false
   }
 
@@ -1035,7 +1037,7 @@ async function validateForm(): Promise<boolean> {
     `/api/menu/check-name?entity=products&name=${encodeURIComponent(form.value.name.trim())}`,
   )
   if (!res.available) {
-    nameError.value = 'Ya existe un producto con ese nombre.'
+    nameError.value = t('menu.productos.nameExistsError')
     return false
   }
 
@@ -1043,7 +1045,7 @@ async function validateForm(): Promise<boolean> {
     const w = resaleUnitWeightGr.value
     if (w == null || Number(w) <= 0) {
       resaleWeightError.value = true
-      submitError.value = 'Indica la equivalencia en gr o ml por unidad vendida.'
+      submitError.value = t('menu.productos.equivalenceRequiredError')
       return false
     }
     return true
@@ -1138,8 +1140,8 @@ async function onStationCreated(station: { id: string; name: string }) {
 
   if (!categoryId) {
     toast.success(
-      `Estación "${station.name}" creada. Selecciona una categoría para asignarla, o hazlo en Operaciones › Comandas.`,
-      { title: 'Estación creada' },
+      `${t('menu.productos.stationCreated')}: ${station.name}`,
+      { title: t('menu.productos.stationCreated') },
     )
     await refetchActiveStations()
     return
@@ -1153,14 +1155,14 @@ async function onStationCreated(station: { id: string; name: string }) {
     })
     await Promise.all([refreshCategoryStations(), refetchActiveStations()])
     toast.success(
-      `Estación "${station.name}" asignada a ${categoryName || 'la categoría'}.`,
-      { title: 'Estación lista' },
+      t('menu.productos.stationAssigned', { category: categoryName || t('menu.productos.categoryRequired') }),
+      { title: t('menu.productos.stationReady') },
     )
   } catch (e: any) {
     await refetchActiveStations()
     toast.error(
-      e?.data?.detail || e?.message || 'No se pudo asignar la estación a la categoría',
-      { title: 'Estación creada sin asignar' },
+      e?.data?.detail || e?.message || t('menu.productos.stationAssignmentError'),
+      { title: t('menu.productos.stationCreatedUnassigned') },
     )
   } finally {
     isAssigningInheritedStation.value = false
@@ -1233,7 +1235,7 @@ async function submitProduct() {
       const weight = Number(resaleUnitWeightGr.value)
       if (!Number.isFinite(weight) || weight <= 0) {
         resaleWeightError.value = true
-        submitError.value = 'Indica la equivalencia en gr o ml por unidad vendida.'
+      submitError.value = t('menu.productos.equivalenceRequiredError')
         isSubmitting.value = false
         return
       }
@@ -1273,7 +1275,7 @@ async function submitProduct() {
       }
 
       cache.invalidateQueries()
-      toast.success('Producto de venta directa creado')
+      toast.success(t('menu.productos.directProductCreated'))
       await router.push('/menu/productos')
       return
     }
@@ -1303,9 +1305,9 @@ async function submitProduct() {
     console.error('Error creating product:', error)
     const detail = error.data?.detail
     if (Array.isArray(detail)) {
-      submitError.value = 'Error de validación: revisa que todos los campos estén completos y con valores válidos.'
+      submitError.value = t('menu.productos.validationError')
     } else {
-      submitError.value = detail || error.message || 'Error al crear el producto. Por favor intenta de nuevo.'
+      submitError.value = detail || error.message || t('menu.productos.createError')
     }
   } finally {
     isSubmitting.value = false
@@ -1314,7 +1316,7 @@ async function submitProduct() {
 
 function formatCurrency(value: number) {
   if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

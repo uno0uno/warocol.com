@@ -6,28 +6,28 @@
       : 'md:col-span-2 p-4 rounded-xl border border-border bg-surface-secondary/30'"
   >
     <div v-if="!embedded">
-      <h4 class="text-sm font-semibold text-text-primary">Inventario</h4>
+      <h4 class="text-sm font-semibold text-text-primary">{{ t('menu.productos.resaleInventory') }}</h4>
       <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-        Venta por pieza (<span class="font-mono">und</span>).
+        {{ t('menu.productos.resaleModeDescription') }}
       </p>
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <span class="text-sm font-medium text-text-primary">Venta</span>
+      <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.resaleSale') }}</span>
       <div
         class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none"
         aria-readonly="true"
       >
-        Pieza (und)
+        {{ t('menu.productos.pieceUnit') }}
       </div>
     </div>
 
     <div class="flex flex-col gap-1.5">
       <label :for="weightInputId" class="text-sm font-medium text-text-primary">
-        Equivalencia <span class="text-destructive">*</span>
+        {{ t('menu.productos.equivalence') }} <span class="text-destructive">*</span>
       </label>
       <div class="flex gap-2">
-        <div class="flex rounded-lg border border-border overflow-hidden flex-shrink-0" role="group" aria-label="Unidad de equivalencia">
+        <div class="flex rounded-lg border border-border overflow-hidden flex-shrink-0" role="group" :aria-label="t('menu.productos.equivalenceUnitAria')">
           <button
             type="button"
             class="min-h-[44px] px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
@@ -56,7 +56,7 @@
           v-model="unitWeightGr"
           :min="0"
           :precision="1"
-          :placeholder="`Ej. 400`"
+          :placeholder="t('menu.productos.equivalenceExample')"
           :class="[
             'input-base flex-1 min-h-[44px] px-4 py-2',
             showError ? 'border-destructive focus:ring-destructive' : '',
@@ -65,10 +65,10 @@
         />
       </div>
       <p v-if="showError" role="alert" class="text-xs text-destructive">
-        Indica cuántos {{ unitWeightUnit }} equivale 1 und.
+        {{ t('menu.productos.equivalenceError', { unit: unitWeightUnit }) }}
       </p>
       <p v-else class="text-xs text-text-tertiary">
-        1 venta = 1 und en inventario.
+        {{ t('menu.productos.oneSaleOneUnit') }}
       </p>
     </div>
 
@@ -122,4 +122,6 @@ const weightInputId = `resale-weight-${uid}`
 const emit = defineEmits<{
   (e: 'clear-error'): void
 }>()
+
+const { t } = useI18n({ useScope: 'global' })
 </script>
