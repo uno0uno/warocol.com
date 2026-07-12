@@ -192,7 +192,14 @@
       "emptySubAbs": "Para registrar un ajuste manual, ve a Stock → Ajustar stock",
       "filterTypeAria": "Filtrar por tipo de ajuste",
       "filterIngredientAria": "Filtrar por ingrediente",
-      "invSearchPlaceholder": "Buscar por ingrediente o motivo..."
+      "invSearchPlaceholder": "Buscar por ingrediente o motivo...",
+      "totalAdjustments": "Total de ajustes",
+      "criticalStock": "Stock crítico",
+      "lowStock": "Stock bajo",
+      "typeFilter": "Tipo de ajuste",
+      "positive": "Incrementos",
+      "negative": "Decrementos",
+      "system": "Sistema"
     },
     "proveedores": {
       "searchPlaceholder": "Buscar proveedor...",

@@ -192,7 +192,14 @@
       "emptySubAbs": "To record a manual adjustment, go to Stock → Adjust stock",
       "filterTypeAria": "Filter by adjustment type",
       "filterIngredientAria": "Filter by ingredient",
-      "invSearchPlaceholder": "Search by ingredient or reason..."
+      "invSearchPlaceholder": "Search by ingredient or reason...",
+      "totalAdjustments": "Total adjustments",
+      "criticalStock": "Critical stock",
+      "lowStock": "Low stock",
+      "typeFilter": "Adjustment type",
+      "positive": "Increases",
+      "negative": "Decreases",
+      "system": "System"
     },
     "proveedores": {
       "searchPlaceholder": "Search supplier...",

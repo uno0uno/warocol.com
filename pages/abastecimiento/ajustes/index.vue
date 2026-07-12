@@ -10,7 +10,7 @@
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard
-          label="Total Ajustes"
+          :label="t('abastecimiento.ajustes.totalAdjustments')"
           :value="adjustmentsTotal"
           icon="adjustments-horizontal"
         />
@@ -20,12 +20,12 @@
           icon="beaker"
         />
         <UiStatsCard
-          label="Stock Crítico"
+          :label="t('abastecimiento.ajustes.criticalStock')"
           :value="stockStats.critical_count || 0"
           icon="exclamation-circle"
         />
         <UiStatsCard
-          label="Stock Bajo"
+          :label="t('abastecimiento.ajustes.lowStock')"
           :value="stockStats.low_stock_count || 0"
           icon="exclamation"
         />
@@ -50,9 +50,9 @@
             :class="[filterSelectClass, 'md:hidden']"
             :aria-label="t('abastecimiento.ajustes.filterTypeAria')"
           >
-            <option value="">Tipo ajuste</option>
-            <option value="positive">Incrementos</option>
-            <option value="negative">Decrementos</option>
+            <option value="">{{ t('abastecimiento.ajustes.typeFilter') }}</option>
+            <option value="positive">{{ t('abastecimiento.ajustes.positive') }}</option>
+            <option value="negative">{{ t('abastecimiento.ajustes.negative') }}</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
@@ -71,11 +71,11 @@
       >
         <template #header-adjustment_type>
           <UiTableHeaderFilter
-            title="Tipo"
+            :title="t('abastecimiento.ajustes.typeFilter')"
             filter-type="select"
             :model-value="adjustmentTypeFilter"
             :options="adjustmentTypeOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             align="center"
             @update:model-value="adjustmentTypeFilter = typeof $event === 'string' ? $event : ''"
           />
@@ -99,7 +99,7 @@
                 {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
               </p>
               <UiStatusBadge
-                :value="item.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+                :value="item.quantity_change >= 0 ? t('abastecimiento.ajustes.positive') : t('abastecimiento.ajustes.negative')"
                 format="text"
                 :variant="item.quantity_change >= 0 ? 'success' : 'destructive'"
                 size="sm"
@@ -123,7 +123,7 @@
 
         <template #cell-adjustment_type="{ row }">
           <UiStatusBadge
-            :value="row.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+            :value="row.quantity_change >= 0 ? t('abastecimiento.ajustes.positive') : t('abastecimiento.ajustes.negative')"
             format="text"
             :variant="row.quantity_change >= 0 ? 'success' : 'destructive'"
             size="sm"
@@ -148,7 +148,7 @@
         </template>
 
         <template #cell-created_by_name="{ value }">
-          <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
+          <span class="text-sm text-text-primary">{{ value || t('abastecimiento.ajustes.system') }}</span>
         </template>
       </UiResponsiveDataView>
     </div>
@@ -159,7 +159,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 useHead({ title: () => t('abastecimiento.head.historialAjustes') })
@@ -172,10 +172,10 @@ const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange 
 const ingredientFilter = ref('')
 const adjustmentTypeFilter = ref('')
 
-const adjustmentTypeOptions = [
+const adjustmentTypeOptions = computed(() => [
   { value: 'positive', label: t('abastecimiento.common.incrementos') },
   { value: 'negative', label: t('abastecimiento.common.decrementos') },
-]
+])
 
 const hasActiveFilters = computed(
   () =>
@@ -304,7 +304,7 @@ const clearFilters = () => {
 }
 
 // Table columns configuration
-const adjustmentsTableColumns = [
+const adjustmentsTableColumns = computed(() => [
   {
     key: 'created_at',
     title: t('abastecimiento.common.fecha'),
@@ -361,10 +361,10 @@ const adjustmentsTableColumns = [
     format: 'text',
     align: 'left'
   }
-]
+])
 
 const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(value)
