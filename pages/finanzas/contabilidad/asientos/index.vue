@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -9,7 +9,7 @@ useHead({ title: () => t('finanzas.head.asientos') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-const { formatCalendarDate } = useFormatters()
+const { formatCalendarDate, formatCurrency } = useFormatters()
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface TenantAccount {
@@ -119,50 +119,41 @@ const clearFilters = () => {
 }
 
 // ── Formatters ───────────────────────────────────────────────────────────────
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
-
 const formatDate = (iso: string) => {
   if (!iso) return '—'
   return formatCalendarDate(iso)
 }
 
-const SOURCE_MODULE_LABELS: Record<string, string> = {
-  gastos: 'Gastos',
-  ventas: 'Ventas',
-  nomina: 'Nómina',
-  inventario: 'Inventario',
-  arqueo: 'Arqueo',
-  manual: 'Manual',
-  system: 'Sistema',
-  customer_wallet_recharge: 'Recarga billetera',
-  customer_wallet_refund: 'Devolución billetera',
+const sourceLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const key = value.replace(/-/g, '_')
+  const label = t(`finanzas.contabilidad.sources.${key}`)
+  return label === `finanzas.contabilidad.sources.${key}` ? value : label
+}
+const statusLabel = (value: string | null | undefined) => {
+  if (!value) return ''
+  const label = t(`finanzas.contabilidad.status.${value}`)
+  return label === `finanzas.contabilidad.status.${value}` ? value : label
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Borrador',
-  posted: 'Publicado',
-  voided: 'Anulado',
-}
+const statusFilterOptions = computed(() => [
+  { label: t('finanzas.contabilidad.status.draft'), value: 'draft' },
+  { label: t('finanzas.contabilidad.status.posted'), value: 'posted' },
+  { label: t('finanzas.contabilidad.status.voided'), value: 'voided' },
+])
 
-const statusFilterOptions = [
-  { label: 'Borrador', value: 'draft' },
-  { label: 'Publicado', value: 'posted' },
-  { label: 'Anulado', value: 'voided' },
-]
-
-const sourceModuleFilterOptions = [
-  { label: 'Manual', value: 'manual' },
-  { label: 'Gastos', value: 'gastos' },
-  { label: 'Ventas', value: 'ventas' },
-  { label: 'Nómina', value: 'nomina' },
-  { label: 'Inventario', value: 'inventario' },
-  { label: 'Arqueo', value: 'arqueo' },
-  { label: 'Sistema', value: 'system' },
-]
+const sourceModuleFilterOptions = computed(() => [
+  { label: t('finanzas.contabilidad.sources.manual'), value: 'manual' },
+  { label: t('finanzas.contabilidad.sources.gastos'), value: 'gastos' },
+  { label: t('finanzas.contabilidad.sources.ventas'), value: 'ventas' },
+  { label: t('finanzas.contabilidad.sources.nomina'), value: 'nomina' },
+  { label: t('finanzas.contabilidad.sources.inventario'), value: 'inventario' },
+  { label: t('finanzas.contabilidad.sources.arqueo'), value: 'arqueo' },
+  { label: t('finanzas.contabilidad.sources.system'), value: 'system' },
+])
 
 // ── Table columns ────────────────────────────────────────────────────────────
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'entryDate',     title: t('finanzas.common.date'),       sortable: false },
   { key: 'description',   title: t('finanzas.common.description'), sortable: false },
   { key: 'sourceModule',  title: t('finanzas.contabilidad.module'),      sortable: false },
@@ -170,7 +161,7 @@ const tableColumns = [
   { key: 'totalDebit',    title: t('finanzas.contabilidad.debit'),      sortable: false },
   { key: 'totalCredit',   title: t('finanzas.contabilidad.credit'),     sortable: false },
   { key: 'actions',       title: t('finanzas.common.actions'),    sortable: false },
-]
+])
 
 // ── Entry navigation link ─────────────────────────────────────────────────────
 const entryLink = (entry: JournalEntry): string | null => {
@@ -233,7 +224,7 @@ const handleVoid = async () => {
     closeDetail()
     await refetch()
   } catch (err: any) {
-    voidError.value = err?.data?.detail || err?.data?.message || 'Error al anular el asiento'
+    voidError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.voidEntryError')
   } finally {
     voiding.value = false
   }
@@ -260,12 +251,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
       <!-- Period summary strip -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-        <MetricCard title="Total asientos" :value="totalEntries" format="number" variant="primary" />
-        <MetricCard title="Débitos" :value="pageDebits" format="currency" variant="primary" />
-        <MetricCard title="Créditos" :value="pageCredits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.totalEntries')" :value="totalEntries" format="number" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.debits')" :value="pageDebits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.credits')" :value="pageCredits" format="currency" variant="primary" />
         <MetricCard
-          title="Estado"
-          :value="pageIsBalanced ? 'Cuadrado' : 'Descuadrado'"
+          :title="t('finanzas.common.status')"
+          :value="pageIsBalanced ? t('finanzas.contabilidad.balanced') : t('finanzas.contabilidad.unbalanced')"
           format="text"
           :variant="pageIsBalanced ? 'success' : 'warning'"
         />
@@ -284,9 +275,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-model="statusFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por estado"
+            :aria-label="t('finanzas.contabilidad.filterStatus')"
           >
-            <option value="">Estado</option>
+            <option value="">{{ t('finanzas.common.status') }}</option>
             <option v-for="option in statusFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -294,9 +285,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-model="sourceModuleFilter"
             :class="[filterSelectClass, 'md:hidden']"
-            aria-label="Filtrar por módulo"
+            :aria-label="t('finanzas.contabilidad.filterModule')"
           >
-            <option value="">Módulo</option>
+            <option value="">{{ t('finanzas.contabilidad.module') }}</option>
             <option v-for="option in sourceModuleFilterOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -306,12 +297,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <NuxtLink
             to="/finanzas/contabilidad/asientos/crear"
             class="h-10 px-3 flex items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
-            aria-label="Crear nuevo asiento contable"
+            :aria-label="t('finanzas.contabilidad.createEntry')"
           >
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="hidden sm:inline">Nuevo asiento</span>
+            <span class="hidden sm:inline">{{ t('finanzas.contabilidad.newEntry') }}</span>
           </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -327,28 +318,28 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           row-size="sm"
           :columns="tableColumns"
           :data="entries"
-          empty-message="No hay asientos contables registrados"
-          empty-sub-message="Crea el primer asiento manual con el botón t('finanzas.contabilidad.newEntry')"
+          :empty-message="t('finanzas.contabilidad.emptyEntries')"
+          :empty-sub-message="t('finanzas.contabilidad.emptyEntriesSub')"
           variant="default"
           @row-click="openDetail"
         >
         <template #header-sourceModule>
           <UiTableHeaderFilter
             v-model="sourceModuleFilter"
-            title="Módulo"
+            :title="t('finanzas.contabilidad.module')"
             filter-type="select"
             :options="sourceModuleFilterOptions"
-            all-label="Todos"
+            :all-label="t('finanzas.common.all')"
           />
         </template>
 
         <template #header-status>
           <UiTableHeaderFilter
             v-model="statusFilter"
-            title="Estado"
+            :title="t('finanzas.common.status')"
             filter-type="select"
             :options="statusFilterOptions"
-            all-label="Todos"
+            :all-label="t('finanzas.common.all')"
           />
         </template>
 
@@ -362,7 +353,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
                 <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
-                <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_MODULE_LABELS[item.sourceModule] || item.sourceModule" format="text" variant="secondary" size="sm" />
+                <UiStatusBadge v-if="item.sourceModule" :value="sourceLabel(item.sourceModule)" format="text" variant="secondary" size="sm" />
               </div>
               <NuxtLink v-if="entryLink(item)" :to="entryLink(item) || ''" class="text-sm font-medium text-primary hover:underline underline-offset-2 truncate mt-0.5 block">{{ item.description }}</NuxtLink>
               <p v-else class="text-sm font-medium text-text-primary truncate mt-0.5">{{ item.description }}</p>
@@ -389,13 +380,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-sourceModule="{ value }">
-          <UiStatusBadge v-if="value" :value="SOURCE_MODULE_LABELS[value] || value" format="text" variant="secondary" size="sm" />
+          <UiStatusBadge v-if="value" :value="sourceLabel(value)" format="text" variant="secondary" size="sm" />
           <span v-else class="text-xs text-text-secondary">—</span>
         </template>
 
         <template #cell-status="{ value }">
           <UiStatusBadge
-            :value="STATUS_LABELS[value] || value"
+            :value="statusLabel(value)"
             format="text"
             :variant="value === 'posted' ? 'success' : value === 'voided' ? 'destructive' : 'secondary'"
             size="sm"
@@ -418,7 +409,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               type="button"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
               :aria-label="t('finanzas.contabilidad.viewEntryOf', { date: formatDate(row.entryDate) })"
-              title="Ver detalle"
+              :title="t('finanzas.contabilidad.viewEntry')"
               @click.stop="openDetail(row)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -437,7 +428,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <button
             :disabled="currentPage <= 1"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Primera página"
+            :aria-label="t('finanzas.contabilidad.firstPage')"
             @click="goToPage(1)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
@@ -445,7 +436,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <button
             :disabled="currentPage <= 1"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página anterior"
+            :aria-label="t('finanzas.contabilidad.prevPage')"
             @click="goToPage(currentPage - 1)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
@@ -456,7 +447,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <button
             :disabled="currentPage >= totalPages"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Página siguiente"
+            :aria-label="t('finanzas.contabilidad.nextPage')"
             @click="goToPage(currentPage + 1)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -464,7 +455,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <button
             :disabled="currentPage >= totalPages"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label="Última página"
+            :aria-label="t('finanzas.contabilidad.lastPage')"
             @click="goToPage(totalPages)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
@@ -494,15 +485,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary">Anular asiento</h3>
+            <h3 class="text-lg font-bold text-text-primary">{{ t('finanzas.contabilidad.voidEntry') }}</h3>
             <p class="text-sm text-text-secondary mt-1">
-              Se creará un asiento de reversión automáticamente. Esta acción no se puede deshacer.
+              {{ t('finanzas.contabilidad.voidEntryHelp') }}
             </p>
           </div>
 
           <textarea
             v-model="voidReason"
-            placeholder="Motivo de la anulación (requerido)..."
+            :placeholder="t('finanzas.contabilidad.voidReason')"
             rows="3"
             class="w-full mb-4 px-3 py-2 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             :class="voidReason.trim() === '' && voiding ? 'border-destructive' : ''"
@@ -519,7 +510,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
               @click="closeVoidModal"
             >
-              Cancelar
+              {{ t('finanzas.common.cancel') }}
             </button>
             <button
               type="button"
@@ -531,7 +522,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              <span>{{ voiding ? 'Anulando...' : 'Confirmar anulación' }}</span>
+              <span>{{ voiding ? t('finanzas.contabilidad.voiding') : t('finanzas.contabilidad.confirmVoid') }}</span>
             </button>
           </div>
         </div>
