@@ -34,7 +34,7 @@ const emit = defineEmits<{
   'filter-change': []
 }>()
 
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 const { currentTenant, businessProfile } = useTenantReactive()
 
 const {

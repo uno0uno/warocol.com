@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
+
 const props = withDefaults(
   defineProps<{
     variant: 'selection' | 'edit-only'
@@ -34,8 +36,8 @@ const props = withDefaults(
     availabilityOptions: () => [],
     channelOptions: () => [],
     inCatalogOptions: () => [
-      { label: 'En catálogo', value: 'true' },
-      { label: 'Fuera del catálogo', value: 'false' },
+      { label: t('menu.bulk.inCatalog'), value: 'true' },
+      { label: t('menu.bulk.outOfCatalog'), value: 'false' },
     ],
   },
 )
@@ -70,13 +72,13 @@ function onCancel() {
     class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
   >
     <div class="flex items-center gap-2 flex-shrink-0">
-      <span class="text-sm font-semibold text-text-primary">{{ selectedCount }} seleccionada(s)</span>
+      <span class="text-sm font-semibold text-text-primary">{{ t('menu.productos.selectedCount', { count: selectedCount }) }}</span>
       <button
         type="button"
         class="text-xs text-text-secondary hover:text-text-primary underline"
         @click="emit('clear-selection')"
       >
-        deseleccionar
+        {{ t('menu.productos.deselect') }}
       </button>
     </div>
 
@@ -84,47 +86,47 @@ function onCancel() {
 
     <UiFilterSelect
       v-model="bulkCategoryId"
-      placeholder="Categoría..."
-      :aria-label="editMode ? 'Categoría al guardar para seleccionadas' : 'Cambiar categoría masivamente'"
+      :placeholder="`${t('menu.filters.categoryPlaceholder')}...`"
+      :aria-label="t('menu.bulk.categoryAria')"
       :options="categories.map((c) => ({ label: c.name, value: c.id }))"
     />
 
     <UiFilterSelect
       v-model="bulkAvailability"
-      placeholder="Estado..."
-      :aria-label="editMode ? 'Estado al guardar para seleccionadas' : 'Cambiar estado masivamente'"
+      :placeholder="`${t('menu.filters.statusPlaceholder')}...`"
+      :aria-label="t('menu.bulk.statusAria')"
       :options="availabilityOptions"
     />
 
     <UiFilterSelect
       v-if="showInCatalog"
       v-model="bulkInCatalog"
-      placeholder="En catálogo..."
-      :aria-label="editMode ? 'Catálogo al guardar para seleccionadas' : 'Cambiar en catálogo masivamente'"
+      :placeholder="`${t('menu.bulk.catalogPlaceholder')}...`"
+      :aria-label="t('menu.bulk.catalogAria')"
       :options="inCatalogOptions"
     />
 
     <UiFilterSelect
       v-if="showStation"
       v-model="bulkStationId"
-      placeholder="Cocina..."
-      :aria-label="editMode ? 'Cocina al guardar para seleccionadas' : 'Cambiar estación de cocina masivamente'"
+      :placeholder="`${t('menu.filters.stationPlaceholder')}...`"
+      :aria-label="t('menu.bulk.stationAria')"
       :options="stations.map((s) => ({ label: s.name, value: s.id }))"
     />
 
     <UiFilterSelect
       v-if="showOnline"
       v-model="bulkOnline"
-      placeholder="Domicilios..."
-      :aria-label="editMode ? 'Domicilios al guardar para seleccionadas' : 'Cambiar domicilios masivamente'"
+      :placeholder="`${t('menu.filters.onlineOnly')}...`"
+      :aria-label="t('menu.bulk.onlineAria')"
       :options="channelOptions"
     />
 
     <UiFilterSelect
       v-if="showQr"
       v-model="bulkQr"
-      placeholder="QR mesa..."
-      :aria-label="editMode ? 'QR mesa al guardar para seleccionadas' : 'Cambiar QR mesa masivamente'"
+      :placeholder="`${t('menu.filters.qrOnly')}...`"
+      :aria-label="t('menu.bulk.qrAria')"
       :options="channelOptions"
     />
 
@@ -135,7 +137,7 @@ function onCancel() {
       @click="emit('apply')"
     >
       <UiLoadingDots v-if="isSubmitting" size="12px" />
-      <span v-else>Aplicar</span>
+      <span v-else>{{ t('menu.productos.apply') }}</span>
     </button>
 
     <button
@@ -145,7 +147,7 @@ function onCancel() {
       :disabled="isSubmitting"
       @click="emit('delete')"
     >
-      Eliminar
+      {{ t('common.delete') }}
     </button>
 
     <button
@@ -154,7 +156,7 @@ function onCancel() {
       :disabled="isSubmitting"
       @click="onCancel"
     >
-      Cancelar
+      {{ t('common.cancel') }}
     </button>
   </div>
 
@@ -164,7 +166,7 @@ function onCancel() {
     class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
   >
     <span class="text-sm text-text-secondary flex-shrink-0">
-      Modo edición — los cambios se envían al guardar
+      {{ t('menu.productos.editingModeHint') }}
     </span>
 
     <div class="flex-1" />
@@ -176,7 +178,7 @@ function onCancel() {
       @click="emit('apply')"
     >
       <UiLoadingDots v-if="isSubmitting" size="12px" />
-      <span v-else>Aplicar</span>
+      <span v-else>{{ t('menu.productos.apply') }}</span>
     </button>
 
     <button
@@ -185,7 +187,7 @@ function onCancel() {
       :disabled="isSubmitting"
       @click="emit('cancel')"
     >
-      Cancelar
+      {{ t('common.cancel') }}
     </button>
   </div>
 </template>

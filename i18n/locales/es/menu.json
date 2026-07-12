@@ -54,7 +54,50 @@
       "updateNoneError": "No se pudo actualizar ningún producto",
       "catalogUpdated": "Catálogo actualizado",
       "someIngredientsNotRenamed": "Algunos insumos no se renombraron",
-      "ingredientNotSynced": "Insumo no sincronizado"
+      "ingredientNotSynced": "Insumo no sincronizado",
+      "newProduct": "+ Nuevo producto",
+      "newShort": "+ Nuevo",
+      "costWarning": "{count} producto{suffix} con costo mayor al precio de venta — posibles compras mal registradas.",
+      "viewDataQuality": "Ver Calidad de Datos →",
+      "closeWarning": "Cerrar aviso",
+      "marginOperational": "Margen operativo",
+      "noInventory": "Sin inventario",
+      "configureOpenSale": "Configurar venta libre en Personalizar",
+      "openSaleTitle": "Contenedor de venta libre — se gestiona en Operaciones → Personalizar",
+      "openSalePrice": "Precio al vender en el POS · sin categoría de menú",
+      "myCostLabel": "Mi costo:",
+      "noCost": "Sin costo",
+      "system": "Sistema",
+      "noMenuCategory": "No usa categoría de menú",
+      "sellPriceDefinedByCashier": "El cajero define el monto en el POS",
+      "sellPrice": "Al vender",
+      "notApplicable": "No aplica",
+      "noMargin": "Sin margen",
+      "customizeOpenSale": "Activa o desactiva venta libre en Operaciones → Personalizar",
+      "editProduct": "Editar producto",
+      "pagination": "Paginación",
+      "showingProducts": "Mostrando {start} a {end} de {total} productos",
+      "deleteProductsTitle": "Eliminar productos",
+      "deleteProductsQuestion": "¿Eliminar {count} producto{suffix}?",
+      "deleteProductsDescription": "Si tienen ventas registradas, se archivarán: dejarán de venderse en POS y domicilios, pero se conserva el historial. Si nunca se vendieron, se eliminan permanentemente.",
+      "confirmDelete": "Sí, eliminar",
+      "deleting": "Eliminando...",
+      "editingModeHint": "Modo edición — los cambios se envían al guardar",
+      "selectedCount": "{count} seleccionada(s)",
+      "deselect": "deseleccionar",
+      "apply": "Aplicar",
+      "cancel": "Cancelar"
+      ,"productNamePlaceholder": "Nombre del producto"
+      ,"nameOf": "Nombre de {name}"
+      ,"categoryOf": "Categoría de {name}"
+      ,"enableQr": "Habilitar para QR en mesa"
+      ,"disableQr": "Deshabilitar para QR en mesa"
+      ,"editProductFor": "Editar {name}"
+      ,"updateError": "Error al actualizar. Intenta de nuevo."
+      ,"enableDeliveryFor": "Habilitar {name} para domicilios"
+      ,"disableDeliveryFor": "Deshabilitar {name} para domicilios"
+      ,"enableQrFor": "Habilitar {name} para QR en mesa"
+      ,"disableQrFor": "Deshabilitar {name} para QR en mesa"
     },
     "recetas": {
       "searchPlaceholder": "Buscar recetas...",
@@ -166,6 +209,17 @@
       "marginNegative": "Margen negativo",
       "costDriftAria": "Solo desfase de costo",
       "costDrift": "Desfase costo"
+    },
+    "bulk": {
+      "inCatalog": "En catálogo",
+      "outOfCatalog": "Fuera del catálogo",
+      "categoryAria": "Cambiar categoría masivamente",
+      "statusAria": "Cambiar estado masivamente",
+      "catalogPlaceholder": "En catálogo",
+      "catalogAria": "Cambiar en catálogo masivamente",
+      "stationAria": "Cambiar estación de cocina masivamente",
+      "onlineAria": "Cambiar domicilios masivamente",
+      "qrAria": "Cambiar QR mesa masivamente"
     },
     "chooser": {
       "createNew": "Crear nuevo",

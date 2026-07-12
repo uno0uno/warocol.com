@@ -54,7 +54,50 @@
       "updateNoneError": "Could not update any product",
       "catalogUpdated": "Catalog updated",
       "someIngredientsNotRenamed": "Some items were not renamed",
-      "ingredientNotSynced": "Item not synced"
+      "ingredientNotSynced": "Item not synced",
+      "newProduct": "+ New product",
+      "newShort": "+ New",
+      "costWarning": "{count} product{suffix} with cost above the sale price — possible incorrectly recorded purchases.",
+      "viewDataQuality": "View Data Quality →",
+      "closeWarning": "Close warning",
+      "marginOperational": "Operating margin",
+      "noInventory": "No inventory",
+      "configureOpenSale": "Configure open sale in Customize",
+      "openSaleTitle": "Open sale container — managed in Operations → Customize",
+      "openSalePrice": "Price when sold in POS · no menu category",
+      "myCostLabel": "My cost:",
+      "noCost": "No cost",
+      "system": "System",
+      "noMenuCategory": "No menu category",
+      "sellPriceDefinedByCashier": "Cashier defines the amount in POS",
+      "sellPrice": "At sale",
+      "notApplicable": "Not applicable",
+      "noMargin": "No margin",
+      "customizeOpenSale": "Enable or disable open sale in Operations → Customize",
+      "editProduct": "Edit product",
+      "pagination": "Pagination",
+      "showingProducts": "Showing {start} to {end} of {total} products",
+      "deleteProductsTitle": "Delete products",
+      "deleteProductsQuestion": "Delete {count} product{suffix}?",
+      "deleteProductsDescription": "Products with recorded sales will be archived: they will stop selling in POS and delivery, while history is preserved. Products never sold will be permanently deleted.",
+      "confirmDelete": "Yes, delete",
+      "deleting": "Deleting...",
+      "editingModeHint": "Edit mode — changes are sent when saved",
+      "selectedCount": "{count} selected",
+      "deselect": "deselect",
+      "apply": "Apply",
+      "cancel": "Cancel"
+      ,"productNamePlaceholder": "Product name"
+      ,"nameOf": "Name of {name}"
+      ,"categoryOf": "Category of {name}"
+      ,"enableQr": "Enable for table QR"
+      ,"disableQr": "Disable for table QR"
+      ,"editProductFor": "Edit {name}"
+      ,"updateError": "Could not update. Try again."
+      ,"enableDeliveryFor": "Enable {name} for delivery"
+      ,"disableDeliveryFor": "Disable {name} for delivery"
+      ,"enableQrFor": "Enable {name} for table QR"
+      ,"disableQrFor": "Disable {name} for table QR"
     },
     "recetas": {
       "searchPlaceholder": "Search recipes...",
@@ -166,6 +209,17 @@
       "marginNegative": "Negative margin",
       "costDriftAria": "Only cost drift",
       "costDrift": "Cost drift"
+    },
+    "bulk": {
+      "inCatalog": "In catalog",
+      "outOfCatalog": "Out of catalog",
+      "categoryAria": "Bulk category change",
+      "statusAria": "Bulk status change",
+      "catalogPlaceholder": "Catalog",
+      "catalogAria": "Bulk catalog change",
+      "stationAria": "Bulk kitchen station change",
+      "onlineAria": "Bulk delivery change",
+      "qrAria": "Bulk table QR change"
     },
     "chooser": {
       "createNew": "Create new",
