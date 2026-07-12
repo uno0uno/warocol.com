@@ -193,6 +193,19 @@
       "canceled": "Cancelado",
       "updatingBody": "Estamos actualizando el empleado y guardando los cambios.",
       "deletingBody": "Estamos eliminando el empleado y cerrando su registro."
+      ,"deleteFileConfirm": "¿Estás seguro de que deseas eliminar este archivo?"
+      ,"pending": "Pendiente"
+      ,"paid": "Pagado"
+      ,"minimumWage": "Salario Mínimo"
+      ,"multiplierReq": "Multiplicador SMMLV *"
+      ,"noNotes": "Sin notas"
+      ,"totalPaidYear": "Total Pagado ({year})"
+      ,"paymentCount": "{count} pagos"
+      ,"gross": "Bruto"
+      ,"viewDetails": "Ver detalles"
+      ,"viewPaymentDetails": "Ver detalles del pago"
+      ,"benefitsDescription": "Registro de pagos de beneficios legales: prima, cesantías, intereses y vacaciones."
+      ,"compensation": "Compensación"
     },
     "salaryModal": {
       "configTitle": "Configurar Salario",

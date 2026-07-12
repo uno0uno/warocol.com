@@ -193,6 +193,19 @@
       "canceled": "Canceled",
       "updatingBody": "Updating employee and saving changes.",
       "deletingBody": "Deleting employee and closing their record."
+      ,"deleteFileConfirm": "Are you sure you want to delete this file?"
+      ,"pending": "Pending"
+      ,"paid": "Paid"
+      ,"minimumWage": "Minimum wage"
+      ,"multiplierReq": "Minimum wage multiplier *"
+      ,"noNotes": "No notes"
+      ,"totalPaidYear": "Total paid ({year})"
+      ,"paymentCount": "{count} payments"
+      ,"gross": "Gross"
+      ,"viewDetails": "View details"
+      ,"viewPaymentDetails": "View payment details"
+      ,"benefitsDescription": "Record payments for legal benefits: bonus, severance, interest, and vacation pay."
+      ,"compensation": "Compensation"
     },
     "salaryModal": {
       "configTitle": "Configure salary",

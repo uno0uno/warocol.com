@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, reactive, computed, watch, inject, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
@@ -10,7 +10,7 @@ const router = useRouter()
 const toast = useToast()
 const employeeId = route.params.id as string
 
-useHead({ title: t('equipo.salarios.detailTitle') })
+useHead({ title: () => t('equipo.salarios.detailTitle') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -90,7 +90,7 @@ const removeFile = (index: number) => {
 }
 
 const removeAttachment = (attachmentId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
+  if (!confirm(t('equipo.salarios.deleteFileConfirm'))) {
     return
   }
   attachmentsToRemove.value.push(attachmentId)
@@ -177,7 +177,7 @@ const saveChanges = async () => {
 }
 
 const deleteEmployee = async () => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.')) {
+  if (!confirm(t('equipo.salarios.deleteConfirm'))) {
     return
   }
 
@@ -218,7 +218,7 @@ const markAsPaid = async (payment: any) => {
 
 // Helper functions
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -238,8 +238,8 @@ const formatFileSize = (bytes: number) => {
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    'pending': 'Pendiente',
-    'paid': 'Pagado',
+    'pending': t('equipo.salarios.pending'),
+    'paid': t('equipo.salarios.paid'),
     'cancelled': t('equipo.salarios.canceled')
   }
   return labels[status] || status
@@ -247,7 +247,7 @@ const getStatusLabel = (status: string) => {
 
 const getSalaryTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    'smmlv': 'Salario Mínimo',
+    'smmlv': t('equipo.salarios.minimumWage'),
     'fixed': t('equipo.salarios.fixed'),
     'hourly': t('equipo.salarios.hourly'),
     'daily': t('equipo.salarios.dayLaborer')
@@ -307,7 +307,7 @@ watch(employeeData, (data) => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Volver</span>
+          <span>{{ t('equipo.common.back') }}</span>
         </button>
         <button
           v-if="!isEditMode"
@@ -317,7 +317,7 @@ watch(employeeData, (data) => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          <span>Eliminar</span>
+          <span>{{ t('equipo.common.delete') }}</span>
         </button>
       </div>
 
@@ -334,7 +334,7 @@ watch(employeeData, (data) => {
               </div>
               <div class="space-y-1 min-w-0">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Empleado
+                  {{ t('equipo.salarios.employee') }}
                 </p>
                 <p class="text-sm sm:text-base font-semibold text-text-primary truncate">
                   {{ employee.name }}
@@ -354,10 +354,10 @@ watch(employeeData, (data) => {
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Salario Mensual
+                  {{ t('equipo.salarios.monthlySalary') }}
                 </p>
                 <p class="text-sm sm:text-lg font-semibold text-primary">
-                  {{ employee.calculated_salary ? formatCurrency(employee.calculated_salary) : 'Sin configurar' }}
+                  {{ employee.calculated_salary ? formatCurrency(employee.calculated_salary) : t('equipo.salarios.notConfigured') }}
                 </p>
                 <p v-if="employee.salary_type === 'smmlv' && employee.multiplier" class="text-xs text-text-secondary">
                   {{ employee.multiplier }}x SMMLV
@@ -374,13 +374,13 @@ watch(employeeData, (data) => {
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Total Pagado ({{ new Date().getFullYear() }})
+                  {{ t('equipo.salarios.totalPaidYear', { year: new Date().getFullYear() }) }}
                 </p>
                 <p class="text-sm sm:text-lg font-semibold text-primary">
                   {{ formatCurrency(employee.total_paid_this_year || 0) }}
                 </p>
                 <p class="text-xs text-text-secondary">
-                  {{ employee.payments_count || 0 }} pagos
+                  {{ t('equipo.salarios.paymentCount', { count: employee.payments_count || 0 }) }}
                 </p>
               </div>
             </div>
@@ -396,14 +396,14 @@ watch(employeeData, (data) => {
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <span>Configuración del Salario</span>
+              <span>{{ t('equipo.salarios.configTitle') }}</span>
             </h3>
             <button
               v-if="!isEditMode"
               @click="toggleEditMode"
               class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
             >
-              Editar
+              {{ t('equipo.common.edit') }}
             </button>
           </div>
 
@@ -414,10 +414,10 @@ watch(employeeData, (data) => {
                 <thead class="bg-surface-secondary">
                   <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
-                      Campo
+                      {{ t('equipo.salarios.field') }}
                     </th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
-                      Valor
+                      {{ t('equipo.salarios.value') }}
                     </th>
                   </tr>
                 </thead>
@@ -425,27 +425,27 @@ watch(employeeData, (data) => {
                   <!-- Employment Type Row -->
                   <tr class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Tipo de contrato
+                      {{ t('equipo.salarios.contractType') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
-                      <span class="font-medium">{{ employee.employment_type ? getEmploymentTypeLabel(employee.employment_type) : 'Sin configurar' }}</span>
+                      <span class="font-medium">{{ employee.employment_type ? getEmploymentTypeLabel(employee.employment_type) : t('equipo.salarios.notConfigured') }}</span>
                     </td>
                   </tr>
 
                   <!-- Type Row — hidden for daily workers -->
                   <tr v-if="employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Tipo de Salario
+                      {{ t('equipo.salarios.salaryType') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
-                      <span class="font-medium">{{ employee.salary_type ? getSalaryTypeLabel(employee.salary_type) : 'Sin configurar' }}</span>
+                      <span class="font-medium">{{ employee.salary_type ? getSalaryTypeLabel(employee.salary_type) : t('equipo.salarios.notConfigured') }}</span>
                     </td>
                   </tr>
 
                   <!-- Multiplier Row (if SMMLV) -->
                   <tr v-if="employee.salary_type === 'smmlv' && employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Multiplicador SMMLV
+                      {{ t('equipo.salarios.smmlvMultiplier') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
                       <span class="font-medium">{{ employee.multiplier || '-' }}x</span>
@@ -455,7 +455,7 @@ watch(employeeData, (data) => {
                   <!-- Fixed Amount Row — hidden for daily workers -->
                   <tr v-if="employee.salary_type === 'fixed' && employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Monto Fijo
+                      {{ t('equipo.salarios.fixedAmount') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
                       <span class="font-bold text-primary text-lg">{{ formatCurrency(employee.fixed_amount || 0) }}</span>
@@ -465,7 +465,7 @@ watch(employeeData, (data) => {
                   <!-- Daily Rate Row (if daily worker) -->
                   <tr v-if="employee.employment_type === 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Valor por día
+                      {{ t('equipo.salarios.dailyRate') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
                       <span class="font-bold text-primary text-lg">{{ formatCurrency(employee.daily_rate || 0) }}</span>
@@ -475,7 +475,7 @@ watch(employeeData, (data) => {
                   <!-- Calculated Salary Row — hidden for daily workers (no fixed monthly salary) -->
                   <tr v-if="employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Salario Calculado
+                      {{ t('equipo.salarios.calculated') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
                       <span class="font-bold text-primary text-lg">{{ employee.calculated_salary ? formatCurrency(employee.calculated_salary) : '-' }}</span>
@@ -485,10 +485,10 @@ watch(employeeData, (data) => {
                   <!-- Notes Row -->
                   <tr class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                      Notas
+                      {{ t('equipo.common.notes') }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary">
-                      <span class="font-medium">{{ employee.salary_notes || 'Sin notas' }}</span>
+                      <span class="font-medium">{{ employee.salary_notes || t('equipo.salarios.noNotes') }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -502,23 +502,23 @@ watch(employeeData, (data) => {
               <!-- Employment Type -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de Contrato *
+                  {{ t('equipo.salarios.contractTypeReq') }}
                 </label>
                 <select
                   v-model="editForm.employmentType"
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="employee">Empleado</option>
-                  <option value="contractor">Contratista</option>
-                  <option value="daily">Jornalero</option>
+                  <option value="employee">{{ t('equipo.salarios.employee') }}</option>
+                  <option value="contractor">{{ t('equipo.salarios.contractor') }}</option>
+                  <option value="daily">{{ t('equipo.salarios.dayLaborer') }}</option>
                 </select>
               </div>
 
               <!-- Daily Rate (if daily worker) -->
               <div v-if="editForm.employmentType === 'daily'">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Valor por Día *
+                    {{ t('equipo.salarios.dailyRateReq') }}
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -536,22 +536,22 @@ watch(employeeData, (data) => {
               <template v-if="editForm.employmentType !== 'daily'">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Tipo de Salario *
+                    {{ t('equipo.salarios.salaryTypeReq') }}
                   </label>
                   <select
                     v-model="editForm.salaryType"
                     class="input-base w-full px-4 py-2"
                   >
-                    <option v-if="editForm.employmentType !== 'contractor'" value="smmlv">Salario Mínimo (SMMLV)</option>
-                    <option value="fixed">Fijo</option>
-                    <option value="hourly">Por Hora</option>
+                    <option v-if="editForm.employmentType !== 'contractor'" value="smmlv">{{ t('equipo.salarios.minimumWage') }} (SMMLV)</option>
+                    <option value="fixed">{{ t('equipo.salarios.fixed') }}</option>
+                    <option value="hourly">{{ t('equipo.salarios.hourly') }}</option>
                   </select>
                 </div>
 
                 <!-- Multiplier (if SMMLV) -->
                 <div v-if="editForm.salaryType === 'smmlv'">
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Multiplicador SMMLV *
+                    {{ t('equipo.salarios.multiplierReq') }}
                   </label>
                   <UiDecimalInput
                     v-model="editForm.minimumWageMultiplier"
@@ -564,7 +564,7 @@ watch(employeeData, (data) => {
                 <!-- Fixed Amount (if fixed) -->
                 <div v-if="editForm.salaryType === 'fixed'">
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Monto Fijo *
+                    {{ t('equipo.salarios.fixedAmountReq') }}
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -580,7 +580,7 @@ watch(employeeData, (data) => {
                 <!-- Hourly Rate (if hourly) -->
                 <div v-if="editForm.salaryType === 'hourly'">
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Valor por Hora *
+                    {{ t('equipo.salarios.hourlyRateReq') }}
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -597,12 +597,12 @@ watch(employeeData, (data) => {
               <!-- Notes -->
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Notas (Opcional)
+                  {{ t('equipo.salarios.notesOptional') }}
                 </label>
                 <textarea
                   v-model="editForm.notes"
                   rows="3"
-                  placeholder="Observaciones adicionales..."
+                  :placeholder="t('equipo.salarios.notesPlaceholder')"
                   class="input-base w-full px-4 py-2 resize-none"
                 ></textarea>
               </div>
@@ -620,7 +620,7 @@ watch(employeeData, (data) => {
                 type="button"
                 class="flex-1 px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:bg-background transition-colors font-medium"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </button>
               <button
                 type="submit"
@@ -643,12 +643,12 @@ watch(employeeData, (data) => {
       <div class="bg-surface border-2 border-border rounded-lg mt-6">
         <div class="p-4 sm:p-6">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary">Historial de Pagos</h3>
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary">{{ t('equipo.salarios.paymentHistory') }}</h3>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/pago`"
               class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
             >
-              + Nuevo Pago
+              {{ t('equipo.salarios.newPayment') }}
             </NuxtLink>
           </div>
 
@@ -659,7 +659,7 @@ watch(employeeData, (data) => {
 
           <!-- Empty State -->
           <div v-else-if="payments.length === 0" class="text-center py-8">
-            <p class="text-sm text-text-secondary">No hay pagos registrados</p>
+            <p class="text-sm text-text-secondary">{{ t('equipo.salarios.noPayments') }}</p>
           </div>
 
           <!-- Payments Table -->
@@ -667,13 +667,13 @@ watch(employeeData, (data) => {
             <table class="w-full">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Período</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Fecha</th>
-                  <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">Monto</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Método</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Estado</th>
-                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Archivos</th>
-                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Acciones</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.period') }}</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.date') }}</th>
+                  <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.amount') }}</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.method') }}</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.status') }}</th>
+                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.files') }}</th>
+                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -687,7 +687,7 @@ watch(employeeData, (data) => {
                   <td class="py-3 px-4 text-sm text-right font-medium">
                     <span class="text-primary">{{ formatCurrency(payment.net_pay ?? payment.payment_amount) }}</span>
                     <span v-if="payment.net_pay && payment.net_pay !== payment.payment_amount" class="block text-xs text-text-tertiary">
-                      Bruto: {{ formatCurrency(payment.payment_amount) }}
+                      {{ t('equipo.salarios.gross') }}: {{ formatCurrency(payment.payment_amount) }}
                     </span>
                   </td>
                   <td class="py-3 px-4 text-sm text-text-secondary">{{ payment.payment_method }}</td>
@@ -716,8 +716,8 @@ watch(employeeData, (data) => {
                       <NuxtLink
                         :to="`/equipo/salarios/pagos/${payment.id}`"
                         class="p-2 text-text-secondary hover:text-primary transition-colors rounded-lg"
-                        title="Ver detalles"
-                        aria-label="Ver detalles del pago"
+                        :title="t('equipo.salarios.viewDetails')"
+                        :aria-label="t('equipo.salarios.viewPaymentDetails')"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -728,8 +728,8 @@ watch(employeeData, (data) => {
                         v-if="payment.status === 'pending'"
                         @click="markAsPaid(payment)"
                         class="p-2 text-green-600 hover:text-green-700 transition-colors rounded-lg"
-                        title="Marcar como pagado"
-                        aria-label="Marcar como pagado"
+                        :title="t('equipo.salarios.markPaid')"
+                        :aria-label="t('equipo.salarios.markPaid')"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -746,8 +746,8 @@ watch(employeeData, (data) => {
       <!-- Prestaciones Sociales (solo empleados y jornaleros) -->
       <div v-if="employee.employment_type && employee.employment_type !== 'contractor'" class="bg-surface border-2 border-border rounded-lg mt-6">
         <div class="p-4 sm:p-6">
-          <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Prestaciones Sociales</h3>
-          <p class="text-sm text-text-secondary mb-4">Registro de pagos de beneficios legales: prima, cesantías, intereses y vacaciones.</p>
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">{{ t('equipo.salarios.benefits') }}</h3>
+          <p class="text-sm text-text-secondary mb-4">{{ t('equipo.salarios.benefitsDescription') }}</p>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/prima`"
@@ -756,8 +756,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Prima</span>
-              <span class="text-xs text-text-secondary">Jun · Dic</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.prima') }}</span>
+              <span class="text-xs text-text-secondary">{{ t('equipo.salarios.primaMonths') }}</span>
             </NuxtLink>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/cesantias`"
@@ -766,8 +766,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Cesantías</span>
-              <span class="text-xs text-text-secondary">Ene · Feb</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.cesantias') }}</span>
+              <span class="text-xs text-text-secondary">{{ t('equipo.salarios.cesantiasMonths') }}</span>
             </NuxtLink>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/int-cesantias`"
@@ -776,7 +776,7 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Int. Cesantías</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.intCesantias') }}</span>
               <span class="text-xs text-text-secondary">12% anual</span>
             </NuxtLink>
             <NuxtLink
@@ -786,8 +786,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Vacaciones</span>
-              <span class="text-xs text-text-secondary">Compensación</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.vacaciones') }}</span>
+              <span class="text-xs text-text-secondary">{{ t('equipo.salarios.compensation') }}</span>
             </NuxtLink>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/dotacion`"
@@ -796,8 +796,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Dotación</span>
-              <span class="text-xs text-text-secondary">Abr · Ago · Dic</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.dotacion') }}</span>
+              <span class="text-xs text-text-secondary">{{ t('equipo.salarios.vacMonths') }}</span>
             </NuxtLink>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/horas-extras`"
@@ -806,8 +806,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span class="text-sm font-medium text-text-primary">Horas Extras</span>
-              <span class="text-xs text-text-secondary">Art. 168 CST</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('equipo.salarios.horasExtras') }}</span>
+              <span class="text-xs text-text-secondary">{{ t('equipo.salarios.art168') }}</span>
             </NuxtLink>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/liquidacion`"
@@ -816,8 +816,8 @@ watch(employeeData, (data) => {
               <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <span class="text-sm font-medium text-red-700">Liquidación</span>
-              <span class="text-xs text-red-500">Retiro</span>
+              <span class="text-sm font-medium text-red-700">{{ t('equipo.salarios.liquidacion') }}</span>
+              <span class="text-xs text-red-500">{{ t('equipo.salarios.retirement') }}</span>
             </NuxtLink>
           </div>
         </div>
