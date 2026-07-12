@@ -258,7 +258,7 @@ definePageMeta({
   module: 'menu',
 })
 
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 useHead({ title: t('menu.recetas.form.editTitle') })
