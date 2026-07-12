@@ -138,6 +138,8 @@
       "emptySub": "Employees with configured salary will appear here",
       "viewEdit": "View and edit",
       "new": "+ New",
+      "addEmployee": "+ Add employee",
+      "deleteConfirm": "Are you sure you want to remove this employee? This cannot be undone.",
       "deleteError": "Error deleting employee",
       "detailTitle": "Salary detail",
       "configTitle": "Salary configuration",

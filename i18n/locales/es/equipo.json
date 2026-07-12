@@ -138,6 +138,8 @@
       "emptySub": "Los empleados con salario configurado aparecerán aquí",
       "viewEdit": "Ver y editar",
       "new": "+ Nuevo",
+      "addEmployee": "+ Agregar empleado",
+      "deleteConfirm": "¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.",
       "deleteError": "Error al eliminar empleado",
       "detailTitle": "Detalle del Salario",
       "configTitle": "Configuración del Salario",

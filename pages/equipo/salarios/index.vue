@@ -1,11 +1,11 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
-useHead({ title: 'Salarios' })
+useHead({ title: () => t('equipo.salarios.title') })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -21,7 +21,7 @@ const performSearch = () => applySearch()
 const clearFilters = () => clearSearch()
 
 // Fetch employees with salary data
-const { data: employeesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: employeesData, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['salaries', 'employees', currentTenant.value?.id],
   query: () => $fetch('/api/salaries/employees'),
   enabled: () => !!currentTenant.value,
@@ -61,7 +61,7 @@ const stats = computed(() => {
 })
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -72,18 +72,18 @@ const { formatDate: _fmtDate } = useFormatters()
 const formatDate = (dateString: string) => _fmtDate(dateString)
 
 // Table columns
-const employeesTableColumns = [
+const employeesTableColumns = computed(() => [
   { key: 'name', title: t('equipo.common.name'), sortable: true },
   { key: 'email', title: t('equipo.common.email'), sortable: false },
   { key: 'role_label', title: t('equipo.common.role'), sortable: false },
   { key: 'calculated_salary', title: t('equipo.salarios.salary'), sortable: true },
   { key: 'salary_type_display', title: t('equipo.salarios.type'), sortable: false },
   { key: 'actions', title: '', sortable: false }
-]
+])
 
 // Delete employee
 const deleteEmployee = async (employeeId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.')) {
+  if (!confirm(t('equipo.salarios.deleteConfirm'))) {
     return
   }
 
@@ -126,21 +126,21 @@ onUnmounted(() => {
       <!-- Metrics Cards -->
       <div v-if="stats" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <SharedMetricCard
-          title="Nómina Mensual"
+          :title="t('equipo.salarios.monthlyPayroll')"
           :value="stats.totalPayroll"
           format="currency"
           variant="primary"
           size="sm"
         />
         <SharedMetricCard
-          title="Empleados"
+          :title="t('equipo.salarios.employees')"
           :value="stats.totalEmployees"
           format="number"
           variant="primary"
           size="sm"
         />
         <SharedMetricCard
-          title="Con Salario"
+          :title="t('equipo.salarios.withSalary')"
           :value="stats.employeesWithSalary"
           format="number"
           variant="primary"
@@ -163,8 +163,8 @@ onUnmounted(() => {
             to="/equipo/miembros"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
           >
-            <span class="hidden sm:inline">+ Agregar Empleado</span>
-            <span class="sm:hidden">+ Nuevo</span>
+            <span class="hidden sm:inline">{{ t('equipo.salarios.addEmployee') }}</span>
+            <span class="sm:hidden">{{ t('equipo.salarios.new') }}</span>
           </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -173,8 +173,8 @@ onUnmounted(() => {
       <UiResponsiveDataView
         :columns="employeesTableColumns"
         :data="employees"
-        empty-message="No hay empleados registrados"
-        empty-sub-message="Los empleados con salario configurado aparecerán aquí"
+        :empty-message="t('equipo.salarios.empty')"
+        :empty-sub-message="t('equipo.salarios.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -204,7 +204,7 @@ onUnmounted(() => {
               <span v-if="item.salary_type" class="text-xs text-text-secondary">
                 {{ item.salary_type === 'smmlv' ? `${item.multiplier || 0}x SMMLV` : item.salary_type === 'fixed' ? t('equipo.salarios.fixed') : t('equipo.salarios.hourly') }}
               </span>
-              <span v-else class="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">Sin configurar</span>
+              <span v-else class="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">{{ t('equipo.salarios.notConfigured') }}</span>
             </div>
           </NuxtLink>
         </template>
@@ -239,13 +239,13 @@ onUnmounted(() => {
               {{ row.multiplier || 0 }}x SMMLV
             </span>
             <span v-else-if="row.salary_type === 'fixed'" class="text-sm text-text-secondary">
-              Fijo
+              {{ t('equipo.salarios.fixed') }}
             </span>
             <span v-else-if="row.salary_type === 'hourly'" class="text-sm text-text-secondary">
-              Por hora
+              {{ t('equipo.salarios.hourly') }}
             </span>
             <span v-else class="inline-flex items-center px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-              Sin configurar
+              {{ t('equipo.salarios.notConfigured') }}
             </span>
           </div>
         </template>
@@ -255,7 +255,7 @@ onUnmounted(() => {
             <NuxtLink
               :to="`/equipo/salarios/${row.id}`"
               class="text-text-secondary hover:text-primary transition-colors"
-              title="Ver y editar"
+              :title="t('equipo.salarios.viewEdit')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -265,7 +265,7 @@ onUnmounted(() => {
             <button
               @click="deleteEmployee(row.id)"
               class="text-destructive hover:text-destructive/80 transition-colors"
-              title="Eliminar"
+              :title="t('equipo.common.delete')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
