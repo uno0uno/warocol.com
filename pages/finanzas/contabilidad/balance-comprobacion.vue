@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: 'Balance de comprobación - Warocol' })
+const { t } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('finanzas.contabilidad.trialBalance.headTitle') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const { formatCurrency: formatMoney } = useFormatters()
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const { addDaysISO, monthBounds, todayISO } = useTenantTimezone()
@@ -41,7 +43,7 @@ const periodStart = ref(firstDayOfCurrentMonth())
 const periodEnd = ref(todayStr())
 const includeZeroBalances = ref(false)
 
-// shouldFetch controls when we actually query — true on mount, and on "Consultar" click
+// shouldFetch controls when we actually query: true on mount and on the run button.
 const shouldFetch = ref(false)
 
 onMounted(() => { shouldFetch.value = true })
@@ -105,21 +107,21 @@ const totalDebits = computed(() => trialData.value?.totalDebits ?? 0)
 const totalCredits = computed(() => trialData.value?.totalCredits ?? 0)
 const isBalanced = computed(() => trialData.value?.isBalanced ?? true)
 
-// ── Consultar button ─────────────────────────────────────────────────────────
+// ── Run button ───────────────────────────────────────────────────────────────
 const handleConsultar = () => {
   shouldFetch.value = true
   refetch()
 }
 
 // ── PUC class constants ──────────────────────────────────────────────────────
-const PUC_CLASSES = [
-  { value: '1', label: 'Activos' },
-  { value: '2', label: 'Pasivos' },
-  { value: '3', label: 'Patrimonio' },
-  { value: '4', label: 'Ingresos' },
-  { value: '5', label: 'Gastos' },
-  { value: '6', label: 'Costos' },
-]
+const PUC_CLASSES = computed(() => [
+  { value: '1', label: t('finanzas.contabilidad.classes.assets') },
+  { value: '2', label: t('finanzas.contabilidad.classes.liabilities') },
+  { value: '3', label: t('finanzas.contabilidad.classes.equity') },
+  { value: '4', label: t('finanzas.contabilidad.classes.income') },
+  { value: '5', label: t('finanzas.contabilidad.classes.expenses') },
+  { value: '6', label: t('finanzas.contabilidad.classes.costs') },
+])
 
 // ── Grouped rows with subtotals ──────────────────────────────────────────────
 const groupedRows = computed(() => {
@@ -130,7 +132,7 @@ const groupedRows = computed(() => {
     subtotals: { openingBalance: number; periodDebits: number; periodCredits: number; closingBalance: number }
   }[] = []
 
-  for (const cls of PUC_CLASSES) {
+  for (const cls of PUC_CLASSES.value) {
     const items = rows.value.filter(r => r.class === cls.value)
     if (items.length === 0) continue
 
@@ -159,26 +161,25 @@ const indentStyle = (code: string): string => {
 }
 
 // ── Currency formatter ───────────────────────────────────────────────────────
-const formatCurrency = (value: number): string => {
+const formatAccountingCurrency = (value: number): string => {
   if (value < 0) {
-    return `(${new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(Math.abs(value))})`
+    return `(${formatMoney(Math.abs(value))})`
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return formatMoney(value)
 }
 
 const isNegative = (value: number) => value < 0
 
 // ── CSV Export ───────────────────────────────────────────────────────────────
 const exportCSV = () => {
-  const headers = ['Código', 'Nombre', 'Saldo Inicial', 'Débitos', 'Créditos', 'Saldo Final']
+  const headers = [
+    t('finanzas.contabilidad.code'),
+    t('finanzas.contabilidad.name'),
+    t('finanzas.contabilidad.openingBalance'),
+    t('finanzas.contabilidad.debits'),
+    t('finanzas.contabilidad.credits'),
+    t('finanzas.contabilidad.finalBalance'),
+  ]
   const csvRows = [headers.join(',')]
   for (const row of rows.value) {
     csvRows.push([
@@ -194,7 +195,7 @@ const exportCSV = () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `balance-comprobacion-${periodStart.value}-${periodEnd.value}.csv`
+  a.download = `${t('finanzas.contabilidad.trialBalance.filePrefix')}-${periodStart.value}-${periodEnd.value}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -214,18 +215,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       <!-- Date inputs row -->
       <div class="flex flex-wrap items-end gap-3">
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-text-secondary" for="period-start">Desde</label>
+          <label class="text-xs font-medium text-text-secondary" for="period-start">{{ t('finanzas.contabilidad.trialBalance.from') }}</label>
           <input
             id="period-start"
             v-model="periodStart"
             type="date"
             class="h-9 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             :max="periodEnd"
-            aria-label="Fecha de inicio del período"
+            :aria-label="t('finanzas.contabilidad.trialBalance.startDateAria')"
           />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-text-secondary" for="period-end">Hasta</label>
+          <label class="text-xs font-medium text-text-secondary" for="period-end">{{ t('finanzas.contabilidad.trialBalance.to') }}</label>
           <input
             id="period-end"
             v-model="periodEnd"
@@ -233,7 +234,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             class="h-9 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             :min="periodStart"
             :max="todayStr()"
-            aria-label="Fecha de fin del período"
+            :aria-label="t('finanzas.contabilidad.trialBalance.endDateAria')"
           />
         </div>
 
@@ -243,50 +244,50 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-model="includeZeroBalances"
             type="checkbox"
             class="w-4 h-4 rounded border-border text-primary focus:ring-primary focus:ring-2"
-            aria-label="Incluir cuentas con saldo cero"
+            :aria-label="t('finanzas.contabilidad.trialBalance.includeZero')"
           />
-          <span class="text-sm text-text-secondary">Incluir saldos cero</span>
+          <span class="text-sm text-text-secondary">{{ t('finanzas.contabilidad.trialBalance.includeZero') }}</span>
         </label>
 
-        <!-- Consultar button -->
+        <!-- Run button -->
         <button
           type="button"
           :disabled="asyncStatus === 'loading'"
           class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          aria-label="Consultar balance de comprobación"
+          :aria-label="t('finanzas.contabilidad.trialBalance.consultAria')"
           @click="handleConsultar"
         >
           <svg v-if="asyncStatus === 'loading'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          <span>Consultar</span>
+          <span>{{ asyncStatus === 'loading' ? t('finanzas.contabilidad.trialBalance.consulting') : t('finanzas.contabilidad.trialBalance.consult') }}</span>
         </button>
       </div>
 
       <!-- Preset buttons -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs text-text-secondary mr-1">Período rápido:</span>
+        <span class="text-xs text-text-secondary mr-1">{{ t('finanzas.contabilidad.trialBalance.quickPeriod') }}:</span>
         <button
           type="button"
           class="h-8 px-3 rounded-lg border border-border bg-background text-xs text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           @click="applyPreset(firstDayOfCurrentMonth(), todayStr())"
-        >Mes actual</button>
+        >{{ t('finanzas.contabilidad.trialBalance.currentMonth') }}</button>
         <button
           type="button"
           class="h-8 px-3 rounded-lg border border-border bg-background text-xs text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           @click="applyPreset(firstDayOfLastMonth(), lastDayOfLastMonth())"
-        >Mes anterior</button>
+        >{{ t('finanzas.contabilidad.trialBalance.previousMonth') }}</button>
         <button
           type="button"
           class="h-8 px-3 rounded-lg border border-border bg-background text-xs text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           @click="applyPreset(firstDayOfCurrentQuarter(), todayStr())"
-        >Trimestre actual</button>
+        >{{ t('finanzas.contabilidad.trialBalance.currentQuarter') }}</button>
         <button
           type="button"
           class="h-8 px-3 rounded-lg border border-border bg-background text-xs text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           @click="applyPreset(firstDayOfCurrentYear(), todayStr())"
-        >Año actual</button>
+        >{{ t('finanzas.contabilidad.trialBalance.currentYear') }}</button>
       </div>
     </div>
 
@@ -300,7 +301,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       <svg class="w-12 h-12 text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      <p class="text-sm text-text-secondary">Selecciona un período y haz clic en Consultar</p>
+      <p class="text-sm text-text-secondary">{{ t('finanzas.contabilidad.trialBalance.preQuery') }}</p>
     </div>
 
     <!-- Error state -->
@@ -319,8 +320,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <div>
-          <p class="text-sm font-semibold">El balance no está cuadrado</p>
-          <p class="text-xs mt-0.5">Revisa los asientos contables — los totales de débito y crédito no coinciden.</p>
+          <p class="text-sm font-semibold">{{ t('finanzas.contabilidad.trialBalance.unbalancedTitle') }}</p>
+          <p class="text-xs mt-0.5">{{ t('finanzas.contabilidad.trialBalance.unbalancedHelp') }}</p>
         </div>
       </div>
 
@@ -328,13 +329,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       <div class="flex items-center gap-3 flex-wrap">
         <div class="flex-1 min-w-0">
           <h2 class="text-sm font-semibold text-text-primary">
-            Balance de comprobación
+            {{ t('finanzas.contabilidad.trialBalance.title') }}
             <span class="font-normal text-text-secondary ml-1">
               {{ periodStart }} — {{ periodEnd }}
             </span>
           </h2>
           <p class="text-xs text-text-secondary mt-0.5">
-            {{ rows.length }} cuenta{{ rows.length !== 1 ? 's' : '' }}
+            {{ t('finanzas.contabilidad.trialBalance.accountCount', { count: rows.length }) }}
           </p>
         </div>
 
@@ -346,7 +347,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          Cuadrado
+          {{ t('finanzas.contabilidad.balanced') }}
         </span>
 
         <!-- CSV export button -->
@@ -354,13 +355,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           v-if="rows.length > 0"
           type="button"
           class="h-9 px-3 flex items-center gap-1.5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors whitespace-nowrap"
-          aria-label="Exportar a CSV"
+          :aria-label="t('finanzas.contabilidad.trialBalance.exportCsv')"
           @click="exportCSV"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          CSV
+          {{ t('finanzas.contabilidad.trialBalance.csv') }}
         </button>
       </div>
 
@@ -372,22 +373,22 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <svg class="w-12 h-12 text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <p class="text-sm font-medium text-text-primary">Sin movimientos en el período seleccionado</p>
-        <p class="text-xs text-text-secondary mt-1">Intenta con un rango de fechas diferente o activa "Incluir saldos cero".</p>
+        <p class="text-sm font-medium text-text-primary">{{ t('finanzas.contabilidad.trialBalance.emptyTitle') }}</p>
+        <p class="text-xs text-text-secondary mt-1">{{ t('finanzas.contabilidad.trialBalance.emptyHelp') }}</p>
       </div>
 
       <!-- Trial balance table -->
       <div v-else class="rounded-xl border border-data-table-border overflow-hidden bg-data-table-container-bg">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm" role="table" aria-label="Balance de comprobación">
+          <table class="w-full text-sm" role="table" :aria-label="t('finanzas.contabilidad.trialBalance.title')">
             <thead>
               <tr class="border-b border-data-table-border bg-data-table-header-bg">
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap w-28">Código</th>
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider">Cuenta</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Saldo inicial</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Débitos</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Créditos</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">Saldo final</th>
+                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap w-28">{{ t('finanzas.contabilidad.code') }}</th>
+                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider">{{ t('finanzas.contabilidad.account') }}</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.openingBalance') }}</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.debits') }}</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.credits') }}</th>
+                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.finalBalance') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -423,16 +424,16 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                     </span>
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.openingBalance) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(row.openingBalance) }}
+                    {{ formatAccountingCurrency(row.openingBalance) }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.periodDebits) ? 'text-destructive' : 'text-text-primary'">
-                    {{ row.periodDebits !== 0 ? formatCurrency(row.periodDebits) : '—' }}
+                    {{ row.periodDebits !== 0 ? formatAccountingCurrency(row.periodDebits) : '—' }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.periodCredits) ? 'text-destructive' : 'text-text-primary'">
-                    {{ row.periodCredits !== 0 ? formatCurrency(row.periodCredits) : '—' }}
+                    {{ row.periodCredits !== 0 ? formatAccountingCurrency(row.periodCredits) : '—' }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums font-medium" :class="isNegative(row.closingBalance) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(row.closingBalance) }}
+                    {{ formatAccountingCurrency(row.closingBalance) }}
                   </td>
                 </tr>
 
@@ -440,19 +441,19 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <tr class="border-t border-data-table-border bg-data-table-footer-bg">
                   <td class="py-2 px-3" />
                   <td class="py-2 px-3">
-                    <span class="text-xs font-bold text-text-secondary">Subtotal {{ group.label }}</span>
+                    <span class="text-xs font-bold text-text-secondary">{{ t('finanzas.contabilidad.trialBalance.subtotal', { label: group.label }) }}</span>
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.openingBalance) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(group.subtotals.openingBalance) }}
+                    {{ formatAccountingCurrency(group.subtotals.openingBalance) }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodDebits) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(group.subtotals.periodDebits) }}
+                    {{ formatAccountingCurrency(group.subtotals.periodDebits) }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodCredits) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(group.subtotals.periodCredits) }}
+                    {{ formatAccountingCurrency(group.subtotals.periodCredits) }}
                   </td>
                   <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.closingBalance) ? 'text-destructive' : 'text-text-primary'">
-                    {{ formatCurrency(group.subtotals.closingBalance) }}
+                    {{ formatAccountingCurrency(group.subtotals.closingBalance) }}
                   </td>
                 </tr>
 
@@ -463,7 +464,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <td class="py-3 px-3" />
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-text-primary">TOTALES</span>
+                    <span class="text-sm font-bold text-text-primary">{{ t('finanzas.contabilidad.trialBalance.totals') }}</span>
                     <span
                       v-if="isBalanced"
                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-badge-success-bg text-badge-success-text"
@@ -471,22 +472,22 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                       </svg>
-                      Cuadrado
+                      {{ t('finanzas.contabilidad.balanced') }}
                     </span>
                     <span
                       v-else
                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-destructive/10 text-destructive"
                     >
-                      No cuadrado
+                      {{ t('finanzas.contabilidad.trialBalance.notBalanced') }}
                     </span>
                   </div>
                 </td>
                 <td class="py-3 px-3" />
                 <td class="py-3 px-3 text-right tabular-nums text-sm font-bold text-text-primary">
-                  {{ formatCurrency(totalDebits) }}
+                  {{ formatAccountingCurrency(totalDebits) }}
                 </td>
                 <td class="py-3 px-3 text-right tabular-nums text-sm font-bold text-text-primary">
-                  {{ formatCurrency(totalCredits) }}
+                  {{ formatAccountingCurrency(totalCredits) }}
                 </td>
                 <td class="py-3 px-3" />
               </tr>
