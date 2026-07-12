@@ -16,7 +16,6 @@
         :header-action="dynamicHeaderAction"
         :is-refreshing="isRefreshing"
         :is-progressive-loading="isProgressiveLoading"
-        :hide-logo="isSidebarExpanded"
         @refresh="handleRefresh"
         @navigate-pos="navigateToPOS"
       />

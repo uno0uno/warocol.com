@@ -276,13 +276,13 @@ const handleLogout = async () => {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.5625rem;
-  min-height: 2.375rem;
-  padding: 0.3125rem 0.625rem;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.4375rem;
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
-  font-size: 0.9375rem;
-  line-height: 1.25rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
   font-weight: 500;
   width: 100%;
   text-decoration: none;
@@ -292,7 +292,7 @@ const handleLogout = async () => {
   gap: 0;
   padding-left: 0;
   padding-right: 0;
-  min-height: 2.375rem;
+  min-height: 2.75rem;
 }
 .nav-item--active {
   background-color: hsl(var(--nav-item-active-bg) / 0.10);
@@ -322,8 +322,8 @@ const handleLogout = async () => {
 
 /* ── Nav icon ── */
 .nav-icon {
-  width: 23px;
-  height: 23px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   transition: color 0.15s;
 }

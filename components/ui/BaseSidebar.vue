@@ -104,11 +104,11 @@ const sidebarClass = computed(() => [
   props.overlay
     ? [
         'base-sidebar--overlay fixed left-0 top-0 z-[2030]',
-        isExpanded.value ? 'w-56' : 'w-[4.25rem]',
+        isExpanded.value ? 'w-fit min-w-[14rem] max-w-[18rem]' : 'w-[4.25rem]',
       ]
     : [
         props.toggle ? 'base-sidebar--toggle' : '',
-        isExpanded.value ? 'w-56' : 'w-[4.25rem]',
+        isExpanded.value ? 'w-fit min-w-[14rem] max-w-[18rem]' : 'w-[4.25rem]',
         !props.toggle ? 'hover:w-56' : '',
       ],
 ])
@@ -171,7 +171,9 @@ function closeOverlay() {
 
 .base-sidebar-shell--expanded,
 .base-sidebar-shell--toggle.base-sidebar-shell--expanded {
-  width: 14rem;
+  width: fit-content;
+  min-width: 14rem;
+  max-width: 18rem;
 }
 
 .base-sidebar-shell--overlay {
