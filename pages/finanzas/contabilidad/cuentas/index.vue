@@ -1,18 +1,18 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
-useHead({ title: t('finanzas.contabilidad.accountsTitle') })
+useHead({ title: () => t('finanzas.contabilidad.accountsTitle') })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
-const { formatCalendarDate } = useFormatters()
-const formatCOP = (v: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
+const { formatCalendarDate, formatCurrency } = useFormatters()
+const formatCOP = (v: number) => formatCurrency(v ?? 0)
+const datePickerLocale = computed(() => locale.value === 'en' ? enUS : es)
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const showAll = ref(false)
@@ -24,11 +24,11 @@ const maxDate = computed(() => dateAtNoon(todayISO()))
 const dateRangeDates = ref<Date[] | null>([dateAtNoon(currentMonth.first), dateAtNoon(today)])
 
 const presetDates = [
-  { label: 'Hoy',             value: [dateAtNoon(today), dateAtNoon(today)] },
-  { label: t('finanzas.contabilidad.thisWeek'),     value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
-  { label: t('finanzas.contabilidad.thisMonth'),        value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
-  { label: 'Último mes',      value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
-  { label: 'Últimos 90 días', value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
+  { label: t('finanzas.common.today'), value: [dateAtNoon(today), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.thisWeek'), value: [dateAtNoon(addDaysISO(today, -7)), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.thisMonth'), value: [dateAtNoon(currentMonth.first), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.lastMonth'), value: [dateAtNoon(addDaysISO(today, -30)), dateAtNoon(today)] },
+  { label: t('finanzas.contabilidad.last90Days'), value: [dateAtNoon(addDaysISO(today, -90)), dateAtNoon(today)] },
 ]
 
 const formatDateRange = (dates: Date[]) => {
@@ -89,8 +89,12 @@ const levelFilter  = ref<string | null>(null)  // 'cuenta' | 'subcuenta' | null
 const CLASS_ORDER = ['1', '2', '3', '4', '5', '6']
 
 const CLASS_SHORT: Record<string, string> = {
-  '1': 'Activos', '2': 'Pasivos', '3': 'Patrimonio',
-  '4': 'Ingresos', '5': 'Gastos', '6': 'Costos',
+  '1': t('finanzas.contabilidad.classes.assets'),
+  '2': t('finanzas.contabilidad.classes.liabilities'),
+  '3': t('finanzas.contabilidad.classes.equity'),
+  '4': t('finanzas.contabilidad.classes.income'),
+  '5': t('finanzas.contabilidad.classes.expenses'),
+  '6': t('finanzas.contabilidad.classes.costs'),
 }
 const CLASS_VARIANTS: Record<string, string> = {
   '1': 'primary', '2': 'warning', '3': 'secondary',
@@ -107,10 +111,10 @@ const CLASS_TEXT: Record<string, string> = {
 
 const pucLevel = (code: string): { label: string; variant: string } => {
   const len = code.length
-  if (len === 1) return { label: 'Clase',    variant: 'primary' }
-  if (len === 2) return { label: 'Grupo',    variant: 'secondary' }
-  if (len === 4) return { label: 'Cuenta',   variant: 'warning' }
-  return              { label: 'Subcuenta', variant: 'success' }
+  if (len === 1) return { label: t('finanzas.contabilidad.class'), variant: 'primary' }
+  if (len === 2) return { label: t('finanzas.contabilidad.group'), variant: 'secondary' }
+  if (len === 4) return { label: t('finanzas.contabilidad.account'), variant: 'warning' }
+  return { label: t('finanzas.contabilidad.subaccount'), variant: 'success' }
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -237,11 +241,11 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-        <MetricCard title="Saldo inicial" :value="periodSummary.openingBalance" format="currency" variant="primary" />
-        <MetricCard title="Débitos período" :value="periodSummary.periodDebits" format="currency" variant="primary" />
-        <MetricCard title="Créditos período" :value="periodSummary.periodCredits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.openingBalance')" :value="periodSummary.openingBalance" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.debitsPeriod')" :value="periodSummary.periodDebits" format="currency" variant="primary" />
+        <MetricCard :title="t('finanzas.contabilidad.creditsPeriod')" :value="periodSummary.periodCredits" format="currency" variant="primary" />
         <MetricCard
-          title="Saldo cierre"
+          :title="t('finanzas.contabilidad.closingBalance')"
           :value="periodSummary.closingBalance"
           format="currency"
           :variant="periodSummary.closingBalance >= 0 ? 'primary' : 'destructive'"
@@ -257,8 +261,8 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           range
           :preset-dates="presetDates"
           :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
+          :locale="datePickerLocale"
+          :placeholder="t('finanzas.common.dateRange')"
           auto-apply
           :teleport="true"
           :timezone="timezone"
@@ -273,9 +277,9 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <select
           v-model="classFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          aria-label="Filtrar por clase"
+          :aria-label="t('finanzas.contabilidad.filterClass')"
         >
-          <option :value="null">Todas las clases</option>
+          <option :value="null">{{ t('finanzas.contabilidad.allClasses') }}</option>
           <option v-for="cls in CLASS_ORDER" :key="cls" :value="cls">{{ cls }} · {{ CLASS_SHORT[cls] }}</option>
         </select>
 
@@ -283,22 +287,22 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <select
           v-model="activeFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          aria-label="Filtrar por estado"
+          :aria-label="t('finanzas.contabilidad.filterStatus')"
         >
-          <option :value="null">Todas</option>
-          <option value="true">Activas</option>
-          <option value="false">Inactivas</option>
+          <option :value="null">{{ t('finanzas.common.allF') }}</option>
+          <option value="true">{{ t('finanzas.contabilidad.active') }}</option>
+          <option value="false">{{ t('finanzas.contabilidad.inactive') }}</option>
         </select>
 
         <!-- Nivel filter -->
         <select
           v-model="levelFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          aria-label="Filtrar por nivel"
+          :aria-label="t('finanzas.contabilidad.filterLevel')"
         >
-          <option :value="null">Nivel</option>
-          <option value="cuenta">Cuenta (4 dígitos)</option>
-          <option value="subcuenta">Subcuenta (6+ dígitos)</option>
+          <option :value="null">{{ t('finanzas.contabilidad.level') }}</option>
+          <option value="cuenta">{{ t('finanzas.contabilidad.account4') }}</option>
+          <option value="subcuenta">{{ t('finanzas.contabilidad.subaccount6') }}</option>
         </select>
 
         <!-- Clear filters -->
@@ -306,7 +310,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           v-if="hasActiveFilters"
           type="button"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-          aria-label="Limpiar filtros"
+          :aria-label="t('finanzas.common.clearFilters')"
           @click="clearFilters"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -328,7 +332,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h4" />
           </svg>
-          {{ showAll ? t('finanzas.contabilidad.fullPuc') : `Solo detalle (${totalDetail})` }}
+          {{ showAll ? t('finanzas.contabilidad.fullPuc') : t('finanzas.contabilidad.detailOnlyCount', { count: totalDetail }) }}
         </button>
       </div>
 
@@ -342,7 +346,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           <div class="flex items-center justify-between gap-3 px-1">
             <p class="text-sm font-semibold text-text-primary">{{ group.label }}</p>
             <span class="text-xs font-medium text-text-secondary">
-              {{ group.items.length }} {{ group.items.length === 1 ? 'cuenta' : 'cuentas' }}
+              {{ t('finanzas.contabilidad.accountCount', { count: group.items.length }) }}
             </span>
           </div>
           <div class="[&_td]:!py-1 [&_th]:!py-1.5">
@@ -350,7 +354,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
               row-size="sm"
               :columns="tableColumns"
               :data="group.items"
-              empty-message="Sin cuentas en esta clase"
+              :empty-message="t('finanzas.contabilidad.emptyClass')"
               variant="default"
               @row-click="openAccount"
             >
@@ -373,10 +377,10 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         <UiStatusBadge v-if="showAll" :value="pucLevel(item.code).label" format="text" :variant="pucLevel(item.code).variant" size="sm" />
                         <span v-if="item.isDetail" class="text-xs font-mono tabular-nums"
                           :class="accountTrial(item.id).periodDebits ? 'text-primary' : 'text-text-secondary'">
-                          D: {{ formatCOP(accountTrial(item.id).periodDebits) }}
+                          {{ t('finanzas.contabilidad.debitShort') }}: {{ formatCOP(accountTrial(item.id).periodDebits) }}
                         </span>
                         <span v-if="item.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
-                          C: {{ formatCOP(accountTrial(item.id).periodCredits) }}
+                          {{ t('finanzas.contabilidad.creditShort') }}: {{ formatCOP(accountTrial(item.id).periodCredits) }}
                         </span>
 
                       </div>
@@ -386,7 +390,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         :class="accountTrial(item.id).closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
                         {{ formatCOP(accountTrial(item.id).closingBalance) }}
                       </span>
-                      <UiStatusBadge :value="item.isActive ? 'Activa' : 'Inactiva'" format="text" :variant="item.isActive ? 'success' : 'secondary'" size="sm" />
+                      <UiStatusBadge :value="item.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne')" format="text" :variant="item.isActive ? 'success' : 'secondary'" size="sm" />
                       <button
                         v-if="item.isDetail"
                         type="button"
@@ -429,7 +433,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                 <!-- isSystem lock icon -->
                 <template #cell-isSystem="{ value }">
                   <div class="flex justify-center">
-                    <svg v-if="value" class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
+                    <svg v-if="value" class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" :aria-label="t('finanzas.contabilidad.systemAccount')">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -471,7 +475,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                 <!-- isActive -->
                 <template #cell-isActive="{ row }">
                   <UiStatusBadge
-                    :value="row.isActive ? 'Activa' : 'Inactiva'"
+                    :value="row.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne')"
                     format="text"
                     :variant="row.isActive ? 'success' : 'secondary'"
                     size="sm"
@@ -507,8 +511,8 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                       v-if="row.isDetail"
                       type="button"
                       class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-                      aria-label="Ver libro mayor"
-                      title="Ver libro mayor"
+                      :aria-label="t('finanzas.contabilidad.viewLedger')"
+                      :title="t('finanzas.contabilidad.viewLedger')"
                       @click.stop="openAccount(row)"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -524,7 +528,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
 
         <!-- Empty state -->
         <div v-if="groupedAccounts.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
-          <p class="text-sm text-text-secondary">Sin cuentas para este filtro</p>
+          <p class="text-sm text-text-secondary">{{ t('finanzas.contabilidad.emptyFilter') }}</p>
         </div>
       </div>
 

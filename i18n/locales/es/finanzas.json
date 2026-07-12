@@ -541,7 +541,25 @@
       "firstPage": "Primera página",
       "prevPage": "Página anterior",
       "nextPage": "Página siguiente",
-      "lastPage": "Última página"
+      "lastPage": "Última página",
+      "lastMonth": "Último mes",
+      "last90Days": "Últimos 90 días",
+      "account": "Cuenta",
+      "subaccount": "Subcuenta",
+      "detailOnlyCount": "Solo detalle ({count})",
+      "accountCount": "{count} cuenta | {count} cuentas",
+      "debitShort": "D",
+      "creditShort": "C",
+      "activeOne": "Activa",
+      "inactiveOne": "Inactiva",
+      "classes": {
+        "assets": "Activos",
+        "liabilities": "Pasivos",
+        "equity": "Patrimonio",
+        "income": "Ingresos",
+        "expenses": "Gastos",
+        "costs": "Costos"
+      }
     },
     "conciliacion": {
       "title": "Conciliación",
