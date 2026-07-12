@@ -381,6 +381,19 @@
       ,"editProductList": "Ver / editar lista"
       ,"searchAndAddProducts": "Busca y agrega productos uno a uno"
       ,"selectedProductsCount": "{count} producto(s) seleccionado(s)"
+      ,"createBusy": "Creando grupo de modificadores..."
+      ,"createBusyHint": "Estamos guardando la configuración y opciones del grupo."
+      ,"optionalLabel": "(opcional)"
+      ,"totalOptions": "Total opciones:"
+      ,"withComposition": "Con composición:"
+      ,"withAdditionalCost": "Con costo adicional:"
+      ,"createBusyButton": "Creando..."
+      ,"createGroup": "Crear grupo"
+      ,"nameError": "El nombre es obligatorio."
+      ,"duplicateNameError": "Ya existe un grupo de modificadores con ese nombre."
+      ,"createOptionError": "Agrega al menos un modificador al grupo."
+      ,"createError": "Error al crear el grupo. Por favor intenta de nuevo."
+      ,"nameLabel": "Nombre:"
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",

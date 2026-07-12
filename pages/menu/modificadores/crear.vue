@@ -2,8 +2,8 @@
   <div>
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Creando grupo de modificadores..."
-      hint="Estamos guardando la configuración y opciones del grupo."
+      :label="t('menu.modificadores.createBusy')"
+      :hint="t('menu.modificadores.createBusyHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -12,11 +12,11 @@
       <form @submit.prevent="submitGroup" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
         <div class="xl:col-span-2 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
-            <UiFormSection title="Datos del grupo">
+            <UiFormSection :title="t('menu.modificadores.groupData')">
               <div class="space-y-4">
                 <div>
                   <label :for="productSearchInputId" class="block text-sm font-medium text-text-primary mb-1">
-                    Productos *
+                    {{ t('menu.modificadores.productsRequired') }}
                   </label>
                   <UiProductMultiSelect
                     v-model="selectedProducts"
@@ -26,12 +26,12 @@
 
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Nombre *
+                    {{ t('menu.modificadores.groupNameRequired') }}
                   </label>
                   <input
                     type="text"
                     v-model="form.name"
-                    placeholder="Ej. extras, tamaño, sin..."
+                    :placeholder="t('menu.modificadores.groupNamePlaceholder')"
                     class="input-base w-full px-4 py-2"
                     :class="nameError ? 'border-destructive focus:ring-destructive' : ''"
                     required
@@ -46,7 +46,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Selección mínima *
+                    {{ t('menu.modificadores.minSelectionRequired') }}
                     </label>
                     <input
                       type="number"
@@ -56,12 +56,12 @@
                       class="input-base w-full px-4 py-2"
                       required
                     />
-                    <p class="text-xs text-text-tertiary mt-1">Mínimo de opciones a elegir</p>
+                    <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.minSelectionHelp') }}</p>
                   </div>
 
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-1">
-                      Selección máxima *
+                    {{ t('menu.modificadores.maxSelectionRequired') }}
                     </label>
                     <input
                       type="number"
@@ -71,13 +71,13 @@
                       class="input-base w-full px-4 py-2"
                       required
                     />
-                    <p class="text-xs text-text-tertiary mt-1">Máximo de opciones a elegir</p>
+                    <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.maxSelectionHelp') }}</p>
                   </div>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Orden de visualización <span class="text-text-tertiary font-normal">(opcional)</span>
+                    {{ t('menu.modificadores.displayOrder') }} <span class="text-text-tertiary font-normal">{{ t('menu.modificadores.optionalLabel') }}</span>
                   </label>
                   <input
                     type="number"
@@ -86,7 +86,7 @@
                     min="0"
                     class="input-base w-full px-4 py-2"
                   />
-                  <p class="text-xs text-text-tertiary mt-1">Menor número aparece primero</p>
+                  <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.displayOrderHelp') }}</p>
                 </div>
 
                 <div class="flex items-start gap-3">
@@ -98,24 +98,24 @@
                   />
                   <div>
                     <label for="is_required" class="text-sm font-medium text-text-primary cursor-pointer">
-                      Obligatorio
+                      {{ t('menu.modificadores.requiredToggle') }}
                     </label>
                     <p class="text-xs text-text-tertiary mt-0.5">
-                      El cliente debe seleccionar al menos una opción
+                      {{ t('menu.modificadores.requiredHelp') }}
                     </p>
                   </div>
                 </div>
               </div>
             </UiFormSection>
 
-            <UiFormSection title="Opciones">
+            <UiFormSection :title="t('menu.modificadores.opciones')">
               <template #actions>
                 <button
                   type="button"
                   @click="addModifier"
                   class="min-h-[32px] px-3 py-1.5 rounded-lg text-sm font-medium bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 >
-                  + Agregar
+                  {{ t('menu.modificadores.addOption') }}
                 </button>
               </template>
 
@@ -130,8 +130,8 @@
                   <svg class="w-12 h-12 mx-auto mb-3 text-text-tertiary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  <p class="text-sm font-medium mb-0.5">Sin opciones agregadas</p>
-                  <p class="text-xs text-text-tertiary">Agrega modificadores que el cliente pueda elegir</p>
+                  <p class="text-sm font-medium mb-0.5">{{ t('menu.modificadores.emptyOptions') }}</p>
+                  <p class="text-xs text-text-tertiary">{{ t('menu.modificadores.emptyOptionsHelp') }}</p>
                 </div>
 
                 <div v-else class="space-y-3">
@@ -156,18 +156,18 @@
 
         <div class="xl:col-span-1 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('menu.modificadores.groupSummary') }}</h3>
 
             <div class="space-y-3">
               <div class="flex justify-between text-sm gap-2">
-                <span class="text-text-secondary">Nombre:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.nameLabel') }}</span>
                 <span class="font-semibold text-text-primary text-right truncate">{{ form.name || '—' }}</span>
               </div>
 
               <div class="flex justify-between text-sm items-center gap-2">
-                <span class="text-text-secondary">Tipo:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.type') }}:</span>
                 <UiStatusBadge
-                  :value="form.is_required ? 'Obligatorio' : 'Opcional'"
+                  :value="form.is_required ? t('menu.modificadores.required') : t('menu.modificadores.optional')"
                   format="text"
                   :variant="form.is_required ? 'warning' : 'secondary'"
                   size="sm"
@@ -175,27 +175,27 @@
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Selección:</span>
-                <span class="font-semibold text-text-primary">{{ form.min_qty }} – {{ form.max_qty }} opciones</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.selection') }}</span>
+                <span class="font-semibold text-text-primary">{{ form.min_qty }} – {{ form.max_qty }} {{ t('menu.modificadores.optionsCount') }}</span>
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Productos:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.selectedProducts') }}</span>
                 <span class="font-semibold text-text-primary">{{ selectedProducts.length }}</span>
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Total opciones:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.totalOptions') }}</span>
                 <span class="font-semibold text-text-primary">{{ form.modifiers.length }}</span>
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Con composición:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.withComposition') }}</span>
                 <span class="font-semibold text-text-primary">{{ form.modifiers.filter(m => m.option_type !== 'NONE').length }}</span>
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Con costo adicional:</span>
+                <span class="text-text-secondary">{{ t('menu.modificadores.withAdditionalCost') }}</span>
                 <span class="font-semibold text-text-primary">{{ form.modifiers.filter(m => m.price > 0).length }}</span>
               </div>
             </div>
@@ -214,7 +214,7 @@
               >
                 <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
                 <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-                {{ isSubmitting ? 'Creando...' : 'Crear grupo' }}
+                {{ isSubmitting ? t('menu.modificadores.createBusyButton') : t('menu.modificadores.createGroup') }}
               </UiButton>
 
               <UiButton
@@ -225,7 +225,7 @@
                 :disabled="isSubmitting"
                 @click="router.push('/menu/modificadores')"
               >
-                Cancelar
+                {{ t('menu.modificadores.cancel') }}
               </UiButton>
             </div>
           </div>
@@ -260,7 +260,9 @@ definePageMeta({
   module: 'menu',
 })
 
-useHead({ title: 'Crear Modificador' })
+const { t } = useI18n({ useScope: 'global' })
+
+useHead({ title: () => t('menu.head.modificadores') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
@@ -385,17 +387,17 @@ async function validateForm(): Promise<boolean> {
   nameError.value = ''
 
   if (selectedProducts.value.length === 0) {
-    submitError.value = 'Selecciona al menos un producto.'
+    submitError.value = t('menu.modificadores.selectProductError')
     return false
   }
 
   if (!form.value.name.trim()) {
-    nameError.value = 'El nombre es obligatorio.'
+    nameError.value = t('menu.modificadores.nameError')
     return false
   }
 
   if (form.value.max_qty < form.value.min_qty) {
-    submitError.value = 'La selección máxima debe ser mayor o igual a la mínima.'
+    submitError.value = t('menu.modificadores.maxMinError')
     return false
   }
 
@@ -403,12 +405,12 @@ async function validateForm(): Promise<boolean> {
     `/api/menu/check-name?entity=modifier-groups&name=${encodeURIComponent(form.value.name.trim())}`,
   )
   if (!res.available) {
-    nameError.value = 'Ya existe un grupo de modificadores con ese nombre.'
+    nameError.value = t('menu.modificadores.duplicateNameError')
     return false
   }
 
   if (form.value.modifiers.length === 0) {
-    submitError.value = 'Agrega al menos un modificador al grupo.'
+    submitError.value = t('menu.modificadores.createOptionError')
     return false
   }
 
@@ -445,7 +447,7 @@ async function submitGroup() {
     await router.push('/menu/modificadores')
   } catch (error: any) {
     console.error('Error creating modifier group:', error)
-    submitError.value = error.data?.detail || error.message || 'Error al crear el grupo. Por favor intenta de nuevo.'
+    submitError.value = error.data?.detail || error.message || t('menu.modificadores.createError')
   } finally {
     isSubmitting.value = false
   }

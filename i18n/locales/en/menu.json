@@ -381,6 +381,19 @@
       ,"editProductList": "View / edit list"
       ,"searchAndAddProducts": "Search and add products one at a time"
       ,"selectedProductsCount": "{count} product(s) selected"
+      ,"createBusy": "Creating modifier group..."
+      ,"createBusyHint": "Saving the group configuration and options."
+      ,"optionalLabel": "(optional)"
+      ,"totalOptions": "Total options:"
+      ,"withComposition": "With composition:"
+      ,"withAdditionalCost": "With additional cost:"
+      ,"createBusyButton": "Creating..."
+      ,"createGroup": "Create group"
+      ,"nameError": "The name is required."
+      ,"duplicateNameError": "A modifier group with that name already exists."
+      ,"createOptionError": "Add at least one modifier to the group."
+      ,"createError": "Could not create the group. Please try again."
+      ,"nameLabel": "Name:"
     },
     "categorias": {
       "searchPlaceholder": "Search category...",
