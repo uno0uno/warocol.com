@@ -33,7 +33,7 @@
         id="ingredient-search-results"
         role="listbox"
         :style="panelStyle"
-        class="bg-surface border border-border rounded-lg shadow-lg overflow-y-auto"
+        class="bg-surface border border-border rounded-lg shadow-lg overflow-x-hidden overflow-y-auto"
       >
         <template v-for="row in groupedResults" :key="row._isHeader ? `header-${row.id}` : row.id">
           <li
@@ -49,17 +49,17 @@
             role="option"
             @mousedown.prevent="select(row)"
             :class="[
-              'px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5',
+              'px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer flex items-start gap-1.5',
               row.parent_id ? 'pl-6' : ''
             ]"
           >
             <span class="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
-              <span class="truncate">{{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span></span>
+              <span class="min-w-0 break-words whitespace-normal leading-snug">{{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span></span>
               <span
                 v-if="row.is_resale"
                 class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0"
-              >Reventa</span>
-              <span v-else-if="row.is_custom" class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0">Personalizado</span>
+              >{{ t('menu.common.reventa') }}</span>
+              <span v-else-if="row.is_custom" class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0">{{ t('abastecimiento.glossary.customLabel') }}</span>
             </span>
           </li>
         </template>
@@ -69,18 +69,18 @@
           aria-hidden="true"
           class="px-3 py-2 text-sm text-text-secondary/60 select-none"
         >
-          Sin resultados
+          {{ t('abastecimiento.glossary.noSearchResults') }}
         </li>
         <li
           v-if="allowCreate && query && !loading"
           role="option"
           @mousedown.prevent="$emit('create', query)"
-          class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+          class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-start gap-1.5"
         >
           <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Crear "{{ query }}"
+          <span class="min-w-0 flex-1 whitespace-normal break-words leading-snug">{{ t('abastecimiento.glossary.createNamed', { name: query }) }}</span>
         </li>
       </ul>
     </Teleport>
@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
+const { t } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Ingredient {

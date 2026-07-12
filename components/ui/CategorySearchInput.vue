@@ -39,10 +39,10 @@
         :key="cat.id"
         role="option"
         @mousedown.prevent="select(cat)"
-        class="px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+        class="px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer flex items-start gap-1.5"
       >
-        <span>{{ cat.name }}</span>
-        <span v-if="!cat.tenant_id" class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0">Global</span>
+        <span class="min-w-0 flex-1 break-words whitespace-normal leading-snug">{{ cat.name }}</span>
+        <span v-if="!cat.tenant_id" class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0">{{ t('abastecimiento.glossary.globalLabel') }}</span>
       </li>
       <!-- "No results" message -->
       <li
@@ -51,19 +51,19 @@
         aria-hidden="true"
         class="px-3 py-2 text-sm text-text-secondary/60 select-none"
       >
-        Sin resultados
+        {{ t('abastecimiento.glossary.noSearchResults') }}
       </li>
       <!-- "Crear" footer — only when allowCreate, query has text, and no exact case-insensitive match -->
       <li
         v-if="allowCreate && query.trim() && !loading && !exactMatch"
         role="option"
         @mousedown.prevent="$emit('create', query.trim())"
-        class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+        class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-start gap-1.5"
       >
         <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Crear "{{ query.trim() }}"
+        <span class="min-w-0 flex-1 whitespace-normal break-words leading-snug">{{ t('abastecimiento.glossary.createNamed', { name: query.trim() }) }}</span>
       </li>
     </ul>
   </div>
@@ -72,6 +72,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useCategorySearch, type CategoryRow } from '~/composables/useCategorySearch'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Props {
   placeholder?: string
