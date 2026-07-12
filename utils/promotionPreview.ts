@@ -160,6 +160,7 @@ export function buildPromotionPreview(opts: {
   productNames?: string[]
   categoryIds?: string[]
   productIds?: string[]
+  locale?: string
 }): string {
   const activeWord =
     opts.isCurrentlyActive === true
@@ -169,7 +170,8 @@ export function buildPromotionPreview(opts: {
         : opts.isActive
           ? 'Activa'
           : 'Desactivada'
-  const schedPart = formatScheduleWindows(opts.schedules)
+  const locale = opts.locale ?? 'es'
+  const schedPart = formatScheduleWindows(opts.schedules, locale)
   const scopePart = formatScopeLabel(
     opts.scopeType,
     opts.categoryNames ?? [],
@@ -178,8 +180,12 @@ export function buildPromotionPreview(opts: {
       categoryCount: opts.categoryIds?.length,
       productCount: opts.productIds?.length,
     },
+    locale,
   )
-  return `${activeWord} ${schedPart} en ${scopePart}`
+  const localizedActiveWord = locale === 'en'
+    ? opts.isCurrentlyActive === true ? 'Active' : opts.isCurrentlyActive === false ? 'Inactive now' : opts.isActive ? 'Active' : 'Disabled'
+    : activeWord
+  return `${localizedActiveWord} ${schedPart} ${locale === 'en' ? 'for' : 'en'} ${scopePart}`
 }
 
 /** Client-side overlap check for two schedule rows (same tenant promo form). */
