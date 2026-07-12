@@ -435,7 +435,15 @@
       "saveError": "No se pudo guardar la categoría. Inténtalo de nuevo.",
       "saved": "Guardado",
       "createdSuccess": "Categoría creada correctamente",
-      "updatedSuccess": "Categoría actualizada correctamente"
+      "updatedSuccess": "Categoría actualizada correctamente",
+      "privateVisibility": "Solo será visible para tu restaurante",
+      "characterCount": "{count} / 100 caracteres",
+      "productCategoryNamePlaceholder": "Ej: Bebidas, Postres, Combos",
+      "descriptionUsePlaceholder": "Para qué se usa esta categoría",
+      "nameMaxError": "El nombre no puede tener más de 100 caracteres",
+      "creatingLabel": "Creando",
+      "creatingCategoryAria": "Creando categoría",
+      "createError": "Error al crear la categoría"
     },
     "filters": {
       "searchPlaceholder": "Buscar productos...",

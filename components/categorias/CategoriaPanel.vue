@@ -23,7 +23,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Crear nueva categoría"
+        :aria-label="t('menu.categorias.createCategory')"
         @keydown.esc="close"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
@@ -44,16 +44,16 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Nueva categoría</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('menu.categorias.panelNewTitle') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  Solo será visible para tu restaurante
+                  {{ t('menu.categorias.privateVisibility') }}
                 </p>
               </div>
             </div>
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('menu.categorias.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -67,7 +67,7 @@
         <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
             <label for="cat-name" class="text-sm font-medium text-text-primary">
-              Nombre <span class="text-destructive" aria-hidden="true">*</span>
+              {{ t('menu.categorias.nameRequired') }}
             </label>
             <input
               id="cat-name"
@@ -76,26 +76,26 @@
               type="text"
               required
               maxlength="100"
-              placeholder="Ej: Bebidas, Postres, Combos"
+              :placeholder="t('menu.categorias.productCategoryNamePlaceholder')"
               class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
               autocomplete="off"
               :disabled="loading"
             />
             <p class="text-xs text-text-tertiary">
-              {{ name.length }} / 100 caracteres
+              {{ t('menu.categorias.characterCount', { count: name.length }) }}
             </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
             <label for="cat-description" class="text-sm font-medium text-text-primary">
-              Descripción <span class="text-text-tertiary text-xs font-normal">(opcional)</span>
+              {{ t('menu.categorias.descriptionOptional') }} <span class="text-text-tertiary text-xs font-normal">{{ t('menu.categorias.optional') }}</span>
             </label>
             <textarea
               id="cat-description"
               v-model="description"
               rows="3"
               maxlength="500"
-              placeholder="Para qué se usa esta categoría"
+              :placeholder="t('menu.categorias.descriptionUsePlaceholder')"
               class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface resize-y"
               :disabled="loading"
             />
@@ -121,7 +121,7 @@
             :disabled="loading"
             class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg"
           >
-            Cancelar
+            {{ t('menu.categorias.cancel') }}
           </button>
           <button
             type="button"
@@ -130,11 +130,11 @@
             class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors flex items-center gap-2"
           >
             <template v-if="loading">
-              <span>Creando</span>
-              <CommonsInlineDots aria-label="Creando categoría" :size="5" />
+              <span>{{ t('menu.categorias.creatingLabel') }}</span>
+              <CommonsInlineDots :aria-label="t('menu.categorias.creatingCategoryAria')" :size="5" />
             </template>
             <template v-else>
-              Crear categoría
+              {{ t('menu.categorias.createCategory') }}
             </template>
           </button>
         </div>
@@ -148,6 +148,8 @@ import { nextTick, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '~/composables/useTenantReactive'
 import type { CategoryRow } from '~/composables/useCategorySearch'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Props {
   modelValue: boolean
@@ -197,11 +199,11 @@ function close() {
 async function submit() {
   const trimmedName = name.value.trim()
   if (!trimmedName) {
-    errorMsg.value = 'El nombre es obligatorio'
+    errorMsg.value = t('menu.categorias.nameRequiredError')
     return
   }
   if (trimmedName.length > 100) {
-    errorMsg.value = 'El nombre no puede tener más de 100 caracteres'
+    errorMsg.value = t('menu.categorias.nameMaxError')
     return
   }
 
@@ -224,9 +226,9 @@ async function submit() {
     emit('update:modelValue', false)
   } catch (e: any) {
     if (e?.response?.status === 409 || e?.statusCode === 409) {
-      errorMsg.value = 'Ya existe una categoría con ese nombre'
+      errorMsg.value = t('menu.categorias.duplicateNameError')
     } else {
-      errorMsg.value = e?.data?.detail || e?.message || 'Error al crear la categoría'
+      errorMsg.value = e?.data?.detail || e?.message || t('menu.categorias.createError')
     }
   } finally {
     loading.value = false

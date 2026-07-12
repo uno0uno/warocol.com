@@ -435,7 +435,15 @@
       "saveError": "Could not save the category. Please try again.",
       "saved": "Saved",
       "createdSuccess": "Category created successfully",
-      "updatedSuccess": "Category updated successfully"
+      "updatedSuccess": "Category updated successfully",
+      "privateVisibility": "Only visible to your restaurant",
+      "characterCount": "{count} / 100 characters",
+      "productCategoryNamePlaceholder": "E.g. Drinks, Desserts, Combos",
+      "descriptionUsePlaceholder": "What this category is used for",
+      "nameMaxError": "Name cannot exceed 100 characters",
+      "creatingLabel": "Creating",
+      "creatingCategoryAria": "Creating category",
+      "createError": "Error creating the category"
     },
     "filters": {
       "searchPlaceholder": "Search products...",
