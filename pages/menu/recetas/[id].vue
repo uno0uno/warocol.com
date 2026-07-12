@@ -9,30 +9,30 @@
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <div class="xl:col-span-2 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
-          <UiFormSection title="Datos de la receta">
+          <UiFormSection :title="t('menu.recetas.form.dataTitle')">
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Nombre *
+                  {{ t('menu.recetas.form.nameRequired') }}
                 </label>
                 <input
                   v-model="form.name"
                   type="text"
                   required
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej. pizza italiana clásica"
+                  :placeholder="t('menu.recetas.form.namePlaceholder')"
                 />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
-                  Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                  {{ t('menu.recetas.form.description') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                 </label>
                 <textarea
                   v-model="form.description"
                   rows="3"
                   class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem]"
-                  placeholder="Breve descripción de la receta base"
+                  :placeholder="t('menu.recetas.form.descriptionPlaceholder')"
                 />
               </div>
 
@@ -42,13 +42,13 @@
                   type="checkbox"
                   id="is_active"
                   class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
-                />
+                  />
                 <div>
                   <label for="is_active" class="text-sm font-medium text-text-primary cursor-pointer">
-                    Receta activa
+                    {{ t('menu.recetas.form.activeRecipe') }}
                   </label>
                   <p class="text-xs text-text-tertiary mt-0.5">
-                    Disponible para asignar a productos nuevos
+                    {{ t('menu.recetas.form.activeHelp') }}
                   </p>
                 </div>
               </div>
@@ -64,7 +64,7 @@
                 class="bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 @click="addIngredient"
               >
-                + Agregar
+                {{ t('menu.recetas.form.addLine') }}
               </UiButton>
             </template>
 
@@ -77,7 +77,7 @@
 
               <div v-if="form.ingredients.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
                 <Icon name="heroicons:cube" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
-                <p class="text-sm font-medium mb-0.5">Sin líneas en la receta</p>
+                <p class="text-sm font-medium mb-0.5">{{ t('menu.recetas.form.emptyLines') }}</p>
                 <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
               </div>
 
@@ -99,7 +99,7 @@
                     </div>
 
                     <div class="md:col-span-3">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.quantityRequired') }}</label>
                       <UiDecimalInput
                         v-model="ingredient.base_quantity"
                         required
@@ -111,7 +111,7 @@
                     </div>
 
                     <div class="md:col-span-3">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.unit') }}</label>
                       <div class="relative">
                         <select
                           v-model="ingredient.unit"
@@ -140,7 +140,7 @@
                         type="button"
                         @click="removeIngredient(index)"
                         class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
-                        title="Eliminar línea"
+                        :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                       >
                         <Icon name="heroicons:trash" class="h-5 w-5" />
                       </button>
@@ -148,12 +148,12 @@
                   </div>
 
                   <div class="mt-3">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Notas <span class="font-normal">(opcional)</span></label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.notes') }} <span class="font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span></label>
                     <input
                       v-model="ingredient.notes"
                       type="text"
                       class="input-base w-full px-3 py-2 text-sm"
-                      placeholder="Ej. mozzarella de búfala"
+                      :placeholder="t('menu.recetas.form.notesPlaceholder')"
                     />
                   </div>
                 </div>
@@ -165,7 +165,7 @@
 
       <div class="xl:col-span-1 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('menu.recetas.form.summary') }}</h3>
 
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
@@ -174,9 +174,9 @@
             </div>
 
             <div class="flex justify-between text-sm items-center gap-2">
-              <span class="text-text-secondary">Estado:</span>
+              <span class="text-text-secondary">{{ t('menu.recetas.form.status') }}</span>
               <UiStatusBadge
-                :value="form.is_active ? 'Activa' : 'Inactiva'"
+                :value="form.is_active ? t('menu.common.active') : t('menu.common.inactive')"
                 format="text"
                 :variant="form.is_active ? 'success' : 'secondary'"
                 size="sm"
@@ -196,7 +196,7 @@
             >
               <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
               <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-              {{ isSubmitting ? 'Guardando...' : 'Guardar receta' }}
+              {{ isSubmitting ? t('menu.recetas.form.saving') : t('menu.recetas.form.saveRecipe') }}
             </UiButton>
 
             <UiButton
@@ -207,7 +207,7 @@
               :disabled="isSubmitting"
               @click="cancel"
             >
-              Cancelar
+              {{ t('common.cancel') }}
             </UiButton>
 
             <UiButton
@@ -219,7 +219,7 @@
               @click="deleteRecipe"
             >
               <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
-              Eliminar receta
+              {{ t('menu.recetas.form.deleteRecipe') }}
             </UiButton>
           </div>
         </div>
@@ -239,7 +239,6 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -251,14 +250,18 @@ definePageMeta({
   },
   middleware: defineNuxtRouteMiddleware((to, from) => {
     const backButton = useState('backButton')
+    const { $i18n } = useNuxtApp()
     backButton.value = {
-      label: 'Volver a Recetas'
+      label: ($i18n as { t: (key: string) => string }).t('menu.recetas.backToRecipes')
     }
   }),
   module: 'menu',
 })
 
-useHead({ title: 'Editar Receta' })
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
+
+useHead({ title: t('menu.recetas.form.editTitle') })
 
 const route = useRoute()
 const router = useRouter()
@@ -470,10 +473,10 @@ const handleSubmit = async () => {
 
     cache.invalidateQueries()
     await refresh()
-    toast.success('Receta actualizada correctamente', { title: 'Guardado' })
+    toast.success(t('menu.recetas.form.updated'), { title: t('menu.common.guardado') })
   } catch (error: any) {
     console.error('Error updating recipe base:', error)
-    submitError.value = error.data?.detail || error.message || 'Error al actualizar. Intenta de nuevo.'
+    submitError.value = error.data?.detail || error.message || t('menu.recetas.form.updateError')
   } finally {
     isSubmitting.value = false
   }
@@ -484,7 +487,7 @@ const cancel = () => {
 }
 
 const deleteRecipe = async () => {
-  if (!confirm('¿Estás seguro de que deseas eliminar esta receta base? Esta acción no se puede deshacer.')) {
+  if (!confirm(t('menu.recetas.form.deleteConfirm'))) {
     return
   }
 
@@ -498,7 +501,7 @@ const deleteRecipe = async () => {
     await router.push('/menu/recetas')
   } catch (error: any) {
     console.error('Error deleting recipe base:', error)
-    submitError.value = error.data?.detail || error.message || 'Error al eliminar. Intenta de nuevo.'
+    submitError.value = error.data?.detail || error.message || t('menu.recetas.form.deleteError')
   } finally {
     isSubmitting.value = false
   }

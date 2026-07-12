@@ -178,6 +178,8 @@
       "selectWarehouseItem": "Select warehouse item",
       "selectWarehouseItemPrompt": "Select a warehouse item",
       "removeWarehouseItemLine": "Remove line",
+      "recipeWarehouseHint": "— raw material in storage (flour, cheese).",
+      "recipeMenuProductHint": "— what you sell at checkout; if it is resale (soda, snack), stock is created automatically when choosing that option.",
       "recipeCompositionSection": "Composition",
       "recipeCompositionSummary": "Lines:",
       "recipeCompositionEmptyHelp": "Add warehouse items or resale products",

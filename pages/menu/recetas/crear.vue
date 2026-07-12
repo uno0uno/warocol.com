@@ -2,7 +2,7 @@
   <div>
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Creando receta base..."
+      :label="t('menu.recetas.form.creatingBase')"
       :hint="WAREHOUSE_COPY.recipeCompositionSavingHint"
       variant="glass"
       indicator="matrix"
@@ -16,11 +16,11 @@
       <form @submit.prevent="submitRecipe" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
         <div class="xl:col-span-2 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
-            <UiFormSection title="Datos de la receta">
+            <UiFormSection :title="t('menu.recetas.form.dataTitle')">
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Nombre *
+                    {{ t('menu.recetas.form.nameRequired') }}
                   </label>
                   <input
                     v-model="form.name"
@@ -28,7 +28,7 @@
                     required
                     class="input-base w-full px-4 py-2"
                     :class="nameError ? 'border-destructive focus:ring-destructive' : ''"
-                    placeholder="Ej. pizza italiana clásica"
+                    :placeholder="t('menu.recetas.form.namePlaceholder')"
                     @input="nameError = ''"
                   />
                   <p v-if="nameError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
@@ -39,13 +39,13 @@
 
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
-                    Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                    {{ t('menu.recetas.form.description') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                   </label>
                   <textarea
                     v-model="form.description"
                     rows="3"
                     class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem]"
-                    placeholder="Breve descripción de la receta base"
+                    :placeholder="t('menu.recetas.form.descriptionPlaceholder')"
                   />
                 </div>
 
@@ -58,10 +58,10 @@
                   />
                   <div>
                     <label for="is_active" class="text-sm font-medium text-text-primary cursor-pointer">
-                      Receta activa
+                      {{ t('menu.recetas.form.activeRecipe') }}
                     </label>
                     <p class="text-xs text-text-tertiary mt-0.5">
-                      Disponible para asignar a productos nuevos
+                      {{ t('menu.recetas.form.activeHelp') }}
                     </p>
                   </div>
                 </div>
@@ -75,7 +75,7 @@
                   @click="addIngredient"
                   class="min-h-[32px] px-3 py-1.5 rounded-lg text-sm font-medium bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 >
-                  + Agregar
+                  {{ t('menu.recetas.form.addLine') }}
                 </button>
               </template>
 
@@ -95,7 +95,7 @@
                   <svg class="w-12 h-12 mx-auto mb-3 text-text-tertiary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <p class="text-sm font-medium mb-0.5">Sin líneas en la receta</p>
+                  <p class="text-sm font-medium mb-0.5">{{ t('menu.recetas.form.emptyLines') }}</p>
                   <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
                 </div>
 
@@ -116,7 +116,7 @@
                       </div>
 
                       <div class="md:col-span-3">
-                        <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
+                        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.quantityRequired') }}</label>
                         <UiDecimalInput
                           v-model="ingredient.base_quantity"
                           placeholder="0"
@@ -128,7 +128,7 @@
                       </div>
 
                       <div class="md:col-span-3">
-                        <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.unit') }}</label>
                         <div class="relative">
                           <select
                             v-model="ingredient.unit"
@@ -159,7 +159,7 @@
                           type="button"
                           @click="removeIngredient(index)"
                           class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
-                          title="Eliminar línea"
+                          :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                         >
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -169,11 +169,11 @@
                     </div>
 
                     <div class="mt-3">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Notas <span class="font-normal">(opcional)</span></label>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.recetas.form.notes') }} <span class="font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span></label>
                       <input
                         v-model="ingredient.notes"
                         type="text"
-                        placeholder="Ej. mozzarella de búfala"
+                        :placeholder="t('menu.recetas.form.notesPlaceholder')"
                         class="input-base w-full px-3 py-2 text-sm"
                       />
                     </div>
@@ -186,11 +186,11 @@
 
         <div class="xl:col-span-1 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('menu.recetas.form.summary') }}</h3>
 
             <div class="space-y-3">
               <div class="flex justify-between text-sm gap-2">
-                <span class="text-text-secondary">Nombre:</span>
+                <span class="text-text-secondary">{{ t('menu.recetas.form.nameSummary') }}</span>
                 <span class="font-semibold text-text-primary text-right truncate">{{ form.name || '—' }}</span>
               </div>
 
@@ -200,9 +200,9 @@
               </div>
 
               <div class="flex justify-between text-sm items-center gap-2">
-                <span class="text-text-secondary">Estado:</span>
+                <span class="text-text-secondary">{{ t('menu.recetas.form.status') }}</span>
                 <UiStatusBadge
-                  :value="form.is_active ? 'Activa' : 'Inactiva'"
+                  :value="form.is_active ? t('menu.common.active') : t('menu.common.inactive')"
                   format="text"
                   :variant="form.is_active ? 'success' : 'secondary'"
                   size="sm"
@@ -224,7 +224,7 @@
               >
                 <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
                 <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-                {{ isSubmitting ? 'Creando...' : 'Crear receta' }}
+                {{ isSubmitting ? t('menu.recetas.form.creating') : t('menu.recetas.form.createRecipe') }}
               </UiButton>
 
               <UiButton
@@ -235,7 +235,7 @@
                 :disabled="isSubmitting"
                 @click="router.push('/menu/recetas')"
               >
-                Cancelar
+                {{ t('common.cancel') }}
               </UiButton>
             </div>
           </div>
@@ -256,7 +256,6 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -265,7 +264,10 @@ definePageMeta({
   module: 'menu',
 })
 
-useHead({ title: 'Crear Receta' })
+const { t } = useI18n()
+const WAREHOUSE_COPY = useWarehouseCopy()
+
+useHead({ title: t('menu.recetas.form.createTitle') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
@@ -380,7 +382,7 @@ async function validateForm(): Promise<boolean> {
   duplicateIngredientError.value = ''
 
   if (!form.value.name.trim()) {
-    nameError.value = 'El nombre es obligatorio.'
+    nameError.value = t('menu.recetas.form.nameRequiredError')
     return false
   }
 
@@ -388,7 +390,7 @@ async function validateForm(): Promise<boolean> {
     `/api/menu/check-name?entity=recipe-bases&name=${encodeURIComponent(form.value.name.trim())}`,
   )
   if (!res.available) {
-    nameError.value = 'Ya existe una receta base con ese nombre.'
+    nameError.value = t('menu.recetas.form.nameExistsError')
     return false
   }
 
@@ -448,11 +450,11 @@ async function submitRecipe() {
     clearNuxtData()
     await router.push('/menu/recetas')
   } catch (error: any) {
-    const detail = error.data?.detail || error.message || 'Error inesperado. Por favor intenta de nuevo.'
+    const detail = error.data?.detail || error.message || t('menu.recetas.form.unexpectedError')
     if (error.status === 400 && typeof detail === 'string' && detail.toLowerCase().includes('nombre')) {
       nameError.value = detail
     } else {
-      submitError.value = typeof detail === 'string' ? detail : 'Error inesperado. Por favor intenta de nuevo.'
+      submitError.value = typeof detail === 'string' ? detail : t('menu.recetas.form.unexpectedError')
     }
   } finally {
     isSubmitting.value = false

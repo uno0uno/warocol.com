@@ -178,6 +178,8 @@
       "selectWarehouseItem": "Selecciona artículo de bodega",
       "selectWarehouseItemPrompt": "Seleccione un artículo de bodega",
       "removeWarehouseItemLine": "Eliminar línea",
+      "recipeWarehouseHint": "— materia prima en bodega (harina, queso).",
+      "recipeMenuProductHint": "— lo que vendes en caja; si es reventa (gaseosa, snack), el stock se crea solo al elegir esa opción.",
       "recipeCompositionSection": "Composición",
       "recipeCompositionSummary": "Líneas:",
       "recipeCompositionEmptyHelp": "Agrega artículos de bodega o productos de reventa",
