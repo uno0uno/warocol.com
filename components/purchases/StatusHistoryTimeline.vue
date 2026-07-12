@@ -4,7 +4,7 @@
       <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>Historial</span>
+      <span>{{ t('abastecimiento.compraDirectaDetalle.history') }}</span>
     </h3>
 
     <!-- Loading State -->
@@ -16,7 +16,7 @@
     <div v-else-if="error" class="text-center py-8">
       <p class="text-sm text-red-500">{{ error }}</p>
       <button @click="fetchHistory" class="mt-4 text-sm text-primary hover:underline">
-        Reintentar
+        {{ t('abastecimiento.compraDirectaDetalle.retry') }}
       </button>
     </div>
 
@@ -63,7 +63,7 @@
                   {{ getEntryTitle(entry) }}
                 </h4>
                 <p v-if="entry.from_status && entry.metadata?.action !== 'items_edited'" class="text-xs text-text-secondary">
-                  Desde: {{ getStatusText(entry.from_status) }}
+                  {{ t('abastecimiento.compraDirectaDetalle.fromStatus', { status: getStatusText(entry.from_status) }) }}
                 </p>
               </div>
 
@@ -83,7 +83,7 @@
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span class="text-sm font-medium text-green-600">Agregados:</span>
+                    <span class="text-sm font-medium text-green-600">{{ t('abastecimiento.compraDirectaDetalle.added') }}</span>
                   </div>
                   <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.added" :key="item" class="flex items-center gap-1">
@@ -99,7 +99,7 @@
                     <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                     </svg>
-                    <span class="text-sm font-medium text-red-600">Eliminados:</span>
+                    <span class="text-sm font-medium text-red-600">{{ t('abastecimiento.compraDirectaDetalle.removed') }}</span>
                   </div>
                   <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.removed" :key="item" class="flex items-center gap-1">
@@ -115,7 +115,7 @@
                     <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    <span class="text-sm font-medium text-yellow-600">Modificados:</span>
+                    <span class="text-sm font-medium text-yellow-600">{{ t('abastecimiento.compraDirectaDetalle.modified') }}</span>
                   </div>
                   <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.modified" :key="item" class="flex items-center gap-1">
@@ -129,7 +129,7 @@
                 <div v-if="entry.metadata.totals" class="pt-2 border-t border-border">
                   <div class="flex items-center justify-between text-sm">
                     <span class="text-text-secondary">
-                      Total: ${{ formatNumber(entry.metadata.totals.before) }} → ${{ formatNumber(entry.metadata.totals.after) }}
+                      {{ t('abastecimiento.compraDirectaDetalle.total') }}: ${{ formatNumber(entry.metadata.totals.before) }} → ${{ formatNumber(entry.metadata.totals.after) }}
                     </span>
                     <span
                       class="font-medium"
@@ -173,7 +173,7 @@
       <svg class="w-12 h-12 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <p class="text-sm text-text-secondary">No hay historial de cambios de estado disponible</p>
+      <p class="text-sm text-text-secondary">{{ t('abastecimiento.compraDirectaDetalle.noHistory') }}</p>
     </div>
   </div>
 </template>
@@ -187,6 +187,7 @@ const props = defineProps<{
   currentStatus?: string
   baseTransitionUrl?: string // Optional base URL for transition detail navigation
 }>()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -203,7 +204,7 @@ const fetchHistory = async () => {
     }
   } catch (err: any) {
     console.error('Error fetching history:', err)
-    error.value = err.data?.detail || 'Error al cargar el historial'
+    error.value = err.data?.detail || t('common.error')
   } finally {
     loading.value = false
   }
@@ -223,14 +224,14 @@ watch(() => props.currentStatus, (newStatus, oldStatus) => {
 // Helper functions
 function getEntryTitle(entry: any): string {
   if (entry.metadata?.action === 'items_edited') {
-    return 'Items Editados'
+    return t('abastecimiento.compraDirectaDetalle.itemsEdited')
   }
   return getStatusText(entry.to_status)
 }
 
 function formatNumber(value: number): string {
   if (value === null || value === undefined) return '0'
-  return Math.abs(value).toLocaleString('es-CO', {
+  return Math.abs(value).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   })
@@ -258,17 +259,17 @@ function getDisplayableMetadata(metadata: any): Record<string, any> {
 
 function getStatusText(status: string): string {
   const texts: Record<string, string> = {
-    pending: 'Pendiente',
-    confirmed: 'Confirmado',
-    preparing: 'Preparando',
-    shipped: 'Enviado',
-    partially_received: 'Parcialmente Recibido',
-    received: 'Recibido y Verificado',
-    verified: 'Verificado', // Legacy status for old records
-    invoiced: 'Facturado',
-    paid: 'Pagado',
-    cancelled: 'Cancelado',
-    overdue: 'Vencido'
+    pending: t('abastecimiento.common.pendiente'),
+    confirmed: t('abastecimiento.common.confirmado'),
+    preparing: t('abastecimiento.common.preparando'),
+    shipped: t('abastecimiento.common.enviado'),
+    partially_received: t('abastecimiento.common.recibidoParcial'),
+    received: t('abastecimiento.common.recibida'),
+    verified: t('abastecimiento.common.verificado'),
+    invoiced: t('abastecimiento.common.facturada'),
+    paid: t('abastecimiento.common.pagada'),
+    cancelled: t('abastecimiento.common.cancelado'),
+    overdue: t('abastecimiento.common.vencido')
   }
   return texts[status] || status
 }
@@ -340,29 +341,30 @@ const { formatDateTime } = useFormatters()
 
 function formatMetadataKey(key: string): string {
   const keyMap: Record<string, string> = {
-    confirmation_number: 'Número de Confirmación',
-    estimated_delivery_date: 'Fecha Estimada de Entrega',
-    tracking_number: 'Número de Guía',
-    carrier: 'Transportadora',
-    package_count: 'Número de Paquetes',
-    received_items: 'Items Recibidos',
-    discrepancies: 'Discrepancias',
-    quality_status: 'Estado de Calidad',
-    defects_found: 'Defectos Encontrados',
-    invoice_number: 'Número de Factura',
-    invoice_date: 'Fecha de Factura',
-    invoice_amount: 'Monto de Factura',
-    payment_method: 'Método de Pago',
-    payment_reference: 'Referencia de Pago',
-    payment_amount: 'Monto Pagado',
-    payment_date: 'Fecha de Pago',
-    cancellation_reason: 'Razón de Cancelación'
+    confirmation_number: t('abastecimiento.compraDirectaDetalle.metadata.confirmation_number'),
+    estimated_delivery_date: t('abastecimiento.compraDirectaDetalle.metadata.estimated_delivery_date'),
+    tracking_number: t('abastecimiento.compraDirectaDetalle.metadata.tracking_number'),
+    carrier: t('abastecimiento.compraDirectaDetalle.metadata.carrier'),
+    package_count: t('abastecimiento.compraDirectaDetalle.metadata.package_count'),
+    items_count: t('abastecimiento.compraDirectaDetalle.metadata.items_count'),
+    received_items: t('abastecimiento.compraDirectaDetalle.metadata.received_items'),
+    discrepancies: t('abastecimiento.compraDirectaDetalle.metadata.discrepancies'),
+    quality_status: t('abastecimiento.compraDirectaDetalle.metadata.quality_status'),
+    defects_found: t('abastecimiento.compraDirectaDetalle.metadata.defects_found'),
+    invoice_number: t('abastecimiento.compraDirectaDetalle.metadata.invoice_number'),
+    invoice_date: t('abastecimiento.compraDirectaDetalle.metadata.invoice_date'),
+    invoice_amount: t('abastecimiento.compraDirectaDetalle.metadata.invoice_amount'),
+    payment_method: t('abastecimiento.compraDirectaDetalle.metadata.payment_method'),
+    payment_reference: t('abastecimiento.compraDirectaDetalle.metadata.payment_reference'),
+    payment_amount: t('abastecimiento.compraDirectaDetalle.metadata.payment_amount'),
+    payment_date: t('abastecimiento.compraDirectaDetalle.metadata.payment_date'),
+    cancellation_reason: t('abastecimiento.compraDirectaDetalle.metadata.cancellation_reason')
   }
   return keyMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
 
 function formatMetadataValue(key: string, value: any): string {
-  if (value === null || value === undefined) return 'N/A'
+  if (value === null || value === undefined) return t('abastecimiento.compraDirectaDetalle.notAvailable')
 
   // Date fields
   if (key.includes('date') || key.includes('_at')) {
@@ -372,7 +374,7 @@ function formatMetadataValue(key: string, value: any): string {
   // Money fields
   if (key.includes('amount') || key.includes('price') || key.includes('cost')) {
     try {
-      return parseFloat(value).toLocaleString('es-CO', {
+      return parseFloat(value).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
         style: 'currency',
         currency: 'COP'
       })

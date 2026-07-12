@@ -648,7 +648,7 @@ import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useQuery } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+import { useWarehouseCopy } from '~/composables/useWarehouseCopy'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
@@ -656,6 +656,7 @@ const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
 const { t, locale } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
