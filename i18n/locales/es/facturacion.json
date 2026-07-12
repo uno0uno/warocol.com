@@ -73,6 +73,7 @@
       "noResolutionTitle": "Sin resolución DIAN vigente",
       "noResolutionBody": "Configura una resolución activa con numeración disponible en la sección Resolución DIAN.",
       "taxReviewTitle": "Revisa el impuesto aplicado a ventas",
+      "taxReviewBody": "Activa INC o IVA solo cuando aplique a tus ventas. Si tu negocio emite sin esos impuestos, confirma que los datos fiscales correspondan a persona natural no responsable antes de guardar.",
       "matiasUuidTitle": "Falta UUID cliente Matias",
       "matiasUuidBody": "Configura el client_uuid del cliente emisor en la sección Proveedor de facturación electrónica antes de emitir con Matias.",
       "ready": "Tu cuenta está lista para emitir facturas electrónicas."
@@ -81,6 +82,7 @@
       "title": "Resolución DIAN",
       "new": "Nueva resolución",
       "edit": "Editar resolución",
+      "configure": "Configurar resolución",
       "emptyTitle": "Sin resoluciones DIAN configuradas",
       "emptySub": "Configura la resolución que registraste en el portal de Matias (número, prefijo, rango)",
       "number": "Número de resolución",
@@ -98,12 +100,21 @@
       "rangeLabel": "Rango: {from} → {to}",
       "fromLabel": "Desde:",
       "toLabel": "Hasta:",
-      "gapsHint": "DIAN no permite reutilizarlos — revisa la bitácora."
+      "gapsTitle": "Números quemados detectados en tu numeración",
+      "in24h": "en 24h",
+      "in7d": "en 7d",
+      "in30d": "en 30d",
+      "gapsHint": "DIAN no permite reutilizarlos — revisa la bitácora.",
+      "currentNumberInvalid": "Debe estar entre {from} y {to}. DIAN prohíbe reutilizar números; el contador solo avanza.",
+      "nextIssueUses": "Próxima emisión usará {number}.",
+      "usedOfTotal": "{used} de {total} usados ({percent}%)"
     },
     "fiscal": {
       "sectionTitle": "Datos Fiscales del Negocio",
+      "body": "Identifican al emisor ante DIAN y Matias. No activan impuestos por sí solos ni cambian el cálculo de IVA o INC.",
       "nit": "NIT",
       "businessName": "Razón social",
+      "businessNamePlaceholder": "MI RESTAURANTE SAS",
       "orgType": "Tipo de organización",
       "orgHint": "Define si el emisor factura como persona natural o jurídica.",
       "taxRegime": "Responsabilidad IVA",
@@ -114,10 +125,15 @@
       "city": "Ciudad",
       "phone": "Teléfono",
       "email": "Email facturación",
+      "emailPlaceholder": "facturacion@mirestaurante.com",
       "save": "Guardar datos fiscales",
       "miNegocio": "Mi negocio"
     },
     "print": {
+      "title": "Personalizar tickets POS",
+      "bodyPrefix": "Afecta prefactura y recibo impreso en el POS. El logo se configura en ",
+      "documentLabel": "Etiqueta del documento",
+      "tipLabel": "Etiqueta de propina / servicio",
       "docPlaceholder": "Prefactura, Orden de compra, Factura #…",
       "tipPlaceholder": "Propina, Servicio, Cargo por servicio…",
       "docHint": "Texto que encabeza el ticket (máx. 40 caracteres). Ej: Prefactura, Pedido N°.",
@@ -127,6 +143,8 @@
       "save": "Guardar personalización"
     },
     "tax": {
+      "title": "Impuestos aplicados a ventas",
+      "body": "Estos controles afectan el cálculo y desglose de impuestos en POS y facturas. No cambian por sí solos tu tipo de organización ni tu responsabilidad fiscal.",
       "incTitle": "INC — Impoconsumo 8%",
       "incBody": "Aplica cuando tus ventas deben liquidar Impoconsumo. Afecta el total y el desglose de la factura.",
       "ivaTitle": "IVA — 19%",
@@ -137,15 +155,24 @@
       "howIva": "Cómo aplicar el IVA",
       "included": "Incluido en el precio",
       "added": "Se suma al precio",
-      "incIncludedHint": "El 8% ya está dentro del precio.",
-      "incAddedHint": "El 8% se agrega encima.",
-      "ivaIncludedHint": "El 19% ya está dentro del precio.",
-      "ivaAddedHint": "El 19% se agrega encima.",
+      "incIncludedHint": "El 8% ya está dentro del precio. Ej: $10.800 → base $10.000 + INC $800",
+      "incAddedHint": "El 8% se agrega encima. Ej: $10.000 base → cobro $10.800",
+      "ivaIncludedHint": "El 19% ya está dentro del precio. Ej: $11.900 → base $10.000 + IVA $1.900",
+      "ivaAddedHint": "El 19% se agrega encima. Ej: $10.000 base → cobro $11.900",
       "save": "Guardar configuración"
     },
     "provider": {
       "title": "Proveedor de facturación electrónica",
+      "requestLabel": "Solicitar facturación electrónica",
+      "requestBody": "Indica que quieres emitir facturas electrónicas desde WARO. Esta solicitud no reemplaza la habilitación interna con Matias ni cambia IVA o INC.",
+      "matiasUuid": "UUID cliente Matias",
+      "requiredToIssue": "(requerido para emitir)",
+      "matiasUuidHint": "Identificador client_uuid del cliente emisor en Matias para Casa de Software. Es un requisito técnico del proveedor; no define tu régimen fiscal ni los impuestos de venta.",
       "environment": "Entorno",
+      "environments": {
+        "production": "Producción",
+        "testing": "Habilitación (pruebas)"
+      },
       "notConfigured": "No configurado",
       "lastDocument": "Último documento",
       "noDocuments": "Sin documentos emitidos"

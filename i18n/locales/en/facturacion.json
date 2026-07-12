@@ -73,6 +73,7 @@
       "noResolutionTitle": "No active DIAN resolution",
       "noResolutionBody": "Configure an active resolution with available numbering in the DIAN resolution section.",
       "taxReviewTitle": "Review sales tax settings",
+      "taxReviewBody": "Enable INC or VAT only when it applies to your sales. If your business issues invoices without those taxes, confirm that fiscal data matches a non-VAT-liable natural person before saving.",
       "matiasUuidTitle": "Missing Matias client UUID",
       "matiasUuidBody": "Configure the issuer client_uuid in the Electronic invoicing provider section before issuing with Matias.",
       "ready": "Your account is ready to issue electronic invoices."
@@ -81,6 +82,7 @@
       "title": "DIAN resolution",
       "new": "New resolution",
       "edit": "Edit resolution",
+      "configure": "Configure resolution",
       "emptyTitle": "No DIAN resolutions configured",
       "emptySub": "Configure the resolution you registered in the Matias portal (number, prefix, range)",
       "number": "Resolution number",
@@ -98,12 +100,21 @@
       "rangeLabel": "Range: {from} → {to}",
       "fromLabel": "From:",
       "toLabel": "To:",
-      "gapsHint": "DIAN does not allow reusing them — check the log."
+      "gapsTitle": "Burned numbers detected in your numbering",
+      "in24h": "in 24h",
+      "in7d": "in 7d",
+      "in30d": "in 30d",
+      "gapsHint": "DIAN does not allow reusing them — check the log.",
+      "currentNumberInvalid": "Must be between {from} and {to}. DIAN does not allow reusing numbers; the counter only moves forward.",
+      "nextIssueUses": "Next issue will use {number}.",
+      "usedOfTotal": "{used} of {total} used ({percent}%)"
     },
     "fiscal": {
       "sectionTitle": "Business fiscal data",
+      "body": "Identifies the issuer before DIAN and Matias. These fields do not enable taxes by themselves or change VAT or INC calculations.",
       "nit": "NIT",
       "businessName": "Legal name",
+      "businessNamePlaceholder": "MY RESTAURANT LLC",
       "orgType": "Organization type",
       "orgHint": "Defines whether the issuer invoices as a natural person or legal entity.",
       "taxRegime": "VAT responsibility",
@@ -114,10 +125,15 @@
       "city": "City",
       "phone": "Phone",
       "email": "Invoicing email",
+      "emailPlaceholder": "billing@myrestaurant.com",
       "save": "Save fiscal data",
       "miNegocio": "My business"
     },
     "print": {
+      "title": "Customize POS tickets",
+      "bodyPrefix": "Affects POS pre-invoices and printed receipts. The logo is configured in ",
+      "documentLabel": "Document label",
+      "tipLabel": "Tip / service label",
       "docPlaceholder": "Pre-invoice, Purchase order, Invoice #…",
       "tipPlaceholder": "Tip, Service, Service charge…",
       "docHint": "Text at the top of the ticket (max. 40 characters). E.g. Pre-invoice, Order #.",
@@ -127,6 +143,8 @@
       "save": "Save customization"
     },
     "tax": {
+      "title": "Taxes applied to sales",
+      "body": "These controls affect tax calculation and breakdowns in POS and invoices. They do not change your organization type or fiscal responsibility by themselves.",
       "incTitle": "INC — Consumption tax 8%",
       "incBody": "Apply when sales must collect Impoconsumo. Affects the total and invoice breakdown.",
       "ivaTitle": "VAT — 19%",
@@ -137,15 +155,24 @@
       "howIva": "How to apply VAT",
       "included": "Included in price",
       "added": "Added on top",
-      "incIncludedHint": "The 8% is already inside the price.",
-      "incAddedHint": "The 8% is added on top.",
-      "ivaIncludedHint": "The 19% is already inside the price.",
-      "ivaAddedHint": "The 19% is added on top.",
+      "incIncludedHint": "The 8% is already included in the price. Example: $10,800 → $10,000 base + $800 INC",
+      "incAddedHint": "The 8% is added on top. Example: $10,000 base → $10,800 charged",
+      "ivaIncludedHint": "The 19% is already included in the price. Example: $11,900 → $10,000 base + $1,900 VAT",
+      "ivaAddedHint": "The 19% is added on top. Example: $10,000 base → $11,900 charged",
       "save": "Save configuration"
     },
     "provider": {
       "title": "Electronic invoicing provider",
+      "requestLabel": "Request electronic invoicing",
+      "requestBody": "Indicates that you want to issue electronic invoices from WARO. This request does not replace internal enablement with Matias or change VAT or INC.",
+      "matiasUuid": "Matias client UUID",
+      "requiredToIssue": "(required to issue)",
+      "matiasUuidHint": "Issuer client_uuid identifier in Matias for Casa de Software. It is a technical provider requirement; it does not define your fiscal regime or sales taxes.",
       "environment": "Environment",
+      "environments": {
+        "production": "Production",
+        "testing": "Enablement (testing)"
+      },
       "notConfigured": "Not configured",
       "lastDocument": "Last document",
       "noDocuments": "No documents issued"
