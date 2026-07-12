@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
@@ -11,7 +10,8 @@ definePageMeta({
   module: 'equipo',
 })
 
-useHead({ title: 'Perfil de mesero — Equipo' })
+const { t, locale } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('equipo.miembros.profileTitle') })
 
 const route = useRoute()
 const memberId = computed(() => String(route.params.id))
@@ -33,7 +33,7 @@ const member = computed(() => {
   if (!m) return null
   return {
     id: m.id,
-    name: m.profile?.name || m.profile?.user_name || 'Sin nombre',
+    name: m.profile?.name || m.profile?.user_name || t('equipo.miembros.noName'),
     email: m.profile?.email || null,
     role: m.role || null,
     avatar: m.profile?.logo_avatar || null,
@@ -42,29 +42,29 @@ const member = computed(() => {
 
 const roleDefinitions: Record<string, { label: string; badgeClass: string }> = {
   superuser: {
-    label: 'Propietario',
+    label: t('equipo.roles.superuser'),
     badgeClass: 'bg-amber-100 text-amber-800',
   },
   admin: {
-    label: 'Administrador',
+    label: t('equipo.roles.admin'),
     badgeClass: 'bg-blue-100 text-blue-800',
   },
   employee: {
-    label: 'Cajero / Operador',
+    label: t('equipo.roles.employeeLabel'),
     badgeClass: 'bg-slate-100 text-slate-700',
   },
   member: {
-    label: 'Operador de equipo',
+    label: t('equipo.roles.memberLabel'),
     badgeClass: 'bg-green-100 text-green-800',
   },
   promotor: {
-    label: 'Promotor comercial',
+    label: t('equipo.roles.promotorLabel'),
     badgeClass: 'bg-purple-100 text-purple-800',
   },
 }
 
 const roleLabel = (role: string | null) =>
-  role ? roleDefinitions[role]?.label || role : '—'
+  role ? roleDefinitions[role]?.label || role : t('equipo.miembros.noRoleDash')
 
 const memberRoleClass = (role: string | null) => ({
   [roleDefinitions[role || '']?.badgeClass || 'bg-green-100 text-green-800']: true,
@@ -183,7 +183,7 @@ const handleRefresh = async () => {
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
+  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency', currency: 'COP', minimumFractionDigits: 0,
   }).format(v || 0)
 
@@ -191,14 +191,16 @@ const formatPercent = (v: number) => `${(v || 0).toFixed(2)}%`
 
 const formatDate = (iso: string | null | undefined) => {
   if (!iso) return ''
-  return fnsFormat(new Date(iso), "d MMM yyyy, h:mm a", { locale: es })
+  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit',
+  }).format(new Date(iso))
 }
 
 const channelLabel = (ch: string | null | undefined) => {
   if (ch === 'online') return 'Online'
-  if (ch === 'mesa') return 'Mesa'
-  if (ch === 'barra') return 'Barra'
-  return 'POS'
+  if (ch === 'mesa') return t('equipo.miembros.channelTable')
+  if (ch === 'barra') return t('equipo.miembros.channelBar')
+  return t('equipo.miembros.channelPos')
 }
 const channelVariant = (ch: string | null | undefined) => {
   if (ch === 'online') return 'success'
@@ -207,14 +209,14 @@ const channelVariant = (ch: string | null | undefined) => {
   return 'secondary'
 }
 
-const columns: Column[] = [
-  { key: 'order_date', title: 'Fecha', width: '180px' },
-  { key: 'order_number', title: 'Orden', width: '80px' },
-  { key: 'channel', title: 'Canal', width: '90px' },
-  { key: 'total_amount', title: 'Subtotal', align: 'right' },
-  { key: 'tip_amount', title: 'Propina', align: 'right' },
+const columns = computed<Column[]>(() => [
+  { key: 'order_date', title: t('equipo.miembros.date'), width: '180px' },
+  { key: 'order_number', title: t('equipo.miembros.order'), width: '80px' },
+  { key: 'channel', title: t('equipo.miembros.channel'), width: '90px' },
+  { key: 'total_amount', title: t('equipo.miembros.subtotal'), align: 'right' },
+  { key: 'tip_amount', title: t('equipo.miembros.tip'), align: 'right' },
   { key: 'tip_percent', title: '%', align: 'right', width: '70px' },
-]
+])
 
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -237,9 +239,9 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
       class="flex flex-col items-center justify-center gap-3 py-16 px-6 bg-surface rounded-xl border-2 border-border text-center"
     >
       <span aria-hidden="true" class="text-4xl">🔍</span>
-      <p class="text-base font-semibold text-text-primary">Miembro no encontrado</p>
+      <p class="text-base font-semibold text-text-primary">{{ t('equipo.miembros.memberNotFound') }}</p>
       <p class="text-sm text-text-secondary max-w-md">
-        El miembro que buscas no existe o ya no pertenece al equipo.
+        {{ t('equipo.miembros.memberNotFoundDescription') }}
       </p>
     </div>
 
@@ -268,35 +270,35 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
             <MetricCard
-              title="Hoy"
+              :title="t('equipo.miembros.today')"
               :value="todayAgg.sum"
               format="currency"
               variant="primary"
-              :subtitle="`Promedio: ${formatPercent(todayAgg.avg)}`"
+              :subtitle="t('equipo.miembros.average', { value: formatPercent(todayAgg.avg) })"
             />
             <MetricCard
-              title="Últimos 7 días"
+              :title="t('equipo.miembros.lastSevenDays')"
               :value="weekAgg.sum"
               format="currency"
               variant="primary"
-              :subtitle="`Promedio: ${formatPercent(weekAgg.avg)}`"
+              :subtitle="t('equipo.miembros.average', { value: formatPercent(weekAgg.avg) })"
             />
             <MetricCard
-              title="Últimos 30 días"
+              :title="t('equipo.miembros.lastThirtyDays')"
               :value="monthAgg.sum"
               format="currency"
               variant="primary"
-              :subtitle="`Promedio: ${formatPercent(monthAgg.avg)}`"
+              :subtitle="t('equipo.miembros.average', { value: formatPercent(monthAgg.avg) })"
             />
           </div>
 
           <div class="flex flex-col gap-3">
-            <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
+            <p class="text-sm font-semibold text-text-primary">{{ t('equipo.miembros.lastTenTips') }}</p>
             <UiResponsiveDataView
               :columns="columns"
               :data="recentTips"
-              empty-message="Sin propinas registradas"
-              empty-sub-message="Las propinas atribuidas a este mesero aparecerán aquí."
+              :empty-message="t('equipo.miembros.noTips')"
+              :empty-sub-message="t('equipo.miembros.noTipsSub')"
               item-key="id"
               row-size="sm"
             >
@@ -310,7 +312,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
                     <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
                   </div>
                   <div class="flex items-end justify-between">
-                    <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
+                    <p class="text-xs text-text-secondary">{{ t('equipo.miembros.subtotal') }}: {{ formatCurrency(item.total_amount) }}</p>
                     <div class="text-right">
                       <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
                       <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
@@ -359,7 +361,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
           </div>
         </div>
         <p class="text-sm text-text-secondary">
-          Las propinas no están habilitadas en este restaurante.
+          {{ t('equipo.miembros.tipsDisabled') }}
         </p>
       </div>
     </div>
