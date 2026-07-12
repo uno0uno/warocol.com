@@ -24,7 +24,7 @@
           <!-- First-time setup hint -->
           <div v-if="!businessProfile && isEditMode" class="absolute inset-x-0 bottom-3 flex justify-center">
             <span class="text-white/90 text-xs font-medium drop-shadow bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm">
-              Completa tu perfil para que tus clientes te encuentren
+              {{ t('negocio.completeProfileHint') }}
             </span>
           </div>
 
@@ -36,14 +36,14 @@
               class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-primary border border-white/40 rounded-lg hover:bg-white transition-colors flex items-center gap-1.5 shadow-sm"
             >
               <PencilSquareIcon class="w-3.5 h-3.5" />
-              Editar perfil
+              {{ t('negocio.editProfile') }}
             </button>
             <template v-else>
               <button
                 @click="cancelEdit"
                 class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-secondary border border-white/40 rounded-lg hover:bg-white transition-colors shadow-sm"
               >
-                Cancelar
+                {{ t('negocio.cancel') }}
               </button>
               <button
                 @click="saveChanges"
@@ -51,7 +51,7 @@
                 class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
               >
                 <CheckIcon class="w-3.5 h-3.5" />
-                Guardar
+                {{ t('negocio.save') }}
               </button>
             </template>
           </div>
@@ -79,12 +79,12 @@
             <div class="flex items-center gap-2 mt-2 flex-wrap">
               <UiStatusBadge
                 :variant="isOpenNow ? 'success' : 'destructive'"
-                :value="isOpenNow ? 'Abierto' : 'Cerrado'"
+                :value="isOpenNow ? t('negocio.open') : t('negocio.closed')"
                 format="text"
               />
               <UiStatusBadge
                 :variant="businessProfile?.is_active ? 'success' : 'warning'"
-                :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
+                :value="businessProfile?.is_active ? t('negocio.active') : t('negocio.hidden')"
                 format="text"
               />
             </div>
@@ -96,7 +96,7 @@
               v-model="editForm.display_name"
               type="text"
               class="input-base w-full px-3 py-2 text-base font-semibold"
-              placeholder="Nombre del negocio"
+              :placeholder="t('negocio.businessNamePlaceholder')"
             />
           </div>
 
@@ -105,43 +105,43 @@
             {{ businessProfile.description }}
           </p>
           <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic">
-            Sin descripción
+            {{ t('negocio.noDescription') }}
           </p>
 
           <!-- Edit fields: description + urls -->
           <div v-if="isEditMode" class="space-y-3 mt-3">
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Descripción pública</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.publicDescription') }}</label>
               <textarea
                 v-model="editForm.description"
                 class="input-base w-full px-3 py-2 text-sm"
                 rows="2"
-                placeholder="Breve descripción de tu negocio"
+                :placeholder="t('negocio.descriptionPlaceholder')"
               />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Logo</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.logo') }}</label>
                 <button
                   type="button"
                   @click="openImageModal('logo')"
                   class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/5 hover:border-primary/60 transition-colors"
-                  aria-label="Subir imagen de logo"
+                  :aria-label="t('negocio.uploadLogoAria')"
                 >
                   <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
-                  {{ editForm.logo_url ? 'Cambiar logo' : 'Subir logo' }}
+                  {{ editForm.logo_url ? t('negocio.changeLogo') : t('negocio.uploadLogo') }}
                 </button>
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Banner</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.banner') }}</label>
                 <button
                   type="button"
                   @click="openImageModal('banner')"
                   class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/5 hover:border-primary/60 transition-colors"
-                  aria-label="Subir imagen de banner"
+                  :aria-label="t('negocio.uploadBannerAria')"
                 >
                   <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
-                  {{ editForm.banner_url ? 'Cambiar banner' : 'Subir banner' }}
+                  {{ editForm.banner_url ? t('negocio.changeBanner') : t('negocio.uploadBanner') }}
                 </button>
               </div>
             </div>
@@ -162,19 +162,19 @@
             class="text-sm font-semibold leading-snug"
             :class="businessProfile.is_active ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
           >
-            {{ businessProfile.is_active ? 'Visible en el directorio' : 'Tu negocio está oculto' }}
+            {{ businessProfile.is_active ? t('negocio.visibleInDirectory') : t('negocio.hiddenBusiness') }}
           </p>
           <p
             class="text-xs mt-0.5 leading-snug"
             :class="businessProfile.is_active ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
           >
-            {{ businessProfile.is_active ? `Aparece en ${publicCityPath}` : 'Actívalo para aparecer en el directorio de WaRo Colombia' }}
+            {{ businessProfile.is_active ? t('negocio.appearsInDirectory', { path: publicCityPath }) : t('negocio.activateForDirectory') }}
           </p>
         </div>
         <label
           class="relative inline-flex items-center cursor-pointer flex-shrink-0"
           :class="isTogglingActive ? 'opacity-50 pointer-events-none' : ''"
-          :aria-label="businessProfile.is_active ? 'Desactivar visibilidad en el directorio' : 'Activar visibilidad en el directorio'"
+          :aria-label="businessProfile.is_active ? t('negocio.disableDirectoryVisibility') : t('negocio.enableDirectoryVisibility')"
         >
           <input
             type="checkbox"
@@ -196,10 +196,10 @@
         <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div class="min-w-0 flex-1">
           <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-snug">
-            Selecciona tu ciudad para aparecer en el directorio
+            {{ t('negocio.selectCityForDirectory') }}
           </p>
           <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-snug">
-            Tu negocio está visible pero aún no tiene ciudad asignada. Editá tu perfil y elegí una ciudad del listado.
+            {{ t('negocio.cityRequiredForDirectory') }}
           </p>
         </div>
       </div>
@@ -211,11 +211,11 @@
       >
         <div class="flex items-center gap-2 mb-2">
           <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          <h3 class="text-sm sm:text-base font-semibold text-text-primary">Tu enlace público</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-text-primary">{{ t('negocio.publicLink') }}</h3>
         </div>
 
         <p class="text-xs text-text-secondary mb-3 leading-snug">
-          Comparte este enlace con tus clientes para que puedan ver tu carta y hacer pedidos.
+          {{ t('negocio.publicLinkDescription') }}
         </p>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
@@ -230,21 +230,21 @@
               type="button"
               @click="copyPublicLink"
               :disabled="isCopyingLink"
-              :aria-label="`Copiar enlace público: ${publicUrl}`"
+              :aria-label="t('negocio.copyPublicLinkAria', { url: publicUrl })"
               class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ClipboardDocumentIcon class="w-4 h-4" aria-hidden="true" />
-              Copiar
+              {{ t('negocio.copy') }}
             </button>
             <button
               type="button"
               @click="sharePublicLink"
               :disabled="isSharingLink"
-              aria-label="Compartir enlace público"
+              :aria-label="t('negocio.sharePublicLinkAria')"
               class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-surface-secondary text-text-primary border border-border rounded-lg hover:bg-surface-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShareIcon class="w-4 h-4" aria-hidden="true" />
-              Compartir
+              {{ t('negocio.share') }}
             </button>
           </div>
         </div>
@@ -255,7 +255,7 @@
         >
           <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
-            Tu página pública aún no está activa. Actívala arriba para que tus clientes puedan abrir este enlace desde el directorio.
+            {{ t('negocio.publicPageInactive') }}
           </p>
         </div>
       </div>
@@ -268,7 +268,7 @@
       <div v-if="businessProfile && !isEditMode" class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-            Tiempo prep.
+            {{ t('negocio.prepTimeShort') }}
           </p>
           <p class="text-base sm:text-lg font-bold text-text-primary">
             {{ businessProfile.estimated_preparation_time }} min
@@ -276,7 +276,7 @@
         </div>
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-            Pedido mínimo
+            {{ t('negocio.minimumOrder') }}
           </p>
           <p class="text-base sm:text-lg font-bold text-text-primary">
             {{ formatCurrencyCompact(businessProfile.min_order_amount) }}
@@ -284,7 +284,7 @@
         </div>
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-            Límite online
+            {{ t('negocio.onlineLimit') }}
           </p>
           <p class="text-base sm:text-lg font-bold text-text-primary">
             {{ formatOnlineOrderMaxAmountCompact(businessProfile.online_order_max_amount) }}
@@ -292,11 +292,11 @@
         </div>
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between items-start sm:items-center text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-            Pedidos online
+            {{ t('negocio.onlineOrders') }}
           </p>
           <UiStatusBadge
             :variant="businessProfile.accepts_online_orders ? 'success' : 'secondary'"
-            :value="businessProfile.accepts_online_orders ? 'Activos' : 'Inactivos'"
+            :value="businessProfile.accepts_online_orders ? t('negocio.activePlural') : t('negocio.inactivePlural')"
             format="text"
             size="sm"
           />
@@ -307,7 +307,7 @@
       <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <MapPinIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Contacto
+          {{ t('negocio.contact') }}
         </h3>
 
         <!-- View -->
@@ -331,7 +331,7 @@
               v-if="!businessProfile?.address && !businessProfile?.city && !businessProfile?.phone_number && !businessProfile?.email"
               class="text-sm text-text-secondary italic"
             >
-              Sin información de contacto
+              {{ t('negocio.noContact') }}
             </p>
           </div>
         </template>
@@ -340,15 +340,15 @@
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="sm:col-span-2">
-              <label class="block text-xs font-medium text-text-secondary mb-1">Dirección</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.address') }}</label>
               <input v-model="editForm.address" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Calle 123 # 45-67" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Barrio</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.neighborhood') }}</label>
               <input v-model="editForm.neighborhood" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Chapinero" />
             </div>
             <div>
-              <label for="negocio-country" class="block text-xs font-medium text-text-secondary mb-1">País</label>
+              <label for="negocio-country" class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.country') }}</label>
               <select
                 id="negocio-country"
                 v-model="editForm.country"
@@ -359,12 +359,12 @@
                 <option value="Colombia">Colombia</option>
               </select>
               <p id="negocio-country-help" class="text-[10px] text-text-tertiary mt-1">
-                Por ahora WaRo opera solo en Colombia.
+                {{ t('negocio.colombiaOnly') }}
               </p>
             </div>
             <div>
               <label for="negocio-city" class="block text-xs font-medium text-text-secondary mb-1">
-                Ciudad
+                {{ t('negocio.city') }}
                 <span class="text-amber-600" aria-hidden="true">*</span>
               </label>
               <div ref="citySearchAnchorRef" class="relative">
@@ -380,7 +380,7 @@
                   :aria-describedby="cityHelpId"
                   autocomplete="off"
                   class="input-base w-full px-3 py-2 pl-9 pr-10 text-sm"
-                  placeholder="Busca ciudad o municipio..."
+                  :placeholder="t('negocio.cityPlaceholder')"
                   @input="onCitySearchInput"
                   @focus="openCitySearch"
                   @blur="closeCitySearchSoon"
@@ -397,7 +397,7 @@
                   v-if="citySearchTerm"
                   type="button"
                   class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                  aria-label="Limpiar ciudad"
+                  :aria-label="t('negocio.clearCity')"
                   @mousedown.prevent
                   @click="clearCitySelection"
                 >
@@ -445,21 +445,21 @@
                 </ul>
               </Teleport>
               <p :id="cityHelpId" class="text-[10px] text-text-tertiary mt-1">
-                Define en qué directorio aparece tu negocio (warocol.com/&lt;ciudad&gt;).
+                {{ t('negocio.cityDirectoryHelp') }}
               </p>
               <p
                 v-if="cityCatalogError"
                 class="text-[10px] text-amber-700 dark:text-amber-400 mt-1"
               >
-                No pudimos cargar el catálogo. Puedes seguir editando el resto del perfil e intentarlo de nuevo.
+                {{ t('negocio.cityCatalogError') }}
               </p>
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Teléfono</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.phone') }}</label>
               <input v-model="editForm.phone_number" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Email</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.email') }}</label>
               <input v-model="editForm.email" type="email" class="input-base w-full px-3 py-2 text-sm" placeholder="contacto@negocio.com" />
             </div>
           </div>
@@ -470,13 +470,13 @@
       <div v-if="businessProfile?.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <ClockIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Horario
+          {{ t('negocio.hours') }}
         </h3>
 
         <!-- View -->
         <template v-if="!isEditMode">
           <div class="mb-4 flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
-            <span class="text-sm text-text-secondary">Zona horaria</span>
+            <span class="text-sm text-text-secondary">{{ t('negocio.timezone') }}</span>
             <span class="text-sm font-semibold text-text-primary text-right">
               {{ businessTimezoneLabel }}
             </span>
@@ -493,10 +493,10 @@
                   class="text-sm w-24"
                   :class="isToday(index) ? 'font-semibold text-primary' : 'text-text-primary'"
                 >
-                  {{ DAY_LABELS[dayKey] }}
+                  {{ dayLabel(dayKey) }}
                 </span>
                 <span v-if="isToday(index)" class="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                  hoy
+                  {{ t('negocio.today') }}
                 </span>
               </div>
               <span
@@ -506,7 +506,7 @@
                   : isToday(index) ? 'text-primary font-semibold' : 'text-text-primary'"
               >
                 <template v-if="!businessProfile.business_hours?.[dayKey] || businessProfile.business_hours?.[dayKey]?.closed">
-                  Cerrado
+                  {{ t('negocio.closed') }}
                 </template>
                 <template v-else>
                   {{ businessProfile.business_hours[dayKey]?.open }} – {{ businessProfile.business_hours[dayKey]?.close }}
@@ -519,7 +519,7 @@
         <!-- Edit -->
         <template v-else>
           <div class="mb-4">
-            <label for="negocio-timezone" class="block text-xs font-medium text-text-secondary mb-1">Zona horaria</label>
+            <label for="negocio-timezone" class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.timezone') }}</label>
             <select
               id="negocio-timezone"
               v-model="editForm.timezone"
@@ -530,11 +530,11 @@
                 :key="option.value"
                 :value="option.value"
               >
-                {{ option.label }}
+                {{ timezoneOptionLabel(option) }}
               </option>
             </select>
             <p class="text-[10px] text-text-tertiary mt-1">
-              Se usa para calcular abierto/cerrado, cierres y reportes operativos.
+              {{ t('negocio.timezoneHelp') }}
             </p>
           </div>
           <div class="space-y-1">
@@ -547,7 +547,7 @@
                 class="text-sm w-24 flex-shrink-0"
                 :class="isToday(index) ? 'font-semibold text-primary' : 'text-text-primary'"
               >
-                {{ DAY_LABELS[dayKey] }}
+                {{ dayLabel(dayKey) }}
               </span>
               <label class="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
                 <input
@@ -555,7 +555,7 @@
                   type="checkbox"
                   class="rounded border-border text-primary focus:ring-primary"
                 />
-                <span class="text-xs text-text-secondary">Cerrado</span>
+                <span class="text-xs text-text-secondary">{{ t('negocio.closed') }}</span>
               </label>
               <div
                 class="flex items-center gap-2 flex-1 min-w-0"
@@ -584,30 +584,30 @@
       <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <ShoppingCartIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Pedidos en línea
+          {{ t('negocio.onlineOrders') }}
         </h3>
 
         <!-- View -->
         <template v-if="!isEditMode">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Estado de pedidos</span>
+              <span class="text-sm text-text-secondary">{{ t('negocio.orderStatus') }}</span>
               <UiStatusBadge
                 :variant="businessProfile?.accepts_online_orders ? 'success' : 'secondary'"
-                :value="businessProfile?.accepts_online_orders ? 'Activos' : 'Desactivados'"
+                :value="businessProfile?.accepts_online_orders ? t('negocio.activePlural') : t('negocio.disabledPlural')"
                 format="text"
               />
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Tiempo de preparación estimado</span>
+              <span class="text-sm text-text-secondary">{{ t('negocio.estimatedPrepTime') }}</span>
               <span class="text-sm font-semibold text-text-primary">{{ businessProfile?.estimated_preparation_time }} min</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Pedido mínimo</span>
+              <span class="text-sm text-text-secondary">{{ t('negocio.minimumOrder') }}</span>
               <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(businessProfile?.min_order_amount ?? 0) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Límite máximo online</span>
+              <span class="text-sm text-text-secondary">{{ t('negocio.maximumOnlineLimit') }}</span>
               <span class="text-sm font-semibold text-text-primary">{{ formatOnlineOrderMaxAmount(businessProfile?.online_order_max_amount) }}</span>
             </div>
           </div>
@@ -618,8 +618,8 @@
           <div class="space-y-4">
             <div class="flex items-center justify-between py-1">
               <div>
-                <p class="text-sm font-medium text-text-primary">Pedidos en línea</p>
-                <p class="text-xs text-text-secondary mt-0.5">Permite pedidos desde la plataforma</p>
+                <p class="text-sm font-medium text-text-primary">{{ t('negocio.onlineOrders') }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ t('negocio.onlineOrdersHelp') }}</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input v-model="editForm.accepts_online_orders" type="checkbox" class="sr-only peer" />
@@ -628,7 +628,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Tiempo de preparación (min)</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.prepTimeMinutes') }}</label>
                 <!-- text + inputmode='numeric' instead of type='number' to
                      prevent the spinner buttons and mouse-wheel scroll
                      from accidentally incrementing the value by the
@@ -644,7 +644,7 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Pedido mínimo (COP)</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.minimumOrderCop') }}</label>
                 <input
                   v-model.number="editForm.min_order_amount"
                   type="text"
@@ -654,7 +654,7 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Límite máximo online (COP)</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.maximumOnlineLimitCop') }}</label>
                 <input
                   v-model.number="editForm.online_order_max_amount"
                   type="text"
@@ -673,7 +673,7 @@
       <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Redes sociales
+          {{ t('negocio.socialMedia') }}
         </h3>
 
         <!-- View -->
@@ -692,23 +692,23 @@
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Instagram</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.instagram') }}</label>
               <input v-model="editForm.social_media.instagram" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario o URL" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">WhatsApp</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.whatsapp') }}</label>
               <input v-model="editForm.social_media.whatsapp" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Facebook</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.facebook') }}</label>
               <input v-model="editForm.social_media.facebook" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="URL o nombre de página" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Twitter / X</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.twitter') }}</label>
               <input v-model="editForm.social_media.twitter" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">TikTok</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.tiktok') }}</label>
               <input v-model="editForm.social_media.tiktok" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario" />
             </div>
           </div>
@@ -753,7 +753,8 @@ import {
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
-useHead({ title: 'Mi Negocio' })
+const { t, locale } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('negocio.pageTitle') })
 
 const { isOpenNow, currentTenant } = useTenantReactive()
 const tenantsStore = useTenantsStore()
@@ -877,10 +878,10 @@ const { panelStyle: cityPanelStyle, updatePlacement: updateCitySearchPlacement }
 )
 
 const cityEmptyMessage = computed(() => {
-  if (cityCatalogLoading.value) return 'Cargando ciudades...'
-  if (cityCatalogError.value) return 'No se pudo cargar el catálogo'
-  if (!cityCatalog.value.length && cityCatalogLoaded.value) return 'No hay ciudades disponibles'
-  return 'Sin resultados'
+  if (cityCatalogLoading.value) return t('negocio.loadingCities')
+  if (cityCatalogError.value) return t('negocio.cityCatalogUnavailable')
+  if (!cityCatalog.value.length && cityCatalogLoaded.value) return t('negocio.noCities')
+  return t('negocio.noResults')
 })
 
 const activeCityOptionId = computed(() => {
@@ -967,7 +968,7 @@ watch(() => visibleCityResults.value.length, (length) => {
 
 const publicCityPath = computed(() => {
   const slug = businessProfile.value?.city_slug
-  return slug ? `warocol.com/${slug}` : 'el directorio de WaRo Colombia'
+  return slug ? `warocol.com/${slug}` : t('negocio.waroDirectory')
 })
 
 const directoryWarning = computed(() => {
@@ -988,36 +989,30 @@ const effectiveBannerStyle = computed(() => {
 
 // ─── Constants ───
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-const DAY_LABELS: Record<string, string> = {
-  monday: 'Lunes',
-  tuesday: 'Martes',
-  wednesday: 'Miércoles',
-  thursday: 'Jueves',
-  friday: 'Viernes',
-  saturday: 'Sábado',
-  sunday: 'Domingo',
-}
+const dayLabel = (dayKey: string) => t(`negocio.daysOfWeek.${dayKey}`)
 const TIMEZONE_OPTIONS = [
-  { value: 'America/Bogota', label: 'Colombia - Bogota (UTC-5)' },
-  { value: 'America/Lima', label: 'Peru - Lima (UTC-5)' },
-  { value: 'America/Guayaquil', label: 'Ecuador - Guayaquil (UTC-5)' },
-  { value: 'America/Panama', label: 'Panama (UTC-5)' },
-  { value: 'America/Mexico_City', label: 'Mexico - Ciudad de Mexico' },
-  { value: 'America/Caracas', label: 'Venezuela - Caracas (UTC-4)' },
-  { value: 'America/Santiago', label: 'Chile - Santiago' },
-  { value: 'America/New_York', label: 'Estados Unidos - New York' },
-  { value: 'Europe/Madrid', label: 'Espana - Madrid' },
-  { value: 'Asia/Kathmandu', label: 'Nepal - Kathmandu (UTC+5:45)' },
-  { value: 'Australia/Adelaide', label: 'Australia - Adelaide' },
-  { value: 'Pacific/Apia', label: 'Samoa - Apia' },
-  { value: 'Pacific/Kiritimati', label: 'Kiribati - Kiritimati (UTC+14)' },
-  { value: 'Pacific/Pago_Pago', label: 'Samoa Americana - Pago Pago (UTC-11)' },
+  { value: 'America/Bogota', key: 'bogota' },
+  { value: 'America/Lima', key: 'lima' },
+  { value: 'America/Guayaquil', key: 'guayaquil' },
+  { value: 'America/Panama', key: 'panama' },
+  { value: 'America/Mexico_City', key: 'mexicoCity' },
+  { value: 'America/Caracas', key: 'caracas' },
+  { value: 'America/Santiago', key: 'santiago' },
+  { value: 'America/New_York', key: 'newYork' },
+  { value: 'Europe/Madrid', key: 'madrid' },
+  { value: 'Asia/Kathmandu', key: 'kathmandu' },
+  { value: 'Australia/Adelaide', key: 'adelaide' },
+  { value: 'Pacific/Apia', key: 'apia' },
+  { value: 'Pacific/Kiritimati', key: 'kiritimati' },
+  { value: 'Pacific/Pago_Pago', key: 'pagoPago' },
 ]
+const timezoneOptionLabel = (option: { key: string }) => t(`negocio.timezones.${option.key}`)
 const { zonedParts, normalizeTimezone } = useTenantTimezone()
 
 const timezoneLabel = (value?: string | null) => {
   const timezone = normalizeTimezone(value)
-  return TIMEZONE_OPTIONS.find(option => option.value === timezone)?.label ?? timezone
+  const option = TIMEZONE_OPTIONS.find(option => option.value === timezone)
+  return option ? timezoneOptionLabel(option) : timezone
 }
 
 const businessTimezoneLabel = computed(() => timezoneLabel(businessProfile.value?.timezone))
@@ -1048,7 +1043,7 @@ const hasSocialMedia = computed(() => {
 const formatCurrency = (value: number | string | null | undefined) => {
   const n = Number(value) || 0
   if (!n) return '$0'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 }
 
 const formatCurrencyCompact = (value: number | string | null | undefined) => {
@@ -1061,18 +1056,18 @@ const formatCurrencyCompact = (value: number | string | null | undefined) => {
 }
 
 const formatOnlineOrderMaxAmount = (value: number | string | null | undefined) => {
-  if (value === null || value === undefined || value === '') return 'Según cliente'
+  if (value === null || value === undefined || value === '') return t('negocio.customerDetermines')
   const n = Number(value)
-  if (!Number.isFinite(n)) return 'Según cliente'
-  if (n <= 0) return 'Sin límite'
+  if (!Number.isFinite(n)) return t('negocio.customerDetermines')
+  if (n <= 0) return t('negocio.noLimit')
   return formatCurrency(n)
 }
 
 const formatOnlineOrderMaxAmountCompact = (value: number | string | null | undefined) => {
-  if (value === null || value === undefined || value === '') return 'Cliente'
+  if (value === null || value === undefined || value === '') return t('negocio.customerShort')
   const n = Number(value)
-  if (!Number.isFinite(n)) return 'Cliente'
-  if (n <= 0) return 'Sin límite'
+  if (!Number.isFinite(n)) return t('negocio.customerShort')
+  if (n <= 0) return t('negocio.noLimit')
   return formatCurrencyCompact(n)
 }
 
@@ -1166,9 +1161,9 @@ const copyPublicLink = async () => {
       document.execCommand('copy')
       document.body.removeChild(textArea)
     }
-    toast.success('Enlace copiado al portapapeles', { title: 'Enlace copiado' })
+    toast.success(t('negocio.linkCopied'), { title: t('negocio.linkCopiedTitle') })
   } catch {
-    toast.error('No se pudo copiar el enlace', { title: 'Error' })
+    toast.error(t('negocio.linkCopyError'), { title: t('negocio.error') })
   } finally {
     isCopyingLink.value = false
   }
@@ -1178,7 +1173,7 @@ const isSharingLink = ref(false)
 const sharePublicLink = async () => {
   if (!publicUrl.value || isSharingLink.value) return
   isSharingLink.value = true
-  const shareTitle = businessProfile.value?.display_name || 'Mi negocio'
+  const shareTitle = businessProfile.value?.display_name || t('negocio.myBusiness')
   const shareText = `¡Hazme tu pedido en línea aquí! ${publicUrl.value}`
   try {
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
@@ -1192,7 +1187,7 @@ const sharePublicLink = async () => {
     }
   } catch (err: any) {
     if (err?.name !== 'AbortError') {
-      toast.error('No se pudo compartir el enlace', { title: 'Error' })
+      toast.error(t('negocio.linkShareError'), { title: t('negocio.error') })
     }
   } finally {
     isSharingLink.value = false
@@ -1212,11 +1207,11 @@ const toggleActive = async () => {
     })
     await refreshProfile()
     toast.success(
-      newState ? 'Tu negocio ahora es visible en el directorio' : 'Tu negocio está oculto del directorio',
-      { title: newState ? '¡Negocio activado!' : 'Negocio oculto' }
+      newState ? t('negocio.businessVisible') : t('negocio.businessHidden'),
+      { title: newState ? t('negocio.businessActivated') : t('negocio.businessHiddenTitle') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar estado', { title: 'Error' })
+    toast.error(error.data?.detail || t('negocio.toggleError'), { title: t('negocio.error') })
   } finally {
     isTogglingActive.value = false
   }
@@ -1260,9 +1255,9 @@ const saveChanges = async () => {
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
     await refreshBusinessProfileCaches()
     isEditMode.value = false
-    toast.success('Perfil actualizado exitosamente', { title: 'Guardado' })
+    toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
   } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar el perfil', { title: 'Error' })
+    toast.error(error.data?.detail || t('negocio.saveError'), { title: t('negocio.error') })
   } finally {
     isSaving.value = false
   }
@@ -1304,9 +1299,9 @@ const handleImageUploaded = async (url: string) => {
       }
       editForm[field] = url
       await refreshBusinessProfileCaches()
-      toast.success('Imagen guardada correctamente.', { title: 'Imagen subida' })
+      toast.success(t('negocio.imageSaved'), { title: t('negocio.imageUploaded') })
     } catch {
-      toast.error('La imagen se subió pero no se pudo guardar. Inténtalo de nuevo.', { title: 'Error' })
+      toast.error(t('negocio.imageSaveError'), { title: t('negocio.error') })
     }
     return
   }
@@ -1314,7 +1309,7 @@ const handleImageUploaded = async (url: string) => {
   // No profile yet — enter edit mode so user can complete required fields
   if (!isEditMode.value) enterEditMode()
   editForm[field] = url
-  toast.success('Imagen lista. Completa los datos y guarda el perfil.', { title: 'Imagen subida' })
+  toast.success(t('negocio.imageReady'), { title: t('negocio.imageUploaded') })
 }
 
 // ─── Auto-enter edit mode when no profile ───
