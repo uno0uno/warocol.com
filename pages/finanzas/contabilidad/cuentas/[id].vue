@@ -481,9 +481,8 @@ const openEntryDetail = (entry: { id: string }) => {
               <span>{{ account.isActive ? t('finanzas.contabilidad.deactivate') : t('finanzas.contabilidad.activate') }}</span>
             </button>
 
-            <button
+            <button type="button"
               v-if="account.isDetail && account.accountClass === '1' && account.normalBalance === 'debit' && account.isActive"
-              type="button"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#7c3bed] px-3.5 text-sm font-semibold leading-5 text-[#7c3bed] transition-colors hover:bg-[rgba(124,59,237,0.08)] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/25 active:scale-[0.98]"
               :aria-label="t('finanzas.contabilidad.updateRealBalanceOf', { name: account.name })" @click="showAdjustPanel = true">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -502,7 +501,8 @@ const openEntryDetail = (entry: { id: string }) => {
       <p class="text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('finanzas.contabilidad.subaccounts') }}</p>
       <div class="flex flex-wrap gap-2">
         <NuxtLink v-for="sub in subAccounts" :key="sub.id" :to="`/finanzas/contabilidad/cuentas/${sub.id}`"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group">
+          class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group"
+          :aria-label="t('finanzas.contabilidad.viewSubaccountOf', { code: sub.code, name: sub.name })">
           <span class="text-xs font-mono font-medium text-text-primary">{{ sub.code }}</span>
           <span class="text-xs text-text-secondary truncate max-w-[160px]">{{ sub.name }}</span>
           <UiStatusBadge :value="sub.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne')" format="text"
@@ -535,6 +535,7 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <select v-model="statusFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          :aria-label="t('finanzas.contabilidad.filterStatus')"
           @change="page = 1">
           <option :value="null">{{ t('finanzas.common.status') }}</option>
           <option value="draft">{{ t('finanzas.contabilidad.status.draft') }}</option>
@@ -544,6 +545,7 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <select v-model="sourceFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          :aria-label="t('finanzas.contabilidad.filterModule')"
           @change="page = 1">
           <option :value="null">{{ t('finanzas.contabilidad.module') }}</option>
           <option value="ventas">{{ t('finanzas.contabilidad.sources.ventas') }}</option>
@@ -565,7 +567,8 @@ const openEntryDetail = (entry: { id: string }) => {
         <div class="flex-1" />
 
         <NuxtLink to="/finanzas/contabilidad/asientos/crear"
-          class="flex items-center gap-1.5 h-10 px-3 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap flex-shrink-0">
+          class="flex items-center gap-1.5 h-10 px-3 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap flex-shrink-0"
+          :aria-label="t('finanzas.contabilidad.createEntry')">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -664,14 +667,14 @@ const openEntryDetail = (entry: { id: string }) => {
       <!-- Pagination -->
       <div v-if="totalEntries > PAGE_SIZE" class="flex items-center justify-end px-1 py-2">
         <div class="flex items-center gap-1">
-          <button :disabled="page <= 1" @click="page = 1"
+          <button type="button" :disabled="page <= 1" @click="page = 1"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             :aria-label="t('finanzas.contabilidad.firstPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
-          <button :disabled="page <= 1" @click="page--"
+          <button type="button" :disabled="page <= 1" @click="page--"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             :aria-label="t('finanzas.contabilidad.prevPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,14 +682,14 @@ const openEntryDetail = (entry: { id: string }) => {
             </svg>
           </button>
           <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ page }} / {{ totalPages }}</span>
-          <button :disabled="page >= totalPages" @click="page++"
+          <button type="button" :disabled="page >= totalPages" @click="page++"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             :aria-label="t('finanzas.contabilidad.nextPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
-          <button :disabled="page >= totalPages" @click="page = totalPages"
+          <button type="button" :disabled="page >= totalPages" @click="page = totalPages"
             class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             :aria-label="t('finanzas.contabilidad.lastPage')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -760,6 +763,7 @@ const openEntryDetail = (entry: { id: string }) => {
               <span class="text-text-secondary select-none flex-shrink-0 pr-1">·</span>
               <input id="create-code" ref="codeInput" v-model="createSuffix" type="text" placeholder="05" maxlength="6"
                 class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
+                :aria-label="t('finanzas.contabilidad.pucCodeSuffix')"
                 @keydown.escape="closeCreatePanel" />
             </div>
             <p class="text-xs text-text-secondary">
@@ -778,7 +782,7 @@ const openEntryDetail = (entry: { id: string }) => {
               @keydown.enter="saveSubAccount" @keydown.escape="closeCreatePanel" />
           </div>
 
-          <!-- Asociar a método de pago (opcional) -->
+          <!-- Optional payment method association -->
           <div v-if="availableMethods.length" class="flex flex-col gap-1.5">
             <label for="create-method" class="text-sm font-medium text-text-primary">
               {{ t('finanzas.contabilidad.associatePaymentMethod') }}
@@ -799,7 +803,7 @@ const openEntryDetail = (entry: { id: string }) => {
           <div class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-text-primary">{{ t('finanzas.contabilidad.type') }}</span>
             <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('finanzas.contabilidad.accountType')">
-              <button type="button" :class="[
+              <button type="button" :aria-label="t('finanzas.contabilidad.markAsDetail')" :aria-pressed="createIsDetail" :class="[
                 'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
                 createIsDetail
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
@@ -816,7 +820,7 @@ const openEntryDetail = (entry: { id: string }) => {
                   {{ t('finanzas.contabilidad.recordsMovements') }}
                 </span>
               </button>
-              <button type="button" :class="[
+              <button type="button" :aria-label="t('finanzas.contabilidad.markAsGrouping')" :aria-pressed="!createIsDetail" :class="[
                 'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
                 !createIsDetail
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
@@ -849,7 +853,8 @@ const openEntryDetail = (entry: { id: string }) => {
 
         <!-- Footer -->
         <div class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-3">
-          <button :disabled="creating || !createSuffix.trim() || !createName.trim()"
+          <button type="button" :disabled="creating || !createSuffix.trim() || !createName.trim()"
+            :aria-label="creating ? t('finanzas.contabilidad.creating') : t('finanzas.contabilidad.createSubaccount')"
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="saveSubAccount">
             <svg v-if="creating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -858,7 +863,8 @@ const openEntryDetail = (entry: { id: string }) => {
             </svg>
             {{ creating ? t('finanzas.contabilidad.creating') : t('finanzas.contabilidad.createSubaccount') }}
           </button>
-          <button
+          <button type="button"
+            :aria-label="t('finanzas.common.cancel')"
             class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
             @click="closeCreatePanel">
             {{ t('finanzas.common.cancel') }}
