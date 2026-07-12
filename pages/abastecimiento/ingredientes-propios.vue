@@ -10,7 +10,7 @@
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard :label="WAREHOUSE_COPY.catalogStatsTotal" :value="stats.total" icon="beaker" />
-        <UiStatsCard label="Con costo" :value="stats.withCost" icon="currency-dollar" />
+        <UiStatsCard :label="t('abastecimiento.glossary.withCost')" :value="stats.withCost" icon="currency-dollar" />
       </UiStats>
 
       <UiAdvancedFiltersBar
@@ -29,7 +29,7 @@
             :aria-label="t('abastecimiento.common.tipo')"
             @change="currentPage = 1"
           >
-            <option value="">Tipo</option>
+            <option value="">{{ t('abastecimiento.glossary.typeFilter') }}</option>
             <option value="food">{{ WAREHOUSE_COPY.typeFood }}</option>
             <option value="supply">{{ WAREHOUSE_COPY.typeSupply }}</option>
             <option value="service">{{ WAREHOUSE_COPY.typeService }}</option>
@@ -47,7 +47,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
             </svg>
-            Archivados
+            {{ t('abastecimiento.glossary.archived') }}
           </button>
         </template>
 
@@ -75,11 +75,11 @@
       >
         <template #header-type>
           <UiTableHeaderFilter
-            title="Tipo"
+            :title="t('abastecimiento.glossary.typeFilter')"
             filter-type="select"
             :model-value="typeFilter"
             :options="typeHeaderOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             @update:model-value="updateTypeFilter"
           />
         </template>
@@ -94,12 +94,12 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">Archivado</span>
+                <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">{{ t('abastecimiento.glossary.archived') }}</span>
               </div>
               <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span class="text-xs text-text-secondary font-mono">{{ item.unit }}{{ item.unit_weight_gr ? ` · ${item.unit_weight_gr} gr/und` : '' }}</span>
                 <span class="text-xs text-text-tertiary">{{ TYPE_LABELS[item.type] || item.type }}</span>
-                <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString('es-CO') }}</span>
+                <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }}</span>
               </div>
             </div>
             <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -112,7 +112,7 @@
         <template #cell-name="{ value, row }">
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold capitalize" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
-            <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">Archivado</span>
+            <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">{{ t('abastecimiento.glossary.archived') }}</span>
           </div>
         </template>
 
@@ -131,7 +131,7 @@
 
         <template #cell-costo_unitario="{ value }">
           <UiStatusBadge
-            :value="value ? `$${Number(value).toLocaleString('es-CO')}` : t('abastecimiento.common.sinCosto')"
+            :value="value ? `$${Number(value).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO')}` : t('abastecimiento.common.sinCosto')"
             format="text"
             :variant="value ? 'info' : 'secondary'"
             size="sm"
@@ -147,8 +147,8 @@
             <button
               v-if="row.is_active !== false"
               @click="openPanel(row)"
-              :aria-label="`Editar ${row.name}`"
-              title="Editar"
+              :aria-label="`${t('abastecimiento.glossary.editItem')} ${row.name}`"
+              :title="t('abastecimiento.glossary.editItem')"
               class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -158,8 +158,8 @@
             <button
               v-if="row.is_active !== false"
               @click="openArchiveModal(row)"
-              :aria-label="`Archivar ${row.name}`"
-              title="Archivar"
+              :aria-label="`${t('abastecimiento.glossary.archiveItem')} ${row.name}`"
+              :title="t('abastecimiento.glossary.archiveItem')"
               class="p-1.5 rounded-md hover:bg-state-warning-bg transition-colors text-text-secondary hover:text-state-warning-text"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -169,8 +169,8 @@
             <button
               v-if="row.is_active === false"
               @click="restoreIngredient(row)"
-              :aria-label="`Restaurar ${row.name}`"
-              title="Restaurar"
+              :aria-label="`${t('abastecimiento.glossary.restoreItem')} ${row.name}`"
+              :title="t('abastecimiento.glossary.restoreItem')"
               class="p-1.5 rounded-md hover:bg-primary/10 transition-colors text-text-secondary hover:text-primary"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -206,18 +206,18 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-bold text-text-primary">Archivar ingrediente</h3>
+                <h3 class="text-base font-bold text-text-primary">{{ t('abastecimiento.glossary.archivePanelTitle') }}</h3>
                 <p class="text-sm text-text-secondary mt-0.5">{{ archiveTarget?.name }}</p>
               </div>
             </div>
 
             <p class="text-sm text-text-secondary leading-relaxed">
-              Al archivar este ingrediente se eliminará de todas las recetas, modificadores y reventa activos.
-              <strong class="text-text-primary">El historial de compras, ventas y movimientos queda intacto.</strong>
+              {{ t('abastecimiento.glossary.archivePanelBody') }}
+              <strong class="text-text-primary">{{ t('abastecimiento.glossary.archivePanelHistory') }}</strong>
             </p>
 
             <p class="text-xs text-text-tertiary bg-surface-secondary/60 rounded-lg px-3 py-2 leading-relaxed">
-              Si quieres volver a usarlo en el futuro, puedes restaurarlo desde la vista de archivados.
+              {{ t('abastecimiento.glossary.archivePanelHint') }}
             </p>
 
             <div class="flex gap-3 mt-1">
@@ -227,7 +227,7 @@
                 :disabled="archiving"
                 class="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-50"
               >
-                Cancelar
+                {{ t('abastecimiento.glossary.cancel') }}
               </button>
               <button
                 type="button"
@@ -235,8 +235,8 @@
                 :disabled="archiving"
                 class="flex-1 h-10 rounded-lg bg-action-warning-bg text-action-warning-text text-sm font-semibold text-action-primary-text hover:bg-action-warning-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span v-if="archiving">Archivando...</span>
-                <span v-else>Archivar</span>
+                <span v-if="archiving">{{ t('abastecimiento.glossary.archivingItem') }}</span>
+                <span v-else>{{ t('abastecimiento.glossary.archiveItem') }}</span>
               </button>
             </div>
           </div>
@@ -248,24 +248,24 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 useHead({ title: () => WAREHOUSE_COPY.warehouseCatalog })
 
 const { currentTenant } = useTenantReactive()
 
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_LABELS = computed(() => ({
   food: WAREHOUSE_COPY.typeFood,
   supply: WAREHOUSE_COPY.typeSupply,
   service: WAREHOUSE_COPY.typeService,
-}
+}))
 
-const typeHeaderOptions = [
+const typeHeaderOptions = computed(() => [
   { value: 'food', label: WAREHOUSE_COPY.typeFood },
   { value: 'supply', label: WAREHOUSE_COPY.typeSupply },
   { value: 'service', label: WAREHOUSE_COPY.typeService },
-]
+])
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
@@ -431,7 +431,7 @@ const clearFilters = () => {
   currentPage.value = 1
 }
 
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'name',         title: t('abastecimiento.common.nombre'),   sortable: true,  format: 'custom', align: 'left' },
   { key: 'unit',         title: t('abastecimiento.common.unidad'),   sortable: false, format: 'custom', align: 'left' },
   { key: 'unit_weight_gr',title: t('abastecimiento.common.grUnd'),  sortable: false, format: 'custom', align: 'left' },
@@ -439,7 +439,7 @@ const tableColumns = [
   { key: 'costo_unitario',             title: t('abastecimiento.common.costo'),         sortable: true,  format: 'custom', align: 'left' },
   { key: 'category',                   title: t('abastecimiento.common.categoria'),     sortable: false, format: 'custom', align: 'left' },
   { key: 'actions',                    title: '',              sortable: false, format: 'custom', align: 'center' },
-]
+])
 
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

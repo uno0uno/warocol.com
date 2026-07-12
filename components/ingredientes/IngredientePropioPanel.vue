@@ -102,7 +102,7 @@
             <p class="text-xs text-text-tertiary leading-snug">
               {{ t('abastecimiento.glossary.ingredientTypeHelp') }}
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" :aria-label="t('abastecimiento.glossary.ingredientType')">
               <button
                 type="button"
                 @click="setIngredientType('food')"
