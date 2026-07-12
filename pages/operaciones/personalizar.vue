@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
@@ -42,16 +42,16 @@ interface LabelPreset {
   plural: string
 }
 
-const labelPresets: LabelPreset[] = [
-  { key: 'mesas', label: t('operaciones.personalizar.tablesDefault'), singular: 'Mesa', plural: 'Mesas' },
-  { key: 'habitaciones', label: 'Habitaciones', singular: 'Habitación', plural: 'Habitaciones' },
-  { key: 'cabanas', label: 'Cabañas', singular: 'Cabaña', plural: 'Cabañas' },
-  { key: 'areas', label: 'Áreas', singular: 'Área', plural: 'Áreas' },
-  { key: 'custom', label: 'Personalizado', singular: '', plural: '' },
-]
+const labelPresets = computed<LabelPreset[]>(() => [
+  { key: 'mesas', label: t('operaciones.personalizar.tablesDefault'), singular: t('operaciones.personalizar.tableSingular'), plural: t('operaciones.personalizar.tablePlural') },
+  { key: 'habitaciones', label: t('operaciones.personalizar.roomsPreset'), singular: t('operaciones.personalizar.roomSingular'), plural: t('operaciones.personalizar.roomsPreset') },
+  { key: 'cabanas', label: t('operaciones.personalizar.cabinsPreset'), singular: t('operaciones.personalizar.cabinSingular'), plural: t('operaciones.personalizar.cabinsPreset') },
+  { key: 'areas', label: t('operaciones.personalizar.areasPreset'), singular: t('operaciones.personalizar.areaSingular'), plural: t('operaciones.personalizar.areasPreset') },
+  { key: 'custom', label: t('operaciones.personalizar.custom'), singular: '', plural: '' },
+])
 
 const matchPresetKey = (sin: string, plu: string): string => {
-  const match = labelPresets.find(
+  const match = labelPresets.value.find(
     (p) => p.key !== 'custom' && p.singular === sin && p.plural === plu,
   )
   return match ? match.key : 'custom'
@@ -81,7 +81,7 @@ watch(
 const selectPreset = (key: string) => {
   selectedPresetKey.value = key
   if (key !== 'custom') {
-    const preset = labelPresets.find((p) => p.key === key)
+    const preset = labelPresets.value.find((p) => p.key === key)
     if (preset) {
       customSingular.value = preset.singular
       customPlural.value = preset.plural
@@ -91,13 +91,13 @@ const selectPreset = (key: string) => {
 
 const previewSingular = computed(() => {
   if (selectedPresetKey.value === 'custom') return customSingular.value.trim() || 'Mesa'
-  const preset = labelPresets.find((p) => p.key === selectedPresetKey.value)
+  const preset = labelPresets.value.find((p) => p.key === selectedPresetKey.value)
   return preset?.singular || 'Mesa'
 })
 
 const previewPlural = computed(() => {
   if (selectedPresetKey.value === 'custom') return customPlural.value.trim() || 'Mesas'
-  const preset = labelPresets.find((p) => p.key === selectedPresetKey.value)
+  const preset = labelPresets.value.find((p) => p.key === selectedPresetKey.value)
   return preset?.plural || 'Mesas'
 })
 
@@ -114,9 +114,9 @@ const saveLabel = async () => {
   isSavingLabel.value = true
   try {
     await setLabel(previewSingular.value, previewPlural.value)
-    toast.success('Nombre actualizado para todo el restaurante', { title: 'Guardado' })
+    toast.success(t('operaciones.personalizar.nameUpdated'), { title: t('operaciones.personalizar.savedTitle') })
   } catch (error: any) {
-    toast.error(error?.data?.detail || t('operaciones.personalizar.saveNameError'), { title: 'Error' })
+    toast.error(error?.data?.detail || t('operaciones.personalizar.saveNameError'), { title: t('operaciones.comandas.error') })
   } finally {
     isSavingLabel.value = false
   }
@@ -155,7 +155,7 @@ const toggleAutoSelectGeneric = async () => {
       { title: newState ? t('operaciones.personalizar.preselectOn') : t('operaciones.personalizar.preselectOff') }
     )
   } catch (error: any) {
-    toast.error(error.data?.detail || t('operaciones.personalizar.configError'), { title: 'Error' })
+    toast.error(error.data?.detail || t('operaciones.personalizar.configError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingGeneric.value = false
   }
@@ -173,13 +173,13 @@ const toggleOpenSale = async () => {
     await invalidateRestaurantContext()
     toast.success(
       newState
-        ? 'Venta libre visible en el POS para los cajeros'
-        : 'Venta libre oculta en el POS',
-      { title: newState ? 'Venta libre activada' : 'Venta libre desactivada' }
+        ? t('operaciones.personalizar.openSaleActive')
+        : t('operaciones.personalizar.openSaleInactive'),
+      { title: newState ? t('operaciones.personalizar.openSaleActive') : t('operaciones.personalizar.openSaleInactive') }
     )
   } catch (error: any) {
     const detail = error?.data?.detail ?? error?.data?.message
-    toast.error(detail || t('operaciones.personalizar.openSaleError'), { title: 'Error' })
+    toast.error(detail || t('operaciones.personalizar.openSaleError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingOpenSale.value = false
   }
@@ -203,11 +203,11 @@ const toggleOpenSale = async () => {
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
             {{ businessProfile.open_sale_enabled
-              ? 'Venta libre en POS activa'
-              : 'Venta libre en POS desactivada' }}
+              ? t('operaciones.personalizar.openSaleActive')
+              : t('operaciones.personalizar.openSaleInactive') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            Cuando está activa, los cajeros ven el botón Venta libre para cobrar montos que no están en el menú. Se crea un producto contenedor automáticamente.
+            {{ t('operaciones.personalizar.openSaleHelp') }}
           </p>
         </div>
         <label
@@ -240,7 +240,7 @@ const toggleOpenSale = async () => {
               : t('operaciones.personalizar.genericInactive') }}
           </p>
           <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            El cobro abre con cliente Genérico ya seleccionado. El cajero puede cambiarlo desde la tarjeta de cliente.
+            {{ t('operaciones.personalizar.genericHelp') }}
           </p>
         </div>
         <label
@@ -264,14 +264,14 @@ const toggleOpenSale = async () => {
       <!-- ══════ TABLE LABEL CUSTOMIZATION (Issue #612) ══════ -->
       <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <p class="text-sm font-semibold text-text-primary">Nombre de las mesas</p>
+          <p class="text-sm font-semibold text-text-primary">{{ t('operaciones.personalizar.tableNamesTitle') }}</p>
           <p class="text-xs leading-snug text-text-secondary">
-            Cambia el sustantivo que aparece en toda la plataforma. Usa palabras femeninas para que la concordancia del texto siga siendo correcta.
+            {{ t('operaciones.personalizar.tableNamesHelp') }}
           </p>
         </div>
 
         <!-- Preset chips -->
-        <div role="group" aria-label="Sustantivo predeterminado" class="flex flex-wrap gap-2">
+        <div role="group" :aria-label="t('operaciones.personalizar.defaultNounAria')" class="flex flex-wrap gap-2">
           <button
             v-for="preset in labelPresets"
             :key="preset.key"
@@ -291,7 +291,7 @@ const toggleOpenSale = async () => {
         <div v-if="selectedPresetKey === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
             <label for="label-singular" class="text-sm font-medium text-text-primary">
-              Singular
+              {{ t('operaciones.personalizar.singular') }}
             </label>
             <input
               id="label-singular"
@@ -304,7 +304,7 @@ const toggleOpenSale = async () => {
           </div>
           <div class="flex flex-col gap-1">
             <label for="label-plural" class="text-sm font-medium text-text-primary">
-              Plural
+              {{ t('operaciones.personalizar.plural') }}
             </label>
             <input
               id="label-plural"
@@ -319,9 +319,9 @@ const toggleOpenSale = async () => {
 
         <!-- Live preview -->
         <div class="rounded-lg bg-background border border-border px-4 py-3 flex flex-col gap-1">
-          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Vista previa</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">{{ t('operaciones.personalizar.preview') }}</p>
           <p class="text-sm text-text-primary leading-relaxed">
-            Tu menú dirá: <span class="font-semibold">{{ previewSingular }} 5</span>,
+            {{ t('operaciones.personalizar.previewText') }} <span class="font-semibold">{{ previewSingular }} 5</span>,
             <span class="font-semibold">{{ previewPlural }} abiertas</span>,
             <span class="font-semibold">{{ previewPlural }} configuradas</span>.
           </p>
@@ -330,7 +330,7 @@ const toggleOpenSale = async () => {
         <!-- Disclosure + Save -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p class="text-xs text-text-secondary">
-            Configuración guardada para todo el restaurante. Todos los dispositivos verán el mismo nombre.
+            {{ t('operaciones.personalizar.savedDevices') }}
           </p>
           <button
             type="button"
@@ -338,7 +338,7 @@ const toggleOpenSale = async () => {
             class="min-h-[44px] px-4 py-2 rounded-lg bg-action-primary-bg text-action-primary-text font-medium text-sm transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
             @click="saveLabel"
           >
-            {{ isSavingLabel ? 'Guardando...' : 'Guardar' }}
+            {{ isSavingLabel ? t('operaciones.personalizar.saving') : t('operaciones.personalizar.save') }}
           </button>
         </div>
       </div>

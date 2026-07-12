@@ -205,6 +205,31 @@
       "enableGeneric": "Enable Generic customer pre-selection",
       "singularPlaceholder": "e.g. Room",
       "pluralPlaceholder": "e.g. Rooms"
+      ,"openSaleActive": "Open sale in POS enabled"
+      ,"openSaleInactive": "Open sale in POS disabled"
+      ,"openSaleHelp": "When enabled, cashiers see the Open sale button to charge amounts not listed in the menu. A container product is created automatically."
+      ,"genericHelp": "Checkout opens with the Generic customer already selected. The cashier can change it from the customer card."
+      ,"tableNamesTitle": "Table names"
+      ,"tableNamesHelp": "Change the noun used throughout the platform. Use feminine words so sentence agreement remains correct."
+      ,"defaultNounAria": "Default noun"
+      ,"custom": "Custom"
+      ,"singular": "Singular"
+      ,"plural": "Plural"
+      ,"preview": "Preview"
+      ,"previewText": "Your menu will say:"
+      ,"savedDevices": "Saved for the whole restaurant. Every device will see the same name."
+      ,"save": "Save"
+      ,"saving": "Saving..."
+      ,"savedTitle": "Saved"
+      ,"nameUpdated": "Name updated for the whole restaurant"
+      ,"roomsPreset": "Rooms"
+      ,"cabinsPreset": "Cabins"
+      ,"areasPreset": "Areas"
+      ,"roomSingular": "Room"
+      ,"cabinSingular": "Cabin"
+      ,"areaSingular": "Area"
+      ,"tableSingular": "Table"
+      ,"tablePlural": "Tables"
     },
     "comandas": {
       "enableComandas": "Enable tickets",

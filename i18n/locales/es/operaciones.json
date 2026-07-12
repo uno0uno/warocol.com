@@ -205,6 +205,31 @@
       "enableGeneric": "Activar pre-selección de cliente Genérico",
       "singularPlaceholder": "Ej: Habitación",
       "pluralPlaceholder": "Ej: Habitaciones"
+      ,"openSaleActive": "Venta libre en POS activa"
+      ,"openSaleInactive": "Venta libre en POS desactivada"
+      ,"openSaleHelp": "Cuando está activa, los cajeros ven el botón Venta libre para cobrar montos que no están en el menú. Se crea un producto contenedor automáticamente."
+      ,"genericHelp": "El cobro abre con cliente Genérico ya seleccionado. El cajero puede cambiarlo desde la tarjeta de cliente."
+      ,"tableNamesTitle": "Nombre de las mesas"
+      ,"tableNamesHelp": "Cambia el sustantivo que aparece en toda la plataforma. Usa palabras femeninas para que la concordancia del texto siga siendo correcta."
+      ,"defaultNounAria": "Sustantivo predeterminado"
+      ,"custom": "Personalizado"
+      ,"singular": "Singular"
+      ,"plural": "Plural"
+      ,"preview": "Vista previa"
+      ,"previewText": "Tu menú dirá:"
+      ,"savedDevices": "Configuración guardada para todo el restaurante. Todos los dispositivos verán el mismo nombre."
+      ,"save": "Guardar"
+      ,"saving": "Guardando..."
+      ,"savedTitle": "Guardado"
+      ,"nameUpdated": "Nombre actualizado para todo el restaurante"
+      ,"roomsPreset": "Habitaciones"
+      ,"cabinsPreset": "Cabañas"
+      ,"areasPreset": "Áreas"
+      ,"roomSingular": "Habitación"
+      ,"cabinSingular": "Cabaña"
+      ,"areaSingular": "Área"
+      ,"tableSingular": "Mesa"
+      ,"tablePlural": "Mesas"
     },
     "comandas": {
       "enableComandas": "Activar comandas",
