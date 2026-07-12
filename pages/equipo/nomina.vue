@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -203,7 +203,7 @@ const tableData = computed(() => {
   }))
 })
 
-const mobileBenefitCols = [
+const mobileBenefitCols = computed(() => [
   { key: 'primaS1',      label: t('equipo.nomina.primaS1'),       benefit: 'primaS1'      },
   { key: 'primaS2',      label: t('equipo.nomina.primaS2'),       benefit: 'primaS2'      },
   { key: 'cesantias',    label: t('equipo.nomina.cesantias'),      benefit: 'cesantias'    },
@@ -211,9 +211,9 @@ const mobileBenefitCols = [
   { key: 'vacaciones',   label: t('equipo.nomina.vacaciones'),     benefit: 'vacaciones'   },
   { key: 'dotacion',     label: t('equipo.nomina.dotacion'),       benefit: 'dotacion'     },
   { key: 'horasExtras',  label: t('equipo.nomina.hExtras'),      benefit: 'horasExtras'  },
-]
+])
 
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'select',        title: '',               sortable: false, align: 'center' as const },
   { key: 'name',          title: t('equipo.common.employee'),       sortable: false },
   { key: 'employmentType',title: t('equipo.common.type'),           sortable: false, align: 'center' as const },
@@ -224,11 +224,11 @@ const tableColumns = [
   { key: 'vacaciones',    title: t('equipo.nomina.vacaciones'),     sortable: false, align: 'center' as const },
   { key: 'dotacion',      title: t('equipo.nomina.dotacion'),       sortable: false, align: 'center' as const },
   { key: 'horasExtras',   title: t('equipo.nomina.hExtras'),      sortable: false, align: 'center' as const },
-]
+])
 
 const employmentTypeLabel: Record<string, string> = {
-  employee:   'Empleado',
-  daily:      'Jornalero',
+  employee:   t('equipo.salarios.employee'),
+  daily:      t('equipo.salarios.dayLaborer'),
   contractor: t('equipo.nomina.contractor'),
 }
 
@@ -656,16 +656,16 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <select
             v-model="selectedYear"
             :class="filterSelectClass"
-            aria-label="Filtrar por año"
+            :aria-label="t('equipo.nomina.filterYear')"
           >
             <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
           </select>
           <select
             v-model="selectedMonth"
             :class="filterSelectClass"
-            aria-label="Filtrar por mes"
+            :aria-label="t('equipo.nomina.filterMonth')"
           >
-            <option :value="null">Mes</option>
+            <option :value="null">{{ t('equipo.nomina.month') }}</option>
             <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
           </select>
         </template>
@@ -674,14 +674,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       <!-- Bulk action bar -->
       <Transition name="slide-down">
         <div v-if="selectedCells.length > 0" class="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-2 border-primary rounded-xl">
-          <span class="text-sm font-semibold text-primary">{{ selectedCells.length }} prestación(es) · {{ selectedEmployeeRows.length }} empleado(s)</span>
+          <span class="text-sm font-semibold text-primary">{{ t('equipo.nomina.selectedSummary', { benefits: selectedCells.length, employees: selectedEmployeeRows.length }) }}</span>
           <button
             @click="openSlideOver"
             class="ml-auto px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors min-h-[36px]"
           >
-            Registrar prestaciones →
+            {{ t('equipo.nomina.registerBenefitsArrow') }}
           </button>
-          <button @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">Cancelar</button>
+          <button @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">{{ t('equipo.common.cancel') }}</button>
         </div>
       </Transition>
 
@@ -689,8 +689,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="tableData"
-        empty-message="No hay empleados registrados"
-        empty-sub-message="Los empleados y jornaleros aparecerán aquí"
+        :empty-message="t('equipo.nomina.empty')"
+        :empty-sub-message="t('equipo.nomina.emptySub')"
         variant="default"
         row-size="xs"
       >
@@ -730,7 +730,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <span v-if="col.benefit === 'dotacion' && item.employment_type !== 'employee'" class="text-xs text-text-tertiary">N/A</span>
                   <UiStatusBadge
                     v-else
-                    :value="item[col.key] != null ? formatCurrency(item[col.key]) : (col.benefit === 'horasExtras' ? 'Agregar' : 'Pendiente')"
+                    :value="item[col.key] != null ? formatCurrency(item[col.key]) : (col.benefit === 'horasExtras' ? t('equipo.nomina.add') : t('equipo.nomina.pending'))"
                     :variant="item[col.key] != null ? 'success' : 'secondary'"
                     size="sm"
                   />
@@ -775,7 +775,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Tipo de contrato -->
           <template #cell-employmentType="{ value }">
             <UiStatusBadge
-              :value="employmentTypeLabel[value] ?? 'Sin configurar'"
+              :value="employmentTypeLabel[value] ?? t('equipo.salarios.notConfigured')"
               :variant="value === 'employee' ? 'info' : value === 'daily' ? 'warning' : 'secondary'"
               size="sm"
               format="text"
@@ -799,7 +799,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Prima S1 -->
           <template #cell-primaS1="{ row }">
             <button v-if="row.primaS1 == null" @click="toggleCell(row.id, 'primaS1')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS1') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'primaS1') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.primaS1'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.primaS1'), name: row.name }))">
-              <UiStatusBadge :value="isCellSelected(row.id,'primaS1') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS1') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+              <UiStatusBadge :value="isCellSelected(row.id,'primaS1') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'primaS1') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS1)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -807,7 +807,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Prima S2 -->
           <template #cell-primaS2="{ row }">
             <button v-if="row.primaS2 == null" @click="toggleCell(row.id, 'primaS2')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS2') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'primaS2') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.primaS2'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.primaS2'), name: row.name }))">
-              <UiStatusBadge :value="isCellSelected(row.id,'primaS2') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS2') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+              <UiStatusBadge :value="isCellSelected(row.id,'primaS2') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'primaS2') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS2)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -815,7 +815,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Cesantías -->
           <template #cell-cesantias="{ row }">
             <button v-if="row.cesantias == null" @click="toggleCell(row.id, 'cesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'cesantias') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'cesantias') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.cesantias'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.cesantias'), name: row.name }))">
-              <UiStatusBadge :value="isCellSelected(row.id,'cesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'cesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+              <UiStatusBadge :value="isCellSelected(row.id,'cesantias') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'cesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.cesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -823,7 +823,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Int. Cesantías -->
           <template #cell-intCesantias="{ row }">
             <button v-if="row.intCesantias == null" @click="toggleCell(row.id, 'intCesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'intCesantias') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'intCesantias') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.intCesantias'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.intCesantias'), name: row.name }))">
-              <UiStatusBadge :value="isCellSelected(row.id,'intCesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'intCesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+              <UiStatusBadge :value="isCellSelected(row.id,'intCesantias') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'intCesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.intCesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -831,7 +831,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Vacaciones -->
           <template #cell-vacaciones="{ row }">
             <button v-if="row.vacaciones == null" @click="toggleCell(row.id, 'vacaciones')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'vacaciones') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'vacaciones') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.vacaciones'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.vacaciones'), name: row.name }))">
-              <UiStatusBadge :value="isCellSelected(row.id,'vacaciones') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'vacaciones') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+              <UiStatusBadge :value="isCellSelected(row.id,'vacaciones') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'vacaciones') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.vacaciones)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -841,7 +841,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             <span v-if="row.employment_type !== 'employee'" class="text-xs text-text-tertiary px-2">N/A</span>
             <template v-else>
               <button v-if="row.dotacion == null" @click="toggleCell(row.id, 'dotacion')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'dotacion') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'dotacion') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.dotacion'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.dotacion'), name: row.name }))">
-                <UiStatusBadge :value="isCellSelected(row.id,'dotacion') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'dotacion') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
+                <UiStatusBadge :value="isCellSelected(row.id,'dotacion') ? `✓ ${t('equipo.nomina.selected')}` : t('equipo.nomina.pending')" :variant="isCellSelected(row.id,'dotacion') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
               </button>
               <UiStatusBadge v-else :value="formatCurrency(row.dotacion)" variant="success" size="sm" format="text" class="font-normal" />
             </template>
@@ -851,7 +851,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #cell-horasExtras="{ row }">
             <button @click="toggleCell(row.id, 'horasExtras')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'horasExtras') ? 'ring-2 ring-primary' : '']" :aria-label="(isCellSelected(row.id,'horasExtras') ? t('equipo.nomina.deselectCell', { benefit: t('equipo.nomina.horasExtras'), name: row.name }) : t('equipo.nomina.selectCell', { benefit: t('equipo.nomina.horasExtras'), name: row.name }))">
               <UiStatusBadge
-                :value="isCellSelected(row.id,'horasExtras') ? '✓ Seleccionada' : (row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar')"
+                :value="isCellSelected(row.id,'horasExtras') ? `✓ ${t('equipo.nomina.selected')}` : (row.horasExtras != null ? formatCurrency(row.horasExtras) : t('equipo.nomina.add'))"
                 :variant="isCellSelected(row.id,'horasExtras') ? 'info' : (row.horasExtras != null ? 'success' : 'secondary')"
                 size="sm" format="text" class="font-normal"
               />
@@ -864,7 +864,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-base font-semibold text-text-primary">Pago PILA</h3>
+            <h3 class="text-base font-semibold text-text-primary">{{ t('equipo.nomina.pilaTitle') }}</h3>
             <p class="text-sm text-text-secondary mt-0.5">Seguridad social — liquidar cuentas 237005 y 237010</p>
           </div>
           <svg class="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -881,11 +881,11 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
-          <p class="text-sm text-emerald-800 font-medium">Sin PILA pendiente — todas las cuentas SS están saldadas</p>
+          <p class="text-sm text-emerald-800 font-medium">{{ t('equipo.nomina.pilaSettled') }}</p>
         </div>
 
         <div v-else class="space-y-2 mb-4">
-          <p class="text-sm text-text-secondary mb-2">Períodos con saldo SS pendiente:</p>
+          <p class="text-sm text-text-secondary mb-2">{{ t('equipo.nomina.pendingSs') }}</p>
 
           <div
             v-for="period in pilaPending"
@@ -904,8 +904,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <div class="flex items-center gap-4">
                 <span class="font-semibold text-text-primary">{{ formatPeriodMonth(period.period_month) }}</span>
                 <div class="flex items-center gap-3 text-sm text-text-secondary">
-                  <span>Empleado: <strong class="text-text-primary">{{ formatCurrency(Number(period.employee_ss_pending)) }}</strong></span>
-                  <span>Empleador: <strong class="text-text-primary">{{ formatCurrency(Number(period.employer_ss_pending)) }}</strong></span>
+                  <span>{{ t('equipo.nomina.employeeLabel') }} <strong class="text-text-primary">{{ formatCurrency(Number(period.employee_ss_pending)) }}</strong></span>
+                  <span>{{ t('equipo.nomina.employerLabel') }} <strong class="text-text-primary">{{ formatCurrency(Number(period.employer_ss_pending)) }}</strong></span>
                 </div>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0">
@@ -947,9 +947,9 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                     <p class="text-xs text-text-tertiary mt-0.5">Puede diferir si incluye recargos</p>
                   </div>
                   <div>
-                    <label for="pila-method" class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
-                    <select id="pila-method" v-model="pilaForm.payment_method" class="input-base w-full px-3 py-2" aria-label="Método de pago PILA">
-                      <option value="">Sin especificar</option>
+                    <label for="pila-method" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.pilaMethod') }}</label>
+                    <select id="pila-method" v-model="pilaForm.payment_method" class="input-base w-full px-3 py-2" :aria-label="t('equipo.nomina.pilaMethod')">
+                      <option value="">{{ t('equipo.nomina.unspecified') }}</option>
                       <template v-for="group in paymentGroups">
                         <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
                         <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
@@ -957,12 +957,12 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                     </select>
                   </div>
                   <div>
-                    <label for="pila-date" class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
-                    <input id="pila-date" v-model="pilaForm.payment_date" type="date" required class="input-base w-full px-3 py-2" aria-label="Fecha de pago PILA" />
+                    <label for="pila-date" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.pilaDate') }} *</label>
+                    <input id="pila-date" v-model="pilaForm.payment_date" type="date" required class="input-base w-full px-3 py-2" :aria-label="t('equipo.nomina.pilaDate')" />
                   </div>
                   <div>
-                    <label for="pila-notes" class="block text-sm font-medium text-text-primary mb-1">Notas</label>
-                    <input id="pila-notes" v-model="pilaForm.notes" type="text" class="input-base w-full px-3 py-2" placeholder="Número de planilla PILA (opcional)" aria-label="Notas adicionales PILA" />
+                    <label for="pila-notes" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.notes') }}</label>
+                    <input id="pila-notes" v-model="pilaForm.notes" type="text" class="input-base w-full px-3 py-2" :placeholder="t('equipo.nomina.pilaNumber')" :aria-label="t('equipo.nomina.pilaNotes')" />
                   </div>
                 </div>
 
@@ -977,10 +977,10 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                     class="px-6 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold min-h-[44px]"
                   >
                     <CommonsTheCustomLoader v-if="pilaSubmitting" size="small" />
-                    <span>{{ pilaSubmitting ? 'Registrando...' : 'Registrar PILA' }}</span>
+                    <span>{{ pilaSubmitting ? t('equipo.nomina.registering') : t('equipo.nomina.registerPila') }}</span>
                   </button>
                   <button type="button" @click="closePilaForm" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors min-h-[44px]">
-                    Cancelar
+                    {{ t('equipo.common.cancel') }}
                   </button>
                 </div>
               </form>
@@ -998,7 +998,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
         <!-- PILA History -->
         <div v-if="pilaHistory.length > 0">
-          <h4 class="text-sm font-semibold text-text-primary mb-2">Historial de pagos PILA</h4>
+          <h4 class="text-sm font-semibold text-text-primary mb-2">{{ t('equipo.nomina.pilaHistory') }}</h4>
           <div v-if="pilaHistoryLoading" class="space-y-2 animate-pulse">
             <div v-for="i in 3" :key="i" class="h-10 rounded bg-titan-200" />
           </div>
@@ -1030,15 +1030,15 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
-        aria-label="Registrar prestaciones"
+        :aria-label="t('equipo.nomina.registerBenefits')"
       >
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div>
-            <h2 class="text-base font-semibold text-text-primary">Registrar Prestaciones</h2>
+            <h2 class="text-base font-semibold text-text-primary">{{ t('equipo.nomina.registerBenefitsTitle') }}</h2>
             <p class="text-sm text-text-secondary">{{ selectedCells.length }} prestación(es) · {{ selectedEmployeeRows.length }} empleado(s)</p>
           </div>
-          <button @click="closeSlideOver" class="p-2 rounded-lg hover:bg-surface transition-colors" aria-label="Cerrar panel">
+          <button @click="closeSlideOver" class="p-2 rounded-lg hover:bg-surface transition-colors" :aria-label="t('equipo.nomina.closePanel')">
             <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -1049,13 +1049,13 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         <div class="px-6 py-4 border-b border-border bg-surface flex-shrink-0">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.paymentDateReq') }}</label>
               <input v-model="slideDate" type="date" required class="input-base w-full px-3 py-2" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.paymentMethod') }}</label>
               <select v-model="slideMethod" class="input-base w-full px-3 py-2">
-                <option value="">Sin especificar</option>
+                <option value="">{{ t('equipo.nomina.unspecified') }}</option>
                 <template v-for="group in paymentGroups">
                   <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
                   <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
@@ -1090,19 +1090,19 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
               <!-- Shared salary fields (shown if any salary-based benefit is selected) -->
               <div v-if="selectedByEmployee[row.id]?.some(b => ['primaS1','primaS2','cesantias','vacaciones'].includes(b))" class="mb-4 p-3 bg-surface rounded-xl space-y-3">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Campos compartidos</p>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ t('equipo.nomina.sharedFields') }}</p>
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-medium text-text-primary mb-1">Salario base *</label>
+                    <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.baseSalaryReq') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
                       <input v-model.number="slideData[row.id].gross_salary" type="number" min="1" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" />
                     </div>
                   </div>
                   <div>
-                    <label class="block text-xs font-medium text-text-primary mb-1">Días trabajados</label>
+                    <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.daysWorked') }}</label>
                     <input v-model.number="slideData[row.id].days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2 text-sm" placeholder="360" />
-                    <p class="text-xs text-text-tertiary mt-0.5">Prima ≤180 · Cesantías/Vac ≤360</p>
+                    <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.nomina.primaCap') }}</p>
                   </div>
                 </div>
               </div>
@@ -1111,19 +1111,19 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <div class="space-y-1.5 mb-3">
                 <div v-if="selectedByEmployee[row.id]?.includes('primaS1') && row.primaS1 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
                   <span class="text-xs font-medium text-text-primary flex-1">Prima S1 — {{ selectedYear }}-S1</span>
-                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
+                  <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('primaS2') && row.primaS2 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
                   <span class="text-xs font-medium text-text-primary flex-1">Prima S2 — {{ selectedYear }}-S2</span>
-                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
+                  <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('cesantias') && row.cesantias == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
                   <span class="text-xs font-medium text-text-primary flex-1">Cesantías {{ selectedYear }}</span>
-                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
+                  <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('vacaciones') && row.vacaciones == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
                   <span class="text-xs font-medium text-text-primary flex-1">Vacaciones {{ selectedYear }}</span>
-                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
+                  <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
               </div>
 
@@ -1154,14 +1154,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label class="block text-xs font-medium text-text-primary mb-1">Período *</label>
                     <select v-model="slideData[row.id].dot_period" class="input-base w-full px-2 py-2 text-sm">
-                      <option value="">Seleccionar</option>
-                      <option value="Abr">Abril</option>
-                      <option value="Ago">Agosto</option>
-                      <option value="Dic">Diciembre</option>
+                    <option value="">{{ t('equipo.nomina.select') }}</option>
+                    <option value="Abr">{{ t('equipo.nomina.april') }}</option>
+                    <option value="Ago">{{ t('equipo.nomina.august') }}</option>
+                    <option value="Dic">{{ t('equipo.nomina.december') }}</option>
                     </select>
                   </div>
                   <div>
-                    <label class="block text-xs font-medium text-text-primary mb-1">Valor total *</label>
+                    <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.totalValueReq') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
                       <input v-model.number="slideData[row.id].dot_total" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
@@ -1169,15 +1169,15 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   </div>
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-text-primary mb-1">Artículos entregados</label>
-                  <textarea v-model="slideData[row.id].dot_items" class="input-base w-full px-3 py-2 text-sm min-h-[52px]" placeholder="Ej: 2 camisas, 1 pantalón..." />
+                  <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.itemsDelivered') }}</label>
+                  <textarea v-model="slideData[row.id].dot_items" class="input-base w-full px-3 py-2 text-sm min-h-[52px]" :placeholder="t('equipo.nomina.itemsPlaceholder')" />
                 </div>
               </div>
 
               <!-- Horas Extras -->
               <div v-if="selectedByEmployee[row.id]?.includes('horasExtras')" class="p-3 bg-surface rounded-xl space-y-2">
                 <div class="flex items-center gap-2">
-                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Horas Extras</p>
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ t('equipo.nomina.horasExtras') }}</p>
                   <span v-if="row.horasExtras != null" class="text-xs text-text-secondary">(registradas: {{ formatCurrency(row.horasExtras) }})</span>
                 </div>
                 <div>
@@ -1210,7 +1210,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   </div>
                 </div>
                 <div v-if="horasExtrasTotal(row.id) > 0" class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                  <span class="text-xs text-text-secondary">Total calculado</span>
+                  <span class="text-xs text-text-secondary">{{ t('equipo.nomina.totalCalculated') }}</span>
                   <span class="text-sm font-bold text-emerald-700 ml-auto">{{ formatCurrency(horasExtrasTotal(row.id)) }}</span>
                 </div>
               </div>
@@ -1237,10 +1237,10 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               class="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
             >
               <CommonsTheCustomLoader v-if="isSlideSubmitting" size="small" />
-              <span>{{ isSlideSubmitting ? 'Registrando...' : `Registrar ${selectedCells.length} prestación(es)` }}</span>
+              <span>{{ isSlideSubmitting ? t('equipo.nomina.registering') : t('equipo.nomina.registerSelected', { count: selectedCells.length }) }}</span>
             </button>
             <button type="button" @click="closeSlideOver" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors min-h-[44px]">
-              Cerrar
+              {{ t('equipo.common.close') }}
             </button>
           </div>
         </div>
