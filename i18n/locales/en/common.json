@@ -52,6 +52,11 @@
       "pageOf": "Page {page} of {total}"
     },
     "submitBusy": "Submitting changes",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "attachments": "Attachments",
+    "attachFile": "Attach file",
+    "attachmentHint": "PDF, images, documents (max. 10MB)",
+    "fileTooLarge": "File too large",
+    "fileTooLargeMessage": "{name} exceeds the 10MB size limit"
   }
 }

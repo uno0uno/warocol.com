@@ -416,6 +416,13 @@ const tenantToday = computed(() => todayISO())
 
 const paymentMethods = computed(() => {
   const items: { value: string; label: string; icon: any }[] = []
+  const defaultLabels: Record<string, string> = {
+    cash: t('equipo.salaryModal.cash'),
+    card: t('equipo.salaryModal.card'),
+    digital: t('equipo.salaryModal.digital'),
+    credit: t('equipo.salaryModal.credit'),
+    customer_wallet: t('equipo.salaryModal.customerWallet'),
+  }
   for (const g of paymentGroups.value) {
     const icon = SLUG_ICON_MAP[g.slug] ?? SLUG_ICON_FALLBACK
     if (g.methods.length) {
@@ -423,7 +430,7 @@ const paymentMethods = computed(() => {
         items.push({ value: m.id, label: m.name, icon })
       }
     } else {
-      items.push({ value: g.slug, label: g.name, icon })
+      items.push({ value: g.slug, label: defaultLabels[g.slug] ?? g.name, icon })
     }
   }
   return items

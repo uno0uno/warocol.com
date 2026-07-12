@@ -7,7 +7,7 @@
       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
       </svg>
-      <span>{{ title }}</span>
+      <span>{{ displayTitle }}</span>
     </h3>
 
     <!-- File Upload -->
@@ -34,10 +34,10 @@
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Adjuntar archivo
+          {{ t('common.attachFile') }}
         </button>
         <span :class="embedded ? 'block text-xs text-text-secondary leading-relaxed' : 'text-xs text-text-secondary'">
-          PDF, imágenes, documentos (máx. 10MB)
+          {{ t('common.attachmentHint') }}
         </span>
       </div>
 
@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
 import { computed, ref } from 'vue'
 
 const props = withDefaults(defineProps<{
@@ -79,11 +80,12 @@ const props = withDefaults(defineProps<{
   embedded?: boolean
 }>(), {
   modelValue: () => [],
-  title: 'Documentos Adjuntos',
+  title: undefined,
   embedded: false
 })
 
 const files = computed(() => props.modelValue ?? [])
+const displayTitle = computed(() => props.title || t('common.attachments'))
 
 const emit = defineEmits<{
   'update:modelValue': [files: File[]]
@@ -99,7 +101,7 @@ const handleFileSelect = (event: Event) => {
     const maxSize = 10 * 1024 * 1024
     const validFiles = picked.filter(file => {
       if (file.size > maxSize) {
-        useToast().error(`${file.name} excede el tamaño máximo de 10MB`, { title: 'Archivo muy grande' })
+        useToast().error(t('common.fileTooLargeMessage', { name: file.name }), { title: t('common.fileTooLarge') })
         return false
       }
       return true
