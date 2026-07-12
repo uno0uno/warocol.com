@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      label="Registrando ajuste..."
-      hint="Estamos guardando el ajuste y actualizando el inventario."
+      :label="t('abastecimiento.stock.registering')"
+      :hint="t('abastecimiento.stock.adjustingHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -54,8 +54,8 @@
               <div v-if="selectedIngredient" class="bg-background border-2 border-border rounded-lg p-4">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Stock Actual</p>
-                    <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-7 w-24 bg-surface-secondary rounded animate-pulse" aria-label="Cargando stock actual" />
+                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">{{ t('abastecimiento.stock.currentStock') }}</p>
+                    <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-7 w-24 bg-surface-secondary rounded animate-pulse" :aria-label="t('common.loading')" />
                     <template v-else>
                       <p class="text-2xl font-bold text-text-primary">
                         {{ formatNumber(currentStock) }} <span class="text-sm text-text-secondary">{{ selectedIngredient.unit }}</span>
@@ -69,13 +69,13 @@
                     </template>
                   </div>
                   <div>
-                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Stock Mínimo</p>
+                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">{{ t('abastecimiento.stock.minimum') }}</p>
                     <p class="text-lg font-semibold text-text-primary">
                       {{ formatNumber(selectedIngredient.minimum_stock || 0) }} <span class="text-sm text-text-secondary">{{ selectedIngredient.unit }}</span>
                     </p>
                   </div>
                   <div>
-                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Stock Máximo</p>
+                    <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">{{ t('abastecimiento.stock.maximum') }}</p>
                     <p class="text-lg font-semibold text-text-primary">
                       {{ selectedIngredient.maximum_stock ? formatNumber(selectedIngredient.maximum_stock) : '-' }}
                       <span v-if="selectedIngredient.maximum_stock" class="text-sm text-text-secondary">{{ selectedIngredient.unit }}</span>
@@ -98,7 +98,7 @@
                     class="text-xs font-semibold underline hover:no-underline flex-shrink-0"
                     @click="retryStockFetch"
                   >
-                    Reintentar
+                    {{ t('common.retry') }}
                   </button>
                 </div>
               </div>
@@ -107,13 +107,13 @@
 
           <!-- Configuración del Ajuste -->
           <div v-if="selectedIngredient && stockLoaded" class="mt-8">
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Configuración del Ajuste</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-6">{{ t('abastecimiento.stock.adjustmentConfig') }}</h3>
 
             <div class="space-y-6">
               <!-- Adjustment Type -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-3">
-                  Tipo de Ajuste <span class="text-destructive">*</span>
+                  {{ t('abastecimiento.stock.adjustmentType') }} <span class="text-destructive">*</span>
                 </label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
@@ -127,10 +127,10 @@
                     <div class="flex items-center justify-center gap-2">
                       <Icon name="heroicons:arrow-up-circle" class="w-6 h-6 text-state-success-icon" />
                       <span class="font-semibold" :class="form.adjustmentType === 'increment' ? 'text-state-success-text' : 'text-text-primary'">
-                        Incremento
+                        {{ t('abastecimiento.stock.increment') }}
                       </span>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">Agregar inventario</p>
+                    <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.stock.incrementHelp') }}</p>
                   </button>
 
                   <button
@@ -144,10 +144,10 @@
                     <div class="flex items-center justify-center gap-2">
                       <Icon name="heroicons:arrow-down-circle" class="w-6 h-6 text-state-danger-icon" />
                       <span class="font-semibold" :class="form.adjustmentType === 'decrement' ? 'text-state-danger-text' : 'text-text-primary'">
-                        Decremento
+                        {{ t('abastecimiento.stock.decrement') }}
                       </span>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">Reducir inventario</p>
+                    <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.stock.decrementHelp') }}</p>
                   </button>
 
                   <button
@@ -161,10 +161,10 @@
                     <div class="flex items-center justify-center gap-2">
                       <Icon name="heroicons:arrows-right-left" class="w-6 h-6 text-state-info-icon" />
                       <span class="font-semibold" :class="form.adjustmentType === 'set' ? 'text-state-info-text' : 'text-text-primary'">
-                        Ajustar a
+                        {{ t('abastecimiento.stock.set') }}
                       </span>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">Establecer stock exacto</p>
+                    <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.stock.setHelp') }}</p>
                   </button>
                 </div>
               </div>
@@ -174,7 +174,7 @@
                 <!-- Quantity -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    {{ form.adjustmentType === 'set' ? 'Nuevo Stock' : 'Cantidad' }} <span class="text-destructive">*</span>
+                    {{ form.adjustmentType === 'set' ? t('abastecimiento.stock.newStock') : t('abastecimiento.stock.quantity') }} <span class="text-destructive">*</span>
                   </label>
                   <UiDecimalInput
                     v-model="form.quantity"
@@ -182,14 +182,14 @@
                     :precision="INVENTORY_QUANTITY_PRECISION"
                     required
                     class="w-full px-4 py-2"
-                    :placeholder="form.adjustmentType === 'set' ? 'Ingrese el stock correcto' : 'Ingrese la cantidad'"
+                    :placeholder="form.adjustmentType === 'set' ? t('abastecimiento.stock.targetStock') : t('abastecimiento.stock.quantityPlaceholder')"
                   />
                 </div>
 
                 <!-- Unit Selection -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
-                    Unidad <span class="text-destructive">*</span>
+                    {{ t('abastecimiento.common.unidad') }} <span class="text-destructive">*</span>
                   </label>
                   <select
                     v-model="form.unit"
@@ -198,7 +198,7 @@
                   >
                     <!-- Base unit (always available) -->
                     <option :value="selectedIngredient?.unit">
-                      {{ selectedIngredient?.unit }} (unidad base)
+                      {{ selectedIngredient?.unit }} ({{ t('abastecimiento.stock.baseUnit') }})
                     </option>
                     <!-- Purchase units -->
                     <option
@@ -218,8 +218,8 @@
               <!-- Cost per Unit (only for increments) -->
               <div v-if="form.adjustmentType === 'increment'">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Costo por {{ form.unit }}
-                  <span class="text-xs text-text-secondary font-normal">(opcional - para actualizar costo promedio)</span>
+                  {{ t('abastecimiento.stock.costPerUnit', { unit: form.unit }) }}
+                  <span class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.optional') }} - {{ t('abastecimiento.stock.costHelp') }})</span>
                 </label>
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
@@ -228,7 +228,7 @@
                     :min="0"
                     :precision="TECHNICAL_UNIT_COST_PRECISION"
                     class="w-full px-4 py-2 pl-8"
-                    placeholder="Ingrese el costo unitario (opcional)"
+                    :placeholder="t('abastecimiento.stock.costPlaceholder')"
                   />
                 </div>
                 <p class="text-xs text-text-secondary mt-1">
@@ -239,42 +239,42 @@
               <!-- Preview of new stock -->
               <div v-if="hasValidQuantity" class="mt-2 p-3 bg-state-info-bg border border-state-info-border rounded-lg">
                 <p class="text-sm text-state-info-text">
-                  <span class="font-semibold">Resultado:</span>
-                  Stock {{ form.adjustmentType === 'increment' ? 'aumentará' : form.adjustmentType === 'decrement' ? 'disminuirá' : 'se establecerá' }} a
+                  <span class="font-semibold">{{ t('abastecimiento.stock.result') }}:</span>
+                  {{ t('abastecimiento.stock.resultStock', { verb: form.adjustmentType === 'increment' ? t('abastecimiento.stock.resultIncrease') : form.adjustmentType === 'decrement' ? t('abastecimiento.stock.resultDecrease') : t('abastecimiento.stock.resultSetShort') }) }}
                   <span class="font-bold">{{ formatNumber(newStockInBase) }} {{ selectedIngredient?.unit }}</span>
                 </p>
                 <p v-if="form.cost_per_unit && form.adjustmentType === 'increment'" class="text-xs text-state-info-text mt-1">
-                  Costo unitario: ${{ formatTechnicalUnitCost(form.cost_per_unit) }} por {{ form.unit }}
+                  {{ t('abastecimiento.stock.unitCostSummary', { value: formatTechnicalUnitCost(form.cost_per_unit), unit: form.unit }) }}
                 </p>
               </div>
 
               <!-- Reason Selection -->
               <div v-if="form.adjustmentType">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Motivo del Ajuste <span class="text-destructive">*</span>
+                  {{ t('abastecimiento.stock.reason') }} <span class="text-destructive">*</span>
                 </label>
                 <select
                   v-model="form.reason"
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="">Seleccionar motivo...</option>
-                  <option v-for="r in ADJUSTMENT_REASONS" :key="r.value" :value="r.value">{{ r.label }}</option>
+                  <option value="">{{ t('abastecimiento.stock.selectReason') }}</option>
+                  <option v-for="r in localizedReasons" :key="r.value" :value="r.value">{{ r.label }}</option>
                 </select>
               </div>
 
               <!-- Notes -->
               <div v-if="form.reason">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Notas <span v-if="form.reason === 'other'" class="text-destructive">*</span>
-                  <span v-else class="text-xs text-text-secondary font-normal">(opcional)</span>
+                  {{ t('abastecimiento.stock.notes') }} <span v-if="form.reason === 'other'" class="text-destructive">*</span>
+                  <span v-else class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.notesOptional') }})</span>
                 </label>
                 <textarea
                   v-model="form.notes"
                   :required="form.reason === 'other'"
                   rows="4"
                   class="input-base w-full px-4 py-2 resize-none"
-                  placeholder="Agrega detalles adicionales sobre el ajuste..."
+                  :placeholder="t('abastecimiento.stock.notesPlaceholder')"
                 ></textarea>
               </div>
 
@@ -286,7 +286,7 @@
                   </div>
                   <div class="ml-3">
                     <p class="text-sm text-state-warning-text">
-                      <span class="font-semibold">Advertencia:</span> Este ajuste representa un cambio mayor al 50% del stock actual. Por favor, verifica los datos antes de continuar.
+                      <span class="font-semibold">{{ t('abastecimiento.stock.warning') }}</span> {{ t('abastecimiento.stock.largeAdjustmentWarning') }}
                     </p>
                   </div>
                 </div>
@@ -309,20 +309,20 @@
       <!-- Right Column: Summary & Actions -->
       <div class="xl:col-span-1">
         <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen del Ajuste</h3>
+          <h3 class="text-lg font-semibold text-text-primary mb-4">{{ t('abastecimiento.stock.adjustmentSummary') }}</h3>
 
           <div class="bg-background rounded-lg p-4 border border-border mb-6">
             <div class="space-y-3">
               <div>
                 <p class="text-sm text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemColumn }}</p>
-                <p class="font-medium text-text-primary">{{ selectedIngredient?.name || 'Sin seleccionar' }}</p>
+                <p class="font-medium text-text-primary">{{ selectedIngredient?.name || t('abastecimiento.stock.notSelected') }}</p>
               </div>
               <div>
-                <p class="text-sm text-text-secondary mb-1">Stock Actual</p>
+                <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.stock.currentStock') }}</p>
                 <p class="font-medium text-text-primary">{{ formatNumber(currentStock) }} {{ selectedIngredient?.unit || '' }}</p>
               </div>
               <div v-if="form.adjustmentType">
-                <p class="text-sm text-text-secondary mb-1">Tipo de Ajuste</p>
+                <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.stock.adjustmentType') }}</p>
                 <span
                   class="px-2 py-1 rounded text-xs font-medium"
                   :class="{
@@ -331,17 +331,17 @@
                     'bg-state-info-bg text-state-info-text': form.adjustmentType === 'set'
                   }"
                 >
-                  {{ form.adjustmentType === 'increment' ? 'Incremento' : form.adjustmentType === 'decrement' ? 'Decremento' : 'Ajustar a' }}
+                  {{ form.adjustmentType === 'increment' ? t('abastecimiento.stock.increment') : form.adjustmentType === 'decrement' ? t('abastecimiento.stock.decrement') : t('abastecimiento.stock.set') }}
                 </span>
               </div>
               <div v-if="hasValidQuantity">
-                <p class="text-sm text-text-secondary mb-1">Nuevo Stock</p>
+                <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.stock.newStock') }}</p>
                 <p class="text-lg font-bold text-text-primary">
                   {{ formatNumber(newStockInBase) }} {{ selectedIngredient?.unit || '' }}
                 </p>
               </div>
               <div v-if="form.reason">
-                <p class="text-sm text-text-secondary mb-1">Motivo</p>
+                <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.stock.reason') }}</p>
                 <p class="text-sm text-text-primary">{{ reasonLabel(form.reason) }}</p>
               </div>
             </div>
@@ -357,7 +357,7 @@
               <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
               <span v-else>
                 <Icon name="heroicons:check-circle" class="w-5 h-5 inline mr-2" />
-                {{ isSubmitting ? 'Registrando...' : 'Registrar Ajuste' }}
+                {{ isSubmitting ? t('abastecimiento.stock.registering') : t('abastecimiento.stock.registerAdjustment') }}
               </span>
             </button>
 
@@ -365,7 +365,7 @@
               :to="cancelRedirectUrl"
               class="w-full py-3 rounded-lg bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring font-medium block text-center"
             >
-              Cancelar
+              {{ t('abastecimiento.stock.cancel') }}
             </NuxtLink>
           </div>
         </div>
@@ -386,6 +386,7 @@ import {
 } from '~/composables/useInventoryAdjustment'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
+const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 interface Props {
@@ -429,18 +430,22 @@ const ingredients = computed(() => {
   return [...list].sort((a, b) => a.name.localeCompare(b.name))
 })
 
-const REASON_LABELS = ADJUSTMENT_REASONS.reduce((acc, r) => {
-  acc[r.value] = r.label
+const localizedReasons = computed(() => ADJUSTMENT_REASONS.map(r => ({
+  ...r,
+  label: t(`abastecimiento.stock.reasonLabels.${r.value}`),
+})))
+const REASON_LABELS = computed(() => ADJUSTMENT_REASONS.reduce((acc, r) => {
+  acc[r.value] = t(`abastecimiento.stock.reasonLabels.${r.value}`)
   return acc
-}, {} as Record<string, string>)
-const reasonLabel = (value: string) => REASON_LABELS[value] || value
+}, {} as Record<string, string>))
+const reasonLabel = (value: string) => REASON_LABELS.value[value] || value
 
 const formatNumber = (value: number | null | undefined) => {
-  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION)
+  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
 }
 
 const formatTechnicalUnitCost = (value: number | null | undefined) => {
-  return formatDomainQuantity(value, TECHNICAL_UNIT_COST_PRECISION)
+  return formatDomainQuantity(value, TECHNICAL_UNIT_COST_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
 }
 
 const purchaseUnitOptions = computed(() =>
@@ -462,11 +467,16 @@ const currentStockInFormUnit = computed<number | null>(() => {
 })
 
 const pageTitle = computed(() =>
-  selectedIngredient.value ? `Ajuste de ${selectedIngredient.value.name}` : 'Nuevo Ajuste de Inventario',
+  selectedIngredient.value
+    ? `${t('abastecimiento.stock.adjustmentTitle')} — ${selectedIngredient.value.name}`
+    : t('abastecimiento.stock.newAdjustment'),
 )
 const pageDescription = computed(() => {
   if (selectedIngredient.value && stockLoaded.value) {
-    return `Stock actual: ${formatNumber(currentStock.value)} ${selectedIngredient.value.unit}`
+    return t('abastecimiento.stock.currentStockSummary', {
+      value: formatNumber(currentStock.value),
+      unit: selectedIngredient.value.unit,
+    })
   }
   return WAREHOUSE_COPY.stockAdjustmentStartPrompt
 })
@@ -525,15 +535,15 @@ const handleSubmit = async () => {
   try {
     await submit(convertToBase)
     useToast().success(
-      `El inventario de ${selectedIngredient.value?.name} ha sido ajustado exitosamente.`,
-      { title: 'Ajuste registrado' },
+      t('abastecimiento.stock.inventoryAdjusted', { name: selectedIngredient.value?.name }),
+      { title: t('abastecimiento.stock.adjustmentRecorded') },
     )
     navigateTo(props.successRedirectUrl)
   } catch {
     // errorMessage already set inside submit()
     useToast().error(
-      errorMessage.value || 'No se pudo registrar el ajuste. Por favor, inténtalo de nuevo.',
-      { title: 'Error' },
+      errorMessage.value || t('abastecimiento.stock.registerError'),
+      { title: t('common.error') },
     )
   }
 }
