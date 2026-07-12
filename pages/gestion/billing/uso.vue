@@ -14,7 +14,8 @@ interface Column {
 }
 
 definePageMeta({})
-useHead({ title: 'Uso restante — WaRo Admin' })
+const { t, locale } = useI18n({ useScope: 'global' })
+useHead({ title: () => t('billing.remainingUsageTitle') })
 
 const { subscription, remainingUsage, isRefreshing, fetchBillingOverview } = useBilling()
 
@@ -53,6 +54,7 @@ type UsageMetricValue = {
 }
 
 interface UsageDisplayRow {
+  resourceKey: string
   resource: string
   description: string
   used: number
@@ -70,18 +72,19 @@ const hasLimitedQuota = (metric: UsageMetricValue) =>
 const usagePercentage = (metric: UsageMetricValue) =>
   hasLimitedQuota(metric) ? Math.min(Math.round(((metric.used ?? 0) / metric.limit!) * 100), 100) : 0
 
-const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
-  if (metric.limit === null) return 'Sin límite'
+const localeCode = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
+const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = t('billing.notIncluded')) => {
+  if (metric.limit === null) return t('billing.noLimit')
   if (typeof metric.limit !== 'number') return zeroLabel
   if (metric.limit <= 0) return zeroLabel
-  return metric.limit.toLocaleString('es-CO')
+  return metric.limit.toLocaleString(localeCode.value)
 }
 
-const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = 'No incluido') => {
-  if (metric.limit === null) return 'Sin límite'
+const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = t('billing.notIncluded')) => {
+  if (metric.limit === null) return t('billing.noLimit')
   if (typeof metric.limit !== 'number') return zeroLabel
   if (metric.limit <= 0) return zeroLabel
-  return (metric.remaining ?? 0).toLocaleString('es-CO')
+  return (metric.remaining ?? 0).toLocaleString(localeCode.value)
 }
 
 const scanUsage = computed<BillingUsageMetric>(() =>
@@ -102,78 +105,91 @@ const quotaDisplayConfig = [
   BILLING_QUOTA_RESOURCE_CONFIG.electronic_invoices_per_period,
 ]
 
+const usageLabels = computed<Record<string, { resource: string; description: string; unit: string; notIncluded?: string }>>(() => ({
+  admin_users: { resource: t('billing.quotaAdminUsers'), description: t('billing.quotaAdminUsersDescription'), unit: t('billing.unitAdminUsers') },
+  active_sessions_per_admin_user: { resource: t('billing.quotaSessions'), description: t('billing.quotaSessionsDescription'), unit: t('billing.unitSessions') },
+  active_kitchens: { resource: t('billing.quotaKitchens'), description: t('billing.quotaKitchensDescription'), unit: t('billing.unitKitchens') },
+  active_tables_including_bar: { resource: t('billing.quotaTables'), description: t('billing.quotaTablesDescription'), unit: t('billing.unitTables') },
+  active_qr_tables: { resource: t('billing.quotaQrTables'), description: t('billing.quotaQrTablesDescription'), unit: t('billing.unitQrTables') },
+  completed_online_orders_per_month: { resource: t('billing.quotaOnlineOrders'), description: t('billing.quotaOnlineOrdersDescription'), unit: t('billing.unitOnlineOrders') },
+  electronic_invoices_per_period: { resource: t('billing.quotaInvoices'), description: t('billing.quotaInvoicesDescription'), unit: t('billing.unitInvoices'), notIncluded: t('billing.notIncluded') },
+}))
+
 const quotaUsageRows = computed(() =>
   quotaDisplayConfig
     .map((config): UsageDisplayRow | null => {
       const metric = remainingUsage.value?.quota_usage?.[config.key]
       if (!metric) return null
       return {
-        resource: config.label,
+        resourceKey: config.key,
+        resource: usageLabels.value[config.key]?.resource ?? config.label,
         description: hasLimitedQuota(metric)
-          ? config.description
+          ? usageLabels.value[config.key]?.description ?? config.description
           : metric.limit === null
-            ? 'Sin límite por override'
-            : config.zeroLabel ?? 'No incluido',
+            ? t('billing.noLimitOverride')
+            : usageLabels.value[config.key]?.notIncluded ?? t('billing.notIncluded'),
         used: metric.used,
         limit: metric.limit,
         remaining: metric.remaining,
         percentage: usagePercentage(metric),
-        unit: config.unit,
+        unit: usageLabels.value[config.key]?.unit ?? config.unit,
         emptyMessage: hasLimitedQuota(metric)
           ? null
           : metric.limit === null
-            ? 'Sin límite'
-            : '0 disponibles',
-        zeroLabel: config.zeroLabel,
+            ? t('billing.noLimit')
+            : t('billing.zeroAvailable'),
+        zeroLabel: usageLabels.value[config.key]?.notIncluded ?? config.zeroLabel,
       }
     })
     .filter((row): row is UsageDisplayRow => row !== null)
 )
 
-const columns: Column[] = [
-  { key: 'resource', title: 'Recurso', sortable: false },
-  { key: 'used', title: 'Usado', sortable: false, align: 'right' },
-  { key: 'limit', title: 'Disponible', sortable: false, align: 'right' },
-  { key: 'remaining', title: 'Restante', sortable: false, align: 'right' },
-  { key: 'percentage', title: '% usado', sortable: false, align: 'right' },
-]
+const columns = computed<Column[]>(() => [
+  { key: 'resource', title: t('billing.resource'), sortable: false },
+  { key: 'used', title: t('billing.used'), sortable: false, align: 'right' },
+  { key: 'limit', title: t('billing.available'), sortable: false, align: 'right' },
+  { key: 'remaining', title: t('billing.remaining'), sortable: false, align: 'right' },
+  { key: 'percentage', title: t('billing.usedPercentage'), sortable: false, align: 'right' },
+])
 
 const tableData = computed(() => {
   const quotaRows = quotaUsageRows.value
   return [
     {
-      resource: 'Escaneos',
-      description: 'Cupo del período actual',
+      resourceKey: 'scans',
+      resource: t('billing.scans'),
+      description: t('billing.currentPeriodQuota'),
       used: scanUsage.value.used,
       limit: scanUsage.value.limit,
       remaining: scanUsage.value.remaining,
       percentage: usagePercentage(scanUsage.value),
-      unit: 'escaneos',
+      unit: t('billing.scansUnit'),
       emptyMessage: null,
     },
     {
-      resource: 'Facturación electrónica',
+      resourceKey: 'electronic_invoices_per_period',
+      resource: t('billing.quotaInvoices'),
       description: hasLimitedQuota(electronicInvoiceUsage.value)
-        ? 'Facturas incluidas en el período actual'
-        : 'Sin cupo pagado - 0 restantes',
+        ? t('billing.invoicesCurrentPeriod')
+        : t('billing.noPaidQuota'),
       used: electronicInvoiceUsage.value.used,
       limit: electronicInvoiceUsage.value.limit,
       remaining: electronicInvoiceUsage.value.remaining,
       percentage: usagePercentage(electronicInvoiceUsage.value),
-      unit: 'facturas',
-      emptyMessage: hasLimitedQuota(electronicInvoiceUsage.value) ? null : '0 disponibles',
-      zeroLabel: 'Sin cupo pagado',
+      unit: t('billing.invoiceUnit'),
+      emptyMessage: hasLimitedQuota(electronicInvoiceUsage.value) ? null : t('billing.zeroAvailable'),
+      zeroLabel: t('billing.noPaidQuota'),
     },
-    ...quotaRows.filter((row) => row.resource !== 'Facturación electrónica'),
+    ...quotaRows.filter((row) => row.resourceKey !== 'electronic_invoices_per_period'),
   ]
 })
 
 const periodLabel = computed(() => {
   const start = remainingUsage.value?.period_start ?? subscription.value?.current_period_start
   const end = remainingUsage.value?.period_end ?? subscription.value?.current_period_end
-  if (!start || !end) return 'Período actual'
+  if (!start || !end) return t('billing.currentPeriod')
 
-  const formatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
+  const formatter = new Intl.DateTimeFormat(localeCode.value, { day: 'numeric', month: 'short', year: 'numeric' })
   return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`
 })
 </script>
@@ -186,7 +202,7 @@ const periodLabel = computed(() => {
 
     <template v-else>
       <div class="rounded-xl border border-border bg-surface px-4 py-3 md:px-6 md:py-4">
-        <p class="text-xs font-semibold text-text-secondary uppercase tracking-widest">Uso restante</p>
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-widest">{{ t('billing.remainingUsage') }}</p>
         <p class="mt-1 text-base font-medium leading-6 text-text-primary">{{ periodLabel }}</p>
       </div>
 
@@ -195,8 +211,8 @@ const periodLabel = computed(() => {
           row-size="sm"
           :columns="columns"
           :data="tableData"
-          empty-message="No hay cupos disponibles"
-          empty-sub-message="Los cupos aparecerán cuando tengas una suscripción activa"
+          :empty-message="t('billing.noQuotasAvailable')"
+          :empty-sub-message="t('billing.noQuotasAvailableSub')"
           variant="default"
         >
           <template #card="{ item, index }">
@@ -209,15 +225,15 @@ const periodLabel = computed(() => {
               </div>
               <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
                 <div>
-                  <p class="text-xs text-text-secondary">Usado</p>
-                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString('es-CO') }}</p>
+                  <p class="text-xs text-text-secondary">{{ t('billing.used') }}</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString(localeCode) }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-text-secondary">Disp.</p>
+                  <p class="text-xs text-text-secondary">{{ t('billing.availableShort') }}</p>
                   <p class="text-sm text-text-secondary tabular-nums">{{ metricLimitLabel(item, item.zeroLabel) }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-text-secondary">Rest.</p>
+                  <p class="text-xs text-text-secondary">{{ t('billing.remainingShort') }}</p>
                   <p class="text-sm font-semibold text-text-primary tabular-nums">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
                 </div>
                 <div>
@@ -236,7 +252,7 @@ const periodLabel = computed(() => {
 
           <template #cell-used="{ item }">
             <span class="text-sm font-semibold text-text-primary tabular-nums">
-              {{ item.used.toLocaleString('es-CO') }}
+              {{ item.used.toLocaleString(localeCode) }}
             </span>
           </template>
 
