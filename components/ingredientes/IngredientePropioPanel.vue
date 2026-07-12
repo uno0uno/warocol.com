@@ -18,7 +18,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="isEdit ? `Editar ingrediente: ${ingredient?.name}` : 'Crear ingrediente personalizado'"
+        :aria-label="isEdit ? `${t('abastecimiento.glossary.ingredientEdit')}: ${ingredient?.name}` : t('abastecimiento.glossary.ingredientNew')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -39,17 +39,17 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ isEdit ? 'Editar ingrediente' : 'Nuevo ingrediente' }}
+                  {{ isEdit ? t('abastecimiento.glossary.ingredientEdit') : t('abastecimiento.glossary.ingredientNew') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ isEdit ? ingredient?.name : 'Ingrediente personalizado de tu restaurante' }}
+                  {{ isEdit ? ingredient?.name : t('abastecimiento.glossary.ingredientSubtitle') }}
                 </p>
               </div>
             </div>
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('abastecimiento.glossary.closePanel')"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -71,9 +71,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
             </svg>
             <div>
-              <p class="text-sm font-semibold text-amber-800">Ingrediente archivado</p>
+              <p class="text-sm font-semibold text-amber-800">{{ t('abastecimiento.glossary.archivedIngredient') }}</p>
               <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                No aparece en recetas ni pedidos nuevos. El historial de compras y ventas queda intacto.
+                {{ t('abastecimiento.glossary.archivedIngredientHelp') }}
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@
               id="ing-name"
               v-model="form.name"
               type="text"
-              placeholder="Ej: Carne Angus especial"
+              :placeholder="t('abastecimiento.glossary.ingredientNamePlaceholder')"
               :class="inputClass"
               @input="clearError('name')"
             />
@@ -97,10 +97,10 @@
           <!-- CREACIÓN: selector de tipo (solo si no viene fijado del paso anterior) -->
           <div v-if="!isEdit && !lockIngredientType" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
-              Tipo <span class="text-destructive">*</span>
+              {{ t('abastecimiento.glossary.ingredientType') }} <span class="text-destructive">*</span>
             </label>
             <p class="text-xs text-text-tertiary leading-snug">
-              Ingrediente de bodega para recetas y costos. Distinto de producto de menú (reventa en POS).
+              {{ t('abastecimiento.glossary.ingredientTypeHelp') }}
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
               <button
@@ -112,8 +112,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
                 </svg>
-                <span class="text-xs font-bold leading-tight">Alimento</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'food' ? 'text-primary/80' : 'text-text-tertiary']">Peso o volumen. Ej: carne, aceite</span>
+                <span class="text-xs font-bold leading-tight">{{ t('abastecimiento.glossary.food') }}</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'food' ? 'text-primary/80' : 'text-text-tertiary']">{{ t('abastecimiento.glossary.foodDescription') }}</span>
               </button>
               <button
                 type="button"
@@ -124,8 +124,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
                 </svg>
-                <span class="text-xs font-bold leading-tight">Insumo</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'supply' ? 'text-primary/80' : 'text-text-tertiary']">Siempre en und. Ej: icopor, bolsa</span>
+                <span class="text-xs font-bold leading-tight">{{ t('abastecimiento.glossary.supply') }}</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'supply' ? 'text-primary/80' : 'text-text-tertiary']">{{ t('abastecimiento.glossary.supplyDescription') }}</span>
               </button>
               <button
                 type="button"
@@ -135,55 +135,55 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span class="text-xs font-bold leading-tight">Servicio</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Por hora o por unidad. Ej: mano de obra, transporte</span>
+                <span class="text-xs font-bold leading-tight">{{ t('abastecimiento.glossary.service') }}</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">{{ t('abastecimiento.glossary.serviceDescription') }}</span>
               </button>
             </div>
           </div>
 
           <!-- EDICIÓN o creación con tipo fijado -->
           <div v-if="isEdit || lockIngredientType" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Tipo</label>
+            <label class="text-sm font-medium text-text-primary">{{ t('abastecimiento.glossary.ingredientType') }}</label>
             <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none gap-2">
               <template v-if="form.type === 'food'">
                 <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
                 </svg>
-                Alimento
+                {{ t('abastecimiento.glossary.food') }}
               </template>
               <template v-else-if="form.type === 'supply'">
                 <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
                 </svg>
-                Insumo
+                {{ t('abastecimiento.glossary.supply') }}
               </template>
               <template v-else-if="form.type === 'service'">
                 <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Servicio
+                {{ t('abastecimiento.glossary.service') }}
               </template>
               <template v-else>{{ form.type }}</template>
               <span class="text-[10px] text-text-tertiary ml-auto">
-                {{ isEdit ? 'No se puede cambiar' : 'Elegido en el paso anterior' }}
+                {{ isEdit ? t('abastecimiento.glossary.typeCannotChange') : t('abastecimiento.glossary.fixedType') }}
               </span>
             </div>
           </div>
 
           <!-- CREACIÓN: unidad fija (insumo / servicio) -->
           <div v-if="!isEdit && form.type === 'supply'" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Unidad base</label>
+            <label class="text-sm font-medium text-text-primary">{{ t('abastecimiento.glossary.baseUnit') }}</label>
             <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
-              und — unidades (fijo para insumos)
+              {{ t('abastecimiento.glossary.fixedSupplyUnit') }}
             </div>
           </div>
           <div v-if="!isEdit && form.type === 'service'" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
-              ¿Cómo se cobra? <span class="text-destructive">*</span>
+              {{ t('abastecimiento.glossary.billingMethod') }} <span class="text-destructive">*</span>
             </label>
-            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Unidad del servicio">
+            <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('abastecimiento.glossary.serviceUnitAria')">
               <button
                 type="button"
                 @click="setServiceUnitMode('hr')"
@@ -194,7 +194,7 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-xs font-bold">Por hora</span>
+                <span class="text-xs font-bold">{{ t('abastecimiento.glossary.perHour') }}</span>
                 <span :class="['text-[10px] font-mono', serviceUnitMode === 'hr' ? 'text-primary' : 'text-text-tertiary']">hr</span>
               </button>
               <button
@@ -207,8 +207,8 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-xs font-bold">Por unidad</span>
-                <span :class="['text-[10px] leading-snug text-center', serviceUnitMode === 'und' ? 'text-primary/80' : 'text-text-tertiary']">viaje, servicio fijo</span>
+                <span class="text-xs font-bold">{{ t('abastecimiento.glossary.perUnit') }}</span>
+                <span :class="['text-[10px] leading-snug text-center', serviceUnitMode === 'und' ? 'text-primary/80' : 'text-text-tertiary']">{{ t('abastecimiento.glossary.unitTripFixed') }}</span>
               </button>
             </div>
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
@@ -217,9 +217,9 @@
           <!-- CREACIÓN: selector de tipo de medida (solo alimento) -->
           <div v-if="!isEdit && form.type === 'food'" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
-              Tipo de medida <span class="text-destructive">*</span>
+              {{ t('abastecimiento.glossary.measureType') }} <span class="text-destructive">*</span>
             </label>
-            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de medida">
+            <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('abastecimiento.glossary.measureTypeAria')">
               <!-- Peso -->
               <button
                 type="button"
@@ -231,7 +231,7 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-xs font-bold">Peso</span>
+                <span class="text-xs font-bold">{{ t('abastecimiento.glossary.weight') }}</span>
                 <span :class="['text-[10px] font-mono', unitType === 'peso' ? 'text-primary' : 'text-text-tertiary']">gr / kg</span>
               </button>
 
@@ -246,7 +246,7 @@
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-xs font-bold">Volumen</span>
+                <span class="text-xs font-bold">{{ t('abastecimiento.glossary.volume') }}</span>
                 <span :class="['text-[10px] font-mono', unitType === 'volumen' ? 'text-primary' : 'text-text-tertiary']">ml / lt</span>
               </button>
             </div>
@@ -296,8 +296,8 @@
           <!-- Reventa (solo edición de ingredientes und existentes) -->
           <div v-if="!hideResaleToggle && isEdit && form.unit === 'und'" class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
             <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-medium text-text-primary">Vender como reventa</span>
-              <span class="text-xs text-text-tertiary">Aparece en POS y domicilios con precio directo</span>
+              <span class="text-sm font-medium text-text-primary">{{ t('abastecimiento.glossary.resale') }}</span>
+              <span class="text-xs text-text-tertiary">{{ t('abastecimiento.glossary.resaleHelp') }}</span>
             </div>
             <button
               type="button"
@@ -321,8 +321,8 @@
           <!-- Equivalencia gr/ml por unidad (solo alimento und — insumo/servicio usan und o hr directo) -->
           <div v-if="form.type === 'food' && form.unit === 'und'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
-              {{ unitWeightUnit }} por unidad
-              <span class="text-xs text-text-tertiary font-normal">— conversión en recetas</span>
+              {{ unitWeightUnit }} {{ t('abastecimiento.glossary.unitConversion') }}
+              <span class="text-xs text-text-tertiary font-normal">{{ t('abastecimiento.glossary.conversionHelp') }}</span>
             </label>
 
             <div class="flex gap-2">
@@ -349,13 +349,13 @@
                 v-model="form.unitWeightGr"
                 :min="0"
                 :precision="6"
-                :placeholder="`Ej: 400 (1 und = 400 ${unitWeightUnit})`"
+                :placeholder="t('abastecimiento.glossary.conversionPlaceholder', { unit: unitWeightUnit })"
                 :class="inputClass + ' flex-1'"
               />
             </div>
 
             <p class="text-xs text-text-tertiary">
-              Si una receta usa este ingrediente en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.
+              {{ t('abastecimiento.glossary.conversionDescription', { unit: unitWeightUnit }) }}
             </p>
           </div>
 
@@ -371,14 +371,14 @@
           <!-- Categoría -->
           <div class="flex flex-col gap-1.5">
             <label for="ing-category" class="text-sm font-medium text-text-primary">
-              Categoría <span class="text-destructive">*</span>
+              {{ t('abastecimiento.glossary.categoryRequired') }}
             </label>
             <input
               id="ing-category"
               v-model="form.category"
               type="text"
               list="ing-category-list"
-              placeholder="Ej: Carnes, Salsas, Lácteos..."
+              :placeholder="t('abastecimiento.glossary.categoryPlaceholder')"
               :class="inputClass"
               @input="clearError('category')"
             />
@@ -423,18 +423,18 @@
             <button
               v-if="showBackToChooser && !isEdit"
               type="button"
-              aria-label="Volver al selector de tipo"
+              :aria-label="t('abastecimiento.glossary.back')"
               class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
               @click="emit('back-to-chooser')"
             >
-              Atrás
+              {{ t('abastecimiento.glossary.back') }}
             </button>
             <button
               type="button"
               @click="close"
               class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              Cancelar
+              {{ t('abastecimiento.glossary.cancel') }}
             </button>
             <button
               v-if="ingredient?.is_active !== false"
@@ -443,8 +443,8 @@
               :disabled="saving"
               class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
             >
-              <span v-if="saving">Guardando...</span>
-              <span v-else>{{ isEdit ? 'Guardar cambios' : 'Crear ingrediente' }}</span>
+              <span v-if="saving">{{ t('abastecimiento.glossary.savingIngredient') }}</span>
+              <span v-else>{{ isEdit ? t('abastecimiento.glossary.saveChanges') : t('abastecimiento.glossary.createIngredient') }}</span>
             </button>
           </div>
 
@@ -455,7 +455,7 @@
             @click="showArchiveConfirm = true"
             class="h-10 w-full rounded-lg border border-amber-300 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-300/40"
           >
-            Archivar ingrediente
+            {{ t('abastecimiento.glossary.archiveIngredient') }}
           </button>
           <button
             v-if="isEdit && ingredient?.is_active === false"
@@ -464,8 +464,8 @@
             :disabled="restoring"
             class="h-10 w-full rounded-lg border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
           >
-            <span v-if="restoring">Restaurando...</span>
-            <span v-else>Restaurar ingrediente</span>
+            <span v-if="restoring">{{ t('abastecimiento.glossary.restoringIngredient') }}</span>
+            <span v-else>{{ t('abastecimiento.glossary.restoreIngredient') }}</span>
           </button>
         </div>
 
@@ -473,21 +473,21 @@
         <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
           <div v-if="showArchiveConfirm" class="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/40">
             <div class="bg-surface w-full md:mx-6 md:rounded-2xl shadow-2xl p-6 flex flex-col gap-4 rounded-t-2xl">
-              <h3 class="text-base font-bold text-text-primary">Archivar "{{ ingredient?.name }}"</h3>
+              <h3 class="text-base font-bold text-text-primary">{{ t('abastecimiento.glossary.archiveConfirmTitle', { name: ingredient?.name }) }}</h3>
               <p class="text-sm text-text-secondary leading-relaxed">
-                Se eliminará de todas las recetas, modificadores y reventa activos.
-                <strong class="text-text-primary">El historial queda intacto.</strong>
+                {{ t('abastecimiento.glossary.archiveConfirmBody') }}
+                <strong class="text-text-primary">{{ t('abastecimiento.glossary.archiveConfirmHistory') }}</strong>
               </p>
               <p class="text-xs text-text-tertiary bg-surface-secondary/60 rounded-lg px-3 py-2">
-                Puedes restaurarlo desde la vista de archivados.
+                {{ t('abastecimiento.glossary.archiveConfirmHint') }}
               </p>
               <div class="flex gap-3">
                 <button type="button" @click="showArchiveConfirm = false" class="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors">
-                  Cancelar
+                  {{ t('abastecimiento.glossary.cancel') }}
                 </button>
                 <button type="button" @click="archiveIngredient" :disabled="archiving" class="flex-1 h-10 rounded-lg bg-amber-500 text-sm font-semibold text-white hover:bg-amber-600 transition-colors disabled:opacity-50">
-                  <span v-if="archiving">Archivando...</span>
-                  <span v-else>Archivar</span>
+                  <span v-if="archiving">{{ t('abastecimiento.glossary.archiving') }}</span>
+                  <span v-else>{{ t('abastecimiento.glossary.archive') }}</span>
                 </button>
               </div>
             </div>
@@ -510,6 +510,8 @@ import {
   usesCustomPurchaseUnitsDraft,
   type DraftPurchaseUnit,
 } from '@/composables/useIngredientPurchaseUnitsDraft'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Props {
   modelValue: boolean
