@@ -66,6 +66,20 @@
       "inviteError": "Error al enviar la invitacion",
       "cancelInviteError": "Error al cancelar invitacion",
       "deleteError": "Error al eliminar miembro"
+      ,"noName": "Sin nombre"
+      ,"cancelInviteConfirm": "¿Estás seguro de cancelar la invitación para {email}?"
+      ,"confirmCancel": "Sí, cancelar"
+      ,"deleteConfirm": "¿Estás seguro de eliminar a {name} del equipo? Esta acción no se puede deshacer."
+      ,"inviteSentTo": "Invitación enviada a {email}"
+      ,"memberDeleted": "{name} ha sido eliminado del equipo"
+      ,"profileUpdated": "Perfil actualizado correctamente"
+      ,"roleUpdated": "Rol actualizado a {role}"
+      ,"inviteCanceledFor": "Invitación para {email} cancelada"
+      ,"noDate": "Sin fecha"
+      ,"expired": "Expirada"
+      ,"today": "Hoy"
+      ,"tomorrow": "Mañana"
+      ,"days": "{count} días"
     },
     "roles": {
       "admin": "Administrador",
@@ -73,6 +87,20 @@
       "member": "Miembro",
       "promotor": "Promotor",
       "superuser": "Super Usuario",
+      "ownerShort": "Dueño",
+      "adminShort": "Admin",
+      "employeeLabel": "Cajero / Operador",
+      "employeeShort": "Cajero",
+      "memberLabel": "Operador de equipo",
+      "memberShort": "Operador",
+      "promotorLabel": "Promotor comercial",
+      "superuserDescription": "Acceso total al negocio, equipo, permisos, finanzas y configuración.",
+      "adminDescription": "Gestiona la operación diaria, ventas, menú, reportes y configuración operativa.",
+      "employeeDescription": "Puede operar POS, registrar ventas y usar funciones básicas del turno.",
+      "memberDescription": "Rol operativo básico para miembros del equipo con acceso limitado.",
+      "promotorDescription": "Rol comercial para promoción y apoyo de ventas con acceso limitado.",
+      "noRole": "Sin rol",
+      "customDescription": "Rol personalizado del equipo.",
       "active": "Activo",
       "inactive": "Inactivo"
     },

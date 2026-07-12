@@ -66,6 +66,20 @@
       "inviteError": "Error sending invitation",
       "cancelInviteError": "Error canceling invitation",
       "deleteError": "Error removing member"
+      ,"noName": "No name"
+      ,"cancelInviteConfirm": "Are you sure you want to cancel the invitation for {email}?"
+      ,"confirmCancel": "Yes, cancel"
+      ,"deleteConfirm": "Are you sure you want to remove {name} from the team? This cannot be undone."
+      ,"inviteSentTo": "Invitation sent to {email}"
+      ,"memberDeleted": "{name} was removed from the team"
+      ,"profileUpdated": "Profile updated successfully"
+      ,"roleUpdated": "Role updated to {role}"
+      ,"inviteCanceledFor": "Invitation for {email} canceled"
+      ,"noDate": "No date"
+      ,"expired": "Expired"
+      ,"today": "Today"
+      ,"tomorrow": "Tomorrow"
+      ,"days": "{count} days"
     },
     "roles": {
       "admin": "Administrator",
@@ -73,6 +87,20 @@
       "member": "Member",
       "promotor": "Promoter",
       "superuser": "Super user",
+      "ownerShort": "Owner",
+      "adminShort": "Admin",
+      "employeeLabel": "Cashier / Operator",
+      "employeeShort": "Cashier",
+      "memberLabel": "Team operator",
+      "memberShort": "Operator",
+      "promotorLabel": "Sales promoter",
+      "superuserDescription": "Full access to the business, team, permissions, finance, and settings.",
+      "adminDescription": "Manages daily operations, sales, menu, reports, and operational settings.",
+      "employeeDescription": "Can operate POS, record sales, and use basic shift features.",
+      "memberDescription": "Basic operational role for team members with limited access.",
+      "promotorDescription": "Sales role for promotion and sales support with limited access.",
+      "noRole": "No role",
+      "customDescription": "Custom team role.",
       "active": "Active",
       "inactive": "Inactive"
     },

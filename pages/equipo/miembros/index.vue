@@ -43,7 +43,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            Invitar miembro
+            {{ t('equipo.miembros.invite') }}
           </button>
         </template>
       </UiAdvancedFiltersBar>
@@ -55,7 +55,7 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p>{{ adminUsersQuotaMessage }}</p>
           <NuxtLink to="/gestion/billing/uso" class="font-semibold text-amber-950 underline underline-offset-2">
-            Ver Mi Plan
+            {{ t('equipo.miembros.viewPlan') }}
           </NuxtLink>
         </div>
       </div>
@@ -64,18 +64,18 @@
       <UiResponsiveDataView
         :columns="teamMembersTableColumns"
         :data="teamMembers"
-        empty-message="No hay miembros en este equipo"
-        empty-sub-message="Los miembros apareceran aqui cuando sean agregados"
+        :empty-message="t('equipo.miembros.empty')"
+        :empty-sub-message="t('equipo.miembros.emptySub')"
         variant="default"
         row-size="sm"
       >
       <template #header-role>
         <UiTableHeaderFilter
           v-model="roleFilter"
-          title="Rol"
+        :title="t('equipo.common.role')"
           filter-type="select"
           :options="roleFilterOptions"
-          all-label="Todos"
+        :all-label="t('equipo.common.all')"
         />
       </template>
 
@@ -113,22 +113,22 @@
             <!-- warocol.com#642 — Ver perfil → /equipo/miembros/[id] (tip totals + recent tips) -->
             <NuxtLink :to="`/equipo/miembros/${item.id}`"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
-              title="Ver perfil">
+              :title="t('equipo.miembros.viewProfile')">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             </NuxtLink>
             <button v-if="isCurrentUser(item)" @click="openEditProfileModal(item)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
-              title="Editar mi perfil">
+              :title="t('equipo.miembros.editMyProfile')">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
             <button v-if="isSuperUser && !isCurrentUser(item)" @click="openEditRoleModal(item)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
-              title="Cambiar rol">
+              :title="t('equipo.miembros.changeRole')">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
             <button v-if="canManageTeam && !isCurrentUser(item)" @click="openDeleteModal(item)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-              title="Eliminar miembro">
+              :title="t('equipo.miembros.deleteMember')">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
           </div>
@@ -170,7 +170,7 @@
           <NuxtLink
             :to="`/equipo/miembros/${row.id}`"
             class="text-primary hover:text-primary/70 transition-colors p-1"
-            title="Ver perfil"
+            :title="t('equipo.miembros.viewProfile')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -181,7 +181,7 @@
             v-if="isCurrentUser(row)"
             @click="openEditProfileModal(row)"
             class="text-blue-500 hover:text-blue-700 transition-colors p-1"
-            title="Editar mi perfil"
+            :title="t('equipo.miembros.editMyProfile')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -192,7 +192,7 @@
             v-if="isSuperUser && !isCurrentUser(row)"
             @click="openEditRoleModal(row)"
             class="text-blue-500 hover:text-blue-700 transition-colors p-1"
-            title="Cambiar rol"
+            :title="t('equipo.miembros.changeRole')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -203,7 +203,7 @@
             v-if="canManageTeam && !isCurrentUser(row)"
             @click="openDeleteModal(row)"
             class="text-red-500 hover:text-red-700 transition-colors p-1"
-            title="Eliminar miembro"
+            :title="t('equipo.miembros.deleteMember')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -220,7 +220,7 @@
           <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Invitaciones pendientes
+          {{ t('equipo.miembros.pendingInvites') }}
           <span class="text-sm font-normal text-text-secondary">({{ pendingInvitations.length }})</span>
         </h3>
       </div>
@@ -230,11 +230,11 @@
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Invitado</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Email</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Rol</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Expira</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">Acciones</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('equipo.miembros.invited') }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('equipo.common.email') }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('equipo.common.role') }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('equipo.miembros.expires') }}</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">{{ t('equipo.common.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -244,7 +244,7 @@
                   <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0 bg-amber-500">
                     {{ getInitials(invitation.name, null) }}
                   </div>
-                  <div class="text-sm font-medium text-text-primary">{{ invitation.name || 'Sin nombre' }}</div>
+                  <div class="text-sm font-medium text-text-primary">{{ invitation.name || t('equipo.miembros.noName') }}</div>
                 </div>
               </td>
               <td class="px-4 py-3 text-sm text-text-primary">{{ invitation.email }}</td>
@@ -259,7 +259,7 @@
                   v-if="canManageTeam"
                   @click="openCancelInvitationModal(invitation)"
                   class="text-red-500 hover:text-red-700 transition-colors p-1"
-                  title="Cancelar invitacion"
+                  :title="t('equipo.miembros.cancelInvite')"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -280,7 +280,7 @@
                 {{ getInitials(invitation.name, null) }}
               </div>
               <div>
-                <div class="text-sm font-medium text-text-primary">{{ invitation.name || 'Sin nombre' }}</div>
+                <div class="text-sm font-medium text-text-primary">{{ invitation.name || t('equipo.miembros.noName') }}</div>
                 <div class="text-xs text-text-secondary">{{ invitation.email }}</div>
               </div>
             </div>
@@ -298,7 +298,7 @@
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
               {{ getRoleLabel(invitation.role) }}
             </span>
-            <span class="text-xs text-text-secondary">Expira: {{ formatExpirationDate(invitation.expiresAt) }}</span>
+            <span class="text-xs text-text-secondary">{{ t('equipo.miembros.expires') }}: {{ formatExpirationDate(invitation.expiresAt) }}</span>
           </div>
         </div>
       </div>
@@ -316,23 +316,23 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-text-primary mb-2">Cancelar invitacion</h3>
+            <h3 class="text-lg font-bold text-text-primary mb-2">{{ t('equipo.miembros.cancelInvite') }}</h3>
             <p class="text-sm text-text-secondary mb-6">
-              ¿Estas seguro de cancelar la invitacion para <strong>{{ invitationToCancel?.email }}</strong>?
+              {{ t('equipo.miembros.cancelInviteConfirm', { email: invitationToCancel?.email }) }}
             </p>
             <div class="flex gap-3">
               <button
                 @click="closeCancelInvitationModal"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
               >
-                No, mantener
+                {{ t('equipo.miembros.keep') }}
               </button>
               <button
                 @click="cancelInvitation"
                 :disabled="cancelingInvitation"
                 class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
               >
-                {{ cancelingInvitation ? t('equipo.miembros.canceling') : 'Si, cancelar' }}
+                {{ cancelingInvitation ? t('equipo.miembros.canceling') : t('equipo.miembros.confirmCancel') }}
               </button>
             </div>
           </div>
@@ -349,7 +349,7 @@
         <!-- Modal -->
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-text-primary">Invitar miembro</h2>
+            <h2 class="text-xl font-bold text-text-primary">{{ t('equipo.miembros.invite') }}</h2>
             <button @click="closeInviteModal" class="text-text-secondary hover:text-text-primary">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -360,19 +360,19 @@
           <form @submit.prevent="sendInvitation" class="space-y-4">
             <!-- Name -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Nombre</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.name') }}</label>
               <input
                 v-model="inviteForm.name"
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Nombre completo"
+                :placeholder="t('equipo.miembros.fullName')"
               />
             </div>
 
             <!-- Email -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Email</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.email') }}</label>
               <input
                 v-model="inviteForm.email"
                 type="email"
@@ -384,7 +384,7 @@
 
             <!-- Phone -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Telefono</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.phone') }}</label>
               <input
                 v-model="inviteForm.phone"
                 type="tel"
@@ -396,7 +396,7 @@
 
             <!-- Role -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Rol</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.role') }}</label>
               <select
                 v-model="inviteForm.role"
                 required
@@ -423,7 +423,7 @@
                 @click="closeInviteModal"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </button>
               <button
                 type="submit"
@@ -454,9 +454,9 @@
               </svg>
             </div>
 
-            <h3 class="text-lg font-bold text-text-primary mb-2">Eliminar miembro</h3>
+            <h3 class="text-lg font-bold text-text-primary mb-2">{{ t('equipo.miembros.deleteMember') }}</h3>
             <p class="text-sm text-text-secondary mb-6">
-              ¿Estas seguro de eliminar a <strong>{{ memberToDelete?.name }}</strong> del equipo? Esta accion no se puede deshacer.
+              {{ t('equipo.miembros.deleteConfirm', { name: memberToDelete?.name }) }}
             </p>
 
             <div class="flex gap-3">
@@ -464,7 +464,7 @@
                 @click="closeDeleteModal"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </button>
               <button
                 @click="deleteMember"
@@ -488,7 +488,7 @@
         <!-- Modal -->
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-text-primary">Editar mi perfil</h2>
+            <h2 class="text-xl font-bold text-text-primary">{{ t('equipo.miembros.editMyProfile') }}</h2>
             <button @click="closeEditProfileModal" class="text-text-secondary hover:text-text-primary">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -510,25 +510,25 @@
 
             <!-- Name -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Nombre</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.name') }}</label>
               <input
                 v-model="editProfileForm.name"
                 type="text"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Tu nombre completo"
+                :placeholder="t('equipo.miembros.yourFullName')"
               />
             </div>
 
             <!-- Email (read-only) -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Email</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.common.email') }}</label>
               <input
                 :value="profileToEdit?.email"
                 type="email"
                 disabled
                 class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-text-secondary cursor-not-allowed"
               />
-              <p class="text-xs text-text-secondary mt-1">El email no se puede cambiar</p>
+              <p class="text-xs text-text-secondary mt-1">{{ t('equipo.miembros.emailImmutable') }}</p>
             </div>
 
             <!-- Error message -->
@@ -543,7 +543,7 @@
                 @click="closeEditProfileModal"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </button>
               <button
                 type="submit"
@@ -567,7 +567,7 @@
         <!-- Modal -->
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-text-primary">Cambiar rol</h2>
+            <h2 class="text-xl font-bold text-text-primary">{{ t('equipo.miembros.changeRole') }}</h2>
             <button @click="closeEditRoleModal" class="text-text-secondary hover:text-text-primary">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -593,12 +593,12 @@
 
             <!-- Current Role -->
             <div class="text-sm text-text-secondary">
-              Rol actual: <span class="font-medium text-text-primary">{{ getRoleLabel(memberToEdit?.role) }}</span>
+              {{ t('equipo.miembros.currentRole') }} <span class="font-medium text-text-primary">{{ getRoleLabel(memberToEdit?.role) }}</span>
             </div>
 
             <!-- New Role Select -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Nuevo rol</label>
+              <label class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.miembros.newRole') }}</label>
               <select
                 v-model="editRoleForm.role"
                 required
@@ -625,7 +625,7 @@
                 @click="closeEditRoleModal"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
               >
-                Cancelar
+                {{ t('equipo.common.cancel') }}
               </button>
               <button
                 type="submit"
@@ -664,33 +664,33 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const roleFilter = ref('')
 const roleDefinitions = {
   superuser: {
-    label: 'Propietario',
-    shortLabel: 'Dueño',
-    description: 'Acceso total al negocio, equipo, permisos, finanzas y configuración.',
+    label: t('equipo.roles.superuser'),
+    shortLabel: t('equipo.roles.ownerShort'),
+    description: t('equipo.roles.superuserDescription'),
     badgeClass: 'bg-amber-100 text-amber-800',
   },
   admin: {
     label: t('equipo.roles.admin'),
-    shortLabel: 'Admin',
-    description: 'Gestiona la operación diaria, ventas, menú, reportes y configuración operativa.',
+    shortLabel: t('equipo.roles.adminShort'),
+    description: t('equipo.roles.adminDescription'),
     badgeClass: 'bg-blue-100 text-blue-800',
   },
   employee: {
-    label: 'Cajero / Operador',
-    shortLabel: 'Cajero',
-    description: 'Puede operar POS, registrar ventas y usar funciones básicas del turno.',
+    label: t('equipo.roles.employeeLabel'),
+    shortLabel: t('equipo.roles.employeeShort'),
+    description: t('equipo.roles.employeeDescription'),
     badgeClass: 'bg-slate-100 text-slate-700',
   },
   member: {
-    label: 'Operador de equipo',
-    shortLabel: 'Operador',
-    description: 'Rol operativo básico para miembros del equipo con acceso limitado.',
+    label: t('equipo.roles.memberLabel'),
+    shortLabel: t('equipo.roles.memberShort'),
+    description: t('equipo.roles.memberDescription'),
     badgeClass: 'bg-green-100 text-green-800',
   },
   promotor: {
-    label: 'Promotor comercial',
+    label: t('equipo.roles.promotorLabel'),
     shortLabel: t('equipo.roles.promotor'),
-    description: 'Rol comercial para promoción y apoyo de ventas con acceso limitado.',
+    description: t('equipo.roles.promotorDescription'),
     badgeClass: 'bg-purple-100 text-purple-800',
   },
 }
@@ -848,7 +848,7 @@ const isCurrentUser = (member) => {
 }
 
 const getRoleLabel = (role) => {
-  return roleDefinitions[role]?.label || role || 'Sin rol'
+  return roleDefinitions[role]?.label || role || t('equipo.roles.noRole')
 }
 
 const getRoleShortLabel = (role) => {
@@ -856,7 +856,7 @@ const getRoleShortLabel = (role) => {
 }
 
 const getRoleDescription = (role) => {
-  return roleDefinitions[role]?.description || 'Rol personalizado del equipo.'
+  return roleDefinitions[role]?.description || t('equipo.roles.customDescription')
 }
 
 const getRoleBadgeClass = (role) => {
@@ -864,7 +864,7 @@ const getRoleBadgeClass = (role) => {
 }
 
 // Table columns configuration
-const teamMembersTableColumns = [
+const teamMembersTableColumns = computed(() => [
   {
     key: 'name',
     title: t('equipo.miembros.member'),
@@ -893,7 +893,7 @@ const teamMembersTableColumns = [
     format: 'text',
     align: 'center'
   }
-]
+])
 
 // Invite Modal State
 const showInviteModal = ref(false)
@@ -995,7 +995,7 @@ const sendInvitation = async () => {
     })
 
     if (response.success) {
-      toast.success(`Invitacion enviada a ${inviteForm.email}`, {
+      toast.success(t('equipo.miembros.inviteSentTo', { email: inviteForm.email }), {
         title: t('equipo.miembros.inviteSent')
       })
       closeInviteModal()
@@ -1036,7 +1036,7 @@ const deleteMember = async () => {
     })
 
     if (response.success) {
-      toast.success(`${memberToDelete.value.name} ha sido eliminado del equipo`)
+      toast.success(t('equipo.miembros.memberDeleted', { name: memberToDelete.value.name }))
       closeDeleteModal()
       refresh()
     } else {
@@ -1086,7 +1086,7 @@ const updateProfile = async () => {
     })
 
     if (response.success) {
-      toast.success('Perfil actualizado correctamente')
+      toast.success(t('equipo.miembros.profileUpdated'))
       closeEditProfileModal()
       refresh()
     } else {
@@ -1136,7 +1136,7 @@ const updateRole = async () => {
     })
 
     if (response.success) {
-      toast.success(response.message || `Rol actualizado a ${getRoleLabel(editRoleForm.role)}`)
+      toast.success(response.message || t('equipo.miembros.roleUpdated', { role: getRoleLabel(editRoleForm.role) }))
       closeEditRoleModal()
       refresh()
     } else {
@@ -1177,7 +1177,7 @@ const cancelInvitation = async () => {
     })
 
     if (response.success) {
-      toast.success(`Invitacion para ${invitationToCancel.value.email} cancelada`)
+      toast.success(t('equipo.miembros.inviteCanceledFor', { email: invitationToCancel.value.email }))
       closeCancelInvitationModal()
       await Promise.all([refresh(), fetchBillingOverview()])
     } else {
@@ -1193,16 +1193,16 @@ const cancelInvitation = async () => {
 
 // Format expiration date
 const formatExpirationDate = (dateString) => {
-  if (!dateString) return 'Sin fecha'
+  if (!dateString) return t('equipo.miembros.noDate')
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = date - now
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffDays < 0) return 'Expirada'
-  if (diffDays === 0) return 'Hoy'
-  if (diffDays === 1) return 'Manana'
-  if (diffDays <= 7) return `${diffDays} dias`
+  if (diffDays < 0) return t('equipo.miembros.expired')
+  if (diffDays === 0) return t('equipo.miembros.today')
+  if (diffDays === 1) return t('equipo.miembros.tomorrow')
+  if (diffDays <= 7) return t('equipo.miembros.days', { count: diffDays })
 
   return _fmtDate(date.toISOString())
 }

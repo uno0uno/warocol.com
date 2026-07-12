@@ -15,9 +15,10 @@ useHead({ title: 'Equipo' })
 
 const route = useRoute()
 
-const navigationItems = [
-  { to: '/equipo/miembros', label: 'Miembros' },
-  { to: '/equipo/salarios', label: 'Salarios', matchPath: '/equipo/salarios' },
-  { to: '/equipo/nomina', label: 'Nómina' }
-]
+const { t } = useI18n({ useScope: 'global' })
+const navigationItems = computed(() => [
+  { to: '/equipo/miembros', label: t('equipo.head.miembros') },
+  { to: '/equipo/salarios', label: t('equipo.head.salarios'), matchPath: '/equipo/salarios' },
+  { to: '/equipo/nomina', label: t('equipo.head.nomina') }
+])
 </script>
