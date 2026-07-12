@@ -300,6 +300,8 @@
       "registerPila": "Record PILA",
       "registering": "Recording...",
       "pilaSettled": "No pending PILA — all social security accounts are settled",
+      "benefitsRegistered": "Benefits recorded successfully",
+      "recorded": "recorded",
       "removeName": "Remove {name}",
       "primaS1": "Prima S1",
       "primaS2": "Prima S2",

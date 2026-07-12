@@ -14,6 +14,7 @@ const { currentTenant } = useTenantReactive()
 const { formatCurrency } = useFormatters()
 const { todayISO } = useTenantTimezone()
 const tenantToday = computed(() => todayISO())
+const dateLocale = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
 
 // ── Filters ───────────────────────────────────────────────────────────────
 const currentYear = new Date().getFullYear()
@@ -609,7 +610,7 @@ async function submitBulk() {
   if (errors.length > 0) {
     slideError.value = errors.join('\n')
   } else {
-    slideSuccess.value = 'Prestaciones registradas correctamente'
+    slideSuccess.value = t('equipo.nomina.benefitsRegistered')
     selectedCells.value = []
     showSlideOver.value = false
     slideData.value = {}
@@ -865,7 +866,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-base font-semibold text-text-primary">{{ t('equipo.nomina.pilaTitle') }}</h3>
-            <p class="text-sm text-text-secondary mt-0.5">Seguridad social — liquidar cuentas 237005 y 237010</p>
+            <p class="text-sm text-text-secondary mt-0.5">{{ t('equipo.nomina.ssLiquidate') }}</p>
           </div>
           <svg class="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -925,26 +926,26 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <form @submit.prevent="submitPila" novalidate>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <label for="pila-emp-ss" class="block text-sm font-medium text-text-primary mb-1">Aporte empleado (237005)</label>
+                    <label for="pila-emp-ss" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.employeeContrib') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-emp-ss" v-model.number="pilaForm.employee_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" aria-label="Aporte seguridad social empleado" />
+                      <input id="pila-emp-ss" v-model.number="pilaForm.employee_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" :aria-label="t('equipo.nomina.employeeSs')" />
                     </div>
                   </div>
                   <div>
-                    <label for="pila-er-ss" class="block text-sm font-medium text-text-primary mb-1">Aporte empleador (237010)</label>
+                    <label for="pila-er-ss" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.employerContrib') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-er-ss" v-model.number="pilaForm.employer_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" aria-label="Aporte seguridad social empleador" />
+                      <input id="pila-er-ss" v-model.number="pilaForm.employer_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" :aria-label="t('equipo.nomina.employerSs')" />
                     </div>
                   </div>
                   <div>
-                    <label for="pila-total" class="block text-sm font-medium text-text-primary mb-1">Total PILA *</label>
+                    <label for="pila-total" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.pilaTotalReq') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-total" v-model.number="pilaForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2 font-semibold" aria-label="Total pago PILA" />
+                      <input id="pila-total" v-model.number="pilaForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2 font-semibold" :aria-label="t('equipo.nomina.pilaTotal')" />
                     </div>
-                    <p class="text-xs text-text-tertiary mt-0.5">Puede diferir si incluye recargos</p>
+                    <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.nomina.mayDiffer') }}</p>
                   </div>
                   <div>
                     <label for="pila-method" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.pilaMethod') }}</label>
@@ -1010,7 +1011,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             >
               <span class="font-medium text-text-primary">{{ formatPeriodMonth(p.period_month) }}</span>
               <div class="flex items-center gap-4 text-text-secondary">
-                <span>{{ new Date(p.payment_date).toLocaleDateString('es-CO') }}</span>
+                <span>{{ new Date(p.payment_date).toLocaleDateString(dateLocale) }}</span>
                 <span class="font-semibold text-text-primary">{{ formatCurrency(Number(p.total_amount)) }}</span>
               </div>
             </div>
@@ -1036,7 +1037,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div>
             <h2 class="text-base font-semibold text-text-primary">{{ t('equipo.nomina.registerBenefitsTitle') }}</h2>
-            <p class="text-sm text-text-secondary">{{ selectedCells.length }} prestación(es) · {{ selectedEmployeeRows.length }} empleado(s)</p>
+            <p class="text-sm text-text-secondary">{{ t('equipo.nomina.selectedSummary', { benefits: selectedCells.length, employees: selectedEmployeeRows.length }) }}</p>
           </div>
           <button @click="closeSlideOver" class="p-2 rounded-lg hover:bg-surface transition-colors" :aria-label="t('equipo.nomina.closePanel')">
             <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1110,29 +1111,29 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <!-- Selected salary-based benefits list -->
               <div class="space-y-1.5 mb-3">
                 <div v-if="selectedByEmployee[row.id]?.includes('primaS1') && row.primaS1 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
-                  <span class="text-xs font-medium text-text-primary flex-1">Prima S1 — {{ selectedYear }}-S1</span>
+                  <span class="text-xs font-medium text-text-primary flex-1">{{ t('equipo.nomina.primaS1') }} — {{ selectedYear }}-S1</span>
                   <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('primaS2') && row.primaS2 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
-                  <span class="text-xs font-medium text-text-primary flex-1">Prima S2 — {{ selectedYear }}-S2</span>
+                  <span class="text-xs font-medium text-text-primary flex-1">{{ t('equipo.nomina.primaS2') }} — {{ selectedYear }}-S2</span>
                   <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('cesantias') && row.cesantias == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
-                  <span class="text-xs font-medium text-text-primary flex-1">Cesantías {{ selectedYear }}</span>
+                  <span class="text-xs font-medium text-text-primary flex-1">{{ t('equipo.nomina.cesantias') }} {{ selectedYear }}</span>
                   <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
                 <div v-if="selectedByEmployee[row.id]?.includes('vacaciones') && row.vacaciones == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
-                  <span class="text-xs font-medium text-text-primary flex-1">Vacaciones {{ selectedYear }}</span>
+                  <span class="text-xs font-medium text-text-primary flex-1">{{ t('equipo.nomina.vacaciones') }} {{ selectedYear }}</span>
                   <UiStatusBadge :value="t('equipo.nomina.included')" variant="info" size="sm" />
                 </div>
               </div>
 
               <!-- Int. Cesantías -->
               <div v-if="selectedByEmployee[row.id]?.includes('intCesantias') && row.intCesantias == null" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Int. Cesantías {{ selectedYear }}</p>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ t('equipo.nomina.intCesantias') }} {{ selectedYear }}</p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-xs font-medium text-text-primary mb-1">Base cesantías (× 12%)</label>
+                    <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.baseCesantias') }}</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
                       <input v-model.number="slideData[row.id].cesantias_base" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
@@ -1140,7 +1141,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   </div>
                   <div class="flex items-end">
                     <div class="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg w-full">
-                      <p class="text-xs text-text-secondary">Calculado (12%)</p>
+                      <p class="text-xs text-text-secondary">{{ t('equipo.nomina.calculated12') }}</p>
                       <p class="text-sm font-bold text-emerald-700">{{ formatCurrency(intCesantiasPreview(row.id)) }}</p>
                     </div>
                   </div>
@@ -1149,10 +1150,10 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
               <!-- Dotación (employees only) -->
               <div v-if="selectedByEmployee[row.id]?.includes('dotacion') && row.dotacion == null && row.employment_type === 'employee'" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Dotación {{ selectedYear }}</p>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ t('equipo.nomina.dotacion') }} {{ selectedYear }}</p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-xs font-medium text-text-primary mb-1">Período *</label>
+                    <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.periodReq') }}</label>
                     <select v-model="slideData[row.id].dot_period" class="input-base w-full px-2 py-2 text-sm">
                     <option value="">{{ t('equipo.nomina.select') }}</option>
                     <option value="Abr">{{ t('equipo.nomina.april') }}</option>
@@ -1178,14 +1179,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <div v-if="selectedByEmployee[row.id]?.includes('horasExtras')" class="p-3 bg-surface rounded-xl space-y-2">
                 <div class="flex items-center gap-2">
                   <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ t('equipo.nomina.horasExtras') }}</p>
-                  <span v-if="row.horasExtras != null" class="text-xs text-text-secondary">(registradas: {{ formatCurrency(row.horasExtras) }})</span>
+                  <span v-if="row.horasExtras != null" class="text-xs text-text-secondary">({{ t('equipo.nomina.recorded') }}: {{ formatCurrency(row.horasExtras) }})</span>
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-text-primary mb-1">Período (mes)</label>
+                  <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.periodMonth') }}</label>
                   <input v-model="slideData[row.id].period_month" type="month" class="input-base w-full px-3 py-2 text-sm" />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-text-primary mb-1">Tarifa horaria base</label>
+                  <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.hourlyBase') }}</label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
                     <input v-model.number="slideData[row.id].base_hourly_rate" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
@@ -1193,19 +1194,19 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-xs text-text-secondary mb-1">Diurnas ×1.25</label>
+                    <label class="block text-xs text-text-secondary mb-1">{{ t('equipo.nomina.diurnal') }}</label>
                     <input v-model.number="slideData[row.id].hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
                   </div>
                   <div>
-                    <label class="block text-xs text-text-secondary mb-1">Nocturnas ×1.75</label>
+                    <label class="block text-xs text-text-secondary mb-1">{{ t('equipo.nomina.nocturnal') }}</label>
                     <input v-model.number="slideData[row.id].hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
                   </div>
                   <div>
-                    <label class="block text-xs text-text-secondary mb-1">Dom. diurna ×2.00</label>
+                    <label class="block text-xs text-text-secondary mb-1">{{ t('equipo.nomina.sunDiurnal') }}</label>
                     <input v-model.number="slideData[row.id].hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
                   </div>
                   <div>
-                    <label class="block text-xs text-text-secondary mb-1">Dom. nocturna ×2.50</label>
+                    <label class="block text-xs text-text-secondary mb-1">{{ t('equipo.nomina.sunNocturnal') }}</label>
                     <input v-model.number="slideData[row.id].hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
                   </div>
                 </div>

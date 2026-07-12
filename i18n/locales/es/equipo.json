@@ -300,6 +300,8 @@
       "registerPila": "Registrar PILA",
       "registering": "Registrando...",
       "pilaSettled": "Sin PILA pendiente — todas las cuentas SS están saldadas",
+      "benefitsRegistered": "Prestaciones registradas correctamente",
+      "recorded": "registradas",
       "removeName": "Quitar {name}",
       "primaS1": "Prima S1",
       "primaS2": "Prima S2",
