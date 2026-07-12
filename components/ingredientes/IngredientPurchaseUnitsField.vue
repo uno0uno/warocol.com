@@ -189,7 +189,7 @@
 import type { DraftPurchaseUnit, PurchaseUnitSuggestion } from '@/composables/useIngredientPurchaseUnitsDraft'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const CONVERSION_PRECISION = 6
 
@@ -225,7 +225,7 @@ const formError = ref('')
 const newUnit = ref({ purchase_unit_label: '', conversion_factor: null as number | null })
 
 function formatConversionFactor(value: number | string | null | undefined) {
-  return formatDomainQuantity(value, CONVERSION_PRECISION)
+  return formatDomainQuantity(value, CONVERSION_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
 }
 
 function slugifyPurchaseUnit(label: string) {

@@ -81,7 +81,7 @@
           <!-- Nombre -->
           <div class="flex flex-col gap-1.5">
             <label for="ing-name" class="text-sm font-medium text-text-primary">
-              Nombre <span class="text-destructive">*</span>
+              {{ t('abastecimiento.common.nombre') }} <span class="text-destructive">*</span>
             </label>
             <input
               id="ing-name"
@@ -287,7 +287,7 @@
 
           <!-- EDICIÓN: unidad de solo lectura -->
           <div v-if="isEdit" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Unidad</label>
+            <label class="text-sm font-medium text-text-primary">{{ t('abastecimiento.common.unidad') }}</label>
             <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
               {{ UNIT_LABELS[form.unit] || form.unit }}
             </div>
@@ -580,14 +580,14 @@ const isEdit = computed(() => !!props.ingredient)
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
-const UNIT_LABELS: Record<string, string> = {
-  gr: 'gr — gramos',
-  kg: 'kg — kilogramos',
-  ml: 'ml — mililitros',
-  lt: 'lt — litros',
-  und: 'und — unidades',
-  hr: 'hr — horas',
-}
+const UNIT_LABELS = computed<Record<string, string>>(() => ({
+  gr: `gr — ${t('abastecimiento.glossary.grams')}`,
+  kg: `kg — ${t('abastecimiento.glossary.kilograms')}`,
+  ml: `ml — ${t('abastecimiento.glossary.milliliters')}`,
+  lt: `lt — ${t('abastecimiento.glossary.liters')}`,
+  und: `und — ${t('abastecimiento.glossary.units')}`,
+  hr: `hr — ${t('abastecimiento.glossary.hours')}`,
+}))
 
 type IngredientDbType = 'food' | 'supply' | 'service'
 
