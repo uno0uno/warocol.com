@@ -9,15 +9,15 @@
     <template v-else>
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-text-secondary">
-          {{ activeCount }} activo{{ activeCount === 1 ? '' : 's' }}
-          <span v-if="inactiveCount"> · {{ inactiveCount }} inactivo{{ inactiveCount === 1 ? '' : 's' }}</span>
+          {{ t('operaciones.turnos.activeCount', { count: activeCount }) }}
+          <span v-if="inactiveCount"> · {{ t('operaciones.turnos.inactiveCount', { count: inactiveCount }) }}</span>
         </p>
         <button
           type="button"
           class="btn-primary px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] whitespace-nowrap"
           @click="openCreate"
         >
-          + Nuevo turno
+          {{ t('operaciones.turnos.newShift') }}
         </button>
       </div>
 
@@ -42,7 +42,7 @@
               <p class="text-xs text-text-secondary mt-0.5">{{ formatSchedule(item) }}</p>
             </div>
             <UiStatusBadge
-              :value="item.is_active ? 'Activo' : 'Inactivo'"
+              :value="item.is_active ? t('operaciones.turnos.active') : t('operaciones.turnos.inactive')"
               format="text"
               :variant="item.is_active ? 'success' : 'secondary'"
               size="sm"
@@ -50,7 +50,7 @@
             <div class="flex items-center gap-0.5 flex-shrink-0">
               <button
                 type="button"
-                :aria-label="`Editar ${item.name}`"
+                :aria-label="t('operaciones.turnos.editAria', { name: item.name })"
                 :title="t('operaciones.turnos.edit')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="openEdit(item)"
@@ -60,7 +60,7 @@
               <button
                 v-if="item.is_active"
                 type="button"
-                :aria-label="`Desactivar ${item.name}`"
+                :aria-label="t('operaciones.turnos.deactivateAria', { name: item.name })"
                 :title="t('operaciones.turnos.deactivate')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
                 @click="requestDeactivate(item)"
@@ -70,7 +70,7 @@
               <button
                 v-else
                 type="button"
-                :aria-label="`Reactivar ${item.name}`"
+                :aria-label="t('operaciones.turnos.reactivateAria', { name: item.name })"
                 :title="t('operaciones.turnos.reactivate')"
                 class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
                 @click="reactivate(item)"
@@ -91,7 +91,7 @@
 
         <template #cell-status="{ row }">
           <UiStatusBadge
-            :value="row.is_active ? 'Activo' : 'Inactivo'"
+            :value="row.is_active ? t('operaciones.turnos.active') : t('operaciones.turnos.inactive')"
             format="text"
             :variant="row.is_active ? 'success' : 'secondary'"
             size="sm"
@@ -102,7 +102,7 @@
           <div class="flex items-center justify-end gap-0.5">
             <button
               type="button"
-              :aria-label="`Editar ${row.name}`"
+              :aria-label="t('operaciones.turnos.editAria', { name: row.name })"
               :title="t('operaciones.turnos.edit')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="openEdit(row)"
@@ -112,7 +112,7 @@
             <button
               v-if="row.is_active"
               type="button"
-              :aria-label="`Desactivar ${row.name}`"
+              :aria-label="t('operaciones.turnos.deactivateAria', { name: row.name })"
               :title="t('operaciones.turnos.deactivate')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-state-warning-text hover:bg-state-warning-bg focus:outline-none focus:ring-2 focus:ring-state-warning-border/30 transition-colors"
               @click="requestDeactivate(row)"
@@ -122,7 +122,7 @@
             <button
               v-else
               type="button"
-              :aria-label="`Reactivar ${row.name}`"
+              :aria-label="t('operaciones.turnos.reactivateAria', { name: row.name })"
               :title="t('operaciones.turnos.reactivate')"
               class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
               @click="reactivate(row)"
@@ -144,8 +144,8 @@
       v-model="confirmOpen"
       :title="t('operaciones.turnos.deactivateTitle')"
       :message="confirmMessage"
-      confirm-label="Desactivar"
-      loading-label="Desactivando..."
+      :confirm-label="t('operaciones.turnos.deactivate')"
+      :loading-label="t('operaciones.turnos.deactivating')"
       variant="destructive"
       :loading="isDeactivating"
       @confirm="performDeactivate"
@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ArrowPathIcon, NoSymbolIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import type { ShiftTemplate } from '~/components/operaciones/ShiftTemplatePanel.vue'
@@ -204,7 +204,7 @@ const formatTime = (t: string) => (t?.length >= 5 ? t.slice(0, 5) : t)
 const formatSchedule = (row: ShiftTemplate) => {
   const start = formatTime(row.start_time)
   const end = formatTime(row.end_time)
-  return row.crosses_midnight ? `${start} – ${end} (día siguiente)` : `${start} – ${end}`
+  return row.crosses_midnight ? `${start} – ${end} (${t('operaciones.shiftPanel.nextDay')})` : `${start} – ${end}`
 }
 
 const panelOpen = ref(false)
@@ -232,7 +232,7 @@ const isDeactivating = ref(false)
 
 const requestDeactivate = (row: ShiftTemplate) => {
   pendingDeactivate.value = row
-  confirmMessage.value = `¿Desactivar "${row.name}"? No aparecerá al cerrar caja, pero los arqueos pasados no se modifican.`
+  confirmMessage.value = t('operaciones.shiftPanel.deactivateMessage', { name: row.name })
   confirmOpen.value = true
 }
 
@@ -246,7 +246,7 @@ const performDeactivate = async () => {
       body: { is_active: false },
     })
     await cache.invalidateQueries({ key: ['operaciones', 'shifts'] })
-    toast.success(`Turno "${row.name}" desactivado`)
+    toast.success(t('operaciones.turnos.deactivatedToast', { name: row.name }))
     confirmOpen.value = false
   } catch (err: any) {
     toast.error(err?.data?.detail || t('operaciones.turnos.deactivateError'), { title: 'Error' })
@@ -262,7 +262,7 @@ const reactivate = async (row: ShiftTemplate) => {
       body: { is_active: true },
     })
     await cache.invalidateQueries({ key: ['operaciones', 'shifts'] })
-    toast.success(`Turno "${row.name}" reactivado`)
+    toast.success(t('operaciones.turnos.reactivatedToast', { name: row.name }))
   } catch (err: any) {
     toast.error(err?.data?.detail || t('operaciones.turnos.reactivateError'), { title: 'Error' })
   }

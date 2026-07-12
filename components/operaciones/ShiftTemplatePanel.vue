@@ -60,7 +60,7 @@
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
             <label :for="nameId" class="text-sm font-medium text-text-primary">
-              Nombre <span class="text-destructive">*</span>
+              {{ t('operaciones.shiftPanel.nameRequired') }}
             </label>
             <input
               :id="nameId"
@@ -77,7 +77,7 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
-              <label :for="startId" class="text-sm font-medium text-text-primary">Inicio</label>
+              <label :for="startId" class="text-sm font-medium text-text-primary">{{ t('operaciones.shiftPanel.start') }}</label>
               <input
                 :id="startId"
                 v-model="form.start_time"
@@ -87,7 +87,7 @@
               />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label :for="endId" class="text-sm font-medium text-text-primary">Fin</label>
+              <label :for="endId" class="text-sm font-medium text-text-primary">{{ t('operaciones.shiftPanel.end') }}</label>
               <input
                 :id="endId"
                 v-model="form.end_time"
@@ -100,9 +100,9 @@
 
           <div class="flex items-start justify-between gap-3 py-1">
             <div>
-              <p class="text-sm font-medium text-text-primary">Cruza medianoche</p>
+              <p class="text-sm font-medium text-text-primary">{{ t('operaciones.shiftPanel.crossesMidnight') }}</p>
               <p class="text-xs text-text-secondary mt-0.5">
-                Actívalo si el turno termina al día siguiente (ej. 22:00 – 06:00).
+                {{ t('operaciones.shiftPanel.crossesMidnightHelp') }}
               </p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
@@ -123,7 +123,7 @@
               class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               @click="close"
             >
-              Cancelar
+              {{ t('operaciones.shiftPanel.cancel') }}
             </button>
             <button
               type="button"
@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 import { ClockIcon } from '@heroicons/vue/24/outline'
 
 export interface ShiftTemplate {
@@ -236,7 +236,7 @@ const close = () => {
 const validate = () => {
   const name = form.value.name.trim()
   if (!name) {
-    errors.value = { name: 'El nombre es obligatorio' }
+    errors.value = { name: t('operaciones.shiftPanel.nameRequiredError') }
     return false
   }
   if (!form.value.start_time || !form.value.end_time) {

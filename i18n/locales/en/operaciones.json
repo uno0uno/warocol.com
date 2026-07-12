@@ -67,6 +67,17 @@
       "edit": "Edit",
       "deactivate": "Deactivate",
       "reactivate": "Reactivate"
+      ,"activeCount": "{count} active"
+      ,"inactiveCount": "{count} inactive"
+      ,"newShift": "+ New shift"
+      ,"active": "Active"
+      ,"inactive": "Inactive"
+      ,"editAria": "Edit {name}"
+      ,"deactivateAria": "Deactivate {name}"
+      ,"reactivateAria": "Reactivate {name}"
+      ,"deactivating": "Deactivating..."
+      ,"deactivatedToast": "Shift \"{name}\" deactivated"
+      ,"reactivatedToast": "Shift \"{name}\" reactivated"
     },
     "shiftPanel": {
       "editTitle": "Edit shift",
@@ -81,6 +92,15 @@
       "nameExists": "A shift with that name already exists",
       "invalidSchedule": "Invalid schedule",
       "saveError": "Could not save the shift. Try again."
+      ,"nextDay": "next day"
+      ,"deactivateMessage": "Deactivate \"{name}\"? It will not appear when closing the cash register, but past counts will not be changed."
+      ,"nameRequired": "Name *"
+      ,"start": "Start"
+      ,"end": "End"
+      ,"crossesMidnight": "Crosses midnight"
+      ,"crossesMidnightHelp": "Enable if the shift ends the next day (e.g. 22:00 – 06:00)."
+      ,"cancel": "Cancel"
+      ,"nameRequiredError": "Name is required"
     },
     "mesas": {
       "posCode": "POS code",

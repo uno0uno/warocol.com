@@ -67,6 +67,17 @@
       "edit": "Editar",
       "deactivate": "Desactivar",
       "reactivate": "Reactivar"
+      ,"activeCount": "{count} activo(s)"
+      ,"inactiveCount": "{count} inactivo(s)"
+      ,"newShift": "+ Nuevo turno"
+      ,"active": "Activo"
+      ,"inactive": "Inactivo"
+      ,"editAria": "Editar {name}"
+      ,"deactivateAria": "Desactivar {name}"
+      ,"reactivateAria": "Reactivar {name}"
+      ,"deactivating": "Desactivando..."
+      ,"deactivatedToast": "Turno \"{name}\" desactivado"
+      ,"reactivatedToast": "Turno \"{name}\" reactivado"
     },
     "shiftPanel": {
       "editTitle": "Editar turno",
@@ -81,6 +92,15 @@
       "nameExists": "Ya existe un turno con ese nombre",
       "invalidSchedule": "Horario inválido",
       "saveError": "No se pudo guardar el turno. Inténtalo de nuevo."
+      ,"nextDay": "día siguiente"
+      ,"deactivateMessage": "¿Desactivar \"{name}\"? No aparecerá al cerrar caja, pero los arqueos pasados no se modifican."
+      ,"nameRequired": "Nombre *"
+      ,"start": "Inicio"
+      ,"end": "Fin"
+      ,"crossesMidnight": "Cruza medianoche"
+      ,"crossesMidnightHelp": "Actívalo si el turno termina al día siguiente (ej. 22:00 – 06:00)."
+      ,"cancel": "Cancelar"
+      ,"nameRequiredError": "El nombre es obligatorio"
     },
     "mesas": {
       "posCode": "Código POS",
