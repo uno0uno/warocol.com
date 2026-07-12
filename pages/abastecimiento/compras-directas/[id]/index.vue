@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSaving || isUploading"
-      :label="isSaving ? 'Guardando cambios...' : 'Subiendo archivo...'"
-      :hint="isSaving ? 'Estamos actualizando la compra directa.' : 'Estamos subiendo el archivo y asociandolo a la compra.'"
+      :label="isSaving ? t('abastecimiento.compraDirectaDetalle.saving') : t('abastecimiento.compraDirectaDetalle.uploading')"
+      :hint="isSaving ? t('abastecimiento.compraDirectaDetalle.savingHint') : t('abastecimiento.compraDirectaDetalle.uploadingHint')"
       variant="glass"
       indicator="matrix"
     />
@@ -29,7 +29,7 @@
             <p class="text-lg font-semibold text-text-primary">{{ purchase.purchase_number }}</p>
             <button @click="copyPurchaseLink"
               class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary transition-colors"
-              title="Copiar enlace">
+              :title="t('abastecimiento.compraDirectaDetalle.copyLink')">
               <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -40,20 +40,20 @@
 
         <!-- Supplier -->
         <PurchasesPurchaseInfoCard
-          label="Proveedor"
+          :label="t('abastecimiento.compraDirectaDetalle.supplier')"
           icon-path="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
         >
-          <p class="text-lg font-semibold text-text-primary">{{ purchase.supplier_name || 'Sin proveedor' }}</p>
+          <p class="text-lg font-semibold text-text-primary">{{ purchase.supplier_name || t('abastecimiento.compraDirectaDetalle.emptySupplier') }}</p>
           <p v-if="purchase.supplier_tax_id" class="text-xs text-text-secondary">NIT: {{ purchase.supplier_tax_id }}</p>
         </PurchasesPurchaseInfoCard>
 
         <!-- Status Badge -->
         <PurchasesPurchaseInfoCard
-          label="Estado Actual"
+          :label="t('abastecimiento.compraDirectaDetalle.currentStatus')"
           icon-path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
         >
           <UiStatusBadge
-            :value="isEditMode ? 'Editando' : getStatusText(purchase.status)"
+            :value="isEditMode ? t('abastecimiento.compraDirectaDetalle.editing') : getStatusText(purchase.status)"
             format="text"
             :variant="isEditMode ? 'warning' : getStatusVariant(purchase.status)"
           />
@@ -61,7 +61,7 @@
 
         <!-- Payment Method -->
         <PurchasesPurchaseInfoCard
-          label="Método de Pago"
+          :label="t('abastecimiento.compraDirectaDetalle.paymentMethod')"
           icon-path="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
         >
           <p class="text-lg font-semibold text-text-primary">
@@ -75,9 +75,9 @@
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
       >
         <div>
-          <p class="text-sm font-semibold text-text-primary">Pago pendiente</p>
+          <p class="text-sm font-semibold text-text-primary">{{ t('abastecimiento.compraDirectaDetalle.pendingPayment') }}</p>
           <p class="text-xs text-text-secondary">
-            Esta compra esta contabilizada como deuda a proveedor hasta registrar el pago.
+            {{ t('abastecimiento.compraDirectaDetalle.pendingPaymentHelp') }}
           </p>
         </div>
         <button
@@ -85,7 +85,7 @@
           class="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-shell-cta-bg px-4 text-sm font-semibold text-shell-cta-text transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
           @click="showPaymentPanel = true"
         >
-          Pagar
+          {{ t('abastecimiento.compraDirectaDetalle.pay') }}
         </button>
       </div>
 
@@ -97,7 +97,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <span>Items ({{ editItems.length }})</span>
+            <span>{{ t('abastecimiento.common.items') }} ({{ editItems.length }})</span>
           </h3>
 
           <!-- Edit Toggle Button -->
@@ -109,7 +109,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span>Editar</span>
+            <span>{{ t('abastecimiento.compraDirectaDetalle.edit') }}</span>
           </button>
 
           <div v-else class="flex items-center gap-2">
@@ -117,7 +117,7 @@
               @click="cancelEdit"
               class="px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:bg-background transition-colors"
             >
-              Cancelar
+              {{ t('abastecimiento.compraDirectaDetalle.cancel') }}
             </button>
             <button
               @click="saveChanges"
@@ -127,7 +127,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
-              <span>Guardar</span>
+              <span>{{ t('abastecimiento.compraDirectaDetalle.save') }}</span>
             </button>
           </div>
         </div>
@@ -152,13 +152,13 @@
               <!-- Card body -->
               <div class="px-4 py-3 flex items-center justify-between gap-4">
                 <div>
-                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">Precio</p>
+                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">{{ t('abastecimiento.compraDirectaDetalle.price') }}</p>
                   <p class="text-sm font-medium text-text-primary">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</p>
                   <p class="text-[11px] text-text-secondary">/ {{ item.purchase_unit || item.unit }}</p>
                 </div>
                 <div class="h-8 w-px bg-border"></div>
                 <div class="text-right">
-                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">Total</p>
+                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">{{ t('abastecimiento.compraDirectaDetalle.total') }}</p>
                   <p class="text-base font-bold text-text-primary">${{ formatCurrency(item.total_cost) }}</p>
                 </div>
               </div>
@@ -168,7 +168,7 @@
             </div>
             <!-- Mobile total -->
             <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
-              <span class="text-sm font-medium text-primary">Total compra</span>
+              <span class="text-sm font-medium text-primary">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</span>
               <span class="text-lg font-bold text-primary">${{ formatCurrency(purchase.total_amount) }}</span>
             </div>
           </div>
@@ -180,11 +180,11 @@
                 <tr class="bg-surface-secondary border-b border-border">
                   <th class="w-8 px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">#</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Ref. Factura</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">Cant.</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Unidad</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Precio</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Total</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.invoiceReference') }}</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.quantityShort') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.unit') }}</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.price') }}</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">{{ t('abastecimiento.compraDirectaDetalle.total') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
@@ -216,7 +216,7 @@
               </tbody>
               <tfoot>
                 <tr class="bg-primary/5 border-t-2 border-primary/20">
-                  <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-right border-r border-dashed border-border/60">Total de la compra</td>
+                  <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-right border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</td>
                   <td class="px-4 py-3.5 text-right">
                     <span class="text-base font-bold text-primary tabular-nums">${{ formatCurrency(purchase.total_amount) }}</span>
                   </td>
@@ -250,7 +250,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <!-- Quantity -->
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.common.cantidad') }}</label>
                 <UiDecimalInput
                   v-model="item.purchase_quantity"
                   :min="0.000001"
@@ -262,13 +262,13 @@
 
               <!-- Unit -->
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.unit') }}</label>
                 <select
                   v-model="item.purchase_unit"
                   class="input-base w-full px-3 py-2 text-sm"
                   @change="updateItemTotal(index)"
                 >
-                  <option value="">Seleccionar</option>
+                  <option value="">{{ t('abastecimiento.compraDirectaDetalle.selectUnit') }}</option>
                   <option
                     v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                     :key="unitOpt.value"
@@ -281,7 +281,7 @@
 
               <!-- Unit Cost -->
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Precio Unit.</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.unitPrice') }}</label>
                 <UiDecimalInput
                   v-model="item.unit_cost"
                   :min="0"
@@ -293,7 +293,7 @@
 
               <!-- Total -->
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Total</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.total') }}</label>
                 <div class="input-base w-full px-3 py-2 text-sm bg-primary/10 text-primary font-bold">
                   ${{ formatCurrency(item.total_cost) }}
                 </div>
@@ -306,7 +306,7 @@
                 v-model="item.notes"
                 type="text"
                 class="input-base w-full px-3 py-2 text-sm"
-                placeholder="Notas del item (opcional)"
+                :placeholder="t('abastecimiento.compraDirectaDetalle.itemNotesPlaceholder')"
               />
             </div>
           </div>
@@ -323,13 +323,13 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Agregar Item</span>
+              <span>{{ t('abastecimiento.compraDirectaDetalle.addItem') }}</span>
             </button>
 
             <!-- Expanded: Inline Add Form -->
             <div v-else class="p-4 bg-background">
               <div class="flex justify-between items-center mb-4">
-                <h4 class="text-sm font-semibold text-text-primary">Nuevo Item</h4>
+                <h4 class="text-sm font-semibold text-text-primary">{{ t('abastecimiento.compraDirectaDetalle.newItem') }}</h4>
                 <button
                   @click="showAddItemForm = false; resetNewItem()"
                   class="text-text-secondary hover:text-text-primary p-1"
@@ -354,7 +354,7 @@
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                 <!-- Quantity -->
                 <div>
-                  <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
+                  <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.common.cantidad') }} *</label>
                   <UiDecimalInput
                     v-model="newItem.purchase_quantity"
                     :min="0.000001"
@@ -365,14 +365,14 @@
 
                 <!-- Unit Select -->
                 <div>
-                  <label class="block text-xs font-medium text-text-secondary mb-1">Unidad *</label>
+                  <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.unit') }} *</label>
                   <select
                     v-model="newItem.purchase_unit"
                     :disabled="!newItem.ingredient_id"
                     class="input-base w-full px-3 py-2 text-sm"
                     :class="{ 'bg-surface-secondary cursor-not-allowed': !newItem.ingredient_id }"
                   >
-                    <option value="">{{ newItem.ingredient_id ? 'Seleccionar' : WAREHOUSE_COPY.selectWarehouseItemShort }}</option>
+                    <option value="">{{ newItem.ingredient_id ? t('abastecimiento.compraDirectaDetalle.selectUnit') : WAREHOUSE_COPY.selectWarehouseItemShort }}</option>
                     <option
                       v-for="unitOpt in getPurchaseUnitOptions(newItem.ingredient_id)"
                       :key="unitOpt.value"
@@ -385,7 +385,7 @@
 
                 <!-- Unit Cost -->
                 <div>
-                  <label class="block text-xs font-medium text-text-secondary mb-1">Precio Unit. *</label>
+                  <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.unitPrice') }} *</label>
                   <UiDecimalInput
                     v-model="newItem.unit_cost"
                     :min="0"
@@ -396,7 +396,7 @@
 
                 <!-- Preview Total -->
                 <div>
-                  <label class="block text-xs font-medium text-text-secondary mb-1">Total</label>
+                  <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.total') }}</label>
                   <div class="input-base w-full px-3 py-2 text-sm bg-primary/10 text-primary font-bold">
                     ${{ formatCurrency(roundMoney(newItem.purchase_quantity * newItem.unit_cost)) }}
                   </div>
@@ -409,7 +409,7 @@
                   v-model="newItem.notes"
                   type="text"
                   class="input-base w-full px-3 py-2 text-sm"
-                  placeholder="Notas del item (opcional)"
+                  :placeholder="t('abastecimiento.compraDirectaDetalle.itemNotesPlaceholder')"
                 />
               </div>
 
@@ -423,7 +423,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Agregar a la Lista</span>
+                <span>{{ t('abastecimiento.compraDirectaDetalle.addToList') }}</span>
               </button>
             </div>
           </div>
@@ -432,19 +432,19 @@
         <!-- Total Summary (Edit mode only — view mode shows total in table footer) -->
         <div v-if="isEditMode" class="flex justify-end mt-4">
           <div class="bg-primary/10 border border-primary/20 rounded-xl px-5 py-3 flex items-center gap-4">
-            <p class="text-sm font-medium text-primary">Total de la Compra</p>
+            <p class="text-sm font-medium text-primary">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</p>
             <p class="text-xl font-bold text-primary">${{ formatCurrency(editTotal) }}</p>
           </div>
         </div>
 
         <!-- Purchase Date (edit mode only) -->
         <div v-if="isEditMode" class="mt-4 sm:mt-6">
-          <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">Fecha de compra</h4>
+          <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">{{ t('abastecimiento.compraDirectaDetalle.purchaseDate') }}</h4>
           <ClientOnly>
             <VueDatePicker
               v-model="editPurchaseDate"
               :enable-time-picker="false"
-              :locale="es"
+              :locale="datePickerLocale"
               auto-apply
               :teleport="true"
               :max-date="new Date()"
@@ -452,25 +452,25 @@
               input-class-name="dp-custom-input"
               menu-class-name="dp-custom-menu"
               calendar-cell-class-name="dp-custom-cell"
-              placeholder="Seleccionar fecha..."
+              :placeholder="t('abastecimiento.compraDirectaDetalle.selectDate')"
             />
           </ClientOnly>
         </div>
 
         <!-- Notes -->
         <div class="mt-4 sm:mt-6">
-          <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">Observaciones</h4>
+          <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">{{ t('abastecimiento.compraDirectaDetalle.notes') }}</h4>
           <textarea
             v-if="isEditMode"
             v-model="editNotes"
             class="input-base w-full px-3 py-2 text-sm"
             rows="2"
-            placeholder="Observaciones (opcional)"
+            :placeholder="t('abastecimiento.compraDirectaDetalle.notesPlaceholder')"
           ></textarea>
           <p v-else-if="purchase.notes" class="text-xs sm:text-sm text-text-secondary bg-background p-3 sm:p-4 rounded-lg border border-border whitespace-pre-wrap">
             {{ purchase.notes }}
           </p>
-          <p v-else class="text-xs sm:text-sm text-text-secondary italic">Sin observaciones</p>
+          <p v-else class="text-xs sm:text-sm text-text-secondary italic">{{ t('abastecimiento.compraDirectaDetalle.noNotes') }}</p>
         </div>
       </div>
 
@@ -480,7 +480,7 @@
           <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
-          <span>Documentos Adjuntos</span>
+          <span>{{ t('abastecimiento.compraDirectaDetalle.attachments') }}</span>
         </h3>
 
         <!-- Existing Attachments -->
@@ -495,7 +495,7 @@
               rel="noopener noreferrer"
               class="flex items-center gap-3 p-3 border border-border rounded-lg bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
               :class="getAttachmentUrl(attachment) ? 'hover:bg-surface-secondary cursor-pointer' : ''"
-              :aria-label="getAttachmentUrl(attachment) ? `Abrir documento ${attachment.file_name}` : undefined"
+              :aria-label="getAttachmentUrl(attachment) ? t('abastecimiento.compraDirectaDetalle.openDocument', { name: attachment.file_name }) : undefined"
             >
               <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,7 +509,7 @@
               <span
                 v-if="getAttachmentUrl(attachment)"
                 class="p-2 text-primary rounded-lg transition-colors"
-                title="Abrir en nueva ventana"
+                :title="t('abastecimiento.compraDirectaDetalle.openNewWindow')"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M6 8.25V18h9.75" />
@@ -521,12 +521,12 @@
 
         <!-- Upload New Attachments -->
         <div :class="{ 'border-t border-border pt-4': purchase.attachments?.length > 0 }">
-          <h4 class="font-medium text-text-primary mb-4">Agregar Documento</h4>
+          <h4 class="font-medium text-text-primary mb-4">{{ t('abastecimiento.compraDirectaDetalle.addDocument') }}</h4>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Invoice Upload -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-2">Factura</label>
+              <label class="block text-sm font-medium text-text-primary mb-2">{{ t('abastecimiento.compraDirectaDetalle.invoice') }}</label>
               <div
                 class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
                 @click="triggerFileInput('invoice')"
@@ -543,14 +543,14 @@
                 <svg class="w-8 h-8 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p class="text-sm text-text-secondary">Click o arrastra archivo aqui</p>
-                <p class="text-xs text-text-secondary mt-1">PDF, JPG, PNG (max 10MB)</p>
+                <p class="text-sm text-text-secondary">{{ t('abastecimiento.compraDirectaDetalle.dropFile') }}</p>
+                <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.compraDirectaDetalle.acceptedFiles') }}</p>
               </div>
             </div>
 
             <!-- Payment Proof Upload -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-2">Comprobante de Pago</label>
+              <label class="block text-sm font-medium text-text-primary mb-2">{{ t('abastecimiento.compraDirectaDetalle.paymentProof') }}</label>
               <div
                 class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
                 @click="triggerFileInput('payment')"
@@ -567,8 +567,8 @@
                 <svg class="w-8 h-8 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p class="text-sm text-text-secondary">Click o arrastra archivo aqui</p>
-                <p class="text-xs text-text-secondary mt-1">PDF, JPG, PNG (max 10MB)</p>
+                <p class="text-sm text-text-secondary">{{ t('abastecimiento.compraDirectaDetalle.dropFile') }}</p>
+                <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.compraDirectaDetalle.acceptedFiles') }}</p>
               </div>
             </div>
           </div>
@@ -613,14 +613,14 @@
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <h2 id="direct-purchase-payment-title" class="text-base font-bold leading-tight text-text-primary">Registrar pago</h2>
-                  <p class="mt-0.5 truncate text-xs leading-snug text-text-secondary">{{ purchase.purchase_number }} · {{ purchase.supplier_name || 'Sin proveedor' }}</p>
+                  <h2 id="direct-purchase-payment-title" class="text-base font-bold leading-tight text-text-primary">{{ t('abastecimiento.compraDirectaDetalle.registerPayment') }}</h2>
+                  <p class="mt-0.5 truncate text-xs leading-snug text-text-secondary">{{ purchase.purchase_number }} · {{ purchase.supplier_name || t('abastecimiento.compraDirectaDetalle.emptySupplier') }}</p>
                 </div>
               </div>
               <button
                 type="button"
                 class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                aria-label="Cerrar"
+                :aria-label="t('abastecimiento.compraDirectaDetalle.close')"
                 @click="showPaymentPanel = false"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -643,7 +643,7 @@
 
 <script setup lang="ts">
 import { format as fnsFormat } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { enUS, es } from 'date-fns/locale'
 import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useQuery } from '@pinia/colada'
@@ -655,6 +655,7 @@ import { usePaymentLabel } from '~/composables/usePaymentLabel'
 const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
@@ -664,10 +665,11 @@ function resolvePaymentLabel(slug: string | null | undefined, methodId?: string 
   return _resolvePaymentLabel(slug, methodId)
 }
 
-const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
+const datePickerLocale = computed(() => locale.value === 'en' ? 'en' : 'es')
+const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: locale.value === 'en' ? enUS : es })
 
 useHead({
-  title: 'Detalle Compra Directa - Abastecimiento'
+  title: () => t('abastecimiento.head.comprasDirectas')
 })
 
 // State
@@ -925,12 +927,12 @@ const saveChanges = async () => {
       body: payload
     })
 
-    toast.success('Cambios guardados exitosamente', { title: 'Guardado' })
+    toast.success(t('abastecimiento.compraDirectaDetalle.saveSuccess'), { title: t('abastecimiento.compraDirectaDetalle.savedTitle') })
     isEditMode.value = false
     await refresh()
   } catch (error: any) {
     console.error('Error saving changes:', error)
-    toast.error(error.data?.detail || 'Error al guardar los cambios', { title: 'Error' })
+    toast.error(error.data?.detail || t('abastecimiento.compraDirectaDetalle.saveError'), { title: t('common.error') })
   } finally {
     isSaving.value = false
   }
@@ -963,13 +965,13 @@ const handleFileDrop = async (event: DragEvent, type: 'invoice' | 'payment') => 
 
 const uploadFile = async (file: File, type: 'invoice' | 'payment') => {
   if (file.size > 10 * 1024 * 1024) {
-    toast.error('El archivo es muy grande. Maximo 10MB permitido.', { title: 'Error' })
+    toast.error(t('abastecimiento.compraDirectaDetalle.fileTooLarge'), { title: t('common.error') })
     return
   }
 
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png']
   if (!allowedTypes.includes(file.type)) {
-    toast.error('Tipo de archivo no permitido. Use PDF, JPG o PNG.', { title: 'Error' })
+    toast.error(t('abastecimiento.compraDirectaDetalle.invalidFileType'), { title: t('common.error') })
     return
   }
 
@@ -991,11 +993,13 @@ const uploadFile = async (file: File, type: 'invoice' | 'payment') => {
       body: formData
     })
 
-    toast.success(`${type === 'invoice' ? 'Factura' : 'Comprobante'} subido exitosamente`, { title: 'Archivo Subido' })
+    toast.success(t('abastecimiento.compraDirectaDetalle.fileUploaded', {
+      type: t(type === 'invoice' ? 'abastecimiento.compraDirectaDetalle.invoice' : 'abastecimiento.compraDirectaDetalle.paymentProof'),
+    }), { title: t('abastecimiento.compraDirectaDetalle.uploadedTitle') })
     await refresh()
   } catch (error: any) {
     console.error('Error uploading file:', error)
-    toast.error(error.data?.detail || 'Error al subir el archivo', { title: 'Error' })
+    toast.error(error.data?.detail || t('abastecimiento.compraDirectaDetalle.uploadError'), { title: t('common.error') })
   } finally {
     isUploading.value = false
   }
@@ -1020,10 +1024,10 @@ const copyPurchaseLink = async () => {
       document.body.removeChild(textArea)
     }
 
-    toast.success('Enlace copiado exitosamente', { title: 'Copiado' })
+    toast.success(t('abastecimiento.compraDirectaDetalle.copySuccess'), { title: t('abastecimiento.compraDirectaDetalle.copiedTitle') })
   } catch (error) {
     console.error('Error copying link:', error)
-    toast.error('No se pudo copiar el enlace', { title: 'Error' })
+    toast.error(t('abastecimiento.compraDirectaDetalle.copyError'), { title: t('common.error') })
   }
 }
 
@@ -1033,12 +1037,12 @@ const formatDate = (date: string) => _fmtDate(date)
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 const formatUnitCost = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString('es-CO', {
+  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
     minimumFractionDigits: 0,
     maximumFractionDigits: UNIT_COST_PRECISION,
   })
@@ -1046,9 +1050,9 @@ const formatUnitCost = (value: number) => {
 
 const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
-    'received': 'Recibida',
-    'invoiced': 'Facturada',
-    'paid': 'Pagada'
+    'received': t('abastecimiento.common.recibida'),
+    'invoiced': t('abastecimiento.common.facturada'),
+    'paid': t('abastecimiento.common.pagada')
   }
   return statusMap[status] || status
 }
@@ -1065,11 +1069,11 @@ const getStatusVariant = (status: string) => {
 
 const getAttachmentTypeLabel = (type: string) => {
   const typeMap: Record<string, string> = {
-    'invoice': 'Factura',
-    'payment_proof': 'Comprobante de Pago',
-    'delivery_photo': 'Foto de Entrega',
-    'quality_photo': 'Foto de Calidad',
-    'other': 'Otro'
+    'invoice': t('abastecimiento.compraDirectaDetalle.attachmentInvoice'),
+    'payment_proof': t('abastecimiento.compraDirectaDetalle.attachmentPayment'),
+    'delivery_photo': t('abastecimiento.compraDirectaDetalle.attachmentDelivery'),
+    'quality_photo': t('abastecimiento.compraDirectaDetalle.attachmentQuality'),
+    'other': t('abastecimiento.compraDirectaDetalle.attachmentOther')
   }
   return typeMap[type] || type
 }

@@ -12,17 +12,18 @@ withDefaults(defineProps<{
 const dotValues = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1]
 const dotDelays = dotValues.map(() => `${(Math.random() * 2).toFixed(2)}s`)
 
+const { t } = useI18n({ useScope: 'global' })
 const { currentPhrase, start, stop } = useLoadingPhrases([
-  'Cargando ventas...',
-  'Consultando los pedidos...',
-  'Haciendo las cuentas...',
-  'Negociando con el servidor...',
-  'Sumando comandas...',
-  'Revisando el inventario...',
-  'Prometemos no cobrar comisiones...',
-  'Calculando tu ticket promedio...',
-  'Casi listo, paciencia chef...',
-  'Sincronizando con la cocina...',
+  t('common.loadingPhrases.sales'),
+  t('common.loadingPhrases.orders'),
+  t('common.loadingPhrases.accounts'),
+  t('common.loadingPhrases.server'),
+  t('common.loadingPhrases.tickets'),
+  t('common.loadingPhrases.inventory'),
+  t('common.loadingPhrases.commissions'),
+  t('common.loadingPhrases.averageTicket'),
+  t('common.loadingPhrases.almostReady'),
+  t('common.loadingPhrases.kitchen'),
 ])
 
 onMounted(() => start())

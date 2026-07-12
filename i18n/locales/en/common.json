@@ -15,6 +15,7 @@
     "filter": "Filter",
     "apply": "Apply",
     "period": "Period",
+    "error": "Error",
     "retry": "Retry",
     "yes": "Yes",
     "no": "No",
@@ -33,6 +34,18 @@
       "last15": "Last 15 days",
       "lastMonth": "Last month",
       "last90": "Last 90 days"
+    },
+    "loadingPhrases": {
+      "sales": "Loading sales...",
+      "orders": "Checking orders...",
+      "accounts": "Doing the math...",
+      "server": "Negotiating with the server...",
+      "tickets": "Adding up kitchen tickets...",
+      "inventory": "Reviewing inventory...",
+      "commissions": "We promise not to charge commissions...",
+      "averageTicket": "Calculating your average ticket...",
+      "almostReady": "Almost ready, chef...",
+      "kitchen": "Syncing with the kitchen..."
     },
     "pagination": {
       "showingRange": "Showing {start} to {end} of {total} results",
