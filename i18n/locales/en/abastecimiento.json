@@ -630,6 +630,37 @@
       "waroTemplateCreated": "Template created",
       "waroTemplateCreateError": "Error creating template",
       "waroTemplateBaseAlreadyAssigned": "This template already has a base assigned. Remove it first."
+    },
+    "calidad": {
+      "qualityScore": "Data quality score",
+      "critical": "Critical",
+      "criticalAnomalies": "critical anomalies",
+      "warnings": "Warnings",
+      "warningCount": "warnings",
+      "resolved": "Resolved",
+      "last30Days": "last 30 days",
+      "active": "Active",
+      "criticalOnly": "Critical only",
+      "warningOnly": "Warnings only",
+      "filterSeverityAria": "Filter by severity",
+      "clearFiltersAria": "Clear filters",
+      "empty": "No orders with anomalies",
+      "emptySub": "No price anomalies were detected in the last 30 days.",
+      "supplierFallback": "No supplier",
+      "order": "Order",
+      "supplier": "Supplier",
+      "date": "Date",
+      "criticalHeader": "Critical",
+      "warningHeader": "Warnings",
+      "criticalShort": "crit.",
+      "criticalOne": "{count} critical",
+      "criticalMany": "{count} critical",
+      "warningOne": "{count} warning",
+      "warningMany": "{count} warnings",
+      "warehouseItemOne": "{count} warehouse item",
+      "warehouseItemMany": "{count} warehouse items",
+      "viewAndFixOrder": "View and fix order {order}",
+      "correct": "Fix"
     }
   }
 }

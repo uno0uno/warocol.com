@@ -630,6 +630,37 @@
       "waroTemplateCreated": "Plantilla creada",
       "waroTemplateCreateError": "Error al crear la plantilla",
       "waroTemplateBaseAlreadyAssigned": "Esta plantilla ya tiene un base asignado. Quítalo primero."
+    },
+    "calidad": {
+      "qualityScore": "Score de calidad",
+      "critical": "Críticos",
+      "criticalAnomalies": "anomalías críticas",
+      "warnings": "Avisos",
+      "warningCount": "advertencias",
+      "resolved": "Resueltos",
+      "last30Days": "últimos 30 días",
+      "active": "Activas",
+      "criticalOnly": "Solo críticas",
+      "warningOnly": "Solo avisos",
+      "filterSeverityAria": "Filtrar por severidad",
+      "clearFiltersAria": "Limpiar filtros",
+      "empty": "Sin órdenes con anomalías",
+      "emptySub": "No se detectaron anomalías de precios en los últimos 30 días.",
+      "supplierFallback": "Sin proveedor",
+      "order": "Orden",
+      "supplier": "Proveedor",
+      "date": "Fecha",
+      "criticalHeader": "Críticos",
+      "warningHeader": "Avisos",
+      "criticalShort": "crít.",
+      "criticalOne": "{count} crítico",
+      "criticalMany": "{count} críticos",
+      "warningOne": "{count} aviso",
+      "warningMany": "{count} avisos",
+      "warehouseItemOne": "{count} artículo de bodega",
+      "warehouseItemMany": "{count} artículos de bodega",
+      "viewAndFixOrder": "Ver y corregir orden {order}",
+      "correct": "Corregir"
     }
   }
 }

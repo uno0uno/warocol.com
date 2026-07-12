@@ -13,7 +13,7 @@
       <!-- Score Header — 4 KPI cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <SharedMetricCard
-          title="Score de Calidad"
+          :title="t('abastecimiento.calidad.qualityScore')"
           :value="qualityData?.score ?? 0"
           subtitle="/ 100"
           variant="primary"
@@ -21,25 +21,25 @@
           :show-icon="false"
         />
         <SharedMetricCard
-          title="Críticos"
+          :title="t('abastecimiento.calidad.critical')"
           :value="qualityData?.critical ?? 0"
-          subtitle="anomalías críticas"
+          :subtitle="t('abastecimiento.calidad.criticalAnomalies')"
           variant="primary"
           format="number"
           :show-icon="false"
         />
         <SharedMetricCard
-          title="Avisos"
+          :title="t('abastecimiento.calidad.warnings')"
           :value="qualityData?.warning ?? 0"
-          subtitle="advertencias"
+          :subtitle="t('abastecimiento.calidad.warningCount')"
           variant="primary"
           format="number"
           :show-icon="false"
         />
         <SharedMetricCard
-          title="Resueltos"
+          :title="t('abastecimiento.calidad.resolved')"
           :value="qualityData?.resolved ?? 0"
-          subtitle="últimos 30 días"
+          :subtitle="t('abastecimiento.calidad.last30Days')"
           variant="primary"
           format="number"
           :show-icon="false"
@@ -63,17 +63,17 @@
 
         <select
           v-model="severityFilter"
-          aria-label="Filtrar por severidad"
+          :aria-label="t('abastecimiento.calidad.filterSeverityAria')"
           class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer min-w-[130px] transition-colors"
         >
-          <option value="">Activas</option>
-          <option value="critical">Solo críticas</option>
-          <option value="warning">Solo avisos</option>
+          <option value="">{{ t('abastecimiento.calidad.active') }}</option>
+          <option value="critical">{{ t('abastecimiento.calidad.criticalOnly') }}</option>
+          <option value="warning">{{ t('abastecimiento.calidad.warningOnly') }}</option>
         </select>
 
         <button
           v-if="searchIngredient || severityFilter"
-          aria-label="Limpiar filtros"
+          :aria-label="t('abastecimiento.calidad.clearFiltersAria')"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center justify-center"
           @click="clearFilters"
         >
@@ -91,8 +91,8 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         @row-click="viewOrder"
-        empty-message="Sin órdenes con anomalías"
-        empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
+        :empty-message="t('abastecimiento.calidad.empty')"
+        :empty-sub-message="t('abastecimiento.calidad.emptySub')"
         variant="default"
         row-size="sm"
       >
@@ -109,20 +109,20 @@
                 <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date ?? item.date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.supplier_name ?? 'Sin proveedor' }} · {{ item.alerts.length }} {{ item.alerts.length !== 1 ? WAREHOUSE_COPY.warehouseItemPlural : WAREHOUSE_COPY.warehouseItemSingular }}
+                {{ item.supplier_name ?? t('abastecimiento.calidad.supplierFallback') }} · {{ warehouseItemsLabel(item.alerts.length) }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <UiStatusBadge
                 v-if="item.critical > 0"
-                :value="`${item.critical} crít.`"
+                :value="criticalShortLabel(item.critical)"
                 format="text"
                 variant="destructive"
                 size="sm"
               />
               <UiStatusBadge
                 v-if="item.warning > 0"
-                :value="`${item.warning} aviso${item.warning > 1 ? 's' : ''}`"
+                :value="warningLabel(item.warning)"
                 format="text"
                 variant="warning"
                 size="sm"
@@ -137,7 +137,7 @@
         </template>
 
         <template #cell-supplier_name="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ value ?? 'Sin proveedor' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value ?? t('abastecimiento.calidad.supplierFallback') }}</span>
         </template>
 
         <template #cell-purchase_date="{ value, row }">
@@ -147,7 +147,7 @@
         <template #cell-critical="{ value }">
           <UiStatusBadge
             v-if="value > 0"
-            :value="`${value} crítico${value > 1 ? 's' : ''}`"
+            :value="criticalLabel(value)"
             format="text"
             variant="destructive"
             size="sm"
@@ -157,7 +157,7 @@
         <template #cell-warning="{ value }">
           <UiStatusBadge
             v-if="value > 0"
-            :value="`${value} aviso${value > 1 ? 's' : ''}`"
+            :value="warningLabel(value)"
             format="text"
             variant="warning"
             size="sm"
@@ -166,7 +166,7 @@
 
         <template #cell-alerts="{ value }">
           <UiStatusBadge
-            :value="`${value.length} ${value.length !== 1 ? WAREHOUSE_COPY.warehouseItemPlural : WAREHOUSE_COPY.warehouseItemSingular}`"
+            :value="warehouseItemsLabel(value.length)"
             format="text"
             variant="secondary"
             size="sm"
@@ -177,13 +177,13 @@
           <div class="flex justify-center">
             <NuxtLink
               :to="`/abastecimiento/compras-directas/${row.purchase_id}/editar`"
-              :aria-label="`Ver y corregir orden ${row.purchase_number ?? ''}`"
+              :aria-label="t('abastecimiento.calidad.viewAndFixOrder', { order: row.purchase_number ?? '' })"
               target="_blank"
               rel="noopener noreferrer"
               class="min-h-[36px] px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 text-primary text-sm font-medium hover:bg-primary/15 transition-colors"
               @click.stop
             >
-              Corregir
+              {{ t('abastecimiento.calidad.correct') }}
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
@@ -199,7 +199,8 @@
 <script setup lang="ts">
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+const { t } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
@@ -252,15 +253,15 @@ const handleSort = (field: string) => {
 }
 
 // Table columns
-const tableColumns = [
-  { key: 'purchase_number', title: 'Orden', sortable: true },
-  { key: 'supplier_name', title: 'Proveedor', sortable: true },
-  { key: 'purchase_date', title: 'Fecha', sortable: true },
-  { key: 'critical', title: 'Críticos', sortable: true },
-  { key: 'warning', title: 'Avisos', sortable: true },
+const tableColumns = computed(() => [
+  { key: 'purchase_number', title: t('abastecimiento.calidad.order'), sortable: true },
+  { key: 'supplier_name', title: t('abastecimiento.calidad.supplier'), sortable: true },
+  { key: 'purchase_date', title: t('abastecimiento.calidad.date'), sortable: true },
+  { key: 'critical', title: t('abastecimiento.calidad.criticalHeader'), sortable: true },
+  { key: 'warning', title: t('abastecimiento.calidad.warningHeader'), sortable: true },
   { key: 'alerts', title: WAREHOUSE_COPY.calidadAlertsColumn, sortable: false },
   { key: 'actions', title: '', sortable: false }
-]
+])
 
 // Group alerts by purchase_id → one row per order
 const ordersWithAnomalies = computed(() => {
@@ -335,4 +336,19 @@ const viewOrder = (order: any) => {
 // Helpers
 const { formatDate: _fmtDate } = useFormatters()
 const formatDate = (dateStr: string) => _fmtDate(dateStr)
+
+const pluralLabel = (count: number, singularKey: string, pluralKey: string) =>
+  t(count === 1 ? singularKey : pluralKey, { count })
+
+const criticalShortLabel = (count: number) =>
+  `${count} ${t('abastecimiento.calidad.criticalShort')}`
+
+const criticalLabel = (count: number) =>
+  pluralLabel(count, 'abastecimiento.calidad.criticalOne', 'abastecimiento.calidad.criticalMany')
+
+const warningLabel = (count: number) =>
+  pluralLabel(count, 'abastecimiento.calidad.warningOne', 'abastecimiento.calidad.warningMany')
+
+const warehouseItemsLabel = (count: number) =>
+  pluralLabel(count, 'abastecimiento.calidad.warehouseItemOne', 'abastecimiento.calidad.warehouseItemMany')
 </script>
