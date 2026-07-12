@@ -83,12 +83,12 @@
               ? 'bg-text-secondary/10 text-text-secondary'
               : 'bg-primary/10 text-primary'"
           >
-            {{ item.tenant_id === null ? 'Global' : 'Propia' }}
+            {{ item.tenant_id === null ? t('menu.categorias.global') : t('menu.categorias.own') }}
           </span>
           <button
             v-if="item.tenant_id !== null"
             type="button"
-            :aria-label="`Eliminar categoría ${item.name}`"
+            :aria-label="t('menu.categorias.deleteAria', { name: item.name })"
             class="flex-shrink-0 min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
             @click.stop="requestDelete(item)"
           >
@@ -109,7 +109,7 @@
             ? 'bg-text-secondary/10 text-text-secondary'
             : 'bg-primary/10 text-primary'"
         >
-          {{ item.tenant_id === null ? 'Global' : 'Propia' }}
+          {{ item.tenant_id === null ? t('menu.categorias.global') : t('menu.categorias.own') }}
         </span>
       </template>
 
@@ -122,7 +122,7 @@
           <button
             v-if="item.tenant_id !== null"
             type="button"
-            :aria-label="`Editar categoría ${item.name}`"
+            :aria-label="t('menu.categorias.editAria', { name: item.name })"
             class="min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
             @click="openEditPanel(item)"
           >
@@ -131,13 +131,13 @@
           <button
             v-if="item.tenant_id !== null"
             type="button"
-            :aria-label="`Eliminar categoría ${item.name}`"
+            :aria-label="t('menu.categorias.deleteAria', { name: item.name })"
             class="min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
             @click="requestDelete(item)"
           >
             <TrashIcon class="w-4 h-4" />
           </button>
-          <span v-if="item.tenant_id === null" class="text-xs text-text-tertiary px-2">Solo lectura</span>
+          <span v-if="item.tenant_id === null" class="text-xs text-text-tertiary px-2">{{ t('menu.categorias.readOnly') }}</span>
         </div>
       </template>
         </UiResponsiveDataView>
@@ -156,8 +156,8 @@
       v-model="confirmOpen"
       :title="confirmTitle"
       :message="confirmMessage"
-      confirm-label="Eliminar"
-      loading-label="Eliminando..."
+        :confirm-label="t('menu.categorias.deleteConfirm')"
+        :loading-label="t('menu.categorias.deleteLoading')"
       variant="destructive"
       :loading="isDeleting"
       @confirm="performDelete"
@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 
 definePageMeta({
   // layout: 'dashboard' — inherited from parent menu.vue
@@ -206,10 +206,10 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const tipoFilter = ref<'global' | 'own' | ''>('')
 
 const performSearch = () => applySearch()
-const tipoHeaderOptions = [
-  { label: 'Global', value: 'global' },
-  { label: 'Propia', value: 'own' },
-]
+const tipoHeaderOptions = computed(() => [
+  { label: t('menu.categorias.global'), value: 'global' },
+  { label: t('menu.categorias.own'), value: 'own' },
+])
 
 const hasActiveFilters = computed(
   () => !!localSearchTerm.value || !!appliedSearch.value || !!tipoFilter.value,
@@ -220,12 +220,12 @@ const clearFilters = () => {
   tipoFilter.value = ''
 }
 
-const columns = [
-  { key: 'name', title: 'Nombre' },
-  { key: 'tipo', title: 'Tipo' },
-  { key: 'description', title: 'Descripción' },
+const columns = computed(() => [
+  { key: 'name', title: t('menu.categorias.name') },
+  { key: 'tipo', title: t('menu.common.tipo') },
+  { key: 'description', title: t('menu.categorias.description') },
   { key: 'actions', title: '', align: 'right' as const },
-]
+])
 
 const {
   data: categoriesData,
@@ -322,8 +322,8 @@ const requestDelete = async (rawCat: Record<string, any>) => {
   if (cat.tenant_id === null) return // safety net — UI also hides
 
   pendingDelete.value = cat
-  confirmTitle.value = '¿Eliminar categoría?'
-  confirmMessage.value = `Esta acción no se puede deshacer y removerá "${cat.name}" del menú.`
+  confirmTitle.value = t('menu.categorias.deleteTitle')
+  confirmMessage.value = t('menu.categorias.deleteMessage', { name: cat.name })
 
   // Fetch cascade impact (products + station mappings) before opening the
   // confirm modal so we can warn about the kitchen-routing side effect.
@@ -332,7 +332,7 @@ const requestDelete = async (rawCat: Record<string, any>) => {
       `/api/menu/categories/${cat.id}/delete-impact`,
     )
     if (impact.data.station_mappings > 0) {
-      confirmMessage.value += ` Esto también quitará la asignación a la estación de cocina; tendrás que reasignarla en /operaciones/comandas si quieres seguir usándola.`
+      confirmMessage.value += ` ${t('menu.categorias.stationImpact')}`
     }
   } catch {
     // Pre-fetch is best-effort — if it fails, fall through with the base
@@ -360,17 +360,17 @@ const performDelete = async () => {
       (detail.code === 'category_has_dependents' || detail.code === 'category_has_dependents_unknown')
 
     const dependents: ErrorModalDependent[] = isStructured409 && detail.counts
-      ? [{ label: 'Productos asociados', count: detail.counts.products ?? 0 }].filter((d) => d.count > 0)
+      ? [{ label: t('menu.categorias.dependentProducts'), count: detail.counts.products ?? 0 }].filter((d) => d.count > 0)
       : []
 
     confirmOpen.value = false
     pendingDelete.value = null
     errorModal.value = {
       open: true,
-      title: 'No se pudo eliminar la categoría',
+      title: t('menu.categorias.deleteErrorTitle'),
       message: isStructured409 && typeof detail.message === 'string'
         ? detail.message
-        : 'Ocurrió un error al intentar eliminar la categoría. Inténtalo de nuevo.',
+        : t('menu.categorias.deleteErrorMessage'),
       dependents,
     }
   } finally {

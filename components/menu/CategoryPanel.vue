@@ -23,7 +23,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="isEdit ? `Editar categoría: ${category?.name}` : 'Crear categoría'"
+        :aria-label="isEdit ? `${t('menu.categorias.panelEditTitle')}: ${category?.name}` : t('menu.categorias.createCategory')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -42,17 +42,17 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ isEdit ? 'Editar categoría' : 'Nueva categoría' }}
+                  {{ isEdit ? t('menu.categorias.panelEditTitle') : t('menu.categorias.panelNewTitle') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ isEdit ? category?.name : 'Agrupa productos para tu menú y comandas' }}
+                  {{ isEdit ? category?.name : t('menu.categorias.panelSubtitle') }}
                 </p>
               </div>
             </div>
             <button
               @click="close"
               type="button"
-              aria-label="Cerrar panel"
+              :aria-label="t('menu.categorias.closePanel')"
               :disabled="saving"
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 transition-colors"
             >
@@ -68,7 +68,7 @@
           <!-- Nombre -->
           <div class="flex flex-col gap-1.5">
             <label :for="nameId" class="text-sm font-medium text-text-primary">
-              Nombre <span class="text-destructive">*</span>
+              {{ t('menu.categorias.nameRequired') }}
             </label>
             <input
               :id="nameId"
@@ -76,7 +76,7 @@
               v-model="form.name"
               type="text"
               maxlength="100"
-              placeholder="Ej: Entradas, Bebidas, Postres..."
+              :placeholder="t('menu.categorias.namePlaceholder')"
               :class="inputClass"
               @input="clearError('name')"
               @keydown.enter.prevent="submit"
@@ -87,15 +87,15 @@
           <!-- Descripción -->
           <div class="flex flex-col gap-1.5">
             <label :for="descId" class="text-sm font-medium text-text-primary">
-              Descripción
-              <span class="text-xs text-text-secondary font-normal">(opcional)</span>
+              {{ t('menu.categorias.descriptionOptional') }}
+              <span class="text-xs text-text-secondary font-normal">{{ t('menu.categorias.optional') }}</span>
             </label>
             <textarea
               :id="descId"
               v-model="form.description"
               rows="3"
               maxlength="500"
-              placeholder="Texto interno para identificar la categoría"
+              :placeholder="t('menu.categorias.descriptionPlaceholder')"
               class="input-base w-full px-4 py-2 resize-none"
             />
           </div>
@@ -113,7 +113,7 @@
               class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
               @click="close"
             >
-              Cancelar
+              {{ t('menu.categorias.cancel') }}
             </button>
             <button
               type="button"
@@ -122,7 +122,7 @@
               @click="submit"
             >
               <UiLoadingDots v-if="saving" size="8px" color="currentColor" />
-              <span>{{ saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear categoría') }}</span>
+              <span>{{ saving ? t('menu.categorias.saveBusy') : (isEdit ? t('menu.categorias.saveChanges') : t('menu.categorias.createCategory')) }}</span>
             </button>
           </div>
         </div>
@@ -133,6 +133,8 @@
 
 <script setup lang="ts">
 import { TagIcon } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Category {
   id: string
@@ -212,7 +214,7 @@ const close = () => {
 const submit = async () => {
   const name = form.value.name.trim()
   if (!name) {
-    errors.value = { name: 'El nombre es obligatorio' }
+    errors.value = { name: t('menu.categorias.nameRequiredError') }
     return
   }
 
@@ -235,8 +237,8 @@ const submit = async () => {
 
     emit('saved', response.data)
     toast.success(
-      isEdit.value ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente',
-      { title: 'Guardado' },
+      isEdit.value ? t('menu.categorias.updatedSuccess') : t('menu.categorias.createdSuccess'),
+      { title: t('menu.categorias.saved') },
     )
     if (!isEdit.value) {
       emit('update:modelValue', false)
@@ -245,11 +247,11 @@ const submit = async () => {
     if (err?.status === 409) {
       const detail = err?.data?.detail
       errors.value = {
-        name: typeof detail === 'string' ? detail : 'Ya existe una categoría con ese nombre',
+        name: typeof detail === 'string' ? detail : t('menu.categorias.duplicateNameError'),
       }
     } else {
       errors.value = {
-        general: err?.data?.detail || 'No se pudo guardar la categoría. Inténtalo de nuevo.',
+        general: err?.data?.detail || t('menu.categorias.saveError'),
       }
     }
   } finally {
