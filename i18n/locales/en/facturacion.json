@@ -125,7 +125,7 @@
       "city": "City",
       "phone": "Phone",
       "email": "Invoicing email",
-      "emailPlaceholder": "billing@myrestaurant.com",
+      "emailPlaceholder": "billing{'@'}myrestaurant.com",
       "save": "Save fiscal data",
       "miNegocio": "My business"
     },

@@ -125,7 +125,7 @@
       "city": "Ciudad",
       "phone": "Teléfono",
       "email": "Email facturación",
-      "emailPlaceholder": "facturacion@mirestaurante.com",
+      "emailPlaceholder": "facturacion{'@'}mirestaurante.com",
       "save": "Guardar datos fiscales",
       "miNegocio": "Mi negocio"
     },
