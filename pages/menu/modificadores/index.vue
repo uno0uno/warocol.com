@@ -21,8 +21,8 @@
             @click="goToCreateGroup"
             class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
           >
-            <span class="hidden sm:inline">+ Nuevo Grupo</span>
-            <span class="sm:hidden">+ Nuevo</span>
+            <span class="hidden sm:inline">{{ t('menu.modificadores.newGroup') }}</span>
+            <span class="sm:hidden">{{ t('menu.modificadores.newShort') }}</span>
           </button>
         </template>
       </UiAdvancedFiltersBar>
@@ -38,10 +38,10 @@
       <template #header-tipo>
         <UiTableHeaderFilter
           v-model="requiredFilter"
-          title="Tipo"
+          :title="t('menu.modificadores.type')"
           filter-type="select"
           :options="requiredHeaderOptions"
-          all-label="Todos"
+          :all-label="t('menu.modificadores.all')"
           align="center"
         />
       </template>
@@ -68,10 +68,10 @@
             v-if="(row.products || []).length > 3"
             class="text-xs text-text-secondary"
           >
-            +{{ row.products.length - 3 }} más
+            {{ t('menu.modificadores.moreProducts', { count: row.products.length - 3 }) }}
           </span>
           <span v-if="!row.products?.length" class="text-xs text-text-secondary">
-            Sin productos
+            {{ t('menu.modificadores.noProducts') }}
           </span>
         </div>
       </template>
@@ -84,10 +84,10 @@
             class="inline-flex max-w-full items-center rounded-full border border-badge-primary-border bg-badge-primary-bg px-2 py-0.5 text-[11px] font-medium leading-4 text-badge-primary-text"
             :title="option"
           >
-            <span class="truncate">{{ option }}</span>
+            <span class="whitespace-normal break-words">{{ option }}</span>
           </span>
           <span v-if="!getGroupOptionLabels(row.id).length" class="text-xs text-text-secondary">
-            Sin opciones
+            {{ t('menu.modificadores.noOptions') }}
           </span>
         </div>
       </template>
@@ -108,14 +108,14 @@
         <div class="flex justify-center">
           <UiStatusBadge
             v-if="row.is_required"
-            value="Obligatorio"
+            :value="t('menu.modificadores.required')"
             format="text"
             variant="warning"
             size="sm"
           />
           <UiStatusBadge
             v-else
-            value="Opcional"
+            :value="t('menu.modificadores.optional')"
             format="text"
             variant="secondary"
             size="sm"
@@ -128,7 +128,7 @@
           <button
             @click="goToEditGroup(row.id)"
             class="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-text-secondary transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
-            title="Editar grupo"
+            :title="t('menu.modificadores.editGroup')"
           >
             <Icon name="heroicons:pencil-square" class="h-4 w-4" />
           </button>
@@ -145,12 +145,12 @@
           <div class="flex-1 min-w-0">
             <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
             <p class="text-xs text-text-secondary mt-0.5 truncate">
-              {{ getModificadoresByGrupo(item.id).length }} opciones · sel. {{ item.min_qty }}–{{ item.max_qty }}
+              {{ getModificadoresByGrupo(item.id).length }} {{ t('menu.modificadores.optionsCount') }} · {{ t('menu.modificadores.selectionShort') }} {{ item.min_qty }}–{{ item.max_qty }}
               <span v-if="formatGroupOptionsSummary(item.id)"> · {{ formatGroupOptionsSummary(item.id) }}</span>
             </p>
           </div>
           <UiStatusBadge
-            :value="item.is_required ? 'Obligatorio' : 'Opcional'"
+            :value="item.is_required ? t('menu.modificadores.required') : t('menu.modificadores.optional')"
             format="text"
             :variant="item.is_required ? 'warning' : 'secondary'"
             size="sm"
@@ -168,7 +168,7 @@
             'relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
             canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
           ]">
-          Anterior
+          {{ t('menu.modificadores.previous') }}
         </button>
         <button
           @click="nextPage"
@@ -177,11 +177,11 @@
             'ml-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
             canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
           ]">
-          Siguiente
+          {{ t('menu.modificadores.next') }}
         </button>
       </div>
       <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-end">
-          <nav class="relative z-0 inline-flex items-center gap-1" aria-label="Pagination">
+          <nav class="relative z-0 inline-flex items-center gap-1" :aria-label="t('menu.modificadores.pagination')">
             <button
               @click="previousPage"
               :disabled="!canGoPrevious"
@@ -189,7 +189,7 @@
                 'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoPrevious ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
-              <span class="sr-only">Anterior</span>
+              <span class="sr-only">{{ t('menu.modificadores.previous') }}</span>
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
@@ -202,7 +202,7 @@
                 'relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
-              <span class="sr-only">Siguiente</span>
+              <span class="sr-only">{{ t('menu.modificadores.next') }}</span>
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
               </svg>
@@ -218,23 +218,23 @@
       class="hidden md:block bg-surface border border-border rounded-lg p-4 -mt-3"
     >
       <h4 class="text-sm font-semibold text-text-primary mb-3">
-        Modificadores del grupo "{{ grupo.name }}"
+        {{ t('menu.modificadores.expandedTitle', { name: grupo.name }) }}
       </h4>
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
             <tr class="border-b border-border">
               <th class="text-left py-2 px-2 text-xs font-medium text-text-secondary">
-                Modificador
+                {{ t('menu.modificadores.modifier') }}
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                Precio Adicional
+                {{ t('menu.modificadores.additionalPrice') }}
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                Max Cantidad
+                {{ t('menu.modificadores.maxQuantity') }}
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                Estado
+                {{ t('menu.modificadores.status') }}
               </th>
             </tr>
           </thead>
@@ -249,7 +249,7 @@
                   {{ mod.name }}
                   <UiStatusBadge
                     v-if="mod.is_default"
-                    value="Por defecto"
+                    :value="t('menu.modificadores.default')"
                     format="text"
                     variant="default"
                     size="sm"
@@ -266,7 +266,7 @@
               </td>
               <td class="py-3 px-2 text-center">
                 <UiStatusBadge
-                  :value="mod.is_available ? 'Activo' : 'Inactivo'"
+                  :value="mod.is_available ? t('menu.modificadores.active') : t('menu.modificadores.inactive')"
                   format="text"
                   :variant="mod.is_available ? 'success' : 'destructive'"
                   size="sm"
@@ -285,7 +285,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -308,10 +308,10 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 const requiredFilter = ref<'required' | 'optional' | ''>('')
-const requiredHeaderOptions = [
-  { label: 'Obligatorio', value: 'required' },
-  { label: 'Opcional', value: 'optional' },
-]
+const requiredHeaderOptions = computed(() => [
+  { label: t('menu.modificadores.required'), value: 'required' },
+  { label: t('menu.modificadores.optional'), value: 'optional' },
+])
 const isRequiredFilter = computed(() => {
   if (requiredFilter.value === 'required') return true
   if (requiredFilter.value === 'optional') return false
@@ -447,7 +447,7 @@ const gruposTableColumns = [
 ]
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
