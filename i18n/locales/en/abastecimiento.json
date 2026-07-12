@@ -225,7 +225,7 @@
       "descriptionPlaceholder": "Brief description of the supplier and products offered, etc.",
       "namePlaceholder": "E.g. Valley Fruits LLC",
       "taxIdPlaceholder": "E.g. 900123456-7",
-      "emailPlaceholder": "contact@supplier.com",
+      "emailPlaceholder": "contact{'@'}supplier.com",
       "phonePlaceholder": "+57 300 123 4567",
       "automaticAgreements": "Automatic payment agreements",
       "newAgreement": "+ New agreement",

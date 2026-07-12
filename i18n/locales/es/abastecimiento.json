@@ -225,7 +225,7 @@
       "descriptionPlaceholder": "Breve descripción del proveedor, productos que ofrece, etc.",
       "namePlaceholder": "Ej: Frutas del Valle S.A.S",
       "taxIdPlaceholder": "Ej: 900123456-7",
-      "emailPlaceholder": "contacto@proveedor.com",
+      "emailPlaceholder": "contacto{'@'}proveedor.com",
       "phonePlaceholder": "+57 300 123 4567",
       "automaticAgreements": "Acuerdos de pago automáticos",
       "newAgreement": "+ Nuevo acuerdo",
