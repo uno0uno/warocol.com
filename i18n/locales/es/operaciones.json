@@ -31,6 +31,28 @@
       "emptyBody": "La bitácora registra eliminaciones de tab, anulaciones de pago y cambios en carrito. Si acabas de activar la función, los eventos aparecerán cuando el equipo use POS.",
       "pageOf": "Página {page} de {total}",
       "all": "Todas"
+      ,"allChannels": "Todos los canales"
+      ,"allActions": "Todas las acciones"
+      ,"close": "Cerrar"
+      ,"order": "Orden"
+      ,"system": "Sistema"
+      ,"lineOne": "línea"
+      ,"lineMany": "líneas"
+      ,"actionTabAdded": "Producto agregado al tab"
+      ,"actionTabRemoved": "Producto eliminado del tab"
+      ,"actionQtyChanged": "Cantidad modificada"
+      ,"actionTabEdited": "Ítem editado en el tab"
+      ,"actionEditBlocked": "Edición bloqueada (cocina)"
+      ,"actionTabCleared": "Tab vaciado"
+      ,"actionCartLineRemoved": "Línea eliminada del carrito"
+      ,"actionCartCleared": "Carrito vaciado"
+      ,"actionPaymentVoided": "Pago anulado"
+      ,"actionComandaCancelled": "Línea de comanda cancelada"
+      ,"actionPromotionDeleted": "Promoción eliminada"
+      ,"channelTable": "Mesa"
+      ,"channelBar": "Barra"
+      ,"channelCounter": "Mostrador"
+      ,"payload": "Payload"
     },
     "turnos": {
       "name": "Turno",

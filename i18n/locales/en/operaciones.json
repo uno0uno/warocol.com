@@ -31,6 +31,28 @@
       "emptyBody": "The log records tab deletions, payment voids and cart changes. If you just enabled it, events appear when the team uses the POS.",
       "pageOf": "Page {page} of {total}",
       "all": "All"
+      ,"allChannels": "All channels"
+      ,"allActions": "All actions"
+      ,"close": "Close"
+      ,"order": "Order"
+      ,"system": "System"
+      ,"lineOne": "line"
+      ,"lineMany": "lines"
+      ,"actionTabAdded": "Product added to tab"
+      ,"actionTabRemoved": "Product removed from tab"
+      ,"actionQtyChanged": "Quantity changed"
+      ,"actionTabEdited": "Item edited in tab"
+      ,"actionEditBlocked": "Edit blocked (kitchen)"
+      ,"actionTabCleared": "Tab cleared"
+      ,"actionCartLineRemoved": "Cart line removed"
+      ,"actionCartCleared": "Cart cleared"
+      ,"actionPaymentVoided": "Payment voided"
+      ,"actionComandaCancelled": "Kitchen ticket line cancelled"
+      ,"actionPromotionDeleted": "Promotion deleted"
+      ,"channelTable": "Table"
+      ,"channelBar": "Bar"
+      ,"channelCounter": "Counter"
+      ,"payload": "Payload"
     },
     "turnos": {
       "name": "Shift",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ClipboardDocumentListIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
@@ -11,6 +11,7 @@ import {
   formatOperationEventActor,
   formatOperationEventSummary,
   formatOperationEventTableName,
+  operationActionI18nKeys,
 } from '~/composables/useOperationEvents'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
@@ -39,15 +40,15 @@ const actionHeaderFilter = computed({
     actionFilter.value = typeof value === 'string' && value ? value : null
   },
 })
-const channelHeaderOptions = [
-  { value: 'mesa', label: CHANNEL_LABELS.mesa },
-  { value: 'barra', label: CHANNEL_LABELS.barra },
-  { value: 'mostrador', label: CHANNEL_LABELS.mostrador },
-]
-const actionHeaderOptions = OPERATION_EVENT_ACTIONS.map(action => ({
+const channelHeaderOptions = computed(() => [
+  { value: 'mesa', label: t('operaciones.bitacora.channelTable') },
+  { value: 'barra', label: t('operaciones.bitacora.channelBar') },
+  { value: 'mostrador', label: t('operaciones.bitacora.channelCounter') },
+])
+const actionHeaderOptions = computed(() => OPERATION_EVENT_ACTIONS.map(action => ({
   value: action,
-  label: ACTION_LABELS[action],
-}))
+  label: t(`operaciones.bitacora.${operationActionI18nKeys[action]}`),
+})))
 const currentPage = ref(1)
 const detailOpen = ref(false)
 const selectedEvent = ref<OperationEventRow | null>(null)
@@ -139,11 +140,17 @@ const columns = computed<Column[]>(() => [
   { key: 'links', title: '', sortable: false, align: 'right' },
 ])
 
-const actionLabel = (action: string) => ACTION_LABELS[action] ?? action
-const channelLabel = (channel: string) => CHANNEL_LABELS[channel] ?? channel
+const actionLabel = (action: string) => {
+  const key = operationActionI18nKeys[action]
+  return key ? t(`operaciones.bitacora.${key}`) : ACTION_LABELS[action] ?? action
+}
+const channelLabel = (channel: string) => {
+  const keys: Record<string, string> = { mesa: 'channelTable', barra: 'channelBar', mostrador: 'channelCounter' }
+  return keys[channel] ? t(`operaciones.bitacora.${keys[channel]}`) : CHANNEL_LABELS[channel] ?? channel
+}
 
 const summaryFor = (row: OperationEventRow) =>
-  formatOperationEventSummary(row.action, row.payload ?? {}, formatCurrency)
+  formatOperationEventSummary(row.action, row.payload ?? {}, formatCurrency, locale.value)
 
 const tableNameFor = (row: OperationEventRow) =>
   formatOperationEventTableName(row.payload ?? {})
@@ -175,10 +182,8 @@ const tableNameFor = (row: OperationEventRow) =>
             class="md:hidden"
             :aria-label="t('operaciones.bitacora.filterChannel')"
           >
-            <option :value="null">Todos los canales</option>
-            <option value="mesa">{{ CHANNEL_LABELS.mesa }}</option>
-            <option value="barra">{{ CHANNEL_LABELS.barra }}</option>
-            <option value="mostrador">{{ CHANNEL_LABELS.mostrador }}</option>
+            <option :value="null">{{ t('operaciones.bitacora.allChannels') }}</option>
+            <option v-for="option in channelHeaderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
 
           <select
@@ -187,7 +192,7 @@ const tableNameFor = (row: OperationEventRow) =>
             class="md:hidden"
             :aria-label="t('operaciones.bitacora.filterAction')"
           >
-            <option :value="null">Todas las acciones</option>
+            <option :value="null">{{ t('operaciones.bitacora.allActions') }}</option>
             <option v-for="a in OPERATION_EVENT_ACTIONS" :key="a" :value="a">
               {{ ACTION_LABELS[a] }}
             </option>
@@ -222,7 +227,7 @@ const tableNameFor = (row: OperationEventRow) =>
             :title="t('operaciones.bitacora.channel')"
             filter-type="select"
             :options="channelHeaderOptions"
-            all-label="Todos"
+            :all-label="t('operaciones.bitacora.all')"
             align="center"
           />
         </template>
@@ -233,7 +238,7 @@ const tableNameFor = (row: OperationEventRow) =>
             :title="t('operaciones.bitacora.action')"
             filter-type="select"
             :options="actionHeaderOptions"
-            all-label="Todas"
+            :all-label="t('operaciones.bitacora.allActions')"
             align="left"
           />
         </template>
@@ -273,7 +278,7 @@ const tableNameFor = (row: OperationEventRow) =>
             class="text-xs text-primary hover:underline"
             @click.stop
           >
-            Orden
+            {{ t('operaciones.bitacora.order') }}
           </NuxtLink>
           <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
@@ -313,7 +318,7 @@ const tableNameFor = (row: OperationEventRow) =>
           class="min-h-[36px] px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surface text-text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           @click="goToPage(currentPage - 1)"
         >
-          Anterior
+          {{ t('common.previous') }}
         </button>
         <span class="text-sm text-text-secondary tabular-nums">
           {{ t('operaciones.bitacora.pageOf', { page: currentPage, total: totalPages }) }}
@@ -324,7 +329,7 @@ const tableNameFor = (row: OperationEventRow) =>
           class="min-h-[36px] px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surface text-text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           @click="goToPage(currentPage + 1)"
         >
-          Siguiente
+          {{ t('common.next') }}
         </button>
       </div>
     </template>
@@ -370,21 +375,21 @@ const tableNameFor = (row: OperationEventRow) =>
 
           <div class="px-5 py-4 overflow-y-auto space-y-3 text-sm">
             <div>
-              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">Usuario</p>
+              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">{{ t('operaciones.bitacora.user') }}</p>
               <p class="text-text-primary">{{ formatOperationEventActor(selectedEvent) }}</p>
             </div>
             <div v-if="selectedEvent.reason">
-              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">Motivo</p>
+              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">{{ t('operaciones.bitacora.reason') }}</p>
               <p class="text-text-primary">{{ selectedEvent.reason }}</p>
             </div>
             <div v-if="selectedEvent.order_id">
-              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">Orden</p>
+              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">{{ t('operaciones.bitacora.order') }}</p>
               <NuxtLink :to="`/ventas/${selectedEvent.order_id}`" class="text-primary hover:underline">
                 {{ selectedEvent.order_id }}
               </NuxtLink>
             </div>
             <div>
-              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1">Payload</p>
+              <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1">{{ t('operaciones.bitacora.payload') }}</p>
               <pre class="text-xs bg-surface-secondary border border-border rounded-lg p-3 overflow-x-auto text-text-primary">{{ detailPayloadJson }}</pre>
             </div>
           </div>

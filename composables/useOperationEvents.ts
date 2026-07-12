@@ -65,6 +65,20 @@ export const CHANNEL_LABELS: Record<string, string> = {
   mostrador: 'Mostrador',
 }
 
+export const operationActionI18nKeys: Record<string, string> = {
+  tab_item_added: 'actionTabAdded',
+  tab_item_removed: 'actionTabRemoved',
+  tab_item_qty_changed: 'actionQtyChanged',
+  tab_item_edited: 'actionTabEdited',
+  tab_item_edit_blocked: 'actionEditBlocked',
+  tab_cleared: 'actionTabCleared',
+  cart_line_removed: 'actionCartLineRemoved',
+  cart_cleared: 'actionCartCleared',
+  payment_voided: 'actionPaymentVoided',
+  comanda_line_cancelled: 'actionComandaCancelled',
+  promotion_deleted: 'actionPromotionDeleted',
+}
+
 export function formatOperationEventActor(row: OperationEventRow): string {
   if (row.actor_user_name) return row.actor_user_name
   if (row.actor_member_name) return row.actor_member_name
@@ -76,6 +90,7 @@ export function formatOperationEventSummary(
   action: string,
   payload: Record<string, unknown>,
   formatCurrency: (n: number) => string,
+  locale = 'es',
 ): string {
   const product = payload.product_name as string | undefined
   const qty = payload.quantity as number | undefined
@@ -94,7 +109,9 @@ export function formatOperationEventSummary(
 
   if (action === 'tab_cleared' || action === 'cart_cleared') {
     const count = payload.items_count as number | undefined
-    if (count != null) return `${count} línea${count === 1 ? '' : 's'}`
+    if (count != null) return locale === 'en'
+      ? `${count} ${count === 1 ? 'line' : 'lines'}`
+      : `${count} ${count === 1 ? 'línea' : 'líneas'}`
   }
 
   if (action === 'promotion_deleted') {
@@ -105,7 +122,7 @@ export function formatOperationEventSummary(
   }
 
   if (payload.order_number != null) {
-    return `Orden #${payload.order_number}`
+    return `${locale === 'en' ? 'Order' : 'Orden'} #${payload.order_number}`
   }
 
   return '—'
