@@ -126,7 +126,16 @@
       "empty": "No hay proveedores registrados",
       "emptySub": "Crea un nuevo proveedor para comenzar",
       "filterStatusAria": "Filtrar por estado",
-      "filterPaymentAria": "Filtrar por plazo de pago"
+      "filterPaymentAria": "Filtrar por plazo de pago",
+      "supplierFilter": "Proveedor",
+      "paymentTermsFilter": "Plazo de pago",
+      "newSupplier": "+ Nuevo proveedor",
+      "newShort": "+ Nuevo",
+      "copyPortal": "Copiar enlace del portal",
+      "editSupplier": "Editar proveedor",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "showing": "Mostrando {start} a {end} de {total} resultados"
     },
     "comprasDirectas": {
       "searchPlaceholder": "Buscar compras directas...",

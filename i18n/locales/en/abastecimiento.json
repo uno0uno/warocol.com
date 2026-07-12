@@ -126,7 +126,16 @@
       "empty": "No suppliers registered",
       "emptySub": "Create a new supplier to get started",
       "filterStatusAria": "Filter by status",
-      "filterPaymentAria": "Filter by payment terms"
+      "filterPaymentAria": "Filter by payment terms",
+      "supplierFilter": "Supplier",
+      "paymentTermsFilter": "Payment terms",
+      "newSupplier": "+ New supplier",
+      "newShort": "+ New",
+      "copyPortal": "Copy portal link",
+      "editSupplier": "Edit supplier",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {start} to {end} of {total} results"
     },
     "comprasDirectas": {
       "searchPlaceholder": "Search direct purchases...",

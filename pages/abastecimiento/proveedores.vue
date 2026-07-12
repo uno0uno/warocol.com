@@ -27,9 +27,9 @@
             :aria-label="t('abastecimiento.proveedores.filterStatusAria')"
             @change="onStatusFilterChange"
           >
-            <option value="">Estado</option>
-            <option value="active">Activo</option>
-            <option value="inactive">Inactivo</option>
+            <option value="">{{ t('abastecimiento.common.estado') }}</option>
+            <option value="active">{{ t('abastecimiento.common.activo') }}</option>
+            <option value="inactive">{{ t('abastecimiento.common.inactivo') }}</option>
           </select>
 
           <select
@@ -38,7 +38,7 @@
             :aria-label="t('abastecimiento.proveedores.filterPaymentAria')"
             @change="onPaymentTermsChange"
           >
-            <option value="">Plazo de pago</option>
+            <option value="">{{ t('abastecimiento.proveedores.paymentTermsFilter') }}</option>
             <option v-for="term in paymentTermsOptions" :key="term" :value="term">{{ term }}</option>
           </select>
         </template>
@@ -46,8 +46,8 @@
         <template #trailing>
           <NuxtLink to="/abastecimiento/proveedor/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-            <span class="hidden sm:inline">+ Nuevo Proveedor</span>
-            <span class="sm:hidden">+ Nuevo</span>
+            <span class="hidden sm:inline">{{ t('abastecimiento.proveedores.newSupplier') }}</span>
+            <span class="sm:hidden">{{ t('abastecimiento.proveedores.newShort') }}</span>
           </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -66,7 +66,7 @@
       >
         <template #header-is_active>
           <UiTableHeaderFilter
-            title="Estado"
+            :title="t('abastecimiento.common.estado')"
             column-key="is_active"
             sortable
             :sort-field="sortField"
@@ -74,7 +74,7 @@
             filter-type="select"
             :model-value="statusFilter"
             :options="supplierStatusOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             align="center"
             @sort="handleSort"
             @update:model-value="updateStatusHeaderFilter"
@@ -95,7 +95,7 @@
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <UiStatusBadge
-                :value="item.is_active ? 'Activo' : 'Inactivo'"
+                :value="item.is_active ? t('abastecimiento.common.activo') : t('abastecimiento.common.inactivo')"
                 format="text"
                 :variant="item.is_active ? 'success' : 'destructive'"
                 size="sm"
@@ -103,7 +103,7 @@
               <button
                 @click.stop="copyPortalLink(item)"
                 class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-                title="Copiar enlace del portal"
+                :title="t('abastecimiento.proveedores.copyPortal')"
               >
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -112,7 +112,7 @@
               <button
                 @click.stop="editProveedor(item)"
                 class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-                title="Editar proveedor"
+                :title="t('abastecimiento.proveedores.editSupplier')"
               >
                 <PencilIcon class="h-3.5 w-3.5" />
               </button>
@@ -138,21 +138,21 @@
         </template>
 
         <template #cell-is_active="{ value }">
-          <UiStatusBadge :value="value ? 'Activo' : 'Inactivo'" format="text"
+          <UiStatusBadge :value="value ? t('abastecimiento.common.activo') : t('abastecimiento.common.inactivo')" format="text"
             :variant="value ? 'success' : 'destructive'" size="sm" />
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
             <button @click="copyPortalLink(row)" class="text-text-secondary hover:text-primary transition-colors"
-              title="Copiar enlace del portal">
+              :title="t('abastecimiento.proveedores.copyPortal')">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </button>
             <button @click="editProveedor(row)" class="text-text-secondary hover:text-primary transition-colors"
-              title="Editar proveedor">
+              :title="t('abastecimiento.proveedores.editSupplier')">
               <PencilIcon class="h-4 w-4" />
             </button>
           </div>
@@ -164,18 +164,17 @@
         <div class="flex-1 flex justify-between sm:hidden">
           <button @click="prevPage" :disabled="currentPage === 1"
             class="relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
-            Anterior
+            {{ t('abastecimiento.proveedores.previous') }}
           </button>
           <button @click="nextPage" :disabled="currentPage === totalPages"
             class="ml-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
-            Siguiente
+            {{ t('abastecimiento.proveedores.next') }}
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-text-secondary">
-              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex }}</span>
-              de <span class="font-medium">{{ totalSuppliers }}</span> resultados
+              {{ t('abastecimiento.proveedores.showing', { start: startIndex, end: endIndex, total: totalSuppliers }) }}
             </p>
           </div>
           <div>
@@ -220,7 +219,7 @@ import {
 import { ref, computed, watch, inject, onMounted } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
-const { t } = useI18n()
+const { t } = useI18n({ useScope: 'global' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -240,17 +239,17 @@ const apiSearchField = ref('name')
 const statusFilter = ref('')
 const paymentTermsFilter = ref('')
 
-const searchFields = [
+const searchFields = computed(() => [
   { label: t('abastecimiento.common.proveedor'), value: 'name' },
   { label: t('abastecimiento.common.nit'), value: 'tax_id' },
   { label: t('abastecimiento.common.email'), value: 'email' },
   { label: t('abastecimiento.common.telefono'), value: 'phone' },
-]
+])
 
-const supplierStatusOptions = [
+const supplierStatusOptions = computed(() => [
   { value: 'active', label: t('abastecimiento.common.activo') },
   { value: 'inactive', label: t('abastecimiento.common.inactivo') },
-]
+])
 
 const apiIsActive = ref<boolean | null>(null)
 const apiPaymentTerms = ref<string | null>(null)
@@ -419,7 +418,7 @@ const handleSort = (field) => {
 
 // DataTable configuration
 
-const proveedoresTableColumns = [
+const proveedoresTableColumns = computed(() => [
   {
     key: 'name',
     title: t('abastecimiento.common.proveedor'),
@@ -474,7 +473,7 @@ const proveedoresTableColumns = [
 
   }
 
-]
+])
 
 
 
