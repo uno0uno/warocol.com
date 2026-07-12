@@ -157,7 +157,7 @@
     "city": "City",
     "cityPlaceholder": "Search city or municipality...",
     "clearCity": "Clear city",
-    "cityDirectoryHelp": "Defines which directory lists your business (warocol.com/<city>).",
+    "cityDirectoryHelp": "Defines which directory lists your business (warocol.com/city).",
     "cityCatalogError": "We could not load the catalog. You can continue editing the rest of your profile and try again later.",
     "phone": "Phone",
     "email": "Email",
