@@ -272,7 +272,7 @@ const dateFilterLabelMap: Record<string, string> = {
 }
 
 const localizedPurchaseDateFilterOptions = computed(() =>
-  purchaseDateFilterOptions.map(option => ({
+  purchaseDateFilterOptions.value.map(option => ({
     value: option.value,
     label: t(dateFilterLabelMap[option.value] || option.label),
   })),

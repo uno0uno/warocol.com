@@ -28,7 +28,7 @@
             :aria-label="t('abastecimiento.comprasDirectas.filterSupplierAria')"
             @change="currentPage = 1"
           >
-            <option value="">Proveedor</option>
+            <option value="">{{ t('abastecimiento.comprasDirectas.supplierFilter') }}</option>
             <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
 
@@ -38,7 +38,7 @@
             :aria-label="t('abastecimiento.comprasDirectas.filterStatusAria')"
             @change="currentPage = 1"
           >
-            <option value="">Estado</option>
+            <option value="">{{ t('abastecimiento.comprasDirectas.statusFilter') }}</option>
             <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
 
@@ -55,8 +55,8 @@
         <template #trailing>
           <NuxtLink to="/abastecimiento/compras-directas/crear"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-            <span class="hidden sm:inline">+ Nueva Compra Directa</span>
-            <span class="sm:hidden">+ Nueva</span>
+            <span class="hidden sm:inline">{{ t('abastecimiento.comprasDirectas.newPurchase') }}</span>
+            <span class="sm:hidden">{{ t('abastecimiento.comprasDirectas.newShort') }}</span>
           </NuxtLink>
         </template>
       </UiAdvancedFiltersBar>
@@ -85,7 +85,7 @@
       >
         <template #header-supplier_name>
           <UiTableHeaderFilter
-            title="Proveedor"
+            :title="t('abastecimiento.comprasDirectas.supplierFilter')"
             column-key="supplier_name"
             sortable
             :sort-field="sortField"
@@ -93,7 +93,7 @@
             filter-type="select"
             :model-value="proveedorFilter"
             :options="supplierHeaderOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             @sort="handleSort"
             @update:model-value="updateProveedorFilter"
           />
@@ -101,7 +101,7 @@
 
         <template #header-status>
           <UiTableHeaderFilter
-            title="Estado"
+            :title="t('abastecimiento.comprasDirectas.statusFilter')"
             column-key="status"
             sortable
             :sort-field="sortField"
@@ -109,7 +109,7 @@
             filter-type="select"
             :model-value="statusFilter"
             :options="statusOptions"
-            all-label="Todos"
+            :all-label="t('abastecimiento.common.todos')"
             align="center"
             @sort="handleSort"
             @update:model-value="updateStatusFilter"
@@ -129,10 +129,10 @@
                 <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.supplier_name || t('abastecimiento.common.sinProveedor') }} · {{ item.items_count || 0 }} items
+                {{ item.supplier_name || t('abastecimiento.common.sinProveedor') }} · {{ t('abastecimiento.comprasDirectas.itemsCount', { count: item.items_count || 0 }) }}
               </p>
               <p class="text-xs text-text-tertiary mt-0.5">
-                Pago: {{ getPaymentDateLabel(item) }}
+                {{ t('abastecimiento.comprasDirectas.paymentLabel', { date: getPaymentDateLabel(item) }) }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -171,7 +171,7 @@
         </template>
 
         <template #cell-items_count="{ value }">
-          <UiStatusBadge :value="`${value || 0} items`" format="text" variant="secondary" size="sm" />
+          <UiStatusBadge :value="t('abastecimiento.comprasDirectas.itemsCount', { count: value || 0 })" format="text" variant="secondary" size="sm" />
         </template>
 
         <template #cell-status="{ value }">
@@ -190,7 +190,7 @@
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
             <button @click="viewPurchase(row)" class="text-text-secondary hover:text-primary transition-colors"
-              title="Ver detalle">
+              :title="t('abastecimiento.comprasDirectas.viewDetail')">
               <EyeIcon class="h-4 w-4" />
             </button>
           </div>
@@ -207,7 +207,7 @@
               'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
               canGoPrevious ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
             ]">
-            Anterior
+            {{ t('abastecimiento.comprasDirectas.previous') }}
           </button>
           <button
             @click="nextPage"
@@ -216,19 +216,13 @@
               'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
               canGoNext ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
             ]">
-            Siguiente
+            {{ t('abastecimiento.comprasDirectas.next') }}
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-text-secondary">
-              Mostrando
-              <span class="font-medium">{{ startItem }}</span>
-              a
-              <span class="font-medium">{{ endItem }}</span>
-              de
-              <span class="font-medium">{{ purchasesData.total }}</span>
-              compras
+              {{ t('abastecimiento.comprasDirectas.showing', { start: startItem, end: endItem, total: purchasesData.total }) }}
             </p>
           </div>
           <div>
@@ -268,7 +262,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
-const { t } = useI18n()
+const { t, locale } = useI18n({ useScope: 'global' })
 
 useHead({
   title: () => t('abastecimiento.head.comprasDirectas')
@@ -346,14 +340,14 @@ const supplierHeaderOptions = computed(() =>
 )
 
 // Status options
-const statusOptions = [
+const statusOptions = computed(() => [
   { value: 'received', label: t('abastecimiento.common.recibida') },
   { value: 'invoiced', label: t('abastecimiento.common.facturada') },
-  { value: 'paid', label: t('abastecimiento.common.pagada') }
-]
+  { value: 'paid', label: t('abastecimiento.common.pagada') },
+])
 
 // Table columns
-const tableColumns = [
+const tableColumns = computed(() => [
   { key: 'purchase_number', title: t('abastecimiento.common.numero'), sortable: true },
   { key: 'supplier_name', title: t('abastecimiento.common.proveedor'), sortable: true },
   { key: 'purchase_date', title: t('abastecimiento.common.fecha'), sortable: true },
@@ -363,7 +357,7 @@ const tableColumns = [
   { key: 'status', title: t('abastecimiento.common.estado'), sortable: true },
   { key: 'invoice_number', title: t('abastecimiento.common.factura'), sortable: false },
   { key: 'actions', title: '', sortable: false }
-]
+])
 
 // Computed
 const sortedPurchases = computed(() => {
@@ -412,14 +406,14 @@ const getPaymentDateLabel = (purchase: any) => {
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
-    'received': 'Recibida',
-    'invoiced': 'Facturada',
-    'paid': 'Pagada'
+    'received': t('abastecimiento.common.recibida'),
+    'invoiced': t('abastecimiento.common.facturada'),
+    'paid': t('abastecimiento.common.pagada'),
   }
   return statusMap[status] || status
 }

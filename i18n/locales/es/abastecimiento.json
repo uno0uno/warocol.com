@@ -126,7 +126,17 @@
       "emptySub": "Crea una nueva compra directa para comenzar",
       "filterSupplierAria": "Filtrar por proveedor",
       "filterStatusAria": "Filtrar por estado",
-      "filterPeriodAria": "Filtrar por período"
+      "filterPeriodAria": "Filtrar por período",
+      "supplierFilter": "Proveedor",
+      "statusFilter": "Estado",
+      "newPurchase": "+ Nueva compra directa",
+      "newShort": "+ Nueva",
+      "itemsCount": "{count} ítems",
+      "paymentLabel": "Pago: {date}",
+      "viewDetail": "Ver detalle",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "showing": "Mostrando {start} a {end} de {total} compras"
     },
     "glossary": {
       "warehouseItem": "Artículo de bodega",

@@ -1,18 +1,18 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 /** Enum values for GET purchases `date_filter` (matches legacy FiltersBar + API). */
-export const purchaseDateFilterOptions = [
-  { label: 'Período', value: '' },
-  { label: 'Hoy', value: 'today' },
-  { label: 'Ayer', value: 'yesterday' },
-  { label: 'Semana pasada', value: 'last_week' },
-  { label: 'Últimos 15 días', value: '15_days' },
-  { label: 'Último mes', value: '1_month' },
-  { label: 'Últimos 3 meses', value: '3_months' },
-] as const
-
 export function usePurchaseDateFilter() {
+  const { t } = useI18n({ useScope: 'global' })
   const dateFilter = ref('')
+  const purchaseDateFilterOptions = computed(() => [
+    { label: t('common.period'), value: '' },
+    { label: t('common.datePresets.today'), value: 'today' },
+    { label: t('common.datePresets.yesterday'), value: 'yesterday' },
+    { label: t('common.datePresets.lastWeek'), value: 'last_week' },
+    { label: t('common.datePresets.last15'), value: '15_days' },
+    { label: t('common.datePresets.lastMonth'), value: '1_month' },
+    { label: t('common.datePresets.last90'), value: '3_months' },
+  ])
 
   const clearPurchaseDateFilter = () => {
     dateFilter.value = ''

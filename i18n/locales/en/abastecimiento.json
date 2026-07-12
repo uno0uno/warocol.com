@@ -126,7 +126,17 @@
       "emptySub": "Create a new direct purchase to get started",
       "filterSupplierAria": "Filter by supplier",
       "filterStatusAria": "Filter by status",
-      "filterPeriodAria": "Filter by period"
+      "filterPeriodAria": "Filter by period",
+      "supplierFilter": "Supplier",
+      "statusFilter": "Status",
+      "newPurchase": "+ New direct purchase",
+      "newShort": "+ New",
+      "itemsCount": "{count} items",
+      "paymentLabel": "Payment: {date}",
+      "viewDetail": "View details",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {start} to {end} of {total} purchases"
     },
     "glossary": {
       "warehouseItem": "Warehouse item",
