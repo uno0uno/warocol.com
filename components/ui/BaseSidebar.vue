@@ -104,11 +104,11 @@ const sidebarClass = computed(() => [
   props.overlay
     ? [
         'base-sidebar--overlay fixed left-0 top-0 z-[2030]',
-        isExpanded.value ? 'w-fit min-w-[14rem] max-w-[18rem]' : 'w-[4.25rem]',
+        isExpanded.value ? 'w-fit min-w-[13rem] max-w-[16rem]' : 'w-[4.25rem]',
       ]
     : [
         props.toggle ? 'base-sidebar--toggle' : '',
-        isExpanded.value ? 'w-fit min-w-[14rem] max-w-[18rem]' : 'w-[4.25rem]',
+        isExpanded.value ? 'w-fit min-w-[13rem] max-w-[16rem]' : 'w-[4.25rem]',
         !props.toggle ? 'hover:w-56' : '',
       ],
 ])
@@ -172,8 +172,8 @@ function closeOverlay() {
 .base-sidebar-shell--expanded,
 .base-sidebar-shell--toggle.base-sidebar-shell--expanded {
   width: fit-content;
-  min-width: 14rem;
-  max-width: 18rem;
+  min-width: 13rem;
+  max-width: 16rem;
 }
 
 .base-sidebar-shell--overlay {
@@ -187,6 +187,7 @@ function closeOverlay() {
 .base-sidebar {
   background-color: hsl(var(--nav-surface-bg));
   border-color: hsl(var(--nav-surface-border));
+  width: 100%;
   min-height: 0;
 }
 
