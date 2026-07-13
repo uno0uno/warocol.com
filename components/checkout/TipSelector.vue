@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, watch } from 'vue'
 import {
   formatIntegerMoney,
@@ -34,9 +34,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: TipModel): void
 }>()
 
-const tenantsStore = useTenantsStore()
 const uiLocale = computed<UiLocale>(() =>
-  normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+  normalizeUiLocale(locale.value),
 )
 
 type Mode = { kind: 'preset'; index: number } | { kind: 'custom' } | { kind: 'none' }

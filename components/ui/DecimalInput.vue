@@ -25,7 +25,7 @@ const props = withDefaults(
     required?: boolean
     id?: string
     class?: string
-    /** Optional override; defaults to tenant businessProfile.locale → es. */
+    /** Optional override; defaults to the active i18n UI locale. */
     locale?: UiLocale | string | null
   }>(),
   {
@@ -39,7 +39,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: number | null]
 }>()
 
-const tenantsStore = useTenantsStore()
+const { locale: i18nLocale } = useI18n({ useScope: 'global' })
 const inputRef = ref<HTMLInputElement>()
 const displayValue = ref('')
 
@@ -47,9 +47,7 @@ const resolvedLocale = computed<UiLocale>(() => {
   if (props.locale != null && props.locale !== '') {
     return normalizeUiLocale(props.locale)
   }
-  return normalizeUiLocale(
-    (tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale,
-  )
+  return normalizeUiLocale(i18nLocale.value)
 })
 
 function formatModelForDisplay(value: number | null | undefined): string {

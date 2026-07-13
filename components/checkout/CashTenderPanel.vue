@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 import {
   formatIntegerMoney,
   normalizeUiLocale,
@@ -18,9 +18,8 @@ const props = withDefaults(defineProps<{
   requireInputForFeedback: false,
 })
 
-const tenantsStore = useTenantsStore()
 const uiLocale = computed<UiLocale>(() =>
-  normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+  normalizeUiLocale(locale.value),
 )
 
 const cashPresetsExtra = [

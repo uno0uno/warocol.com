@@ -10,6 +10,16 @@
 </template>
 
 <script setup lang="ts">
+import { getLocaleDirection, toLocaleTag } from '~/utils/appLocales'
+
+const { locale } = useI18n({ useScope: 'global' })
+
+useHead(() => ({
+  htmlAttrs: {
+    lang: toLocaleTag(locale.value),
+    dir: getLocaleDirection(locale.value),
+  },
+}))
 </script>
 
 <style lang="scss">

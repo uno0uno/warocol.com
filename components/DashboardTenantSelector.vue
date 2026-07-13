@@ -16,32 +16,6 @@
               <XMarkIcon class="w-4 h-4" />
             </button>
           </div>
-          <!-- Language (desktop shell; mirrors mobile bottom-nav settings) -->
-          <div class="px-4 pt-3 pb-2 flex-shrink-0 border-b border-sheet-border">
-            <label class="text-xs font-medium text-text-secondary mb-2 block">{{ t('shell.language') }}</label>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
-                :class="locale === 'es'
-                  ? 'border-primary bg-icon-button-primary-bg text-text-primary'
-                  : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
-                @click="setUserLocale('es')"
-              >
-                {{ t('shell.localeEs') }}
-              </button>
-              <button
-                type="button"
-                class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
-                :class="locale === 'en'
-                  ? 'border-primary bg-icon-button-primary-bg text-text-primary'
-                  : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
-                @click="setUserLocale('en')"
-              >
-                {{ t('shell.localeEn') }}
-              </button>
-            </div>
-          </div>
           <div class="px-4 py-3 flex-shrink-0">
             <div class="flex items-center gap-2 px-3 py-2 border-b border-form-control-border focus-within:border-form-control-focus-border transition-colors">
               <MagnifyingGlassIcon class="w-4 h-4 text-form-control-placeholder flex-shrink-0" />
@@ -128,7 +102,6 @@ const openTenantModal = () => {
 const closeTenantModal = () => { showTenantModal.value = false }
 
 const { t } = useI18n()
-const { locale, setUserLocale } = useAppLocale()
 const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
