@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "شاشة تذاكر الطلبات — WARO",
+      "heading": "شاشة تذاكر الطلبات",
+      "disabledTitle": "تذاكر الطلبات غير مفعلة",
+      "disabledBody": "قم بتفعيل تذاكر الطلبات من إعدادات عملك لاستخدام هذه الشاشة.",
+      "all": "الكل",
+      "counter": "العداد",
+      "delivery": "توصيل",
+      "pickup": "استلام",
+      "active": "نشطة",
+      "ready": "جاهزة",
+      "readyToServe": "جاهزة للتسليم",
+      "noActive": "لا توجد تذاكر طلبات نشطة",
+      "noComandas": "لا توجد تذاكر طلبات",
+      "emptyPending": "لا توجد طلبات معلقة أو قيد التحضير حاليًا.",
+      "emptyFiltered": "لم يتم العثور على تذاكر طلبات بالفلاتر المحددة.",
+      "soundOffAria": "كتم التنبيهات",
+      "soundOnAria": "تفعيل التنبيهات الصوتية"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "رابط غير صالح",
+      "checkUrl": "تحقق من الرابط أو رابط الوصول.",
+      "stationNotFound": "لم يتم العثور على المحطة",
+      "loadingStation": "جارٍ تحميل المحطة…",
+      "loadingChanges": "جارٍ تحميل التغييرات...",
+      "soundOffAria": "كتم التنبيهات",
+      "soundOnAria": "تفعيل التنبيهات الصوتية",
+      "enableSound": "تفعيل الصوت",
+      "refreshAria": "تحديث تذاكر الطلبات",
+      "noActive": "لا توجد تذاكر طلبات نشطة في هذه المحطة",
+      "readyToServe": "جاهزة للتسليم",
+      "active": "نشطة"
+    },
+    "card": {
+      "delivered": "تم تسليم تذكرة الطلب",
+      "tokenExpired": "انتهت صلاحية رابط KDS. أعد تحميل الصفحة.",
+      "statusError": "خطأ في تحديث الحالة",
+      "quickSale": "بيع سريع",
+      "ready": "جاهز",
+      "cancel": "إلغاء"
+    },
+    "item": {
+      "tokenExpired": "انتهت صلاحية رابط KDS. أعد تحميل الصفحة.",
+      "updateError": "خطأ في تحديث العنصر"
+    },
+    "station": {
+      "createAria": "إنشاء محطة مطبخ جديدة",
+      "newTitle": "محطة جديدة",
+      "closePanelAria": "إغلاق اللوحة",
+      "namePlaceholder": "مثال: المطبخ الرئيسي، البار، الشواية",
+      "colorPickerAria": "محدد الألوان",
+      "hexAria": "رمز اللون السداسي",
+      "creating": "جارٍ إنشاء المحطة",
+      "nameExists": "توجد محطة بهذا الاسم بالفعل",
+      "createError": "خطأ في إنشاء المحطة"
+    }
+  }
+}

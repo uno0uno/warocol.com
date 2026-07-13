@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "Moniteur de commandes — WARO",
+      "heading": "Moniteur de commandes",
+      "disabledTitle": "Commandes non activées",
+      "disabledBody": "Activez les commandes depuis les paramètres de votre établissement pour utiliser ce moniteur.",
+      "all": "Toutes",
+      "counter": "Comptoir",
+      "delivery": "Livraisons",
+      "pickup": "À emporter",
+      "active": "Actives",
+      "ready": "Prêtes",
+      "readyToServe": "Prêtes à servir",
+      "noActive": "Aucune commande active",
+      "noComandas": "Aucune commande",
+      "emptyPending": "Aucune commande en attente ou en préparation pour le moment.",
+      "emptyFiltered": "Aucune commande trouvée avec les filtres sélectionnés.",
+      "soundOffAria": "Désactiver les alertes sonores",
+      "soundOnAria": "Activer les alertes sonores"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "Lien invalide",
+      "checkUrl": "Vérifiez l'URL ou le lien d'accès.",
+      "stationNotFound": "Station introuvable",
+      "loadingStation": "Chargement de la station…",
+      "loadingChanges": "Chargement des modifications...",
+      "soundOffAria": "Désactiver les alertes sonores",
+      "soundOnAria": "Activer les alertes sonores",
+      "enableSound": "Activer le son",
+      "refreshAria": "Actualiser les commandes",
+      "noActive": "Aucune commande active sur cette station",
+      "readyToServe": "Prêtes à servir",
+      "active": "Actives"
+    },
+    "card": {
+      "delivered": "Commande livrée",
+      "tokenExpired": "Lien KDS expiré. Rechargez la page.",
+      "statusError": "Erreur lors de la mise à jour du statut",
+      "quickSale": "Vente rapide",
+      "ready": "Prêt",
+      "cancel": "Annuler"
+    },
+    "item": {
+      "tokenExpired": "Lien KDS expiré. Rechargez la page.",
+      "updateError": "Erreur lors de la mise à jour de l'article"
+    },
+    "station": {
+      "createAria": "Créer une nouvelle station de cuisine",
+      "newTitle": "Nouvelle station",
+      "closePanelAria": "Fermer le panneau",
+      "namePlaceholder": "Ex: Cuisine principale, Bar, Grill",
+      "colorPickerAria": "Sélecteur de couleur",
+      "hexAria": "Code couleur hexadécimal",
+      "creating": "Création de la station",
+      "nameExists": "Une station avec ce nom existe déjà",
+      "createError": "Erreur lors de la création de la station"
+    }
+  }
+}

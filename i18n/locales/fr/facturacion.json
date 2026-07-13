@@ -1,0 +1,193 @@
+{
+  "facturacion": {
+    "head": {
+      "module": "Facturation",
+      "audit": "Journal des numéros brûlés — DIAN"
+    },
+    "common": {
+      "error": "Erreur",
+      "saved": "Enregistré",
+      "saving": "Enregistrement en cours...",
+      "active": "Active",
+      "inactive": "Inactive",
+      "status": "Statut",
+      "type": "Type",
+      "range": "Plage",
+      "from": "Du",
+      "to": "Au",
+      "update": "Mettre à jour",
+      "edit": "Modifier"
+    },
+    "toasts": {
+      "resolutionUpdated": "Résolution mise à jour",
+      "resolutionCreated": "Résolution créée",
+      "resolutionSaveError": "Erreur lors de l'enregistrement de la résolution",
+      "toggleError": "Erreur lors du changement de statut",
+      "taxSaved": "Paramètres de taxes de vente enregistrés",
+      "taxSaveError": "Erreur lors de l'enregistrement des paramètres de taxes de vente",
+      "printSaved": "Personnalisation des tickets enregistrée",
+      "printSaveError": "Erreur lors de l'enregistrement de la personnalisation",
+      "fiscalSaved": "Données fiscales enregistrées",
+      "fiscalSaveError": "Erreur lors de l'enregistrement des données fiscales"
+    },
+    "docTypes": {
+      "invoice": "Facture de vente",
+      "creditNote": "Note de crédit",
+      "debitNote": "Note de débit",
+      "invoiceShort": "Facture"
+    },
+    "columns": {
+      "prefix": "Préfixe",
+      "resolutionNumber": "N° Résolution",
+      "available": "Disponibles",
+      "used": "Utilisées",
+      "percentUsed": "% Utilisé",
+      "validity": "Validité"
+    },
+    "defaults": {
+      "prefactura": "Pré-facture",
+      "propina": "Pourboire"
+    },
+    "orgTypes": {
+      "legal": "Personne morale",
+      "natural": "Personne physique"
+    },
+    "taxRegimes": {
+      "iva": "Assujetti à la TVA",
+      "noIva": "Non assujetti à la TVA"
+    },
+    "taxLevels": {
+      "grand": "Grand contribuable",
+      "selfWithholding": "Auto-reteneur",
+      "withholdingAgent": "Agent de retenue",
+      "simple": "Régime simplifié",
+      "na": "Non applicable"
+    },
+    "readiness": {
+      "requestTitle": "Demander l'activation de la facturation électronique",
+      "requestBody": "Activez la demande dans la section Fournisseur de facturation électronique. WARO validera l'activation technique avec Matias avant l'émission.",
+      "pendingTitle": "Activation interne en attente",
+      "pendingBody": "La demande peut être active, mais WARO doit finaliser l'activation technique avec Matias avant l'émission.",
+      "missingFiscalTitle": "Données fiscales manquantes",
+      "missingFiscalBody": "Renseignez le NIT, la raison sociale, le téléphone et l'e-mail dans la section Données fiscales de l'entreprise.",
+      "noResolutionTitle": "Aucune résolution DIAN active",
+      "noResolutionBody": "Configurez une résolution active avec une numérotation disponible dans la section Résolution DIAN.",
+      "taxReviewTitle": "Vérifiez les taxes appliquées aux ventes",
+      "taxReviewBody": "Activez INC ou IVA uniquement si cela s'applique à vos ventes. Si votre entreprise émet sans ces taxes, confirmez que les données fiscales correspondent à une personne physique non assujettie avant d'enregistrer.",
+      "matiasUuidTitle": "UUID client Matias manquant",
+      "matiasUuidBody": "Configurez le client_uuid de l'émetteur dans la section Fournisseur de facturation électronique avant d'émettre avec Matias.",
+      "ready": "Votre compte est prêt à émettre des factures électroniques."
+    },
+    "resolutions": {
+      "title": "Résolution DIAN",
+      "new": "Nouvelle résolution",
+      "edit": "Modifier la résolution",
+      "configure": "Configurer la résolution",
+      "emptyTitle": "Aucune résolution DIAN configurée",
+      "emptySub": "Configurez la résolution que vous avez enregistrée sur le portail Matias (numéro, préfixe, plage)",
+      "number": "Numéro de résolution",
+      "prefix": "Préfixe",
+      "rangeFrom": "Début de plage",
+      "rangeTo": "Fin de plage",
+      "currentNumber": "Numéro actuel (consécutif)",
+      "docType": "Type de document",
+      "dateFrom": "Date de début",
+      "dateTo": "Date de fin",
+      "create": "Créer une résolution",
+      "activate": "Activer la résolution",
+      "deactivate": "Désactiver la résolution",
+      "editAria": "Modifier la résolution",
+      "rangeLabel": "Plage : {from} → {to}",
+      "fromLabel": "De :",
+      "toLabel": "À :",
+      "gapsTitle": "Numéros manquants détectés dans votre numérotation",
+      "in24h": "en 24h",
+      "in7d": "en 7j",
+      "in30d": "en 30j",
+      "gapsHint": "DIAN n'autorise pas leur réutilisation — consultez le journal.",
+      "currentNumberInvalid": "Doit être entre {from} et {to}. DIAN interdit la réutilisation des numéros ; le compteur n'avance que.",
+      "nextIssueUses": "La prochaine émission utilisera {number}.",
+      "usedOfTotal": "{used} sur {total} utilisés ({percent}%)"
+    },
+    "fiscal": {
+      "sectionTitle": "Informations fiscales de l'entreprise",
+      "body": "Identifient l'émetteur auprès de DIAN et Matias. Ils n'activent pas les taxes par eux-mêmes et ne modifient pas le calcul de l'IVA ou de l'INC.",
+      "nit": "NIT",
+      "businessName": "Raison sociale",
+      "businessNamePlaceholder": "MI RESTAURANTE SAS",
+      "orgType": "Type d'organisation",
+      "orgHint": "Définit si l'émetteur facture en tant que personne physique ou morale.",
+      "taxRegime": "Responsabilité IVA",
+      "taxRegimeHint": "Décrit la responsabilité fiscale de l'émetteur ; ne remplace pas les interrupteurs de taxes de vente.",
+      "taxLevel": "Niveau de responsabilité",
+      "taxLevelHint": "Enregistre les responsabilités supplémentaires de l'émetteur, telles que grand contribuable ou régime simplifié.",
+      "address": "Adresse fiscale",
+      "city": "Ville",
+      "phone": "Téléphone",
+      "email": "E-mail de facturation",
+      "emailPlaceholder": "facturacion{'@'}mirestaurante.com",
+      "save": "Enregistrer les informations fiscales",
+      "miNegocio": "Mon entreprise"
+    },
+    "print": {
+      "title": "Personnaliser les tickets POS",
+      "bodyPrefix": "Concerne la pré-facture et le reçu imprimé au POS. Le logo est configuré dans",
+      "documentLabel": "Libellé du document",
+      "tipLabel": "Libellé pour pourboire / service",
+      "docPlaceholder": "Pré-facture, Bon de commande, Facture n°…",
+      "tipPlaceholder": "Pourboire, Service, Frais de service…",
+      "docHint": "Texte en en-tête du ticket (max. 40 caractères). Ex : Pré-facture, Commande n°.",
+      "tipHint": "Texte de la ligne de pourboire sur la pré-facture, le reçu imprimé et l'e-mail (max. 40 caractères). Ex : Service.",
+      "showLogo": "Afficher le logo sur les tickets",
+      "showLogoHint": "Utilise le logo de Mon entreprise sur la pré-facture et la facture imprimée",
+      "save": "Enregistrer la personnalisation"
+    },
+    "tax": {
+      "title": "Taxes appliquées aux ventes",
+      "body": "Ces contrôles affectent le calcul et la ventilation des taxes sur le POS et les factures. Ils ne modifient pas d'eux-mêmes votre type d'organisation ni votre responsabilité fiscale.",
+      "incTitle": "INC — Impoconsumo 8%",
+      "incBody": "S'applique lorsque vos ventes doivent liquider l'Impoconsumo. Affecte le total et la ventilation de la facture.",
+      "ivaTitle": "TVA — 19%",
+      "ivaBody": "Activez-le uniquement si vos ventes doivent inclure la TVA de 19%. Cela affecte le total et la ventilation de la facture.",
+      "liquorTitle": "TVA Alcools à emporter — 5%",
+      "liquorBody": "Pour les bouteilles ou alcools à emporter, le cas échéant ; toujours ajouté au prix de base.",
+      "howInc": "Comment appliquer l'INC",
+      "howIva": "Comment appliquer la TVA",
+      "included": "Inclus dans le prix",
+      "added": "Ajouté au prix",
+      "incIncludedHint": "Les 8% sont déjà inclus dans le prix. Ex: $10.800 → base $10.000 + INC $800",
+      "incAddedHint": "Les 8% sont ajoutés en supplément. Ex: $10.000 base → facturation $10.800",
+      "ivaIncludedHint": "Les 19% sont déjà inclus dans le prix. Ex: $11.900 → base $10.000 + TVA $1.900",
+      "ivaAddedHint": "Les 19% sont ajoutés en supplément. Ex: $10.000 base → facturation $11.900",
+      "save": "Enregistrer la configuration"
+    },
+    "provider": {
+      "title": "Fournisseur de facturation électronique",
+      "requestLabel": "Demander la facturation électronique",
+      "requestBody": "Indique que vous souhaitez émettre des factures électroniques depuis WARO. Cette demande ne remplace pas l'activation interne avec Matias et ne modifie pas la TVA ou l'INC.",
+      "matiasUuid": "UUID client Matias",
+      "requiredToIssue": "(requis pour émettre)",
+      "matiasUuidHint": "Identifiant client_uuid du client émetteur dans Matias pour Casa de Software. C'est une exigence technique du fournisseur ; cela ne définit pas votre régime fiscal ni les taxes de vente.",
+      "environment": "Environnement",
+      "environments": {
+        "production": "Production",
+        "testing": "Activation (tests)"
+      },
+      "notConfigured": "Non configuré",
+      "lastDocument": "Dernier document",
+      "noDocuments": "Aucun document émis"
+    },
+    "audit": {
+      "back": "Retour à la Facturation",
+      "filterResolution": "Filtrer par résolution",
+      "when": "Quand",
+      "burnedNumber": "Numéro brûlé",
+      "resolution": "Résolution",
+      "order": "Commande",
+      "validatedDian": "Déjà validé auprès de la DIAN",
+      "matias5xx": "Erreur 5xx de Matias",
+      "emptyTitle": "Aucun numéro brûlé",
+      "totalHistorical": "Total historique"
+    }
+  }
+}

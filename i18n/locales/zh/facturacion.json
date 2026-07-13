@@ -1,0 +1,193 @@
+{
+  "facturacion": {
+    "head": {
+      "module": "发票",
+      "audit": "已作废编号日志 — DIAN"
+    },
+    "common": {
+      "error": "错误",
+      "saved": "已保存",
+      "saving": "正在保存...",
+      "active": "启用",
+      "inactive": "停用",
+      "status": "状态",
+      "type": "类型",
+      "range": "范围",
+      "from": "从",
+      "to": "至",
+      "update": "更新",
+      "edit": "编辑"
+    },
+    "toasts": {
+      "resolutionUpdated": "决议已更新",
+      "resolutionCreated": "决议已创建",
+      "resolutionSaveError": "保存决议失败",
+      "toggleError": "更改状态失败",
+      "taxSaved": "销售税设置已成功保存",
+      "taxSaveError": "保存销售税设置失败",
+      "printSaved": "小票自定义设置已保存",
+      "printSaveError": "保存自定义设置失败",
+      "fiscalSaved": "税务数据已成功保存",
+      "fiscalSaveError": "保存税务数据失败"
+    },
+    "docTypes": {
+      "invoice": "销售发票",
+      "creditNote": "贷项通知单",
+      "debitNote": "借项通知单",
+      "invoiceShort": "发票"
+    },
+    "columns": {
+      "prefix": "前缀",
+      "resolutionNumber": "决议编号",
+      "available": "可用",
+      "used": "已用",
+      "percentUsed": "已用百分比",
+      "validity": "有效期"
+    },
+    "defaults": {
+      "prefactura": "预开发票",
+      "propina": "小费"
+    },
+    "orgTypes": {
+      "legal": "法人实体",
+      "natural": "自然人"
+    },
+    "taxRegimes": {
+      "iva": "增值税纳税人",
+      "noIva": "非增值税纳税人"
+    },
+    "taxLevels": {
+      "grand": "大型纳税人",
+      "selfWithholding": "自行预扣税款人",
+      "withholdingAgent": "预扣税款代理人",
+      "simple": "简易税制",
+      "na": "不适用"
+    },
+    "readiness": {
+      "requestTitle": "申请开通电子发票",
+      "requestBody": "在“电子发票提供商”部分激活申请。WARO将在开具前与Matias验证技术启用情况。",
+      "pendingTitle": "内部启用待处理",
+      "pendingBody": "申请可能已激活，但WARO必须在开具前与Matias完成技术启用。",
+      "missingFiscalTitle": "缺少税务数据",
+      "missingFiscalBody": "请在“业务税务数据”部分填写NIT、法定名称、电话和电子邮件。",
+      "noResolutionTitle": "无有效的DIAN决议",
+      "noResolutionBody": "请在“DIAN决议”部分配置一个具有可用编号的有效决议。",
+      "taxReviewTitle": "审查销售税设置",
+      "taxReviewBody": "仅当INC或IVA适用于您的销售时才启用。如果您的业务开具发票不含这些税费，请在保存前确认税务数据与非增值税纳税的自然人相符。",
+      "matiasUuidTitle": "缺少Matias客户UUID",
+      "matiasUuidBody": "在使用Matias开具发票前，请在“电子发票提供商”部分配置开票方client_uuid。",
+      "ready": "您的账户已准备好开具电子发票。"
+    },
+    "resolutions": {
+      "title": "DIAN决议",
+      "new": "新建决议",
+      "edit": "编辑开票决议",
+      "configure": "配置开票决议",
+      "emptyTitle": "未配置 DIAN 开票决议",
+      "emptySub": "请配置您在 Matias 门户中注册的开票决议（编号、前缀、范围）",
+      "number": "开票决议编号",
+      "prefix": "前缀",
+      "rangeFrom": "范围起始",
+      "rangeTo": "范围结束",
+      "currentNumber": "当前编号（连续）",
+      "docType": "文档类型",
+      "dateFrom": "起始日期",
+      "dateTo": "结束日期",
+      "create": "创建开票决议",
+      "activate": "激活开票决议",
+      "deactivate": "停用开票决议",
+      "editAria": "编辑开票决议",
+      "rangeLabel": "范围: {from} → {to}",
+      "fromLabel": "从:",
+      "toLabel": "到:",
+      "gapsTitle": "您的编号中检测到已作废号码",
+      "in24h": "24小时内",
+      "in7d": "7天内",
+      "in30d": "30天内",
+      "gapsHint": "DIAN 不允许重复使用 — 请查看日志。",
+      "currentNumberInvalid": "必须介于 {from} 和 {to} 之间。DIAN 禁止重复使用编号；计数器只能前进。",
+      "nextIssueUses": "下次开票将使用 {number}。",
+      "usedOfTotal": "已使用 {total} 中的 {used} ({percent}%)"
+    },
+    "fiscal": {
+      "sectionTitle": "商家税务信息",
+      "body": "用于在 DIAN 和 Matias 处识别开票方。这些字段本身不会激活税费，也不会改变 IVA 或 INC 的计算方式。",
+      "nit": "NIT",
+      "businessName": "法定名称",
+      "businessNamePlaceholder": "MI RESTAURANTE SAS",
+      "orgType": "组织类型",
+      "orgHint": "定义开票方是作为自然人还是法人实体开票。",
+      "taxRegime": "IVA 责任",
+      "taxRegimeHint": "描述开票方的税务责任；它不会取代销售税开关。",
+      "taxLevel": "责任级别",
+      "taxLevelHint": "记录开票方的额外责任，例如大型纳税人或简易制度。",
+      "address": "税务地址",
+      "city": "城市",
+      "phone": "电话",
+      "email": "开票邮箱",
+      "emailPlaceholder": "facturacion{'@'}mirestaurante.com",
+      "save": "保存税务信息",
+      "miNegocio": "我的商家"
+    },
+    "print": {
+      "title": "自定义 POS 小票",
+      "bodyPrefix": "影响 POS 预开发票和打印收据。Logo 在",
+      "documentLabel": "文档标签",
+      "tipLabel": "小费/服务费标签",
+      "docPlaceholder": "预开发票，采购订单，发票编号…",
+      "tipPlaceholder": "小费，服务费，服务费…",
+      "docHint": "小票顶部的文本（最多40个字符）。例如：预开发票，订单号。",
+      "tipHint": "预开发票、打印收据和电子邮件中小费行的文本（最多40个字符）。例如：服务费。",
+      "showLogo": "在小票上显示 Logo",
+      "showLogoHint": "在预开发票和打印发票上使用我的商家 Logo",
+      "save": "保存自定义设置"
+    },
+    "tax": {
+      "title": "销售税",
+      "body": "这些控件影响 POS 和发票中的税费计算和明细。它们本身不会改变您的组织类型或税务责任。",
+      "incTitle": "INC — Impoconsumo 8%",
+      "incBody": "当您的销售需要缴纳 Impoconsumo 时适用。影响发票总额和明细。",
+      "ivaTitle": "IVA — 19%",
+      "ivaBody": "仅当您的销售额需要包含19%的IVA时才启用。这会影响发票总额和明细。",
+      "liquorTitle": "外带酒水IVA — 5%",
+      "liquorBody": "适用于瓶装或外带酒水；始终加到基础价格上。",
+      "howInc": "如何应用INC",
+      "howIva": "如何应用IVA",
+      "included": "包含在价格中",
+      "added": "加到价格上",
+      "incIncludedHint": "8%已包含在价格中。例如：$10.800 → 基础价 $10.000 + INC $800",
+      "incAddedHint": "8%额外加收。例如：$10.000 基础价 → 收费 $10.800",
+      "ivaIncludedHint": "19%已包含在价格中。例如：$11.900 → 基础价 $10.000 + IVA $1.900",
+      "ivaAddedHint": "19%额外加收。例如：$10.000 基础价 → 收费 $11.900",
+      "save": "保存配置"
+    },
+    "provider": {
+      "title": "电子发票提供商",
+      "requestLabel": "申请电子发票",
+      "requestBody": "表示您希望通过WARO开具电子发票。此申请不替代与Matias的内部启用，也不会更改IVA或INC。",
+      "matiasUuid": "Matias客户UUID",
+      "requiredToIssue": "(开具必需)",
+      "matiasUuidHint": "Matias中Casa de Software的开票客户client_uuid标识符。这是提供商的技术要求；它不定义您的财政制度或销售税。",
+      "environment": "环境",
+      "environments": {
+        "production": "生产环境",
+        "testing": "启用 (测试)"
+      },
+      "notConfigured": "未配置",
+      "lastDocument": "最新文件",
+      "noDocuments": "未开具任何文件"
+    },
+    "audit": {
+      "back": "返回发票",
+      "filterResolution": "按决议筛选",
+      "when": "时间",
+      "burnedNumber": "作废编号",
+      "resolution": "决议",
+      "order": "订单",
+      "validatedDian": "已在DIAN验证",
+      "matias5xx": "Matias 5xx错误",
+      "emptyTitle": "没有作废编号",
+      "totalHistorical": "历史总计"
+    }
+  }
+}

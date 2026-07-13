@@ -24,9 +24,10 @@ describe('app locale catalog', () => {
     assert.deepEqual(ALL_APP_LOCALES, ['es', 'en', 'pt', 'fr', 'de', 'hi', 'zh', 'ar'])
   })
 
-  it('keeps unreviewed locales disabled', () => {
-    assert.deepEqual(APP_LOCALES, ['es', 'en'])
-    assert.equal(normalizeEnabledAppLocale('fr'), null)
+  it('enables every translated product locale', () => {
+    assert.deepEqual(APP_LOCALES, ['es', 'en', 'pt', 'fr', 'de', 'hi', 'zh', 'ar'])
+    assert.equal(normalizeEnabledAppLocale('fr'), 'fr')
+    assert.equal(normalizeEnabledAppLocale('ar'), 'ar')
     assert.equal(normalizeEnabledAppLocale('en-US'), 'en')
   })
 
@@ -48,7 +49,7 @@ describe('app locale catalog', () => {
     assert.equal(resolveAppLocale(undefined, 'en', false), 'en')
     assert.equal(resolveAppLocale('es', 'en', true), 'es')
     assert.equal(resolveAppLocale('en', 'es', true), 'en')
-    assert.equal(resolveAppLocale('fr', 'en', true), 'es')
+    assert.equal(resolveAppLocale('fr', 'en', true), 'fr')
     assert.equal(resolveAppLocale('xx', 'en', true), 'es')
   })
 })

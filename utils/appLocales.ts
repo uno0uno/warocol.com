@@ -17,13 +17,13 @@ export const LOCALE_MESSAGE_FILES = [
 export const APP_LOCALE_DEFINITIONS = [
   { code: 'es', language: 'es-CO', numberLanguage: 'es-CO', name: 'Español', direction: 'ltr', enabled: true },
   { code: 'en', language: 'en-US', numberLanguage: 'en-US', name: 'English', direction: 'ltr', enabled: true },
-  { code: 'pt', language: 'pt-BR', numberLanguage: 'pt-BR', name: 'Português', direction: 'ltr', enabled: false },
-  { code: 'fr', language: 'fr-FR', numberLanguage: 'fr-FR', name: 'Français', direction: 'ltr', enabled: false },
-  { code: 'de', language: 'de-DE', numberLanguage: 'de-DE', name: 'Deutsch', direction: 'ltr', enabled: false },
-  { code: 'hi', language: 'hi-IN', numberLanguage: 'hi-IN', name: 'हिन्दी', direction: 'ltr', enabled: false },
-  { code: 'zh', language: 'zh-CN', numberLanguage: 'zh-CN', name: '简体中文', direction: 'ltr', enabled: false },
+  { code: 'pt', language: 'pt-BR', numberLanguage: 'pt-BR', name: 'Português', direction: 'ltr', enabled: true },
+  { code: 'fr', language: 'fr-FR', numberLanguage: 'fr-FR', name: 'Français', direction: 'ltr', enabled: true },
+  { code: 'de', language: 'de-DE', numberLanguage: 'de-DE', name: 'Deutsch', direction: 'ltr', enabled: true },
+  { code: 'hi', language: 'hi-IN', numberLanguage: 'hi-IN', name: 'हिन्दी', direction: 'ltr', enabled: true },
+  { code: 'zh', language: 'zh-CN', numberLanguage: 'zh-CN', name: '简体中文', direction: 'ltr', enabled: true },
   // Keep Latin digits for operational POS input during the first Arabic rollout.
-  { code: 'ar', language: 'ar', numberLanguage: 'ar-u-nu-latn', name: 'العربية', direction: 'rtl', enabled: false },
+  { code: 'ar', language: 'ar', numberLanguage: 'ar-u-nu-latn', name: 'العربية', direction: 'rtl', enabled: true },
 ] as const
 
 export type AppLocaleDefinition = (typeof APP_LOCALE_DEFINITIONS)[number]

@@ -1,0 +1,62 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "add": "Adicionar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "previous": "Anterior",
+    "next": "Próximo",
+    "loading": "Carregando...",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "apply": "Aplicar",
+    "period": "Período",
+    "error": "Erro",
+    "retry": "Tentar novamente",
+    "yes": "Sim",
+    "no": "Não",
+    "notSpecified": "Não especificado",
+    "nA": "N/D",
+    "filters": {
+      "field": "Campo",
+      "searchField": "Campo de busca",
+      "dateRange": "Intervalo de datas",
+      "clear": "Limpar filtros"
+    },
+    "datePresets": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "lastWeek": "Última semana",
+      "last15": "Últimos 15 dias",
+      "lastMonth": "Último mês",
+      "last90": "Últimos 90 dias"
+    },
+    "loadingPhrases": {
+      "sales": "Carregando vendas...",
+      "orders": "Consultando os pedidos...",
+      "accounts": "Fazendo as contas...",
+      "server": "Negociando com o servidor...",
+      "tickets": "Somando as comandas...",
+      "inventory": "Conferindo o estoque...",
+      "commissions": "Prometemos não cobrar comissões...",
+      "averageTicket": "Calculando seu tíquete médio...",
+      "almostReady": "Quase pronto, tenha paciência, chef...",
+      "kitchen": "Sincronizando com a cozinha..."
+    },
+    "pagination": {
+      "showingRange": "Exibindo de {start} a {end} de {total} resultados",
+      "pageOf": "Página {page} de {total}"
+    },
+    "submitBusy": "Enviando alterações",
+    "processing": "Processando...",
+    "attachments": "Documentos anexados",
+    "attachFile": "Anexar arquivo",
+    "attachmentHint": "PDF, imagens e documentos (máx. 10 MB)",
+    "fileTooLarge": "Arquivo muito grande",
+    "fileTooLargeMessage": "{name} excede o tamanho máximo de 10 MB"
+  }
+}

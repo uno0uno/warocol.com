@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "Küchenbon-Monitor — WARO",
+      "heading": "Küchenbon-Monitor",
+      "disabledTitle": "Küchenbons nicht aktiviert",
+      "disabledBody": "Aktiviere Küchenbons in den Geschäftseinstellungen, um diesen Monitor zu nutzen.",
+      "all": "Alle",
+      "counter": "Theke",
+      "delivery": "Lieferungen",
+      "pickup": "Abholungen",
+      "active": "Aktiv",
+      "ready": "Bereit",
+      "readyToServe": "Bereit zur Ausgabe",
+      "noActive": "Keine aktiven Küchenbons",
+      "noComandas": "Keine Küchenbons vorhanden",
+      "emptyPending": "Derzeit keine ausstehenden oder in Zubereitung befindlichen Bestellungen.",
+      "emptyFiltered": "Keine Küchenbons mit den ausgewählten Filtern gefunden.",
+      "soundOffAria": "Benachrichtigungen stummschalten",
+      "soundOnAria": "Akustische Benachrichtigungen aktivieren"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "Ungültiger Link",
+      "checkUrl": "Überprüfe die URL oder den Zugangslink.",
+      "stationNotFound": "Station nicht gefunden",
+      "loadingStation": "Station wird geladen…",
+      "loadingChanges": "Änderungen werden geladen...",
+      "soundOffAria": "Benachrichtigungen stummschalten",
+      "soundOnAria": "Akustische Benachrichtigungen aktivieren",
+      "enableSound": "Ton aktivieren",
+      "refreshAria": "Küchenbons aktualisieren",
+      "noActive": "Keine aktiven Küchenbons an dieser Station",
+      "readyToServe": "Bereit zur Ausgabe",
+      "active": "Aktiv"
+    },
+    "card": {
+      "delivered": "Küchenbon ausgegeben",
+      "tokenExpired": "KDS-Link abgelaufen. Seite neu laden.",
+      "statusError": "Fehler beim Aktualisieren des Status",
+      "quickSale": "Schnellverkauf",
+      "ready": "Bereit",
+      "cancel": "Abbrechen"
+    },
+    "item": {
+      "tokenExpired": "KDS-Link abgelaufen. Seite neu laden.",
+      "updateError": "Fehler beim Aktualisieren des Artikels"
+    },
+    "station": {
+      "createAria": "Neue Küchenstation erstellen",
+      "newTitle": "Neue Station",
+      "closePanelAria": "Panel schließen",
+      "namePlaceholder": "Z.B.: Hauptküche, Bar, Grill",
+      "colorPickerAria": "Farbauswahl",
+      "hexAria": "Hex-Farbcode",
+      "creating": "Station wird erstellt",
+      "nameExists": "Eine Station mit diesem Namen existiert bereits",
+      "createError": "Fehler beim Erstellen der Station"
+    }
+  }
+}

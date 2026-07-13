@@ -1,0 +1,62 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "back": "Retour",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "loading": "Chargement...",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "apply": "Appliquer",
+    "period": "Période",
+    "error": "Erreur",
+    "retry": "Réessayer",
+    "yes": "Oui",
+    "no": "Non",
+    "notSpecified": "Non spécifié",
+    "nA": "N/A",
+    "filters": {
+      "field": "Champ",
+      "searchField": "Champ de recherche",
+      "dateRange": "Plage de dates",
+      "clear": "Effacer les filtres"
+    },
+    "datePresets": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "lastWeek": "Semaine dernière",
+      "last15": "15 derniers jours",
+      "lastMonth": "Mois dernier",
+      "last90": "90 derniers jours"
+    },
+    "loadingPhrases": {
+      "sales": "Chargement des ventes...",
+      "orders": "Vérification des commandes...",
+      "accounts": "Calcul des comptes...",
+      "server": "Négociation avec le serveur...",
+      "tickets": "Totalisation des tickets de cuisine...",
+      "inventory": "Vérification de l'inventaire...",
+      "commissions": "Nous promettons de ne pas facturer de commissions...",
+      "averageTicket": "Calcul de votre ticket moyen...",
+      "almostReady": "Presque prêt, patience chef...",
+      "kitchen": "Synchronisation avec la cuisine..."
+    },
+    "pagination": {
+      "showingRange": "Affichage de {start} à {end} sur {total} résultats",
+      "pageOf": "Page {page} sur {total}"
+    },
+    "submitBusy": "Envoi des modifications",
+    "processing": "Traitement...",
+    "attachments": "Pièces jointes",
+    "attachFile": "Joindre un fichier",
+    "attachmentHint": "PDF, images, documents (max. 10 Mo)",
+    "fileTooLarge": "Fichier trop volumineux",
+    "fileTooLargeMessage": "{name} dépasse la taille maximale de 10 Mo"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "es": { "reviewed": true, "reviewer": "source locale" },
+  "en": { "reviewed": true, "reviewer": "existing production locale" },
+  "pt": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" },
+  "fr": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" },
+  "de": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" },
+  "hi": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" },
+  "zh": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" },
+  "ar": { "reviewed": true, "reviewer": "product activation approval 2026-07-13" }
+}

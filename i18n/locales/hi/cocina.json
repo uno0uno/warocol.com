@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "ऑर्डर मॉनिटर — WARO",
+      "heading": "ऑर्डर मॉनिटर",
+      "disabledTitle": "ऑर्डर सक्रिय नहीं हैं",
+      "disabledBody": "इस मॉनिटर का उपयोग करने के लिए अपने व्यवसाय की सेटिंग से ऑर्डर सक्रिय करें।",
+      "all": "सभी",
+      "counter": "काउंटर",
+      "delivery": "डिलीवरी",
+      "pickup": "पिकअप",
+      "active": "सक्रिय",
+      "ready": "तैयार",
+      "readyToServe": "वितरण के लिए तैयार",
+      "noActive": "कोई सक्रिय ऑर्डर नहीं हैं",
+      "noComandas": "कोई ऑर्डर नहीं हैं",
+      "emptyPending": "अभी कोई लंबित या तैयारी में ऑर्डर नहीं हैं।",
+      "emptyFiltered": "चयनित फ़िल्टर के साथ कोई ऑर्डर नहीं मिले।",
+      "soundOffAria": "अलर्ट म्यूट करें",
+      "soundOnAria": "ध्वनि अलर्ट सक्रिय करें"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "अमान्य लिंक",
+      "checkUrl": "URL या एक्सेस लिंक जांचें।",
+      "stationNotFound": "स्टेशन नहीं मिला",
+      "loadingStation": "स्टेशन लोड हो रहा है…",
+      "loadingChanges": "परिवर्तन लोड हो रहे हैं...",
+      "soundOffAria": "अलर्ट म्यूट करें",
+      "soundOnAria": "ध्वनि अलर्ट सक्रिय करें",
+      "enableSound": "ध्वनि सक्रिय करें",
+      "refreshAria": "ऑर्डर रीफ़्रेश करें",
+      "noActive": "इस स्टेशन पर कोई सक्रिय ऑर्डर नहीं हैं",
+      "readyToServe": "वितरण के लिए तैयार",
+      "active": "सक्रिय"
+    },
+    "card": {
+      "delivered": "ऑर्डर डिलीवर किया गया",
+      "tokenExpired": "KDS लिंक समाप्त हो गया है। पृष्ठ रीलोड करें।",
+      "statusError": "स्थिति अपडेट करने में त्रुटि",
+      "quickSale": "त्वरित बिक्री",
+      "ready": "तैयार",
+      "cancel": "रद्द करें"
+    },
+    "item": {
+      "tokenExpired": "KDS लिंक समाप्त हो गया है। पृष्ठ रीलोड करें।",
+      "updateError": "आइटम अपडेट करने में त्रुटि"
+    },
+    "station": {
+      "createAria": "नया किचन स्टेशन बनाएं",
+      "newTitle": "नया स्टेशन",
+      "closePanelAria": "पैनल बंद करें",
+      "namePlaceholder": "उदा: मुख्य रसोई, बार, ग्रिल",
+      "colorPickerAria": "रंग चयनकर्ता",
+      "hexAria": "हेक्स में रंग कोड",
+      "creating": "स्टेशन बनाया जा रहा है",
+      "nameExists": "इस नाम का एक स्टेशन पहले से मौजूद है",
+      "createError": "स्टेशन बनाने में त्रुटि"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "Monitor de comandas — WARO",
+      "heading": "Monitor de comandas",
+      "disabledTitle": "Comandas não ativadas",
+      "disabledBody": "Ative as comandas nas configurações do seu negócio para usar este monitor.",
+      "all": "Todas",
+      "counter": "Balcão",
+      "delivery": "Entregas",
+      "pickup": "Retiradas",
+      "active": "Ativas",
+      "ready": "Prontas",
+      "readyToServe": "Prontas para entregar",
+      "noActive": "Não há comandas ativas",
+      "noComandas": "Não há comandas",
+      "emptyPending": "Não há pedidos pendentes nem em preparo no momento.",
+      "emptyFiltered": "Nenhuma comanda foi encontrada com os filtros selecionados.",
+      "soundOffAria": "Silenciar alertas",
+      "soundOnAria": "Ativar alertas sonoros"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "Link inválido",
+      "checkUrl": "Verifique a URL ou o link de acesso.",
+      "stationNotFound": "Estação não encontrada",
+      "loadingStation": "Carregando estação…",
+      "loadingChanges": "Carregando alterações...",
+      "soundOffAria": "Silenciar alertas",
+      "soundOnAria": "Ativar alertas sonoros",
+      "enableSound": "Ativar som",
+      "refreshAria": "Atualizar comandas",
+      "noActive": "Não há comandas ativas nesta estação",
+      "readyToServe": "Prontas para entregar",
+      "active": "Ativas"
+    },
+    "card": {
+      "delivered": "Comanda entregue",
+      "tokenExpired": "O link do KDS expirou. Recarregue a página.",
+      "statusError": "Erro ao atualizar o status",
+      "quickSale": "Venda rápida",
+      "ready": "Pronto",
+      "cancel": "Cancelar"
+    },
+    "item": {
+      "tokenExpired": "O link do KDS expirou. Recarregue a página.",
+      "updateError": "Erro ao atualizar o item"
+    },
+    "station": {
+      "createAria": "Criar nova estação de cozinha",
+      "newTitle": "Nova estação",
+      "closePanelAria": "Fechar painel",
+      "namePlaceholder": "Ex.: Cozinha principal, Bar, Churrasqueira",
+      "colorPickerAria": "Seletor de cores",
+      "hexAria": "Código hexadecimal da cor",
+      "creating": "Criando estação",
+      "nameExists": "Já existe uma estação com esse nome",
+      "createError": "Erro ao criar a estação"
+    }
+  }
+}
