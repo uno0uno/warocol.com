@@ -26,21 +26,14 @@ useHead({ title: () => t('auth.loginTitle') })
 
 const checking = ref(true)
 const router = useRouter()
+const { syncAuthenticatedLocale } = useAppLocale()
 
 onMounted(async () => {
   try {
     const sessionData = await $fetch('/api/auth/session')
     if (canUseInternalSession(sessionData)) {
-      const authStore = useAuthStore()
       const accessStore = useAccessStore()
-      authStore.initializeFromMiddleware({
-        session: sessionData,
-        profileData: null,
-        user: {
-          name: sessionData.user.name || 'Anonymous User',
-          email: sessionData.user.email,
-        }
-      })
+      await syncAuthenticatedLocale(sessionData)
       await accessStore.load()
       return navigateTo(getAccessAwareRedirect(useRoute().query.redirect, accessStore, router))
     }

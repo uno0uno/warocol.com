@@ -176,7 +176,9 @@ const verifyingCode = ref(false)
 const showCustomerPortalLink = ref(false)
 const toast = useToast()
 const router = useRouter()
+const authStore = useAuthStore()
 const accessStore = useAccessStore()
+const { syncAuthenticatedLocale } = useAppLocale()
 
 
 // ========================================
@@ -278,6 +280,7 @@ onMounted(async () => {
       if (session.user.tenant_name === expectedTenantName) {
 
         const route = useRoute()
+        await syncAuthenticatedLocale(session)
         await accessStore.load()
         const redirectUrl = getAccessAwareRedirect(route.query.redirect, accessStore, router)
         await navigateTo(redirectUrl)
@@ -358,6 +361,12 @@ async function verifyCode() {
       },
       credentials: 'include'
     })
+
+    const session = await authStore.refreshSession()
+    if (!canUseInternalSession(session)) {
+      throw { status: 403, data: { code: 'no_internal_access' } }
+    }
+    await syncAuthenticatedLocale(session)
 
     toast.success(t('auth.accessGranted'))
 

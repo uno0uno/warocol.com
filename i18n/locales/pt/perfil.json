@@ -18,7 +18,9 @@
       "nameHelp": "É assim que outros usuários verão você.",
       "description": "Descrição",
       "descriptionPlaceholder": "Conte um pouco sobre você",
-      "publicHelp": "Opcional. Seu nome, descrição e foto também podem aparecer na autoria pública dos seus artigos."
+      "publicHelp": "Opcional. Seu nome, descrição e foto também podem aparecer na autoria pública dos seus artigos.",
+      "language": "Idioma pessoal",
+      "languageHelp": "Este idioma pertence ao seu perfil e permanece ativo quando você troca de negócio."
     },
     "validation": {
       "nameRequired": "O nome é obrigatório.",

@@ -110,7 +110,9 @@ const redirectProgress = ref(0)
 // Obtener parámetros de la URL
 const token = route.query.token
 const email = route.query.email
+const authStore = useAuthStore()
 const accessStore = useAccessStore()
+const { syncAuthenticatedLocale } = useAppLocale()
 const redirectUrl = ref<string | null>(null)
 
 // ========================================
@@ -193,6 +195,11 @@ const verifyToken = async () => {
       throw response
     }
 
+    const sessionData = await authStore.refreshSession()
+    if (!canUseInternalSession(sessionData)) {
+      throw { status: 403, data: { code: 'no_internal_access' } }
+    }
+    await syncAuthenticatedLocale(sessionData)
     await accessStore.load()
     redirectUrl.value = getAccessAwareRedirect(route.query.redirect, accessStore, router)
 

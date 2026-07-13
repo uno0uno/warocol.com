@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { CameraIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { CameraIcon, LanguageIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import {
+  DEFAULT_APP_LOCALE,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -8,15 +12,30 @@ const { t } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('perfil.head.title') })
 
 const authStore = useAuthStore()
+const tenantsStore = useTenantsStore()
 const toast = useToast()
+const {
+  locale,
+  resolvePreferredLocale,
+  applyPersonalLocale,
+  syncFromSources,
+} = useAppLocale()
 const showAvatarModal = ref(false)
 const isSaving = ref(false)
 const saveError = ref('')
 const nameError = ref('')
 const descriptionError = ref('')
 
-const form = reactive({ name: '', description: '' })
-const persisted = reactive({ name: '', description: '' })
+const form = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+  name: '',
+  description: '',
+  preferredLocale: DEFAULT_APP_LOCALE,
+})
+const persisted = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+  name: '',
+  description: '',
+  preferredLocale: DEFAULT_APP_LOCALE,
+})
 
 const displayUser = computed(() => authStore.displayUser)
 const initials = computed(() => {
@@ -25,19 +44,24 @@ const initials = computed(() => {
 })
 const normalizedName = computed(() => form.name.trim())
 const normalizedDescription = computed(() => form.description.trim())
+const localeChanged = computed(() => form.preferredLocale !== persisted.preferredLocale)
 const hasChanges = computed(() =>
   normalizedName.value !== persisted.name
-  || normalizedDescription.value !== persisted.description,
+  || normalizedDescription.value !== persisted.description
+  || localeChanged.value,
 )
 
 const syncPersistedProfile = () => {
   const sessionUser = authStore.session?.user
   const name = (sessionUser?.name || sessionUser?.user_name || '').trim()
   const description = sessionUser?.description?.trim() || ''
+  const preferredLocale = resolvePreferredLocale()
   form.name = name
   form.description = description
+  form.preferredLocale = preferredLocale
   persisted.name = name
   persisted.description = description
+  persisted.preferredLocale = preferredLocale
   saveError.value = ''
   nameError.value = ''
   descriptionError.value = ''
@@ -48,6 +72,8 @@ watch(
     authStore.session?.user?.name,
     authStore.session?.user?.user_name,
     authStore.session?.user?.description,
+    authStore.session?.user?.preferred_locale,
+    tenantsStore.selectedTenant?.ui_locale,
   ],
   () => {
     if (!hasChanges.value) syncPersistedProfile()
@@ -85,18 +111,30 @@ const saveProfile = async () => {
 
   isSaving.value = true
   saveError.value = ''
+  const shouldUpdateLocale = localeChanged.value
+  const previousLocale = locale.value
   try {
+    if (shouldUpdateLocale) await applyPersonalLocale(form.preferredLocale)
+
+    const body: Record<string, string | null> = {
+      name: normalizedName.value,
+      description: normalizedDescription.value || null,
+    }
+    if (shouldUpdateLocale) body.preferred_locale = form.preferredLocale
+
     await $fetch('/api/auth/update-profile', {
       method: 'PUT',
-      body: {
-        name: normalizedName.value,
-        description: normalizedDescription.value || null,
-      },
+      body,
     })
     await authStore.refreshSession()
+    await syncFromSources()
     syncPersistedProfile()
     toast.success(t('perfil.feedback.saved'), { title: t('perfil.feedback.savedTitle') })
   } catch (error: any) {
+    if (shouldUpdateLocale) {
+      form.preferredLocale = persisted.preferredLocale
+      await applyPersonalLocale(previousLocale).catch(() => undefined)
+    }
     saveError.value = error?.data?.detail || error?.data?.message || t('perfil.feedback.saveError')
   } finally {
     isSaving.value = false
@@ -106,6 +144,7 @@ const saveProfile = async () => {
 const resetForm = () => {
   form.name = persisted.name
   form.description = persisted.description
+  form.preferredLocale = persisted.preferredLocale
   saveError.value = ''
   nameError.value = ''
   descriptionError.value = ''
@@ -201,6 +240,22 @@ const handleAvatarUploaded = async (url: string) => {
           />
           <p v-if="descriptionError" id="profile-description-error" class="mt-1 text-xs text-destructive" role="alert">{{ descriptionError }}</p>
           <p v-else id="profile-description-help" class="mt-1 text-xs leading-relaxed text-text-secondary">{{ t('perfil.personal.publicHelp') }}</p>
+        </div>
+
+        <div>
+          <div class="mb-1.5 flex items-center gap-2">
+            <LanguageIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+            <label for="profile-language" class="text-sm font-semibold text-text-primary">{{ t('perfil.personal.language') }}</label>
+          </div>
+          <LocaleSelector
+            id="profile-language"
+            v-model="form.preferredLocale"
+            :disabled="isSaving"
+            class="w-full"
+          />
+          <p id="profile-language-help" class="mt-1 text-xs leading-relaxed text-text-secondary">
+            {{ t('perfil.personal.languageHelp') }}
+          </p>
         </div>
 
         <p v-if="saveError" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{{ saveError }}</p>

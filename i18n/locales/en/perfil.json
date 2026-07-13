@@ -18,7 +18,9 @@
       "nameHelp": "This is how other users will see you.",
       "description": "Description",
       "descriptionPlaceholder": "Tell us a little about yourself",
-      "publicHelp": "Optional. Your name, description, and photo may also appear in the public byline of your articles."
+      "publicHelp": "Optional. Your name, description, and photo may also appear in the public byline of your articles.",
+      "language": "Personal language",
+      "languageHelp": "This language belongs to your profile and remains active when you switch businesses."
     },
     "validation": {
       "nameRequired": "Name is required.",

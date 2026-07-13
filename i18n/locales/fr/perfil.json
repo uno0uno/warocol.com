@@ -18,7 +18,9 @@
       "nameHelp": "C’est ainsi que les autres utilisateurs vous verront.",
       "description": "Description",
       "descriptionPlaceholder": "Parlez-nous brièvement de vous",
-      "publicHelp": "Facultatif. Votre nom, votre description et votre photo peuvent aussi apparaître dans la signature publique de vos articles."
+      "publicHelp": "Facultatif. Votre nom, votre description et votre photo peuvent aussi apparaître dans la signature publique de vos articles.",
+      "language": "Langue personnelle",
+      "languageHelp": "Cette langue appartient à votre profil et reste active lorsque vous changez d’établissement."
     },
     "validation": {
       "nameRequired": "Le nom est obligatoire.",

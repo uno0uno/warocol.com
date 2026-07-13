@@ -18,7 +18,9 @@
       "nameHelp": "So sehen dich andere Benutzer.",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Erzähle kurz etwas über dich",
-      "publicHelp": "Optional. Dein Name, deine Beschreibung und dein Foto können auch in der öffentlichen Autorenzeile deiner Artikel erscheinen."
+      "publicHelp": "Optional. Dein Name, deine Beschreibung und dein Foto können auch in der öffentlichen Autorenzeile deiner Artikel erscheinen.",
+      "language": "Persönliche Sprache",
+      "languageHelp": "Diese Sprache gehört zu deinem Profil und bleibt beim Wechsel des Betriebs aktiv."
     },
     "validation": {
       "nameRequired": "Der Name ist erforderlich.",

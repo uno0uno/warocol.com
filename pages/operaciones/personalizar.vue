@@ -13,7 +13,10 @@ useHead({ title: () => t('operaciones.head.personalizar') })
 
 const { currentTenant } = useTenantReactive()
 const tenantsStore = useTenantsStore()
-const { locale, applyLocale } = useAppLocale()
+const { applyTenantLocale } = useAppLocale()
+const configuredLocale = computed<AppLocaleCode>(() =>
+  normalizeEnabledAppLocale(tenantsStore.selectedTenant?.ui_locale) ?? DEFAULT_APP_LOCALE,
+)
 const cache = useQueryCache()
 
 // Operaciones audience aggregator — gated under OPERACIONES.
@@ -165,13 +168,13 @@ watch(isSavingLocale, (saving) => {
 })
 
 const saveUiLocale = async (next: AppLocaleCode) => {
-  if (isSavingLocale.value || next === locale.value) return
+  if (isSavingLocale.value || next === configuredLocale.value) return
   const previous = normalizeEnabledAppLocale(
     tenantsStore.selectedTenant?.ui_locale,
   ) ?? DEFAULT_APP_LOCALE
 
   isSavingLocale.value = true
-  await applyLocale(next)
+  await applyTenantLocale(next)
   try {
     await $fetch('/api/operaciones/ui-locale', {
       method: 'PATCH',
@@ -184,7 +187,7 @@ const saveUiLocale = async (next: AppLocaleCode) => {
       title: t('operaciones.personalizar.savedTitle'),
     })
   } catch (error: any) {
-    await applyLocale(previous)
+    await applyTenantLocale(previous)
     const detail = error?.data?.detail ?? error?.data?.message
     toast.error(detail || t('operaciones.personalizar.languageSaveError'), {
       title: t('operaciones.comandas.error'),
@@ -285,7 +288,7 @@ const toggleOpenSale = async () => {
           <LocaleSelector
             v-else
             id="tenant-ui-locale"
-            :model-value="locale"
+            :model-value="configuredLocale"
             class="w-full"
             @update:model-value="saveUiLocale"
           />
