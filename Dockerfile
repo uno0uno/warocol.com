@@ -2,9 +2,12 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY package.json bun.lock ./
+ARG NODE_BUILD_MAX_OLD_SPACE_SIZE=6144
+ENV NODE_OPTIONS="--max-old-space-size=${NODE_BUILD_MAX_OLD_SPACE_SIZE}"
+
+COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm,id=npm-cache-warocol \
-    npm install
+    npm ci
 
 # .env is passed as a secret mount — never stored in image layers
 COPY . .

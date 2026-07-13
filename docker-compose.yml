@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NODE_BUILD_MAX_OLD_SPACE_SIZE: ${NODE_BUILD_MAX_OLD_SPACE_SIZE:-6144}
       secrets:
         - env_file
     volumes:
