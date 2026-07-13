@@ -58,14 +58,30 @@ export function normalizeEnabledAppLocale(value: unknown): AppLocaleCode | null 
   return code && isAppLocaleEnabled(code) ? code : null
 }
 
-export function resolveAppLocale(
-  tenantValue: unknown,
-  cookieValue: unknown,
-  tenantLoaded: boolean,
-): AppLocaleCode {
-  if (tenantLoaded) {
+export interface AppLocaleSources {
+  profileValue?: unknown
+  tenantValue?: unknown
+  cookieValue?: unknown
+  profileLoaded?: boolean
+  tenantLoaded?: boolean
+}
+
+export function resolveAppLocale({
+  profileValue,
+  tenantValue,
+  cookieValue,
+  profileLoaded = false,
+  tenantLoaded = false,
+}: AppLocaleSources): AppLocaleCode {
+  const profileLocale = normalizeEnabledAppLocale(profileValue)
+  if (profileLoaded && profileLocale) return profileLocale
+
+  if (profileLoaded && tenantLoaded) {
     return normalizeEnabledAppLocale(tenantValue) ?? DEFAULT_APP_LOCALE
   }
+
+  // Until both authenticated sources are known, preserve the validated SSR
+  // cache so hydration does not briefly fall back to another language.
   return normalizeEnabledAppLocale(cookieValue) ?? DEFAULT_APP_LOCALE
 }
 

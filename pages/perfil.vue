@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import { CameraIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { CameraIcon, LanguageIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import {
+  DEFAULT_APP_LOCALE,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -8,15 +12,35 @@ const { t } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('perfil.head.title') })
 
 const authStore = useAuthStore()
+const tenantsStore = useTenantsStore()
 const toast = useToast()
+const {
+  locale,
+  resolvePreferredLocale,
+  applyPersonalLocale,
+  syncFromSources,
+} = useAppLocale()
 const showAvatarModal = ref(false)
 const isSaving = ref(false)
+const isInitialLoading = ref(true)
+const isRefreshing = ref(false)
+const hasEverLoaded = ref(false)
+const profileLoadError = ref('')
 const saveError = ref('')
 const nameError = ref('')
 const descriptionError = ref('')
+let activeProfileLoad: Promise<void> | undefined
 
-const form = reactive({ name: '', description: '' })
-const persisted = reactive({ name: '', description: '' })
+const form = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+  name: '',
+  description: '',
+  preferredLocale: DEFAULT_APP_LOCALE,
+})
+const persisted = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+  name: '',
+  description: '',
+  preferredLocale: DEFAULT_APP_LOCALE,
+})
 
 const displayUser = computed(() => authStore.displayUser)
 const initials = computed(() => {
@@ -25,29 +49,85 @@ const initials = computed(() => {
 })
 const normalizedName = computed(() => form.name.trim())
 const normalizedDescription = computed(() => form.description.trim())
+const localeChanged = computed(() => form.preferredLocale !== persisted.preferredLocale)
 const hasChanges = computed(() =>
   normalizedName.value !== persisted.name
-  || normalizedDescription.value !== persisted.description,
+  || normalizedDescription.value !== persisted.description
+  || localeChanged.value,
 )
 
 const syncPersistedProfile = () => {
   const sessionUser = authStore.session?.user
   const name = (sessionUser?.name || sessionUser?.user_name || '').trim()
   const description = sessionUser?.description?.trim() || ''
+  const preferredLocale = resolvePreferredLocale()
   form.name = name
   form.description = description
+  form.preferredLocale = preferredLocale
   persisted.name = name
   persisted.description = description
+  persisted.preferredLocale = preferredLocale
   saveError.value = ''
   nameError.value = ''
   descriptionError.value = ''
 }
+
+const loadProfile = () => {
+  if (activeProfileLoad) return activeProfileLoad
+
+  const isFirstLoad = !hasEverLoaded.value
+  if (isFirstLoad) isInitialLoading.value = true
+  else isRefreshing.value = true
+  profileLoadError.value = ''
+
+  activeProfileLoad = (async () => {
+    try {
+      await authStore.refreshSession()
+      await syncFromSources()
+      if (!hasChanges.value) syncPersistedProfile()
+      hasEverLoaded.value = true
+    } catch (error: any) {
+      profileLoadError.value = error?.data?.detail
+        || error?.data?.message
+        || t('perfil.feedback.refreshError')
+
+      if (!isFirstLoad) {
+        toast.error(profileLoadError.value, { title: t('common.error') })
+      }
+    } finally {
+      isInitialLoading.value = false
+      isRefreshing.value = false
+      activeProfileLoad = undefined
+    }
+  })()
+
+  return activeProfileLoad
+}
+
+const {
+  setRefreshHandler,
+  clearRefreshHandler,
+  registerProgressiveLoading,
+} = useLayoutActions()
+
+registerProgressiveLoading(isRefreshing)
+
+onMounted(() => {
+  setRefreshHandler(loadProfile)
+  void loadProfile()
+})
+
+onUnmounted(() => {
+  clearRefreshHandler(loadProfile)
+})
 
 watch(
   () => [
     authStore.session?.user?.name,
     authStore.session?.user?.user_name,
     authStore.session?.user?.description,
+    authStore.session?.user?.preferred_locale,
+    tenantsStore.selectedTenant?.ui_locale,
   ],
   () => {
     if (!hasChanges.value) syncPersistedProfile()
@@ -85,18 +165,30 @@ const saveProfile = async () => {
 
   isSaving.value = true
   saveError.value = ''
+  const shouldUpdateLocale = localeChanged.value
+  const previousLocale = locale.value
   try {
+    if (shouldUpdateLocale) await applyPersonalLocale(form.preferredLocale)
+
+    const body: Record<string, string | null> = {
+      name: normalizedName.value,
+      description: normalizedDescription.value || null,
+    }
+    if (shouldUpdateLocale) body.preferred_locale = form.preferredLocale
+
     await $fetch('/api/auth/update-profile', {
       method: 'PUT',
-      body: {
-        name: normalizedName.value,
-        description: normalizedDescription.value || null,
-      },
+      body,
     })
     await authStore.refreshSession()
+    await syncFromSources()
     syncPersistedProfile()
     toast.success(t('perfil.feedback.saved'), { title: t('perfil.feedback.savedTitle') })
   } catch (error: any) {
+    if (shouldUpdateLocale) {
+      form.preferredLocale = persisted.preferredLocale
+      await applyPersonalLocale(previousLocale).catch(() => undefined)
+    }
     saveError.value = error?.data?.detail || error?.data?.message || t('perfil.feedback.saveError')
   } finally {
     isSaving.value = false
@@ -106,6 +198,7 @@ const saveProfile = async () => {
 const resetForm = () => {
   form.name = persisted.name
   form.description = persisted.description
+  form.preferredLocale = persisted.preferredLocale
   saveError.value = ''
   nameError.value = ''
   descriptionError.value = ''
@@ -125,46 +218,56 @@ const handleAvatarUploaded = async (url: string) => {
 
 <template>
   <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 md:gap-6">
-    <header class="space-y-1">
-      <h1 class="text-2xl font-bold text-text-primary">{{ t('perfil.title') }}</h1>
-      <p class="text-sm leading-relaxed text-text-secondary">{{ t('perfil.subtitle') }}</p>
-    </header>
+    <div v-if="isInitialLoading" class="flex min-h-[400px] items-center justify-center">
+      <CommonsTheCustomLoader size="large" />
+    </div>
 
-    <section class="rounded-xl border-2 border-border bg-surface p-4 sm:p-6" :aria-labelledby="'profile-photo-title'">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-shell-account-avatar-border bg-shell-account-avatar-bg">
-          <img
-            v-if="displayUser.avatar"
-            :src="displayUser.avatar"
-            :alt="t('perfil.avatar.alt', { name: displayUser.name })"
-            class="h-full w-full object-cover"
-          />
-          <div v-else class="flex h-full w-full items-center justify-center text-2xl font-bold text-shell-account-icon-text" aria-hidden="true">
-            {{ initials }}
+    <CommonsTheErrorState
+      v-else-if="profileLoadError && !hasEverLoaded"
+      :message="profileLoadError"
+    />
+
+    <template v-else>
+      <header class="space-y-1">
+        <h1 class="text-2xl font-bold text-text-primary">{{ t('perfil.title') }}</h1>
+        <p class="text-sm leading-relaxed text-text-secondary">{{ t('perfil.subtitle') }}</p>
+      </header>
+
+      <section class="rounded-xl border-2 border-border bg-surface p-4 sm:p-6" :aria-labelledby="'profile-photo-title'">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-shell-account-avatar-border bg-shell-account-avatar-bg">
+            <img
+              v-if="displayUser.avatar"
+              :src="displayUser.avatar"
+              :alt="t('perfil.avatar.alt', { name: displayUser.name })"
+              class="h-full w-full object-cover"
+            />
+            <div v-else class="flex h-full w-full items-center justify-center text-2xl font-bold text-shell-account-icon-text" aria-hidden="true">
+              {{ initials }}
+            </div>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h2 id="profile-photo-title" class="text-base font-semibold text-text-primary">{{ t('perfil.avatar.title') }}</h2>
+            <p class="mt-1 text-xs leading-relaxed text-text-secondary">{{ t('perfil.avatar.help') }}</p>
+            <button
+              type="button"
+              class="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border-2 border-form-control-border px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              @click="showAvatarModal = true"
+            >
+              <CameraIcon class="h-4 w-4" aria-hidden="true" />
+              {{ displayUser.avatar ? t('perfil.avatar.change') : t('perfil.avatar.add') }}
+            </button>
           </div>
         </div>
-        <div class="min-w-0 flex-1">
-          <h2 id="profile-photo-title" class="text-base font-semibold text-text-primary">{{ t('perfil.avatar.title') }}</h2>
-          <p class="mt-1 text-xs leading-relaxed text-text-secondary">{{ t('perfil.avatar.help') }}</p>
-          <button
-            type="button"
-            class="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border-2 border-form-control-border px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            @click="showAvatarModal = true"
-          >
-            <CameraIcon class="h-4 w-4" aria-hidden="true" />
-            {{ displayUser.avatar ? t('perfil.avatar.change') : t('perfil.avatar.add') }}
-          </button>
+      </section>
+
+      <form class="rounded-xl border-2 border-border bg-surface p-4 sm:p-6" @submit.prevent="saveProfile">
+        <div class="mb-5 flex items-center gap-2">
+          <UserCircleIcon class="h-5 w-5 text-primary" aria-hidden="true" />
+          <h2 class="text-base font-semibold text-text-primary">{{ t('perfil.personal.title') }}</h2>
         </div>
-      </div>
-    </section>
 
-    <form class="rounded-xl border-2 border-border bg-surface p-4 sm:p-6" @submit.prevent="saveProfile">
-      <div class="mb-5 flex items-center gap-2">
-        <UserCircleIcon class="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 class="text-base font-semibold text-text-primary">{{ t('perfil.personal.title') }}</h2>
-      </div>
-
-      <div class="space-y-5">
+        <div class="space-y-5">
         <div>
           <label for="profile-name" class="mb-1.5 block text-sm font-semibold text-text-primary">{{ t('perfil.personal.name') }}</label>
           <input
@@ -203,6 +306,22 @@ const handleAvatarUploaded = async (url: string) => {
           <p v-else id="profile-description-help" class="mt-1 text-xs leading-relaxed text-text-secondary">{{ t('perfil.personal.publicHelp') }}</p>
         </div>
 
+        <div>
+          <div class="mb-1.5 flex items-center gap-2">
+            <LanguageIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+            <label for="profile-language" class="text-sm font-semibold text-text-primary">{{ t('perfil.personal.language') }}</label>
+          </div>
+          <LocaleSelector
+            id="profile-language"
+            v-model="form.preferredLocale"
+            :disabled="isSaving"
+            class="w-full"
+          />
+          <p id="profile-language-help" class="mt-1 text-xs leading-relaxed text-text-secondary">
+            {{ t('perfil.personal.languageHelp') }}
+          </p>
+        </div>
+
         <p v-if="saveError" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{{ saveError }}</p>
 
         <div class="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
@@ -229,15 +348,16 @@ const handleAvatarUploaded = async (url: string) => {
             <span v-else>{{ t('perfil.actions.save') }}</span>
           </button>
         </div>
-      </div>
-    </form>
+        </div>
+      </form>
 
-    <CommonsImageUploadModal
-      v-if="showAvatarModal"
-      image-type="avatar"
-      upload-endpoint="/api/auth/profile/avatar"
-      @upload="handleAvatarUploaded"
-      @close="showAvatarModal = false"
-    />
+      <CommonsImageUploadModal
+        v-if="showAvatarModal"
+        image-type="avatar"
+        upload-endpoint="/api/auth/profile/avatar"
+        @upload="handleAvatarUploaded"
+        @close="showAvatarModal = false"
+      />
+    </template>
   </div>
 </template>

@@ -5,14 +5,14 @@
  * Must NOT call useI18n()/useAppLocale() here — vue-i18n requires component
  * setup context. Use nuxtApp.$i18n from the @nuxtjs/i18n plugin instead.
  *
- * SSR starts from the cache cookie. Once tenant data loads on the client,
- * selectedTenant.ui_locale is authoritative and refreshes that cookie.
+ * SSR starts from the cache cookie. Once authenticated data loads on the
+ * client, profile.preferred_locale wins over tenant.ui_locale and refreshes
+ * that cookie.
  */
 import {
   APP_LOCALE_COOKIE,
 } from '~/composables/useAppLocale'
 import {
-  DEFAULT_APP_LOCALE,
   normalizeEnabledAppLocale,
   resolveAppLocale,
   type AppLocaleCode,
@@ -40,32 +40,43 @@ export default defineNuxtPlugin({
       watch: true,
     })
 
-    const resolvePreferred = (): AppLocaleCode => {
-      return resolveAppLocale(undefined, cookie.value, false)
-    }
-
     const apply = async (code: AppLocaleCode) => {
       if (i18n.locale.value !== code) {
         await i18n.setLocale(code)
       }
     }
 
-    await apply(resolvePreferred())
+    const initialLocale = resolveAppLocale({ cookieValue: cookie.value })
+    if (cookie.value !== initialLocale) cookie.value = initialLocale
+    await apply(initialLocale)
 
-    // The tenant list is client-hydrated and is the source of truth for every role.
     if (import.meta.client) {
       try {
+        const authStore = useAuthStore()
         const tenantsStore = useTenantsStore()
+        let applyQueue = Promise.resolve()
         watch(
           () => [
+            authStore.session?.user?.preferred_locale,
+            Boolean(authStore.session?.user),
             tenantsStore.selectedTenant?.id,
             tenantsStore.selectedTenant?.ui_locale,
           ] as const,
-          async ([tenantId, raw]) => {
-            if (!tenantId) return
-            const next = normalizeEnabledAppLocale(raw) ?? DEFAULT_APP_LOCALE
+          ([profileRaw, profileLoaded, tenantId, tenantRaw]) => {
+            const personal = normalizeEnabledAppLocale(profileRaw)
+            if (!profileLoaded || (!personal && !tenantId)) return
+
+            const next = resolveAppLocale({
+              profileValue: profileRaw,
+              tenantValue: tenantRaw,
+              cookieValue: cookie.value,
+              profileLoaded,
+              tenantLoaded: Boolean(tenantId),
+            })
             cookie.value = next
-            await apply(next)
+            applyQueue = applyQueue
+              .then(() => apply(next))
+              .catch(() => undefined)
           },
           { immediate: true },
         )

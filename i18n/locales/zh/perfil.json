@@ -18,7 +18,9 @@
       "nameHelp": "其他用户将看到这个名字。",
       "description": "个人简介",
       "descriptionPlaceholder": "简单介绍一下自己",
-      "publicHelp": "选填。你的姓名、简介和照片也可能显示在文章的公开作者信息中。"
+      "publicHelp": "选填。你的姓名、简介和照片也可能显示在文章的公开作者信息中。",
+      "language": "个人语言",
+      "languageHelp": "此语言属于你的个人资料，切换商户后仍会保持启用。"
     },
     "validation": {
       "nameRequired": "姓名为必填项。",

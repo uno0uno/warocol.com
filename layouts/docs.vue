@@ -182,7 +182,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: hsl(var(--surface));
+  background: hsl(var(--background));
   font-family: 'Lato', sans-serif;
 }
 
@@ -325,7 +325,7 @@ onMounted(() => {
 .docs-sidebar {
   width: 256px;
   flex-shrink: 0;
-  background: hsl(var(--surface-secondary));
+  background: hsl(var(--background));
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -526,7 +526,7 @@ onMounted(() => {
   flex: 1;
   min-width: 0;
   padding: 24px 24px 64px 32px;
-  background: hsl(var(--surface-secondary));
+  background: hsl(var(--background));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -543,7 +543,7 @@ onMounted(() => {
 @media (max-width: 639px) {
   .docs-main {
     padding: 0 0 calc(48px + 58px);
-    background: hsl(var(--surface));
+    background: hsl(var(--background));
     align-items: stretch;
   }
 }
@@ -554,7 +554,7 @@ onMounted(() => {
   flex-shrink: 0;
   display: none;
   padding: 20px 12px 0;
-  background: hsl(var(--surface-secondary));
+  background: hsl(var(--background));
 }
 
 @media (min-width: 1280px) {

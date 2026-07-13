@@ -50,11 +50,55 @@ describe('app locale catalog', () => {
     assert.equal(toLocaleTag('xx'), 'es-CO')
   })
 
-  it('treats tenant locale as authoritative after tenant load', () => {
-    assert.equal(resolveAppLocale(undefined, 'en', false), 'en')
-    assert.equal(resolveAppLocale('es', 'en', true), 'es')
-    assert.equal(resolveAppLocale('en', 'es', true), 'en')
-    assert.equal(resolveAppLocale('fr', 'en', true), 'fr')
-    assert.equal(resolveAppLocale('xx', 'en', true), 'es')
+  it('uses the validated cookie only while authenticated sources load', () => {
+    assert.equal(resolveAppLocale({ cookieValue: 'en' }), 'en')
+    assert.equal(resolveAppLocale({ cookieValue: 'xx' }), 'es')
+    assert.equal(resolveAppLocale({
+      profileLoaded: false,
+      tenantLoaded: true,
+      tenantValue: 'fr',
+      cookieValue: 'pt',
+    }), 'pt')
+  })
+
+  it('makes every supported personal locale authoritative', () => {
+    for (const profileValue of APP_LOCALES) {
+      assert.equal(resolveAppLocale({
+        profileValue,
+        tenantValue: 'es',
+        cookieValue: 'en',
+        profileLoaded: true,
+        tenantLoaded: true,
+      }), profileValue)
+    }
+  })
+
+  it('falls back from a null profile to tenant and then Spanish', () => {
+    assert.equal(resolveAppLocale({
+      profileValue: null,
+      tenantValue: 'fr',
+      cookieValue: 'en',
+      profileLoaded: true,
+      tenantLoaded: true,
+    }), 'fr')
+    assert.equal(resolveAppLocale({
+      profileValue: null,
+      tenantValue: 'xx',
+      cookieValue: 'en',
+      profileLoaded: true,
+      tenantLoaded: true,
+    }), 'es')
+  })
+
+  it('keeps a personal locale across tenant changes and rollback snapshots', () => {
+    const base = {
+      profileValue: 'de',
+      cookieValue: 'de',
+      profileLoaded: true,
+      tenantLoaded: true,
+    }
+    assert.equal(resolveAppLocale({ ...base, tenantValue: 'es' }), 'de')
+    assert.equal(resolveAppLocale({ ...base, tenantValue: 'ar' }), 'de')
+    assert.equal(resolveAppLocale({ ...base, profileValue: null, tenantValue: 'ar' }), 'ar')
   })
 })

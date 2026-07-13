@@ -9,8 +9,8 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-  <!-- Soft transition from article hero surface to content surface -->
-  <div class="w-full bg-surface-secondary">
+  <!-- Keep the article canvas aligned with the dashboard background. -->
+  <div class="w-full bg-background">
     <div class="article-container py-6 lg:py-8">
       <!-- Imagen con esquinas redondeadas, sin texto encima -->
       <div class="w-full aspect-video max-h-[480px] overflow-hidden rounded-xl shadow-sm">

@@ -153,13 +153,13 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-surface-secondary flex flex-col font-sans">
+  <div class="min-h-screen bg-background flex flex-col font-sans">
 
     <!-- ════════════════════════════════════════
          HERO SECTION
-         Fondo blanco con dot-grid sutil + gradiente lateral púrpura
+         Fondo del dashboard con dot-grid sutil + gradiente lateral púrpura
     ════════════════════════════════════════ -->
-    <section class="relative bg-surface overflow-hidden border-b border-border">
+    <section class="relative bg-background overflow-hidden border-b border-border">
       <!-- Dot grid background -->
       <div class="dot-grid" aria-hidden="true"></div>
       <!-- Gradiente de color lateral izquierdo -->
@@ -186,7 +186,7 @@ useHead({
         </p>
 
         <!-- Stats pill -->
-        <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-surface-secondary rounded-full border border-border text-xs sm:text-sm text-text-secondary">
+        <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-surface rounded-full border border-border text-xs sm:text-sm text-text-secondary">
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Contenido para restaurantes
