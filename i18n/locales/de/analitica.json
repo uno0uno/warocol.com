@@ -475,8 +475,8 @@
     "kali": {
       "emptyTitle": "Bereit zum Chatten",
       "processingSince": "Wird seit {elapsed} verarbeitet",
-      "loadingAria": "Kali wird geladen",
-      "messageLabel": "Nachricht an Kali",
+      "loadingAria": "Der Assistent wird geladen",
+      "messageLabel": "Nachricht an den Assistenten",
       "placeholder": "Fragen Sie nach Verkäufen, Gerichtspreisen oder Ihrem Restaurant",
       "retry": "Erneut versuchen",
       "cancelResponse": "Antwort abbrechen",
@@ -503,11 +503,11 @@
       "errors": {
         "incomplete": "Die Antwort konnte nicht vervollständigt werden.",
         "emptyAssistant": "Ich konnte diese Antwort nicht vervollständigen.",
-        "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um Kali zu verwenden.",
-        "forbidden": "Kali ist für diesen Tenant oder dieses Modul nicht aktiviert.",
-        "serviceUnavailable": "Der Kali-Dienst hat nicht geantwortet. Versuchen Sie es in wenigen Sekunden erneut.",
-        "startFailed": "Die Konversation mit Kali konnte nicht gestartet werden.",
-        "streamFailed": "Kali konnte diese Antwort nicht vervollständigen."
+        "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um den Assistenten zu verwenden.",
+        "forbidden": "Der Assistent ist für diesen Tenant oder dieses Modul nicht aktiviert.",
+        "serviceUnavailable": "Der Dienst des Assistenten hat nicht geantwortet. Versuchen Sie es in wenigen Sekunden erneut.",
+        "startFailed": "Die Konversation mit dem Assistenten konnte nicht gestartet werden.",
+        "streamFailed": "Der Assistent konnte diese Antwort nicht vervollständigen."
       }
     }
   }

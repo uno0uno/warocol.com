@@ -248,7 +248,10 @@
       "languageTitle": "Idioma da interface",
       "languageHelp": "Aplica-se a todas as pessoas e dispositivos deste restaurante.",
       "languageUpdated": "Idioma atualizado para todo o restaurante",
-      "languageSaveError": "Não foi possível salvar o idioma"
+      "languageSaveError": "Não foi possível salvar o idioma",
+      "languageSaving": "Salvando o idioma…",
+      "languageApplying": "Atualizando a interface…",
+      "languageSyncing": "Sincronizando o restaurante…"
     },
     "comandas": {
       "enableComandas": "Ativar comandas",

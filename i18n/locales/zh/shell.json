@@ -1,10 +1,10 @@
 {
   "nav": {
-    "pos": "POS",
+    "pos": "收银",
     "ventas": "销售",
     "despacho": "订单配送",
     "analitica": "分析",
-    "kali": "Kali",
+    "asistente": "助手",
     "finanzas": "财务",
     "facturacion": "开票",
     "menu": "菜单",

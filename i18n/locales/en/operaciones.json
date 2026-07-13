@@ -249,6 +249,9 @@
       ,"languageHelp": "Applies to every person and device in this restaurant."
       ,"languageUpdated": "Language updated for the whole restaurant"
       ,"languageSaveError": "Could not save the language"
+      ,"languageSaving": "Saving language…"
+      ,"languageApplying": "Updating the interface…"
+      ,"languageSyncing": "Syncing the restaurant…"
     },
     "comandas": {
       "enableComandas": "Enable tickets",

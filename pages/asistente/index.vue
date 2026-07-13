@@ -143,8 +143,10 @@ definePageMeta({
   feature: 'kali_enabled',
 })
 
+const { t } = useI18n({ useScope: 'global' })
+
 useHead({
-  title: 'Kali',
+  title: () => t('nav.asistente'),
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
@@ -170,7 +172,6 @@ interface ParsedSseEvent {
 }
 
 const AGENT_ENDPOINT = '/api/ai/sales/messages/stream'
-const { t } = useI18n({ useScope: 'global' })
 const draft = ref('')
 const messages = ref<ChatMessage[]>([])
 const progressEvents = ref<ProgressEvent[]>([])

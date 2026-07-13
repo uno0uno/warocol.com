@@ -1,10 +1,10 @@
 {
   "nav": {
-    "pos": "POS",
+    "pos": "نقطة البيع",
     "ventas": "المبيعات",
     "despacho": "إرسال الطلبات",
     "analitica": "التحليلات",
-    "kali": "Kali",
+    "asistente": "المساعد",
     "finanzas": "المالية",
     "facturacion": "الفواتير",
     "menu": "القائمة",

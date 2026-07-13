@@ -475,8 +475,8 @@
     "kali": {
       "emptyTitle": "Ready to chat",
       "processingSince": "Processing for {elapsed}",
-      "loadingAria": "Kali is loading",
-      "messageLabel": "Message for Kali",
+      "loadingAria": "The assistant is loading",
+      "messageLabel": "Message for the assistant",
       "placeholder": "Ask about sales, dish prices, or your restaurant",
       "retry": "Retry",
       "cancelResponse": "Cancel response",
@@ -503,11 +503,11 @@
       "errors": {
         "incomplete": "The answer could not be completed.",
         "emptyAssistant": "I could not complete this answer.",
-        "sessionExpired": "Your session expired. Sign in again to use Kali.",
-        "forbidden": "Kali is not enabled for this tenant or module.",
-        "serviceUnavailable": "The Kali service did not respond. Try again in a few seconds.",
-        "startFailed": "The conversation with Kali could not be started.",
-        "streamFailed": "Kali could not complete this answer."
+        "sessionExpired": "Your session expired. Sign in again to use the assistant.",
+        "forbidden": "The assistant is not enabled for this tenant or module.",
+        "serviceUnavailable": "The assistant service did not respond. Try again in a few seconds.",
+        "startFailed": "The conversation with the assistant could not be started.",
+        "streamFailed": "The assistant could not complete this answer."
       }
     }
   }

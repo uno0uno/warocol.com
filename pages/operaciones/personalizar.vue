@@ -146,6 +146,23 @@ const invalidateRestaurantContext = async () => {
 }
 
 const isSavingLocale = ref(false)
+const {
+  currentPhrase: localeSavingPhraseKey,
+  start: startLocaleSavingPhrases,
+  stop: stopLocaleSavingPhrases,
+} = useLoadingPhrases([
+  'languageSaving',
+  'languageApplying',
+  'languageSyncing',
+])
+const localeSavingPhrase = computed(() =>
+  t(`operaciones.personalizar.${localeSavingPhraseKey.value}`),
+)
+
+watch(isSavingLocale, (saving) => {
+  if (saving) startLocaleSavingPhrases()
+  else stopLocaleSavingPhrases()
+})
 
 const saveUiLocale = async (next: AppLocaleCode) => {
   if (isSavingLocale.value || next === locale.value) return
@@ -243,13 +260,36 @@ const toggleOpenSale = async () => {
             {{ t('operaciones.personalizar.languageHelp') }}
           </p>
         </div>
-        <LocaleSelector
-          id="tenant-ui-locale"
-          :model-value="locale"
-          :disabled="isSavingLocale"
-          class="w-full sm:w-64 flex-shrink-0"
-          @update:model-value="saveUiLocale"
-        />
+        <div class="flex min-h-11 w-full flex-shrink-0 items-center justify-center sm:w-64">
+          <div
+            v-if="isSavingLocale"
+            class="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-form-control-border bg-form-control-bg px-3 py-2 text-form-control-text"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span class="sr-only">{{ t('operaciones.personalizar.languageSaving') }}</span>
+            <UiLoadingDots
+              size="9px"
+              color="currentColor"
+              class="flex-shrink-0 text-form-control-text"
+              aria-hidden="true"
+            />
+            <span
+              class="min-w-0 text-center text-xs font-medium leading-snug text-form-control-help sm:text-sm"
+              aria-hidden="true"
+            >
+              {{ localeSavingPhrase }}
+            </span>
+          </div>
+          <LocaleSelector
+            v-else
+            id="tenant-ui-locale"
+            :model-value="locale"
+            class="w-full"
+            @update:model-value="saveUiLocale"
+          />
+        </div>
       </div>
 
       <!-- ══════ VENTA LIBRE EN POS (#805) ══════ -->

@@ -2,6 +2,7 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 export const useDashboardPageConfig = () => {
   const route = useRoute()
+  const { t } = useI18n({ useScope: 'global' })
 
     const getPageConfig = () => {
     const path = route.path
@@ -16,9 +17,9 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
-    } else if (path === '/asistente/kali') {
+    } else if (path === '/asistente') {
       return {
-        pageTitle: 'Kali',
+        pageTitle: t('nav.asistente'),
         pageSubtitle: undefined,
         searchPlaceholder: undefined,
         activePage: 'asistente' as const,

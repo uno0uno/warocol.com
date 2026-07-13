@@ -1,10 +1,10 @@
 {
   "nav": {
-    "pos": "POS",
+    "pos": "Point of Sale",
     "ventas": "Sales",
     "despacho": "Dispatch",
     "analitica": "Analytics",
-    "kali": "Kali",
+    "asistente": "Assistant",
     "finanzas": "Finance",
     "facturacion": "Invoicing",
     "menu": "Menu",

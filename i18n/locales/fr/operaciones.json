@@ -248,7 +248,10 @@
       "languageTitle": "Langue de l’interface",
       "languageHelp": "S’applique à toutes les personnes et à tous les appareils de ce restaurant.",
       "languageUpdated": "Langue mise à jour pour tout le restaurant",
-      "languageSaveError": "Impossible d’enregistrer la langue"
+      "languageSaveError": "Impossible d’enregistrer la langue",
+      "languageSaving": "Enregistrement de la langue…",
+      "languageApplying": "Mise à jour de l’interface…",
+      "languageSyncing": "Synchronisation du restaurant…"
     },
     "comandas": {
       "enableComandas": "Activer les commandes",
