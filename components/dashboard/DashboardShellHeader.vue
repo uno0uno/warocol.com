@@ -38,11 +38,11 @@
           key="pos-link"
           type="button"
           class="flex flex-shrink-0 items-center gap-1 md:gap-2 h-11 bg-shell-action-bg border-2 border-shell-action-border text-shell-action-text px-2 lg:px-4 rounded-lg text-base font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
-          :title="t('shell.posSale')"
+          :title="t('nav.pos')"
           @click="$emit('navigate-pos')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-          <span class="hidden lg:inline text-base">{{ t('shell.posSale') }}</span>
+          <span class="hidden lg:inline text-base">{{ t('nav.pos') }}</span>
         </button>
 
         <div key="portal-actions" id="dashboard-header-actions" class="flex items-center" />
