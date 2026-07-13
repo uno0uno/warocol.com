@@ -7,7 +7,16 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "nuxt start"
+    "start": "nuxt start",
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "i18n:check:pt": "node scripts/check-i18n.mjs --locale pt",
+    "i18n:check:fr": "node scripts/check-i18n.mjs --locale fr",
+    "i18n:check:de": "node scripts/check-i18n.mjs --locale de",
+    "i18n:check:hi": "node scripts/check-i18n.mjs --locale hi",
+    "i18n:check:zh": "node scripts/check-i18n.mjs --locale zh",
+    "i18n:check:ar": "node scripts/check-i18n.mjs --locale ar",
+    "i18n:check:all": "node scripts/check-i18n.mjs --all",
+    "i18n:translate": "node scripts/translate-i18n.mjs"
   },
   "dependencies": {
     "@heroicons/vue": "^2.0.18",

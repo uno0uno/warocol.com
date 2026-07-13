@@ -49,14 +49,14 @@
                 v-if="isOrderable"
                 class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-success/10 text-success"
               >
-                <span class="w-2 h-2 bg-success rounded-full mr-2 animate-pulse" />
+                <span class="w-2 h-2 bg-success rounded-full me-2 animate-pulse" />
                 Abierto
               </span>
               <span
                 v-else
                 class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-destructive/10 text-destructive"
               >
-                <span class="w-2 h-2 bg-destructive rounded-full mr-2" />
+                <span class="w-2 h-2 bg-destructive rounded-full me-2" />
                 Cerrado
               </span>
             </div>

@@ -8,8 +8,8 @@
         </svg>
       </div>
       <!-- Decorative dots -->
-      <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-status-warning-bg border-2 border-white" />
-      <span class="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-status-critical-bg border-2 border-white" />
+      <span class="absolute -top-1 -end-1 w-3 h-3 rounded-full bg-status-warning-bg border-2 border-white" />
+      <span class="absolute -bottom-1 -start-1 w-2 h-2 rounded-full bg-status-critical-bg border-2 border-white" />
     </div>
 
     <h3 class="text-base font-semibold text-text-primary mb-1">{{ t('errors.somethingWrong') }}</h3>

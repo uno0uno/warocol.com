@@ -163,9 +163,9 @@ useHead({
       <!-- Dot grid background -->
       <div class="dot-grid" aria-hidden="true"></div>
       <!-- Gradiente de color lateral izquierdo -->
-      <div class="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-badge-primary-bg/60 to-transparent pointer-events-none" aria-hidden="true"></div>
+      <div class="absolute inset-y-0 start-0 w-1/2 bg-gradient-to-r from-badge-primary-bg/60 to-transparent pointer-events-none" aria-hidden="true"></div>
       <!-- Accent blob superior derecho -->
-      <div class="absolute -top-32 -right-32 w-96 h-96 bg-badge-primary-bg/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+      <div class="absolute -top-32 -end-32 w-96 h-96 bg-badge-primary-bg/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-5 lg:px-12 pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
         <!-- Eyebrow badge -->

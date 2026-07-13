@@ -19,7 +19,7 @@
                 x{{ modifier.quantity }}
               </span>
             </span>
-            <span class="ml-4" :class="modifierLineAmount(modifier) === 0 ? 'text-success' : ''">
+            <span class="ms-4" :class="modifierLineAmount(modifier) === 0 ? 'text-success' : ''">
               {{ modifierLineAmount(modifier) === 0 ? 'Gratis' : formatPrice(modifierLineAmount(modifier)) }}
             </span>
           </div>

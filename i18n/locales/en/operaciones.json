@@ -245,6 +245,10 @@
       ,"areaSingular": "Area"
       ,"tableSingular": "Table"
       ,"tablePlural": "Tables"
+      ,"languageTitle": "Interface language"
+      ,"languageHelp": "Applies to every person and device in this restaurant."
+      ,"languageUpdated": "Language updated for the whole restaurant"
+      ,"languageSaveError": "Could not save the language"
     },
     "comandas": {
       "enableComandas": "Enable tickets",
@@ -307,7 +311,7 @@
       "checkingStatus": "Checking status...",
       "cannotDeactivate": "Cannot deactivate now",
       "activeTicketsMessage": "There are {count} active ticket(s) at this station. Resolve them before deactivating it.",
-      "affectedCategories": "{count} affected categor{suffix}",
+      "affectedCategories": "{count} affected categories",
       "affectedCategoriesHelp": "Their products will stop generating tickets while the station is inactive.",
       "noActiveImpact": "No active impact. It can be safely deactivated.",
       "activatedTitle": "Activated",
@@ -454,6 +458,7 @@
       ,"overlapTitle": "Overlap detected"
       ,"overlapEmpty": "Shares products with other active promotions. The highest priority wins at checkout."
       ,"overlapNamed": "Shares products with: {names}{suffix}. The highest priority wins at checkout."
+      ,"overlapMoreSuffix": " and others"
       ,"saveFailedTitle": "Could not save"
       ,"deleted": "Promotion deleted"
       ,"deleteFailed": "Could not delete"

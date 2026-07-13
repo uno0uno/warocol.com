@@ -155,9 +155,9 @@ const groupedRows = computed(() => {
 const indentStyle = (code: string): string => {
   const len = code.length
   if (len <= 1) return ''
-  if (len <= 2) return 'pl-4'
-  if (len <= 4) return 'pl-8'
-  return 'pl-12'
+  if (len <= 2) return 'ps-4'
+  if (len <= 4) return 'ps-8'
+  return 'ps-12'
 }
 
 // ── Currency formatter ───────────────────────────────────────────────────────
@@ -267,7 +267,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
       <!-- Preset buttons -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs text-text-secondary mr-1">{{ t('finanzas.contabilidad.trialBalance.quickPeriod') }}:</span>
+        <span class="text-xs text-text-secondary me-1">{{ t('finanzas.contabilidad.trialBalance.quickPeriod') }}:</span>
         <button
           type="button"
           class="h-8 px-3 rounded-lg border border-border bg-background text-xs text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
@@ -330,7 +330,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <div class="flex-1 min-w-0">
           <h2 class="text-sm font-semibold text-text-primary">
             {{ t('finanzas.contabilidad.trialBalance.title') }}
-            <span class="font-normal text-text-secondary ml-1">
+            <span class="font-normal text-text-secondary ms-1">
               {{ periodStart }} — {{ periodEnd }}
             </span>
           </h2>
@@ -383,12 +383,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <table class="w-full text-sm" role="table" :aria-label="t('finanzas.contabilidad.trialBalance.title')">
             <thead>
               <tr class="border-b border-data-table-border bg-data-table-header-bg">
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap w-28">{{ t('finanzas.contabilidad.code') }}</th>
-                <th scope="col" class="text-left py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider">{{ t('finanzas.contabilidad.account') }}</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.openingBalance') }}</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.debits') }}</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.credits') }}</th>
-                <th scope="col" class="text-right py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.finalBalance') }}</th>
+                <th scope="col" class="text-start py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap w-28">{{ t('finanzas.contabilidad.code') }}</th>
+                <th scope="col" class="text-start py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider">{{ t('finanzas.contabilidad.account') }}</th>
+                <th scope="col" class="text-end py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.openingBalance') }}</th>
+                <th scope="col" class="text-end py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.debits') }}</th>
+                <th scope="col" class="text-end py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.credits') }}</th>
+                <th scope="col" class="text-end py-2.5 px-3 text-xs font-bold text-data-table-header-text uppercase tracking-wider whitespace-nowrap">{{ t('finanzas.contabilidad.finalBalance') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -423,16 +423,16 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                       {{ row.name }}
                     </span>
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.openingBalance) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums" :class="isNegative(row.openingBalance) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(row.openingBalance) }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.periodDebits) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums" :class="isNegative(row.periodDebits) ? 'text-destructive' : 'text-text-primary'">
                     {{ row.periodDebits !== 0 ? formatAccountingCurrency(row.periodDebits) : '—' }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums" :class="isNegative(row.periodCredits) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums" :class="isNegative(row.periodCredits) ? 'text-destructive' : 'text-text-primary'">
                     {{ row.periodCredits !== 0 ? formatAccountingCurrency(row.periodCredits) : '—' }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums font-medium" :class="isNegative(row.closingBalance) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums font-medium" :class="isNegative(row.closingBalance) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(row.closingBalance) }}
                   </td>
                 </tr>
@@ -443,16 +443,16 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                   <td class="py-2 px-3">
                     <span class="text-xs font-bold text-text-secondary">{{ t('finanzas.contabilidad.trialBalance.subtotal', { label: group.label }) }}</span>
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.openingBalance) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.openingBalance) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(group.subtotals.openingBalance) }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodDebits) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodDebits) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(group.subtotals.periodDebits) }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodCredits) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.periodCredits) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(group.subtotals.periodCredits) }}
                   </td>
-                  <td class="py-2 px-3 text-right tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.closingBalance) ? 'text-destructive' : 'text-text-primary'">
+                  <td class="py-2 px-3 text-end tabular-nums text-xs font-bold" :class="isNegative(group.subtotals.closingBalance) ? 'text-destructive' : 'text-text-primary'">
                     {{ formatAccountingCurrency(group.subtotals.closingBalance) }}
                   </td>
                 </tr>
@@ -483,10 +483,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                   </div>
                 </td>
                 <td class="py-3 px-3" />
-                <td class="py-3 px-3 text-right tabular-nums text-sm font-bold text-text-primary">
+                <td class="py-3 px-3 text-end tabular-nums text-sm font-bold text-text-primary">
                   {{ formatAccountingCurrency(totalDebits) }}
                 </td>
-                <td class="py-3 px-3 text-right tabular-nums text-sm font-bold text-text-primary">
+                <td class="py-3 px-3 text-end tabular-nums text-sm font-bold text-text-primary">
                   {{ formatAccountingCurrency(totalCredits) }}
                 </td>
                 <td class="py-3 px-3" />

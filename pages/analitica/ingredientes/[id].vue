@@ -568,7 +568,7 @@ const quantityMinFilter = ref(queryStringValue(route.query.quantity_min))
 const quantityMaxFilter = ref(queryStringValue(route.query.quantity_max))
 const historyOffset = computed(() => (historyPage.value - 1) * historyPageSize)
 
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 const granularityOptions = computed<Array<{ label: string; value: Granularity }>>(() => [
   { label: t('analitica.ingredientes.day'), value: 'day' },
   { label: t('analitica.ingredientes.month'), value: 'month' },

@@ -8,7 +8,7 @@
           <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-semibold text-primary-foreground text-sm">
             {{ userInitials }}
           </div>
-          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success border-2 border-shell-mobile-bg rounded-full"></span>
+          <span class="absolute bottom-0 end-0 w-2.5 h-2.5 bg-success border-2 border-shell-mobile-bg rounded-full"></span>
         </div>
         <div class="flex flex-col">
           <span class="text-sm font-semibold text-text-primary leading-tight">{{ userName }}</span>
@@ -43,7 +43,7 @@
           <BellIcon v-else class="w-5 h-5 text-icon-button-neutral-text" aria-hidden="true" />
           <span
             v-if="notificationsCount > 0"
-            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
+            class="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
             aria-hidden="true"
           >
             {{ notificationsCount > 9 ? '9+' : notificationsCount }}
@@ -101,7 +101,7 @@
               </div>
               <span
                 v-if="item.showCriticalDot && hasCriticalAlerts"
-                class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive border-2 border-shell-mobile-bg rounded-full"
+                class="absolute -top-0.5 -end-0.5 w-2.5 h-2.5 bg-destructive border-2 border-shell-mobile-bg rounded-full"
                 :aria-label="t('nav.criticalAlerts', { module: t(item.labelKey).toLowerCase() })"
               />
             </div>
@@ -177,33 +177,6 @@
     <!-- Tenant Selector Modal -->
     <UiBottomSheetModal v-model="showTenantModal" :title="t('shell.settings')" max-height="lg">
       <div class="p-4 space-y-6">
-        <!-- Language (shell i18n #1602) -->
-        <div>
-          <label class="text-sm text-text-secondary font-medium mb-2 block">{{ t('shell.language') }}</label>
-          <div class="flex gap-2">
-            <button
-              type="button"
-              class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
-              :class="locale === 'es'
-                ? 'border-primary bg-icon-button-primary-bg text-text-primary'
-                : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
-              @click="setUserLocale('es')"
-            >
-              {{ t('shell.localeEs') }}
-            </button>
-            <button
-              type="button"
-              class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
-              :class="locale === 'en'
-                ? 'border-primary bg-icon-button-primary-bg text-text-primary'
-                : 'border-form-control-border text-text-secondary hover:border-form-control-focus-border'"
-              @click="setUserLocale('en')"
-            >
-              {{ t('shell.localeEn') }}
-            </button>
-          </div>
-        </div>
-
         <!-- Tenant Selector -->
         <div>
           <label class="text-sm text-text-secondary font-medium mb-2 block">{{ t('shell.selectTenant') }}</label>
@@ -292,7 +265,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { t } = useI18n()
-const { locale, setUserLocale } = useAppLocale()
 const { can } = useModuleAccess()
 const { hasFeature } = useFeatureAccess()
 const canSeeNavItem = (item: DashboardNavItem) =>

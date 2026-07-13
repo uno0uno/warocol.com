@@ -157,7 +157,7 @@
                   <p class="text-[11px] text-text-secondary">/ {{ item.purchase_unit || item.unit }}</p>
                 </div>
                 <div class="h-8 w-px bg-border"></div>
-                <div class="text-right">
+                <div class="text-end">
                   <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">{{ t('abastecimiento.compraDirectaDetalle.total') }}</p>
                   <p class="text-base font-bold text-text-primary">${{ formatCurrency(item.total_cost) }}</p>
                 </div>
@@ -179,12 +179,12 @@
               <thead>
                 <tr class="bg-surface-secondary border-b border-border">
                   <th class="w-8 px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">#</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.invoiceReference') }}</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.quantityShort') }}</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.unit') }}</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.price') }}</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">{{ t('abastecimiento.compraDirectaDetalle.total') }}</th>
+                  <th class="px-4 py-3 text-start text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
+                  <th class="px-4 py-3 text-start text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.invoiceReference') }}</th>
+                  <th class="px-4 py-3 text-end text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.quantityShort') }}</th>
+                  <th class="px-4 py-3 text-start text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.unit') }}</th>
+                  <th class="px-4 py-3 text-end text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.price') }}</th>
+                  <th class="px-4 py-3 text-end text-xs font-semibold text-text-secondary uppercase tracking-wider">{{ t('abastecimiento.compraDirectaDetalle.total') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
@@ -200,24 +200,24 @@
                     <span v-if="item.notes" class="text-xs text-text-secondary italic">{{ item.notes }}</span>
                     <span v-else class="text-xs text-text-secondary/40">—</span>
                   </td>
-                  <td class="px-4 py-3.5 text-right border-r border-dashed border-border/60">
+                  <td class="px-4 py-3.5 text-end border-r border-dashed border-border/60">
                     <span class="text-sm font-semibold text-text-primary tabular-nums">{{ item.purchase_quantity || item.quantity }}</span>
                   </td>
                   <td class="px-4 py-3.5 border-r border-dashed border-border/60">
                     <span class="text-sm text-text-primary">{{ item.purchase_unit || item.unit }}</span>
                   </td>
-                  <td class="px-4 py-3.5 text-right border-r border-dashed border-border/60">
+                  <td class="px-4 py-3.5 text-end border-r border-dashed border-border/60">
                     <span class="text-sm text-text-primary tabular-nums">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</span>
                   </td>
-                  <td class="px-4 py-3.5 text-right">
+                  <td class="px-4 py-3.5 text-end">
                     <span class="text-sm font-bold text-text-primary tabular-nums">${{ formatCurrency(item.total_cost) }}</span>
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="bg-primary/5 border-t-2 border-primary/20">
-                  <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-right border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</td>
-                  <td class="px-4 py-3.5 text-right">
+                  <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-end border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</td>
+                  <td class="px-4 py-3.5 text-end">
                     <span class="text-base font-bold text-primary tabular-nums">${{ formatCurrency(purchase.total_amount) }}</span>
                   </td>
                 </tr>
@@ -596,7 +596,7 @@
           v-if="showPaymentPanel && purchase"
           class="fixed z-[90] flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l md:border-border"
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full md:border-l md:border-border"
           role="dialog"
           aria-modal="true"
           aria-labelledby="direct-purchase-payment-title"
@@ -666,8 +666,8 @@ function resolvePaymentLabel(slug: string | null | undefined, methodId?: string 
   return _resolvePaymentLabel(slug, methodId)
 }
 
-const datePickerLocale = computed(() => locale.value === 'en' ? 'en' : 'es')
-const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: locale.value === 'en' ? enUS : es })
+const datePickerLocale = computed(() => normalizeUiLocale(locale.value))
+const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: toDateFnsLocale(locale.value) })
 
 useHead({
   title: () => t('abastecimiento.head.comprasDirectas')
@@ -1038,12 +1038,12 @@ const formatDate = (date: string) => _fmtDate(date)
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return value.toLocaleString(toNumberLocaleTag(locale.value), { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 const formatUnitCost = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return value.toLocaleString(toNumberLocaleTag(locale.value), {
     minimumFractionDigits: 0,
     maximumFractionDigits: UNIT_COST_PRECISION,
   })

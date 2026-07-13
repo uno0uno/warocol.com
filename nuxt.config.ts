@@ -1,3 +1,5 @@
+import { APP_LOCALE_DEFINITIONS, localeMessageFiles } from './utils/appLocales'
+
 export default defineNuxtConfig({
   ssr: true,
   routeRules: {
@@ -254,23 +256,17 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
   ],
   i18n: {
-    // Shell foundation (#1602): es default + en secondary; no URL prefix so
+    // Product UI locales; no URL prefix so
     // product routes (/pos, /ventas, …) stay stable. Files live under i18n/ (v9).
     restructureDir: 'i18n',
-    locales: [
-      {
-        code: 'es',
-        language: 'es-CO',
-        name: 'Español',
-        files: ['es/shell.json', 'es/common.json', 'es/pos.json', 'es/operaciones.json', 'es/cocina.json', 'es/ventas.json', 'es/despacho.json', 'es/facturacion.json', 'es/abastecimiento.json', 'es/menu.json', 'es/finanzas.json', 'es/analitica.json', 'es/equipo.json'],
-      },
-      {
-        code: 'en',
-        language: 'en-US',
-        name: 'English',
-        files: ['en/shell.json', 'en/common.json', 'en/pos.json', 'en/operaciones.json', 'en/cocina.json', 'en/ventas.json', 'en/despacho.json', 'en/facturacion.json', 'en/abastecimiento.json', 'en/menu.json', 'en/finanzas.json', 'en/analitica.json', 'en/equipo.json'],
-      },
-    ],
+    locales: APP_LOCALE_DEFINITIONS
+      .filter(({ enabled }) => enabled)
+      .map(({ code, language, name }) => ({
+        code,
+        language,
+        name,
+        files: localeMessageFiles(code),
+      })),
     lazy: true,
     langDir: 'locales',
     defaultLocale: 'es',

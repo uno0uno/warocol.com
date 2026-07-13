@@ -48,7 +48,7 @@ const { currentTenant, businessProfile } = useTenantReactive()
 const { timezone } = useTenantTimezone()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
-const uiLocale = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
+const uiLocale = computed(() => toNumberLocaleTag(locale.value))
 
 const localizedInternalTaxLabel = (label?: string | null) => {
   const raw = String(label ?? '').trim()
@@ -3162,14 +3162,14 @@ onUnmounted(() => {
           <button
             type="button"
             @click="activeAccordion = activeAccordion === 'order' ? null : 'order'"
-            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-left hover:bg-surface-secondary/70 transition-colors"
+            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-start hover:bg-surface-secondary/70 transition-colors"
           >
             <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
                 <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
               {{ t('pos.checkout.order') }}
-              <span class="text-text-tertiary font-normal text-xs ml-1">({{ cartItems.length }})</span>
+              <span class="text-text-tertiary font-normal text-xs ms-1">({{ cartItems.length }})</span>
             </span>
             <svg
               class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
@@ -3257,7 +3257,7 @@ onUnmounted(() => {
                       :disabled="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '')"
                       @change="toggleLinePromoApply(item, ($event.target as HTMLInputElement).checked)"
                     />
-                    <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                    <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                   </span>
                 </label>
               </div>
@@ -3376,14 +3376,14 @@ onUnmounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <div class="text-center md:text-left w-full">
+              <div class="text-center md:text-start w-full">
                 <div class="font-semibold text-xs md:text-sm leading-tight">
                   {{ t('pos.checkout.payOnDelivery') }}
                 </div>
               </div>
               <div
                 v-if="isDeferredDeliveryPayment"
-                class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden bg-status-warning-text"
+                class="absolute top-1.5 end-1.5 w-2 h-2 rounded-full md:hidden bg-status-warning-text"
               ></div>
             </button>
             <label
@@ -3470,7 +3470,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Group name -->
-                <div class="text-center md:text-left w-full">
+                <div class="text-center md:text-start w-full">
                   <div
                     class="font-semibold text-xs md:text-sm leading-tight"
                     :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
@@ -3482,7 +3482,7 @@ onUnmounted(() => {
                 <!-- Mobile selected dot -->
                 <div
                   v-if="selectedPaymentMethod === group.slug"
-                  class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden"
+                  class="absolute top-1.5 end-1.5 w-2 h-2 rounded-full md:hidden"
                   :class="group.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
                 ></div>
               </div>
@@ -3513,14 +3513,14 @@ onUnmounted(() => {
 
             <!-- Search — only when > 10 methods -->
             <div v-if="selectedGroup.methods.length > 10" class="relative mb-2">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 v-model="methodSearch"
                 type="text"
                 :placeholder="t('pos.checkout.searchMethod')"
-                class="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="w-full h-9 ps-9 pe-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -3549,7 +3549,7 @@ onUnmounted(() => {
                 {{ method.name }}
                 <span
                   v-if="selectedPaymentMethodId === method.id"
-                  class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full"
+                  class="absolute top-1 end-1.5 w-1.5 h-1.5 rounded-full"
                   :class="selectedGroup.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
                 />
               </button>
@@ -3573,7 +3573,7 @@ onUnmounted(() => {
                         : 'bg-primary/8 text-primary font-semibold')
                     : 'text-text-primary hover:bg-surface-secondary/50'"
                 >
-                  <span class="min-w-0 truncate pr-3">{{ method.name }}</span>
+                  <span class="min-w-0 truncate pe-3">{{ method.name }}</span>
                   <svg
                     v-if="selectedPaymentMethodId === method.id"
                     class="h-[1em] w-[1em] flex-shrink-0"
@@ -3731,7 +3731,7 @@ onUnmounted(() => {
               </span>
             </span>
           </label>
-          <p v-if="tipTaxable && tipTaxAmount > 0" class="text-xs text-text-secondary tabular-nums pl-7">
+          <p v-if="tipTaxable && tipTaxAmount > 0" class="text-xs text-text-secondary tabular-nums ps-7">
             {{ tipTaxLabel }}: {{ formatCurrency(tipTaxAmount) }}
           </p>
         </div>
@@ -3760,7 +3760,7 @@ onUnmounted(() => {
                 :disabled="!isDeliveryEligible"
                 :aria-label="t('pos.checkout.deliveryCheckout.toggleAria')"
               />
-              <div class="w-11 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-11 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 
@@ -3834,7 +3834,7 @@ onUnmounted(() => {
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-            class="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+            class="w-full px-5 py-4 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
           >
             <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
               {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
@@ -3877,7 +3877,7 @@ onUnmounted(() => {
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
-            class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+            class="w-full px-5 py-4 flex items-center justify-between text-start hover:bg-surface-secondary/40 transition-colors"
           >
 	            <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
             <svg
@@ -3904,7 +3904,7 @@ onUnmounted(() => {
                 v-for="(promo, promoIdx) in displayPromoBreakdown"
                 v-show="displayPromoBreakdown.length > 1"
                 :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
-                class="flex justify-between text-xs text-state-success-text/90  pl-3"
+                class="flex justify-between text-xs text-state-success-text/90  ps-3"
               >
                 <span>{{ promo.promotion_name }}</span>
                 <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
@@ -3965,7 +3965,7 @@ onUnmounted(() => {
 	                <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
                 <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
               </div>
-              <p class="text-right text-xs text-text-tertiary">COP</p>
+              <p class="text-end text-xs text-text-tertiary">COP</p>
             </div>
           </div>
         </div>
@@ -3977,13 +3977,13 @@ onUnmounted(() => {
         >
           <button
             @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
-            class="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
+            class="w-full px-5 py-3.5 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
           >
             <svg class="h-[1em] w-[1em] text-state-warning-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
             </svg>
             <span class="font-semibold text-sm text-text-primary">Waros</span>
-            <span v-if="!isLoadingWaros" class="ml-auto text-sm font-bold tabular-nums text-state-warning-text">
+            <span v-if="!isLoadingWaros" class="ms-auto text-sm font-bold tabular-nums text-state-warning-text">
               {{ warosBalance.toLocaleString(uiLocale) }}
             </span>
             <svg
@@ -4049,7 +4049,7 @@ onUnmounted(() => {
                             :disabled="warosBalance < reward.waros_cost"
                             @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
                           />
-                          <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                          <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                         </span>
                       </span>
                     </label>
@@ -4120,7 +4120,7 @@ onUnmounted(() => {
                     :disabled="isVoidingPayment === p.id"
                     @click="openVoidPaymentModal(p)"
                     :aria-label="`Eliminar pago #${idx + 1} de ${formatCurrency(p.amount)}`"
-                    class="ml-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                    class="ms-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   >
                     <svg v-if="isVoidingPayment === p.id" class="h-[1em] w-[1em] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -4182,13 +4182,13 @@ onUnmounted(() => {
             <div v-if="!splitIsComplete" class="flex flex-col gap-1">
 	              <label class="text-xs font-medium text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
+                <span class="absolute start-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
                 <input
                   type="text"
                   inputmode="numeric"
                   :value="splitPartialAmount ? splitPartialAmount.toLocaleString(uiLocale) : ''"
                   @input="onSplitAmountInput"
-                  class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
+                  class="w-full ps-7 pe-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
                   :class="splitAmountValidationMessage ? 'border-state-danger-border focus:border-state-danger-border focus:ring-state-danger-border/30' : ''"
                   placeholder="0"
                 />
@@ -4276,7 +4276,7 @@ onUnmounted(() => {
 	                  ? t('pos.checkout.actions.confirmWithAmount', { amount: formatCurrency(finalAmountToCollect) })
 	                  : t('pos.checkout.actions.confirmOrder') }}
             </span>
-            <svg v-if="!isProcessing" class="h-[1em] w-[1em] opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg v-if="!isProcessing" class="h-[1em] w-[1em] opacity-0 -ms-4 group-hover:opacity-100 group-hover:ms-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
           </button>
@@ -4346,7 +4346,7 @@ onUnmounted(() => {
       >
         <button
           @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-          class="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+          class="w-full px-5 py-4 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
         >
           <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
             {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
@@ -4381,7 +4381,7 @@ onUnmounted(() => {
       <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
         <button
           @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
-          class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+          class="w-full px-5 py-4 flex items-center justify-between text-start hover:bg-surface-secondary/40 transition-colors"
         >
 	          <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
           <svg
@@ -4406,7 +4406,7 @@ onUnmounted(() => {
               v-for="(promo, promoIdx) in displayPromoBreakdown"
               v-show="displayPromoBreakdown.length > 1"
               :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
-              class="flex justify-between text-xs text-state-success-text/90  pl-3"
+              class="flex justify-between text-xs text-state-success-text/90  ps-3"
             >
               <span>{{ promo.promotion_name }}</span>
               <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
@@ -4466,7 +4466,7 @@ onUnmounted(() => {
 	              <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
               <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
             </div>
-            <p class="text-right text-xs text-text-tertiary">COP</p>
+            <p class="text-end text-xs text-text-tertiary">COP</p>
           </div>
         </div>
       </div>
@@ -4531,7 +4531,7 @@ onUnmounted(() => {
                           :disabled="warosBalance < reward.waros_cost"
                           @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
                         />
-                        <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                        <span class="block w-10 h-6 bg-control-toggle-track-off rounded-full peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                       </span>
                     </span>
                   </label>
@@ -4816,7 +4816,7 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between gap-3 min-w-0">
               <span class="text-sm text-text-secondary shrink-0">{{ t('pos.checkout.summary.paymentMethod') }}</span>
-              <span class="text-sm font-medium text-text-primary min-w-0 overflow-x-auto whitespace-nowrap text-right">
+              <span class="text-sm font-medium text-text-primary min-w-0 overflow-x-auto whitespace-nowrap text-end">
                 {{
                   orderResult.payment_method
                     ? (orderResult.payment_method_name

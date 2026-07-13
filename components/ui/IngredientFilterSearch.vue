@@ -10,7 +10,7 @@
       v-if="modelValue"
       type="button"
       :aria-label="WAREHOUSE_COPY.menuFilterClearAria"
-      class="absolute right-2 top-1/2 -translate-y-1/2 min-h-[28px] min-w-[28px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      class="absolute end-2 top-1/2 -translate-y-1/2 min-h-[28px] min-w-[28px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       @mousedown.prevent
       @click="clear"
     >

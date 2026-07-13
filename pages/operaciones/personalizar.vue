@@ -1,12 +1,19 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import {
+  DEFAULT_APP_LOCALE,
+  normalizeEnabledAppLocale,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
 useHead({ title: () => t('operaciones.head.personalizar') })
 
 const { currentTenant } = useTenantReactive()
+const tenantsStore = useTenantsStore()
+const { locale, applyLocale } = useAppLocale()
 const cache = useQueryCache()
 
 // Operaciones audience aggregator — gated under OPERACIONES.
@@ -138,6 +145,38 @@ const invalidateRestaurantContext = async () => {
   await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
 }
 
+const isSavingLocale = ref(false)
+
+const saveUiLocale = async (next: AppLocaleCode) => {
+  if (isSavingLocale.value || next === locale.value) return
+  const previous = normalizeEnabledAppLocale(
+    tenantsStore.selectedTenant?.ui_locale,
+  ) ?? DEFAULT_APP_LOCALE
+
+  isSavingLocale.value = true
+  await applyLocale(next)
+  try {
+    await $fetch('/api/operaciones/ui-locale', {
+      method: 'PATCH',
+      body: { locale: next },
+    })
+    tenantsStore.setSelectedTenantUiLocale(next)
+    await cache.invalidateQueries({ key: ['tenants', 'user'] })
+    await invalidateRestaurantContext()
+    toast.success(t('operaciones.personalizar.languageUpdated'), {
+      title: t('operaciones.personalizar.savedTitle'),
+    })
+  } catch (error: any) {
+    await applyLocale(previous)
+    const detail = error?.data?.detail ?? error?.data?.message
+    toast.error(detail || t('operaciones.personalizar.languageSaveError'), {
+      title: t('operaciones.comandas.error'),
+    })
+  } finally {
+    isSavingLocale.value = false
+  }
+}
+
 const toggleAutoSelectGeneric = async () => {
   if (!businessProfile.value || isTogglingGeneric.value) return
   isTogglingGeneric.value = true
@@ -195,6 +234,24 @@ const toggleOpenSale = async () => {
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0 flex flex-col gap-1">
+          <label for="tenant-ui-locale" class="text-sm font-semibold text-text-primary">
+            {{ t('operaciones.personalizar.languageTitle') }}
+          </label>
+          <p class="text-xs leading-snug text-text-secondary">
+            {{ t('operaciones.personalizar.languageHelp') }}
+          </p>
+        </div>
+        <LocaleSelector
+          id="tenant-ui-locale"
+          :model-value="locale"
+          :disabled="isSavingLocale"
+          class="w-full sm:w-64 flex-shrink-0"
+          @update:model-value="saveUiLocale"
+        />
+      </div>
+
       <!-- ══════ VENTA LIBRE EN POS (#805) ══════ -->
       <div
         v-if="businessProfile"
@@ -224,7 +281,7 @@ const toggleOpenSale = async () => {
             :disabled="isTogglingOpenSale"
             @change="toggleOpenSale"
           />
-          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
       </div>
 
@@ -257,7 +314,7 @@ const toggleOpenSale = async () => {
             :disabled="isTogglingGeneric"
             @change="toggleAutoSelectGeneric"
           />
-          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
       </div>
 

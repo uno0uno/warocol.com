@@ -55,7 +55,7 @@
         </label>
         <div class="flex">
           <span
-            class="inline-flex items-center px-3 border border-r-0 border-titan-300 rounded-l-lg bg-titan-50
+            class="inline-flex items-center px-3 border border-e-0 border-titan-300 rounded-s-lg bg-titan-50
                    text-ebony-500 text-sm select-none"
             aria-label="Código de país Colombia"
           >
@@ -69,7 +69,7 @@
             autocomplete="tel-national"
             placeholder="300 123 4567"
             inputmode="numeric"
-            class="flex-1 px-3 py-2.5 text-base border border-titan-300 rounded-r-lg bg-white text-ebony-900
+            class="flex-1 px-3 py-2.5 text-base border border-titan-300 rounded-e-lg bg-white text-ebony-900
                    placeholder:text-titan-400 focus:outline-none focus:ring-2 focus:ring-crocus-500
                    disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isSubmitting"

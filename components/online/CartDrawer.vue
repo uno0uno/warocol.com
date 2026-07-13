@@ -11,7 +11,7 @@
 
     <!-- Drawer -->
     <Transition name="slide">
-      <aside v-if="modelValue" class="fixed top-0 right-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
+      <aside v-if="modelValue" class="fixed top-0 end-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
 
         <!-- Header -->
         <header class="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0">

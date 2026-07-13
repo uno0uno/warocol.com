@@ -7,13 +7,13 @@
         type="text"
         :placeholder="placeholder"
         :required="required && !modelValue"
-        class="input-base w-full px-4 py-2 pr-8"
+        class="input-base w-full px-4 py-2 pe-8"
         @focus="handleFocus"
         @input="handleInput"
       />
       <button
         type="button"
-        class="absolute right-2 top-1/2 -translate-y-1/2"
+        class="absolute end-2 top-1/2 -translate-y-1/2"
         @click="toggleDropdown"
       >
         <svg class="w-4 h-4 text-text-secondary transition-transform" :class="{ 'rotate-180': isOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,14 +49,14 @@
           v-for="option in filteredOptions"
           :key="option.value"
           type="button"
-          class="w-full text-left relative flex cursor-pointer select-none items-center rounded-md px-4 py-2 text-sm outline-none hover:bg-surface-secondary focus:bg-surface-secondary"
+          class="w-full text-start relative flex cursor-pointer select-none items-center rounded-md px-4 py-2 text-sm outline-none hover:bg-surface-secondary focus:bg-surface-secondary"
           :class="{ 'bg-surface-secondary': option.value === modelValue }"
           @click="selectOption(option)"
         >
           <span>{{ option.label }}</span>
           <svg
             v-if="option.value === modelValue"
-            class="ml-auto w-4 h-4"
+            class="ms-auto w-4 h-4"
             fill="currentColor"
             viewBox="0 0 20 20"
           >

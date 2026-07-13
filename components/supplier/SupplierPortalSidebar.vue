@@ -50,7 +50,7 @@
           <div class="w-10 h-10 bg-shell-account-avatar-bg rounded-full flex items-center justify-center font-semibold text-shell-account-text">
             {{ getInitials(supplierName) }}
           </div>
-          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-shell-account-indicator-bg border-2 border-nav-surface-bg rounded-full"></span>
+          <span class="absolute bottom-0 end-0 w-2.5 h-2.5 bg-shell-account-indicator-bg border-2 border-nav-surface-bg rounded-full"></span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="font-semibold text-sm text-nav-icon-active truncate">{{ supplierName || 'Proveedor' }}</div>

@@ -162,7 +162,7 @@
           class="rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2.5 text-sm text-state-success-text"
         >
           {{ t('finanzas.arqueo.shiftAlreadyOpen') }} {{ t('finanzas.arqueo.openingFloatAmount', { amount: formatCurrency(existingShift.openingCash) }) }}.
-          <NuxtLink v-if="closeLink" :to="closeLink" class="font-semibold underline ml-1">{{ t('finanzas.arqueo.goToClose') }}</NuxtLink>
+          <NuxtLink v-if="closeLink" :to="closeLink" class="font-semibold underline ms-1">{{ t('finanzas.arqueo.goToClose') }}</NuxtLink>
         </div>
 
         <p v-if="stepError" class="text-sm text-destructive">{{ stepError }}</p>
@@ -221,7 +221,7 @@
                 :key="denom"
                 class="flex items-center gap-2 px-3 py-2"
               >
-                <span class="text-sm w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
+                <span class="text-sm w-24 text-end flex-shrink-0">{{ formatCurrency(denom) }}</span>
                 <span class="text-text-tertiary text-xs">×</span>
                 <input
                   :ref="el => setDenomRef(el, idx)"
@@ -233,10 +233,10 @@
                   @keydown.enter.prevent="focusNext(idx)"
                   :aria-label="t('finanzas.arqueo.denominationCountAria', { amount: formatCurrency(denom) })"
                 />
-                <span class="text-sm flex-1 text-right">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+                <span class="text-sm flex-1 text-end">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
               </div>
               <div class="flex items-center gap-2 px-3 py-2">
-                <span class="text-sm w-24 text-right">{{ t('finanzas.arqueo.coins') }}</span>
+                <span class="text-sm w-24 text-end">{{ t('finanzas.arqueo.coins') }}</span>
                 <span class="text-transparent text-xs">×</span>
                 <input
                   v-model="monedasAmount"
@@ -246,7 +246,7 @@
                   @input="monedasAmount = sanitizeIntStr($event)"
                   :aria-label="t('finanzas.arqueo.coinsAmountAria')"
                 />
-                <span class="text-sm flex-1 text-right">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+                <span class="text-sm flex-1 text-end">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
               </div>
             </div>
           </div>

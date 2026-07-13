@@ -166,7 +166,7 @@ watch(
         :aria-label="t('finanzas.contabilidad.entryDetail')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-surface-tertiary" aria-hidden="true" />
@@ -274,8 +274,8 @@ watch(
               <div class="rounded-xl border border-border overflow-hidden">
                 <div class="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2 bg-surface-secondary/40 text-xs font-semibold text-text-secondary">
                   <span>{{ t('finanzas.contabilidad.account') }}</span>
-                  <span class="text-right">{{ t('finanzas.contabilidad.debit') }}</span>
-                  <span class="text-right">{{ t('finanzas.contabilidad.credit') }}</span>
+                  <span class="text-end">{{ t('finanzas.contabilidad.debit') }}</span>
+                  <span class="text-end">{{ t('finanzas.contabilidad.credit') }}</span>
                 </div>
                 <div
                   v-for="(line, idx) in entry.lines"
@@ -285,25 +285,25 @@ watch(
                 >
                   <div class="min-w-0">
                     <p class="font-medium text-text-primary truncate">
-                      <span class="font-mono text-text-secondary mr-1.5">{{ accountById[line.accountId]?.code || '?' }}</span>
+                      <span class="font-mono text-text-secondary me-1.5">{{ accountById[line.accountId]?.code || '?' }}</span>
                       {{ accountById[line.accountId]?.name || t('finanzas.contabilidad.unknownAccount') }}
                     </p>
                     <p v-if="line.description" class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
                       {{ line.description }}
                     </p>
                   </div>
-                  <span class="text-sm font-mono tabular-nums text-right" :class="line.debit ? 'text-primary font-medium' : 'text-text-tertiary'">
+                  <span class="text-sm font-mono tabular-nums text-end" :class="line.debit ? 'text-primary font-medium' : 'text-text-tertiary'">
                     {{ line.debit ? formatCOP(line.debit) : '—' }}
                   </span>
-                  <span class="text-sm font-mono tabular-nums text-right" :class="line.credit ? 'text-text-secondary' : 'text-text-tertiary'">
+                  <span class="text-sm font-mono tabular-nums text-end" :class="line.credit ? 'text-text-secondary' : 'text-text-tertiary'">
                     {{ line.credit ? formatCOP(line.credit) : '—' }}
                   </span>
                 </div>
                 <!-- Totals -->
                 <div class="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2.5 bg-surface-secondary/60 border-t-2 border-border text-sm font-bold">
                   <span class="text-text-primary">{{ t('finanzas.contabilidad.totals') }}</span>
-                  <span class="text-primary font-mono tabular-nums text-right">{{ formatCOP(entry.totalDebit) }}</span>
-                  <span class="text-text-secondary font-mono tabular-nums text-right">{{ formatCOP(entry.totalCredit) }}</span>
+                  <span class="text-primary font-mono tabular-nums text-end">{{ formatCOP(entry.totalDebit) }}</span>
+                  <span class="text-text-secondary font-mono tabular-nums text-end">{{ formatCOP(entry.totalCredit) }}</span>
                 </div>
               </div>
             </div>

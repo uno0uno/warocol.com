@@ -73,7 +73,7 @@
         <Icon
           v-if="otpAuthStore.isLoading"
           name="heroicons:arrow-path"
-          class="w-4 h-4 mr-2 animate-spin"
+          class="w-4 h-4 me-2 animate-spin"
         />
         {{ otpAuthStore.isLoading ? 'Enviando...' : 'Enviar código' }}
       </Button>
@@ -92,7 +92,7 @@
       </div>
 
       <div v-if="countdown > 0" class="text-center text-sm font-medium text-state-warning-text">
-        <Icon name="heroicons:clock" class="w-4 h-4 inline mr-1" />
+        <Icon name="heroicons:clock" class="w-4 h-4 inline me-1" />
         Reenviar disponible en {{ countdown }}s
       </div>
 
@@ -119,7 +119,7 @@
           <Icon
             v-if="otpAuthStore.isLoading"
             name="heroicons:arrow-path"
-            class="w-4 h-4 mr-2 animate-spin"
+            class="w-4 h-4 me-2 animate-spin"
           />
           {{ otpAuthStore.isLoading ? 'Verificando...' : 'Verificar' }}
         </Button>

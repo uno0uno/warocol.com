@@ -1,6 +1,6 @@
 <template>
   <!-- Bottom Navigation - Solo Mobile -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg z-50 safe-area-bottom">
+  <nav class="md:hidden fixed bottom-0 start-0 end-0 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg z-50 safe-area-bottom">
     <div class="flex items-center justify-around px-2 py-2">
 
       <!-- Órdenes de Compra -->

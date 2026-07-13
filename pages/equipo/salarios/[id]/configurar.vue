@@ -109,12 +109,12 @@
                 Valor por Día *
               </label>
               <div class="relative">
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                <span class="absolute start-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
                 <UiDecimalInput
                   v-model="form.daily_rate"
                   :min="0"
                   :precision="2"
-                  class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                  class="w-full ps-10 pe-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                   placeholder="0"
                 />
               </div>
@@ -329,12 +329,12 @@
                   {{ form.employment_type === 'contractor' ? 'Honorario *' : 'Salario Mensual *' }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                  <span class="absolute start-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
                   <UiDecimalInput
                     v-model="form.fixed_amount"
                     :min="0"
                     :precision="2"
-                    class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    class="w-full ps-10 pe-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
                 </div>
@@ -373,12 +373,12 @@
                   Valor Hora *
                 </label>
                 <div class="relative">
-                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                  <span class="absolute start-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
                   <UiDecimalInput
                     v-model="form.hourly_rate"
                     :min="0"
                     :precision="2"
-                    class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    class="w-full ps-10 pe-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
                 </div>

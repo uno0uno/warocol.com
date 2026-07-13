@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
-import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
+import { toNumberLocaleTag } from '~/utils/appLocales'
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useQueryCache } from '@pinia/colada'
@@ -291,7 +291,7 @@ const onPosCustomerIdentified = async (customer: {
 }
 
 const posWarosBalance = computed(() => posWarosSummary.value?.current_balance ?? 0)
-const pointsLocale = computed(() => toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))
+const pointsLocale = computed(() => toNumberLocaleTag(normalizeUiLocale(locale.value)))
 const posWalletBalance = computed(() => posCustomerWallet.value?.balance_cop ?? 0)
 const isPosWalletPending = computed(() => isLoadingPosWallet.value || isRefreshingPosWallet.value)
 
@@ -804,7 +804,7 @@ registerTableSessionRefresh(
 )
 
 const formatCurrencyPOS = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))}`
+  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(normalizeUiLocale(locale.value)))}`
 
 const activeMinimumConsumption = computed(() => posStore.activeTableSession?.minimumConsumption ?? null)
 const showActiveMinimumConsumption = computed(() =>
@@ -1860,7 +1860,7 @@ onUnmounted(() => {
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 :aria-label="t('pos.banner.changeWaiterAria')"
-                class="h-8 w-full inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                class="h-8 w-full inline-flex items-center leading-none ps-7 pe-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -1876,7 +1876,7 @@ onUnmounted(() => {
               </select>
               <!-- User icon (overlapping left) -->
               <svg
-                class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] flex-shrink-0 text-text-secondary"
+                class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] flex-shrink-0 text-text-secondary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true"
               >
@@ -1884,7 +1884,7 @@ onUnmounted(() => {
               </svg>
               <!-- Caret (overlapping right) -->
               <svg
-                class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
+                class="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true"
               >
@@ -2157,7 +2157,7 @@ onUnmounted(() => {
         type="button"
         :aria-label="readyComandasCount > 0 ? t('pos.banner.comandasStatusReady', { count: readyComandasCount }) : t('pos.banner.comandasStatus')"
         :title="readyComandasCount > 0 ? (readyComandasCount === 1 ? t('pos.banner.comandasReadyTitleOne', { count: readyComandasCount }) : t('pos.banner.comandasReadyTitleMany', { count: readyComandasCount })) : t('pos.banner.comandasStatus')"
-        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-action-secondary-bg text-action-secondary-text text-sm font-medium hover:bg-action-secondary-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action-secondary-focus-ring mr-1.5 md:mr-2 px-2.5 sm:px-3 md:px-4"
+        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-action-secondary-bg text-action-secondary-text text-sm font-medium hover:bg-action-secondary-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action-secondary-focus-ring me-1.5 md:me-2 px-2.5 sm:px-3 md:px-4"
         :class="readyComandasCount > 0 ? 'ring-1 ring-state-success-border/60' : ''"
         @click="showExpediterPanel = true"
       >
@@ -2176,7 +2176,7 @@ onUnmounted(() => {
         </span>
         <span
           v-if="readyComandasCount > 0"
-          class="sm:hidden absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-badge-success-bg px-1 text-[10px] font-bold text-badge-success-text tabular-nums ring-2 ring-surface"
+          class="sm:hidden absolute -top-1 -end-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-badge-success-bg px-1 text-[10px] font-bold text-badge-success-text tabular-nums ring-2 ring-surface"
           aria-hidden="true"
         >
           {{ readyComandasCount > 9 ? '9+' : readyComandasCount }}

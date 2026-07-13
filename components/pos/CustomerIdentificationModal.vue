@@ -38,7 +38,7 @@
           <!-- Search Input -->
           <div class="px-4 pt-4 pb-3 flex-shrink-0">
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
                 <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
@@ -48,14 +48,14 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('pos.customer.searchPlaceholder')"
-                class="w-full pl-10 pr-10 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
+                class="w-full ps-10 pe-10 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
                 autocomplete="off"
               />
               <button
                 v-if="searchQuery"
                 @click="searchQuery = ''"
                 :aria-label="t('pos.customer.clearSearchAria')"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
+                class="absolute end-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
               >
                 <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -93,7 +93,7 @@
                 v-for="customer in searchResults"
                 :key="String(customer.id)"
                 @click="selectCustomer(customer)"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors text-left min-h-[56px] border-b border-border/50 last:border-b-0"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors text-start min-h-[56px] border-b border-border/50 last:border-b-0"
               >
                 <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {{ customerInitial(customer) }}

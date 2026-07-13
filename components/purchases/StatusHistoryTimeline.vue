@@ -30,7 +30,7 @@
         <!-- Timeline line -->
         <div
           v-if="index !== history.length - 1"
-          class="absolute left-[19px] top-10 bottom-0 w-0.5 bg-border"
+          class="absolute start-[19px] top-10 bottom-0 w-0.5 bg-border"
         ></div>
 
         <!-- Timeline entry -->
@@ -69,7 +69,7 @@
 
               <!-- Timestamp -->
               <p class="text-sm text-text-secondary mb-3">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 inline me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {{ formatDateTime(entry.changed_at) }}
@@ -85,7 +85,7 @@
                     </svg>
                     <span class="text-sm font-medium text-green-600">{{ t('abastecimiento.compraDirectaDetalle.added') }}</span>
                   </div>
-                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                  <ul class="ms-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.added" :key="item" class="flex items-center gap-1">
                       <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                       {{ item }}
@@ -101,7 +101,7 @@
                     </svg>
                     <span class="text-sm font-medium text-red-600">{{ t('abastecimiento.compraDirectaDetalle.removed') }}</span>
                   </div>
-                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                  <ul class="ms-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.removed" :key="item" class="flex items-center gap-1">
                       <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                       {{ item }}
@@ -117,7 +117,7 @@
                     </svg>
                     <span class="text-sm font-medium text-yellow-600">{{ t('abastecimiento.compraDirectaDetalle.modified') }}</span>
                   </div>
-                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                  <ul class="ms-6 text-sm text-text-secondary space-y-0.5">
                     <li v-for="item in entry.metadata.changes_summary.modified" :key="item" class="flex items-center gap-1">
                       <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
                       {{ item }}
@@ -149,14 +149,14 @@
                   class="text-sm"
                 >
                   <span class="font-medium text-text-primary">{{ formatMetadataKey(key) }}:</span>
-                  <span class="text-text-secondary ml-2">{{ formatMetadataValue(key, value) }}</span>
+                  <span class="text-text-secondary ms-2">{{ formatMetadataValue(key, value) }}</span>
                 </div>
               </div>
 
               <!-- Notes -->
               <div v-if="entry.notes" class="mt-3 pt-3 border-t border-border">
                 <p class="text-sm text-text-secondary">
-                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 inline me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
                   {{ entry.notes }}
@@ -231,7 +231,7 @@ function getEntryTitle(entry: any): string {
 
 function formatNumber(value: number): string {
   if (value === null || value === undefined) return '0'
-  return Math.abs(value).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return Math.abs(value).toLocaleString(toNumberLocaleTag(locale.value), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   })
@@ -374,7 +374,7 @@ function formatMetadataValue(key: string, value: any): string {
   // Money fields
   if (key.includes('amount') || key.includes('price') || key.includes('cost')) {
     try {
-      return parseFloat(value).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', {
+      return parseFloat(value).toLocaleString(toNumberLocaleTag(locale.value), {
         style: 'currency',
         currency: 'COP'
       })

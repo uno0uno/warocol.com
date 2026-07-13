@@ -534,7 +534,7 @@ const openEntryDetail = (entry: { id: string }) => {
           menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell" @update:model-value="page = 1" />
 
         <select v-model="statusFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           :aria-label="t('finanzas.contabilidad.filterStatus')"
           @change="page = 1">
           <option :value="null">{{ t('finanzas.common.status') }}</option>
@@ -544,7 +544,7 @@ const openEntryDetail = (entry: { id: string }) => {
         </select>
 
         <select v-model="sourceFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           :aria-label="t('finanzas.contabilidad.filterModule')"
           @change="page = 1">
           <option :value="null">{{ t('finanzas.contabilidad.module') }}</option>
@@ -595,7 +595,7 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Mobile card -->
           <template #card="{ item, index }">
             <button type="button"
-              class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-left hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
+              class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-start hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
               :aria-label="t('finanzas.contabilidad.viewEntryNamed', { name: item.reference || item.description })"
               @click="openEntryDetail(item)">
@@ -715,7 +715,7 @@ const openEntryDetail = (entry: { id: string }) => {
       <div v-if="showCreatePanel" role="dialog" aria-modal="true" :aria-label="t('finanzas.contabilidad.createSubaccount')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-border" aria-hidden="true" />
@@ -758,11 +758,11 @@ const openEntryDetail = (entry: { id: string }) => {
               {{ t('finanzas.contabilidad.pucCode') }} <span class="text-destructive" aria-hidden="true">*</span>
             </label>
             <div class="flex items-center rounded-lg bg-background overflow-hidden">
-              <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code
+              <span class="ps-3 pe-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code
                 }}</span>
-              <span class="text-text-secondary select-none flex-shrink-0 pr-1">·</span>
+              <span class="text-text-secondary select-none flex-shrink-0 pe-1">·</span>
               <input id="create-code" ref="codeInput" v-model="createSuffix" type="text" placeholder="05" maxlength="6"
-                class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
+                class="flex-1 min-w-0 py-2.5 pe-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
                 :aria-label="t('finanzas.contabilidad.pucCodeSuffix')"
                 @keydown.escape="closeCreatePanel" />
             </div>

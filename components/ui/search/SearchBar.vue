@@ -31,7 +31,7 @@ const handleInput = (event) => {
       :value="modelValue"
       :placeholder="placeholder"
       @input="handleInput"
-      class="ml-2 bg-transparent border-none outline-none text-sm flex-1 text-foreground placeholder:text-muted-foreground"
+      class="ms-2 bg-transparent border-none outline-none text-sm flex-1 text-foreground placeholder:text-muted-foreground"
     />
   </div>
 </template>

@@ -5,7 +5,7 @@
   >
     <!-- Image Container -->
     <div class="image-container" :style="{ background: eventGradient }">
-      <Badge class="absolute top-2 left-2 text-xs backdrop-blur-sm">
+      <Badge class="absolute top-2 start-2 text-xs backdrop-blur-sm">
         {{ event.badge || getEventBadge() }}
       </Badge>
       <span class="event-icon">{{ event.icon || getEventIcon() }}</span>
@@ -223,7 +223,7 @@ const formatEventDate = () => {
 }
 
 .avatar {
-  @apply w-5 h-5 rounded-full border-2 border-card -ml-1.5 first:ml-0;
+  @apply w-5 h-5 rounded-full border-2 border-card -ms-1.5 first:ms-0;
   @apply flex items-center justify-center font-semibold text-[8px] text-white;
   @apply transition-transform hover:scale-110 hover:z-10 relative;
 }

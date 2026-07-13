@@ -65,7 +65,7 @@ watch(() => props.options, remeasure, { deep: true })
     </select>
     <span
       ref="measureRef"
-      class="pointer-events-none invisible absolute top-0 left-0 z-[-1] whitespace-nowrap text-sm h-10 inline-flex items-center pl-3 pr-8 font-medium"
+      class="pointer-events-none invisible absolute top-0 start-0 z-[-1] whitespace-nowrap text-sm h-10 inline-flex items-center ps-3 pe-8 font-medium"
       aria-hidden="true"
     >{{ displayLabel }}</span>
   </div>

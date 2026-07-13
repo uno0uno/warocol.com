@@ -274,7 +274,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <!-- Clase filter -->
         <select
           v-model="classFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           :aria-label="t('finanzas.contabilidad.filterClass')"
         >
           <option :value="null">{{ t('finanzas.contabilidad.allClasses') }}</option>
@@ -284,7 +284,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <!-- Estado filter -->
         <select
           v-model="activeFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           :aria-label="t('finanzas.contabilidad.filterStatus')"
         >
           <option :value="null">{{ t('finanzas.common.allF') }}</option>
@@ -295,7 +295,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
         <!-- Nivel filter -->
         <select
           v-model="levelFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           :aria-label="t('finanzas.contabilidad.filterLevel')"
         >
           <option :value="null">{{ t('finanzas.contabilidad.level') }}</option>

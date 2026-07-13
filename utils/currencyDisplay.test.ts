@@ -29,11 +29,17 @@ describe('localeToNumberFormatTag', () => {
     assert.equal(localeToNumberFormatTag(undefined), DEFAULT_NUMBER_LOCALE)
   })
 
-  it('maps es/en prefs and tags', () => {
+  it('maps every supported locale and regional tag', () => {
     assert.equal(localeToNumberFormatTag('es'), 'es-CO')
     assert.equal(localeToNumberFormatTag('en'), 'en-US')
     assert.equal(localeToNumberFormatTag('es-CO'), 'es-CO')
     assert.equal(localeToNumberFormatTag('en-US'), 'en-US')
+    assert.equal(localeToNumberFormatTag('pt-BR'), 'pt-BR')
+    assert.equal(localeToNumberFormatTag('fr'), 'fr-FR')
+    assert.equal(localeToNumberFormatTag('de'), 'de-DE')
+    assert.equal(localeToNumberFormatTag('ar'), 'ar-u-nu-latn')
+    assert.equal(localeToNumberFormatTag('hi'), 'hi-IN')
+    assert.equal(localeToNumberFormatTag('zh'), 'zh-CN')
   })
 })
 

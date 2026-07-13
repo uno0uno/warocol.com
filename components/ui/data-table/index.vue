@@ -270,9 +270,9 @@ watch(
               :key="column.key"
               :class="cn(
                 rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3 px-4',
-                'border-r border-dashed border-data-table-border/60 last:border-r-0',
+                'border-r border-dashed border-data-table-border/60 last:border-e-0',
                 column.align === 'center' && 'text-center',
-                column.align === 'right' && 'text-right',
+                column.align === 'right' && 'text-end',
                 column.class
               )"
               :style="column.width ? { width: column.width } : undefined"
@@ -302,9 +302,9 @@ watch(
                   v-else
                   :class="cn(
                     'text-xs font-semibold text-data-table-header-text uppercase tracking-wider block',
-                    (!column.align || column.align === 'left') && 'text-left',
+                    (!column.align || column.align === 'left') && 'text-start',
                     column.align === 'center' && 'text-center',
-                    column.align === 'right' && 'text-right'
+                    column.align === 'right' && 'text-end'
                   )"
                 >
                   {{ column.title }}
@@ -341,10 +341,10 @@ watch(
               :key="column.key"
               :class="cn(
                 rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3.5 px-4',
-                'text-sm font-medium border-r border-dashed border-data-table-border/60 last:border-r-0',
+                'text-sm font-medium border-r border-dashed border-data-table-border/60 last:border-e-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
-                column.align === 'right' && 'text-right',
+                column.align === 'right' && 'text-end',
                 column.class
               )"
             >
@@ -369,9 +369,9 @@ watch(
               v-for="column in columns"
               :key="`total-${column.key}`"
               :class="cn(
-                'py-3.5 px-4 text-sm text-data-table-cell-text font-semibold border-r border-dashed border-data-table-border/60 last:border-r-0',
+                'py-3.5 px-4 text-sm text-data-table-cell-text font-semibold border-r border-dashed border-data-table-border/60 last:border-e-0',
                 column.align === 'center' && 'text-center',
-                column.align === 'right' && 'text-right',
+                column.align === 'right' && 'text-end',
                 column.class
               )"
             >

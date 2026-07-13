@@ -29,7 +29,7 @@
           </div>
 
           <!-- Edit / Save buttons — top-right of banner -->
-          <div class="absolute top-3 right-3 flex items-center gap-2">
+          <div class="absolute top-3 end-3 flex items-center gap-2">
             <button
               v-if="!isEditMode"
               @click="enterEditMode"
@@ -57,7 +57,7 @@
           </div>
 
           <!-- Logo — anchored to banner bottom, extends below via translate-y -->
-          <div class="absolute bottom-0 left-4 sm:left-6 translate-y-1/2">
+          <div class="absolute bottom-0 start-4 sm:start-6 translate-y-1/2">
             <div
               v-if="logoSrc"
               class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-md"
@@ -183,7 +183,7 @@
             @change="toggleActive"
             :disabled="isTogglingActive"
           />
-          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
       </div>
 
@@ -266,7 +266,7 @@
            so showing the read-only summary at the same time duplicates
            labels and confuses the operator about where to edit. -->
       <div v-if="businessProfile && !isEditMode" class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
-        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-start sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             {{ t('negocio.prepTimeShort') }}
           </p>
@@ -274,7 +274,7 @@
             {{ businessProfile.estimated_preparation_time }} min
           </p>
         </div>
-        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-start sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             {{ t('negocio.minimumOrder') }}
           </p>
@@ -282,7 +282,7 @@
             {{ formatCurrencyCompact(businessProfile.min_order_amount) }}
           </p>
         </div>
-        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-start sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             {{ t('negocio.onlineLimit') }}
           </p>
@@ -290,7 +290,7 @@
             {{ formatOnlineOrderMaxAmountCompact(businessProfile.online_order_max_amount) }}
           </p>
         </div>
-        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between items-start sm:items-center text-left sm:text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between items-start sm:items-center text-start sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             {{ t('negocio.onlineOrders') }}
           </p>
@@ -379,7 +379,7 @@
                   :aria-activedescendant="activeCityOptionId"
                   :aria-describedby="cityHelpId"
                   autocomplete="off"
-                  class="input-base w-full px-3 py-2 pl-9 pr-10 text-sm"
+                  class="input-base w-full px-3 py-2 ps-9 pe-10 text-sm"
                   :placeholder="t('negocio.cityPlaceholder')"
                   @input="onCitySearchInput"
                   @focus="openCitySearch"
@@ -390,13 +390,13 @@
                   @keydown.esc.prevent="closeCitySearch"
                 />
                 <MagnifyingGlassIcon
-                  class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
+                  class="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
                   aria-hidden="true"
                 />
                 <button
                   v-if="citySearchTerm"
                   type="button"
-                  class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  class="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   :aria-label="t('negocio.clearCity')"
                   @mousedown.prevent
                   @click="clearCitySelection"
@@ -405,7 +405,7 @@
                 </button>
                 <span
                   v-else-if="cityCatalogLoading"
-                  class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-text-tertiary/30 border-t-text-tertiary"
+                  class="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-text-tertiary/30 border-t-text-tertiary"
                   aria-hidden="true"
                 />
               </div>
@@ -477,7 +477,7 @@
         <template v-if="!isEditMode">
           <div class="mb-4 flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
             <span class="text-sm text-text-secondary">{{ t('negocio.timezone') }}</span>
-            <span class="text-sm font-semibold text-text-primary text-right">
+            <span class="text-sm font-semibold text-text-primary text-end">
               {{ businessTimezoneLabel }}
             </span>
           </div>
@@ -623,7 +623,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input v-model="editForm.accepts_online_orders" type="checkbox" class="sr-only peer" />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1043,7 +1043,7 @@ const hasSocialMedia = computed(() => {
 const formatCurrency = (value: number | string | null | undefined) => {
   const n = Number(value) || 0
   if (!n) return '$0'
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 }
 
 const formatCurrencyCompact = (value: number | string | null | undefined) => {

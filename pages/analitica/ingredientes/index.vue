@@ -500,7 +500,7 @@ const rows = computed<IngredientAnalyticsRow[]>(() => ((analyticsData.value as a
 const period = computed(() => (analyticsData.value as any)?.data?.period ?? null)
 const isLoading = computed(() => queryStatus.value === 'pending' && !analyticsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && analyticsData.value != null)
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 const tableSortState = computed(() => SORT_TO_TABLE[sortOption.value] ?? SORT_TO_TABLE.consumed_quantity_desc)
 const tableSortField = computed(() => tableSortState.value.field)

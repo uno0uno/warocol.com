@@ -79,12 +79,12 @@
         <div v-else-if="form.salary_type === 'fixed'">
           <label class="block text-sm font-medium text-text-primary mb-2">Monto Mensual</label>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+            <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
             <UiDecimalInput
               v-model="form.fixed_amount"
               :min="0"
               :precision="2"
-              class="w-full pl-7 pr-3 py-2 font-semibold"
+              class="w-full ps-7 pe-3 py-2 font-semibold"
               placeholder="0"
             />
           </div>

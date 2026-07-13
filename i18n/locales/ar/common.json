@@ -1,0 +1,62 @@
+{
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "previous": "السابق",
+    "next": "التالي",
+    "loading": "جارٍ التحميل...",
+    "search": "بحث",
+    "filter": "تصفية",
+    "apply": "تطبيق",
+    "period": "الفترة",
+    "error": "خطأ",
+    "retry": "إعادة المحاولة",
+    "yes": "نعم",
+    "no": "لا",
+    "notSpecified": "غير محدد",
+    "nA": "N/A",
+    "filters": {
+      "field": "الحقل",
+      "searchField": "حقل البحث",
+      "dateRange": "نطاق التاريخ",
+      "clear": "مسح الفلاتر"
+    },
+    "datePresets": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "lastWeek": "الأسبوع الماضي",
+      "last15": "آخر 15 يومًا",
+      "lastMonth": "الشهر الماضي",
+      "last90": "آخر 90 يومًا"
+    },
+    "loadingPhrases": {
+      "sales": "جارٍ تحميل المبيعات...",
+      "orders": "جارٍ التحقق من الطلبات...",
+      "accounts": "جارٍ إجراء الحسابات...",
+      "server": "جارٍ التفاوض مع الخادم...",
+      "tickets": "جارٍ جمع تذاكر الطلبات...",
+      "inventory": "جارٍ مراجعة المخزون...",
+      "commissions": "نعدك بعدم فرض عمولات...",
+      "averageTicket": "جارٍ حساب متوسط فاتورتك...",
+      "almostReady": "شبه جاهز، أيها الشيف، يرجى الانتظار...",
+      "kitchen": "جارٍ المزامنة مع المطبخ..."
+    },
+    "pagination": {
+      "showingRange": "عرض {start} إلى {end} من أصل {total} نتيجة",
+      "pageOf": "صفحة {page} من {total}"
+    },
+    "submitBusy": "جارٍ إرسال التغييرات",
+    "processing": "جارٍ المعالجة...",
+    "attachments": "المرفقات",
+    "attachFile": "إرفاق ملف",
+    "attachmentHint": "ملفات PDF، صور، مستندات (الحد الأقصى 10MB)",
+    "fileTooLarge": "الملف كبير جدًا",
+    "fileTooLargeMessage": "{name} يتجاوز الحد الأقصى للحجم وهو 10MB"
+  }
+}

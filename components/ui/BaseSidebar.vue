@@ -103,7 +103,7 @@ const sidebarClass = computed(() => [
   'base-sidebar group h-screen border-r flex-shrink-0 shadow-xl flex flex-col transition-all duration-200 ease-in-out overflow-hidden',
   props.overlay
     ? [
-        'base-sidebar--overlay fixed left-0 top-0 z-[2030]',
+        'base-sidebar--overlay fixed start-0 top-0 z-[2030]',
         isExpanded.value ? 'w-fit min-w-[13rem] max-w-[16rem]' : 'w-[4.25rem]',
       ]
     : [

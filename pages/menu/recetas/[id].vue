@@ -116,8 +116,8 @@
                         <select
                           v-model="ingredient.unit"
                           :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                          class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
-                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                          class="input-base w-full py-2 pe-3 text-sm disabled:opacity-50"
+                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'ps-7' : 'ps-3'"
                         >
                           <option
                             v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
@@ -125,7 +125,7 @@
                             :value="opt.value"
                           >{{ opt.label }}</option>
                         </select>
-                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute start-2 top-2.5 pointer-events-none text-text-secondary">
                           <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
@@ -194,8 +194,8 @@
               class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
               :disabled="isSubmitting"
             >
-              <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
-              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+              <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 me-2" />
+              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
               {{ isSubmitting ? t('menu.recetas.form.saving') : t('menu.recetas.form.saveRecipe') }}
             </UiButton>
 
@@ -218,7 +218,7 @@
               :disabled="isSubmitting"
               @click="deleteRecipe"
             >
-              <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
+              <Icon name="heroicons:trash" class="h-5 w-5 me-2" />
               {{ t('menu.recetas.form.deleteRecipe') }}
             </UiButton>
           </div>

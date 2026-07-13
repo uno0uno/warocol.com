@@ -103,7 +103,7 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
         <div class="hidden lg:block lg:col-span-5 lg:pt-14">
           <p
             v-if="description"
-            class="text-base lg:text-lg leading-relaxed text-text-secondary border-l-2 border-badge-primary-border pl-5"
+            class="text-base lg:text-lg leading-relaxed text-text-secondary border-s-2 border-badge-primary-border ps-5"
             itemprop="description"
           >
             {{ description }}

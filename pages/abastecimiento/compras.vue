@@ -143,7 +143,7 @@
 
         <template #cell-proveedor="{ value }">
           <div class="flex items-center">
-            <div class="ml-3">
+            <div class="ms-3">
               <div class="text-sm font-medium text-text-primary">{{ value }}</div>
             </div>
           </div>
@@ -207,7 +207,7 @@
             @click="nextPage"
             :disabled="!canGoNext"
             :class="[
-              'ml-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+              'ms-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
               canGoNext ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
             ]">
             Siguiente
@@ -226,7 +226,7 @@
                 @click="previousPage"
                 :disabled="!canGoPrevious"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-l-md border border-action-outline-border text-sm font-medium',
+                  'relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border text-sm font-medium',
                   canGoPrevious ? 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg' : 'bg-action-outline-disabled-bg text-action-outline-disabled-text cursor-not-allowed'
                 ]">
                 <ChevronLeftIcon class="h-5 w-5" />
@@ -238,7 +238,7 @@
                 @click="nextPage"
                 :disabled="!canGoNext"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-r-md border border-action-outline-border text-sm font-medium',
+                  'relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border text-sm font-medium',
                   canGoNext ? 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg' : 'bg-action-outline-disabled-bg text-action-outline-disabled-text cursor-not-allowed'
                 ]">
                 <ChevronRightIcon class="h-5 w-5" />

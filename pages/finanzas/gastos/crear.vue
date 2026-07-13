@@ -63,14 +63,14 @@
                   {{ t('finanzas.gastos.amountReq') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     v-model.number="form.amount"
                     type="number"
                     required
                     min="0"
                     step="1"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                     placeholder="0"
                   />
                 </div>
@@ -128,7 +128,7 @@
                 </span>
               </label>
 
-              <div v-if="form.isRecurring" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-4 border-primary pl-4 sm:pl-5">
+              <div v-if="form.isRecurring" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-s-4 border-primary ps-4 sm:ps-5">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1">
                     {{ t('finanzas.gastos.freqReq') }}
@@ -198,7 +198,7 @@
                 <div
                   v-for="(file, index) in selectedFiles"
                   :key="`${file.name}-${index}`"
-                  class="flex items-center justify-between gap-3 bg-surface p-3 rounded-lg border border-border text-left"
+                  class="flex items-center justify-between gap-3 bg-surface p-3 rounded-lg border border-border text-start"
                 >
                   <div class="flex items-center gap-3 min-w-0">
                     <svg class="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -241,31 +241,31 @@
           <div class="space-y-3">
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.dateLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right">{{ formatCalendarDate(form.transactionDate) }}</span>
+              <span class="font-semibold text-text-primary text-end">{{ formatCalendarDate(form.transactionDate) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.categoryLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right truncate">{{ getCategoryName(form.expenseCategoryId) }}</span>
+              <span class="font-semibold text-text-primary text-end truncate">{{ getCategoryName(form.expenseCategoryId) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.amountLabel') }}</span>
-              <span class="font-semibold text-primary text-right">{{ formatCurrency(form.amount) }}</span>
+              <span class="font-semibold text-primary text-end">{{ formatCurrency(form.amount) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.methodLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right truncate">{{ paymentMethodLabel }}</span>
+              <span class="font-semibold text-text-primary text-end truncate">{{ paymentMethodLabel }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.typeLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right">{{ expenseTypeLabel }}</span>
+              <span class="font-semibold text-text-primary text-end">{{ expenseTypeLabel }}</span>
             </div>
             <div v-if="form.isRecurring" class="flex justify-between gap-3 text-sm pt-3 border-t border-border">
               <span class="text-text-secondary">{{ t('finanzas.gastos.recurrenceLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right">{{ formatFrequency(form.frequency) }}</span>
+              <span class="font-semibold text-text-primary text-end">{{ formatFrequency(form.frequency) }}</span>
             </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.docsLabel') }}</span>
-              <span class="font-semibold text-text-primary text-right">{{ selectedFiles.length }}</span>
+              <span class="font-semibold text-text-primary text-end">{{ selectedFiles.length }}</span>
             </div>
           </div>
 

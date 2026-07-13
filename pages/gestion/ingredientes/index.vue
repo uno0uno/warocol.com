@@ -223,7 +223,7 @@
                 </svg>
                 <span>{{ WAREHOUSE_COPY.similarWaroTemplatesFound }}</span>
               </div>
-              <ul class="flex flex-col gap-0.5 pl-6">
+              <ul class="flex flex-col gap-0.5 ps-6">
                 <li
                   v-for="s in conflictSimilar"
                   :key="s.id"

@@ -2,11 +2,11 @@
   <div class="group relative bg-surface border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
     <!-- Accent line -->
     <div
-      class="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
+      class="absolute start-0 top-4 bottom-4 w-1 rounded-e-full"
       :style="{ backgroundColor: station.color }"
     />
 
-    <div class="flex items-start justify-between gap-4 pl-3">
+    <div class="flex items-start justify-between gap-4 ps-3">
       <div class="min-w-0">
         <h3 class="text-sm font-bold text-text-primary truncate">{{ station.name }}</h3>
         <p v-if="station.kitchen_name" class="text-[11px] text-text-secondary uppercase tracking-wider font-medium mt-0.5">

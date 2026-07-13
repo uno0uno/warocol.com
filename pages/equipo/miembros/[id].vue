@@ -183,7 +183,7 @@ const handleRefresh = async () => {
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 const formatCurrency = (v: number) =>
-  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency', currency: 'COP', minimumFractionDigits: 0,
   }).format(v || 0)
 
@@ -191,7 +191,7 @@ const formatPercent = (v: number) => `${(v || 0).toFixed(2)}%`
 
 const formatDate = (iso: string | null | undefined) => {
   if (!iso) return ''
-  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.DateTimeFormat(toNumberLocaleTag(locale.value), {
     day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit',
   }).format(new Date(iso))
 }

@@ -36,7 +36,7 @@ function pick(reward: WaroReward) {
 }
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -45,9 +45,9 @@ function formatCurrency(value: number) {
 
 function rewardSubtitle(reward: WaroReward) {
   if (reward.reward_type === 'fixed_cop_off' && reward.fixed_cop_off) {
-    return `-${formatCurrency(reward.fixed_cop_off)} · ${reward.waros_cost.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${t('pos.wallet.pointsShort')}`
+    return `-${formatCurrency(reward.fixed_cop_off)} · ${reward.waros_cost.toLocaleString(toNumberLocaleTag(locale.value))} ${t('pos.wallet.pointsShort')}`
   }
-  return `${t('pos.wallet.freeProduct')} · ${reward.waros_cost.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${t('pos.wallet.pointsShort')}`
+  return `${t('pos.wallet.freeProduct')} · ${reward.waros_cost.toLocaleString(toNumberLocaleTag(locale.value))} ${t('pos.wallet.pointsShort')}`
 }
 </script>
 
@@ -66,7 +66,7 @@ function rewardSubtitle(reward: WaroReward) {
           <div>
             <h2 class="text-lg font-bold text-text-primary">{{ t('pos.wallet.redeemReward') }}</h2>
             <p class="text-sm text-text-secondary mt-0.5">
-              {{ t('pos.wallet.pointsBalance', { amount: warosBalance.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }) }}
+              {{ t('pos.wallet.pointsBalance', { amount: warosBalance.toLocaleString(toNumberLocaleTag(locale)) }) }}
             </p>
           </div>
           <button

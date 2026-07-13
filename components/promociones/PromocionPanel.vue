@@ -19,7 +19,7 @@
         :aria-label="isEdit ? `${t('operaciones.promociones.editTitle')}: ${form.name}` : t('operaciones.promociones.createPromotion')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
@@ -441,7 +441,7 @@ const promoTypeOptions = computed((): {
 
 function typeButtonClass(active: boolean) {
   return [
-    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left min-h-[44px]',
+    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start min-h-[44px]',
     active
       ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
@@ -455,15 +455,13 @@ interface ScheduleFormRow {
   crosses_midnight: boolean
 }
 
-const dayOptions = computed(() => [
-  { bit: 1, label: locale.value === 'en' ? 'Mon' : 'Lun' },
-  { bit: 2, label: locale.value === 'en' ? 'Tue' : 'Mar' },
-  { bit: 4, label: locale.value === 'en' ? 'Wed' : 'Mié' },
-  { bit: 8, label: locale.value === 'en' ? 'Thu' : 'Jue' },
-  { bit: 16, label: locale.value === 'en' ? 'Fri' : 'Vie' },
-  { bit: 32, label: locale.value === 'en' ? 'Sat' : 'Sáb' },
-  { bit: 64, label: locale.value === 'en' ? 'Sun' : 'Dom' },
-] as const)
+const dayOptions = computed(() => {
+  const formatter = new Intl.DateTimeFormat(toLocaleTag(locale.value), { weekday: 'short', timeZone: 'UTC' })
+  return Array.from({ length: 7 }, (_, index) => ({
+    bit: 2 ** index,
+    label: formatter.format(new Date(Date.UTC(2024, 0, index + 1))),
+  }))
+})
 
 const defaultSchedule = (): ScheduleFormRow => ({
   days_of_week: 62,
@@ -717,7 +715,7 @@ function overlapToastDescription(warnings: OverlapWarning[]): string {
   if (names.length === 0) {
     return t('operaciones.promociones.overlapEmpty')
   }
-  const suffix = warnings.length > 2 ? (locale.value === 'en' ? ' and others' : ' y otras') : ''
+  const suffix = warnings.length > 2 ? t('operaciones.promociones.overlapMoreSuffix') : ''
   return t('operaciones.promociones.overlapNamed', { names: names.join(', '), suffix })
 }
 

@@ -19,7 +19,7 @@
         :aria-label="labels.title"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
@@ -237,7 +237,7 @@ const FALLBACK = {
 } as const
 
 function uiLoc(): 'es' | 'en' {
-  return locale.value === 'en' ? 'en' : 'es'
+  return normalizeUiLocale(locale.value) === 'en' ? 'en' : 'es'
 }
 
 /** Chrome labels: always follow UI locale via local dict (Teleport-safe). */

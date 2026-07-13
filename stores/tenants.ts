@@ -51,6 +51,7 @@ export interface Tenant {
   id: string
   name: string
   slug: string
+  ui_locale?: string | null
 }
 
 export const useTenantsStore = defineStore('tenants', () => {
@@ -203,6 +204,11 @@ export const useTenantsStore = defineStore('tenants', () => {
     return false
   }
 
+  const setSelectedTenantUiLocale = (locale: string) => {
+    if (!selectedTenant.value) return
+    selectedTenant.value = { ...selectedTenant.value, ui_locale: locale }
+  }
+
   const clearTenants = () => {
     selectedTenant.value = null
     error.value = null
@@ -230,6 +236,7 @@ export const useTenantsStore = defineStore('tenants', () => {
     fetchBusinessProfile,
     selectTenant,
     selectTenantBySlug,
+    setSelectedTenantUiLocale,
     clearTenants,
   }
 })

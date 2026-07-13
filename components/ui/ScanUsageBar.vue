@@ -31,7 +31,7 @@
           <div class="w-1.5 h-1.5 rounded-full" :class="dotColor"></div>
           <span class="text-[0.85rem] font-semibold text-text-primary tracking-tight">
             Escaneos IA
-            <span class="ml-1 text-text-secondary font-medium uppercase text-[10px] tracking-widest bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">
+            <span class="ms-1 text-text-secondary font-medium uppercase text-[10px] tracking-widest bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">
               {{ quota.scans_used.toLocaleString('es-CO') }} / {{ quota.scans_limit.toLocaleString('es-CO') }}
             </span>
           </span>
@@ -39,7 +39,7 @@
         <NuxtLink
           v-if="showPeriod"
           to="/gestion/billing"
-          class="text-xs font-bold text-primary hover:text-primary/80 transition-colors py-1.5 px-2.5 -mr-2 bg-primary/5 rounded-lg active:scale-95"
+          class="text-xs font-bold text-primary hover:text-primary/80 transition-colors py-1.5 px-2.5 -me-2 bg-primary/5 rounded-lg active:scale-95"
           style="min-height: 44px; display: flex; align-items: center;"
         >
           Ver plan

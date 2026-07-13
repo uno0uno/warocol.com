@@ -1,19 +1,11 @@
-/**
- * App UI locale resolver (B4 shell i18n).
- *
- * Order: explicit cookie override → tenant businessProfile.locale (B1 when present) → es.
- * Only es | en. Prefer cookie so choice survives reload before B1 lands.
- */
-export type AppLocaleCode = 'es' | 'en'
-
 export const APP_LOCALE_COOKIE = 'waro_locale'
-export const APP_LOCALES: readonly AppLocaleCode[] = ['es', 'en'] as const
-export const DEFAULT_APP_LOCALE: AppLocaleCode = 'es'
-
-export function normalizeAppLocale(value: unknown): AppLocaleCode | null {
-  if (value === 'es' || value === 'en') return value
-  return null
-}
+import {
+  APP_LOCALES,
+  DEFAULT_APP_LOCALE,
+  normalizeEnabledAppLocale,
+  resolveAppLocale,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 
 /**
  * Component/setup-only composable (calls useI18n).
@@ -30,19 +22,22 @@ export function useAppLocale() {
 
   const tenantsStore = useTenantsStore()
 
-  const tenantLocale = computed(() =>
-    normalizeAppLocale(tenantsStore.businessProfile?.locale),
-  )
+  const tenantLocale = computed<AppLocaleCode | null>(() => {
+    if (!tenantsStore.selectedTenant) return null
+    return normalizeEnabledAppLocale(tenantsStore.selectedTenant.ui_locale)
+      ?? DEFAULT_APP_LOCALE
+  })
 
   function resolvePreferredLocale(): AppLocaleCode {
-    const fromCookie = normalizeAppLocale(cookie.value)
-    if (fromCookie) return fromCookie
-    if (tenantLocale.value) return tenantLocale.value
-    return DEFAULT_APP_LOCALE
+    return resolveAppLocale(
+      tenantsStore.selectedTenant?.ui_locale,
+      cookie.value,
+      Boolean(tenantsStore.selectedTenant),
+    )
   }
 
   async function applyLocale(code: AppLocaleCode, options?: { persist?: boolean }) {
-    const next = normalizeAppLocale(code) ?? DEFAULT_APP_LOCALE
+    const next = normalizeEnabledAppLocale(code) ?? DEFAULT_APP_LOCALE
     const persist = options?.persist !== false
     if (persist) cookie.value = next
     if (locale.value !== next) {
@@ -54,18 +49,18 @@ export function useAppLocale() {
     await applyLocale(resolvePreferredLocale(), { persist: false })
   }
 
-  /** User-driven switch (persists cookie). */
-  async function setUserLocale(code: AppLocaleCode) {
+  /** Apply the authoritative tenant locale and refresh the SSR cache cookie. */
+  async function applyTenantLocale(code: AppLocaleCode) {
     await applyLocale(code, { persist: true })
   }
 
   return {
-    locale: computed(() => (normalizeAppLocale(locale.value) ?? DEFAULT_APP_LOCALE)),
+    locale: computed(() => (normalizeEnabledAppLocale(locale.value) ?? DEFAULT_APP_LOCALE)),
     availableLocales: APP_LOCALES,
     tenantLocale,
     resolvePreferredLocale,
     syncFromSources,
-    setUserLocale,
+    applyTenantLocale,
     applyLocale,
     t,
     te,

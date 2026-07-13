@@ -87,7 +87,7 @@
           </div>
 
           <!-- Group name -->
-          <div class="text-center md:text-left w-full">
+          <div class="text-center md:text-start w-full">
             <div
               class="font-semibold text-xs md:text-sm leading-tight"
               :class="modelValue.slug === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
@@ -99,7 +99,7 @@
           <!-- Mobile selected dot -->
           <div
             v-if="modelValue.slug === group.slug"
-            class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden"
+            class="absolute top-1.5 end-1.5 w-2 h-2 rounded-full md:hidden"
             :class="group.triggersCartera ? 'bg-state-warning-icon' : 'bg-primary'"
           />
         </div>
@@ -117,14 +117,14 @@
 
       <!-- Search — only when > 10 methods -->
       <div v-if="selectedGroup.methods.length > 10" class="relative mb-2">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           v-model="methodSearch"
           type="text"
           placeholder="Buscar método..."
-          class="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+          class="w-full h-9 ps-9 pe-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -154,7 +154,7 @@
           {{ method.name }}
           <span
             v-if="modelValue.id === method.id"
-            class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full"
+            class="absolute top-1 end-1.5 w-1.5 h-1.5 rounded-full"
             :class="selectedGroup.triggersCartera ? 'bg-state-warning-icon' : 'bg-primary'"
           />
         </button>

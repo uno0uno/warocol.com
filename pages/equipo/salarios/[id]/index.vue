@@ -218,7 +218,7 @@ const markAsPaid = async (payment: any) => {
 
 // Helper functions
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -413,10 +413,10 @@ watch(employeeData, (data) => {
               <table class="w-full border-2 border-border rounded-lg">
                 <thead class="bg-surface-secondary">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
+                    <th class="px-4 py-3 text-start text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
                       {{ t('equipo.salarios.field') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th class="px-4 py-3 text-start text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       {{ t('equipo.salarios.value') }}
                     </th>
                   </tr>
@@ -521,12 +521,12 @@ watch(employeeData, (data) => {
                     {{ t('equipo.salarios.dailyRateReq') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <UiDecimalInput
                     v-model="editForm.dailyRate"
                     :min="0"
                     :precision="2"
-                    class="w-full pl-8 pr-4 py-2.5"
+                    class="w-full ps-8 pe-4 py-2.5"
                   />
                 </div>
               </div>
@@ -567,12 +567,12 @@ watch(employeeData, (data) => {
                     {{ t('equipo.salarios.fixedAmountReq') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <UiDecimalInput
                       v-model="editForm.fixedAmount"
                       :min="0"
                       :precision="2"
-                      class="w-full pl-8 pr-4 py-2"
+                      class="w-full ps-8 pe-4 py-2"
                     />
                   </div>
                 </div>
@@ -583,12 +583,12 @@ watch(employeeData, (data) => {
                     {{ t('equipo.salarios.hourlyRateReq') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <UiDecimalInput
                       v-model="editForm.hourlyRate"
                       :min="0"
                       :precision="2"
-                      class="w-full pl-8 pr-4 py-2"
+                      class="w-full ps-8 pe-4 py-2"
                     />
                   </div>
                 </div>
@@ -667,11 +667,11 @@ watch(employeeData, (data) => {
             <table class="w-full">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.period') }}</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.date') }}</th>
-                  <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.amount') }}</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.method') }}</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.status') }}</th>
+                  <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.period') }}</th>
+                  <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.date') }}</th>
+                  <th class="text-end py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.amount') }}</th>
+                  <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.method') }}</th>
+                  <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.status') }}</th>
                   <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.salarios.files') }}</th>
                   <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('equipo.common.actions') }}</th>
                 </tr>
@@ -684,7 +684,7 @@ watch(employeeData, (data) => {
                 >
                   <td class="py-3 px-4 text-sm text-text-primary">{{ payment.period_month }}</td>
                   <td class="py-3 px-4 text-sm text-text-secondary">{{ formatDate(payment.payment_date) }}</td>
-                  <td class="py-3 px-4 text-sm text-right font-medium">
+                  <td class="py-3 px-4 text-sm text-end font-medium">
                     <span class="text-primary">{{ formatCurrency(payment.net_pay ?? payment.payment_amount) }}</span>
                     <span v-if="payment.net_pay && payment.net_pay !== payment.payment_amount" class="block text-xs text-text-tertiary">
                       {{ t('equipo.salarios.gross') }}: {{ formatCurrency(payment.payment_amount) }}

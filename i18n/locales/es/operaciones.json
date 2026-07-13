@@ -245,6 +245,10 @@
       ,"areaSingular": "Área"
       ,"tableSingular": "Mesa"
       ,"tablePlural": "Mesas"
+      ,"languageTitle": "Idioma de la interfaz"
+      ,"languageHelp": "Se aplica a todas las personas y dispositivos de este restaurante."
+      ,"languageUpdated": "Idioma actualizado para todo el restaurante"
+      ,"languageSaveError": "No se pudo guardar el idioma"
     },
     "comandas": {
       "enableComandas": "Activar comandas",
@@ -454,6 +458,7 @@
       ,"overlapTitle": "Superposición detectada"
       ,"overlapEmpty": "Comparte productos con otras promos activas. En checkout gana la de mayor prioridad."
       ,"overlapNamed": "Comparte productos con: {names}{suffix}. En checkout gana la de mayor prioridad."
+      ,"overlapMoreSuffix": " y otras"
       ,"saveFailedTitle": "No se pudo guardar"
       ,"deleted": "Promoción eliminada"
       ,"deleteFailed": "No se pudo eliminar"

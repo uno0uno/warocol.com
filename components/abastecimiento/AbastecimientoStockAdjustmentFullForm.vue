@@ -159,7 +159,7 @@
                       : 'border-border hover:border-state-info-border'"
                   >
                     <div class="flex items-center justify-center gap-2">
-                      <Icon name="heroicons:arrows-right-left" class="w-6 h-6 text-state-info-icon" />
+                      <Icon name="heroicons:arrows-end-left" class="w-6 h-6 text-state-info-icon" />
                       <span class="font-semibold" :class="form.adjustmentType === 'set' ? 'text-state-info-text' : 'text-text-primary'">
                         {{ t('abastecimiento.stock.set') }}
                       </span>
@@ -222,12 +222,12 @@
                   <span class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.optional') }} - {{ t('abastecimiento.stock.costHelp') }})</span>
                 </label>
                 <div class="relative">
-                  <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-4 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
                   <UiDecimalInput
                     v-model="form.cost_per_unit"
                     :min="0"
                     :precision="TECHNICAL_UNIT_COST_PRECISION"
-                    class="w-full px-4 py-2 pl-8"
+                    class="w-full px-4 py-2 ps-8"
                     :placeholder="t('abastecimiento.stock.costPlaceholder')"
                   />
                 </div>
@@ -279,12 +279,12 @@
               </div>
 
               <!-- Warning Message -->
-              <div v-if="showLargeWarning" class="bg-state-warning-bg border-l-4 border-state-warning-border p-4 rounded">
+              <div v-if="showLargeWarning" class="bg-state-warning-bg border-s-4 border-state-warning-border p-4 rounded">
                 <div class="flex">
                   <div class="flex-shrink-0">
                     <Icon name="heroicons:exclamation-triangle" class="h-5 w-5 text-state-warning-icon" />
                   </div>
-                  <div class="ml-3">
+                  <div class="ms-3">
                     <p class="text-sm text-state-warning-text">
                       <span class="font-semibold">{{ t('abastecimiento.stock.warning') }}</span> {{ t('abastecimiento.stock.largeAdjustmentWarning') }}
                     </p>
@@ -356,7 +356,7 @@
             >
               <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
               <span v-else>
-                <Icon name="heroicons:check-circle" class="w-5 h-5 inline mr-2" />
+                <Icon name="heroicons:check-circle" class="w-5 h-5 inline me-2" />
                 {{ isSubmitting ? t('abastecimiento.stock.registering') : t('abastecimiento.stock.registerAdjustment') }}
               </span>
             </button>
@@ -441,11 +441,11 @@ const REASON_LABELS = computed(() => ADJUSTMENT_REASONS.reduce((acc, r) => {
 const reasonLabel = (value: string) => REASON_LABELS.value[value] || value
 
 const formatNumber = (value: number | null | undefined) => {
-  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
+  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION, normalizeUiLocale(locale.value))
 }
 
 const formatTechnicalUnitCost = (value: number | null | undefined) => {
-  return formatDomainQuantity(value, TECHNICAL_UNIT_COST_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
+  return formatDomainQuantity(value, TECHNICAL_UNIT_COST_PRECISION, normalizeUiLocale(locale.value))
 }
 
 const purchaseUnitOptions = computed(() =>

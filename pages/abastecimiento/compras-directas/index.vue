@@ -231,7 +231,7 @@
                 @click="previousPage"
                 :disabled="!canGoPrevious"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-l-md border border-action-outline-border text-sm font-medium',
+                  'relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border text-sm font-medium',
                   canGoPrevious ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
                 ]">
                 <ChevronLeftIcon class="h-5 w-5" />
@@ -243,7 +243,7 @@
                 @click="nextPage"
                 :disabled="!canGoNext"
                 :class="[
-                  'relative inline-flex items-center px-2 py-2 rounded-r-md border border-action-outline-border text-sm font-medium',
+                  'relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border text-sm font-medium',
                   canGoNext ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg' : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed'
                 ]">
                 <ChevronRightIcon class="h-5 w-5" />
@@ -406,7 +406,7 @@ const getPaymentDateLabel = (purchase: any) => {
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'
-  return value.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return value.toLocaleString(toNumberLocaleTag(locale.value), { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 const getStatusText = (status: string) => {

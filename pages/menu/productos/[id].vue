@@ -183,13 +183,13 @@
                   {{ t('menu.productos.salePriceRequired') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <UiDecimalInput
                     v-model="form.price"
                     required
                     :precision="0"
                     :min="0"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                     placeholder="15000"
                   />
                 </div>
@@ -200,12 +200,12 @@
                   {{ t('menu.productos.realCostSystem') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     :value="displayRealCost === null ? '—' : formatCurrency(displayRealCost)"
                     type="text"
                     disabled
-                    class="input-base w-full pl-8 pr-4 py-2 bg-surface-secondary cursor-not-allowed"
+                    class="input-base w-full ps-8 pe-4 py-2 bg-surface-secondary cursor-not-allowed"
                     placeholder="0"
                   />
                 </div>
@@ -222,12 +222,12 @@
                   {{ t('menu.productos.dishCost') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <UiDecimalInput
                     v-model="form.costo_percibido"
                     :precision="0"
                     :min="0"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                     :placeholder="t('menu.productos.optional')"
                   />
                 </div>
@@ -281,7 +281,7 @@
                 type="button"
                 @click="form.tax_category = 'standard'"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                   form.tax_category === 'standard'
                     ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -294,7 +294,7 @@
                 type="button"
                 @click="form.tax_category = 'liquor'"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                   form.tax_category === 'liquor'
                     ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -307,7 +307,7 @@
                 type="button"
                 @click="form.tax_category = 'exempt'"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                   form.tax_category === 'exempt'
                     ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -345,7 +345,7 @@
               >
                 <Icon name="heroicons:cube" class="h-4 w-4" />
                 {{ linkedResaleIngredient.name }}
-                <Icon name="heroicons:arrow-top-right-on-square" class="h-3.5 w-3.5" />
+                <Icon name="heroicons:arrow-top-end-on-square" class="h-3.5 w-3.5" />
               </NuxtLink>
               <p v-else class="text-xs text-text-tertiary">
                 {{ WAREHOUSE_COPY.linkedWarehouseItemNotFoundCatalog }}
@@ -441,7 +441,7 @@
                 :disabled="isConvertingToResale"
                 @click="confirmConvertToResale"
               >
-                <Icon v-if="isConvertingToResale" name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+                <Icon v-if="isConvertingToResale" name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
                 {{ isConvertingToResale ? t('menu.productos.converting') : t('menu.productos.confirmConversion') }}
               </UiButton>
               <UiButton
@@ -583,8 +583,8 @@
                     <select
                       v-model="ingredient.unit"
                       :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                      class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
-                      :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                      class="input-base w-full py-2 pe-3 text-sm disabled:opacity-50"
+                      :class="loadingUnits.has(ingredient.ingredient_id) ? 'ps-7' : 'ps-3'"
                     >
                       <option v-if="!ingredient.ingredient_id" value="" disabled>
                         {{ WAREHOUSE_COPY.selectWarehouseItem }}
@@ -595,7 +595,7 @@
                         :value="opt.value"
                       >{{ opt.label }}</option>
                     </select>
-                    <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                    <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute start-2 top-2.5 pointer-events-none text-text-secondary">
                       <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
@@ -622,7 +622,7 @@
               class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
               @click="addIngredient"
             >
-              <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
+              <Icon name="heroicons:plus" class="h-5 w-5 me-2" />
               {{ t('menu.recetas.form.addLine') }}
             </UiButton>
           </UiFormSection>
@@ -725,7 +725,7 @@
 
             <div class="flex justify-between text-sm gap-2">
               <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? WAREHOUSE_COPY.resaleLineSummaryLabel : WAREHOUSE_COPY.recipeCompositionSummary }}</span>
-              <span class="font-semibold text-text-primary text-right truncate">
+              <span class="font-semibold text-text-primary text-end truncate">
                 <template v-if="isResaleProduct">
                   {{ linkedResaleIngredient?.name ?? '—' }}
                 </template>
@@ -748,8 +748,8 @@
               class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
               :disabled="isSubmitting"
             >
-              <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
-              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+              <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 me-2" />
+              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
               {{ isSubmitting ? t('menu.productos.saving') : t('menu.productos.updateProduct') }}
             </UiButton>
 
@@ -772,7 +772,7 @@
               @click="deleteProduct"
               :disabled="isSubmitting"
             >
-              <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
+              <Icon name="heroicons:trash" class="h-5 w-5 me-2" />
               {{ t('menu.productos.deleteProduct') }}
             </UiButton>
           </div>
@@ -1616,7 +1616,7 @@ const cancel = () => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

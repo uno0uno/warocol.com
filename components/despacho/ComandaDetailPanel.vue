@@ -158,7 +158,7 @@ const itemCountLabel = (count: number) =>
         :aria-label="`${t('despacho.common.viewDetail')} #${comanda.comanda_number}-${String(comanda.comanda_index).padStart(2, '0')}`"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -203,7 +203,7 @@ const itemCountLabel = (count: number) =>
             >
               {{ formatElapsed(effectiveElapsed) }}
             </span>
-            <span class="text-xs text-text-secondary ml-auto">
+            <span class="text-xs text-text-secondary ms-auto">
               {{ itemCountLabel(activeItems.filter(i => i.status !== 'cancelled').length) }}
             </span>
           </div>
@@ -261,7 +261,7 @@ const itemCountLabel = (count: number) =>
               </div>
 
               <!-- Notes -->
-              <p v-if="item.notes && item.status !== 'cancelled'" class="flex items-center gap-1.5 text-xs text-state-warning-text font-medium bg-state-warning-bg rounded-lg px-2.5 py-1.5 pl-1">
+              <p v-if="item.notes && item.status !== 'cancelled'" class="flex items-center gap-1.5 text-xs text-state-warning-text font-medium bg-state-warning-bg rounded-lg px-2.5 py-1.5 ps-1">
                 <MessageSquare :size="12" aria-hidden="true" class="flex-shrink-0" />
                 {{ item.notes }}
               </p>

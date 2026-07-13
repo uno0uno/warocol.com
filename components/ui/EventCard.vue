@@ -27,7 +27,7 @@
       </button>
 
       <!-- Status Badge -->
-      <div class="absolute top-3 left-3">
+      <div class="absolute top-3 start-3">
         <Badge 
           :variant="event.isActive ? 'default' : 'secondary'" 
           :class="[
@@ -296,7 +296,7 @@ const formatEventDate = (dateString) => {
 }
 
 .favorite-btn {
-  @apply absolute top-3 right-3 bg-card/90 backdrop-blur-sm border border-border/50;
+  @apply absolute top-3 end-3 bg-card/90 backdrop-blur-sm border border-border/50;
   @apply w-8 h-8 rounded-full flex items-center justify-center;
   @apply transition-all duration-200 hover:scale-110 hover:bg-card;
 }
@@ -351,7 +351,7 @@ const formatEventDate = (dateString) => {
 }
 
 .avatar {
-  @apply w-7 h-7 rounded-full border-2 border-card -ml-2 first:ml-0;
+  @apply w-7 h-7 rounded-full border-2 border-card -ms-2 first:ms-0;
   @apply flex items-center justify-center font-semibold text-xs text-white;
   @apply transition-transform hover:scale-110 hover:z-10 relative;
 }

@@ -132,7 +132,7 @@
             <span class="text-sm text-text-primary">{{ s.label }}</span>
             <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">{{ t('abastecimiento.glossary.default') }}</span>
           </div>
-          <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">{{ formatConversionFactor(s.conversion_factor) }} {{ baseUnit }}</span>
+          <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ms-2">{{ formatConversionFactor(s.conversion_factor) }} {{ baseUnit }}</span>
         </div>
       </div>
 
@@ -225,7 +225,7 @@ const formError = ref('')
 const newUnit = ref({ purchase_unit_label: '', conversion_factor: null as number | null })
 
 function formatConversionFactor(value: number | string | null | undefined) {
-  return formatDomainQuantity(value, CONVERSION_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
+  return formatDomainQuantity(value, CONVERSION_PRECISION, normalizeUiLocale(locale.value))
 }
 
 function slugifyPurchaseUnit(label: string) {

@@ -46,7 +46,7 @@
               <p v-if="item.sentAt" class="mt-0.5 text-[10px] text-text-tertiary">{{ t('pos.cartItem.firedAt') }} {{ formatTime(item.sentAt) }}</p>
             </div>
 
-            <div class="shrink-0 text-right leading-tight">
+            <div class="shrink-0 text-end leading-tight">
               <p
                 v-if="promoSavings > 0"
                 class="text-[11px] line-through text-text-tertiary tabular-nums"
@@ -90,7 +90,7 @@
       <div class="flex h-8 items-stretch rounded-lg border border-border bg-surface max-lg:h-11">
         <button
           type="button"
-          class="cart-item-tool rounded-l-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          class="cart-item-tool rounded-s-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="item.quantity <= 1"
           :aria-label="t('pos.cartItem.decreaseQtyAria')"
           @click.stop="$emit('decrement')"
@@ -103,7 +103,7 @@
         <button
           v-if="!lockIncrement"
           type="button"
-          class="cart-item-tool rounded-r-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary"
+          class="cart-item-tool rounded-e-lg text-text-secondary transition-colors hover:bg-primary/5 hover:text-text-primary"
           :aria-label="t('pos.cartItem.increaseQtyAria')"
           @click.stop="$emit('increment')"
         >
@@ -111,7 +111,7 @@
         </button>
         <span
           v-else
-          class="cart-item-tool rounded-r-lg"
+          class="cart-item-tool rounded-e-lg"
           aria-hidden="true"
         />
       </div>
@@ -248,7 +248,7 @@ const unitNet = computed(() => {
 })
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -256,7 +256,7 @@ const formatCurrency = (value: number) => {
 }
 
 const formatTime = (isoString: string) => {
-  return new Date(isoString).toLocaleTimeString(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Date(isoString).toLocaleTimeString(toNumberLocaleTag(locale.value), {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: timezone.value,

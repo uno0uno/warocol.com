@@ -167,7 +167,7 @@ const handleRefresh = async () => {
 }
 
 import { formatDistanceToNow } from 'date-fns'
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : dateFnsEs)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 watch(lastUpdate, () => { if (setLastUpdateText) setLastUpdateText(lastUpdateText.value) })

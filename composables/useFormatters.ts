@@ -1,9 +1,9 @@
 import { formatMoney, normalizeCurrencyCode } from '~/utils/currencyDisplay'
+import { toNumberLocaleTag } from '~/utils/appLocales'
 import {
   DEFAULT_UI_LOCALE,
   formatLocaleNumber,
   normalizeUiLocale,
-  toNumberLocaleTag,
   type UiLocale,
 } from '~/utils/parseLocaleDecimal'
 

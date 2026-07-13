@@ -5,14 +5,18 @@
  * Must NOT call useI18n()/useAppLocale() here — vue-i18n requires component
  * setup context. Use nuxtApp.$i18n from the @nuxtjs/i18n plugin instead.
  *
- * Order: cookie override → tenant locale (B1, client) → es.
+ * SSR starts from the cache cookie. Once tenant data loads on the client,
+ * selectedTenant.ui_locale is authoritative and refreshes that cookie.
  */
 import {
   APP_LOCALE_COOKIE,
-  DEFAULT_APP_LOCALE,
-  normalizeAppLocale,
-  type AppLocaleCode,
 } from '~/composables/useAppLocale'
+import {
+  DEFAULT_APP_LOCALE,
+  normalizeEnabledAppLocale,
+  resolveAppLocale,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 
 export default defineNuxtPlugin({
   name: 'waro-i18n-locale',
@@ -37,20 +41,7 @@ export default defineNuxtPlugin({
     })
 
     const resolvePreferred = (): AppLocaleCode => {
-      const fromCookie = normalizeAppLocale(cookie.value)
-      if (fromCookie) return fromCookie
-
-      if (import.meta.client) {
-        try {
-          const tenantsStore = useTenantsStore()
-          const fromTenant = normalizeAppLocale(tenantsStore.businessProfile?.locale)
-          if (fromTenant) return fromTenant
-        } catch {
-          // Pinia/store not ready — fall through to default.
-        }
-      }
-
-      return DEFAULT_APP_LOCALE
+      return resolveAppLocale(undefined, cookie.value, false)
     }
 
     const apply = async (code: AppLocaleCode) => {
@@ -61,18 +52,22 @@ export default defineNuxtPlugin({
 
     await apply(resolvePreferred())
 
-    // Tenant profile is client-hydrated; follow B1 locale only when no cookie override.
+    // The tenant list is client-hydrated and is the source of truth for every role.
     if (import.meta.client) {
       try {
         const tenantsStore = useTenantsStore()
         watch(
-          () => tenantsStore.businessProfile?.locale,
-          async (raw) => {
-            const next = normalizeAppLocale(raw)
-            if (!next) return
-            if (cookie.value === 'es' || cookie.value === 'en') return
+          () => [
+            tenantsStore.selectedTenant?.id,
+            tenantsStore.selectedTenant?.ui_locale,
+          ] as const,
+          async ([tenantId, raw]) => {
+            if (!tenantId) return
+            const next = normalizeEnabledAppLocale(raw) ?? DEFAULT_APP_LOCALE
+            cookie.value = next
             await apply(next)
           },
+          { immediate: true },
         )
       } catch {
         // ignore store watch if pinia unavailable

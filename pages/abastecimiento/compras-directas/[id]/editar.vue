@@ -100,7 +100,7 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">1</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+              <div class="ms-1 sm:ms-3 flex-1 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
                   Items
                 </p>
@@ -124,7 +124,7 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+              <div class="ms-1 sm:ms-3 flex-1 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
                   <span class="hidden sm:inline">Documentos</span>
                   <span class="sm:hidden">Docs</span>
@@ -146,7 +146,7 @@
               >
                 <span class="font-semibold text-sm sm:text-base">3</span>
               </div>
-              <div class="ml-1 sm:ml-3 min-w-0">
+              <div class="ms-1 sm:ms-3 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
                   <span class="hidden sm:inline">Confirmar</span>
                   <span class="sm:hidden">OK</span>
@@ -276,13 +276,13 @@
                       Precio Unit. *
                     </label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                       <UiDecimalInput
                         v-model="item.unit_cost"
                         :min="0"
                         :precision="UNIT_COST_PRECISION"
                         required
-                        class="w-full pl-8 pr-4 py-2"
+                        class="w-full ps-8 pe-4 py-2"
                         @update:model-value="updateItemTotal(index)"
                       />
                     </div>
@@ -384,7 +384,7 @@
                           @click="($refs.invoiceFileInput as HTMLInputElement).click()"
                           class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
                         >
-                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-4 h-4 inline-block me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                           </svg>
                           Seleccionar Archivo
@@ -507,7 +507,7 @@
                           @click="($refs.paymentFileInput as HTMLInputElement).click()"
                           class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
                         >
-                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-4 h-4 inline-block me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                           </svg>
                           Seleccionar Archivo
@@ -570,7 +570,7 @@
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">RESUMEN DE CAMBIOS</h1>
                 <p class="text-xs sm:text-sm text-text-secondary">Revisa los cambios antes de guardar</p>
               </div>
-              <div class="text-left sm:text-right w-full sm:w-auto">
+              <div class="text-start sm:text-end w-full sm:w-auto">
                 <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
                   <p class="text-xs font-medium text-text-secondary">COMPRA N°</p>
                   <p class="text-lg sm:text-xl font-bold text-text-primary">{{ originalPurchase?.purchase_number }}</p>
@@ -627,10 +627,10 @@
             <table class="w-full hidden md:table">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio Unit.</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Total</th>
+                  <th class="text-start py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio Unit.</th>
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -643,21 +643,21 @@
                     <p class="font-medium text-text-primary">{{ getIngredientName(item.ingredient_id) }}</p>
                     <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                   </td>
-                  <td class="text-right py-4 text-text-primary">
+                  <td class="text-end py-4 text-text-primary">
                     {{ item.purchase_quantity }} {{ item.purchase_unit }}
                   </td>
-                  <td class="text-right py-4 text-text-primary">
+                  <td class="text-end py-4 text-text-primary">
                     ${{ formatUnitCost(item.unit_cost) }}
                   </td>
-                  <td class="text-right py-4 font-bold text-primary">
+                  <td class="text-end py-4 font-bold text-primary">
                     ${{ formatPrice(item.total_cost) }}
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="bg-primary/5">
-                  <td colspan="3" class="py-4 text-right font-bold text-text-primary">Total:</td>
-                  <td class="py-4 text-right text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</td>
+                  <td colspan="3" class="py-4 text-end font-bold text-text-primary">Total:</td>
+                  <td class="py-4 text-end text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</td>
                 </tr>
               </tfoot>
             </table>

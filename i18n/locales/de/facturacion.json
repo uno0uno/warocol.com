@@ -1,0 +1,193 @@
+{
+  "facturacion": {
+    "head": {
+      "module": "Fakturierung",
+      "audit": "Protokoll der verbrauchten Nummern — DIAN"
+    },
+    "common": {
+      "error": "Fehler",
+      "saved": "Gespeichert",
+      "saving": "Speichern...",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "status": "Status",
+      "type": "Typ",
+      "range": "Bereich",
+      "from": "Von",
+      "to": "Bis",
+      "update": "Aktualisieren",
+      "edit": "Bearbeiten"
+    },
+    "toasts": {
+      "resolutionUpdated": "Auflösung aktualisiert",
+      "resolutionCreated": "Auflösung erstellt",
+      "resolutionSaveError": "Fehler beim Speichern der Auflösung",
+      "toggleError": "Fehler beim Ändern des Status",
+      "taxSaved": "Umsatzsteuereinstellungen erfolgreich gespeichert",
+      "taxSaveError": "Fehler beim Speichern der Umsatzsteuereinstellungen",
+      "printSaved": "Ticket-Anpassung gespeichert",
+      "printSaveError": "Fehler beim Speichern der Anpassung",
+      "fiscalSaved": "Steuerdaten erfolgreich gespeichert",
+      "fiscalSaveError": "Fehler beim Speichern der Steuerdaten"
+    },
+    "docTypes": {
+      "invoice": "Verkaufsrechnung",
+      "creditNote": "Gutschrift",
+      "debitNote": "Lastschrift",
+      "invoiceShort": "Rechnung"
+    },
+    "columns": {
+      "prefix": "Präfix",
+      "resolutionNumber": "Auflösungs-Nr.",
+      "available": "Verfügbar",
+      "used": "Verwendet",
+      "percentUsed": "% Verwendet",
+      "validity": "Gültigkeit"
+    },
+    "defaults": {
+      "prefactura": "Vorfaktura",
+      "propina": "Trinkgeld"
+    },
+    "orgTypes": {
+      "legal": "Juristische Person",
+      "natural": "Natürliche Person"
+    },
+    "taxRegimes": {
+      "iva": "Umsatzsteuerpflichtig",
+      "noIva": "Nicht umsatzsteuerpflichtig"
+    },
+    "taxLevels": {
+      "grand": "Großsteuerzahler",
+      "selfWithholding": "Selbst-Einbehalter",
+      "withholdingAgent": "Steuereinbehalter",
+      "simple": "Einfaches Regime",
+      "na": "Nicht zutreffend"
+    },
+    "readiness": {
+      "requestTitle": "Aktivierung der elektronischen Rechnungsstellung beantragen",
+      "requestBody": "Aktivieren Sie die Anfrage im Bereich 'Anbieter für elektronische Rechnungsstellung'. WARO wird die technische Freischaltung mit Matias vor der Ausstellung validieren.",
+      "pendingTitle": "Interne Freischaltung ausstehend",
+      "pendingBody": "Die Anfrage kann aktiv sein, aber WARO muss die technische Freischaltung mit Matias vor der Ausstellung abschließen.",
+      "missingFiscalTitle": "Steuerdaten fehlen",
+      "missingFiscalBody": "Vervollständigen Sie NIT, Firmenname, Telefon und E-Mail im Bereich 'Steuerdaten des Unternehmens'.",
+      "noResolutionTitle": "Keine gültige DIAN-Auflösung",
+      "noResolutionBody": "Konfigurieren Sie eine aktive Auflösung mit verfügbarer Nummerierung im Bereich 'DIAN-Auflösung'.",
+      "taxReviewTitle": "Umsatzsteuereinstellungen überprüfen",
+      "taxReviewBody": "Aktivieren Sie INC oder IVA nur, wenn diese auf Ihre Verkäufe zutreffen. Wenn Ihr Unternehmen Rechnungen ohne diese Steuern ausstellt, bestätigen Sie vor dem Speichern, dass die Steuerdaten einer nicht umsatzsteuerpflichtigen natürlichen Person entsprechen.",
+      "matiasUuidTitle": "Matias Client UUID fehlt",
+      "matiasUuidBody": "Konfigurieren Sie die client_uuid des ausstellenden Kunden im Bereich 'Anbieter für elektronische Rechnungsstellung', bevor Sie mit Matias ausstellen.",
+      "ready": "Ihr Konto ist bereit, elektronische Rechnungen auszustellen."
+    },
+    "resolutions": {
+      "title": "DIAN-Auflösung",
+      "new": "Neue Auflösung",
+      "edit": "Auflösung bearbeiten",
+      "configure": "Auflösung konfigurieren",
+      "emptyTitle": "Keine DIAN-Auflösungen konfiguriert",
+      "emptySub": "Konfigurieren Sie die Auflösung, die Sie im Matias-Portal registriert haben (Nummer, Präfix, Bereich).",
+      "number": "Auflösungsnummer",
+      "prefix": "Präfix",
+      "rangeFrom": "Bereich von",
+      "rangeTo": "Bereich bis",
+      "currentNumber": "Aktuelle Nummer (fortlaufend)",
+      "docType": "Dokumenttyp",
+      "dateFrom": "Datum von",
+      "dateTo": "Datum bis",
+      "create": "Auflösung erstellen",
+      "activate": "Auflösung aktivieren",
+      "deactivate": "Auflösung deaktivieren",
+      "editAria": "Auflösung bearbeiten",
+      "rangeLabel": "Bereich: {from} → {to}",
+      "fromLabel": "Von:",
+      "toLabel": "Bis:",
+      "gapsTitle": "Erkannte Lücken in Ihrer Nummerierung",
+      "in24h": "in 24h",
+      "in7d": "in 7d",
+      "in30d": "in 30d",
+      "gapsHint": "DIAN erlaubt keine Wiederverwendung — überprüfen Sie das Protokoll.",
+      "currentNumberInvalid": "Muss zwischen {from} und {to} liegen. DIAN verbietet die Wiederverwendung von Nummern; der Zähler läuft nur vorwärts.",
+      "nextIssueUses": "Nächste Ausgabe verwendet {number}.",
+      "usedOfTotal": "{used} von {total} verwendet ({percent}%)"
+    },
+    "fiscal": {
+      "sectionTitle": "Steuerdaten des Unternehmens",
+      "body": "Identifizieren den Aussteller gegenüber DIAN und Matias. Diese Felder aktivieren nicht selbstständig Steuern und ändern nicht die Berechnung von IVA oder INC.",
+      "nit": "NIT",
+      "businessName": "Firmenname",
+      "businessNamePlaceholder": "MEIN RESTAURANT GmbH",
+      "orgType": "Organisationstyp",
+      "orgHint": "Definiert, ob der Aussteller als natürliche oder juristische Person fakturiert.",
+      "taxRegime": "IVA-Verantwortlichkeit",
+      "taxRegimeHint": "Beschreibt die steuerliche Verantwortlichkeit des Ausstellers; ersetzt nicht die Umschalter für Verkaufssteuern.",
+      "taxLevel": "Verantwortlichkeitsstufe",
+      "taxLevelHint": "Erfasst zusätzliche Verantwortlichkeiten des Ausstellers, wie Großsteuerzahler oder einfaches Regime.",
+      "address": "Steueradresse",
+      "city": "Stadt",
+      "phone": "Telefon",
+      "email": "Rechnungs-E-Mail",
+      "emailPlaceholder": "rechnung{'@'}meinrestaurant.com",
+      "save": "Steuerdaten speichern",
+      "miNegocio": "Mein Unternehmen"
+    },
+    "print": {
+      "title": "POS-Belege anpassen",
+      "bodyPrefix": "Betrifft POS-Vorausrechnungen und gedruckte Belege. Das Logo wird konfiguriert unter",
+      "documentLabel": "Dokumentenbezeichnung",
+      "tipLabel": "Trinkgeld- / Servicebezeichnung",
+      "docPlaceholder": "Vorausrechnung, Bestellung, Rechnung Nr. …",
+      "tipPlaceholder": "Trinkgeld, Service, Servicegebühr …",
+      "docHint": "Text, der den Beleg überschreibt (max. 40 Zeichen). Bsp.: Vorausrechnung, Bestell-Nr.",
+      "tipHint": "Text der Trinkgeldzeile auf Vorausrechnung, gedrucktem Beleg und E-Mail (max. 40 Zeichen). Bsp.: Service.",
+      "showLogo": "Logo auf Belegen anzeigen",
+      "showLogoHint": "Verwendet das Logo von Mein Unternehmen auf Vorausrechnung und gedruckter Rechnung",
+      "save": "Anpassung speichern"
+    },
+    "tax": {
+      "title": "Auf Verkäufe angewandte Steuern",
+      "body": "Diese Steuerelemente beeinflussen die Steuerberechnung und -aufschlüsselung in POS und Rechnungen. Sie ändern nicht selbstständig Ihren Organisationstyp oder Ihre steuerliche Verantwortlichkeit.",
+      "incTitle": "INC — Impoconsumo 8%",
+      "incBody": "Gilt, wenn Ihre Verkäufe Impoconsumo abführen müssen. Beeinflusst den Gesamtbetrag und die Aufschlüsselung der Rechnung.",
+      "ivaTitle": "IVA — 19%",
+      "ivaBody": "Aktivieren Sie dies nur, wenn Ihre Verkäufe 19% IVA enthalten müssen. Dies beeinflusst den Gesamtbetrag und die Aufschlüsselung der Rechnung.",
+      "liquorTitle": "IVA für Spirituosen zum Mitnehmen — 5%",
+      "liquorBody": "Für Flaschen oder Spirituosen zum Mitnehmen, falls zutreffend; wird immer zum Grundpreis addiert.",
+      "howInc": "Wie INC angewendet wird",
+      "howIva": "Wie IVA angewendet wird",
+      "included": "Im Preis inbegriffen",
+      "added": "Zum Preis hinzugerechnet",
+      "incIncludedHint": "Die 8% sind bereits im Preis enthalten. Bsp.: $10.800 → Basis $10.000 + INC $800",
+      "incAddedHint": "Die 8% werden zusätzlich berechnet. Bsp.: $10.000 Basis → Berechnung $10.800",
+      "ivaIncludedHint": "Die 19% sind bereits im Preis enthalten. Bsp.: $11.900 → Basis $10.000 + IVA $1.900",
+      "ivaAddedHint": "Die 19% werden zusätzlich berechnet. Bsp.: $10.000 Basis → Berechnung $11.900",
+      "save": "Einstellungen speichern"
+    },
+    "provider": {
+      "title": "Anbieter für elektronische Rechnungsstellung",
+      "requestLabel": "Elektronische Rechnungsstellung anfordern",
+      "requestBody": "Gibt an, dass Sie elektronische Rechnungen über WARO ausstellen möchten. Diese Anfrage ersetzt nicht die interne Aktivierung mit Matias und ändert weder IVA noch INC.",
+      "matiasUuid": "Matias client_uuid",
+      "requiredToIssue": "(zum Ausstellen erforderlich)",
+      "matiasUuidHint": "client_uuid-Identifikator des ausstellenden Kunden bei Matias für Casa de Software. Dies ist eine technische Anforderung des Anbieters; sie definiert weder Ihr Steuerregime noch Ihre Umsatzsteuern.",
+      "environment": "Umgebung",
+      "environments": {
+        "production": "Produktion",
+        "testing": "Aktivierung (Tests)"
+      },
+      "notConfigured": "Nicht konfiguriert",
+      "lastDocument": "Letztes Dokument",
+      "noDocuments": "Keine Dokumente ausgestellt"
+    },
+    "audit": {
+      "back": "Zurück zur Rechnungsstellung",
+      "filterResolution": "Nach Auflösung filtern",
+      "when": "Wann",
+      "burnedNumber": "Verbrauchte Nummer",
+      "resolution": "Auflösung",
+      "order": "Vorgangsnummer",
+      "validatedDian": "Bereits bei DIAN validiert",
+      "matias5xx": "Matias 5xx Fehler",
+      "emptyTitle": "Keine verbrauchten Nummern vorhanden",
+      "totalHistorical": "Historische Gesamtsumme"
+    }
+  }
+}

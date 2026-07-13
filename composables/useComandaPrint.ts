@@ -3,7 +3,8 @@
  */
 
 import { DEFAULT_TENANT_TIMEZONE, normalizeTimezone } from '~/utils/bogotaDate'
-import { normalizeUiLocale, toNumberLocaleTag, type UiLocale } from '~/utils/parseLocaleDecimal'
+import { normalizeUiLocale, type UiLocale } from '~/utils/parseLocaleDecimal'
+import { toNumberLocaleTag } from '~/utils/appLocales'
 
 export type ComandaModifierSnapshot = {
   name: string

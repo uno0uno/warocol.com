@@ -257,8 +257,8 @@ const onCreditInput = (line: EntryLine) => {
           <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary">
             <span class="text-xs font-medium text-text-secondary">#</span>
             <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.contabilidad.account') }}</span>
-            <span class="text-xs font-medium text-text-secondary text-right">{{ t('finanzas.contabilidad.debit') }}</span>
-            <span class="text-xs font-medium text-text-secondary text-right">{{ t('finanzas.contabilidad.credit') }}</span>
+            <span class="text-xs font-medium text-text-secondary text-end">{{ t('finanzas.contabilidad.debit') }}</span>
+            <span class="text-xs font-medium text-text-secondary text-end">{{ t('finanzas.contabilidad.credit') }}</span>
             <span class="text-xs font-medium text-text-secondary">{{ t('finanzas.common.description') }}</span>
             <span />
           </div>
@@ -277,7 +277,7 @@ const onCreditInput = (line: EntryLine) => {
               <span class="text-xs text-text-secondary sm:hidden">{{ t('finanzas.contabilidad.account') }}</span>
               <select
                 v-model="line.accountId"
-                class="h-10 min-w-0 w-full pl-3 pr-8 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                class="h-10 min-w-0 w-full ps-3 pe-8 rounded-lg border border-border bg-background text-sm leading-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                 :aria-label="t('finanzas.contabilidad.lineAccountOf', { number: idx + 1 })"
               >
                 <option value="">{{ t('finanzas.contabilidad.selectAccount') }}</option>
@@ -296,7 +296,7 @@ const onCreditInput = (line: EntryLine) => {
                 min="0"
                 step="1"
                 placeholder="0"
-                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-end tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 :aria-label="t('finanzas.contabilidad.lineDebitOf', { number: idx + 1 })"
                 @input="onDebitInput(line)"
               />
@@ -311,7 +311,7 @@ const onCreditInput = (line: EntryLine) => {
                 min="0"
                 step="1"
                 placeholder="0"
-                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-right tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-10 px-3 rounded-lg border border-border bg-background text-sm leading-5 text-end tabular-nums text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 :aria-label="t('finanzas.contabilidad.lineCreditOf', { number: idx + 1 })"
                 @input="onCreditInput(line)"
               />
@@ -347,8 +347,8 @@ const onCreditInput = (line: EntryLine) => {
           <div class="hidden sm:grid grid-cols-[2rem_minmax(22rem,1.35fr)_10rem_10rem_minmax(18rem,1fr)_2.75rem] gap-2 px-4 py-2 bg-surface-secondary border-t-2 border-border">
             <span />
             <span class="text-xs font-semibold text-text-primary">{{ t('finanzas.common.total') }}</span>
-            <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalDebits) }}</span>
-            <span class="text-sm font-bold tabular-nums text-right text-text-primary">{{ formatCurrency(totalCredits) }}</span>
+            <span class="text-sm font-bold tabular-nums text-end text-text-primary">{{ formatCurrency(totalDebits) }}</span>
+            <span class="text-sm font-bold tabular-nums text-end text-text-primary">{{ formatCurrency(totalCredits) }}</span>
             <span />
             <span />
           </div>

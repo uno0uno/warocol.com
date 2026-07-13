@@ -315,7 +315,7 @@
                           por {{ item.unit }}
                         </p>
                       </div>
-                      <div class="text-right">
+                      <div class="text-end">
                         <p class="text-xs text-muted-foreground mb-0.5">Total {{ item.purchase_unit }}</p>
                         <p class="text-lg font-bold text-text-primary">
                           {{ parseFloat(item.total_cost).toLocaleString('es-CO', {
@@ -344,7 +344,7 @@
                           </svg>
                           <span class="text-text-primary font-semibold text-xs">{{ formatQuantity(item.purchase_quantity || item.quantity) }} {{ item.purchase_unit || item.unit }}</span>
                         </div>
-                        <span v-if="item.weight_value && item.weight_unit" class="text-text-secondary text-xs ml-5">
+                        <span v-if="item.weight_value && item.weight_unit" class="text-text-secondary text-xs ms-5">
                           Peso: {{ formatQuantity(item.weight_value) }} {{ item.weight_unit }}
                         </span>
                       </div>
@@ -373,19 +373,19 @@
                 <thead class="bg-surface-secondary">
                   <tr>
                     <th
-                      class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      class="px-4 py-3 text-start text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       {{ WAREHOUSE_COPY.warehouseItemColumn }}
                     </th>
                     <th
-                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      class="px-4 py-3 text-end text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Cantidad
                     </th>
                     <th v-if="form.status !== 'quotation'"
-                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      class="px-4 py-3 text-end text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Precio Unitario
                     </th>
                     <th v-if="form.status !== 'quotation'"
-                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      class="px-4 py-3 text-end text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Total
                     </th>
                     <th
@@ -403,13 +403,13 @@
                         <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                       </div>
                     </td>
-                    <td class="px-4 py-3 text-sm text-text-primary text-right font-medium">
+                    <td class="px-4 py-3 text-sm text-text-primary text-end font-medium">
                       <div>{{ formatQuantity(item.purchase_quantity || item.quantity) }} {{ item.purchase_unit || item.unit }}</div>
                       <div v-if="item.weight_value && item.weight_unit" class="text-xs text-text-secondary mt-1">
                         Peso: {{ formatQuantity(item.weight_value) }} {{ item.weight_unit }} ({{ formatQuantity(item.weight_per_unit_grams) }} gr/und)
                       </div>
                     </td>
-                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-right">
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-end">
                       <div>
                         {{ parseFloat(item.unit_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
                       </div>
@@ -417,7 +417,7 @@
                         por {{ item.unit }}
                       </div>
                     </td>
-                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm font-bold text-text-primary text-right">
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm font-bold text-text-primary text-end">
                       <div>{{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}</div>
                       <div class="text-xs text-text-secondary mt-1">{{ item.purchase_unit }}</div>
                     </td>

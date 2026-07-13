@@ -49,7 +49,7 @@
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value }">
         <div class="flex items-center">
-          <div class="ml-2">
+          <div class="ms-2">
             <div class="text-sm font-semibold text-text-primary">{{ value }}</div>
           </div>
         </div>
@@ -174,7 +174,7 @@
           @click="nextPage"
           :disabled="!canGoNext"
           :class="[
-            'ml-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+            'ms-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
             canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
           ]">
           {{ t('menu.modificadores.next') }}
@@ -224,7 +224,7 @@
         <table class="w-full">
           <thead>
             <tr class="border-b border-border">
-              <th class="text-left py-2 px-2 text-xs font-medium text-text-secondary">
+              <th class="text-start py-2 px-2 text-xs font-medium text-text-secondary">
                 {{ t('menu.modificadores.modifier') }}
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
@@ -447,7 +447,7 @@ const gruposTableColumns = [
 ]
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

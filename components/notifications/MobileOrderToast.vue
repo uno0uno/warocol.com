@@ -2,7 +2,7 @@
   <Teleport to="body">
     <!-- Desktop: bottom-right stack -->
     <div
-      class="hidden sm:flex fixed bottom-4 right-4 z-[60] flex-col-reverse gap-2 w-80"
+      class="hidden sm:flex fixed bottom-4 end-4 z-[60] flex-col-reverse gap-2 w-80"
       role="status"
       aria-live="polite"
       aria-label="Notificaciones de nuevos pedidos"
@@ -21,14 +21,14 @@
           class="relative rounded-xl bg-surface border border-border shadow-xl overflow-hidden"
         >
           <div
-            class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+            class="absolute start-0 top-0 bottom-0 w-1 rounded-s-xl"
             :class="notificationIsComandaReady(toast.notification) ? 'bg-success' : 'bg-primary'"
             aria-hidden="true"
           />
           <NuxtLink
             :to="notificationDespachoPath(toast.notification)"
             @click="(event) => handleToastClick(toast, event)"
-            class="flex items-center gap-2 pl-4 pr-10 py-2.5"
+            class="flex items-center gap-2 ps-4 pe-10 py-2.5"
           >
             <div
               class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
@@ -57,7 +57,7 @@
           <button
             @click.stop="dismiss(toast.id)"
             :aria-label="`Cerrar notificación ${toast.notification.payload?.order_number ?? ''}`"
-            class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
+            class="absolute top-1 end-1 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
           >
             <XMarkIcon class="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
           </button>
@@ -70,7 +70,7 @@
 
     <!-- Mobile: bottom pill strip -->
     <div
-      class="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col-reverse gap-1.5 w-[calc(100%-2rem)]"
+      class="sm:hidden fixed bottom-4 start-1/2 -translate-x-1/2 z-[60] flex flex-col-reverse gap-1.5 w-[calc(100%-2rem)]"
       role="status"
       aria-live="polite"
       aria-label="Notificaciones de nuevos pedidos"

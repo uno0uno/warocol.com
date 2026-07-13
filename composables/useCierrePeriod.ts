@@ -15,7 +15,7 @@ export function useCierrePeriod() {
   const { timezone } = useTenantTimezone()
   const { t, locale } = useI18n({ useScope: 'global' })
 
-  const timeFormatter = computed(() => new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  const timeFormatter = computed(() => new Intl.DateTimeFormat(toNumberLocaleTag(locale.value), {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,

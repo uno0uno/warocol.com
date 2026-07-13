@@ -1,0 +1,62 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "loading": "Lädt...",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "apply": "Anwenden",
+    "period": "Zeitraum",
+    "error": "Fehler",
+    "retry": "Erneut versuchen",
+    "yes": "Ja",
+    "no": "Nein",
+    "notSpecified": "Nicht angegeben",
+    "nA": "N/A",
+    "filters": {
+      "field": "Feld",
+      "searchField": "Suchfeld",
+      "dateRange": "Datumsbereich",
+      "clear": "Filter löschen"
+    },
+    "datePresets": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "lastWeek": "Letzte Woche",
+      "last15": "Letzte 15 Tage",
+      "lastMonth": "Letzter Monat",
+      "last90": "Letzte 90 Tage"
+    },
+    "loadingPhrases": {
+      "sales": "Verkäufe werden geladen...",
+      "orders": "Bestellungen werden geprüft...",
+      "accounts": "Konten werden berechnet...",
+      "server": "Verbindung zum Server wird hergestellt...",
+      "tickets": "Küchenbons werden summiert...",
+      "inventory": "Inventar wird überprüft...",
+      "commissions": "Wir versprechen, keine Provisionen zu berechnen...",
+      "averageTicket": "Ihr durchschnittlicher Bon wird berechnet...",
+      "almostReady": "Fast fertig, Geduld, Chef...",
+      "kitchen": "Synchronisiere mit der Küche..."
+    },
+    "pagination": {
+      "showingRange": "Zeige {start} bis {end} von {total} Ergebnissen",
+      "pageOf": "Seite {page} von {total}"
+    },
+    "submitBusy": "Änderungen werden gesendet",
+    "processing": "Verarbeite...",
+    "attachments": "Anhänge",
+    "attachFile": "Datei anhängen",
+    "attachmentHint": "PDF, Bilder, Dokumente (max. 10MB)",
+    "fileTooLarge": "Datei zu groß",
+    "fileTooLargeMessage": "{name} überschreitet die maximale Größe von 10MB"
+  }
+}

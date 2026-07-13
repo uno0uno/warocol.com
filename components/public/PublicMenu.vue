@@ -19,7 +19,7 @@
               : 'bg-action-secondary-bg text-action-secondary-text hover:bg-action-secondary-hover-bg'"
           >
             {{ category.name }}
-            <span class="ml-2 text-xs opacity-75">
+            <span class="ms-2 text-xs opacity-75">
               ({{ getProductCountByCategory(category.id) }})
             </span>
           </button>

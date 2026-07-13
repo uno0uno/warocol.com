@@ -167,7 +167,7 @@
             {{ t('abastecimiento.proveedores.previous') }}
           </button>
           <button @click="nextPage" :disabled="currentPage === totalPages"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
+            class="ms-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
             {{ t('abastecimiento.proveedores.next') }}
           </button>
         </div>
@@ -180,7 +180,7 @@
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
               <button @click="prevPage" :disabled="currentPage === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
+                class="relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
               <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
@@ -190,7 +190,7 @@
                 {{ page }}
               </button>
               <button @click="nextPage" :disabled="currentPage === totalPages"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
+                class="relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
             </nav>

@@ -137,7 +137,7 @@ const regenerateToken = async () => {
           @change="toggleQr"
         >
         <div
-          class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+          class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
         />
       </label>
     </div>
@@ -229,7 +229,7 @@ const regenerateToken = async () => {
         @change="toggleQr"
       >
       <div
-        class="w-8 h-5 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-3"
+        class="w-8 h-5 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-3"
       />
     </label>
     <button

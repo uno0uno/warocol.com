@@ -1,0 +1,62 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "close": "关闭",
+    "back": "返回",
+    "previous": "上一页",
+    "next": "下一页",
+    "loading": "加载中...",
+    "search": "搜索",
+    "filter": "筛选",
+    "apply": "应用",
+    "period": "期间",
+    "error": "错误",
+    "retry": "重试",
+    "yes": "是",
+    "no": "否",
+    "notSpecified": "未指定",
+    "nA": "不适用",
+    "filters": {
+      "field": "字段",
+      "searchField": "搜索字段",
+      "dateRange": "日期范围",
+      "clear": "清除筛选"
+    },
+    "datePresets": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "lastWeek": "上周",
+      "last15": "过去15天",
+      "lastMonth": "上个月",
+      "last90": "过去90天"
+    },
+    "loadingPhrases": {
+      "sales": "正在加载销售数据...",
+      "orders": "正在查询订单...",
+      "accounts": "正在计算账目...",
+      "server": "正在与服务器通信...",
+      "tickets": "正在汇总厨房订单...",
+      "inventory": "正在检查库存...",
+      "commissions": "我们承诺不收取佣金...",
+      "averageTicket": "正在计算您的平均订单金额...",
+      "almostReady": "即将完成，请稍候，厨师...",
+      "kitchen": "正在与厨房同步..."
+    },
+    "pagination": {
+      "showingRange": "显示第 {start} 到 {end} 条，共 {total} 条结果",
+      "pageOf": "第 {page} 页，共 {total} 页"
+    },
+    "submitBusy": "正在提交更改",
+    "processing": "处理中...",
+    "attachments": "附件",
+    "attachFile": "附加文件",
+    "attachmentHint": "PDF、图片、文档（最大10MB）",
+    "fileTooLarge": "文件过大",
+    "fileTooLargeMessage": "{name} 超过了10MB的最大限制"
+  }
+}

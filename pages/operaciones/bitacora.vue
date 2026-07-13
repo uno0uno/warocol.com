@@ -150,7 +150,7 @@ const channelLabel = (channel: string) => {
 }
 
 const summaryFor = (row: OperationEventRow) =>
-  formatOperationEventSummary(row.action, row.payload ?? {}, formatCurrency, locale.value)
+  formatOperationEventSummary(row.action, row.payload ?? {}, formatCurrency, locale.value, t)
 
 const tableNameFor = (row: OperationEventRow) =>
   formatOperationEventTableName(row.payload ?? {})

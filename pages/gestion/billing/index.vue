@@ -108,7 +108,7 @@ const quotaRowsForPlan = (plan: BillingPlan) =>
         limit,
         value: limit <= 0
           ? config.zeroLabel ?? 'No incluido'
-          : `${limit.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')} ${quotaLabels.value[config.key]?.unit ?? config.unit}`,
+          : `${limit.toLocaleString(toNumberLocaleTag(locale.value))} ${quotaLabels.value[config.key]?.unit ?? config.unit}`,
       }
     })
     .filter((row): row is QuotaDisplayConfig & { limit: number; value: string } => row !== null)
@@ -416,7 +416,7 @@ const loadAll = async () => {
 const { formatDate, formatDateTime } = useFormatters()
 
 const formatCOP = (value: number) =>
-  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+  new Intl.NumberFormat(toNumberLocaleTag(locale.value), { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 
 const cycleLabel = computed(() => {
   if (subscription.value?.billing_cycle === 'monthly') return t('billing.monthly')
@@ -806,7 +806,7 @@ watch(() => currentTenant.value?.id, async () => {
                     <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    {{ plan.scan_limit.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }} {{ t('billing.scansPerMonth') }}
+                    {{ plan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}
                   </li>
                   <li
                     v-for="feature in featureEntries(plan)"
@@ -954,7 +954,7 @@ watch(() => currentTenant.value?.id, async () => {
         :aria-label="t('billing.paymentDetail')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">

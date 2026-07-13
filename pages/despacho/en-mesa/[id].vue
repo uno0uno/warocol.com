@@ -345,10 +345,10 @@ async function printQrComanda() {
             <caption class="sr-only">{{ t('despacho.detail.tableOrderItemsCaption') }}</caption>
             <thead class="bg-surface-secondary">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.product') }}</th>
+                <th class="px-6 py-3 text-start text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.product') }}</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.quantityShort') }}</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.price') }}</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.subtotal') }}</th>
+                <th class="px-6 py-3 text-end text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.price') }}</th>
+                <th class="px-6 py-3 text-end text-xs font-semibold text-text-primary uppercase tracking-wider">{{ t('despacho.common.subtotal') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -373,10 +373,10 @@ async function printQrComanda() {
                       {{ formatQuantity(itemQuantity(item)) }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-end">
                     <span class="text-sm font-medium text-text-primary">{{ formatCurrency(itemUnitPrice(item)) }}</span>
                   </td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-end">
                     <span class="text-sm font-bold text-primary">{{ formatCurrency(itemSubtotal(item)) }}</span>
                   </td>
                 </tr>
@@ -386,7 +386,7 @@ async function printQrComanda() {
                   :key="`mod-${item.product_id}-${mod.id}`"
                   class="bg-surface-secondary/30"
                 >
-                  <td class="px-6 py-2 pl-14">
+                  <td class="px-6 py-2 ps-14">
                     <div class="flex items-center gap-2">
                       <span class="text-primary text-xs">+</span>
                       <span class="text-xs text-text-secondary">{{ mod.name }}</span>
@@ -395,10 +395,10 @@ async function printQrComanda() {
                   <td class="px-6 py-2 text-center">
                     <span class="text-xs text-text-tertiary">x{{ formatQuantity(modifierQuantity(mod)) }}</span>
                   </td>
-                  <td class="px-6 py-2 text-right">
+                  <td class="px-6 py-2 text-end">
                     <span class="text-xs text-text-secondary">{{ formatCurrency(modifierUnitPrice(mod)) }}</span>
                   </td>
-                  <td class="px-6 py-2 text-right">
+                  <td class="px-6 py-2 text-end">
                     <span class="text-xs text-primary/70">{{ formatCurrency(modifierSubtotal(mod)) }}</span>
                   </td>
                 </tr>
@@ -406,10 +406,10 @@ async function printQrComanda() {
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
-                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                <td colspan="3" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
                   {{ t('despacho.common.orderTotal') }}
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-end">
                   <span class="text-xl font-bold text-primary">{{ formatCurrency(request.total_amount) }}</span>
                 </td>
               </tr>

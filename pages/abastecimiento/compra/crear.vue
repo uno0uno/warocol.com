@@ -97,7 +97,7 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">1</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+              <div class="ms-1 sm:ms-3 flex-1 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
                   <span class="hidden sm:inline">Información General</span>
                   <span class="sm:hidden">Info</span>
@@ -122,7 +122,7 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+              <div class="ms-1 sm:ms-3 flex-1 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
                   Alimentos
                 </p>
@@ -143,7 +143,7 @@
               >
                 <span class="font-semibold text-sm sm:text-base">3</span>
               </div>
-              <div class="ml-1 sm:ml-3 min-w-0">
+              <div class="ms-1 sm:ms-3 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
                   <span class="hidden sm:inline">Revisión y Confirmación</span>
                   <span class="sm:hidden">Revisar</span>
@@ -204,7 +204,7 @@
                           type="checkbox" 
                           class="sr-only peer"
                         >
-                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-control-toggle-track-on"></div>
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-control-toggle-track-on"></div>
                       </div>
                     </label>
                   </div>
@@ -453,7 +453,7 @@
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">COTIZACIÓN</h1>
                 <p class="text-xs sm:text-sm text-text-secondary">Resumen de solicitud de cotización</p>
               </div>
-              <div class="text-left sm:text-right w-full sm:w-auto">
+              <div class="text-start sm:text-end w-full sm:w-auto">
                 <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
                   <p class="text-xs font-medium text-text-secondary">COTIZACIÓN N°</p>
                   <p class="text-lg sm:text-xl font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
@@ -571,16 +571,16 @@
             <table class="w-full hidden md:table">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                  <th class="text-start py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                     Alimento
                   </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                     Cantidad Solicitada
                   </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                     Equivalente
                   </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                  <th class="text-end py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                     Detalles
                   </th>
                 </tr>
@@ -595,13 +595,13 @@
                     <p class="font-medium text-text-primary">{{ getIngredientName(item.ingredient_id) }}</p>
                     <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                   </td>
-                  <td class="text-right py-4 text-text-primary font-semibold">
+                  <td class="text-end py-4 text-text-primary font-semibold">
                     {{ formatQuantity(item.quantity) }} {{ item.purchase_unit }}
                   </td>
-                  <td class="text-right py-4 text-text-secondary text-sm">
+                  <td class="text-end py-4 text-text-secondary text-sm">
                     {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
                   </td>
-                  <td class="text-right py-4">
+                  <td class="text-end py-4">
                     <div v-if="shouldShowWeightPerUnit(index)" class="text-xs space-y-1">
                       <p class="text-text-primary">
                         Peso: {{ formatQuantity(item.quantity) }} {{ item.weight_unit }}
@@ -798,7 +798,7 @@ const unitConversions = {
   'kg-gr': 1000,
   'lb-gr': 453.592,
   'oz-gr': 28.3495,
-  'ml-ml': 1,
+  'ms-ml': 1,
   'lt-ml': 1000,
   'gal-ml': 3785.41,
   'und-und': 1

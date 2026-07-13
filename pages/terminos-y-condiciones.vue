@@ -235,7 +235,7 @@ const handleAccept = async () => {
 
 function formatDate(value?: string | null) {
   if (!value) return t('terms.pendingPublication')
-  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.DateTimeFormat(toNumberLocaleTag(locale.value), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

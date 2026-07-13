@@ -38,7 +38,7 @@
               <p class="text-sm text-blue-800">
                 <strong>Tarifa horaria configurada:</strong>
                 {{ formatCurrency(Number(employee.hourly_rate)) }}/h
-                <span class="text-blue-600 ml-1">(precargada abajo, editable)</span>
+                <span class="text-blue-600 ms-1">(precargada abajo, editable)</span>
               </p>
             </div>
 
@@ -64,7 +64,7 @@
                 Tarifa horaria base *
               </label>
               <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <input
                   id="base_hourly_rate"
                   v-model.number="form.base_hourly_rate"
@@ -72,7 +72,7 @@
                   min="1"
                   step="any"
                   required
-                  class="input-base w-full pl-8 pr-4 py-2"
+                  class="input-base w-full ps-8 pe-4 py-2"
                   placeholder="0"
                   aria-label="Tarifa horaria base"
                 />

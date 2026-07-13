@@ -177,7 +177,7 @@ const unitVariants = cva(
 )
 
 const iconContainerVariants = cva(
-  'p-2 rounded-lg ml-4',
+  'p-2 rounded-lg ms-4',
   {
     variants: {
       variant: {

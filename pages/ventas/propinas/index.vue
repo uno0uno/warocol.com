@@ -370,7 +370,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <div class="relative flex-1 min-w-[200px]">
           <button
             type="button"
-            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+            class="absolute start-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
             @click="applySearch"
             :aria-label="t('ventas.propinas.search')"
           >
@@ -383,7 +383,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
             type="text"
             inputmode="numeric"
             :placeholder="t('ventas.propinas.searchOrder')"
-            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            class="w-full h-10 ps-9 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             @keydown.enter.prevent="applySearch"
           />
         </div>
@@ -409,7 +409,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Mesero -->
         <select
           v-model="memberFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           :aria-label="t('ventas.propinas.filterWaiter')"
         >
           <option :value="null">{{ t('ventas.common.mesero') }}</option>
@@ -419,7 +419,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Channel -->
         <select
           v-model="channelFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           :aria-label="t('ventas.propinas.filterChannel')"
         >
           <option :value="null">{{ t('ventas.propinas.channel') }}</option>
@@ -431,7 +431,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Payment method -->
         <select
           v-model="paymentFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
+          class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0 md:hidden"
           :aria-label="t('ventas.propinas.filterPayment')"
         >
           <option :value="null">{{ t('ventas.common.metodoPagoShort') }}</option>
@@ -547,7 +547,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
                 </button>
                 <p class="text-xs text-text-tertiary mt-0.5">{{ resolveLabel(item.payment_method) }}</p>
               </div>
-              <div class="text-right">
+              <div class="text-end">
                 <p class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
                 <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
               </div>
@@ -583,7 +583,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #cell-member_name="{ row }">
           <button
             type="button"
-            class="text-sm text-text-primary hover:text-primary hover:underline text-left"
+            class="text-sm text-text-primary hover:text-primary hover:underline text-start"
             @click.stop="filterByMember(row.served_by_member_id)"
           >
             {{ row.member_name || t('ventas.propinas.unassigned') }}

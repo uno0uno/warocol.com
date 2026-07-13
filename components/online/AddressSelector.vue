@@ -8,13 +8,13 @@
         v-for="address in addresses"
         :key="address.id"
         class="relative flex flex-col sm:flex-row gap-3 p-4 bg-background border-2 border-border rounded-xl
-               text-left cursor-pointer transition-all duration-200 w-full
+               text-start cursor-pointer transition-all duration-200 w-full
                hover:border-action-outline-focus-ring hover:shadow-sm"
         :class="{ 'border-action-primary-border bg-badge-primary-bg': selectedId === address.id }"
         @click="$emit('select', address.id)"
       >
         <!-- Selection Indicator -->
-        <div class="absolute top-4 right-4 sm:static sm:flex-shrink-0 sm:pt-1">
+        <div class="absolute top-4 end-4 sm:static sm:flex-shrink-0 sm:pt-1">
           <div
             class="w-5 h-5 rounded-full border-2 transition-all"
             :class="selectedId === address.id ? 'border-primary border-[6px]' : 'border-border'"
@@ -22,7 +22,7 @@
         </div>
 
         <!-- Address Content -->
-        <div class="flex-1 min-w-0 pr-8 sm:pr-0">
+        <div class="flex-1 min-w-0 pe-8 sm:pe-0">
           <!-- Type Badge & Default -->
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span

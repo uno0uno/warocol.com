@@ -31,7 +31,7 @@ const PANEL_FALLBACK = {
 } as const
 
 function uiLoc(): 'es' | 'en' {
-  return locale.value === 'en' ? 'en' : 'es'
+  return normalizeUiLocale(locale.value) === 'en' ? 'en' : 'es'
 }
 
 function panelLabel<K extends keyof typeof PANEL_FALLBACK['en']>(key: K): string {
@@ -286,7 +286,7 @@ const submit = async () => {
         :aria-label="panelLabel('title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-lg md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -384,7 +384,7 @@ const submit = async () => {
               :key="c.id"
               type="button"
               :aria-pressed="selectedIds.has(c.id)"
-              class="w-full text-left rounded-xl border-2 p-3.5 transition-all"
+              class="w-full text-start rounded-xl border-2 p-3.5 transition-all"
               :class="[
                 cardClass(c.fired_at, selectedIds.has(c.id)),
                 flashIds.has(c.id) ? 'animate-pulse ring-2 ring-state-success-border' : '',
@@ -427,7 +427,7 @@ const submit = async () => {
                         <span class="font-semibold text-text-primary tabular-nums flex-shrink-0">{{ i.quantity }}×</span>
                         <span class="truncate">{{ i.kitchen_name }}</span>
                       </div>
-                      <div v-if="i.modifiers_snapshot?.length" class="mt-0.5 ml-5 flex flex-wrap gap-1">
+                      <div v-if="i.modifiers_snapshot?.length" class="mt-0.5 ms-5 flex flex-wrap gap-1">
                         <span
                           v-for="(mod, idx) in i.modifiers_snapshot"
                           :key="idx"

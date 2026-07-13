@@ -21,7 +21,7 @@
         :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -357,7 +357,7 @@
 
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ms-1">(opcional)</span></p>
             <p class="text-xs text-text-tertiary mt-1">Puntos adicionales cuando el pedido supera cierta cantidad de productos</p>
           </div>
           <div class="grid grid-cols-2 gap-3">

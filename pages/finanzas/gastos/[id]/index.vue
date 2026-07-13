@@ -200,7 +200,7 @@
                 </div>
 
                 <!-- Recurring Info Card (Mobile) -->
-                <div v-if="expense.isRecurring" class="bg-primary/5 border-l-4 border-primary rounded-lg p-4">
+                <div v-if="expense.isRecurring" class="bg-primary/5 border-s-4 border-primary rounded-lg p-4">
                   <div class="flex items-center gap-2 mb-3">
                     <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -227,10 +227,10 @@
                 <table class="w-full border-2 border-border rounded-lg">
                   <thead class="bg-surface-secondary">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
+                      <th class="px-4 py-3 text-start text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
                         {{ t('finanzas.gastos.field') }}
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      <th class="px-4 py-3 text-start text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                         {{ t('finanzas.gastos.value') }}
                       </th>
                     </tr>
@@ -352,14 +352,14 @@
                   {{ t('finanzas.gastos.amountReq') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     type="number"
                     v-model.number="form.amount"
                     required
                     min="0"
                     step="1"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                     placeholder="0"
                   />
                 </div>
@@ -385,7 +385,7 @@
               </div>
 
               <!-- Recurring Options (conditional) -->
-              <div v-if="form.isRecurring" class="md:col-span-2 space-y-4 border-l-4 border-primary pl-4 sm:pl-6">
+              <div v-if="form.isRecurring" class="md:col-span-2 space-y-4 border-s-4 border-primary ps-4 sm:ps-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Frequency -->
                   <div>
@@ -509,7 +509,7 @@
                       <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <div class="text-left">
+                      <div class="text-start">
                         <p class="text-sm font-medium text-text-primary">{{ file.name }}</p>
                         <p class="text-xs text-text-secondary">{{ formatFileSize(file.size) }}</p>
                       </div>
@@ -597,11 +597,11 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-border">
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.period') }}</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colDate') }}</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colAmount') }}</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.common.status') }}</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.files') }}</th>
+                <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.period') }}</th>
+                <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colDate') }}</th>
+                <th class="text-end py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.colAmount') }}</th>
+                <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.common.status') }}</th>
+                <th class="text-start py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.gastos.files') }}</th>
                 <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">{{ t('finanzas.common.actions') }}</th>
               </tr>
             </thead>
@@ -613,7 +613,7 @@
               >
                 <td class="py-3 px-4 text-sm text-text-primary">{{ formatPeriodLabel(instance.periodMonth) }}</td>
                 <td class="py-3 px-4 text-sm text-text-secondary">{{ formatCalendarDate(instance.scheduledDate) }}</td>
-                <td class="py-3 px-4 text-sm text-primary text-right font-medium">{{ formatCurrency(instance.amount) }}</td>
+                <td class="py-3 px-4 text-sm text-primary text-end font-medium">{{ formatCurrency(instance.amount) }}</td>
                 <td class="py-3 px-4">
                   <span
                     :class="{
@@ -976,7 +976,7 @@ const formatPeriodLabel = (periodMonth: string) => {
   if (!periodMonth) return ''
   const [year, month] = periodMonth.split('-')
   const date = new Date(Number(year), Number(month) - 1)
-  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.DateTimeFormat(toNumberLocaleTag(locale.value), {
     month: 'long',
     year: 'numeric'
   }).format(date)

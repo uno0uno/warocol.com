@@ -345,7 +345,7 @@
                 id="agreement_active"
                 class="h-4 w-4 text-primary focus:ring-action-primary-focus-ring border-border rounded"
               />
-              <label for="agreement_active" class="ml-2 text-sm font-medium text-text-primary">
+              <label for="agreement_active" class="ms-2 text-sm font-medium text-text-primary">
                 {{ t('abastecimiento.proveedorDetalle.agreementActive') }}
               </label>
             </div>
@@ -357,7 +357,7 @@
                 id="agreement_auto_apply"
                 class="h-4 w-4 text-primary focus:ring-action-primary-focus-ring border-border rounded"
               />
-              <label for="agreement_auto_apply" class="ml-2 text-sm font-medium text-text-primary">
+              <label for="agreement_auto_apply" class="ms-2 text-sm font-medium text-text-primary">
                 {{ t('abastecimiento.proveedorDetalle.autoApply') }}
               </label>
             </div>

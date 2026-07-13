@@ -14,7 +14,7 @@ const { currentTenant } = useTenantReactive()
 const { formatCurrency } = useFormatters()
 const { todayISO } = useTenantTimezone()
 const tenantToday = computed(() => todayISO())
-const dateLocale = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
+const dateLocale = computed(() => toNumberLocaleTag(locale.value))
 
 // ── Filters ───────────────────────────────────────────────────────────────
 const currentYear = new Date().getFullYear()
@@ -678,7 +678,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <span class="text-sm font-semibold text-primary">{{ t('equipo.nomina.selectedSummary', { benefits: selectedCells.length, employees: selectedEmployeeRows.length }) }}</span>
           <button
             @click="openSlideOver"
-            class="ml-auto px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors min-h-[36px]"
+            class="ms-auto px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors min-h-[36px]"
           >
             {{ t('equipo.nomina.registerBenefitsArrow') }}
           </button>
@@ -725,7 +725,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               </div>
 
               <!-- Benefits grid -->
-              <div class="grid grid-cols-2 gap-1.5 pl-7">
+              <div class="grid grid-cols-2 gap-1.5 ps-7">
                 <div v-for="col in mobileBenefitCols" :key="col.key" class="flex flex-col gap-0.5">
                   <span class="text-xs text-text-secondary">{{ col.label }}</span>
                   <span v-if="col.benefit === 'dotacion' && item.employment_type !== 'employee'" class="text-xs text-text-tertiary">N/A</span>
@@ -896,7 +896,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           >
             <!-- Period header row -->
             <button
-              class="w-full flex items-center justify-between p-4 hover:bg-background transition-colors text-left min-h-[44px]"
+              class="w-full flex items-center justify-between p-4 hover:bg-background transition-colors text-start min-h-[44px]"
               :class="activePilaPeriod === period.period_month ? 'bg-primary/5' : ''"
               @click="activePilaPeriod === period.period_month ? closePilaForm() : openPilaForm(period)"
               :aria-expanded="activePilaPeriod === period.period_month"
@@ -928,22 +928,22 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label for="pila-emp-ss" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.employeeContrib') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-emp-ss" v-model.number="pilaForm.employee_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" :aria-label="t('equipo.nomina.employeeSs')" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                      <input id="pila-emp-ss" v-model.number="pilaForm.employee_ss_amount" type="number" min="0" step="any" class="input-base w-full ps-7 pe-3 py-2" :aria-label="t('equipo.nomina.employeeSs')" />
                     </div>
                   </div>
                   <div>
                     <label for="pila-er-ss" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.employerContrib') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-er-ss" v-model.number="pilaForm.employer_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" :aria-label="t('equipo.nomina.employerSs')" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                      <input id="pila-er-ss" v-model.number="pilaForm.employer_ss_amount" type="number" min="0" step="any" class="input-base w-full ps-7 pe-3 py-2" :aria-label="t('equipo.nomina.employerSs')" />
                     </div>
                   </div>
                   <div>
                     <label for="pila-total" class="block text-sm font-medium text-text-primary mb-1">{{ t('equipo.nomina.pilaTotalReq') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input id="pila-total" v-model.number="pilaForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2 font-semibold" :aria-label="t('equipo.nomina.pilaTotal')" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                      <input id="pila-total" v-model.number="pilaForm.total_amount" type="number" min="1" step="any" required class="input-base w-full ps-7 pe-3 py-2 font-semibold" :aria-label="t('equipo.nomina.pilaTotal')" />
                     </div>
                     <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.nomina.mayDiffer') }}</p>
                   </div>
@@ -1028,7 +1028,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
     <Transition name="slide-right">
       <div
         v-if="showSlideOver && selectedCells.length > 0"
-        class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
+        class="fixed end-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         :aria-label="t('equipo.nomina.registerBenefits')"
@@ -1096,8 +1096,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.baseSalaryReq') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-                      <input v-model.number="slideData[row.id].gross_salary" type="number" min="1" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].gross_salary" type="number" min="1" step="any" class="input-base w-full ps-6 pe-2 py-2 text-sm" />
                     </div>
                   </div>
                   <div>
@@ -1135,8 +1135,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.baseCesantias') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-                      <input v-model.number="slideData[row.id].cesantias_base" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].cesantias_base" type="number" min="0" step="any" class="input-base w-full ps-6 pe-2 py-2 text-sm" placeholder="0" />
                     </div>
                   </div>
                   <div class="flex items-end">
@@ -1164,8 +1164,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.totalValueReq') }}</label>
                     <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-                      <input v-model.number="slideData[row.id].dot_total" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].dot_total" type="number" min="0" step="any" class="input-base w-full ps-6 pe-2 py-2 text-sm" placeholder="0" />
                     </div>
                   </div>
                 </div>
@@ -1188,8 +1188,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 <div>
                   <label class="block text-xs font-medium text-text-primary mb-1">{{ t('equipo.nomina.hourlyBase') }}</label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-                    <input v-model.number="slideData[row.id].base_hourly_rate" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                    <input v-model.number="slideData[row.id].base_hourly_rate" type="number" min="0" step="any" class="input-base w-full ps-6 pe-2 py-2 text-sm" placeholder="0" />
                   </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -1212,7 +1212,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 </div>
                 <div v-if="horasExtrasTotal(row.id) > 0" class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <span class="text-xs text-text-secondary">{{ t('equipo.nomina.totalCalculated') }}</span>
-                  <span class="text-sm font-bold text-emerald-700 ml-auto">{{ formatCurrency(horasExtrasTotal(row.id)) }}</span>
+                  <span class="text-sm font-bold text-emerald-700 ms-auto">{{ formatCurrency(horasExtrasTotal(row.id)) }}</span>
                 </div>
               </div>
 
@@ -1260,6 +1260,6 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 .slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-8px); }
 
 /* Slide-over panel */
-.slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-.slide-right-enter-from, .slide-right-leave-to { transform: translateX(100%); }
+.slide-end-enter-active, .slide-end-leave-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.slide-end-enter-from, .slide-end-leave-to { transform: translateX(100%); }
 </style>

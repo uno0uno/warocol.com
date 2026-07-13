@@ -1,0 +1,62 @@
+{
+  "cocina": {
+    "monitor": {
+      "title": "订单监控 — WARO",
+      "heading": "订单监控",
+      "disabledTitle": "订单未启用",
+      "disabledBody": "请在业务设置中启用订单功能以使用此监控器。",
+      "all": "全部",
+      "counter": "柜台取餐",
+      "delivery": "外送",
+      "pickup": "自取",
+      "active": "进行中",
+      "ready": "已备好",
+      "readyToServe": "可派送",
+      "noActive": "无进行中订单",
+      "noComandas": "无订单",
+      "emptyPending": "目前没有待处理或准备中的订单。",
+      "emptyFiltered": "未找到符合所选筛选条件的订单。",
+      "soundOffAria": "静音提醒",
+      "soundOnAria": "启用声音提醒"
+    },
+    "kds": {
+      "titleStation": "KDS · {name}",
+      "title": "KDS",
+      "invalidLink": "无效链接",
+      "checkUrl": "请检查URL或访问链接。",
+      "stationNotFound": "未找到工作站",
+      "loadingStation": "正在加载工作站…",
+      "loadingChanges": "正在加载更改...",
+      "soundOffAria": "静音提醒",
+      "soundOnAria": "启用声音提醒",
+      "enableSound": "启用声音",
+      "refreshAria": "刷新订单",
+      "noActive": "此工作站无进行中订单",
+      "readyToServe": "可派送",
+      "active": "进行中"
+    },
+    "card": {
+      "delivered": "订单已派送",
+      "tokenExpired": "KDS链接已过期。请重新加载页面。",
+      "statusError": "更新状态出错",
+      "quickSale": "快速销售",
+      "ready": "已备好",
+      "cancel": "取消"
+    },
+    "item": {
+      "tokenExpired": "KDS链接已过期。请重新加载页面。",
+      "updateError": "更新项目出错"
+    },
+    "station": {
+      "createAria": "创建新的厨房工作站",
+      "newTitle": "新工作站",
+      "closePanelAria": "关闭面板",
+      "namePlaceholder": "例如：主厨房、吧台、烧烤区",
+      "colorPickerAria": "颜色选择器",
+      "hexAria": "十六进制颜色代码",
+      "creating": "正在创建工作站",
+      "nameExists": "已存在同名工作站",
+      "createError": "创建工作站出错"
+    }
+  }
+}

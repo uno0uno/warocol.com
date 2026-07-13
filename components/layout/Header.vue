@@ -9,7 +9,7 @@
       </NuxtLink>
 
       <!-- Nav principal (centro) — solo desktop -->
-      <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-1 ml-6">
+      <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-1 ms-6">
         <NuxtLink
           v-for="link in navLinks"
           :key="link.to"
@@ -22,21 +22,21 @@
       </nav>
 
       <!-- Search — solo desktop -->
-      <div class="hidden md:flex ml-auto relative items-center w-full max-w-[240px]">
-        <svg class="absolute left-3 w-[14px] h-[14px] text-ebony-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="hidden md:flex ms-auto relative items-center w-full max-w-[240px]">
+        <svg class="absolute start-3 w-[14px] h-[14px] text-ebony-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           type="text"
-          class="w-full py-[7px] pl-[34px] pr-[44px] border border-titan-200 rounded-full bg-titan-50 text-[13px] text-ebony-600 outline-none cursor-default font-inherit placeholder-ebony-400 focus:border-crocus-300 transition-colors"
+          class="w-full py-[7px] ps-[34px] pe-[44px] border border-titan-200 rounded-full bg-titan-50 text-[13px] text-ebony-600 outline-none cursor-default font-inherit placeholder-ebony-400 focus:border-crocus-300 transition-colors"
           placeholder="Buscar..."
           readonly
         />
-        <span class="absolute right-3 text-[10px] text-ebony-400 bg-white border border-titan-200 py-[1px] px-1.5 rounded tracking-[0.02em] font-mono">⌘K</span>
+        <span class="absolute end-3 text-[10px] text-ebony-400 bg-white border border-titan-200 py-[1px] px-1.5 rounded tracking-[0.02em] font-mono">⌘K</span>
       </div>
 
       <!-- Acciones derecha -->
-      <div class="flex items-center gap-2 shrink-0 ml-auto md:ml-0">
+      <div class="flex items-center gap-2 shrink-0 ms-auto md:ms-0">
         <!-- Ingresar — solo desktop -->
         <NuxtLink
           :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"

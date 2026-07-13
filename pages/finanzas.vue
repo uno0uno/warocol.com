@@ -39,7 +39,7 @@ const navigationItems = computed(() => [
   { to: '/finanzas/contabilidad/cuentas', label: t('finanzas.nav.cuentas'), matchPath: '/finanzas/contabilidad/cuentas' },
   { to: '/finanzas/contabilidad/asientos', label: t('finanzas.nav.asientos'), matchPath: '/finanzas/contabilidad/asientos' },
   { to: '/finanzas/contabilidad/balance-comprobacion', label: t('finanzas.nav.balance'), matchPath: '/finanzas/contabilidad/balance-comprobacion' },
-  { to: '/finanzas/reportes/pl-mensual', label: t('finanzas.nav.plMensual'), matchPath: '/finanzas/reportes/pl-mensual' },
+  { to: '/finanzas/reportes/ps-mensual', label: t('finanzas.nav.plMensual'), matchPath: '/finanzas/reportes/ps-mensual' },
 ])
 
 useHead({ title: () => t('finanzas.head.index') })

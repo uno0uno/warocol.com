@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 import {
   formatIntegerMoney,
   normalizeUiLocale,
@@ -18,9 +18,8 @@ const props = withDefaults(defineProps<{
   requireInputForFeedback: false,
 })
 
-const tenantsStore = useTenantsStore()
 const uiLocale = computed<UiLocale>(() =>
-  normalizeUiLocale((tenantsStore.businessProfile as { locale?: string } | null | undefined)?.locale),
+  normalizeUiLocale(locale.value),
 )
 
 const cashPresetsExtra = [
@@ -72,10 +71,10 @@ const showShortfall = computed(() => {
         :value="cashReceivedDisplay"
         :aria-label="t('pos.cash.receivedAria', { amount: formatCurrency(amountToCharge) })"
         placeholder="0"
-        class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
+        class="w-full min-h-[60px] ps-4 pe-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
         @input="onCashReceivedInput"
       />
-      <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
+      <span class="absolute end-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
     </div>
     <button
       type="button"

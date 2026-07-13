@@ -107,7 +107,7 @@ const props = defineProps<{
 
 const money = (value: number | string | null | undefined) => {
   const n = Number(value) || 0
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,

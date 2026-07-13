@@ -254,10 +254,10 @@ async function confirmCancel() {
             <caption class="sr-only">Productos del pedido</caption>
             <thead class="bg-surface-secondary">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
+                <th class="px-6 py-3 text-start text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+                <th class="px-6 py-3 text-end text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-end text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
               </tr>
             </thead>
             <tbody
@@ -280,10 +280,10 @@ async function confirmCancel() {
                     {{ item.quantity }}
                   </span>
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-end">
                   <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.unit_price) }}</span>
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-end">
                   <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
                 </td>
               </tr>
@@ -294,7 +294,7 @@ async function confirmCancel() {
                 :key="`mod-${index}-${mIndex}`"
                 class="bg-surface-secondary/30"
               >
-                <td class="px-6 py-2 pl-14">
+                <td class="px-6 py-2 ps-14">
                   <div class="flex items-center gap-2">
                     <span class="text-primary text-xs">+</span>
                     <span class="text-xs text-text-secondary">{{ mod.name }}</span>
@@ -303,36 +303,36 @@ async function confirmCancel() {
                 <td class="px-6 py-2 text-center">
                   <span class="text-xs text-text-secondary">x{{ mod.quantity }}</span>
                 </td>
-                <td class="px-6 py-2 text-right">
+                <td class="px-6 py-2 text-end">
                   <span class="text-xs text-text-secondary">{{ formatCurrency(mod.price) }}</span>
                 </td>
-                <td class="px-6 py-2 text-right">
+                <td class="px-6 py-2 text-end">
                   <span class="text-xs text-primary/70">{{ formatCurrency(mod.price * mod.quantity) }}</span>
                 </td>
               </tr>
             </tbody>
             <tfoot class="bg-surface-secondary border-t border-border">
               <tr v-if="order.subtotal !== order.total_amount">
-                <td colspan="3" class="px-6 py-3 text-right text-sm text-text-secondary">
+                <td colspan="3" class="px-6 py-3 text-end text-sm text-text-secondary">
                   Subtotal
                 </td>
-                <td class="px-6 py-3 text-right">
+                <td class="px-6 py-3 text-end">
                   <span class="text-sm text-text-primary">{{ formatCurrency(order.subtotal) }}</span>
                 </td>
               </tr>
               <tr v-if="order.delivery_fee > 0">
-                <td colspan="3" class="px-6 py-3 text-right text-sm text-text-secondary">
+                <td colspan="3" class="px-6 py-3 text-end text-sm text-text-secondary">
                   Domicilio
                 </td>
-                <td class="px-6 py-3 text-right">
+                <td class="px-6 py-3 text-end">
                   <span class="text-sm text-text-primary">{{ formatCurrency(order.delivery_fee) }}</span>
                 </td>
               </tr>
               <tr class="border-t-2 border-border">
-                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                <td colspan="3" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
                   Total del pedido
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-end">
                   <span class="text-xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
                 </td>
               </tr>
