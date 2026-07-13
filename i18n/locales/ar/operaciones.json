@@ -248,7 +248,10 @@
       "languageTitle": "لغة الواجهة",
       "languageHelp": "تنطبق على جميع الأشخاص والأجهزة في هذا المطعم.",
       "languageUpdated": "تم تحديث اللغة للمطعم بأكمله",
-      "languageSaveError": "تعذر حفظ اللغة"
+      "languageSaveError": "تعذر حفظ اللغة",
+      "languageSaving": "جارٍ حفظ اللغة…",
+      "languageApplying": "جارٍ تحديث الواجهة…",
+      "languageSyncing": "جارٍ مزامنة المطعم…"
     },
     "comandas": {
       "enableComandas": "تفعيل تذاكر الطلبات",

@@ -44,4 +44,11 @@ withDefaults(defineProps<{
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.15; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .bit {
+    animation: none;
+    opacity: 1;
+  }
+}
 </style>

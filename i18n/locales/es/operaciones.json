@@ -249,6 +249,9 @@
       ,"languageHelp": "Se aplica a todas las personas y dispositivos de este restaurante."
       ,"languageUpdated": "Idioma actualizado para todo el restaurante"
       ,"languageSaveError": "No se pudo guardar el idioma"
+      ,"languageSaving": "Guardando idioma…"
+      ,"languageApplying": "Actualizando la interfaz…"
+      ,"languageSyncing": "Sincronizando el restaurante…"
     },
     "comandas": {
       "enableComandas": "Activar comandas",

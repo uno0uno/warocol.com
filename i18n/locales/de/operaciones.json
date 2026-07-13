@@ -248,7 +248,10 @@
       "languageTitle": "Sprache der Benutzeroberfläche",
       "languageHelp": "Gilt für alle Personen und Geräte in diesem Restaurant.",
       "languageUpdated": "Sprache für das gesamte Restaurant aktualisiert",
-      "languageSaveError": "Sprache konnte nicht gespeichert werden"
+      "languageSaveError": "Sprache konnte nicht gespeichert werden",
+      "languageSaving": "Sprache wird gespeichert…",
+      "languageApplying": "Oberfläche wird aktualisiert…",
+      "languageSyncing": "Restaurant wird synchronisiert…"
     },
     "comandas": {
       "enableComandas": "Küchentickets aktivieren",

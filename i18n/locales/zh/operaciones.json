@@ -248,7 +248,10 @@
       "languageTitle": "界面语言",
       "languageHelp": "适用于此餐厅的所有人员和设备。",
       "languageUpdated": "已更新整个餐厅的语言",
-      "languageSaveError": "无法保存语言"
+      "languageSaveError": "无法保存语言",
+      "languageSaving": "正在保存语言…",
+      "languageApplying": "正在更新界面…",
+      "languageSyncing": "正在同步餐厅…"
     },
     "comandas": {
       "enableComandas": "启用出单",
