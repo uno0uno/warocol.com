@@ -28,11 +28,11 @@
       <div class="md:col-span-2">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.salePrice') }}</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+          <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
           <UiDecimalInput
             v-model="modifier.price"
             :precision="0"
-            class="input-base w-full pl-8 pr-3 py-2 text-sm"
+            class="input-base w-full ps-8 pe-3 py-2 text-sm"
           />
         </div>
       </div>

@@ -89,7 +89,7 @@
             />
             <p v-if="contractorDays" class="text-xs text-text-tertiary mt-1">
               {{ formatCurrency(employee.calculated_salary) }} ÷ 30 × {{ contractorDays }} {{ t('equipo.salaryModal.days') }} = {{ formatCurrency(contractorProportional) }}
-              <span class="text-blue-600 ml-1">— {{ t('equipo.salaryModal.appliedEditable') }}</span>
+              <span class="text-blue-600 ms-1">— {{ t('equipo.salaryModal.appliedEditable') }}</span>
             </p>
           </div>
 
@@ -104,12 +104,12 @@
                 <p class="text-xs text-text-tertiary mt-0.5">{{ t('equipo.salaryModal.calculatedAutomatically') }}</p>
               </div>
               <div v-else class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <UiDecimalInput
                   v-model="form.payment_amount"
                   :min="0"
                   :precision="2"
-                  class="w-full pl-8 pr-4 py-2 text-lg font-semibold"
+                  class="w-full ps-8 pe-4 py-2 text-lg font-semibold"
                   placeholder="0"
                 />
               </div>
@@ -138,7 +138,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
                 <input type="checkbox" v-model="form.withholding_enabled" class="sr-only peer" />
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
               </label>
             </div>
             <div v-if="form.withholding_enabled" class="space-y-3">
@@ -175,7 +175,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
                 <input type="checkbox" v-model="form.ss_enabled" class="sr-only peer" />
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
               </label>
             </div>
             <div v-if="form.ss_enabled" class="space-y-3">
@@ -563,7 +563,7 @@ const isFormValid = computed(() => {
 
 // Formatters
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
@@ -577,7 +577,7 @@ const formatPeriod = (periodString: string) => {
   if (!periodString) return ''
   const [year, month] = periodString.split('-')
   const date = new Date(Number(year), Number(month) - 1)
-  return date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return date.toLocaleDateString(toNumberLocaleTag(locale.value), {
     month: 'long',
     year: 'numeric'
   })

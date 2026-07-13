@@ -682,7 +682,7 @@ const taxLevels = [
                 :checked="row.is_active"
                 @change="toggleResolution(row.id)"
               />
-              <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
         </template>
@@ -731,7 +731,7 @@ const taxLevels = [
                     :checked="row.is_active"
                     @change="toggleResolution(row.id)"
                   />
-                  <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                  <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                 </label>
               </div>
             </div>
@@ -945,9 +945,9 @@ const taxLevels = [
             <p class="text-sm font-medium text-text-primary">{{ t('facturacion.print.showLogo') }}</p>
             <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.print.showLogoHint') }}</p>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
             <input v-model="fiscalForm.show_logo_on_receipts" type="checkbox" class="sr-only peer" />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
       </div>
@@ -985,9 +985,9 @@ const taxLevels = [
               <p class="text-sm font-medium text-text-primary" v-text="t('facturacion.tax.incTitle')"></p>
               <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.incBody')"></p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
               <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
-              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
           <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howInc')">
@@ -995,7 +995,7 @@ const taxLevels = [
               type="button"
               @click="taxForm.inc_included_in_price = true"
               :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                 taxForm.inc_included_in_price
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                   : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -1012,7 +1012,7 @@ const taxLevels = [
               type="button"
               @click="taxForm.inc_included_in_price = false"
               :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                 !taxForm.inc_included_in_price
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                   : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -1036,9 +1036,9 @@ const taxLevels = [
               <p class="text-sm font-medium text-text-primary" v-text="t('facturacion.tax.ivaTitle')"></p>
               <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.ivaBody')"></p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
               <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
-              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
           <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howIva')">
@@ -1046,7 +1046,7 @@ const taxLevels = [
               type="button"
               @click="taxForm.iva_included_in_price = true"
               :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                 taxForm.iva_included_in_price
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                   : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -1063,7 +1063,7 @@ const taxLevels = [
               type="button"
               @click="taxForm.iva_included_in_price = false"
               :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                 !taxForm.iva_included_in_price
                   ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                   : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -1086,9 +1086,9 @@ const taxLevels = [
             <p class="text-sm font-medium text-text-primary" v-text="t('facturacion.tax.liquorTitle')"></p>
             <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.liquorBody')"></p>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
             <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -1132,7 +1132,7 @@ const taxLevels = [
               type="checkbox"
               class="sr-only peer"
             />
-            <span class="w-11 h-6 bg-form-control-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></span>
+            <span class="w-11 h-6 bg-form-control-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></span>
           </label>
         </div>
 
@@ -1181,7 +1181,7 @@ const taxLevels = [
           <span class="text-sm text-text-secondary">{{ t('facturacion.provider.lastDocument') }}</span>
           <span v-if="facturacionStatus?.last_document" class="text-sm font-medium text-text-primary">
             {{ facturacionStatus.last_document.prefix }}-{{ facturacionStatus.last_document.invoice_number }}
-            <span class="text-xs text-text-tertiary ml-1">
+            <span class="text-xs text-text-tertiary ms-1">
               · {{ facturacionStatus.last_document.created_at ? formatDate(facturacionStatus.last_document.created_at) : '' }}
             </span>
           </span>

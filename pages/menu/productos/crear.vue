@@ -200,13 +200,13 @@
                     {{ t('menu.productos.salePriceRequired') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <UiDecimalInput
                       v-model="form.price"
                       required
                       :precision="0"
                       :min="0"
-                      class="input-base w-full pl-8 pr-4 py-2"
+                      class="input-base w-full ps-8 pe-4 py-2"
                       placeholder="15000"
                     />
                   </div>
@@ -217,12 +217,12 @@
                     {{ t('menu.productos.calculatedCost') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <input
                       :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
                       type="text"
                       disabled
-                      class="input-base w-full pl-8 pr-4 py-2 bg-surface-secondary cursor-not-allowed"
+                      class="input-base w-full ps-8 pe-4 py-2 bg-surface-secondary cursor-not-allowed"
                       placeholder="0"
                     />
                   </div>
@@ -236,12 +236,12 @@
                     {{ t('menu.productos.dishCost') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                   </label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <UiDecimalInput
                       v-model="form.costo_percibido"
                       :precision="0"
                       :min="0"
-                      class="input-base w-full pl-8 pr-4 py-2"
+                      class="input-base w-full ps-8 pe-4 py-2"
                       :placeholder="t('menu.productos.referenceInternal')"
                     />
                   </div>
@@ -296,7 +296,7 @@
                   type="button"
                   @click="form.tax_category = 'standard'"
                   :class="[
-                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                     form.tax_category === 'standard'
                       ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -309,7 +309,7 @@
                   type="button"
                   @click="form.tax_category = 'liquor'"
                   :class="[
-                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                     form.tax_category === 'liquor'
                       ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -322,7 +322,7 @@
                   type="button"
                   @click="form.tax_category = 'exempt'"
                   :class="[
-                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
                     form.tax_category === 'exempt'
                       ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
                       : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
@@ -466,8 +466,8 @@
                         <select
                           v-model="ingredient.unit"
                           :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                          class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
-                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                          class="input-base w-full py-2 pe-3 text-sm disabled:opacity-50"
+                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'ps-7' : 'ps-3'"
                         >
                           <option v-if="!ingredient.ingredient_id" value="" disabled>
                             {{ WAREHOUSE_COPY.selectWarehouseItem }}
@@ -478,7 +478,7 @@
                             :value="opt.value"
                           >{{ opt.label }}</option>
                         </select>
-                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute start-2 top-2.5 pointer-events-none text-text-secondary">
                           <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
@@ -506,7 +506,7 @@
                   class="w-full bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                   @click="addIngredient"
                 >
-                  <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
+                  <Icon name="heroicons:plus" class="h-5 w-5 me-2" />
                     {{ t('menu.recetas.form.addLine') }}
                 </UiButton>
               </UiFormSection>
@@ -617,7 +617,7 @@
                 <span class="text-text-secondary flex-shrink-0">
                   {{ isResaleDirectMode ? `${t('menu.productos.equivalence')}:` : t('menu.productos.recipeLines') }}
                 </span>
-                <span class="font-semibold text-text-primary text-right truncate">
+                <span class="font-semibold text-text-primary text-end truncate">
                   <template v-if="isResaleDirectMode">
                     {{ resaleEquivalencySummary }}
                   </template>
@@ -640,8 +640,8 @@
                 class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
                 :disabled="isSubmitting"
               >
-                <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
-                <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+                <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 me-2" />
+                <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
                 {{ isSubmitting ? t('menu.productos.creatingProduct') : t('menu.productos.createProduct') }}
               </UiButton>
 
@@ -1316,7 +1316,7 @@ async function submitProduct() {
 
 function formatCurrency(value: number) {
   if (!value) return '$0'
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

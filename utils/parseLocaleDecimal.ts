@@ -1,27 +1,32 @@
+import {
+  DEFAULT_APP_LOCALE,
+  normalizeAppLocale,
+  toNumberLocaleTag,
+  type AppLocaleCode,
+} from './appLocales.ts'
+
 /** Decimal precision used by {@link DecimalInput} and purchase forms. */
 export type DecimalPrecision = number
 
 /** OCR receipt fields: qty vs COP amounts interpret separators differently. */
 export type ReceiptNumberKind = 'quantity' | 'amount'
 
-/** Tenant/UI language codes that drive number punctuation (epic #1598 B3). */
-export type UiLocale = 'es' | 'en'
+/** Tenant/UI language codes that drive number punctuation. */
+export type UiLocale = AppLocaleCode
 
-export const DEFAULT_UI_LOCALE: UiLocale = 'es'
+export const DEFAULT_UI_LOCALE: UiLocale = DEFAULT_APP_LOCALE
 
-/** Map product locale → Intl number tag (es → es-CO, en → en-US). */
-export function toNumberLocaleTag(locale: UiLocale = DEFAULT_UI_LOCALE): string {
-  return locale === 'en' ? 'en-US' : 'es-CO'
+/** Normalize free-form locale strings. Missing/junk → es. */
+export function normalizeUiLocale(value: unknown): UiLocale {
+  return normalizeAppLocale(value) ?? DEFAULT_UI_LOCALE
 }
 
-/** Normalize free-form locale strings to es|en. Missing/junk → es. */
-export function normalizeUiLocale(value: unknown): UiLocale {
-  if (value === null || value === undefined) return DEFAULT_UI_LOCALE
-  const raw = String(value).trim().toLowerCase().replace(/_/g, '-')
-  if (!raw) return DEFAULT_UI_LOCALE
-  if (raw === 'en' || raw.startsWith('en-')) return 'en'
-  if (raw === 'es' || raw.startsWith('es-')) return 'es'
-  return DEFAULT_UI_LOCALE
+function localeNumberParts(locale: UiLocale): { decimal: string, group: string } {
+  const parts = new Intl.NumberFormat(toNumberLocaleTag(locale)).formatToParts(12345.6)
+  return {
+    decimal: parts.find(part => part.type === 'decimal')?.value ?? '.',
+    group: parts.find(part => part.type === 'group')?.value ?? ',',
+  }
 }
 
 function stripCurrencyNoise(value: string): string {
@@ -110,7 +115,7 @@ function parseLocaleDecimalEn(normalized: string): number | null {
  * Returns `null` for empty or invalid input.
  *
  * When `locale` is omitted, uses a mixed es/en heuristic (legacy callers).
- * When `locale` is `es`|`en`, separators follow that locale explicitly.
+ * When `locale` is provided, separators follow that locale explicitly.
  *
  * Examples (es): `"1,50"` → 1.5, `"1.234,56"` → 1234.56
  * Examples (en): `"1.50"` → 1.5, `"1,234.56"` → 1234.56
@@ -132,8 +137,11 @@ export function parseLocaleDecimal(
   if (!normalized) return null
 
   const resolved = locale == null ? null : normalizeUiLocale(locale)
-  if (resolved === 'es') return parseLocaleDecimalEs(normalized)
-  if (resolved === 'en') return parseLocaleDecimalEn(normalized)
+  if (resolved) {
+    return localeNumberParts(resolved).decimal === ','
+      ? parseLocaleDecimalEs(normalized)
+      : parseLocaleDecimalEn(normalized)
+  }
   return parseLocaleDecimalHeuristic(normalized)
 }
 
@@ -180,10 +188,9 @@ export function parseIntegerMoney(
   if (!work) return 0
 
   const resolved = normalizeUiLocale(locale)
-  if (resolved === 'en') {
-    work = work.replace(/,/g, '')
-  } else {
-    work = work.replace(/\./g, '')
+  const { group } = localeNumberParts(resolved)
+  if (group && group !== '\u00a0' && group !== '\u202f' && group !== ' ') {
+    work = work.split(group).join('')
   }
   work = work.replace(/\D/g, '')
   if (!work) return 0

@@ -79,7 +79,7 @@ const suggestedAmount = computed(() => {
 })
 
 const formatCurrency = (value: number) =>
-  `$${Math.round(Number(value) || 0).toLocaleString(locale.value === 'en' ? 'en-US' : 'es-CO')}`
+  `$${Math.round(Number(value) || 0).toLocaleString(toNumberLocaleTag(locale.value))}`
 
 const methodLabel = (advance: SessionAdvance) => {
   const group = paymentGroups.value.find(g => g.slug === advance.payment_method)
@@ -221,7 +221,7 @@ watch(suggestedAmount, () => {
         role="dialog"
         aria-modal="true"
         :aria-label="t('pos.advance.title')"
-        class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />

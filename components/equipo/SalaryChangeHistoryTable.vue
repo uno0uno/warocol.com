@@ -94,7 +94,7 @@ function formatFieldValue(field: string, value: any): string {
   if (field === 'payment_amount') {
     const amount = typeof parsedValue === 'object' ? parsedValue.payment_amount : parsedValue
     if (!amount || isNaN(Number(amount))) return '-'
-    return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+    return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0

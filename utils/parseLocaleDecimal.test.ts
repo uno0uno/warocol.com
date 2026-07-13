@@ -8,14 +8,14 @@ import {
   parseLocaleDecimal,
   parseReceiptDecimal,
   roundToPrecision,
-  toNumberLocaleTag,
 } from './parseLocaleDecimal.ts'
+import { toNumberLocaleTag } from './appLocales.ts'
 
 describe('normalizeUiLocale / toNumberLocaleTag', () => {
   it('defaults missing and junk to es', () => {
     assert.equal(normalizeUiLocale(null), 'es')
     assert.equal(normalizeUiLocale(''), 'es')
-    assert.equal(normalizeUiLocale('fr'), 'es')
+    assert.equal(normalizeUiLocale('xx'), 'es')
     assert.equal(toNumberLocaleTag('es'), 'es-CO')
   })
 
@@ -24,6 +24,16 @@ describe('normalizeUiLocale / toNumberLocaleTag', () => {
     assert.equal(normalizeUiLocale('en-US'), 'en')
     assert.equal(normalizeUiLocale('EN_GB'), 'en')
     assert.equal(toNumberLocaleTag('en'), 'en-US')
+  })
+
+  it('accepts the six candidate locale variants', () => {
+    assert.equal(normalizeUiLocale('pt-BR'), 'pt')
+    assert.equal(normalizeUiLocale('fr-FR'), 'fr')
+    assert.equal(normalizeUiLocale('de-DE'), 'de')
+    assert.equal(normalizeUiLocale('ar'), 'ar')
+    assert.equal(normalizeUiLocale('hi-IN'), 'hi')
+    assert.equal(normalizeUiLocale('zh-CN'), 'zh')
+    assert.equal(toNumberLocaleTag('ar'), 'ar-u-nu-latn')
   })
 })
 
@@ -119,15 +129,8 @@ describe('formatLocaleNumber', () => {
   })
 
   it('round-trips format→parse for input-style (no grouping) es/en', () => {
-    const cases: Array<{ n: number; locale: 'es' | 'en' }> = [
-      { n: 1.5, locale: 'es' },
-      { n: 1234.56, locale: 'es' },
-      { n: 5000, locale: 'es' },
-      { n: 1234567, locale: 'es' },
-      { n: 1.5, locale: 'en' },
-      { n: 1234.56, locale: 'en' },
-      { n: 5000, locale: 'en' },
-    ]
+    const locales = ['es', 'en', 'pt', 'fr', 'de', 'ar', 'hi', 'zh'] as const
+    const cases = locales.flatMap(locale => [1.5, 1234.56, 5000, 1234567].map(n => ({ n, locale })))
     for (const { n, locale } of cases) {
       const formatted = formatLocaleNumber(n, locale, {
         maximumFractionDigits: 2,
@@ -159,8 +162,8 @@ describe('integer money helpers', () => {
     assert.equal(formatIntegerMoney(0, 'es'), '')
   })
 
-  it('round-trips integer money format→parse for es/en', () => {
-    for (const locale of ['es', 'en'] as const) {
+  it('round-trips integer money format→parse for all UI locales', () => {
+    for (const locale of ['es', 'en', 'pt', 'fr', 'de', 'ar', 'hi', 'zh'] as const) {
       for (const n of [1, 1234, 5000, 1234567]) {
         assert.equal(
           parseIntegerMoney(formatIntegerMoney(n, locale), locale),

@@ -73,7 +73,7 @@ export function formatPromoValue(
     case 'fixed_off': {
       const amount = Number(v.amount_cop)
       if (!Number.isFinite(amount)) return '—'
-      return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'es-CO', {
+      return new Intl.NumberFormat(toNumberLocaleTag(locale), {
         style: 'currency',
         currency: 'COP',
         maximumFractionDigits: 0,

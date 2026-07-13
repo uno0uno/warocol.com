@@ -1,12 +1,12 @@
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import { enUS, es } from 'date-fns/locale'
+import type { Locale } from 'date-fns'
 import { computed, defineComponent, h } from 'vue'
+import { toDateFnsLocale } from '~/utils/dateLocales'
 
-function normalizeDatePickerLocale(value: unknown, fallback: string) {
-  if (value && typeof value === 'object') return value
-  const raw = typeof value === 'string' && value ? value : fallback
-  return raw.toLowerCase().startsWith('en') ? enUS : es
+function normalizeDatePickerLocale(value: unknown, fallback: string): Locale {
+  if (value && typeof value === 'object') return value as Locale
+  return toDateFnsLocale(typeof value === 'string' && value ? value : fallback)
 }
 
 export default defineNuxtPlugin((nuxtApp) => {

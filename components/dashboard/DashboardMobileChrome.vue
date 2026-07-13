@@ -1,9 +1,9 @@
 <template>
   <div
-    class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg transition-all"
+    class="lg:hidden fixed bottom-0 start-0 end-0 z-50 bg-shell-mobile-bg border-t border-shell-mobile-border shadow-lg transition-all"
     :class="[
       posCartSheetOpen ? 'pointer-events-none opacity-0' : '',
-      isSidebarExpanded ? 'md:left-56' : 'md:left-[4.25rem]',
+      isSidebarExpanded ? 'md:start-56' : 'md:start-[4.25rem]',
     ]"
     style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     :aria-hidden="posCartSheetOpen"

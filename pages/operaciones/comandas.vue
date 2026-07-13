@@ -426,7 +426,7 @@
                   type="button"
                   @click="deactivateModalOpen = false"
                   :aria-label="t('operaciones.comandas.close')"
-                  class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
+                  class="absolute top-4 end-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
                 >
                   <XMarkIcon class="w-4 h-4" />
                 </button>
@@ -951,7 +951,7 @@ const quotaExceededMessageFromError = (err: any) => {
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 
   if (used !== null && limit !== null) {
-    const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+    const numberLocale = toNumberLocaleTag(locale.value)
     return t('operaciones.comandas.quotaMessage', {
       used: used.toLocaleString(numberLocale),
       limit: limit.toLocaleString(numberLocale),

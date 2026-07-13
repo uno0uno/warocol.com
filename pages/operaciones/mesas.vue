@@ -327,7 +327,7 @@ const activeTableQuotaMessage = computed(() => {
 
   if (!metric || metric.limit === null) return t('operaciones.mesas.quotaFull')
 
-  const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+  const numberLocale = toNumberLocaleTag(locale.value)
   return t('operaciones.mesas.activeQuotaMessage', {
     tables: pluralLower.value,
     used: metric.used.toLocaleString(numberLocale),
@@ -347,7 +347,7 @@ const activeQrQuotaMessage = computed(() => {
 
   if (!metric || metric.limit === null) return t('operaciones.mesas.qrQuotaMessage')
 
-  const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+  const numberLocale = toNumberLocaleTag(locale.value)
   return t('operaciones.mesas.activeQuotaMessage', {
     tables: pluralLower.value,
     used: metric.used.toLocaleString(numberLocale),
@@ -371,7 +371,7 @@ const quotaExceededMessageFromError = (err: any) => {
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 
   if (used !== null && limit !== null) {
-    const numberLocale = locale.value === 'en' ? 'en-US' : 'es-CO'
+    const numberLocale = toNumberLocaleTag(locale.value)
     return t('operaciones.mesas.activeQuotaMessage', {
       tables: pluralLower.value,
       used: used.toLocaleString(numberLocale),
@@ -531,7 +531,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleTablesEnabled"
               :disabled="isTogglingTables"
             />
-            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -557,7 +557,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleWaiterAttribution"
               :disabled="isTogglingWaiterAttribution"
             />
-            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -583,7 +583,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               @change="toggleTableQrModule"
               :disabled="isTogglingTableQrModule"
             >
-            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
       </div>
@@ -990,7 +990,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <button
                   type="button"
                   aria-label="Cerrar"
-                  class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
+                  class="absolute top-4 end-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
                   @click="deactivateModalOpen = false"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1068,7 +1068,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <button
                   type="button"
                   aria-label="Cerrar"
-                  class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
+                  class="absolute top-4 end-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
                   @click="deleteModalOpen = false"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>

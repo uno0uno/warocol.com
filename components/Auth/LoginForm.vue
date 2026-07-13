@@ -38,7 +38,7 @@
 
             <!-- Email Form -->
             <form @submit.prevent="handleSubmit">
-              <div class="mb-6 text-left">
+              <div class="mb-6 text-start">
                 <label for="email" class="block text-xs font-semibold mb-2" style="color: hsl(250, 30%, 16%);">
                   {{ t('auth.emailLabel') }}
                 </label>
@@ -118,7 +118,7 @@
               <p class="text-sm" style="color: hsl(220, 13%, 28%);">
                 {{ t('auth.noEmail') }}
                 <button @click="emailSent = false; verificationCode = ''" type="button"
-                  class="font-medium ml-1 hover:underline" style="color: hsl(250, 30%, 16%);">
+                  class="font-medium ms-1 hover:underline" style="color: hsl(250, 30%, 16%);">
                   {{ t('auth.resend') }}
                 </button>
               </p>
@@ -136,7 +136,7 @@
                     clip-rule="evenodd" />
                 </svg>
               </div>
-              <div class="ml-3">
+              <div class="ms-3">
                 <p class="text-sm font-medium" style="color: hsl(var(--destructive));">{{ t('auth.authError') }}</p>
                 <p class="text-sm mt-1" style="color: hsl(var(--destructive));">{{ error }}</p>
                 <NuxtLink

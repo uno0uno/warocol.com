@@ -23,14 +23,14 @@
       </div>
 
       <!-- Availability badge -->
-      <div v-if="!product.is_available" class="absolute top-3 right-3">
+      <div v-if="!product.is_available" class="absolute top-3 end-3">
         <span class="px-3 py-1 text-xs font-semibold bg-state-danger-action-bg text-state-danger-action-text rounded-full">
           No disponible
         </span>
       </div>
 
       <!-- Modifier indicator -->
-      <div v-if="product.has_modifiers" class="absolute top-3 left-3">
+      <div v-if="product.has_modifiers" class="absolute top-3 start-3">
         <span class="px-2 py-1 text-xs font-medium bg-primary/80 text-primary-foreground rounded-full">
           Personalizable
         </span>

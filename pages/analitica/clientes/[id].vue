@@ -46,7 +46,7 @@ const goBack = () => router.push('/analitica/clientes')
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone } = useTenantTimezone()
 const { formatCalendarDate, formatDate: formatTenantDate, formatCurrency, formatNumber } = useFormatters()
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 
 // ── Pagination ────────────────────────────────────────────────────────────
 const currentPage = ref(1)
@@ -440,7 +440,7 @@ onUnmounted(() => {
             </div>
             <!-- Total purchased + edit button -->
             <div class="flex items-center gap-3 flex-shrink-0">
-              <div class="text-left sm:text-right">
+              <div class="text-start sm:text-end">
                 <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
                 <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">{{ t('analitica.clientes.totalBought') }}</p>
               </div>
@@ -781,7 +781,7 @@ onUnmounted(() => {
         <template #header>
           <h3 class="text-base font-bold text-text-primary">
             {{ t('analitica.customerDetail.history.title') }}
-            <span v-if="totalOrders > 0" class="ml-2 text-sm font-normal text-text-secondary">{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
+            <span v-if="totalOrders > 0" class="ms-2 text-sm font-normal text-text-secondary">{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
           </h3>
         </template>
 
@@ -891,14 +891,14 @@ onUnmounted(() => {
           </p>
           <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
             <button @click="previousPage" :disabled="!canGoPrevious"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium', canGoPrevious ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
+              :class="['relative inline-flex items-center px-2 py-2 rounded-s-md border border-titan-300 text-sm font-medium', canGoPrevious ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
               {{ currentPage }} / {{ totalPages }}
             </span>
             <button @click="nextPage" :disabled="!canGoNext"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium', canGoNext ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
+              :class="['relative inline-flex items-center px-2 py-2 rounded-e-md border border-titan-300 text-sm font-medium', canGoNext ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             </button>
           </nav>
@@ -952,7 +952,7 @@ onUnmounted(() => {
           :aria-label="t('analitica.customerDetail.waros.manualAssignments')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
         >
           <!-- Mobile drag handle -->
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -1043,7 +1043,7 @@ onUnmounted(() => {
           :aria-label="t('analitica.customerDetail.credit.registerPayment')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
         >
           <!-- Mobile drag handle -->
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">

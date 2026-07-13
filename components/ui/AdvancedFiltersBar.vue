@@ -8,7 +8,7 @@
       >
         <button
           type="button"
-          class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+          class="absolute start-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
           :aria-label="t('common.search')"
           @click="emit('search')"
         >
@@ -19,7 +19,7 @@
         <input
           :value="search"
           :placeholder="searchPlaceholder"
-          class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+          class="w-full h-10 ps-9 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
           @input="emit('update:search', ($event.target as HTMLInputElement).value)"
           @keydown.enter="emit('search')"
         />
@@ -80,7 +80,7 @@
 
     <div
       v-if="$slots.trailing"
-      class="advanced-filters-bar__trailing ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-none"
+      class="advanced-filters-bar__trailing ms-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-none"
     >
       <slot name="trailing" />
     </div>

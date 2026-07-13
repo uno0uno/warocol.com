@@ -40,12 +40,12 @@
               :key="tenant.id"
               @click="selectTenant(tenant)"
               :disabled="isLoadingTenants"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left disabled:opacity-50"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-start disabled:opacity-50"
               :class="selectedTenant?.id === tenant.id ? 'bg-shell-notification-accent-bg text-shell-notification-text font-medium' : 'text-shell-notification-muted-text hover:bg-shell-notification-hover-bg'"
             >
               <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-shell-account-indicator-bg' : 'bg-badge-neutral-bg'" />
               <span class="truncate">{{ tenant.name }}</span>
-              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-shell-account-icon-text flex-shrink-0" />
+              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ms-auto text-shell-account-icon-text flex-shrink-0" />
             </button>
           </div>
         </div>

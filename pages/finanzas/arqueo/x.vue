@@ -150,13 +150,13 @@
               <div
                 v-for="(m, mi) in grp.methods"
                 :key="m.key"
-                class="flex items-center justify-between pl-8 pr-4 py-2.5"
+                class="flex items-center justify-between ps-8 pe-4 py-2.5"
                 :class="mi % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
               >
                 <span class="text-sm text-text-primary">{{ m.label }}</span>
                 <div class="flex items-center gap-3">
                   <span class="text-xs text-text-secondary">{{ methodPct(m).toFixed(0) }}%</span>
-                  <span class="text-sm font-medium text-text-primary w-28 text-right">{{ formatCurrency(m.total) }}</span>
+                  <span class="text-sm font-medium text-text-primary w-28 text-end">{{ formatCurrency(m.total) }}</span>
                 </div>
               </div>
             </div>

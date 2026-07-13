@@ -68,7 +68,7 @@
               {{ t(item.labelKey) }}
               <span
                 v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
-                class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ml-1.5"
+                class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ms-1.5"
               />
             </span>
           </NuxtLink>

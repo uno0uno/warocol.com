@@ -87,7 +87,7 @@ const linkVariants = cva(
       <component 
         v-if="link.icon" 
         :is="link.icon" 
-        :class="variant === 'buttons' ? 'w-4 h-4 mr-2' : 'w-full h-full'"
+        :class="variant === 'buttons' ? 'w-4 h-4 me-2' : 'w-full h-full'"
       />
       <span v-if="variant === 'buttons'">{{ link.platform }}</span>
     </a>

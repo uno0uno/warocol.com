@@ -90,14 +90,14 @@
             </h3>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full text-start">
               <thead class="bg-gray-50 dark:bg-gray-900 text-xs font-semibold uppercase">
                 <tr>
                   <th class="px-6 py-4">Estación</th>
                   <th class="px-6 py-4 text-center">Pedidos</th>
                   <th class="px-6 py-4 text-center">T. Promedio</th>
                   <th class="px-6 py-4 text-center">Retrasos</th>
-                  <th class="px-6 py-4 text-right">Eficiencia</th>
+                  <th class="px-6 py-4 text-end">Eficiencia</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -116,7 +116,7 @@
                     </span>
                     <span v-else class="text-gray-400">-</span>
                   </td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-end">
                     <div class="inline-flex items-center gap-2">
                       <span class="text-sm font-bold" :class="station.efficiency_pct > 90 ? 'text-green-500' : 'text-orange-500'">
                         {{ station.efficiency_pct }}%
@@ -146,11 +146,11 @@
           </div>
           <div class="flex-1 p-5 space-y-4">
             <div v-for="(product, idx) in metrics.slowest_products" :key="idx" class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 group hover:ring-1 hover:ring-indigo-500 transition-all">
-              <div class="flex-1 min-w-0 mr-4">
+              <div class="flex-1 min-w-0 me-4">
                 <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ product.name }}</p>
                 <p class="text-xs text-gray-500">{{ product.total_qty }} unidades servidas</p>
               </div>
-              <div class="text-right">
+              <div class="text-end">
                 <p class="text-sm font-mono font-bold text-indigo-500">{{ product.avg_prep_min }} min</p>
                 <p class="text-[10px] uppercase font-bold tracking-tighter text-gray-400">Promedio</p>
               </div>
@@ -177,7 +177,7 @@
             class="flex-1 group relative flex flex-col items-center"
           >
             <!-- Label above -->
-            <div v-if="hour.orders > 0" class="absolute -top-6 left-1/2 -translate-x-1/2 scale-75 opacity-0 group-hover:opacity-100 transition-all bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded shadow whitespace-nowrap z-10">
+            <div v-if="hour.orders > 0" class="absolute -top-6 start-1/2 -translate-x-1/2 scale-75 opacity-0 group-hover:opacity-100 transition-all bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded shadow whitespace-nowrap z-10">
               {{ hour.orders }} cmds
             </div>
             <!-- Bar -->

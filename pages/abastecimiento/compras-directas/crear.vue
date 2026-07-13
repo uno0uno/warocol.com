@@ -270,7 +270,7 @@
                     <select
                       :id="`item-type-${index}`"
                       v-model="item.item_type"
-                      class="input-base text-xs py-1.5 pl-2 pr-7 max-w-[11rem] h-[30px]"
+                      class="input-base text-xs py-1.5 ps-2 pe-7 max-w-[11rem] h-[30px]"
                       @change="onLineTypeChange(index)"
                     >
                       <option
@@ -345,7 +345,7 @@
                           P. Unit *
                           <span
                             v-if="item.suggested_price"
-                            class="text-[10px] text-success cursor-pointer ml-0.5"
+                            class="text-[10px] text-success cursor-pointer ms-0.5"
                             @click="item.unit_cost = item.suggested_price; onUnitCostChange(index)"
                             title="Usar precio sugerido"
                           >
@@ -353,13 +353,13 @@
                           </span>
                         </label>
                         <div class="relative">
-                          <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <span class="absolute start-2 top-1.5 text-text-secondary text-xs">$</span>
                           <UiDecimalInput
                             v-model="item.unit_cost"
                             :min="0"
                             :precision="UNIT_COST_PRECISION"
                             required
-                            class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                            class="input-base w-full ps-5 pe-2 py-1.5 text-sm"
                             @update:model-value="() => onUnitCostChange(index)"
                             placeholder="0"
                           />
@@ -368,13 +368,13 @@
                       <div>
                         <label class="block text-xs font-medium text-text-primary mb-1">Total *</label>
                         <div class="relative">
-                          <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <span class="absolute start-2 top-1.5 text-text-secondary text-xs">$</span>
                           <UiDecimalInput
                             v-model="item.total_cost"
                             :min="0"
                             :precision="MONEY_PRECISION"
                             required
-                            class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                            class="input-base w-full ps-5 pe-2 py-1.5 text-sm"
                             @update:model-value="() => onTotalCostChange(index)"
                             placeholder="0"
                           />
@@ -390,10 +390,10 @@
                               v-model="item.purchase_unit"
                               required
                               :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                              class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
+                              class="input-base w-full pe-2 py-1.5 text-sm h-[34px]"
                               :class="[
                                 { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
-                                loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
+                                loadingUnitsFor.has(item.ingredient_id) ? 'ps-7' : 'ps-2'
                               ]"
                               @change="() => onUnitChange(index)"
                             >
@@ -406,7 +406,7 @@
                                 {{ unitOpt.label }}
                               </option>
                             </select>
-                            <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                            <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute start-2 top-2.5 pointer-events-none text-text-secondary">
                               <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
@@ -550,7 +550,7 @@
                 <div class="p-4 space-y-3">
                   <div class="flex justify-between items-start">
                     <p class="text-xs font-medium text-text-secondary">Proveedor</p>
-                    <p class="text-sm font-semibold text-text-primary text-right max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
+                    <p class="text-sm font-semibold text-text-primary text-end max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
                   </div>
                   <div class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Fecha</p>
@@ -876,7 +876,7 @@ const unitConversions: Record<string, number> = {
   'kg-gr': 1000,
   'lb-gr': 453.592,
   'oz-gr': 28.3495,
-  'ml-ml': 1,
+  'ms-ml': 1,
   'lt-ml': 1000,
   'gal-ml': 3785.41,
   'und-und': 1

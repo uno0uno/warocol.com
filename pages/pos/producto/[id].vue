@@ -756,7 +756,7 @@ const addToCart = async () => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0
@@ -819,12 +819,12 @@ watch(product, (newProduct) => {
     <!-- Product Content -->
     <div v-else class="flex flex-col lg:flex-row gap-4 md:gap-6 pb-4">
       <!-- Left Column: Product Details & Customization -->
-      <div class="flex-1 space-y-4 md:space-y-6 lg:pr-4">
+      <div class="flex-1 space-y-4 md:space-y-6 lg:pe-4">
         
         <!-- Product Card Hero -->
         <div class="bg-surface rounded-2xl p-4 md:p-6 border border-border relative overflow-hidden">
           <!-- Popular Badge -->
-          <div class="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-xl z-10">
+          <div class="absolute top-0 end-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-xl z-10">
             {{ t('pos.product.popular') }}
           </div>
 

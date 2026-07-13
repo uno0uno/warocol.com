@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-4 right-4 z-50 space-y-3">
+    <div class="fixed bottom-4 end-4 z-50 space-y-3">
       <TransitionGroup name="toast" tag="div" class="space-y-3">
         <div
           v-for="toast in toasts"
@@ -25,7 +25,7 @@
           <!-- Close button -->
           <button
             @click="remove(toast.id)"
-            class="flex-shrink-0 ml-3 p-1 hover:bg-control-action-hover-bg rounded-full transition-colors"
+            class="flex-shrink-0 ms-3 p-1 hover:bg-control-action-hover-bg rounded-full transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

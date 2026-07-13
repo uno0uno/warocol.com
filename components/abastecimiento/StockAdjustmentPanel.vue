@@ -26,7 +26,7 @@
         :aria-label="t('abastecimiento.stock.adjustmentTitle')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
         @keydown.esc="close"
       >
         <!-- Mobile drag handle -->
@@ -215,7 +215,7 @@
                 </select>
                 <span
                   v-if="purchaseUnitsApi.isLoading(form.ingredientId)"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary"
+                  class="absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary"
                   aria-hidden="true"
                 >
                   <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -252,13 +252,13 @@
               <span class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.optional') }})</span>
             </label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
               <UiDecimalInput
                 :id="costId"
                 v-model="form.cost_per_unit"
                 :min="0"
                 :precision="TECHNICAL_UNIT_COST_PRECISION"
-                class="w-full pl-7 pr-3 py-2 min-h-[44px]"
+                class="w-full ps-7 pe-3 py-2 min-h-[44px]"
                 placeholder="0"
               />
             </div>
@@ -582,7 +582,7 @@ const close = () => {
 }
 
 const formatNumber = (value: number | null | undefined) => {
-  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION, locale.value === 'en' ? 'en-US' : 'es-CO')
+  return formatDomainQuantity(value, INVENTORY_QUANTITY_PRECISION, normalizeUiLocale(locale.value))
 }
 </script>
 

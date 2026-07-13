@@ -21,7 +21,7 @@
         :aria-label="isEdit ? `Editar ${tableSingularLower}: ${table?.name}` : `Crear nueva ${tableSingularLower}`"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -82,7 +82,7 @@
           <div v-if="!table?.is_bar" class="flex flex-col gap-1.5">
             <label for="mesa-code" class="text-sm font-medium text-text-primary">
               Código POS
-              <span class="text-xs font-normal text-text-tertiary ml-1">(opcional, máx. 4 — ej. 12, T1)</span>
+              <span class="text-xs font-normal text-text-tertiary ms-1">(opcional, máx. 4 — ej. 12, T1)</span>
             </label>
             <input
               id="mesa-code"
@@ -102,7 +102,7 @@
           <!-- Capacidad -->
           <div class="flex flex-col gap-1.5">
             <label for="mesa-capacity" class="text-sm font-medium text-text-primary">
-              Capacidad <span class="text-xs font-normal text-text-tertiary ml-1">(opcional — número de sillas)</span>
+              Capacidad <span class="text-xs font-normal text-text-tertiary ms-1">(opcional — número de sillas)</span>
             </label>
             <input
               id="mesa-capacity"
@@ -119,7 +119,7 @@
           <!-- Mesero asignado (issue #573, only when feature flag ON) -->
           <div v-if="showMeseroField" class="flex flex-col gap-1.5">
             <label for="mesa-mesero" class="text-sm font-medium text-text-primary">
-              Mesero por defecto <span class="text-xs font-normal text-text-tertiary ml-1">(opcional)</span>
+              Mesero por defecto <span class="text-xs font-normal text-text-tertiary ms-1">(opcional)</span>
             </label>
             <select
               id="mesa-mesero"

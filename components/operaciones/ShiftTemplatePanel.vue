@@ -22,7 +22,7 @@
         role="dialog"
         aria-modal="true"
         :aria-label="isEdit ? `Editar turno: ${template?.name}` : t('operaciones.shiftPanel.create')"
-        class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh] md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-sheet-border" aria-hidden="true" />
@@ -107,7 +107,7 @@
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
               <input v-model="form.crosses_midnight" type="checkbox" class="sr-only peer" />
-              <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 

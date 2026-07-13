@@ -252,7 +252,7 @@
             <span>{{ t('pos.cart.comandas') }}</span>
             <span
               v-if="persistedComandasCount > 0"
-              class="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-surface-secondary text-[10px] font-bold text-text-secondary tabular-nums inline-flex items-center justify-center"
+              class="ms-0.5 min-w-5 h-5 px-1.5 rounded-full bg-surface-secondary text-[10px] font-bold text-text-secondary tabular-nums inline-flex items-center justify-center"
             >
               {{ persistedComandasCount > 99 ? '99+' : persistedComandasCount }}
             </span>
@@ -294,7 +294,7 @@
             </div>
             <div class="h-3.5 bg-surface-secondary rounded w-12 shrink-0" />
           </div>
-          <div class="mt-2.5 pl-9 flex items-center gap-1.5">
+          <div class="mt-2.5 ps-9 flex items-center gap-1.5">
             <div class="h-9 w-20 bg-surface-secondary rounded-lg" />
             <div class="flex-1" />
             <div class="h-11 w-11 bg-surface-secondary rounded-lg" />
@@ -587,7 +587,7 @@ const onServedByChange = (event: Event) => {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

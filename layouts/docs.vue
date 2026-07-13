@@ -617,13 +617,13 @@ onMounted(() => {
 
 .docs-toc-link:hover {
   color: hsl(var(--primary));
-  border-left-color: hsl(var(--focus-ring-subtle));
+  border-start-color: hsl(var(--focus-ring-subtle));
 }
 
 .docs-toc-link--active {
   background: hsl(var(--badge-primary-bg));
   color: hsl(var(--action-primary-hover-bg));
   font-weight: 600;
-  border-left-color: hsl(var(--primary));
+  border-start-color: hsl(var(--primary));
 }
 </style>

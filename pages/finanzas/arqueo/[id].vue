@@ -174,7 +174,7 @@
               <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
             </div>
             <div v-for="method in group.methods" :key="method.key" class="grid grid-cols-[1fr_auto] gap-3 px-4 py-2 text-sm sm:grid-cols-[1fr_auto_auto_auto_auto]">
-              <span class="text-text-secondary pl-2">{{ method.label }}</span>
+              <span class="text-text-secondary ps-2">{{ method.label }}</span>
               <span class="font-medium text-primary tabular-nums">Entr. {{ formatCurrency(method.grossInflowsAmount) }}</span>
               <span v-if="method.totalOutflows > 0" class="font-medium text-destructive tabular-nums">Sal. − {{ formatCurrency(method.totalOutflows) }}</span>
               <span class="font-semibold tabular-nums" :class="amountToneClass(method.expectedAmount)">Neto {{ formatCurrency(method.expectedAmount) }}</span>

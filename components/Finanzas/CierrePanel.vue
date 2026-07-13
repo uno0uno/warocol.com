@@ -21,7 +21,7 @@
         :aria-label="t('finanzas.cierrePanel.title')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -41,7 +41,7 @@
                 <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('finanzas.arqueo.title') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <span
-                    class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-1"
+                    class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded me-1"
                     :class="periodBadgeClass(detail)"
                   >{{ periodTypeLabel(detail) }}</span>
                   {{ formatPeriodDates(detail) }}

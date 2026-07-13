@@ -365,7 +365,7 @@ const cancelSwitch = () => {
           to="/"
           class="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
         >
-          <span class="mr-2">🏠</span>
+          <span class="me-2">🏠</span>
           Volver al inicio
         </NuxtLink>
       </div>
@@ -422,7 +422,7 @@ const cancelSwitch = () => {
       <Transition name="slide-up">
         <div
           v-if="switchDialogVisible"
-          class="fixed bottom-0 left-0 right-0 z-[200] p-4 bg-background border-t border-border shadow-2xl"
+          class="fixed bottom-0 start-0 end-0 z-[200] p-4 bg-background border-t border-border shadow-2xl"
           role="alertdialog"
           aria-live="assertive"
           aria-label="Cambio de restaurante"

@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-4 right-4 z-50 flex flex-col-reverse items-end gap-4">
+    <div class="fixed bottom-4 end-4 z-50 flex flex-col-reverse items-end gap-4">
       <UiToast
         v-for="(toast, index) in visibleToasts"
         :key="toast.id"

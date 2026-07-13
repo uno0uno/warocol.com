@@ -374,14 +374,14 @@ onMounted(() => {
                 Monto *
               </label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <input
                   type="number"
                   v-model.number="editForm.payment_amount"
                   required
                   step="1000"
                   min="0"
-                  class="w-full pl-8 pr-4 py-2 rounded-lg border-2 border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-full ps-8 pe-4 py-2 rounded-lg border-2 border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -565,7 +565,7 @@ onMounted(() => {
             </a>
             <button
               @click="deleteAttachment(attachment.id)"
-              class="text-destructive hover:text-destructive/80 ml-2"
+              class="text-destructive hover:text-destructive/80 ms-2"
               title="Eliminar archivo"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -622,7 +622,7 @@ onMounted(() => {
                 <button
                   type="button"
                   @click="removeFile(index)"
-                  class="text-destructive hover:text-destructive/80 ml-2 flex-shrink-0"
+                  class="text-destructive hover:text-destructive/80 ms-2 flex-shrink-0"
                   title="Eliminar archivo"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

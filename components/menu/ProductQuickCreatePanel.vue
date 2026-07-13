@@ -19,7 +19,7 @@
         aria-label="Crear producto de venta directa"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
           <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
@@ -88,14 +88,14 @@
               Precio de venta <span class="text-destructive">*</span>
             </label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
               <UiDecimalInput
                 id="product-quick-price"
                 v-model="form.price"
                 :min="0"
                 :precision="0"
                 placeholder="2500"
-                class="h-10 w-full rounded-lg border-2 border-border bg-background pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-8 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                 @input="clearError('price')"
               />
             </div>
@@ -107,14 +107,14 @@
               Mi costo del plato
             </label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
               <UiDecimalInput
                 id="product-quick-costo"
                 v-model="form.costo_percibido"
                 :min="0"
                 :precision="0"
                 placeholder="Opcional"
-                class="h-10 w-full rounded-lg border-2 border-border bg-background pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-8 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               />
             </div>
             <p class="text-xs text-text-tertiary">

@@ -58,7 +58,7 @@
 
             <div
               v-if="preview && compressedSize"
-              class="absolute bottom-2 right-2 bg-foreground/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm"
+              class="absolute bottom-2 end-2 bg-foreground/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm"
             >
               {{ compressedSize }}
             </div>

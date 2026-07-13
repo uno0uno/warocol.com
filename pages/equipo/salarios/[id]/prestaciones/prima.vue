@@ -62,7 +62,7 @@
               <p class="text-sm text-blue-800">
                 <strong>{{ t('equipo.prima.configuredSalary') }}</strong>
                 {{ formatCurrency(Number(employee.calculated_salary)) }}
-                <span class="text-blue-600 ml-1">
+                <span class="text-blue-600 ms-1">
                   ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? t('equipo.salarios.hourly') : t('equipo.salarios.fixedAmount') }})
                 </span>
               </p>
@@ -104,7 +104,7 @@
                   {{ t('equipo.prima.semesterSalaryReq') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     id="gross_salary"
                     v-model.number="form.gross_salary"
@@ -112,7 +112,7 @@
                     min="1"
                     step="any"
                     required
-                    class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
+                    class="input-base w-full ps-8 pe-4 py-2 text-lg font-semibold"
                     placeholder="0"
                     :aria-label="t('equipo.prima.semesterSalaryReq')"
                   />
@@ -497,7 +497,7 @@ const isFormValid = computed(() => {
 
 // Formatters
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,

@@ -94,7 +94,7 @@
                   Base de cesantías acumuladas *
                 </label>
                 <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     id="cesantias_base"
                     v-model.number="form.cesantias_base"
@@ -102,7 +102,7 @@
                     min="1"
                     step="any"
                     required
-                    class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
+                    class="input-base w-full ps-8 pe-4 py-2 text-lg font-semibold"
                     placeholder="0"
                     aria-label="Base de cesantías acumuladas"
                   />
@@ -132,14 +132,14 @@
                   Monto a pagar (editable)
                 </label>
                 <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     id="int_cesantias_amount"
                     v-model.number="form.int_cesantias_amount"
                     type="number"
                     min="1"
                     step="any"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                     :placeholder="intCesantiasPreview ? intCesantiasPreview.toString() : '0'"
                     aria-label="Monto de intereses sobre cesantías a pagar"
                   />

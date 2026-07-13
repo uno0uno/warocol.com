@@ -250,13 +250,13 @@ watch(expenseData, (data) => {
                   Monto (Opcional)
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
                   <UiDecimalInput
                     v-model="instanceForm.amount"
                     :min="0"
                     :precision="2"
                     :placeholder="`Predeterminado: ${expense ? formatCurrency(expense.amount) : ''}`"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    class="input-base w-full ps-8 pe-4 py-2"
                   />
                 </div>
                 <p class="text-xs text-text-tertiary mt-1">
@@ -329,7 +329,7 @@ watch(expenseData, (data) => {
                       <button
                         type="button"
                         @click="removeFile(index)"
-                        class="text-destructive hover:text-destructive/80 ml-2 flex-shrink-0"
+                        class="text-destructive hover:text-destructive/80 ms-2 flex-shrink-0"
                         title="Eliminar archivo"
                       >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -989,7 +989,7 @@ onUnmounted(() => {
 
         <!-- Payment Method -->
         <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
-          class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
+          class="bg-surface border-2 border-info rounded-xl p-4 text-start w-full"
           :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
           @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
           :aria-label="order.split_payments && order.split_payments.length > 0 ? t('ventas.detail.viewSplitDetail') : undefined">
@@ -1014,7 +1014,7 @@ onUnmounted(() => {
           v-if="order.status === 'pending'"
           type="button"
           @click="openFinalizeSalePanel"
-          class="bg-status-success-bg border-2 border-status-success-text/30 rounded-xl p-4 text-left w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
+          class="bg-status-success-bg border-2 border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
         >
           <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
           <div class="flex items-center justify-between gap-3">
@@ -1079,7 +1079,7 @@ onUnmounted(() => {
                 {{ order.delivery_address.city }}<span v-if="order.delivery_address.state">, {{ order.delivery_address.state }}</span>
               </p>
               <div v-if="order.delivery_address.delivery_notes"
-                class="mt-3 px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
+                class="mt-3 px-3 py-2 rounded-lg bg-surface-secondary border-s-2 border-emerald-400">
                 <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-1">{{ t('ventas.detail.addressNotes') }}</p>
                 <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_address.delivery_notes }}</p>
               </div>
@@ -1112,7 +1112,7 @@ onUnmounted(() => {
 
             <template v-if="order.delivery_instructions">
               <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 mt-5">{{ t('ventas.detail.courierNotes') }}</p>
-              <div class="px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
+              <div class="px-3 py-2 rounded-lg bg-surface-secondary border-s-2 border-emerald-400">
                 <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_instructions }}</p>
               </div>
             </template>
@@ -1554,7 +1554,7 @@ onUnmounted(() => {
             <thead class="bg-surface-secondary">
               <tr>
                 <th v-if="isEditMode" class="px-4 py-3 w-12"></th>
-                <th class="px-6 py-3 text-left">
+                <th class="px-6 py-3 text-start">
                   <UiTableHeaderFilter
                     v-model="productFilter"
                     :title="t('ventas.common.producto')"
@@ -1571,14 +1571,14 @@ onUnmounted(() => {
                     align="center"
                   />
                 </th>
-                <th class="px-6 py-3 text-right">
+                <th class="px-6 py-3 text-end">
                   <UiTableHeaderFilter
                     :title="t('ventas.detail.price')"
                     filter-type="none"
                     align="right"
                   />
                 </th>
-                <th class="px-6 py-3 text-right">
+                <th class="px-6 py-3 text-end">
                   <UiTableHeaderFilter
                     :title="t('ventas.common.subtotal')"
                     filter-type="none"
@@ -1619,11 +1619,11 @@ onUnmounted(() => {
                       {{ item.quantity }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-end">
                     <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.price_at_purchase)
                     }}</span>
                   </td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-end">
                     <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
                   </td>
                 </tr>
@@ -1633,7 +1633,7 @@ onUnmounted(() => {
                   <tr v-if="!isModifierDeleted(item.id, modifier.id)" class="bg-surface-secondary/30">
                     <td v-if="isEditMode" class="px-4 py-2">
                       <button @click="markModifierForDeletion(item.id, modifier.id)"
-                        class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ml-2"
+                        class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ms-2"
                         :title="t('ventas.detail.deleteAddition')">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1641,8 +1641,8 @@ onUnmounted(() => {
                         </svg>
                       </button>
                     </td>
-                    <td class="px-6 py-2" :class="isEditMode ? '' : 'pl-14'">
-                      <div class="flex items-center gap-2" :class="isEditMode ? 'pl-8' : ''">
+                    <td class="px-6 py-2" :class="isEditMode ? '' : 'ps-14'">
+                      <div class="flex items-center gap-2" :class="isEditMode ? 'ps-8' : ''">
                         <span class="text-primary text-xs">+</span>
                         <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
                       </div>
@@ -1650,10 +1650,10 @@ onUnmounted(() => {
                     <td class="px-6 py-2 text-center">
                       <span class="text-xs text-text-tertiary">x{{ modifier.quantity ?? 1 }}</span>
                     </td>
-                    <td class="px-6 py-2 text-right">
+                    <td class="px-6 py-2 text-end">
                       <span class="text-xs text-text-secondary">{{ formatCurrency(modifier.price) }}</span>
                     </td>
-                    <td class="px-6 py-2 text-right">
+                    <td class="px-6 py-2 text-end">
                       <span class="text-xs text-primary/70">{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
                     </td>
                   </tr>
@@ -1671,10 +1671,10 @@ onUnmounted(() => {
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
                 <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                <td colspan="3" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
                   {{ t('ventas.detail.orderTotalLabel') }}
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-end">
                   <span class="text-xl font-bold text-primary">
                     {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
                   </span>
@@ -1812,7 +1812,7 @@ onUnmounted(() => {
         <div v-if="showFinalizeSalePanel" role="dialog" aria-modal="true" :aria-label="t('ventas.detail.finalizePendingSale')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
             <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
           </div>
@@ -1879,7 +1879,7 @@ onUnmounted(() => {
         <div v-if="showSplitPaymentsPanel" role="dialog" aria-modal="true" :aria-label="t('ventas.detail.splitPaymentAria')"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
           <!-- Mobile drag handle -->
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
             <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />

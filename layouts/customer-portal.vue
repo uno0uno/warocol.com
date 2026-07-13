@@ -65,9 +65,9 @@
             <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
               {{ customerInitials }}
             </div>
-            <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
+            <span class="absolute bottom-0 end-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
           </div>
-          <div class="flex-1 min-w-0 text-left">
+          <div class="flex-1 min-w-0 text-start">
             <div class="text-xs text-titan-400 truncate max-w-[120px]">{{ customerEmail || '...' }}</div>
           </div>
         </div>
@@ -122,7 +122,7 @@
     </main>
 
     <!-- Mobile Bottom Nav -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
+    <nav class="lg:hidden fixed bottom-0 start-0 end-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
       <div class="flex items-center justify-between px-4 py-2">
         <!-- Customer email -->
         <div class="flex items-center gap-3">
@@ -130,7 +130,7 @@
             <div class="w-10 h-10 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-sm">
               {{ customerInitials }}
             </div>
-            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+            <span class="absolute bottom-0 end-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
           </div>
           <span class="text-xs text-titan-500 leading-tight truncate max-w-[140px]">{{ customerEmail || '...' }}</span>
         </div>

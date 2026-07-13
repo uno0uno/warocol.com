@@ -18,7 +18,7 @@ const props = defineProps<Props>()
 
     <!-- Decorative Element -->
     <div
-      class="absolute top-0 left-0 w-2/5 h-full bg-gradient-to-b from-badge-primary-border to-action-primary-bg opacity-80"
+      class="absolute top-0 start-0 w-2/5 h-full bg-gradient-to-b from-badge-primary-border to-action-primary-bg opacity-80"
       style="clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%)"
     />
 

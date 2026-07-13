@@ -20,12 +20,12 @@ defineProps<{
 
 const formatCurrency = (value: number | null) => {
   if (value === null) return '—'
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 }
 
 const formatRelativeDate = (dateString: string | null): string => {
   if (!dateString) return '—'
-  const rtf = new Intl.RelativeTimeFormat(locale.value === 'en' ? 'en' : 'es', { numeric: 'auto' })
+  const rtf = new Intl.RelativeTimeFormat(normalizeUiLocale(locale.value), { numeric: 'auto' })
   const diffMs = new Date(dateString).getTime() - Date.now()
   const diffDays = Math.round(diffMs / 86400000)
   if (Math.abs(diffDays) < 1) {

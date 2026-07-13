@@ -364,7 +364,7 @@ const adjustmentsTableColumns = computed(() => [
 ])
 
 const formatNumber = (value: number) => {
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(value)

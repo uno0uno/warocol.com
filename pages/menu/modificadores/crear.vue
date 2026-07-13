@@ -161,7 +161,7 @@
             <div class="space-y-3">
               <div class="flex justify-between text-sm gap-2">
                 <span class="text-text-secondary">{{ t('menu.modificadores.nameLabel') }}</span>
-                <span class="font-semibold text-text-primary text-right truncate">{{ form.name || '—' }}</span>
+                <span class="font-semibold text-text-primary text-end truncate">{{ form.name || '—' }}</span>
               </div>
 
               <div class="flex justify-between text-sm items-center gap-2">
@@ -212,8 +212,8 @@
                 class="w-full bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus-visible:ring-shell-cta-focus-ring"
                 :disabled="isSubmitting"
               >
-                <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
-                <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+                <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 me-2" />
+                <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
                 {{ isSubmitting ? t('menu.modificadores.createBusyButton') : t('menu.modificadores.createGroup') }}
               </UiButton>
 

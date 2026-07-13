@@ -36,30 +36,30 @@ const showFacturador = computed(() =>
 
 const softwareRoleLabel = computed(() => {
   void locale.value
-  // Prefer i18n for known platform roles when UI is not Spanish.
-  if (locale.value === 'en') return t('pos.receipt.softwareRole')
+  // Prefer API-provided legal Spanish only for the source locale.
+  if (locale.value !== 'es') return t('pos.receipt.softwareRole')
   return software.value.role_label || t('pos.receipt.softwareRole')
 })
 const softwareNotIssuer = computed(() => {
   void locale.value
-  if (locale.value === 'en') return t('pos.receipt.notIssuer')
+  if (locale.value !== 'es') return t('pos.receipt.notIssuer')
   return software.value.not_issuer_disclaimer || t('pos.receipt.notIssuer')
 })
 const softwareIvaLabel = computed(() => {
   void locale.value
   const raw = software.value.iva_responsibility_label
   if (!raw) return null
-  if (locale.value === 'en' && /no responsable de iva/i.test(raw)) return t('pos.receipt.notResponsibleIva')
+  if (locale.value !== 'es' && /no responsable de iva/i.test(raw)) return t('pos.receipt.notResponsibleIva')
   return raw
 })
 const facturadorRoleLabel = computed(() => {
   void locale.value
-  if (locale.value === 'en') return t('pos.receipt.facturadorRole')
+  if (locale.value !== 'es') return t('pos.receipt.facturadorRole')
   return facturador.value.role_label || t('pos.receipt.facturadorRole')
 })
 const facturadorNotIssuer = computed(() => {
   void locale.value
-  if (locale.value === 'en') return t('pos.receipt.notIssuer')
+  if (locale.value !== 'es') return t('pos.receipt.notIssuer')
   return facturador.value.not_issuer_disclaimer || t('pos.receipt.notIssuer')
 })
 </script>

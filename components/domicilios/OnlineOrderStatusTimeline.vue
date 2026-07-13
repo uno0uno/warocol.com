@@ -73,7 +73,7 @@ function getStatusIcon(status: string): string {
         <!-- Connector line (hidden on last item) -->
         <div
           v-if="index !== history.length - 1"
-          class="absolute left-[19px] top-10 bottom-0 w-0.5 bg-border"
+          class="absolute start-[19px] top-10 bottom-0 w-0.5 bg-border"
           aria-hidden="true"
         />
 
@@ -118,7 +118,7 @@ function getStatusIcon(status: string): string {
               <!-- Reason (optional) -->
               <div v-if="entry.reason" class="mt-3 pt-3 border-t border-border">
                 <p class="text-sm text-text-secondary">
-                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-4 h-4 inline me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
                   {{ entry.reason }}

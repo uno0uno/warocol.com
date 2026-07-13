@@ -793,7 +793,7 @@ async function submit() {
               <!-- Quantity badge -->
               <div
                 v-if="cartQtyFor(product.id) > 0"
-                class="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-sm pointer-events-none"
+                class="absolute -top-2 -end-2 z-10 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-sm pointer-events-none"
                 aria-hidden="true"
               >
                 {{ cartQtyFor(product.id) }}
@@ -832,7 +832,7 @@ async function submit() {
                 :aria-label="t('ventas.crear.personalize', { name: customizationProduct?.name ?? t('ventas.crear.productFallback') })"
                 class="fixed z-50 flex flex-col bg-surface shadow-2xl
                        inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                       md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+                       md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
               >
                 <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
                   <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
@@ -869,7 +869,7 @@ async function submit() {
                       <p class="text-sm font-medium text-text-secondary">
                         {{ group.name }}
                         <span v-if="group.is_required || group.min_qty > 0" class="text-destructive" aria-hidden="true">*</span>
-                        <span class="normal-case font-normal ml-1 text-xs">
+                        <span class="normal-case font-normal ms-1 text-xs">
                           (<template v-if="group.min_qty > 1">{{ t('ventas.crear.minShort', { count: group.min_qty }) }} · </template>{{ t('ventas.crear.maxShort', { count: group.max_qty }) }})
                         </span>
                       </p>

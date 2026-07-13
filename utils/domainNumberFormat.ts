@@ -1,14 +1,12 @@
-/** Product locale for quantity display punctuation (aligned with parseLocaleDecimal). */
-export type DomainUiLocale = 'es' | 'en'
+import { DEFAULT_APP_LOCALE, toNumberLocaleTag, type AppLocaleCode } from './appLocales.ts'
 
-function numberLocaleTag(locale: DomainUiLocale = 'es'): string {
-  return locale === 'en' ? 'en-US' : 'es-CO'
-}
+/** Product locale for quantity display punctuation (aligned with parseLocaleDecimal). */
+export type DomainUiLocale = AppLocaleCode
 
 export function formatDomainQuantity(
   value: number | string | null | undefined,
   maxFractionDigits = 4,
-  locale: DomainUiLocale = 'es',
+  locale: DomainUiLocale = DEFAULT_APP_LOCALE,
 ): string {
   if (value === null || value === undefined || value === '') return '-'
 
@@ -17,7 +15,7 @@ export function formatDomainQuantity(
 
   const normalized = Object.is(numericValue, -0) ? 0 : numericValue
 
-  return new Intl.NumberFormat(numberLocaleTag(locale), {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale), {
     minimumFractionDigits: 0,
     maximumFractionDigits: maxFractionDigits,
   }).format(normalized)

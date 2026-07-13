@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
-import { toNumberLocaleTag } from '~/utils/parseLocaleDecimal'
+import { toNumberLocaleTag } from '~/utils/appLocales'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
@@ -163,7 +163,7 @@ const formatDuration = (openedAt: string): string => {
 }
 
 const formatCurrency = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(locale.value === 'en' ? 'en' : 'es'))}`
+  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(normalizeUiLocale(locale.value)))}`
 
 const minimumConsumptionLabel = (table: any): string | null => {
   const state = table.session?.minimum_consumption
@@ -314,7 +314,7 @@ onUnmounted(() => {
             </svg>
           </div>
           <!-- Info -->
-          <div class="flex-1 min-w-0 text-left">
+          <div class="flex-1 min-w-0 text-start">
             <div class="flex items-center gap-2">
               <span class="text-base font-black uppercase tracking-wide">{{ t('pos.floor.bar') }}</span>
               <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
@@ -352,10 +352,10 @@ onUnmounted(() => {
             <div class="flex flex-col items-center justify-center py-4 px-3 gap-3">
               <div class="relative">
                 <!-- Chairs -->
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -top-3 start-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -bottom-3 start-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -start-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-s-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -end-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-e-sm transition-colors duration-200" :class="chairClass(table.status)" />
                 <!-- Table square with short code -->
                 <div
                   class="w-20 h-20 min-w-[5rem] flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1.5 overflow-hidden"

@@ -189,7 +189,7 @@
             class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
             :class="[
               index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
-              isCierreOpen(item) && 'border-l-4 border-l-state-success-border',
+              isCierreOpen(item) && 'border-s-4 border-s-state-success-border',
             ]"
             @click="onRowClick(item)"
           >
@@ -209,7 +209,7 @@
                 {{ t('finanzas.arqueo.registeredAt', { date: formatDate(item.closedAt) }) }}
                 <span
                   v-if="hasReconciliationPending(item)"
-                  class="ml-1 inline-flex rounded bg-state-warning-bg px-1.5 py-0.5 text-[10px] font-semibold text-state-warning-text"
+                  class="ms-1 inline-flex rounded bg-state-warning-bg px-1.5 py-0.5 text-[10px] font-semibold text-state-warning-text"
                 >
                   {{ t('finanzas.arqueo.conciliar') }}
                 </span>

@@ -21,7 +21,7 @@
         :aria-label="isEdit ? `${t('abastecimiento.glossary.ingredientEdit')}: ${ingredient?.name}` : t('abastecimiento.glossary.ingredientNew')"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <!-- Mobile drag handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -166,7 +166,7 @@
                 {{ t('abastecimiento.glossary.service') }}
               </template>
               <template v-else>{{ form.type }}</template>
-              <span class="text-[10px] text-text-tertiary ml-auto">
+              <span class="text-[10px] text-text-tertiary ms-auto">
                 {{ isEdit ? t('abastecimiento.glossary.typeCannotChange') : t('abastecimiento.glossary.fixedType') }}
               </span>
             </div>
@@ -658,7 +658,7 @@ const editSuggestions = computed(() =>
 )
 
 const typeCardClass = (type: IngredientDbType) => [
-  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left min-h-[44px]',
+  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start min-h-[44px]',
   form.value.type === type
     ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
     : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',

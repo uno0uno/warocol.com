@@ -297,7 +297,7 @@ const getMovementTypeVariant = (type: string) => {
 }
 
 const formatNumber = (value: number) => {
-  return formatDomainQuantity(value, 6, locale.value === 'en' ? 'en-US' : 'es-CO')
+  return formatDomainQuantity(value, 6, normalizeUiLocale(locale.value))
 }
 
 const { formatDate } = useFormatters()

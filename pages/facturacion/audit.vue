@@ -155,7 +155,7 @@ const reasonClass = (reason: string) => {
     <div class="flex flex-wrap items-center gap-3">
       <select
         v-model="resolutionFilter"
-        class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+        class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
         :aria-label="t('facturacion.audit.filterResolution')"
       >
         <option :value="null">Todas las resoluciones</option>
@@ -163,7 +163,7 @@ const reasonClass = (reason: string) => {
           {{ r.prefix }} · {{ r.resolution_number }}
         </option>
       </select>
-      <span class="text-sm text-text-secondary ml-auto">
+      <span class="text-sm text-text-secondary ms-auto">
         {{ gapsTotal }} {{ gapsTotal === 1 ? 'registro' : 'registros' }}
       </span>
     </div>

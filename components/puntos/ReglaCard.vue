@@ -66,7 +66,7 @@
     <button
       :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
       @click="emit('edit', rule)"
-      class="flex items-center justify-center min-h-[44px] min-w-[44px] -mr-2 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+      class="flex items-center justify-center min-h-[44px] min-w-[44px] -me-2 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
       :class="[iconColor.replace('text-', 'hover:text-')]"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -147,7 +147,7 @@
       <button
         :aria-label="t('analitica.puntos.editRuleAria', { rule: meta.label })"
         @click="emit('edit', rule)"
-        class="flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+        class="flex items-center justify-center min-h-[44px] min-w-[44px] -me-1 rounded-lg text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
         :class="[iconColor.replace('text-', 'hover:text-'), 'hover:bg-white/70']"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

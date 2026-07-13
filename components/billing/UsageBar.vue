@@ -4,7 +4,7 @@
       <span v-if="tenantName" class="text-sm font-medium text-text-primary truncate">
         {{ tenantName }}
       </span>
-      <span class="text-xs text-text-secondary whitespace-nowrap ml-auto">
+      <span class="text-xs text-text-secondary whitespace-nowrap ms-auto">
         {{ scansUsed.toLocaleString('es-CO') }} / {{ scansLimit.toLocaleString('es-CO') }}
       </span>
     </div>

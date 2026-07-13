@@ -85,7 +85,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                     <span class="text-gray-500 text-sm">$</span>
                   </div>
                   <input 
@@ -94,7 +94,7 @@
                     required 
                     min="0" 
                     step="1"
-                    class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" 
+                    class="w-full ps-7 pe-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
                     placeholder="0"
                   />
                 </div>

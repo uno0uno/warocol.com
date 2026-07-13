@@ -72,7 +72,7 @@ const hasLimitedQuota = (metric: UsageMetricValue) =>
 const usagePercentage = (metric: UsageMetricValue) =>
   hasLimitedQuota(metric) ? Math.min(Math.round(((metric.used ?? 0) / metric.limit!) * 100), 100) : 0
 
-const localeCode = computed(() => locale.value === 'en' ? 'en-US' : 'es-CO')
+const localeCode = computed(() => toNumberLocaleTag(locale.value))
 const metricLimitLabel = (metric: UsageMetricValue, zeroLabel = t('billing.notIncluded')) => {
   if (metric.limit === null) return t('billing.noLimit')
   if (typeof metric.limit !== 'number') return zeroLabel

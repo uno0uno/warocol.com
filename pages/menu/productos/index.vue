@@ -268,14 +268,14 @@
                   />
                   <div class="flex flex-wrap gap-2 mt-2">
                     <div class="relative w-fit shrink-0">
-                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
+                      <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
                       <label class="sr-only" :for="`mobile-price-${item.id}`">{{ t('menu.common.precio') }}</label>
                       <UiDecimalInput
                         :id="`mobile-price-${item.id}`"
                         v-model="ensureDraft(item).price"
                         :min="0"
                         :precision="0"
-                        class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm tabular-nums text-right"
+                        class="input-base input-money w-fit min-w-[7rem] max-w-none ps-5 pe-2 py-1.5 text-sm tabular-nums text-end"
                         :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                         :placeholder="t('menu.common.precio')"
                       />
@@ -287,7 +287,7 @@
                         v-model="ensureDraft(item).costo_percibido"
                         :min="0"
                         :precision="0"
-                        class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm tabular-nums text-right"
+                        class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm tabular-nums text-end"
                         :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                         :placeholder="t('menu.productos.miCosto')"
                       />
@@ -501,15 +501,15 @@
           <template #cell-price="{ value, item }">
             <div
               v-if="editMode && !isOpenSaleShell(item)"
-              class="relative w-fit ml-auto shrink-0"
+              class="relative w-fit ms-auto shrink-0"
               @click.stop
             >
-              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
+              <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
               <UiDecimalInput
                 v-model="ensureDraft(item).price"
                 :min="0"
                 :precision="0"
-                class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                class="input-base input-money w-fit min-w-[7rem] max-w-none ps-5 pe-2 py-1.5 text-sm text-end tabular-nums"
                 :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                 :aria-label="`Precio de ${item.name}`"
                 placeholder="0"
@@ -531,14 +531,14 @@
             <div class="flex justify-end">
               <div
                 v-if="editMode && !isOpenSaleShell(item)"
-                class="relative w-fit ml-auto shrink-0"
+                class="relative w-fit ms-auto shrink-0"
                 @click.stop
               >
                 <UiDecimalInput
                   v-model="ensureDraft(item).costo_percibido"
                   :min="0"
                   :precision="0"
-                  class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm text-right tabular-nums"
+                  class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm text-end tabular-nums"
                   :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                   :aria-label="`Mi costo de ${item.name}`"
                   placeholder="—"
@@ -779,7 +779,7 @@
               @click="nextPage"
               :disabled="!canGoNext"
               :class="[
-                'ml-3 relative inline-flex min-h-[44px] items-center rounded-md px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                'ms-3 relative inline-flex min-h-[44px] items-center rounded-md px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoNext ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
               ]">
               {{ t('common.next') }}
@@ -797,7 +797,7 @@
                   @click="previousPage"
                   :disabled="!canGoPrevious"
                   :class="[
-                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-l-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-s-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                     canGoPrevious ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
                   ]">
                 <span class="sr-only">{{ t('common.previous') }}</span>
@@ -821,7 +821,7 @@
                   @click="nextPage"
                   :disabled="!canGoNext"
                   :class="[
-                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-r-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                    'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-e-md text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                     canGoNext ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg' : 'bg-shell-icon-bg text-shell-icon-text cursor-not-allowed opacity-50'
                   ]">
                   <span class="sr-only">{{ t('common.next') }}</span>
@@ -1644,7 +1644,7 @@ function moneyInputWidth(value: number | null | undefined): string {
 // Format currency
 const formatCurrency = (value: number) => {
   if (!value) return '$0'
-  return new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-CO', {
+  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0

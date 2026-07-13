@@ -59,13 +59,13 @@
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto Pagado *</label>
               <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <UiDecimalInput
                   v-model="formData.payment_amount"
                   :min="0.01"
                   :precision="2"
                   required
-                  class="w-full pl-8 pr-4 py-2.5 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary transition-colors"
+                  class="w-full ps-8 pe-4 py-2.5 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary transition-colors"
                   placeholder="0.00"
                 />
               </div>
@@ -107,7 +107,7 @@
               <span class="text-sm text-text-secondary">Órdenes seleccionadas</span>
               <span class="font-medium text-text-primary">{{ purchases.length }}</span>
             </div>
-            <div class="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+            <div class="max-h-48 overflow-y-auto space-y-2 pe-2 custom-scrollbar">
               <div v-for="purchase in purchases" :key="purchase.id"
                 class="flex justify-between items-center text-sm py-1 border-b border-border/50 last:border-0">
                 <span class="text-text-secondary">#{{ purchase.purchase_number }}</span>
@@ -161,7 +161,7 @@
           <p class="text-xs text-text-secondary">Total a pagar</p>
           <p class="text-lg font-semibold text-text-primary">{{ formatCurrency(totalAmount) }}</p>
         </div>
-        <p v-if="purchases[0]?.purchase_number" class="text-right text-xs text-text-secondary">
+        <p v-if="purchases[0]?.purchase_number" class="text-end text-xs text-text-secondary">
           {{ purchases[0].purchase_number }}
         </p>
       </div>

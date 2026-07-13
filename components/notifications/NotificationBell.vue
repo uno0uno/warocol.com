@@ -18,7 +18,7 @@
         v-if="unreadCount > 0"
         aria-live="polite"
         aria-atomic="true"
-        class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
+        class="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
@@ -35,7 +35,7 @@
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 top-[calc(100%+8px)] w-80 bg-surface border border-border rounded-2xl shadow-xl z-50 overflow-hidden"
+        class="absolute end-0 top-[calc(100%+8px)] w-80 bg-surface border border-border rounded-2xl shadow-xl z-50 overflow-hidden"
         role="dialog"
         aria-label="Panel de notificaciones"
       >

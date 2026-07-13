@@ -33,7 +33,7 @@
             @change="togglePromoLineOptOutSetting"
           />
           <div
-            class="relative h-6 w-10 shrink-0 overflow-hidden rounded-full bg-control-toggle-track-off peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-control-toggle-thumb after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
+            class="relative h-6 w-10 shrink-0 overflow-hidden rounded-full bg-control-toggle-track-off peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:absolute after:start-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-control-toggle-thumb after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
           />
         </label>
       </div>
@@ -143,7 +143,7 @@
                 <button
                   v-if="isScopeClickable(item)"
                   type="button"
-                  class="text-xs text-left text-primary hover:underline truncate max-w-full min-h-[44px]"
+                  class="text-xs text-start text-primary hover:underline truncate max-w-full min-h-[44px]"
                   :aria-label="t('operaciones.promociones.viewScopeAria', { name: item.name })"
                   @click.stop="openScopePopover(item)"
                 >
@@ -212,7 +212,7 @@
             <button
               v-if="item && isScopeClickable(item)"
               type="button"
-              class="text-sm text-left text-primary hover:underline min-h-[44px]"
+              class="text-sm text-start text-primary hover:underline min-h-[44px]"
               :aria-label="t('operaciones.promociones.viewScopeAria', { name: item.name })"
               @click.stop="openScopePopover(item)"
             >

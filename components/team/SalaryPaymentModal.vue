@@ -16,7 +16,7 @@
             <p class="font-medium text-text-primary">{{ employee.name }}</p>
             <p class="text-sm text-text-secondary">{{ employee.email }}</p>
           </div>
-          <div class="text-right">
+          <div class="text-end">
             <p class="text-xs text-text-secondary">Salario configurado</p>
             <p class="font-bold text-primary">{{ formatCurrency(employee.calculated_salary || 0) }}</p>
           </div>
@@ -27,14 +27,14 @@
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">Monto del Pago *</label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
               <input
                 v-model.number="form.payment_amount"
                 type="number"
                 min="0"
                 step="1000"
                 required
-                class="input-base w-full pl-7 pr-3 py-2 font-semibold"
+                class="input-base w-full ps-7 pe-3 py-2 font-semibold"
                 placeholder="0"
               />
             </div>

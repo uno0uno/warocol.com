@@ -99,7 +99,7 @@
               <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span class="text-xs text-text-secondary font-mono">{{ item.unit }}{{ item.unit_weight_gr ? ` · ${item.unit_weight_gr} gr/und` : '' }}</span>
                 <span class="text-xs text-text-tertiary">{{ TYPE_LABELS[item.type] || item.type }}</span>
-                <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO') }}</span>
+                <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString(toNumberLocaleTag(locale)) }}</span>
               </div>
             </div>
             <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -131,7 +131,7 @@
 
         <template #cell-costo_unitario="{ value }">
           <UiStatusBadge
-            :value="value ? `$${Number(value).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO')}` : t('abastecimiento.common.sinCosto')"
+            :value="value ? `$${Number(value).toLocaleString(toNumberLocaleTag(locale))}` : t('abastecimiento.common.sinCosto')"
             format="text"
             :variant="value ? 'info' : 'secondary'"
             size="sm"

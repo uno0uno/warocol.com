@@ -33,7 +33,7 @@
           <div class="bg-surface-secondary rounded-lg p-3 text-sm text-text-secondary">
             <span class="font-medium text-text-primary">Valor registrado:</span>
             ${{ alert.actual_value?.toLocaleString() ?? '?' }}
-            <span v-if="alert.rolling_avg" class="ml-2">
+            <span v-if="alert.rolling_avg" class="ms-2">
               · Promedio histórico: ${{ alert.rolling_avg.toLocaleString() }}
             </span>
           </div>

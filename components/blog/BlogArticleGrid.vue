@@ -63,7 +63,7 @@ const getGradientClass = (index: number) => props.gradientClasses[index % props.
           <div v-else :class="['absolute inset-0', getGradientClass(index + 1)]"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
-          <span class="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-overlay-backdrop/50 text-action-primary-text text-[10px] font-medium backdrop-blur-sm">
+          <span class="absolute bottom-3.5 end-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-overlay-backdrop/50 text-action-primary-text text-[10px] font-medium backdrop-blur-sm">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>

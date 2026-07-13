@@ -4,7 +4,7 @@
       <div v-if="modelValue" class="fixed inset-0 bg-foreground/50 backdrop-blur-sm z-[100]" @click="close" />
     </Transition>
     <Transition name="slide">
-      <aside v-if="modelValue" class="fixed top-0 right-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
+      <aside v-if="modelValue" class="fixed top-0 end-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
         <header class="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
           <h2 class="text-base font-bold text-foreground m-0">Tu pedido</h2>
           <button

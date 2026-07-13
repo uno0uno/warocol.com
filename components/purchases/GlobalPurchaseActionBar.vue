@@ -11,7 +11,7 @@
       >
         <div
           v-if="shouldShowBar"
-          class="fixed top-0 md:bottom-0 md:top-auto left-0 md:left-64 right-0 border-b-2 md:border-b-0 md:border-t-2 shadow-lg z-[55]"
+          class="fixed top-0 md:bottom-0 md:top-auto start-0 md:start-64 end-0 border-b-2 md:border-b-0 md:border-t-2 shadow-lg z-[55]"
           style="pointer-events: auto; background-color: hsl(var(--surface)); border-color: hsl(var(--border));"
         >
         <div class="px-4 py-2 sm:px-6 sm:py-4 md:px-8">

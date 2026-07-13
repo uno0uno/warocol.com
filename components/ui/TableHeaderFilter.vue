@@ -83,13 +83,13 @@ const filterIcon = computed(() => props.filterType === 'toggle' ? CheckCircleIco
 
 const textAlignClass = computed(() => {
   if (props.align === 'center') return 'justify-center text-center'
-  if (props.align === 'right') return 'justify-end text-right'
-  return 'justify-start text-left'
+  if (props.align === 'right') return 'justify-end text-end'
+  return 'justify-start text-start'
 })
 const rangePanelClass = computed(() => {
-  if (props.align === 'right') return 'right-0'
-  if (props.align === 'center') return 'left-1/2 -translate-x-1/2'
-  return 'left-0'
+  if (props.align === 'right') return 'end-0'
+  if (props.align === 'center') return 'start-1/2 -translate-x-1/2'
+  return 'start-0'
 })
 
 function onSort() {

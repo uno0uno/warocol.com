@@ -311,7 +311,7 @@
       "checkingStatus": "Checking status...",
       "cannotDeactivate": "Cannot deactivate now",
       "activeTicketsMessage": "There are {count} active ticket(s) at this station. Resolve them before deactivating it.",
-      "affectedCategories": "{count} affected categor{suffix}",
+      "affectedCategories": "{count} affected categories",
       "affectedCategoriesHelp": "Their products will stop generating tickets while the station is inactive.",
       "noActiveImpact": "No active impact. It can be safely deactivated.",
       "activatedTitle": "Activated",

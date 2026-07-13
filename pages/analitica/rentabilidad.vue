@@ -12,7 +12,7 @@ const { currentTenant } = useTenantReactive()
 const { locale } = useI18n({ useScope: 'global' })
 
 const lastUpdate = ref<Date>(new Date())
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: dateFnsLocale.value }))
 
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()

@@ -77,8 +77,8 @@ const showComparison = ref(false)
 
 // ── Query ─────────────────────────────────────────────────────────────────────
 const { data: plData, asyncStatus, error: fetchError } = useQuery({
-  key: () => ['pl-statement', currentTenant.value?.id, props.year, props.month, props.compact],
-  query: () => $fetch<PLResponse>('/api/accounting/pl-statement', {
+  key: () => ['ps-statement', currentTenant.value?.id, props.year, props.month, props.compact],
+  query: () => $fetch<PLResponse>('/api/accounting/ps-statement', {
     params: {
       year: props.year,
       month: props.month,
@@ -229,7 +229,7 @@ const prevPeriodLabel = computed(() => {
 
     <!-- Link to full report -->
     <NuxtLink
-      :to="`/finanzas/reportes/pl-mensual?year=${year}&month=${month}`"
+      :to="`/finanzas/reportes/ps-mensual?year=${year}&month=${month}`"
       class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
       :aria-label="t('finanzas.pl.viewFullReportAria')"
     >
@@ -248,7 +248,7 @@ const prevPeriodLabel = computed(() => {
       <div>
         <h2 class="text-sm font-semibold text-text-primary">
           {{ t('finanzas.pl.title') }}
-          <span class="font-normal text-text-secondary ml-1">{{ periodLabel }}</span>
+          <span class="font-normal text-text-secondary ms-1">{{ periodLabel }}</span>
         </h2>
         <p v-if="asyncStatus === 'loading'" class="text-xs text-text-secondary mt-0.5 flex items-center gap-1">
           <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -281,8 +281,8 @@ const prevPeriodLabel = computed(() => {
       <!-- Column headers (when comparing) -->
       <div v-if="hasPrevious" class="flex items-center bg-surface-secondary/60 border-b border-border px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-wider">
         <span class="flex-1">{{ t('finanzas.pl.concept') }}</span>
-        <span class="w-36 text-right">{{ periodLabel }}</span>
-        <span class="w-36 text-right">{{ prevPeriodLabel }}</span>
+        <span class="w-36 text-end">{{ periodLabel }}</span>
+        <span class="w-36 text-end">{{ prevPeriodLabel }}</span>
       </div>
 
       <!-- ── Revenue ──────────────────────────────────────────────────────── -->
@@ -295,14 +295,14 @@ const prevPeriodLabel = computed(() => {
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.foodBevSales') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.revenue.foodBeverageSales) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.revenue.foodBeverageSales) }}
             </span>
             <span
               v-if="hasPrevious"
-              class="w-36 text-right tabular-nums text-text-secondary"
+              class="w-36 text-end tabular-nums text-text-secondary"
             >
               {{ formatCurrency(previous!.revenue.foodBeverageSales) }}
             </span>
@@ -311,14 +311,14 @@ const prevPeriodLabel = computed(() => {
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
             <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalIncome') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.revenue.total) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.revenue.total) }}
             </span>
             <span
               v-if="hasPrevious"
-              class="w-36 text-right tabular-nums text-text-secondary"
+              class="w-36 text-end tabular-nums text-text-secondary"
             >
               {{ formatCurrency(previous!.revenue.total) }}
             </span>
@@ -334,24 +334,24 @@ const prevPeriodLabel = computed(() => {
         <div class="divide-y divide-border/60">
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.foodCost') }}</span>
-            <span class="w-36 text-right tabular-nums text-destructive">
+            <span class="w-36 text-end tabular-nums text-destructive">
               {{ formatCurrency(current.cogs.foodCost) }}
             </span>
             <span
               v-if="hasPrevious"
-              class="w-36 text-right tabular-nums text-text-secondary"
+              class="w-36 text-end tabular-nums text-text-secondary"
             >
               {{ formatCurrency(previous!.cogs.foodCost) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
             <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalCogs') }}</span>
-            <span class="w-36 text-right tabular-nums text-destructive">
+            <span class="w-36 text-end tabular-nums text-destructive">
               {{ formatCurrency(current.cogs.total) }}
             </span>
             <span
               v-if="hasPrevious"
-              class="w-36 text-right tabular-nums text-text-secondary"
+              class="w-36 text-end tabular-nums text-text-secondary"
             >
               {{ formatCurrency(previous!.cogs.total) }}
             </span>
@@ -388,72 +388,72 @@ const prevPeriodLabel = computed(() => {
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.payroll') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.payroll) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.payroll) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.payroll) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.rent') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.rent) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.rent) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.rent) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.utilities') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.utilities) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.utilities) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.utilities) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.maintenance') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.maintenance) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.maintenance) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.maintenance) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.other') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.other) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.other) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.other) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
             <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalOpex') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.operatingExpenses.total) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.operatingExpenses.total) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.operatingExpenses.total) }}
             </span>
           </div>
@@ -489,60 +489,60 @@ const prevPeriodLabel = computed(() => {
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.cesantias') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.provisions.cesantias) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.provisions.cesantias) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.provisions.cesantias) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.prima') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.provisions.prima) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.provisions.prima) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.provisions.prima) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.vacaciones') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.provisions.vacaciones) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.provisions.vacaciones) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.provisions.vacaciones) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm">
             <span class="flex-1 text-text-secondary">{{ t('finanzas.pl.intCesantias') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.provisions.interesesCesantias) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.provisions.interesesCesantias) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.provisions.interesesCesantias) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
             <span class="flex-1 text-text-primary">{{ t('finanzas.pl.totalProvisions') }}</span>
             <span
-              class="w-36 text-right tabular-nums"
+              class="w-36 text-end tabular-nums"
               :class="isNegative(current.provisions.total) ? 'text-destructive' : 'text-text-primary'"
             >
               {{ formatCurrency(current.provisions.total) }}
             </span>
-            <span v-if="hasPrevious" class="w-36 text-right tabular-nums text-text-secondary">
+            <span v-if="hasPrevious" class="w-36 text-end tabular-nums text-text-secondary">
               {{ formatCurrency(previous!.provisions.total) }}
             </span>
           </div>
@@ -553,14 +553,14 @@ const prevPeriodLabel = computed(() => {
       <div class="flex items-center px-4 py-4 bg-surface-secondary/60 border-b border-border">
         <span class="flex-1 text-base font-bold text-text-primary">{{ t('finanzas.pl.netIncome') }}</span>
         <span
-          class="w-36 text-right tabular-nums text-base font-bold"
+          class="w-36 text-end tabular-nums text-base font-bold"
           :class="isNegative(current.netIncome) ? 'text-destructive' : 'text-state-success-text'"
         >
           {{ formatCurrency(current.netIncome) }}
         </span>
         <span
           v-if="hasPrevious"
-          class="w-36 text-right tabular-nums text-base font-bold"
+          class="w-36 text-end tabular-nums text-base font-bold"
           :class="isNegative(previous!.netIncome) ? 'text-destructive' : 'text-state-success-text'"
         >
           {{ formatCurrency(previous!.netIncome) }}

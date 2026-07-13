@@ -39,7 +39,7 @@ const handleChange = (event: Event) => {
         @change="handleChange"
       >
       <span
-        class="h-6 w-10 rounded-full bg-control-toggle-track-off transition-colors peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-control-toggle-thumb after:transition-all after:content-[''] peer-checked:after:translate-x-full"
+        class="h-6 w-10 rounded-full bg-control-toggle-track-off transition-colors peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-control-toggle-thumb after:transition-all after:content-[''] peer-checked:after:translate-x-full"
       />
     </label>
   </span>

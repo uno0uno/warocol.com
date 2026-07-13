@@ -195,10 +195,10 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
           :value="customDisplay"
           placeholder="0"
           maxlength="10"
-          class="input-base w-full min-h-[48px] pl-4 pr-10 py-2 text-lg font-semibold tabular-nums"
+          class="input-base w-full min-h-[48px] ps-4 pe-10 py-2 text-lg font-semibold tabular-nums"
           @input="onCustomInput"
         />
-        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-text-secondary pointer-events-none">$</span>
+        <span class="absolute end-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-text-secondary pointer-events-none">$</span>
       </div>
     </div>
   </div>

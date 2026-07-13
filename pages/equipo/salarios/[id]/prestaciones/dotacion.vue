@@ -67,7 +67,7 @@
               <p class="text-sm text-blue-800">
                 <strong>Salario base configurado:</strong>
                 {{ formatCurrency(Number(employee.calculated_salary)) }}
-                <span class="text-blue-600 ml-1">
+                <span class="text-blue-600 ms-1">
                   ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? 'Por horas' : 'Monto fijo' }})
                 </span>
               </p>
@@ -142,7 +142,7 @@
                 Valor total de la dotación *
               </label>
               <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <input
                   id="total_amount"
                   v-model.number="form.total_amount"
@@ -150,7 +150,7 @@
                   min="1"
                   step="any"
                   required
-                  class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
+                  class="input-base w-full ps-8 pe-4 py-2 text-lg font-semibold"
                   placeholder="0"
                   aria-label="Valor total de la dotación"
                 />

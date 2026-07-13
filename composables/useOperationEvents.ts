@@ -91,6 +91,7 @@ export function formatOperationEventSummary(
   payload: Record<string, unknown>,
   formatCurrency: (n: number) => string,
   locale = 'es',
+  translate?: (key: string, params?: Record<string, unknown>) => string,
 ): string {
   const product = payload.product_name as string | undefined
   const qty = payload.quantity as number | undefined
@@ -109,8 +110,8 @@ export function formatOperationEventSummary(
 
   if (action === 'tab_cleared' || action === 'cart_cleared') {
     const count = payload.items_count as number | undefined
-    if (count != null) return locale === 'en'
-      ? `${count} ${count === 1 ? 'line' : 'lines'}`
+    if (count != null) return translate
+      ? `${count} ${translate(count === 1 ? 'operaciones.bitacora.lineOne' : 'operaciones.bitacora.lineMany')}`
       : `${count} ${count === 1 ? 'línea' : 'líneas'}`
   }
 
@@ -122,7 +123,9 @@ export function formatOperationEventSummary(
   }
 
   if (payload.order_number != null) {
-    return `${locale === 'en' ? 'Order' : 'Orden'} #${payload.order_number}`
+    return translate
+      ? `${translate('operaciones.bitacora.order')} #${payload.order_number}`
+      : `Orden #${payload.order_number}`
   }
 
   return '—'

@@ -43,7 +43,7 @@
               <li v-if="breadcrumbPage">
                 <div class="flex items-center">
                   <ChevronRightIcon class="w-4 h-4 text-text-tertiary" />
-                  <span class="ml-1 text-sm font-medium text-text-primary">{{ breadcrumbPage }}</span>
+                  <span class="ms-1 text-sm font-medium text-text-primary">{{ breadcrumbPage }}</span>
                 </div>
               </li>
             </ol>

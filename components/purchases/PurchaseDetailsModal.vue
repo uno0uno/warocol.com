@@ -45,9 +45,9 @@
             <!-- Stepper -->
             <div class="relative">
               <!-- Progress Line -->
-              <div class="absolute top-5 left-0 right-0 h-1 bg-border" style="z-index: 0;"></div>
+              <div class="absolute top-5 start-0 end-0 h-1 bg-border" style="z-index: 0;"></div>
               <div
-                class="absolute top-5 left-0 h-1 bg-primary transition-all duration-500"
+                class="absolute top-5 start-0 h-1 bg-primary transition-all duration-500"
                 :style="{ width: getProgressWidth() + '%', zIndex: 0 }"
               ></div>
 
@@ -282,7 +282,7 @@
                     Nota: {{ item.notes }}
                   </p>
                 </div>
-                <div v-if="purchase?.status !== 'quotation'" class="text-right">
+                <div v-if="purchase?.status !== 'quotation'" class="text-end">
                   <p class="font-semibold text-text-primary">{{ formatCurrency(item.total_cost) }}</p>
                   <p class="text-xs text-text-secondary">{{ formatCurrency(item.unit_cost) }} / {{ item.unit }}</p>
                 </div>

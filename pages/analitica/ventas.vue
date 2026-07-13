@@ -23,7 +23,7 @@ const { timezone, todayISO, addDaysISO, monthBounds } = useTenantTimezone()
 const hasDateFilter = computed(() =>
   dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
 )
-const dateFnsLocale = computed(() => locale.value === 'en' ? enUS : es)
+const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 
 // Payment groups for filter dropdown
 const { data: paymentGroupsData } = useQuery({
@@ -338,11 +338,11 @@ const metrics = computed(() => {
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
           />
-          <select v-model="paymentMethodFilter" :aria-label="t('analitica.ventas.filterMethod')" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
+          <select v-model="paymentMethodFilter" :aria-label="t('analitica.ventas.filterMethod')" class="h-10 ps-3 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
             <option :value="null">{{ t('analitica.ventas.paymentMethod') }}</option>
             <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
           </select>
-          <select v-model="statusFilter" :aria-label="t('analitica.ventas.filterStatus')" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
+          <select v-model="statusFilter" :aria-label="t('analitica.ventas.filterStatus')" class="h-10 ps-3 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
             <option :value="null">{{ t('analitica.common.status') }}</option>
             <option value="completed">{{ t('analitica.ventas.completed') }}</option>
             <option value="cancelled">{{ t('analitica.ventas.canceled') }}</option>

@@ -54,7 +54,7 @@
           <!-- Desktop Table Cells -->
           <template #cell-producto_name="{ value }">
             <div class="flex items-center">
-              <div class="ml-2">
+              <div class="ms-2">
                 <div class="text-sm font-semibold text-text-primary">{{ value }}</div>
               </div>
             </div>
@@ -133,7 +133,7 @@
               @click="nextPage"
               :disabled="!canGoNext"
               :class="[
-                'ml-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+                'ms-2 relative inline-flex min-h-[36px] items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
                 canGoNext ? 'text-text-secondary hover:bg-surface-secondary' : 'text-text-secondary cursor-not-allowed opacity-40'
               ]">
               {{ t('menu.recetas.next') }}
@@ -183,19 +183,19 @@
             <table class="w-full">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-2 px-2 text-xs font-medium text-text-secondary">
+                  <th class="text-start py-2 px-2 text-xs font-medium text-text-secondary">
                     {{ WAREHOUSE_COPY.recipeCompositionTableHeader }}
                   </th>
                   <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
                     {{ t('menu.recetas.stockControl') }}
                   </th>
-                  <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
+                  <th class="text-end py-2 px-2 text-xs font-medium text-text-secondary">
                     {{ t('menu.recetas.quantity') }}
                   </th>
-                  <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
+                  <th class="text-end py-2 px-2 text-xs font-medium text-text-secondary">
                     {{ t('menu.recetas.unitCost') }}
                   </th>
-                  <th class="text-right py-2 px-2 text-xs font-medium text-text-secondary">
+                  <th class="text-end py-2 px-2 text-xs font-medium text-text-secondary">
                     {{ t('menu.recetas.totalCost') }}
                   </th>
                 </tr>
@@ -225,23 +225,23 @@
                       size="sm"
                     />
                   </td>
-                  <td class="py-3 px-2 text-sm text-text-primary text-right">
+                  <td class="py-3 px-2 text-sm text-text-primary text-end">
                     {{ formatQuantity(ing.cantidad) }} {{ ing.unidad }}
                   </td>
-                  <td class="py-3 px-2 text-sm text-text-primary text-right">
+                  <td class="py-3 px-2 text-sm text-text-primary text-end">
                     {{ formatCurrency(ing.costo_unitario) }}
                   </td>
-                  <td class="py-3 px-2 text-sm font-medium text-text-primary text-right">
+                  <td class="py-3 px-2 text-sm font-medium text-text-primary text-end">
                     {{ formatCurrency(ing.costo_total) }}
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="border-t-2 border-border font-semibold">
-                  <td colspan="4" class="py-3 px-2 text-sm text-text-primary text-right">
+                  <td colspan="4" class="py-3 px-2 text-sm text-text-primary text-end">
                     {{ t('menu.recetas.total') }}
                   </td>
-                  <td class="py-3 px-2 text-sm text-text-primary text-right">
+                  <td class="py-3 px-2 text-sm text-text-primary text-end">
                     {{ formatCurrency(recipe.costo_total) }}
                   </td>
                 </tr>

@@ -27,11 +27,7 @@ export function localeToNumberFormatTag(locale?: string | null): string {
   if (locale == null || typeof locale !== 'string' || !locale.trim()) {
     return DEFAULT_NUMBER_LOCALE
   }
-  const raw = locale.trim()
-  const lower = raw.toLowerCase()
-  if (lower === 'en' || lower.startsWith('en-')) return 'en-US'
-  if (lower === 'es' || lower.startsWith('es-')) return 'es-CO'
-  return DEFAULT_NUMBER_LOCALE
+  return toNumberLocaleTag(locale)
 }
 
 export type FormatMoneyOptions = {
@@ -62,3 +58,4 @@ export function formatMoney(
     minimumFractionDigits: 0,
   }).format(value)
 }
+import { toNumberLocaleTag } from './appLocales.ts'

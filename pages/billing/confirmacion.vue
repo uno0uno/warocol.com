@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
     <div class="max-w-md mx-auto flex items-center justify-center min-h-[400px]">
-      <p v-if="debugError" class="text-xs text-form-control-error absolute top-4 left-4 right-4 break-all">{{ debugError }}</p>
+      <p v-if="debugError" class="text-xs text-form-control-error absolute top-4 start-4 end-4 break-all">{{ debugError }}</p>
       <!-- Loading -->
       <div v-if="isLoading" class="text-center space-y-4">
         <CommonsTheCustomLoader size="large" />
