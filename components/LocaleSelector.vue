@@ -18,7 +18,7 @@
       </option>
     </select>
     <ChevronDownIcon
-      class="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-form-control-placeholder"
+      class="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-form-control-placeholder"
       aria-hidden="true"
     />
   </div>
