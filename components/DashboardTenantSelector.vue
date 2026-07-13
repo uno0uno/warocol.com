@@ -67,20 +67,25 @@
       <ChevronDownIcon class="w-3.5 h-3.5 text-shell-account-chevron-text flex-shrink-0" />
     </button>
 
-    <!-- User info — name + purple avatar icon -->
-    <div class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg">
+    <!-- User profile -->
+    <NuxtLink
+      to="/perfil"
+      :aria-label="t('perfil.navigation.open')"
+      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+    >
       <span class="text-sm font-medium text-shell-account-text truncate max-w-[120px]">{{ userName }}</span>
-      <div class="w-8 h-8 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-lg flex items-center justify-center flex-shrink-0">
-        <UserIcon class="w-4 h-4 text-shell-account-icon-text" />
+      <div class="w-8 h-8 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+        <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
+        <span v-else class="text-xs font-bold text-shell-account-icon-text" aria-hidden="true">{{ userInitials }}</span>
       </div>
-    </div>
+    </NuxtLink>
   </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon, UserIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import type { Tenant } from '~/stores/tenants'
 import { useAuthStore } from '~/stores/auth'
 
@@ -109,8 +114,8 @@ const isLoadingTenants = computed(() => tenantsStore.isLoading)
 const { selectTenantWithBillingGuard } = useDashboardTenantSwitch()
 
 const authStore = useAuthStore()
-const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
-const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || '')
+const userName = computed(() => authStore.displayUser.name)
+const userAvatar = computed(() => authStore.displayUser.avatar)
 const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)

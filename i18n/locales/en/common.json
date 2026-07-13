@@ -21,6 +21,26 @@
     "no": "No",
     "notSpecified": "Not specified",
     "nA": "N/A",
+    "imageUpload": {
+      "close": "Close image uploader",
+      "previewAlt": "Preview of {type}",
+      "dropPrompt": "Drag your image here or",
+      "selectFile": "select a file",
+      "formatsHint": "JPEG, PNG, or WebP · max. 5 MB · {recommendation}",
+      "changeImage": "Change image",
+      "uploadingStable": "Uploading image",
+      "uploadAction": "Upload image",
+      "types": { "logo": "logo", "banner": "banner", "product": "product", "avatar": "profile photo" },
+      "titles": { "logo": "Upload logo image", "banner": "Upload banner image", "product": "Upload product image", "avatar": "Upload profile photo" },
+      "recommendations": { "logo": "square image recommended", "banner": "1200 × 400 px recommended", "product": "800 × 800 square image recommended", "avatar": "800 × 800 square image recommended" },
+      "uploadingPhrases": { "preparing": "Preparing...", "optimizing": "Optimizing...", "uploading": "Uploading..." },
+      "errors": {
+        "invalidType": "File type not allowed. Use JPEG, PNG, or WebP.",
+        "tooLarge": "The file is too large ({size}). Maximum 5 MB.",
+        "processing": "The image could not be processed. Try another file.",
+        "upload": "The image could not be uploaded. Try again."
+      }
+    },
     "filters": {
       "field": "Field",
       "searchField": "Search field",

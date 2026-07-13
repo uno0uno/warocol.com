@@ -1,0 +1,38 @@
+{
+  "perfil": {
+    "head": { "title": "Meu perfil" },
+    "title": "Meu perfil",
+    "subtitle": "Gerencie seus dados pessoais. Essas informações pertencem ao seu usuário e permanecem ao trocar de negócio.",
+    "navigation": { "open": "Abrir meu perfil", "noEmail": "Sem e-mail" },
+    "avatar": {
+      "alt": "Foto de perfil de {name}",
+      "title": "Foto de perfil",
+      "help": "Use uma imagem quadrada. Ela aparecerá na sua conta e no conteúdo público em que você for autor.",
+      "change": "Alterar foto",
+      "add": "Adicionar foto"
+    },
+    "personal": {
+      "title": "Dados pessoais",
+      "name": "Nome",
+      "namePlaceholder": "Seu nome completo",
+      "nameHelp": "É assim que outros usuários verão você.",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Conte um pouco sobre você",
+      "publicHelp": "Opcional. Seu nome, descrição e foto também podem aparecer na autoria pública dos seus artigos."
+    },
+    "validation": {
+      "nameRequired": "O nome é obrigatório.",
+      "nameTooLong": "O nome não pode exceder 120 caracteres.",
+      "descriptionTooLong": "A descrição não pode exceder 500 caracteres."
+    },
+    "actions": { "discard": "Descartar alterações", "save": "Salvar alterações", "savingStable": "Salvando alterações do perfil" },
+    "savingPhrases": { "saving": "Salvando...", "updating": "Atualizando seu perfil...", "almostReady": "Quase pronto..." },
+    "feedback": {
+      "savedTitle": "Perfil atualizado",
+      "saved": "Seus dados pessoais foram salvos com sucesso.",
+      "avatarSaved": "Sua foto foi atualizada com sucesso.",
+      "saveError": "Não foi possível salvar seu perfil. Tente novamente.",
+      "refreshError": "A foto foi salva, mas não foi possível atualizar sua sessão. Recarregue a página."
+    }
+  }
+}

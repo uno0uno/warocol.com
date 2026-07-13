@@ -1,0 +1,38 @@
+{
+  "perfil": {
+    "head": { "title": "Mon profil" },
+    "title": "Mon profil",
+    "subtitle": "Gérez vos données personnelles. Ces informations appartiennent à votre utilisateur et restent inchangées lorsque vous changez d’établissement.",
+    "navigation": { "open": "Ouvrir mon profil", "noEmail": "Aucun e-mail" },
+    "avatar": {
+      "alt": "Photo de profil de {name}",
+      "title": "Photo de profil",
+      "help": "Utilisez une image carrée. Elle apparaîtra sur votre compte et dans le contenu public dont vous êtes l’auteur.",
+      "change": "Changer la photo",
+      "add": "Ajouter une photo"
+    },
+    "personal": {
+      "title": "Données personnelles",
+      "name": "Nom",
+      "namePlaceholder": "Votre nom complet",
+      "nameHelp": "C’est ainsi que les autres utilisateurs vous verront.",
+      "description": "Description",
+      "descriptionPlaceholder": "Parlez-nous brièvement de vous",
+      "publicHelp": "Facultatif. Votre nom, votre description et votre photo peuvent aussi apparaître dans la signature publique de vos articles."
+    },
+    "validation": {
+      "nameRequired": "Le nom est obligatoire.",
+      "nameTooLong": "Le nom ne peut pas dépasser 120 caractères.",
+      "descriptionTooLong": "La description ne peut pas dépasser 500 caractères."
+    },
+    "actions": { "discard": "Annuler les modifications", "save": "Enregistrer", "savingStable": "Enregistrement des modifications du profil" },
+    "savingPhrases": { "saving": "Enregistrement...", "updating": "Mise à jour de votre profil...", "almostReady": "Presque terminé..." },
+    "feedback": {
+      "savedTitle": "Profil mis à jour",
+      "saved": "Vos données personnelles ont été enregistrées.",
+      "avatarSaved": "Votre photo a été mise à jour.",
+      "saveError": "Impossible d’enregistrer votre profil. Réessayez.",
+      "refreshError": "La photo a été enregistrée, mais la session n’a pas pu être actualisée. Rechargez la page."
+    }
+  }
+}

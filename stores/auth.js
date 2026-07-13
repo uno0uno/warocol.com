@@ -22,6 +22,8 @@ export const useAuthStore = defineStore('auth', () => {
     return profileData.value?.data?.role_specific_data || null
   })
 
+  const sessionProfile = computed(() => session.value?.user || null)
+
   const hasProfile = computed(() => {
     return !!profile.value
   })
@@ -42,26 +44,34 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Display user data
   const displayUser = computed(() => {
-    if (!profile.value) {
+    const hasCurrentProfile = !!(sessionProfile.value || profile.value || user.value)
+    const currentProfile = {
+      ...(profile.value || {}),
+      ...(user.value || {}),
+      ...(sessionProfile.value || {}),
+    }
+
+    if (!hasCurrentProfile) {
       return {
-        name: 'Warocol',
-        policyId: 'b558ea...60eb60',
+        name: 'Usuario',
+        email: null,
         avatar: null,
-        description: 'Warocol is a community-led Web3 platform designed to add utility to decentralized projects. Build, connect, and grow with the future of digital innovation...'
+        description: '',
+        role: null,
+        hasProfile: false,
       }
     }
 
     return {
-      name: profile.value.name || 'Anonymous User',
-      email: session.value?.user?.email,
-      avatar: profile.value.logo_avatar,
-      description: profile.value.description || 'Welcome to Warocol! Complete your profile to get started.',
-      website: profile.value.website,
-      city: profile.value.city,
-      category: profile.value.category,
-      role: profileData.value?.data?.role || session.value?.user?.role,
-      policyId: 'b558ea...60eb60',
-      hasProfile: hasProfile.value
+      name: currentProfile.name || currentProfile.user_name || 'Usuario',
+      email: currentProfile.email || session.value?.user?.email || null,
+      avatar: currentProfile.logo_avatar || currentProfile.avatar || null,
+      description: currentProfile.description || '',
+      website: currentProfile.website,
+      city: currentProfile.city,
+      category: currentProfile.category,
+      role: currentProfile.role || profileData.value?.data?.role || session.value?.user?.role,
+      hasProfile: !!(sessionProfile.value || profile.value),
     }
   })
 
@@ -87,6 +97,40 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setSession(sessionData) {
     session.value = sessionData
+  }
+
+  function hydrateSession(sessionData) {
+    setSession(sessionData)
+
+    const sessionUser = sessionData?.user
+    if (!sessionUser) {
+      setUser(null)
+      return
+    }
+
+    setUser({
+      ...sessionUser,
+      name: sessionUser.name || sessionUser.user_name || 'Usuario',
+    })
+  }
+
+  function patchSessionUser(patch) {
+    if (!session.value?.user) return
+    hydrateSession({
+      ...session.value,
+      user: {
+        ...session.value.user,
+        ...patch,
+      },
+    })
+  }
+
+  async function refreshSession() {
+    const sessionData = await $fetch('/api/auth/session', {
+      credentials: 'include',
+    })
+    hydrateSession(sessionData)
+    return sessionData
   }
 
   function setProfileData(data) {
@@ -116,14 +160,14 @@ export const useAuthStore = defineStore('auth', () => {
   // Initialize from middleware data
   function initializeFromMiddleware(middlewareData) {
     if (middlewareData.session) {
-      setSession(middlewareData.session)
+      hydrateSession(middlewareData.session)
     }
     
     if (middlewareData.profileData) {
       setProfileData(middlewareData.profileData)
     }
     
-    if (middlewareData.user) {
+    if (middlewareData.user && !middlewareData.session) {
       setUser(middlewareData.user)
     }
   }
@@ -137,6 +181,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Computed
     profile,
+    sessionProfile,
     roleSpecificData,
     hasProfile,
     profileTags,
@@ -146,6 +191,9 @@ export const useAuthStore = defineStore('auth', () => {
     // Actions
     setUser,
     setSession,
+    hydrateSession,
+    patchSessionUser,
+    refreshSession,
     setProfileData,
     setLoading,
     clearAuth,

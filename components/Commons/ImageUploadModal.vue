@@ -4,15 +4,20 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/60 backdrop-blur-sm"
       @click.self="$emit('close')"
     >
-      <div class="bg-surface border-2 border-border rounded-xl w-full max-w-md shadow-xl">
+      <div
+        class="bg-surface border-2 border-border rounded-xl w-full max-w-md shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="image-upload-title"
+      >
 
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 class="text-base font-semibold text-text-primary">{{ headerTitle }}</h2>
+          <h2 id="image-upload-title" class="text-base font-semibold text-text-primary">{{ headerTitle }}</h2>
           <button
             @click="$emit('close')"
             class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-surface-secondary text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-            aria-label="Cerrar modal"
+            :aria-label="t('common.imageUpload.close')"
           >
             <XMarkIcon class="w-5 h-5" aria-hidden="true" />
           </button>
@@ -34,7 +39,7 @@
             <img
               v-if="preview"
               :src="preview"
-              :alt="`Preview de ${imageType}`"
+              :alt="t('common.imageUpload.previewAlt', { type: imageTypeLabel })"
               class="w-full object-cover"
               :class="previewClass"
             />
@@ -46,13 +51,13 @@
             >
               <PhotoIcon class="w-10 h-10 text-text-secondary/40 mb-3" aria-hidden="true" />
               <p class="text-sm font-medium text-text-primary mb-1">
-                Arrastra tu imagen o
+                {{ t('common.imageUpload.dropPrompt') }}
                 <button type="button" class="text-primary hover:underline" @click.stop="fileInput?.click()">
-                  selecciona un archivo
+                  {{ t('common.imageUpload.selectFile') }}
                 </button>
               </p>
               <p class="text-xs text-text-secondary">
-                JPEG, PNG o WebP · máx 5 MB · {{ recommendationText }}
+                {{ t('common.imageUpload.formatsHint', { recommendation: recommendationText }) }}
               </p>
             </div>
 
@@ -68,11 +73,11 @@
               type="button"
               @click="fileInput?.click()"
               class="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors group"
-              aria-label="Cambiar imagen"
+              :aria-label="t('common.imageUpload.changeImage')"
             >
               <span class="hidden group-hover:flex items-center gap-1.5 bg-foreground/60 text-white text-sm font-medium px-3 py-1.5 rounded-lg">
                 <PhotoIcon class="w-4 h-4" aria-hidden="true" />
-                Cambiar imagen
+                {{ t('common.imageUpload.changeImage') }}
               </span>
             </button>
           </div>
@@ -93,26 +98,33 @@
 
         <!-- Footer -->
         <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-border">
+          <span v-if="isUploading" class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {{ t('common.imageUpload.uploadingStable') }}
+          </span>
           <button
             type="button"
             @click="$emit('close')"
             class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface-secondary transition-colors min-h-[44px]"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
             :disabled="!preview || isUploading"
             @click="confirmUpload"
-            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] min-w-[130px] justify-center"
+            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] w-[180px] justify-center"
           >
-            <span v-if="isUploading" class="flex items-center gap-2">
-              Subiendo
-              <CommonsInlineDots aria-label="Subiendo imagen" :size="5" />
+            <span
+              v-if="isUploading"
+              class="flex items-center justify-center gap-2"
+              aria-hidden="true"
+            >
+              <UiLoadingDots size="8px" color="currentColor" aria-hidden="true" />
+              <span class="whitespace-nowrap">{{ uploadingPhrase }}</span>
             </span>
             <span v-else class="flex items-center gap-2">
               <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
-              Subir imagen
+              {{ t('common.imageUpload.uploadAction') }}
             </span>
           </button>
         </div>
@@ -123,14 +135,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { XMarkIcon, PhotoIcon, ExclamationCircleIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
 
 interface Props {
   /** Logical bucket — drives default dimensions, header title, and the
    *  `image_type` field added to the FormData (only when uploadEndpoint is
    *  the legacy tenant endpoint). */
-  imageType: 'logo' | 'banner' | 'product'
+  imageType: 'logo' | 'banner' | 'product' | 'avatar'
   /** Backend POST URL. Receives a multipart/form-data with `file`. */
   uploadEndpoint: string
   /** Whether to also send `image_type` as a form field — needed by the legacy
@@ -164,36 +176,44 @@ const compressedBlob = ref<Blob | null>(null)
 const errorMsg = ref<string | null>(null)
 const isDragging = ref(false)
 const isUploading = ref(false)
+const { t } = useI18n({ useScope: 'global' })
+const {
+  currentPhrase: uploadingPhraseKey,
+  start: startUploadingPhrases,
+  stop: stopUploadingPhrases,
+} = useLoadingPhrases(['preparing', 'optimizing', 'uploading'])
+const uploadingPhrase = computed(() => t(`common.imageUpload.uploadingPhrases.${uploadingPhraseKey.value}`))
+
+watch(isUploading, (uploading) => {
+  if (uploading) startUploadingPhrases()
+  else stopUploadingPhrases()
+})
 
 const DEFAULT_DIMS = {
   logo: { w: 400, h: 400 },
   banner: { w: 1400, h: 470 },
   product: { w: 800, h: 800 },
+  avatar: { w: 800, h: 800 },
 } as const
-
-const DEFAULT_RECOMMENDATIONS: Record<string, string> = {
-  logo: 'cuadrada recomendada',
-  banner: '1200 × 400 px recomendado',
-  product: 'cuadrada · 800×800 recomendada',
-}
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_SIZE_BYTES = 5 * 1024 * 1024
 
 const headerTitle = computed(() => {
   if (props.title) return props.title
-  if (props.imageType === 'logo') return 'Subir imagen de logo'
-  if (props.imageType === 'banner') return 'Subir imagen de banner'
-  return 'Subir imagen del producto'
+  return t(`common.imageUpload.titles.${props.imageType}`)
 })
 
 const recommendationText = computed(() => {
-  return props.recommendationText || DEFAULT_RECOMMENDATIONS[props.imageType] || ''
+  return props.recommendationText || t(`common.imageUpload.recommendations.${props.imageType}`)
 })
+
+const imageTypeLabel = computed(() => t(`common.imageUpload.types.${props.imageType}`))
 
 const previewClass = computed(() => {
   if (props.imageType === 'logo') return 'max-h-48 object-contain'
   if (props.imageType === 'product') return 'h-48 object-cover'
+  if (props.imageType === 'avatar') return 'h-48 w-48 mx-auto rounded-full object-cover'
   return 'h-36'
 })
 
@@ -249,11 +269,11 @@ async function processFile(file: File) {
   errorMsg.value = null
 
   if (!ALLOWED_TYPES.has(file.type)) {
-    errorMsg.value = 'Tipo de archivo no permitido. Usa JPEG, PNG o WebP.'
+    errorMsg.value = t('common.imageUpload.errors.invalidType')
     return
   }
   if (file.size > MAX_SIZE_BYTES) {
-    errorMsg.value = `El archivo es demasiado grande (${formatBytes(file.size)}). Máximo 5 MB.`
+    errorMsg.value = t('common.imageUpload.errors.tooLarge', { size: formatBytes(file.size) })
     return
   }
 
@@ -263,7 +283,7 @@ async function processFile(file: File) {
     preview.value = URL.createObjectURL(blob)
     compressedSize.value = formatBytes(blob.size)
   } catch {
-    errorMsg.value = 'No se pudo procesar la imagen. Intenta con otro archivo.'
+    errorMsg.value = t('common.imageUpload.errors.processing')
   }
 }
 
@@ -300,7 +320,7 @@ async function confirmUpload() {
 
     emit('upload', response.url)
   } catch (err: any) {
-    errorMsg.value = err?.data?.detail || 'Error al subir la imagen. Intenta de nuevo.'
+    errorMsg.value = err?.data?.detail || t('common.imageUpload.errors.upload')
   } finally {
     isUploading.value = false
   }

@@ -21,6 +21,26 @@
     "no": "لا",
     "notSpecified": "غير محدد",
     "nA": "N/A",
+    "imageUpload": {
+      "close": "إغلاق أداة رفع الصور",
+      "previewAlt": "معاينة {type}",
+      "dropPrompt": "اسحب صورتك هنا أو",
+      "selectFile": "اختر ملفًا",
+      "formatsHint": "JPEG أو PNG أو WebP · بحد أقصى 5 ميغابايت · {recommendation}",
+      "changeImage": "تغيير الصورة",
+      "uploadingStable": "جارٍ رفع الصورة",
+      "uploadAction": "رفع الصورة",
+      "types": { "logo": "الشعار", "banner": "اللافتة", "product": "المنتج", "avatar": "الصورة الشخصية" },
+      "titles": { "logo": "رفع صورة الشعار", "banner": "رفع صورة اللافتة", "product": "رفع صورة المنتج", "avatar": "رفع الصورة الشخصية" },
+      "recommendations": { "logo": "يوصى بصورة مربعة", "banner": "يوصى بمقاس 1200 × 400 بكسل", "product": "يوصى بصورة مربعة 800 × 800", "avatar": "يوصى بصورة مربعة 800 × 800" },
+      "uploadingPhrases": { "preparing": "جارٍ التحضير...", "optimizing": "جارٍ التحسين...", "uploading": "جارٍ الرفع..." },
+      "errors": {
+        "invalidType": "نوع الملف غير مسموح. استخدم JPEG أو PNG أو WebP.",
+        "tooLarge": "الملف كبير جدًا ({size}). الحد الأقصى 5 ميغابايت.",
+        "processing": "تعذرت معالجة الصورة. جرّب ملفًا آخر.",
+        "upload": "تعذر رفع الصورة. حاول مرة أخرى."
+      }
+    },
     "filters": {
       "field": "الحقل",
       "searchField": "حقل البحث",

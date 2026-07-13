@@ -21,6 +21,26 @@
     "no": "Não",
     "notSpecified": "Não especificado",
     "nA": "N/D",
+    "imageUpload": {
+      "close": "Fechar carregador de imagens",
+      "previewAlt": "Prévia de {type}",
+      "dropPrompt": "Arraste sua imagem ou",
+      "selectFile": "selecione um arquivo",
+      "formatsHint": "JPEG, PNG ou WebP · máx. 5 MB · {recommendation}",
+      "changeImage": "Alterar imagem",
+      "uploadingStable": "Enviando imagem",
+      "uploadAction": "Enviar imagem",
+      "types": { "logo": "logo", "banner": "banner", "product": "produto", "avatar": "foto de perfil" },
+      "titles": { "logo": "Enviar imagem do logo", "banner": "Enviar imagem do banner", "product": "Enviar imagem do produto", "avatar": "Enviar foto de perfil" },
+      "recommendations": { "logo": "imagem quadrada recomendada", "banner": "1200 × 400 px recomendado", "product": "imagem quadrada de 800 × 800 recomendada", "avatar": "imagem quadrada de 800 × 800 recomendada" },
+      "uploadingPhrases": { "preparing": "Preparando...", "optimizing": "Otimizando...", "uploading": "Enviando..." },
+      "errors": {
+        "invalidType": "Tipo de arquivo não permitido. Use JPEG, PNG ou WebP.",
+        "tooLarge": "O arquivo é muito grande ({size}). Máximo de 5 MB.",
+        "processing": "Não foi possível processar a imagem. Tente outro arquivo.",
+        "upload": "Não foi possível enviar a imagem. Tente novamente."
+      }
+    },
     "filters": {
       "field": "Campo",
       "searchField": "Campo de busca",

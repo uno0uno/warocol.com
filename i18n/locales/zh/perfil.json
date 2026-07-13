@@ -1,0 +1,38 @@
+{
+  "perfil": {
+    "head": { "title": "我的个人资料" },
+    "title": "我的个人资料",
+    "subtitle": "管理你的个人信息。这些信息属于你的用户账号，切换商户后仍会保留。",
+    "navigation": { "open": "打开我的个人资料", "noEmail": "无电子邮箱" },
+    "avatar": {
+      "alt": "{name}的头像",
+      "title": "头像",
+      "help": "请使用正方形图片。它会显示在你的账号以及你作为作者出现的公开内容中。",
+      "change": "更换照片",
+      "add": "添加照片"
+    },
+    "personal": {
+      "title": "个人信息",
+      "name": "姓名",
+      "namePlaceholder": "你的全名",
+      "nameHelp": "其他用户将看到这个名字。",
+      "description": "个人简介",
+      "descriptionPlaceholder": "简单介绍一下自己",
+      "publicHelp": "选填。你的姓名、简介和照片也可能显示在文章的公开作者信息中。"
+    },
+    "validation": {
+      "nameRequired": "姓名为必填项。",
+      "nameTooLong": "姓名不能超过120个字符。",
+      "descriptionTooLong": "个人简介不能超过500个字符。"
+    },
+    "actions": { "discard": "放弃更改", "save": "保存更改", "savingStable": "正在保存个人资料更改" },
+    "savingPhrases": { "saving": "正在保存...", "updating": "正在更新个人资料...", "almostReady": "即将完成..." },
+    "feedback": {
+      "savedTitle": "个人资料已更新",
+      "saved": "你的个人信息已成功保存。",
+      "avatarSaved": "你的照片已成功更新。",
+      "saveError": "无法保存个人资料，请重试。",
+      "refreshError": "照片已保存，但无法刷新会话。请重新加载页面。"
+    }
+  }
+}

@@ -3,10 +3,15 @@
     <div class="flex items-center justify-between px-4 py-2">
 
       <!-- User Profile -->
-      <div class="flex items-center gap-3">
+      <NuxtLink
+        to="/perfil"
+        :aria-label="t('perfil.navigation.open')"
+        class="flex items-center gap-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
         <div class="relative flex-shrink-0">
-          <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-semibold text-primary-foreground text-sm">
-            {{ userInitials }}
+          <div class="w-10 h-10 bg-primary rounded-full overflow-hidden flex items-center justify-center font-semibold text-primary-foreground text-sm">
+            <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
+            <span v-else aria-hidden="true">{{ userInitials }}</span>
           </div>
           <span class="absolute bottom-0 end-0 w-2.5 h-2.5 bg-success border-2 border-shell-mobile-bg rounded-full"></span>
         </div>
@@ -14,7 +19,7 @@
           <span class="text-sm font-semibold text-text-primary leading-tight">{{ userName }}</span>
           <span class="text-xs text-text-tertiary leading-tight">{{ selectedTenant?.name || t('shell.noTenant') }}</span>
         </div>
-      </div>
+      </NuxtLink>
 
       <!-- Actions -->
       <div class="flex items-center gap-2">
@@ -215,15 +220,21 @@
 
         <!-- User Info -->
         <div class="pt-4 border-t border-sheet-border">
-          <div class="flex items-center gap-3 px-4 py-3 bg-shell-account-hover-bg rounded-lg">
-            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-bold text-primary-foreground text-sm">
-              {{ userInitials }}
+          <NuxtLink
+            to="/perfil"
+            :aria-label="t('perfil.navigation.open')"
+            class="flex items-center gap-3 px-4 py-3 bg-shell-account-hover-bg rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+            @click="showTenantModal = false"
+          >
+            <div class="w-10 h-10 bg-primary rounded-full overflow-hidden flex items-center justify-center font-bold text-primary-foreground text-sm">
+              <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
+              <span v-else aria-hidden="true">{{ userInitials }}</span>
             </div>
             <div>
               <div class="font-semibold text-sm text-text-primary">{{ userName }}</div>
               <div class="text-xs text-text-secondary">{{ userEmail }}</div>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
     </UiBottomSheetModal>
@@ -346,8 +357,9 @@ const isLoadingTenants = computed(() => tenantsStore.isLoading)
 
 // Use auth store for user data
 const authStore = useAuthStore()
-const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
-const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || 'No email')
+const userName = computed(() => authStore.displayUser.name)
+const userEmail = computed(() => authStore.displayUser.email || t('perfil.navigation.noEmail'))
+const userAvatar = computed(() => authStore.displayUser.avatar)
 const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)

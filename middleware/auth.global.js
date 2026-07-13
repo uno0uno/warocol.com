@@ -85,10 +85,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     authStore.initializeFromMiddleware({
       session: sessionResponse,
       profileData: null,
-      user: {
-        name: sessionResponse.user.name || 'Anonymous User',
-        email: sessionResponse.user.email,
-      }
     })
 
     try {

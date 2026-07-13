@@ -1,0 +1,38 @@
+{
+  "perfil": {
+    "head": { "title": "Mein Profil" },
+    "title": "Mein Profil",
+    "subtitle": "Verwalte deine persönlichen Daten. Diese Angaben gehören zu deinem Benutzerkonto und bleiben beim Wechsel des Betriebs erhalten.",
+    "navigation": { "open": "Mein Profil öffnen", "noEmail": "Keine E-Mail" },
+    "avatar": {
+      "alt": "Profilfoto von {name}",
+      "title": "Profilfoto",
+      "help": "Verwende ein quadratisches Bild. Es erscheint in deinem Konto und in öffentlichen Inhalten, bei denen du als Autor genannt wirst.",
+      "change": "Foto ändern",
+      "add": "Foto hinzufügen"
+    },
+    "personal": {
+      "title": "Persönliche Daten",
+      "name": "Name",
+      "namePlaceholder": "Dein vollständiger Name",
+      "nameHelp": "So sehen dich andere Benutzer.",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Erzähle kurz etwas über dich",
+      "publicHelp": "Optional. Dein Name, deine Beschreibung und dein Foto können auch in der öffentlichen Autorenzeile deiner Artikel erscheinen."
+    },
+    "validation": {
+      "nameRequired": "Der Name ist erforderlich.",
+      "nameTooLong": "Der Name darf höchstens 120 Zeichen lang sein.",
+      "descriptionTooLong": "Die Beschreibung darf höchstens 500 Zeichen lang sein."
+    },
+    "actions": { "discard": "Änderungen verwerfen", "save": "Änderungen speichern", "savingStable": "Profiländerungen werden gespeichert" },
+    "savingPhrases": { "saving": "Wird gespeichert...", "updating": "Profil wird aktualisiert...", "almostReady": "Fast fertig..." },
+    "feedback": {
+      "savedTitle": "Profil aktualisiert",
+      "saved": "Deine persönlichen Daten wurden gespeichert.",
+      "avatarSaved": "Dein Foto wurde aktualisiert.",
+      "saveError": "Dein Profil konnte nicht gespeichert werden. Versuche es erneut.",
+      "refreshError": "Das Foto wurde gespeichert, aber die Sitzung konnte nicht aktualisiert werden. Lade die Seite neu."
+    }
+  }
+}

@@ -12,6 +12,7 @@ export const LOCALE_MESSAGE_FILES = [
   'finanzas.json',
   'analitica.json',
   'equipo.json',
+  'perfil.json',
 ] as const
 
 export const APP_LOCALE_DEFINITIONS = [
