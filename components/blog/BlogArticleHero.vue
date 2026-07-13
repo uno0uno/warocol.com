@@ -29,8 +29,8 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
 </script>
 
 <template>
-  <!-- Light elevated article hero over the content surface -->
-  <div class="w-full bg-surface relative overflow-hidden border-b border-border shadow-sm pt-8 pb-8 sm:pt-12 sm:pb-12 lg:pt-20 lg:pb-20">
+  <!-- Article hero aligned with the dashboard canvas. -->
+  <div class="w-full bg-background relative overflow-hidden border-b border-border shadow-sm pt-8 pb-8 sm:pt-12 sm:pb-12 lg:pt-20 lg:pb-20">
 
     <!-- Textura food emoji — misma técnica que blog index y home -->
     <div class="food-bg" aria-hidden="true">

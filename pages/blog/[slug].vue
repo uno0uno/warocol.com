@@ -184,7 +184,7 @@ useHead({
 </script>
 
 <template>
-  <div class="bg-surface">
+  <div class="bg-background">
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center min-h-screen">
       <CommonsTheCustomLoader size="large" />

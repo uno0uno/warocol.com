@@ -110,7 +110,7 @@ onMounted(() => {
     aria-hidden="true"
   />
 
-  <div class="w-full bg-surface-secondary py-6 sm:py-10 lg:py-14">
+  <div class="w-full bg-background py-6 sm:py-10 lg:py-14">
     <div class="article-container">
 
       <!-- Breadcrumb -->
