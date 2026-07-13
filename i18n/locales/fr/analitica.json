@@ -475,8 +475,8 @@
     "kali": {
       "emptyTitle": "Prêt à discuter",
       "processingSince": "Traitement depuis {elapsed}",
-      "loadingAria": "Kali est en cours de chargement",
-      "messageLabel": "Message pour Kali",
+      "loadingAria": "L’assistant est en cours de chargement",
+      "messageLabel": "Message pour l’assistant",
       "placeholder": "Posez des questions sur les ventes, les prix des plats ou votre restaurant",
       "retry": "Réessayer",
       "cancelResponse": "Annuler la réponse",
@@ -503,11 +503,11 @@
       "errors": {
         "incomplete": "La réponse n'a pas pu être complétée.",
         "emptyAssistant": "Je n'ai pas pu compléter cette réponse.",
-        "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter pour utiliser Kali.",
-        "forbidden": "Kali n'est pas activé pour ce tenant ou module.",
-        "serviceUnavailable": "Le service Kali n'a pas répondu. Veuillez réessayer dans quelques secondes.",
-        "startFailed": "La conversation avec Kali n'a pas pu être démarrée.",
-        "streamFailed": "Kali n'a pas pu compléter cette réponse."
+        "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter pour utiliser l’assistant.",
+        "forbidden": "L’assistant n’est pas activé pour ce tenant ou module.",
+        "serviceUnavailable": "Le service de l’assistant n’a pas répondu. Veuillez réessayer dans quelques secondes.",
+        "startFailed": "La conversation avec l’assistant n’a pas pu être démarrée.",
+        "streamFailed": "L’assistant n’a pas pu compléter cette réponse."
       }
     }
   }

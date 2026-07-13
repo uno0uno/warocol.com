@@ -47,7 +47,7 @@ export const dashboardPrimaryItems: DashboardNavItem[] = [
 
 export const dashboardSecondaryItems: DashboardNavItem[] = [
   { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
-  { to: '/asistente/kali', page: 'asistente', labelKey: 'nav.kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
+  { to: '/asistente', page: 'asistente', labelKey: 'nav.asistente', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/arqueo', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },
   { to: '/facturacion', page: 'facturacion', labelKey: 'nav.facturacion', icon: DocumentTextIcon, module: 'facturacion' },
   { to: '/menu/productos', page: 'menu', labelKey: 'nav.menu', icon: CubeIcon, module: 'menu' },
@@ -69,7 +69,7 @@ export const dashboardMobileGridItems: DashboardNavItem[] = [
   { to: '/menu/productos', page: 'menu', labelKey: 'nav.menu', icon: CubeIcon, module: 'menu' },
   { to: '/operaciones/comandas', page: 'operaciones', labelKey: 'nav.operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
   { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
-  { to: '/asistente/kali', page: 'asistente', labelKey: 'nav.kali', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
+  { to: '/asistente', page: 'asistente', labelKey: 'nav.asistente', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/cartera', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },
   { to: '/facturacion', page: 'facturacion', labelKey: 'nav.facturacion', icon: ReceiptPercentIcon, module: 'facturacion' },
   { to: '/equipo/miembros', page: 'equipo', labelKey: 'nav.equipo', icon: UserGroupIcon, module: 'equipo' },

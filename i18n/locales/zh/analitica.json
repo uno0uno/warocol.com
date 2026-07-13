@@ -475,8 +475,8 @@
     "kali": {
       "emptyTitle": "准备就绪，开始对话",
       "processingSince": "已处理 {elapsed}",
-      "loadingAria": "Kali 正在加载",
-      "messageLabel": "发送给 Kali 的消息",
+      "loadingAria": "助手正在加载",
+      "messageLabel": "发送给助手的消息",
       "placeholder": "询问销售额、菜品价格或您的餐厅信息",
       "retry": "重试",
       "cancelResponse": "取消回复",
@@ -503,11 +503,11 @@
       "errors": {
         "incomplete": "无法完成回复。",
         "emptyAssistant": "我无法完成此回复。",
-        "sessionExpired": "您的会话已过期。请重新登录以使用 Kali。",
-        "forbidden": "此租户或模块未启用 Kali。",
-        "serviceUnavailable": "Kali 服务无响应。请稍后重试。",
-        "startFailed": "无法启动与 Kali 的对话。",
-        "streamFailed": "Kali 无法完成此回复。"
+        "sessionExpired": "您的会话已过期。请重新登录以使用助手。",
+        "forbidden": "此租户或模块未启用助手。",
+        "serviceUnavailable": "助手服务无响应。请稍后重试。",
+        "startFailed": "无法启动与助手的对话。",
+        "streamFailed": "助手无法完成此回复。"
       }
     }
   }
