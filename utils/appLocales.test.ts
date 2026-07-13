@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   ALL_APP_LOCALES,
   APP_LOCALES,
+  LOCALE_MESSAGE_FILES,
   getLocaleDirection,
   normalizeAppLocale,
   normalizeEnabledAppLocale,
@@ -29,6 +30,10 @@ describe('app locale catalog', () => {
     assert.equal(normalizeEnabledAppLocale('fr'), 'fr')
     assert.equal(normalizeEnabledAppLocale('ar'), 'ar')
     assert.equal(normalizeEnabledAppLocale('en-US'), 'en')
+  })
+
+  it('loads the personal profile message domain', () => {
+    assert.ok(LOCALE_MESSAGE_FILES.includes('perfil.json'))
   })
 
   it('maps language, numeric tags, and RTL direction', () => {

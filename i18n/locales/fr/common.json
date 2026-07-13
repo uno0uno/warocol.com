@@ -21,6 +21,26 @@
     "no": "Non",
     "notSpecified": "Non spécifié",
     "nA": "N/A",
+    "imageUpload": {
+      "close": "Fermer le chargeur d’images",
+      "previewAlt": "Aperçu de {type}",
+      "dropPrompt": "Glissez votre image ici ou",
+      "selectFile": "sélectionnez un fichier",
+      "formatsHint": "JPEG, PNG ou WebP · 5 Mo max. · {recommendation}",
+      "changeImage": "Changer l’image",
+      "uploadingStable": "Téléversement de l’image",
+      "uploadAction": "Téléverser l’image",
+      "types": { "logo": "logo", "banner": "bannière", "product": "produit", "avatar": "photo de profil" },
+      "titles": { "logo": "Téléverser le logo", "banner": "Téléverser la bannière", "product": "Téléverser l’image du produit", "avatar": "Téléverser la photo de profil" },
+      "recommendations": { "logo": "image carrée recommandée", "banner": "1200 × 400 px recommandé", "product": "image carrée de 800 × 800 recommandée", "avatar": "image carrée de 800 × 800 recommandée" },
+      "uploadingPhrases": { "preparing": "Préparation...", "optimizing": "Optimisation...", "uploading": "Téléversement..." },
+      "errors": {
+        "invalidType": "Type de fichier non autorisé. Utilisez JPEG, PNG ou WebP.",
+        "tooLarge": "Le fichier est trop volumineux ({size}). Maximum 5 Mo.",
+        "processing": "Impossible de traiter l’image. Essayez un autre fichier.",
+        "upload": "Impossible de téléverser l’image. Réessayez."
+      }
+    },
     "filters": {
       "field": "Champ",
       "searchField": "Champ de recherche",

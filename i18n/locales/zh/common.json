@@ -21,6 +21,26 @@
     "no": "否",
     "notSpecified": "未指定",
     "nA": "不适用",
+    "imageUpload": {
+      "close": "关闭图片上传器",
+      "previewAlt": "{type}预览",
+      "dropPrompt": "将图片拖到这里，或",
+      "selectFile": "选择文件",
+      "formatsHint": "JPEG、PNG或WebP · 最大5 MB · {recommendation}",
+      "changeImage": "更换图片",
+      "uploadingStable": "正在上传图片",
+      "uploadAction": "上传图片",
+      "types": { "logo": "标志", "banner": "横幅", "product": "商品", "avatar": "头像" },
+      "titles": { "logo": "上传标志图片", "banner": "上传横幅图片", "product": "上传商品图片", "avatar": "上传头像" },
+      "recommendations": { "logo": "建议使用正方形图片", "banner": "建议尺寸为1200 × 400像素", "product": "建议使用800 × 800正方形图片", "avatar": "建议使用800 × 800正方形图片" },
+      "uploadingPhrases": { "preparing": "正在准备...", "optimizing": "正在优化...", "uploading": "正在上传..." },
+      "errors": {
+        "invalidType": "不支持此文件类型。请使用JPEG、PNG或WebP。",
+        "tooLarge": "文件过大（{size}）。最大5 MB。",
+        "processing": "无法处理图片，请尝试其他文件。",
+        "upload": "无法上传图片，请重试。"
+      }
+    },
     "filters": {
       "field": "字段",
       "searchField": "搜索字段",

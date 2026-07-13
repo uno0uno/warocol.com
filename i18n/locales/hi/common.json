@@ -21,6 +21,26 @@
     "no": "नहीं",
     "notSpecified": "निर्दिष्ट नहीं",
     "nA": "N/A",
+    "imageUpload": {
+      "close": "इमेज अपलोडर बंद करें",
+      "previewAlt": "{type} का पूर्वावलोकन",
+      "dropPrompt": "अपना चित्र यहाँ खींचें या",
+      "selectFile": "फ़ाइल चुनें",
+      "formatsHint": "JPEG, PNG या WebP · अधिकतम 5 MB · {recommendation}",
+      "changeImage": "चित्र बदलें",
+      "uploadingStable": "चित्र अपलोड हो रहा है",
+      "uploadAction": "चित्र अपलोड करें",
+      "types": { "logo": "लोगो", "banner": "बैनर", "product": "उत्पाद", "avatar": "प्रोफ़ाइल फ़ोटो" },
+      "titles": { "logo": "लोगो चित्र अपलोड करें", "banner": "बैनर चित्र अपलोड करें", "product": "उत्पाद चित्र अपलोड करें", "avatar": "प्रोफ़ाइल फ़ोटो अपलोड करें" },
+      "recommendations": { "logo": "चौकोर चित्र सुझाया गया", "banner": "1200 × 400 px सुझाया गया", "product": "800 × 800 का चौकोर चित्र सुझाया गया", "avatar": "800 × 800 का चौकोर चित्र सुझाया गया" },
+      "uploadingPhrases": { "preparing": "तैयार हो रहा है...", "optimizing": "अनुकूलित हो रहा है...", "uploading": "अपलोड हो रहा है..." },
+      "errors": {
+        "invalidType": "यह फ़ाइल प्रकार मान्य नहीं है। JPEG, PNG या WebP का उपयोग करें।",
+        "tooLarge": "फ़ाइल बहुत बड़ी है ({size})। अधिकतम 5 MB।",
+        "processing": "चित्र संसाधित नहीं हो सका। दूसरी फ़ाइल आज़माएँ।",
+        "upload": "चित्र अपलोड नहीं हो सका। फिर प्रयास करें।"
+      }
+    },
     "filters": {
       "field": "फ़ील्ड",
       "searchField": "खोज फ़ील्ड",

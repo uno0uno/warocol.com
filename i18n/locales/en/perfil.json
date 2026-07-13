@@ -1,0 +1,38 @@
+{
+  "perfil": {
+    "head": { "title": "My profile" },
+    "title": "My profile",
+    "subtitle": "Manage your personal details. This information belongs to your user and remains the same when you switch businesses.",
+    "navigation": { "open": "Open my profile", "noEmail": "No email" },
+    "avatar": {
+      "alt": "Profile photo of {name}",
+      "title": "Profile photo",
+      "help": "Use a square image. It will appear on your account and in public content where you are listed as an author.",
+      "change": "Change photo",
+      "add": "Add photo"
+    },
+    "personal": {
+      "title": "Personal details",
+      "name": "Name",
+      "namePlaceholder": "Your full name",
+      "nameHelp": "This is how other users will see you.",
+      "description": "Description",
+      "descriptionPlaceholder": "Tell us a little about yourself",
+      "publicHelp": "Optional. Your name, description, and photo may also appear in the public byline of your articles."
+    },
+    "validation": {
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name cannot exceed 120 characters.",
+      "descriptionTooLong": "Description cannot exceed 500 characters."
+    },
+    "actions": { "discard": "Discard changes", "save": "Save changes", "savingStable": "Saving profile changes" },
+    "savingPhrases": { "saving": "Saving...", "updating": "Updating your profile...", "almostReady": "Almost ready..." },
+    "feedback": {
+      "savedTitle": "Profile updated",
+      "saved": "Your personal details were saved successfully.",
+      "avatarSaved": "Your photo was updated successfully.",
+      "saveError": "We could not save your profile. Try again.",
+      "refreshError": "The photo was saved, but we could not refresh your session. Reload the page."
+    }
+  }
+}
