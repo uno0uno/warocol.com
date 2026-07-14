@@ -40,9 +40,6 @@ watch(() => draft.value.country_code, () => {
 
 const canSubmit = computed(() => canSubmitFinancialProfile(response.value, draft.value))
 const isLocked = computed(() => response.value?.eligibility.eligible === false)
-const lockTone = computed(() =>
-  response.value?.eligibility.lock_type === 'permanent' ? 'danger' : 'warning',
-)
 
 const makeDisplayNames = (type: 'region' | 'currency') => {
   try {
@@ -56,25 +53,6 @@ const countryLabel = (code: string) => makeDisplayNames('region')?.of(code) ?? c
 const currencyLabel = (code: string) => {
   const name = makeDisplayNames('currency')?.of(code)
   return name && name !== code ? `${name} (${code})` : code
-}
-
-const reasonLabel = (code: string) => {
-  const knownReasons: Record<string, string> = {
-    PERMANENT_FINANCIAL_ACTIVITY: 'permanentActivity',
-    TEMPORARY_OPERATIONAL_ACTIVITY: 'temporaryActivity',
-    permanent_orders: 'permanentOrders',
-    permanent_payments: 'permanentPayments',
-    permanent_journals: 'permanentJournals',
-    permanent_invoices: 'permanentInvoices',
-    permanent_wallet_movements: 'permanentWallet',
-    temporary_open_orders: 'temporaryOrders',
-    temporary_open_shifts: 'temporaryShifts',
-    temporary_activity: 'temporaryActivity',
-  }
-  const key = knownReasons[code]
-  return key
-    ? t(`operaciones.personalizar.financial.lockReasons.${key}`)
-    : t('operaciones.personalizar.financial.lockReasons.unknown', { code })
 }
 
 const queryErrorMessage = computed(() => {
@@ -157,41 +135,42 @@ const confirmSave = async () => {
     <template v-else>
       <div
         v-if="isLocked"
-        class="mt-4 rounded-lg border p-4"
-        :class="lockTone === 'danger'
-          ? 'border-state-danger-border bg-state-danger-bg'
-          : 'border-state-warning-border bg-state-warning-bg'"
+        class="mt-4 rounded-lg border border-state-warning-border bg-state-warning-bg p-3"
         role="status"
         aria-live="polite"
       >
-        <p
-          class="text-sm font-semibold"
-          :class="lockTone === 'danger' ? 'text-state-danger-text' : 'text-state-warning-text'"
-        >
+        <p class="text-sm font-semibold text-state-warning-text">
           {{ response.eligibility.lock_type === 'permanent'
             ? t('operaciones.personalizar.financial.permanentLockTitle')
             : t('operaciones.personalizar.financial.temporaryLockTitle') }}
         </p>
-        <p
-          class="mt-1 text-xs leading-snug"
-          :class="lockTone === 'danger' ? 'text-state-danger-text/90' : 'text-state-warning-text/90'"
-        >
+        <p class="mt-1 text-xs leading-snug text-state-warning-text/90">
           {{ response.eligibility.lock_type === 'permanent'
             ? t('operaciones.personalizar.financial.permanentLockHelp')
             : t('operaciones.personalizar.financial.temporaryLockHelp') }}
         </p>
-        <ul v-if="response.eligibility.reason_codes.length" class="mt-2 list-disc space-y-1 ps-5 text-xs">
-          <li
-            v-for="reason in response.eligibility.reason_codes"
-            :key="reason"
-            :class="lockTone === 'danger' ? 'text-state-danger-text' : 'text-state-warning-text'"
-          >
-            {{ reasonLabel(reason) }}
-          </li>
-        </ul>
       </div>
 
-      <fieldset class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" :disabled="isLocked || isSaving">
+      <dl v-if="isLocked" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5">
+          <dt class="text-xs text-text-secondary">
+            {{ t('operaciones.personalizar.financial.country') }}
+          </dt>
+          <dd class="mt-0.5 text-sm font-semibold text-text-primary">
+            {{ countryLabel(draft.country_code) }}
+          </dd>
+        </div>
+        <div class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5">
+          <dt class="text-xs text-text-secondary">
+            {{ t('operaciones.personalizar.financial.currency') }}
+          </dt>
+          <dd class="mt-0.5 text-sm font-semibold text-text-primary">
+            {{ currencyLabel(draft.base_currency_code) }}
+          </dd>
+        </div>
+      </dl>
+
+      <fieldset v-else class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" :disabled="isSaving">
         <legend class="sr-only">{{ t('operaciones.personalizar.financial.fieldsLegend') }}</legend>
         <div class="flex flex-col gap-1">
           <label for="financial-country" class="text-sm font-medium text-text-primary">
@@ -231,7 +210,7 @@ const confirmSave = async () => {
         </div>
       </fieldset>
 
-      <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div v-if="!isLocked" class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <p class="max-w-2xl text-xs leading-snug text-text-secondary">
           {{ t('operaciones.personalizar.financial.irreversibleHelp') }}
         </p>
