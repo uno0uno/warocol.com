@@ -177,6 +177,11 @@
       "lastDocument": "Dernier document",
       "noDocuments": "Aucun document émis"
     },
+    "commercial": {
+      "title": "Documents WARO",
+      "status": "Mode commercial non fiscal",
+      "notice": "WARO enregistre ces documents pour l’activité de l’entreprise, mais ne les transmet ni ne les valide auprès d’une autorité fiscale."
+    },
     "audit": {
       "back": "Retour à la Facturation",
       "filterResolution": "Filtrer par résolution",
@@ -187,7 +192,24 @@
       "validatedDian": "Déjà validé auprès de la DIAN",
       "matias5xx": "Erreur 5xx de Matias",
       "emptyTitle": "Aucun numéro brûlé",
-      "totalHistorical": "Total historique"
+      "totalHistorical": "Total historique",
+      "reason": "Motif",
+      "networkTimeout": "Délai réseau dépassé",
+      "title": "Journal des numéros retirés",
+      "description": "Numéros retirés de la séquence DIAN. Chaque ligne identifie un numéro non réutilisable et conserve sa justification vérifiable.",
+      "last24h": "Dernières 24 h",
+      "last7d": "7 derniers jours",
+      "last30d": "30 derniers jours",
+      "allResolutions": "Toutes les résolutions",
+      "recordCount": "{count} enregistrements",
+      "emptyBody": "Votre numérotation DIAN ne comporte aucun retrait.",
+      "emptyForResolution": "Votre numérotation DIAN ne comporte aucun retrait pour cette résolution.",
+      "orderLabel": "Commande {order}",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {page} sur {total}",
+      "unavailableTitle": "Le journal DIAN est indisponible",
+      "unavailableBody": "Cette entreprise utilise des documents WARO non fiscaux et ne consulte ni numérotation ni validation d’une autorité fiscale."
     }
   }
 }

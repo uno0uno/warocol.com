@@ -1,4 +1,4 @@
-import { formatMoney, normalizeCurrencyCode } from '~/utils/currencyDisplay'
+import { formatMoney, normalizeCurrencyCode, type FormatMoneyOptions } from '~/utils/currencyDisplay'
 import { toNumberLocaleTag } from '~/utils/appLocales'
 import {
   DEFAULT_UI_LOCALE,
@@ -69,11 +69,15 @@ export const useFormatters = () => {
   }
 
   /** Display-only money; currency_code from prefs (default COP) + locale punctuation. */
-  const formatCurrency = (value: number | null): string => {
+  const formatCurrency = (
+    value: number | null | undefined,
+    options?: Pick<FormatMoneyOptions, 'notation'>,
+  ): string => {
     return formatMoney(value, {
       currency: currencyCode.value,
       locale: uiLocale.value,
       minorUnits: currencyMinorUnits.value,
+      notation: options?.notation,
     })
   }
 

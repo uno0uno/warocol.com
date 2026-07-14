@@ -177,6 +177,11 @@
       "lastDocument": "Letztes Dokument",
       "noDocuments": "Keine Dokumente ausgestellt"
     },
+    "commercial": {
+      "title": "WARO-Dokumente",
+      "status": "Nichtfiskalischer Geschäftsmodus",
+      "notice": "WARO erfasst diese Dokumente für den Geschäftsbetrieb, übermittelt oder validiert sie jedoch nicht bei einer Steuerbehörde."
+    },
     "audit": {
       "back": "Zurück zur Rechnungsstellung",
       "filterResolution": "Nach Auflösung filtern",
@@ -187,7 +192,24 @@
       "validatedDian": "Bereits bei DIAN validiert",
       "matias5xx": "Matias 5xx Fehler",
       "emptyTitle": "Keine verbrauchten Nummern vorhanden",
-      "totalHistorical": "Historische Gesamtsumme"
+      "totalHistorical": "Historische Gesamtsumme",
+      "reason": "Grund",
+      "networkTimeout": "Netzwerk-Zeitüberschreitung",
+      "title": "Protokoll entfernter Nummern",
+      "description": "Aus der DIAN-Sequenz entfernte Nummern. Jede Zeile kennzeichnet eine nicht wiederverwendbare Nummer und bewahrt ihre prüfbare Begründung.",
+      "last24h": "Letzte 24 Stunden",
+      "last7d": "Letzte 7 Tage",
+      "last30d": "Letzte 30 Tage",
+      "allResolutions": "Alle Beschlüsse",
+      "recordCount": "{count} Einträge",
+      "emptyBody": "Ihre DIAN-Nummerierung enthält keine entfernten Nummern.",
+      "emptyForResolution": "Ihre DIAN-Nummerierung enthält in diesem Beschluss keine entfernten Nummern.",
+      "orderLabel": "Bestellung {order}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "pageOf": "Seite {page} von {total}",
+      "unavailableTitle": "Das DIAN-Protokoll ist nicht verfügbar",
+      "unavailableBody": "Dieses Unternehmen nutzt nichtfiskalische WARO-Dokumente und fragt keine Nummerierung oder Validierung einer Steuerbehörde ab."
     }
   }
 }

@@ -7,6 +7,8 @@ import {
   getCompatibleCurrencyCodes,
   getCurrencyMinorUnits,
   hasFinancialProfileChanges,
+  isColombiaPucProfile,
+  isIntegratedFiscalProfile,
   type TenantFinancialProfileResponse,
 } from './useTenantFinancialProfile.ts'
 
@@ -75,5 +77,16 @@ describe('tenant financial-profile helpers', () => {
     assert.equal(getCurrencyMinorUnits(response.currencies, 'CLP'), 0)
     assert.equal(getCurrencyMinorUnits(response.currencies, 'USD'), 2)
     assert.equal(getCurrencyMinorUnits(response.currencies, 'XXX', 0), 0)
+  })
+
+  it('derives fiscal and PUC gates from the trusted tenant response', () => {
+    assert.equal(isIntegratedFiscalProfile(response, 'tenant-co'), true)
+    assert.equal(isColombiaPucProfile(response, 'tenant-co'), true)
+    assert.equal(isIntegratedFiscalProfile(response, 'another-tenant'), false)
+    assert.equal(isIntegratedFiscalProfile({
+      ...response,
+      profile: { ...response.profile, document_mode: 'waro_commercial', fiscal_provider: null },
+      capabilities: { ...response.capabilities, matias_dian: false },
+    }, 'tenant-co'), false)
   })
 })

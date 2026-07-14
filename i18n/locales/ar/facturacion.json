@@ -177,6 +177,11 @@
       "lastDocument": "آخر مستند",
       "noDocuments": "لا توجد مستندات صادرة"
     },
+    "commercial": {
+      "title": "مستندات WARO",
+      "status": "وضع تجاري غير ضريبي",
+      "notice": "تسجل WARO هذه المستندات لتشغيل النشاط، لكنها لا ترسلها أو تتحقق منها لدى سلطة ضريبية."
+    },
     "audit": {
       "back": "العودة إلى الفواتير",
       "filterResolution": "تصفية حسب القرار",
@@ -187,7 +192,24 @@
       "validatedDian": "تم التحقق منه بالفعل في DIAN",
       "matias5xx": "خطأ 5xx من Matias",
       "emptyTitle": "لا توجد أرقام محروقة",
-      "totalHistorical": "الإجمالي التاريخي"
+      "totalHistorical": "الإجمالي التاريخي",
+      "reason": "السبب",
+      "networkTimeout": "انتهت مهلة الشبكة",
+      "title": "سجل الأرقام المستبعدة",
+      "description": "أرقام مستبعدة من تسلسل DIAN. يحدد كل صف رقمًا لا يمكن إعادة استخدامه ويحفظ مبرره القابل للتدقيق.",
+      "last24h": "آخر 24 ساعة",
+      "last7d": "آخر 7 أيام",
+      "last30d": "آخر 30 يومًا",
+      "allResolutions": "جميع القرارات",
+      "recordCount": "{count} سجل",
+      "emptyBody": "لا تحتوي أرقام DIAN لديك على أرقام مستبعدة.",
+      "emptyForResolution": "لا تحتوي أرقام DIAN لديك على أرقام مستبعدة في هذا القرار.",
+      "orderLabel": "الطلب {order}",
+      "previous": "السابق",
+      "next": "التالي",
+      "pageOf": "الصفحة {page} من {total}",
+      "unavailableTitle": "سجل DIAN غير متاح",
+      "unavailableBody": "يستخدم هذا النشاط مستندات WARO غير الضريبية ولا يستعلم عن ترقيم أو تحقق سلطة ضريبية."
     }
   }
 }

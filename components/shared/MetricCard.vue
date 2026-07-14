@@ -60,6 +60,7 @@
 <script setup lang="ts">
 import { type VariantProps, cva } from 'class-variance-authority'
 import { cn } from '../ui/utils'
+import { formatMetricCardValue } from './metricCardValue'
 
 // Define metric card variants using CVA following governance rules
 const metricCardVariants = cva(
@@ -264,39 +265,17 @@ const props = withDefaults(defineProps<Props>(), {
   showIcon: true
 })
 
-// Compact currency formatter for large numbers
-const formatCompactCurrency = (num: number): string => {
-  if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
-  return `$${Math.round(num).toLocaleString()}`
-}
+const { formatCurrency, formatNumber } = useFormatters()
 
 // Format value based on type
 const formattedValue = computed(() => {
-  if (props.format === 'text') return props.value
-
-  // Handle undefined, null, or empty values
-  if (props.value === undefined || props.value === null || props.value === '') {
-    return props.format === 'currency' ? '$0' : '0'
-  }
-
-  const numValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value
-
-  // Handle NaN after parsing
-  if (isNaN(numValue)) {
-    return props.format === 'currency' ? '$0' : '0'
-  }
-
-  switch (props.format) {
-    case 'currency':
-      return formatCompactCurrency(numValue)
-    case 'percentage':
-      return `${numValue.toFixed(props.precision)}%`
-    case 'decimal':
-      return numValue.toFixed(props.precision)
-    case 'number':
-    default:
-      return `${numValue.toLocaleString()}${props.suffix}`
-  }
+  return formatMetricCardValue({
+    value: props.value,
+    format: props.format,
+    precision: props.precision,
+    suffix: props.suffix,
+    formatCurrency,
+    formatNumber,
+  })
 })
 </script>

@@ -37,6 +37,8 @@ export type FormatMoneyOptions = {
   locale?: string | null
   /** Currency minor units supplied by the authoritative tenant profile. */
   minorUnits?: number | null
+  /** Optional compact notation for metric cards; currency still comes from the tenant profile. */
+  notation?: 'standard' | 'compact'
 }
 
 /** Keep Intl fraction settings bounded even if a partial API response is malformed. */
@@ -49,25 +51,25 @@ export function normalizeMinorUnits(value?: number | null, fallback = 0): number
 
 /**
  * Format a money amount for UI display only.
- * null/undefined → `$0` (legacy useFormatters contract).
+ * null/undefined/non-finite values render as zero in the resolved currency.
  * Does not convert amounts or touch storage/API payloads.
  */
 export function formatMoney(
   value: number | null | undefined,
   options?: FormatMoneyOptions,
 ): string {
-  if (value === null || value === undefined) return '$0'
-  if (!Number.isFinite(value)) return '$0'
-
   const currency = normalizeCurrencyCode(options?.currency)
   const localeTag = localeToNumberFormatTag(options?.locale)
   const minorUnits = normalizeMinorUnits(options?.minorUnits, 0)
+  const numericValue = value === null || value === undefined || !Number.isFinite(value) ? 0 : value
 
   return new Intl.NumberFormat(localeTag, {
     style: 'currency',
     currency,
+    notation: options?.notation ?? 'standard',
+    compactDisplay: 'short',
     minimumFractionDigits: minorUnits,
     maximumFractionDigits: minorUnits,
-  }).format(value)
+  }).format(numericValue)
 }
 import { toNumberLocaleTag } from './appLocales.ts'

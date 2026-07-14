@@ -177,6 +177,11 @@
       "lastDocument": "最新文件",
       "noDocuments": "未开具任何文件"
     },
+    "commercial": {
+      "title": "WARO 文档",
+      "status": "非税务商业模式",
+      "notice": "WARO 为业务运营记录这些文档，但不会向税务机关传输或验证这些文档。"
+    },
     "audit": {
       "back": "返回发票",
       "filterResolution": "按决议筛选",
@@ -187,7 +192,24 @@
       "validatedDian": "已在DIAN验证",
       "matias5xx": "Matias 5xx错误",
       "emptyTitle": "没有作废编号",
-      "totalHistorical": "历史总计"
+      "totalHistorical": "历史总计",
+      "reason": "原因",
+      "networkTimeout": "网络超时",
+      "title": "已停用编号日志",
+      "description": "从 DIAN 序列中移除的编号。每一行标识一个不可重复使用的编号，并保留可审计的原因。",
+      "last24h": "过去 24 小时",
+      "last7d": "过去 7 天",
+      "last30d": "过去 30 天",
+      "allResolutions": "所有决议",
+      "recordCount": "{count} 条记录",
+      "emptyBody": "您的 DIAN 编号中没有已停用编号。",
+      "emptyForResolution": "此决议中没有已停用的 DIAN 编号。",
+      "orderLabel": "订单 {order}",
+      "previous": "上一页",
+      "next": "下一页",
+      "pageOf": "第 {page} 页，共 {total} 页",
+      "unavailableTitle": "DIAN 日志不可用",
+      "unavailableBody": "此业务使用非税务 WARO 文档，不会查询税务机关的编号或验证。"
     }
   }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { getAccountIndentClass, getAccountLevel } from '~/utils/accountingDisplay'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t } = useI18n({ useScope: 'global' })
@@ -62,6 +63,7 @@ interface TrialBalanceRow {
   class: string
   accountType: string
   normalBalance: string
+  level?: number
   openingBalance: number
   periodDebits: number
   periodCredits: number
@@ -113,8 +115,8 @@ const handleConsultar = () => {
   refetch()
 }
 
-// ── PUC class constants ──────────────────────────────────────────────────────
-const PUC_CLASSES = computed(() => [
+// ── Account class constants ──────────────────────────────────────────────────
+const ACCOUNT_CLASSES = computed(() => [
   { value: '1', label: t('finanzas.contabilidad.classes.assets') },
   { value: '2', label: t('finanzas.contabilidad.classes.liabilities') },
   { value: '3', label: t('finanzas.contabilidad.classes.equity') },
@@ -132,7 +134,7 @@ const groupedRows = computed(() => {
     subtotals: { openingBalance: number; periodDebits: number; periodCredits: number; closingBalance: number }
   }[] = []
 
-  for (const cls of PUC_CLASSES.value) {
+  for (const cls of ACCOUNT_CLASSES.value) {
     const items = rows.value.filter(r => r.class === cls.value)
     if (items.length === 0) continue
 
@@ -150,15 +152,6 @@ const groupedRows = computed(() => {
   }
   return groups
 })
-
-// ── Indent from code length ──────────────────────────────────────────────────
-const indentStyle = (code: string): string => {
-  const len = code.length
-  if (len <= 1) return ''
-  if (len <= 2) return 'ps-4'
-  if (len <= 4) return 'ps-8'
-  return 'ps-12'
-}
 
 // ── Currency formatter ───────────────────────────────────────────────────────
 const formatAccountingCurrency = (value: number): string => {
@@ -418,7 +411,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                   <td class="py-2 px-3">
                     <span
                       class="text-sm text-text-primary"
-                      :class="[indentStyle(row.code), row.code.length <= 2 ? 'font-semibold' : 'font-normal']"
+                      :class="[getAccountIndentClass(row), getAccountLevel(row) <= 2 ? 'font-semibold' : 'font-normal']"
                     >
                       {{ row.name }}
                     </span>

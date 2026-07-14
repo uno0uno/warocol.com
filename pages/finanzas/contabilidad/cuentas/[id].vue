@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant } from '~/utils/accountingDisplay'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -11,7 +12,8 @@ const { t, locale } = useI18n({ useScope: 'global' })
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
 const { formatCalendarDate, formatCurrency } = useFormatters()
-const formatCOP = (v: number) => formatCurrency(v ?? 0)
+const formatAmount = (v: number) => formatCurrency(v ?? 0)
+const { isColombiaPuc } = useTenantFinancialProfile()
 
 // Truncate a long description to keep table rows compact.
 // Click on the row opens the slide-over with the full text.
@@ -47,13 +49,10 @@ const ACCOUNT_CLASS_CHIP: Record<string, string> = {
   '5': 'bg-[rgba(220,38,38,0.10)] text-[#991b1b]',
   '6': 'bg-[rgba(112,44,0,0.10)] text-[#702c00]',
 }
-const pucLevel = (code: string) => {
-  const len = code.length
-  if (len === 1) return { label: t('finanzas.contabilidad.class'), variant: 'primary' }
-  if (len === 2) return { label: t('finanzas.contabilidad.group'), variant: 'secondary' }
-  if (len === 4) return { label: t('finanzas.contabilidad.account'), variant: 'warning' }
-  return { label: t('finanzas.contabilidad.subaccount'), variant: 'success' }
-}
+const accountLevelDisplay = (account: TenantAccount) => ({
+  label: t(`finanzas.contabilidad.${getAccountLevelKey(account)}`),
+  variant: getAccountLevelVariant(account),
+})
 const SOURCE_VARIANTS: Record<string, string> = {
   ventas: 'success', gastos: 'destructive', nomina: 'warning',
   inventario: 'primary', arqueo: 'secondary',
@@ -424,7 +423,7 @@ const openEntryDetail = (entry: { id: string }) => {
               </span>
               <span
                 class="inline-flex items-center rounded-full bg-[rgba(112,44,0,0.10)] px-2.5 py-1 text-xs leading-4 font-semibold text-[#702c00]">
-                {{ pucLevel(account.code).label }}
+                {{ accountLevelDisplay(account).label }}
               </span>
               <span
                 class="inline-flex items-center rounded-full bg-[rgba(33,29,53,0.10)] px-2.5 py-1 text-xs leading-4 font-semibold text-[#211d35]">
@@ -451,7 +450,7 @@ const openEntryDetail = (entry: { id: string }) => {
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
               <div class="inline-flex h-4 items-center gap-2 whitespace-nowrap">
                 <span class="text-xs leading-4 font-semibold uppercase tracking-[0.04em] text-[#3e4451]">
-                  {{ t('finanzas.contabilidad.pucAccount') }}
+                  {{ t(isColombiaPuc ? 'finanzas.contabilidad.pucAccount' : 'finanzas.contabilidad.accountCode') }}
                 </span>
                 <span class="font-mono text-sm leading-5 font-bold text-[#211d35]">
                   {{ account.code }}
@@ -460,7 +459,7 @@ const openEntryDetail = (entry: { id: string }) => {
             </div>
           </div>
           <div class="flex flex-shrink-0 flex-wrap items-center gap-2 lg:justify-end">
-            <button v-if="account.code.length < 6" type="button"
+            <button v-if="getAccountLevel(account) < 4" type="button"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#7c3bed] px-4 text-sm font-semibold leading-5 text-white transition-colors hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/30 active:scale-[0.98]"
               :aria-label="t('finanzas.contabilidad.createSubaccount')" @click="openCreatePanel">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -610,12 +609,12 @@ const openEntryDetail = (entry: { id: string }) => {
               </div>
               <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                 <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{
-                  formatCOP(item.totalDebit) }}</span>
+                  formatAmount(item.totalDebit) }}</span>
                 <span v-if="item.totalCredit" class="text-xs font-mono text-text-secondary tabular-nums">-{{
-                  formatCOP(item.totalCredit) }}</span>
+                  formatAmount(item.totalCredit) }}</span>
                 <span class="text-xs font-mono font-semibold tabular-nums"
                   :class="item.runningBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-                  {{ formatCOP(item.runningBalance) }}
+                  {{ formatAmount(item.runningBalance) }}
                 </span>
               </div>
             </button>
@@ -640,20 +639,20 @@ const openEntryDetail = (entry: { id: string }) => {
           </template>
 
           <template #cell-totalDebit="{ value }">
-            <span v-if="value" class="text-sm font-mono font-medium text-primary tabular-nums">{{ formatCOP(value)
+            <span v-if="value" class="text-sm font-mono font-medium text-primary tabular-nums">{{ formatAmount(value)
               }}</span>
             <span v-else class="text-xs text-text-secondary">—</span>
           </template>
 
           <template #cell-totalCredit="{ value }">
-            <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatCOP(value) }}</span>
+            <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatAmount(value) }}</span>
             <span v-else class="text-xs text-text-secondary">—</span>
           </template>
 
           <template #cell-runningBalance="{ value }">
             <span class="text-sm font-mono font-semibold tabular-nums"
               :class="value >= 0 ? 'text-text-primary' : 'text-destructive'">
-              {{ formatCOP(value) }}
+              {{ formatAmount(value) }}
             </span>
           </template>
 
@@ -755,7 +754,7 @@ const openEntryDetail = (entry: { id: string }) => {
           <!-- Código -->
           <div class="flex flex-col gap-1.5">
             <label for="create-code" class="text-sm font-medium text-text-primary">
-              {{ t('finanzas.contabilidad.pucCode') }} <span class="text-destructive" aria-hidden="true">*</span>
+              {{ t(isColombiaPuc ? 'finanzas.contabilidad.pucCode' : 'finanzas.contabilidad.accountCode') }} <span class="text-destructive" aria-hidden="true">*</span>
             </label>
             <div class="flex items-center rounded-lg bg-background overflow-hidden">
               <span class="ps-3 pe-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code
@@ -763,7 +762,7 @@ const openEntryDetail = (entry: { id: string }) => {
               <span class="text-text-secondary select-none flex-shrink-0 pe-1">·</span>
               <input id="create-code" ref="codeInput" v-model="createSuffix" type="text" placeholder="05" maxlength="6"
                 class="flex-1 min-w-0 py-2.5 pe-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
-                :aria-label="t('finanzas.contabilidad.pucCodeSuffix')"
+                :aria-label="t(isColombiaPuc ? 'finanzas.contabilidad.pucCodeSuffix' : 'finanzas.contabilidad.accountCodeSuffix')"
                 @keydown.escape="closeCreatePanel" />
             </div>
             <p class="text-xs text-text-secondary">

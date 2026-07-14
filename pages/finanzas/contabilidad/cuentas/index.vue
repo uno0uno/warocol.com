@@ -2,6 +2,7 @@
 const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant } from '~/utils/accountingDisplay'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.contabilidad.accountsTitle') })
@@ -10,7 +11,8 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } = useTenantTimezone()
 const { formatCalendarDate, formatCurrency } = useFormatters()
-const formatCOP = (v: number) => formatCurrency(v ?? 0)
+const formatAmount = (v: number) => formatCurrency(v ?? 0)
+const { isColombiaPuc } = useTenantFinancialProfile()
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const showAll = ref(false)
@@ -107,13 +109,10 @@ const CLASS_TEXT: Record<string, string> = {
   '4': 'text-state-success-text', '5': 'text-state-danger-text',   '6': 'text-state-warning-text',
 }
 
-const pucLevel = (code: string): { label: string; variant: string } => {
-  const len = code.length
-  if (len === 1) return { label: t('finanzas.contabilidad.class'), variant: 'primary' }
-  if (len === 2) return { label: t('finanzas.contabilidad.group'), variant: 'secondary' }
-  if (len === 4) return { label: t('finanzas.contabilidad.account'), variant: 'warning' }
-  return { label: t('finanzas.contabilidad.subaccount'), variant: 'success' }
-}
+const accountLevelDisplay = (account: TenantAccount) => ({
+  label: t(`finanzas.contabilidad.${getAccountLevelKey(account)}`),
+  variant: getAccountLevelVariant(account),
+})
 
 // ── Data ───────────────────────────────────────────────────────────────────
 interface TenantAccount {
@@ -144,9 +143,9 @@ const displayAccounts = computed<TenantAccount[]>(() => {
     list = list.filter(a => a.isActive === (activeFilter.value === 'true'))
 
   if (levelFilter.value === 'cuenta')
-    list = list.filter(a => a.code.length === 4)
+    list = list.filter(a => getAccountLevel(a) === 3)
   else if (levelFilter.value === 'subcuenta')
-    list = list.filter(a => a.code.length > 4)
+    list = list.filter(a => getAccountLevel(a) >= 4)
 
   return list
 })
@@ -330,7 +329,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h4" />
           </svg>
-          {{ showAll ? t('finanzas.contabilidad.fullPuc') : t('finanzas.contabilidad.detailOnlyCount', { count: totalDetail }) }}
+          {{ showAll ? t(isColombiaPuc ? 'finanzas.contabilidad.fullPuc' : 'finanzas.contabilidad.fullAccountPlan') : t('finanzas.contabilidad.detailOnlyCount', { count: totalDetail }) }}
         </button>
       </div>
 
@@ -372,13 +371,13 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         <span class="text-sm font-medium text-text-primary truncate">{{ item.name }}</span>
                       </div>
                       <div class="flex items-center gap-1.5 mt-0.5">
-                        <UiStatusBadge v-if="showAll" :value="pucLevel(item.code).label" format="text" :variant="pucLevel(item.code).variant" size="sm" />
+                        <UiStatusBadge v-if="showAll" :value="accountLevelDisplay(item).label" format="text" :variant="accountLevelDisplay(item).variant" size="sm" />
                         <span v-if="item.isDetail" class="text-xs font-mono tabular-nums"
                           :class="accountTrial(item.id).periodDebits ? 'text-primary' : 'text-text-secondary'">
-                          {{ t('finanzas.contabilidad.debitShort') }}: {{ formatCOP(accountTrial(item.id).periodDebits) }}
+                          {{ t('finanzas.contabilidad.debitShort') }}: {{ formatAmount(accountTrial(item.id).periodDebits) }}
                         </span>
                         <span v-if="item.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
-                          {{ t('finanzas.contabilidad.creditShort') }}: {{ formatCOP(accountTrial(item.id).periodCredits) }}
+                          {{ t('finanzas.contabilidad.creditShort') }}: {{ formatAmount(accountTrial(item.id).periodCredits) }}
                         </span>
 
                       </div>
@@ -386,7 +385,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                     <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                       <span v-if="item.isDetail" class="text-sm font-semibold font-mono tabular-nums"
                         :class="accountTrial(item.id).closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-                        {{ formatCOP(accountTrial(item.id).closingBalance) }}
+                        {{ formatAmount(accountTrial(item.id).closingBalance) }}
                       </span>
                       <UiStatusBadge :value="item.isActive ? t('finanzas.contabilidad.activeOne') : t('finanzas.contabilidad.inactiveOne')" format="text" :variant="item.isActive ? 'success' : 'secondary'" size="sm" />
                       <button
@@ -439,33 +438,33 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
 
                 <!-- level (showAll mode only) -->
                 <template #cell-level="{ row }">
-                  <UiStatusBadge :value="pucLevel(row.code).label" format="text" :variant="pucLevel(row.code).variant" size="sm" />
+                  <UiStatusBadge :value="accountLevelDisplay(row).label" format="text" :variant="accountLevelDisplay(row).variant" size="sm" />
                 </template>
 
                 <!-- period columns (only for detail accounts) -->
                 <template #cell-openingBalance="{ row }">
                   <span v-if="row.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
-                    {{ formatCOP(accountTrial(row.id).openingBalance) }}
+                    {{ formatAmount(accountTrial(row.id).openingBalance) }}
                   </span>
                   <span v-else class="text-xs text-text-secondary">—</span>
                 </template>
 
                 <template #cell-periodDebits="{ row }">
                   <span class="text-xs font-mono tabular-nums" :class="accountTrial(row.id).periodDebits ? 'text-primary' : 'text-text-secondary'">
-                    {{ formatCOP(accountTrial(row.id).periodDebits) }}
+                    {{ formatAmount(accountTrial(row.id).periodDebits) }}
                   </span>
                 </template>
 
                 <template #cell-periodCredits="{ row }">
                   <span class="text-xs font-mono tabular-nums text-text-secondary">
-                    {{ formatCOP(accountTrial(row.id).periodCredits) }}
+                    {{ formatAmount(accountTrial(row.id).periodCredits) }}
                   </span>
                 </template>
 
                 <template #cell-closingBalance="{ row }">
                   <span v-if="row.isDetail" class="text-xs font-mono font-semibold tabular-nums"
                     :class="accountTrial(row.id).closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-                    {{ formatCOP(accountTrial(row.id).closingBalance) }}
+                    {{ formatAmount(accountTrial(row.id).closingBalance) }}
                   </span>
                   <span v-else class="text-xs text-text-secondary">—</span>
                 </template>
