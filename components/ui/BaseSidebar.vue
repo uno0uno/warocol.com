@@ -20,6 +20,11 @@
             <span class="base-sidebar-menu-line" />
           </button>
 
+          <Transition name="base-sidebar-brand">
+            <div v-if="isExpanded && $slots.brand" class="base-sidebar-brand">
+              <slot name="brand" />
+            </div>
+          </Transition>
         </div>
 
         <!-- Logo -->
@@ -247,7 +252,27 @@ function closeOverlay() {
   display: flex;
   min-height: 3rem;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
+}
+
+.base-sidebar-brand {
+  display: flex;
+  min-width: 0;
+  max-width: 7.5rem;
+  flex: 1 1 auto;
+  align-items: center;
+  overflow: hidden;
+}
+
+.base-sidebar-brand-enter-active,
+.base-sidebar-brand-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.base-sidebar-brand-enter-from,
+.base-sidebar-brand-leave-to {
+  opacity: 0;
+  transform: translateX(-0.375rem);
 }
 
 .base-sidebar-menu-button {

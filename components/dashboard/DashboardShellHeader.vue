@@ -3,6 +3,7 @@
     <div class="flex min-w-0 items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-2 sm:gap-4">
         <NuxtLink
+          v-if="!hideLogo"
           to="/financiero"
           class="dashboard-header-logo hidden xl:flex h-12 w-fit min-w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
           :aria-label="t('shell.goToDashboardHome')"
@@ -119,6 +120,7 @@ defineProps<{
   headerAction?: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void }
   isRefreshing?: boolean
   isProgressiveLoading?: boolean
+  hideLogo?: boolean
 }>()
 
 defineEmits<{

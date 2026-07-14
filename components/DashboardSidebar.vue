@@ -17,6 +17,21 @@
     v-bind="$attrs"
     @expanded-change="$emit('expanded-change', $event)"
   >
+    <template #brand>
+      <NuxtLink
+        to="/financiero"
+        class="flex h-11 w-[7.25rem] min-w-0 items-center justify-center overflow-hidden"
+        :aria-label="t('shell.goToDashboardHome')"
+      >
+        <img
+          :key="route.fullPath"
+          :src="sidebarLogoAnimationSrc"
+          alt="WARO Colombia"
+          class="h-7 w-full object-contain"
+        />
+      </NuxtLink>
+    </template>
+
     <!-- Navigation Links -->
     <template #navigation="{ collapsed, close }">
 
@@ -178,8 +193,13 @@ defineEmits<{
 }>()
 
 const isLoggingOut = ref(false)
+const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+
+const sidebarLogoAnimationSrc = computed(() =>
+  `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
+)
 
 const { hasCriticalAlerts } = useDataQualityStatus()
 
