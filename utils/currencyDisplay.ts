@@ -35,6 +35,16 @@ export type FormatMoneyOptions = {
   currency?: string | null
   /** Tenant locale `es`|`en` or number tag; default es-CO. */
   locale?: string | null
+  /** Currency minor units supplied by the authoritative tenant profile. */
+  minorUnits?: number | null
+}
+
+/** Keep Intl fraction settings bounded even if a partial API response is malformed. */
+export function normalizeMinorUnits(value?: number | null, fallback = 0): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 3) {
+    return fallback
+  }
+  return value
 }
 
 /**
@@ -51,11 +61,13 @@ export function formatMoney(
 
   const currency = normalizeCurrencyCode(options?.currency)
   const localeTag = localeToNumberFormatTag(options?.locale)
+  const minorUnits = normalizeMinorUnits(options?.minorUnits, 0)
 
   return new Intl.NumberFormat(localeTag, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: minorUnits,
+    maximumFractionDigits: minorUnits,
   }).format(value)
 }
 import { toNumberLocaleTag } from './appLocales.ts'

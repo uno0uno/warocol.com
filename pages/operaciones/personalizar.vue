@@ -13,11 +13,15 @@ useHead({ title: () => t('operaciones.head.personalizar') })
 
 const { currentTenant } = useTenantReactive()
 const tenantsStore = useTenantsStore()
+const accessStore = useAccessStore()
 const { applyTenantLocale } = useAppLocale()
 const configuredLocale = computed<AppLocaleCode>(() =>
   normalizeEnabledAppLocale(tenantsStore.selectedTenant?.ui_locale) ?? DEFAULT_APP_LOCALE,
 )
 const cache = useQueryCache()
+const canManageFinancialProfile = computed(() =>
+  accessStore.isLoaded && accessStore.can('mi_negocio'),
+)
 
 // Operaciones audience aggregator — gated under OPERACIONES.
 // Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
@@ -294,6 +298,8 @@ const toggleOpenSale = async () => {
           />
         </div>
       </div>
+
+      <OperacionesFinancialProfileSettings v-if="canManageFinancialProfile" />
 
       <!-- ══════ VENTA LIBRE EN POS (#805) ══════ -->
       <div

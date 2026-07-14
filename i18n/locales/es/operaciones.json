@@ -252,6 +252,27 @@
       ,"languageSaving": "Guardando idioma…"
       ,"languageApplying": "Actualizando la interfaz…"
       ,"languageSyncing": "Sincronizando el restaurante…"
+      ,"financial": {
+        "title": "País y moneda base", "help": "Define la identidad financiera del negocio. Las opciones compatibles provienen de WARO.",
+        "loading": "Cargando configuración financiera…", "loadError": "No se pudo cargar la configuración financiera", "retry": "Reintentar",
+        "permanentLockTitle": "Esta configuración ya no se puede cambiar", "temporaryLockTitle": "Cambio temporalmente bloqueado",
+        "permanentLockHelp": "El negocio ya tiene actividad financiera permanente. Cambiar país o moneda reinterpretaría su historial.",
+        "temporaryLockHelp": "Finaliza o cancela la actividad abierta indicada y vuelve a intentarlo.",
+        "lockReasons": {
+          "permanentActivity": "Existe actividad financiera que debe conservar su país y moneda.", "permanentOrders": "Existen pedidos con historia monetaria.", "permanentPayments": "Existen pagos registrados.",
+          "permanentJournals": "Existen asientos contables confirmados.", "permanentInvoices": "Existen documentos electrónicos emitidos.",
+          "permanentWallet": "Existen movimientos de billetera.", "temporaryOrders": "Hay pedidos abiertos.",
+          "temporaryShifts": "Hay turnos o cajas abiertas.", "temporaryActivity": "Hay actividad operativa sin cerrar.",
+          "unknown": "WARO bloqueó el cambio por la regla {code}."
+        },
+        "fieldsLegend": "Configuración de país y moneda base", "country": "País del negocio", "currency": "Moneda base",
+        "currencyHelp": "Todos los importes del negocio se interpretan en esta moneda; no se realiza conversión FX.",
+        "irreversibleHelp": "Confirma con cuidado. Cuando exista actividad financiera, esta elección será irreversible.",
+        "saving": "Guardando…", "reviewChange": "Revisar cambio", "confirmTitle": "Confirmar país y moneda",
+        "confirmMessage": "Cambiarás {currentCountry} / {currentCurrency} por {nextCountry} / {nextCurrency}. Después de registrar actividad financiera no podrás revertir esta decisión.",
+        "confirmAction": "Sí, cambiar configuración", "cancel": "Cancelar", "saveSuccess": "País y moneda base actualizados",
+        "saveError": "No se pudo actualizar la configuración financiera"
+      }
     },
     "comandas": {
       "enableComandas": "Activar comandas",

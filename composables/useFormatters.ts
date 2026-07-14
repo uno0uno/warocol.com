@@ -10,11 +10,22 @@ import {
 export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
   const tenantsStore = useTenantsStore()
+  const {
+    profile: financialProfile,
+    currencyMinorUnits: financialCurrencyMinorUnits,
+  } = useTenantFinancialProfile()
   const { locale: i18nLocale, t } = useI18n()
 
-  /** Display currency from tenant prefs (B1/B5); missing → COP. */
+  /** Authoritative base currency; public display pref is a partial-rollout fallback only. */
   const currencyCode = computed(() =>
-    normalizeCurrencyCode(tenantsStore.businessProfile?.currency_code),
+    normalizeCurrencyCode(
+      financialProfile.value?.base_currency_code
+      ?? tenantsStore.businessProfile?.currency_code,
+    ),
+  )
+
+  const currencyMinorUnits = computed(() =>
+    financialProfile.value ? financialCurrencyMinorUnits.value : 0,
   )
 
   /**
@@ -62,6 +73,7 @@ export const useFormatters = () => {
     return formatMoney(value, {
       currency: currencyCode.value,
       locale: uiLocale.value,
+      minorUnits: currencyMinorUnits.value,
     })
   }
 
@@ -92,6 +104,8 @@ export const useFormatters = () => {
 
   return {
     uiLocale,
+    currencyCode,
+    currencyMinorUnits,
     numberLocaleTag,
     dateLocaleTag,
     defaultUiLocale: DEFAULT_UI_LOCALE,

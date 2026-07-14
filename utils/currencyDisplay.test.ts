@@ -6,6 +6,7 @@ import {
   formatMoney,
   localeToNumberFormatTag,
   normalizeCurrencyCode,
+  normalizeMinorUnits,
 } from './currencyDisplay.ts'
 
 describe('normalizeCurrencyCode', () => {
@@ -52,6 +53,7 @@ describe('formatMoney', () => {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(1000)
 
     assert.equal(formatMoney(1000), expectedCop)
@@ -64,6 +66,7 @@ describe('formatMoney', () => {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(1000)
     assert.equal(usd, expected)
     // Same underlying amount — only presentation differs from COP
@@ -75,7 +78,37 @@ describe('formatMoney', () => {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(1000)
     assert.equal(formatMoney(1000, { currency: 'USD', locale: 'en' }), expected)
+  })
+
+  it('uses authoritative minor units for zero- and two-decimal currencies', () => {
+    const clp = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(1234.56)
+    const usd = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(1234.5)
+
+    assert.equal(formatMoney(1234.56, { currency: 'CLP', minorUnits: 0 }), clp)
+    assert.equal(formatMoney(1234.5, { currency: 'USD', locale: 'en', minorUnits: 2 }), usd)
+  })
+})
+
+describe('normalizeMinorUnits', () => {
+  it('accepts ISO-style units and falls back safely', () => {
+    assert.equal(normalizeMinorUnits(0), 0)
+    assert.equal(normalizeMinorUnits(2), 2)
+    assert.equal(normalizeMinorUnits(3), 3)
+    assert.equal(normalizeMinorUnits(-1, 0), 0)
+    assert.equal(normalizeMinorUnits(4, 0), 0)
+    assert.equal(normalizeMinorUnits(null, 0), 0)
   })
 })
