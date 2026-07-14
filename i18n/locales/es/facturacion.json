@@ -177,6 +177,11 @@
       "lastDocument": "Último documento",
       "noDocuments": "Sin documentos emitidos"
     },
+    "commercial": {
+      "title": "Documentos WARO",
+      "status": "Modo comercial no fiscal",
+      "notice": "WARO registra estos documentos para la operación del negocio, pero no los transmite ni los valida ante una autoridad fiscal."
+    },
     "audit": {
       "back": "Volver a Facturación",
       "filterResolution": "Filtrar por resolución",
@@ -187,7 +192,24 @@
       "validatedDian": "Ya validado en DIAN",
       "matias5xx": "Error 5xx de Matias",
       "emptyTitle": "No hay números quemados",
-      "totalHistorical": "Total histórico"
+      "totalHistorical": "Total histórico",
+      "reason": "Motivo",
+      "networkTimeout": "Tiempo de espera de red agotado",
+      "title": "Bitácora de números retirados",
+      "description": "Números retirados de la secuencia DIAN. Cada fila identifica un número que no puede reutilizarse y conserva su justificación auditable.",
+      "last24h": "Últimas 24 h",
+      "last7d": "Últimos 7 días",
+      "last30d": "Últimos 30 días",
+      "allResolutions": "Todas las resoluciones",
+      "recordCount": "{count} registros",
+      "emptyBody": "Tu numeración DIAN no ha tenido descartes.",
+      "emptyForResolution": "Tu numeración DIAN no ha tenido descartes en esta resolución.",
+      "orderLabel": "Orden {order}",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "pageOf": "Página {page} de {total}",
+      "unavailableTitle": "La bitácora DIAN no está disponible",
+      "unavailableBody": "Este negocio usa documentos WARO no fiscales y no consulta numeración ni validaciones de una autoridad fiscal."
     }
   }
 }

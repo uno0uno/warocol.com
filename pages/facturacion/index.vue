@@ -21,9 +21,16 @@ const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const { formatDate } = useFormatters()
 const cache = useQueryCache()
+const {
+  isFiscalIntegrated,
+  isWaroCommercial,
+  isLoading: isFinancialProfileLoading,
+} = useTenantFinancialProfile()
 
 // Invoicing readiness banners (#450)
-const { ready: isInvoicingReady, checks: readinessChecks } = useInvoicingReadiness()
+const { ready: isInvoicingReady, checks: readinessChecks } = useInvoicingReadiness({
+  enabled: () => isFiscalIntegrated.value,
+})
 const invalidateReadiness = () => {
   cache.invalidateQueries({ key: ['tenant', 'invoicing-readiness'] })
 }
@@ -32,7 +39,7 @@ const invalidateReadiness = () => {
 const { data: resolutionsData, asyncStatus: resAsyncStatus, refetch: refetchResolutions } = useQuery({
   key: () => ['tenant', 'dian-resolutions', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/tenant/dian-resolutions'),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 const resolutions = computed(() => resolutionsData.value?.data ?? [])
@@ -43,7 +50,7 @@ const { data: gapsSummaryData, refetch: refetchGapsSummary } = useQuery({
   query: () => $fetch<{ success: boolean; data: { last_24h: number; last_7d: number; last_30d: number; total: number } }>(
     '/api/api/tenant/dian-resolutions/gaps-summary'
   ),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 const gapsSummary = computed(() => gapsSummaryData.value?.data ?? null)
@@ -171,7 +178,7 @@ const resolutionDocTypes = [
 const { data: statusData, asyncStatus: statusAsyncStatus, refetch: refetchStatus } = useQuery({
   key: () => ['tenant', 'facturacion-status', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/facturacion-status'),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 const facturacionStatus = computed(() => statusData.value?.data ?? null)
@@ -183,7 +190,10 @@ const localizedMatiasEnvironment = computed(() => {
 })
 
 // ── Initial loading state ────────────────────────────────────────────────────
-const isLoading = computed(() => !resolutionsData.value && !statusData.value)
+const isLoading = computed(() =>
+  isFinancialProfileLoading.value
+  || (isFiscalIntegrated.value && !resolutionsData.value && !statusData.value),
+)
 
 // ── Progressive loading + refresh ───────────────────────────────────────────
 const isRefreshing = computed(() =>
@@ -192,6 +202,7 @@ const isRefreshing = computed(() =>
 )
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
+  if (!isFiscalIntegrated.value) return
   await Promise.all([refetchResolutions(), refetchStatus(), refetchGapsSummary()])
 }
 onMounted(() => { setRefreshHandler(handleRefresh) })
@@ -283,6 +294,7 @@ const resolutionColumns = [
 const { data: fiscalData, refetch: refreshFiscal } = useQuery({
   key: () => ['tenant', 'fiscal-data', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/fiscal-data'),
+  // This endpoint also stores generic POS print labels used by commercial documents.
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -394,8 +406,30 @@ const taxLevels = [
 
   <div v-else class="space-y-6">
 
+    <section
+      v-if="isWaroCommercial"
+      class="rounded-xl border-2 border-state-info-border bg-state-info-bg p-4 sm:p-6"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="flex items-start gap-3">
+        <InformationCircleIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-state-info-icon" aria-hidden="true" />
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-base font-semibold text-state-info-text">{{ t('facturacion.commercial.title') }}</h2>
+            <span class="rounded-full bg-status-chip-bg px-2.5 py-1 text-xs font-semibold text-status-chip-text">
+              {{ t('facturacion.commercial.status') }}
+            </span>
+          </div>
+          <p class="mt-1 text-sm leading-relaxed text-state-info-text/90">
+            {{ t('facturacion.commercial.notice') }}
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- ══════ READINESS BANNERS (issue #450) ══════ -->
-    <div v-if="readinessChecks" class="space-y-3">
+    <div v-if="isFiscalIntegrated && readinessChecks" class="space-y-3">
       <!-- Customer request missing -->
       <div
         v-if="!readinessChecks.customer_requested"
@@ -486,7 +520,7 @@ const taxLevels = [
     </div>
 
     <!-- ══════ RESOLUCIÓN DIAN ══════ -->
-    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+    <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2">
           <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
@@ -759,7 +793,7 @@ const taxLevels = [
     </div>
 
     <!-- ══════ DATOS FISCALES ══════ -->
-    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+    <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
         <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
         {{ t('facturacion.fiscal.sectionTitle') }}
@@ -1108,7 +1142,7 @@ const taxLevels = [
     </div>
 
     <!-- ══════ MATIAS API STATUS ══════ -->
-    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+    <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
         <SignalIcon class="w-5 h-5 text-primary flex-shrink-0" />
         {{ t('facturacion.provider.title') }}

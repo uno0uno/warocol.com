@@ -45,17 +45,22 @@ describe('localeToNumberFormatTag', () => {
 })
 
 describe('formatMoney', () => {
-  it('preserves null contract and COP default formatting', () => {
-    assert.equal(formatMoney(null), '$0')
-    assert.equal(formatMoney(undefined), '$0')
-
+  it('formats empty values as zero in the resolved currency', () => {
     const expectedCop = new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(1000)
+    const expectedUsdZero = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(0)
 
+    assert.equal(formatMoney(null, { currency: 'USD', locale: 'en', minorUnits: 2 }), expectedUsdZero)
+    assert.equal(formatMoney(undefined, { currency: 'USD', locale: 'en', minorUnits: 2 }), expectedUsdZero)
     assert.equal(formatMoney(1000), expectedCop)
     assert.equal(formatMoney(1000, { currency: null, locale: null }), expectedCop)
   })
@@ -99,6 +104,20 @@ describe('formatMoney', () => {
 
     assert.equal(formatMoney(1234.56, { currency: 'CLP', minorUnits: 0 }), clp)
     assert.equal(formatMoney(1234.5, { currency: 'USD', locale: 'en', minorUnits: 2 }), usd)
+  })
+
+  it('uses Intl compact notation without hardcoding a currency symbol', () => {
+    const expected = new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+      notation: 'compact',
+      compactDisplay: 'short',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(1_250_000)
+    assert.equal(formatMoney(1_250_000, {
+      currency: 'EUR', locale: 'de', minorUnits: 2, notation: 'compact',
+    }), expected)
   })
 })
 

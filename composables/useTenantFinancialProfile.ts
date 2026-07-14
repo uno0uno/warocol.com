@@ -52,6 +52,27 @@ export interface FinancialProfileDraft {
 export const financialProfileQueryKey = (tenantId?: string | null) =>
   ['tenant', 'financial-profile', tenantId ?? null] as const
 
+export const isIntegratedFiscalProfile = (
+  response?: TenantFinancialProfileResponse | null,
+  tenantId?: string | null,
+): boolean => Boolean(
+  response
+  && (!tenantId || response.profile.tenant_id === tenantId)
+  && response.capabilities.matias_dian
+  && response.profile.document_mode === 'fiscal_integrated'
+  && response.profile.fiscal_provider === 'matias',
+)
+
+export const isColombiaPucProfile = (
+  response?: TenantFinancialProfileResponse | null,
+  tenantId?: string | null,
+): boolean => Boolean(
+  response
+  && (!tenantId || response.profile.tenant_id === tenantId)
+  && response.capabilities.colombia_puc
+  && response.profile.accounting_localization === 'WARO_CO_PUC_V1',
+)
+
 export const createFinancialProfileDraft = (
   profile?: TenantFinancialProfile | null,
 ): FinancialProfileDraft => ({
@@ -110,12 +131,24 @@ export const useTenantFinancialProfile = () => {
     query: () => $fetch<TenantFinancialProfileResponse>(
       '/api/api/tenant/financial-profile',
     ),
-    enabled: () => import.meta.client && !!currentTenant.value && canManage.value,
+    enabled: () => import.meta.client && !!currentTenant.value,
     staleTime: 30_000,
   })
 
-  const response = computed(() => data.value ?? null)
+  const response = computed(() => {
+    if (!data.value || data.value.profile.tenant_id !== currentTenant.value?.id) return null
+    return data.value
+  })
   const profile = computed(() => response.value?.profile ?? null)
+  const isFiscalIntegrated = computed(() =>
+    isIntegratedFiscalProfile(response.value, currentTenant.value?.id),
+  )
+  const isColombiaPuc = computed(() =>
+    isColombiaPucProfile(response.value, currentTenant.value?.id),
+  )
+  const isWaroCommercial = computed(() =>
+    profile.value?.document_mode === 'waro_commercial',
+  )
   const currencyMinorUnits = computed(() => getCurrencyMinorUnits(
     response.value?.currencies ?? [],
     profile.value?.base_currency_code ?? '',
@@ -123,14 +156,16 @@ export const useTenantFinancialProfile = () => {
   ))
 
   const saveMutation = useMutation({
-    mutation: (draft: FinancialProfileDraft) =>
-      $fetch<TenantFinancialProfileResponse>('/api/api/tenant/financial-profile', {
+    mutation: (draft: FinancialProfileDraft) => {
+      if (!canManage.value) throw new Error('Financial profile update is not allowed')
+      return $fetch<TenantFinancialProfileResponse>('/api/api/tenant/financial-profile', {
         method: 'PUT',
         body: {
           country_code: draft.country_code,
           base_currency_code: draft.base_currency_code,
         },
-      }),
+      })
+    },
     onSettled: async () => {
       await Promise.allSettled([
         cache.invalidateQueries({ key: ['tenant', 'financial-profile'] }),
@@ -152,8 +187,11 @@ export const useTenantFinancialProfile = () => {
     canManage,
     response,
     profile,
+    isFiscalIntegrated,
+    isColombiaPuc,
+    isWaroCommercial,
     currencyMinorUnits,
-    isLoading: computed(() => canManage.value && status.value === 'pending'),
+    isLoading: computed(() => !!currentTenant.value && status.value === 'pending'),
     isRefreshing: computed(() => asyncStatus.value === 'loading' && !!data.value),
     queryError: error,
     refresh,

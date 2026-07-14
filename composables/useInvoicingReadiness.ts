@@ -30,13 +30,13 @@ export interface InvoicingReadinessResponse {
  *   const cache = useQueryCache()
  *   cache.invalidateQueries({ key: ['tenant', 'invoicing-readiness'] })
  */
-export const useInvoicingReadiness = () => {
+export const useInvoicingReadiness = (options: { enabled?: () => boolean } = {}) => {
   const { currentTenant } = useTenantReactive()
 
   const { data, asyncStatus, refetch } = useQuery({
     key:       () => ['tenant', 'invoicing-readiness', currentTenant.value?.id],
     query:     () => $fetch<InvoicingReadinessResponse>('/api/api/tenant/invoicing-readiness'),
-    enabled:   () => import.meta.client && !!currentTenant.value,
+    enabled:   () => import.meta.client && !!currentTenant.value && (options.enabled?.() ?? true),
     staleTime: 60_000,
   })
 

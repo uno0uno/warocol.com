@@ -177,6 +177,11 @@
       "lastDocument": "Last document",
       "noDocuments": "No documents issued"
     },
+    "commercial": {
+      "title": "WARO documents",
+      "status": "Non-fiscal commercial mode",
+      "notice": "WARO records these documents for business operations, but does not transmit or validate them with a tax authority."
+    },
     "audit": {
       "back": "Back to Invoicing",
       "filterResolution": "Filter by resolution",
@@ -187,7 +192,24 @@
       "validatedDian": "Already validated in DIAN",
       "matias5xx": "Matias 5xx error",
       "emptyTitle": "No burned numbers",
-      "totalHistorical": "Historical total"
+      "totalHistorical": "Historical total",
+      "reason": "Reason",
+      "networkTimeout": "Network timeout",
+      "title": "Retired number log",
+      "description": "Numbers removed from the DIAN sequence. Each row identifies a number that cannot be reused and keeps its auditable reason.",
+      "last24h": "Last 24 hours",
+      "last7d": "Last 7 days",
+      "last30d": "Last 30 days",
+      "allResolutions": "All resolutions",
+      "recordCount": "{count} records",
+      "emptyBody": "Your DIAN numbering has no retired numbers.",
+      "emptyForResolution": "Your DIAN numbering has no retired numbers in this resolution.",
+      "orderLabel": "Order {order}",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page} of {total}",
+      "unavailableTitle": "The DIAN log is unavailable",
+      "unavailableBody": "This business uses non-fiscal WARO documents and does not query tax-authority numbering or validations."
     }
   }
 }

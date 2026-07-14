@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n()
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   ExclamationTriangleIcon,
@@ -10,14 +9,17 @@ import {
 } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
-definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
+definePageMeta({ layout: 'dashboard', module: 'facturacion' })
 useHead({ title: () => t('facturacion.head.audit') })
 
 const { currentTenant } = useTenantReactive()
 const router = useRouter()
 const route = useRoute()
 const { formatDate } = useFormatters()
-const cache = useQueryCache()
+const {
+  isFiscalIntegrated,
+  isLoading: isFinancialProfileLoading,
+} = useTenantFinancialProfile()
 
 const PAGE_SIZE = 50
 const currentPage = ref(1)
@@ -31,7 +33,7 @@ watch(resolutionFilter, () => { currentPage.value = 1 })
 const { data: resolutionsData } = useQuery({
   key: () => ['tenant', 'dian-resolutions', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/tenant/dian-resolutions'),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 const resolutions = computed(() => resolutionsData.value?.data ?? [])
@@ -42,7 +44,7 @@ const { data: summaryData, refetch: refetchSummary } = useQuery({
   query: () => $fetch<{ success: boolean; data: { last_24h: number; last_7d: number; last_30d: number; total: number } }>(
     '/api/api/tenant/dian-resolutions/gaps-summary',
   ),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 const summary = computed(() => summaryData.value?.data ?? null)
@@ -62,18 +64,22 @@ const { data: gapsData, status: gapsStatus, asyncStatus: gapsAsync, refetch: ref
     if (resolutionFilter.value) params.resolution_id = resolutionFilter.value
     return $fetch<{ success: boolean; total: number; data: any[] }>('/api/api/tenant/dian-resolutions/gaps', { params })
   },
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && isFiscalIntegrated.value,
   staleTime: 60_000,
 })
 
 const gaps = computed(() => gapsData.value?.data ?? [])
 const gapsTotal = computed(() => gapsData.value?.total ?? 0)
 const totalPages = computed(() => Math.ceil(gapsTotal.value / PAGE_SIZE) || 1)
-const isLoading = computed(() => gapsStatus.value === 'pending' && !gapsData.value)
+const isLoading = computed(() =>
+  isFinancialProfileLoading.value
+  || (isFiscalIntegrated.value && gapsStatus.value === 'pending' && !gapsData.value),
+)
 const isRefreshing = computed(() => gapsAsync.value === 'loading' && gapsData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
+  if (!isFiscalIntegrated.value) return
   await Promise.all([refetchGaps(), refetchSummary()])
 }
 onMounted(() => { setRefreshHandler(handleRefresh) })
@@ -88,7 +94,7 @@ const columns = computed<Column[]>(() => [
   { key: 'created_at', title: t('facturacion.audit.when'), sortable: false },
   { key: 'number', title: t('facturacion.audit.burnedNumber'), sortable: false },
   { key: 'resolution_number', title: t('facturacion.audit.resolution'), sortable: false },
-  { key: 'reason', title: 'Motivo', sortable: false },
+  { key: 'reason', title: t('facturacion.audit.reason'), sortable: false },
   { key: 'original_order_number', title: t('facturacion.audit.order'), sortable: false },
 ])
 
@@ -96,7 +102,7 @@ const reasonLabel = (reason: string) => {
   const map: Record<string, string> = {
     matias_ya_validado: t('facturacion.audit.validatedDian'),
     matias_500: t('facturacion.audit.matias5xx'),
-    network_timeout: 'Timeout de red',
+    network_timeout: t('facturacion.audit.networkTimeout'),
   }
   return map[reason] || reason
 }
@@ -109,7 +115,26 @@ const reasonClass = (reason: string) => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div v-if="isFinancialProfileLoading" class="flex justify-center py-16">
+    <CommonsTheCustomLoader size="medium" />
+  </div>
+
+  <section
+    v-else-if="!isFiscalIntegrated"
+    class="rounded-xl border-2 border-state-info-border bg-state-info-bg p-5"
+    role="status"
+  >
+    <h1 class="text-lg font-semibold text-state-info-text">{{ t('facturacion.audit.unavailableTitle') }}</h1>
+    <p class="mt-1 text-sm text-state-info-text/90">{{ t('facturacion.audit.unavailableBody') }}</p>
+    <NuxtLink
+      to="/facturacion"
+      class="mt-4 inline-flex min-h-[44px] items-center rounded-lg bg-action-primary-bg px-4 py-2 text-sm font-semibold text-action-primary-text hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary"
+    >
+      {{ t('facturacion.audit.back') }}
+    </NuxtLink>
+  </section>
+
+  <div v-else class="space-y-4">
     <!-- Header / back -->
     <div class="flex items-center gap-2">
       <button
@@ -122,11 +147,10 @@ const reasonClass = (reason: string) => {
       <div class="flex-1 min-w-0">
         <h1 class="text-lg sm:text-xl font-semibold text-text-primary flex items-center gap-2">
           <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Bitácora de números quemados
+          {{ t('facturacion.audit.title') }}
         </h1>
         <p class="text-xs text-text-secondary mt-0.5 leading-snug">
-          Números retirados de la secuencia DIAN. Cada fila es un número que ya no puede reutilizarse —
-          la justificación auditable está en el motivo y la respuesta de Matias.
+          {{ t('facturacion.audit.description') }}
         </p>
       </div>
     </div>
@@ -134,15 +158,15 @@ const reasonClass = (reason: string) => {
     <!-- Summary tiles -->
     <div v-if="summary" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-surface border-2 border-border rounded-xl p-3">
-        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">Últimas 24h</p>
+        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">{{ t('facturacion.audit.last24h') }}</p>
         <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ summary.last_24h }}</p>
       </div>
       <div class="bg-surface border-2 border-border rounded-xl p-3">
-        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">Últimos 7 días</p>
+        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">{{ t('facturacion.audit.last7d') }}</p>
         <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ summary.last_7d }}</p>
       </div>
       <div class="bg-surface border-2 border-border rounded-xl p-3">
-        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">Últimos 30 días</p>
+        <p class="text-[11px] uppercase tracking-wide text-text-tertiary font-semibold">{{ t('facturacion.audit.last30d') }}</p>
         <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ summary.last_30d }}</p>
       </div>
       <div class="bg-surface border-2 border-border rounded-xl p-3">
@@ -158,13 +182,13 @@ const reasonClass = (reason: string) => {
         class="py-2 ps-3 pe-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
         :aria-label="t('facturacion.audit.filterResolution')"
       >
-        <option :value="null">Todas las resoluciones</option>
+        <option :value="null">{{ t('facturacion.audit.allResolutions') }}</option>
         <option v-for="r in resolutions" :key="r.id" :value="r.id">
           {{ r.prefix }} · {{ r.resolution_number }}
         </option>
       </select>
       <span class="text-sm text-text-secondary ms-auto">
-        {{ gapsTotal }} {{ gapsTotal === 1 ? 'registro' : 'registros' }}
+        {{ t('facturacion.audit.recordCount', { count: gapsTotal }) }}
       </span>
     </div>
 
@@ -178,8 +202,7 @@ const reasonClass = (reason: string) => {
       <DocumentTextIcon class="w-12 h-12 mx-auto text-text-tertiary" />
       <p class="text-text-secondary">{{ t('facturacion.audit.emptyTitle') }}</p>
       <p class="text-sm text-text-tertiary">
-        Tu numeración DIAN no ha tenido descartes
-        <template v-if="resolutionFilter">en esta resolución</template>.
+        {{ resolutionFilter ? t('facturacion.audit.emptyForResolution') : t('facturacion.audit.emptyBody') }}
       </p>
     </div>
 
@@ -249,7 +272,7 @@ const reasonClass = (reason: string) => {
             :to="`/ventas/${row.original_attempt_order_id}`"
             class="block text-xs text-primary hover:underline"
           >
-            Orden {{ row.original_order_number || row.original_attempt_order_id.substring(0, 8) }}
+            {{ t('facturacion.audit.orderLabel', { order: row.original_order_number || row.original_attempt_order_id.substring(0, 8) }) }}
           </NuxtLink>
         </div>
       </template>
@@ -262,17 +285,17 @@ const reasonClass = (reason: string) => {
         :disabled="currentPage === 1"
         class="min-h-[36px] px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surface text-text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Anterior
+        {{ t('facturacion.audit.previous') }}
       </button>
       <span class="text-sm text-text-secondary tabular-nums">
-        Página {{ currentPage }} de {{ totalPages }}
+        {{ t('facturacion.audit.pageOf', { page: currentPage, total: totalPages }) }}
       </span>
       <button
         @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
         class="min-h-[36px] px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surface text-text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Siguiente
+        {{ t('facturacion.audit.next') }}
       </button>
     </div>
   </div>
