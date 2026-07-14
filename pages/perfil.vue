@@ -3,6 +3,8 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { CameraIcon, LanguageIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import {
   DEFAULT_APP_LOCALE,
+  getAppLocaleDefinition,
+  normalizeEnabledAppLocale,
   type AppLocaleCode,
 } from '~/utils/appLocales'
 
@@ -16,7 +18,7 @@ const tenantsStore = useTenantsStore()
 const toast = useToast()
 const {
   locale,
-  resolvePreferredLocale,
+  tenantLocale,
   applyPersonalLocale,
   syncFromSources,
 } = useAppLocale()
@@ -31,15 +33,17 @@ const nameError = ref('')
 const descriptionError = ref('')
 let activeProfileLoad: Promise<void> | undefined
 
-const form = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+type PersonalLocalePreference = AppLocaleCode | null
+
+const form = reactive<{ name: string, description: string, preferredLocale: PersonalLocalePreference }>({
   name: '',
   description: '',
-  preferredLocale: DEFAULT_APP_LOCALE,
+  preferredLocale: null,
 })
-const persisted = reactive<{ name: string, description: string, preferredLocale: AppLocaleCode }>({
+const persisted = reactive<{ name: string, description: string, preferredLocale: PersonalLocalePreference }>({
   name: '',
   description: '',
-  preferredLocale: DEFAULT_APP_LOCALE,
+  preferredLocale: null,
 })
 
 const displayUser = computed(() => authStore.displayUser)
@@ -49,6 +53,11 @@ const initials = computed(() => {
 })
 const normalizedName = computed(() => form.name.trim())
 const normalizedDescription = computed(() => form.description.trim())
+const inheritedLocale = computed(() => tenantLocale.value ?? DEFAULT_APP_LOCALE)
+const inheritedLocaleName = computed(() => getAppLocaleDefinition(inheritedLocale.value).name)
+const inheritedLocaleLabel = computed(() => t('perfil.personal.languageDefault', {
+  language: inheritedLocaleName.value,
+}))
 const localeChanged = computed(() => form.preferredLocale !== persisted.preferredLocale)
 const hasChanges = computed(() =>
   normalizedName.value !== persisted.name
@@ -60,7 +69,7 @@ const syncPersistedProfile = () => {
   const sessionUser = authStore.session?.user
   const name = (sessionUser?.name || sessionUser?.user_name || '').trim()
   const description = sessionUser?.description?.trim() || ''
-  const preferredLocale = resolvePreferredLocale()
+  const preferredLocale = normalizeEnabledAppLocale(sessionUser?.preferred_locale)
   form.name = name
   form.description = description
   form.preferredLocale = preferredLocale
@@ -168,7 +177,9 @@ const saveProfile = async () => {
   const shouldUpdateLocale = localeChanged.value
   const previousLocale = locale.value
   try {
-    if (shouldUpdateLocale) await applyPersonalLocale(form.preferredLocale)
+    if (shouldUpdateLocale) {
+      await applyPersonalLocale(form.preferredLocale ?? inheritedLocale.value)
+    }
 
     const body: Record<string, string | null> = {
       name: normalizedName.value,
@@ -313,9 +324,13 @@ const handleAvatarUploaded = async (url: string) => {
           </div>
           <LocaleSelector
             id="profile-language"
-            v-model="form.preferredLocale"
+            :model-value="form.preferredLocale ?? inheritedLocale"
+            :inherited="form.preferredLocale === null"
+            :inherit-label="inheritedLocaleLabel"
             :disabled="isSaving"
             class="w-full"
+            @inherit="form.preferredLocale = null"
+            @update:model-value="form.preferredLocale = $event"
           />
           <p id="profile-language-help" class="mt-1 text-xs leading-relaxed text-text-secondary">
             {{ t('perfil.personal.languageHelp') }}

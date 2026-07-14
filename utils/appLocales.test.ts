@@ -101,4 +101,20 @@ describe('app locale catalog', () => {
     assert.equal(resolveAppLocale({ ...base, tenantValue: 'ar' }), 'de')
     assert.equal(resolveAppLocale({ ...base, profileValue: null, tenantValue: 'ar' }), 'ar')
   })
+
+  it('tracks tenant changes only while the personal preference is inherited', () => {
+    const inherited = {
+      profileValue: null,
+      cookieValue: 'de',
+      profileLoaded: true,
+      tenantLoaded: true,
+    }
+    assert.equal(resolveAppLocale({ ...inherited, tenantValue: 'pt' }), 'pt')
+    assert.equal(resolveAppLocale({ ...inherited, tenantValue: 'zh' }), 'zh')
+    assert.equal(resolveAppLocale({ ...inherited, tenantValue: null }), 'es')
+
+    const personalized = { ...inherited, profileValue: 'fr' }
+    assert.equal(resolveAppLocale({ ...personalized, tenantValue: 'pt' }), 'fr')
+    assert.equal(resolveAppLocale({ ...personalized, tenantValue: 'ar' }), 'fr')
+  })
 })

@@ -20,7 +20,8 @@
       "descriptionPlaceholder": "简单介绍一下自己",
       "publicHelp": "选填。你的姓名、简介和照片也可能显示在文章的公开作者信息中。",
       "language": "个人语言",
-      "languageHelp": "此语言属于你的个人资料，切换商户后仍会保持启用。"
+      "languageDefault": "默认（商户：{language}）",
+      "languageHelp": "选择“默认”以跟随商户语言；如果商户没有有效语言，则使用西班牙语。选择其他语言后，该语言会保存到你的个人资料中，并在切换商户后继续使用。"
     },
     "validation": {
       "nameRequired": "姓名为必填项。",
