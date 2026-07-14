@@ -251,7 +251,28 @@
       "languageSaveError": "تعذر حفظ اللغة",
       "languageSaving": "جارٍ حفظ اللغة…",
       "languageApplying": "جارٍ تحديث الواجهة…",
-      "languageSyncing": "جارٍ مزامنة المطعم…"
+      "languageSyncing": "جارٍ مزامنة المطعم…",
+      "financial": {
+        "title": "البلد والعملة الأساسية", "help": "حدّد الهوية المالية للنشاط. تأتي الخيارات المتوافقة من WARO.",
+        "loading": "جارٍ تحميل الإعدادات المالية…", "loadError": "تعذّر تحميل الإعدادات المالية", "retry": "إعادة المحاولة",
+        "permanentLockTitle": "لم يعد من الممكن تغيير هذه الإعدادات", "temporaryLockTitle": "التغيير محظور مؤقتًا",
+        "permanentLockHelp": "لدى النشاط معاملات مالية دائمة. سيؤدي تغيير البلد أو العملة إلى إعادة تفسير السجل.",
+        "temporaryLockHelp": "أكمل أو ألغِ النشاط المفتوح المذكور ثم حاول مرة أخرى.",
+        "lockReasons": {
+          "permanentActivity": "يوجد نشاط مالي يجب الحفاظ على بلده وعملته.", "permanentOrders": "توجد طلبات ذات سجل مالي.", "permanentPayments": "توجد مدفوعات مسجلة.",
+          "permanentJournals": "توجد قيود محاسبية مُرحّلة.", "permanentInvoices": "تم إصدار مستندات إلكترونية.",
+          "permanentWallet": "توجد حركات محفظة.", "temporaryOrders": "توجد طلبات مفتوحة.",
+          "temporaryShifts": "توجد ورديات أو صناديق مفتوحة.", "temporaryActivity": "يوجد نشاط تشغيلي غير مكتمل.",
+          "unknown": "حظرت WARO التغيير بسبب القاعدة {code}."
+        },
+        "fieldsLegend": "إعدادات البلد والعملة الأساسية", "country": "بلد النشاط", "currency": "العملة الأساسية",
+        "currencyHelp": "تُفسَّر جميع مبالغ النشاط بهذه العملة؛ ولا يتم إجراء تحويل عملات.",
+        "irreversibleHelp": "أكّد بعناية. بعد وجود نشاط مالي يصبح هذا الاختيار غير قابل للتراجع.",
+        "saving": "جارٍ الحفظ…", "reviewChange": "مراجعة التغيير", "confirmTitle": "تأكيد البلد والعملة",
+        "confirmMessage": "ستغيّر {currentCountry} / {currentCurrency} إلى {nextCountry} / {nextCurrency}. لا يمكن التراجع عن القرار بعد تسجيل نشاط مالي.",
+        "confirmAction": "نعم، تغيير الإعدادات", "cancel": "إلغاء", "saveSuccess": "تم تحديث البلد والعملة الأساسية",
+        "saveError": "تعذّر تحديث الإعدادات المالية"
+      }
     },
     "comandas": {
       "enableComandas": "تفعيل تذاكر الطلبات",

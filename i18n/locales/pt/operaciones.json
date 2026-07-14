@@ -251,7 +251,28 @@
       "languageSaveError": "Não foi possível salvar o idioma",
       "languageSaving": "Salvando o idioma…",
       "languageApplying": "Atualizando a interface…",
-      "languageSyncing": "Sincronizando o restaurante…"
+      "languageSyncing": "Sincronizando o restaurante…",
+      "financial": {
+        "title": "País e moeda base", "help": "Define a identidade financeira do negócio. As opções compatíveis vêm da WARO.",
+        "loading": "Carregando configurações financeiras…", "loadError": "Não foi possível carregar as configurações financeiras", "retry": "Tentar novamente",
+        "permanentLockTitle": "Estas configurações não podem mais ser alteradas", "temporaryLockTitle": "Alteração temporariamente bloqueada",
+        "permanentLockHelp": "O negócio já possui atividade financeira permanente. Alterar o país ou a moeda reinterpretaria seu histórico.",
+        "temporaryLockHelp": "Conclua ou cancele a atividade aberta indicada e tente novamente.",
+        "lockReasons": {
+          "permanentActivity": "Existe atividade financeira cujo país e moeda devem ser preservados.", "permanentOrders": "Existem pedidos com histórico monetário.", "permanentPayments": "Existem pagamentos registrados.",
+          "permanentJournals": "Existem lançamentos contábeis confirmados.", "permanentInvoices": "Foram emitidos documentos eletrônicos.",
+          "permanentWallet": "Existem movimentos de carteira.", "temporaryOrders": "Há pedidos abertos.",
+          "temporaryShifts": "Há turnos ou caixas abertos.", "temporaryActivity": "Há atividade operacional não concluída.",
+          "unknown": "A WARO bloqueou a alteração pela regra {code}."
+        },
+        "fieldsLegend": "Configuração de país e moeda base", "country": "País do negócio", "currency": "Moeda base",
+        "currencyHelp": "Todos os valores do negócio são interpretados nesta moeda; nenhuma conversão cambial é realizada.",
+        "irreversibleHelp": "Confirme com cuidado. Quando houver atividade financeira, esta escolha será irreversível.",
+        "saving": "Salvando…", "reviewChange": "Revisar alteração", "confirmTitle": "Confirmar país e moeda",
+        "confirmMessage": "Você mudará {currentCountry} / {currentCurrency} para {nextCountry} / {nextCurrency}. Após registrar atividade financeira, esta decisão não poderá ser revertida.",
+        "confirmAction": "Sim, alterar configurações", "cancel": "Cancelar", "saveSuccess": "País e moeda base atualizados",
+        "saveError": "Não foi possível atualizar as configurações financeiras"
+      }
     },
     "comandas": {
       "enableComandas": "Ativar comandas",

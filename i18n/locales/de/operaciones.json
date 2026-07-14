@@ -251,7 +251,28 @@
       "languageSaveError": "Sprache konnte nicht gespeichert werden",
       "languageSaving": "Sprache wird gespeichert…",
       "languageApplying": "Oberfläche wird aktualisiert…",
-      "languageSyncing": "Restaurant wird synchronisiert…"
+      "languageSyncing": "Restaurant wird synchronisiert…",
+      "financial": {
+        "title": "Land und Basiswährung", "help": "Legt die finanzielle Identität des Betriebs fest. Kompatible Optionen kommen von WARO.",
+        "loading": "Finanzeinstellungen werden geladen…", "loadError": "Finanzeinstellungen konnten nicht geladen werden", "retry": "Erneut versuchen",
+        "permanentLockTitle": "Diese Einstellungen können nicht mehr geändert werden", "temporaryLockTitle": "Änderung vorübergehend gesperrt",
+        "permanentLockHelp": "Der Betrieb hat bereits dauerhafte Finanzaktivität. Ein Wechsel von Land oder Währung würde den Verlauf neu interpretieren.",
+        "temporaryLockHelp": "Schließen oder stornieren Sie die angegebene offene Aktivität und versuchen Sie es erneut.",
+        "lockReasons": {
+          "permanentActivity": "Es gibt Finanzaktivität, deren Land und Währung erhalten bleiben müssen.", "permanentOrders": "Bestellungen mit Geldverlauf sind vorhanden.", "permanentPayments": "Erfasste Zahlungen sind vorhanden.",
+          "permanentJournals": "Gebuchte Buchungssätze sind vorhanden.", "permanentInvoices": "Elektronische Dokumente wurden ausgestellt.",
+          "permanentWallet": "Wallet-Bewegungen sind vorhanden.", "temporaryOrders": "Es gibt offene Bestellungen.",
+          "temporaryShifts": "Es gibt offene Schichten oder Kassen.", "temporaryActivity": "Es gibt nicht abgeschlossene Betriebsaktivität.",
+          "unknown": "WARO hat die Änderung aufgrund der Regel {code} gesperrt."
+        },
+        "fieldsLegend": "Einstellungen für Land und Basiswährung", "country": "Land des Betriebs", "currency": "Basiswährung",
+        "currencyHelp": "Alle Beträge werden in dieser Währung interpretiert; es erfolgt keine Währungsumrechnung.",
+        "irreversibleHelp": "Bestätigen Sie sorgfältig. Sobald Finanzaktivität besteht, ist diese Auswahl unumkehrbar.",
+        "saving": "Wird gespeichert…", "reviewChange": "Änderung prüfen", "confirmTitle": "Land und Währung bestätigen",
+        "confirmMessage": "Sie ändern {currentCountry} / {currentCurrency} zu {nextCountry} / {nextCurrency}. Nach erfasster Finanzaktivität kann diese Entscheidung nicht rückgängig gemacht werden.",
+        "confirmAction": "Ja, Einstellungen ändern", "cancel": "Abbrechen", "saveSuccess": "Land und Basiswährung aktualisiert",
+        "saveError": "Finanzeinstellungen konnten nicht aktualisiert werden"
+      }
     },
     "comandas": {
       "enableComandas": "Küchentickets aktivieren",
