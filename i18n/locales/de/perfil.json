@@ -20,7 +20,8 @@
       "descriptionPlaceholder": "Erzähle kurz etwas über dich",
       "publicHelp": "Optional. Dein Name, deine Beschreibung und dein Foto können auch in der öffentlichen Autorenzeile deiner Artikel erscheinen.",
       "language": "Persönliche Sprache",
-      "languageHelp": "Diese Sprache gehört zu deinem Profil und bleibt beim Wechsel des Betriebs aktiv."
+      "languageDefault": "Standard (Betrieb: {language})",
+      "languageHelp": "Verwende Standard, um der Sprache des Betriebs zu folgen; ist keine gültige Sprache festgelegt, wird Spanisch verwendet. Wenn du eine andere Sprache auswählst, wird sie in deinem Profil gespeichert und bleibt beim Wechsel des Betriebs aktiv."
     },
     "validation": {
       "nameRequired": "Der Name ist erforderlich.",

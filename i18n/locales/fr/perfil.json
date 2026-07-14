@@ -20,7 +20,8 @@
       "descriptionPlaceholder": "Parlez-nous brièvement de vous",
       "publicHelp": "Facultatif. Votre nom, votre description et votre photo peuvent aussi apparaître dans la signature publique de vos articles.",
       "language": "Langue personnelle",
-      "languageHelp": "Cette langue appartient à votre profil et reste active lorsque vous changez d’établissement."
+      "languageDefault": "Par défaut (établissement : {language})",
+      "languageHelp": "Utilisez Par défaut pour suivre la langue de l’établissement ; si aucune langue valide n’est définie, l’espagnol sera utilisé. Si vous choisissez une autre langue, elle sera enregistrée dans votre profil et restera active lorsque vous changerez d’établissement."
     },
     "validation": {
       "nameRequired": "Le nom est obligatoire.",

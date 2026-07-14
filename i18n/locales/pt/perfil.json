@@ -20,7 +20,8 @@
       "descriptionPlaceholder": "Conte um pouco sobre você",
       "publicHelp": "Opcional. Seu nome, descrição e foto também podem aparecer na autoria pública dos seus artigos.",
       "language": "Idioma pessoal",
-      "languageHelp": "Este idioma pertence ao seu perfil e permanece ativo quando você troca de negócio."
+      "languageDefault": "Padrão (negócio: {language})",
+      "languageHelp": "Use Padrão para seguir o idioma do negócio; se não houver um idioma válido, será usado o Espanhol. Se escolher outro idioma, ele será salvo no seu perfil e permanecerá ativo ao trocar de negócio."
     },
     "validation": {
       "nameRequired": "O nome é obrigatório.",
