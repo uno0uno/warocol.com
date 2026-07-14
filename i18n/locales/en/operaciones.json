@@ -253,11 +253,11 @@
       ,"languageApplying": "Updating the interface…"
       ,"languageSyncing": "Syncing the restaurant…"
       ,"financial": {
-        "title": "Country and base currency", "help": "Define the business financial identity. Compatible options come from WARO.",
+        "title": "Country and currency", "help": "Set the currency used for all operations.",
         "loading": "Loading financial settings…", "loadError": "Financial settings could not be loaded", "retry": "Try again",
-        "permanentLockTitle": "These settings can no longer be changed", "temporaryLockTitle": "Change temporarily blocked",
-        "permanentLockHelp": "The business already has permanent financial activity. Changing country or currency would reinterpret its history.",
-        "temporaryLockHelp": "Complete or cancel the listed open activity and try again.",
+        "permanentLockTitle": "Country and currency protected", "temporaryLockTitle": "Change unavailable for now",
+        "permanentLockHelp": "They cannot be changed because the business already has financial activity.",
+        "temporaryLockHelp": "Close the pending activity and try again.",
         "lockReasons": {
           "permanentActivity": "Financial activity exists whose country and currency must be preserved.", "permanentOrders": "Orders with monetary history exist.", "permanentPayments": "Recorded payments exist.",
           "permanentJournals": "Posted journal entries exist.", "permanentInvoices": "Electronic documents have been issued.",
@@ -265,10 +265,10 @@
           "temporaryShifts": "There are open shifts or registers.", "temporaryActivity": "There is unfinished operational activity.",
           "unknown": "WARO blocked the change because of rule {code}."
         },
-        "fieldsLegend": "Country and base currency settings", "country": "Business country", "currency": "Base currency",
-        "currencyHelp": "All business amounts are interpreted in this currency; no FX conversion is performed.",
-        "irreversibleHelp": "Confirm carefully. Once financial activity exists, this choice becomes irreversible.",
-        "saving": "Saving…", "reviewChange": "Review change", "confirmTitle": "Confirm country and currency",
+        "fieldsLegend": "Country and currency settings", "country": "Country", "currency": "Currency",
+        "currencyHelp": "WARO does not convert amounts between currencies.",
+        "irreversibleHelp": "You can change this setting until financial activity is recorded.",
+        "saving": "Saving…", "reviewChange": "Save changes", "confirmTitle": "Confirm country and currency",
         "confirmMessage": "You will change {currentCountry} / {currentCurrency} to {nextCountry} / {nextCurrency}. You cannot reverse this decision after financial activity is recorded.",
         "confirmAction": "Yes, change settings", "cancel": "Cancel", "saveSuccess": "Country and base currency updated",
         "saveError": "Financial settings could not be updated"
