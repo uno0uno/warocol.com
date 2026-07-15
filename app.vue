@@ -4,8 +4,6 @@
         <NuxtPage />
       </NuxtLayout>
       <CommonsToastContainer />
-      <LazyModalsLeadModal />
-      <LazyModalsAccessRequestModal />
     </div>
 </template>
 

@@ -1,7 +1,14 @@
 <script setup lang="ts">
-const emit = defineEmits<{
-  lead: [source: string]
-}>()
+import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
+
+const router = useRouter()
+const heroCta = getPublicCta('management', 'hero')
+const startRegistration = () => router.push(activatePublicCta(
+  heroCta,
+  { source: 'home_hero', content: 'primary' },
+  undefined,
+  import.meta.client ? window.sessionStorage : null,
+))
 </script>
 
 <template>
@@ -15,11 +22,12 @@ const emit = defineEmits<{
     <div class="cta-buttons">
       <button
         class="btn btn-secondary"
-        aria-haspopup="dialog"
-        @click="emit('lead', 'habla_con_nosotros')"
+        type="button"
+        @click="startRegistration"
       >
-        HABLA CON NOSOTROS
+        {{ heroCta.button }}
       </button>
+      <p class="cta-microcopy">{{ heroCta.microcopy }}</p>
     </div>
   </section>
 </template>
@@ -68,6 +76,14 @@ h1 {
   justify-content: center;
   margin-bottom: 80px;
   flex-wrap: wrap;
+}
+
+.cta-microcopy {
+  flex-basis: 100%;
+  margin: 0;
+  color: hsl(220, 13%, 35%);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .btn {

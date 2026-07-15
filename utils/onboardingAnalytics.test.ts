@@ -37,3 +37,23 @@ test('deduplicates the same event and attempt in session storage', () => {
 test('is a no-op without a browser target', () => {
   assert.equal(trackOnboardingEvent('plan_selected', { planId }, null, null), false)
 })
+test('allows only slug-like public attribution for funnel events', () => {
+  const event = buildOnboardingAnalyticsEvent('registration_started', {
+    source: 'blog',
+    content: 'food-cost_benefit',
+    campaign: 'self_service_paid',
+    variant: 'costs_benefit_v1',
+    intent: 'costs',
+    // @ts-expect-error PII is outside the analytics contract
+    phone: '+573001112233',
+  })
+  assert.deepEqual(event, {
+    event: 'registration_started',
+    source: 'blog',
+    content: 'food-cost_benefit',
+    campaign: 'self_service_paid',
+    variant: 'costs_benefit_v1',
+    intent: 'costs',
+  })
+  assert.equal(JSON.stringify(event).includes('+573001112233'), false)
+})

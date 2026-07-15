@@ -1,19 +1,36 @@
 <script setup lang="ts">
+import { activatePublicCta } from '~/utils/publicCta'
+
 const props = defineProps<{ slug: string }>()
-const leadModal = useLeadModal()
+const router = useRouter()
 const ctaContent = computed(() => useBlogCta(props.slug))
+const startRegistration = () => router.push(activatePublicCta(
+  ctaContent.value,
+  { source: 'blog_article', content: `${props.slug}_final` },
+  undefined,
+  import.meta.client ? window.sessionStorage : null,
+))
 </script>
 
 <template>
   <div class="blog-cta-banner">
     <div class="blog-cta-inner">
       <div class="blog-cta-text">
+        <p class="blog-cta-eyebrow">{{ ctaContent.eyebrow }}</p>
         <p class="blog-cta-headline">{{ ctaContent.headline }}</p>
         <p class="blog-cta-body">{{ ctaContent.body }}</p>
+        <p class="blog-cta-microcopy">{{ ctaContent.microcopy }}</p>
+        <p v-if="ctaContent.comparison" class="blog-cta-disclosure">
+          {{ ctaContent.comparison.scope }} {{ ctaContent.comparison.disclosure }}
+          <a :href="ctaContent.comparison.url" target="_blank" rel="noopener noreferrer">
+            {{ ctaContent.comparison.source }} · {{ ctaContent.comparison.asOf }}
+          </a>
+        </p>
       </div>
       <button
         class="blog-cta-button"
-        @click="leadModal.open(`blog:${slug}`)"
+        type="button"
+        @click="startRegistration"
       >
         {{ ctaContent.button }}
       </button>
@@ -53,6 +70,15 @@ const ctaContent = computed(() => useBlogCta(props.slug))
   flex: 1;
 }
 
+.blog-cta-eyebrow {
+  margin: 0;
+  color: hsl(var(--badge-primary-hover-bg));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .blog-cta-headline {
   font-size: 1rem;
   font-weight: 700;
@@ -72,6 +98,21 @@ const ctaContent = computed(() => useBlogCta(props.slug))
   line-height: 1.55;
   color: hsl(var(--badge-primary-hover-bg));
   margin: 0;
+}
+
+.blog-cta-microcopy,
+.blog-cta-disclosure {
+  margin: 0.125rem 0 0;
+  color: hsl(var(--badge-primary-hover-bg));
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.blog-cta-disclosure a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .blog-cta-button {

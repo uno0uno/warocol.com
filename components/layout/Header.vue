@@ -47,10 +47,10 @@
 
         <button
           class="text-[13px] font-bold text-white bg-crocus-600 hover:bg-crocus-700 active:scale-[0.97] py-[7px] px-4 rounded-lg cursor-pointer transition-all font-inherit whitespace-nowrap shadow-sm"
-          @click="leadModal.open('comenzar')"
+          type="button"
+          @click="startRegistration"
         >
-          <span class="hidden md:inline">Comenzar gratis</span>
-          <span class="md:hidden">Comenzar</span>
+          {{ headerCta.button }}
         </button>
       </div>
 
@@ -61,12 +61,21 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 import { useCityCatalog } from '~/composables/useCityCatalog'
+import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
 import logo from '~/public/logo_waro_colombia.png'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
-const leadModal = useLeadModal()
 const { cityFromRoute, isCityRoute } = useCityCatalog()
+const headerCta = getPublicCta('pos', 'header')
+
+const startRegistration = () => router.push(activatePublicCta(
+  headerCta,
+  { source: 'public_header', content: 'primary' },
+  undefined,
+  import.meta.client ? window.sessionStorage : null,
+))
 
 const isDocs = computed(() => route.path.startsWith('/docs'))
 

@@ -291,6 +291,12 @@ import {
   type RegistrationAttribution,
   type RegistrationPhase,
 } from '~/utils/registrationFlow'
+import {
+  buildPublicCtaAnalyticsContext,
+  writePublicCtaAttribution,
+  writeVerifiedPublicCtaAttribution,
+} from '~/utils/publicCta'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 interface RegistrationCatalogOption {
   country_code: string
@@ -453,6 +459,12 @@ const sendRegistration = async (isResend: boolean) => {
     phase.value = 'code'
     sentAt.value = Date.now()
     persistDraft()
+    if (!isResend && import.meta.client) {
+      trackOnboardingEvent('registration_started', {
+        ...buildPublicCtaAnalyticsContext(attribution.value),
+        dedupeId: String(sentAt.value),
+      }, undefined, window.sessionStorage)
+    }
     startCooldown()
     toast.success(t('auth.codeSentToast'))
     await nextTick()
@@ -474,23 +486,43 @@ const verifyCode = async () => {
   error.value = ''
   const body = { email: email.value.trim().toLocaleLowerCase(), code: verificationCode.value }
   try {
-    await $fetch('/api/auth/registration/verify-code', { method: 'POST', credentials: 'include', body })
+    const verification = await $fetch<{ registration_attribution?: RegistrationAttribution | null }>(
+      '/api/auth/registration/verify-code',
+      { method: 'POST', credentials: 'include', body },
+    )
+    const verifiedAttribution = writeVerifiedPublicCtaAttribution(
+      window.sessionStorage,
+      verification?.registration_attribution,
+    )
+    if (Object.keys(verifiedAttribution).length > 0) {
+      attribution.value = verifiedAttribution
+    }
 
     const session = await authStore.refreshSession()
+    const trackEmailVerified = () => {
+      if (!import.meta.client) return
+      trackOnboardingEvent('email_verified', {
+        ...buildPublicCtaAnalyticsContext(attribution.value),
+        dedupeId: String(sentAt.value ?? 'registration-code'),
+      }, undefined, window.sessionStorage)
+    }
     toast.success(t('auth.registrationComplete'))
     if (isOnboardingEntrySession(session)) {
+      trackEmailVerified()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(ONBOARDING_PATH)
       return
     }
     if (canUseInternalSession(session)) {
+      trackEmailVerified()
       await syncAuthenticatedLocale(session)
       await accessStore.load()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(getAccessAwareRedirect(undefined, accessStore, router))
       return
     }
-    if (session?.user) {
+    if ((session as { user?: unknown } | null)?.user) {
+      trackEmailVerified()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(CUSTOMER_PORTAL_LOGIN)
       return
@@ -547,6 +579,7 @@ onMounted(async () => {
   } else {
     attribution.value = routeAttribution
   }
+  writePublicCtaAttribution(window.sessionStorage, attribution.value)
   try {
     const response = await $fetch<{ catalog: RegistrationCatalogOption[] }>('/api/auth/registration/options', {
       credentials: 'include',
