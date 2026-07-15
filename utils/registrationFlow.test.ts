@@ -41,6 +41,7 @@ test('round-trips a normalized draft and removes it after its TTL', () => {
   const now = 1_000
   writeRegistrationDraft(storage, {
     email: ' Owner@Example.COM ',
+    phoneCountryIso: 'co',
     phoneCountryCode: '+57',
     phoneNumber: '300 123 4567',
     businessName: '  Panaderia   Central  ',
@@ -55,6 +56,7 @@ test('round-trips a normalized draft and removes it after its TTL', () => {
   assert.deepEqual(readRegistrationDraft(storage, now + 1_000), {
     version: 1,
     email: 'owner@example.com',
+    phoneCountryIso: 'CO',
     phoneCountryCode: '57',
     phoneNumber: '3001234567',
     businessName: 'Panaderia Central',

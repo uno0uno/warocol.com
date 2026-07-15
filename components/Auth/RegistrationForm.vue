@@ -46,31 +46,32 @@
 
           <fieldset>
             <legend class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
-              {{ t('auth.whatsappLabel') }}
+              {{ t('auth.phoneNumberLabel') }}
             </legend>
-            <div class="grid grid-cols-[7.5rem_1fr] gap-3">
+            <div class="grid gap-3 sm:grid-cols-[minmax(13rem,0.85fr)_1.15fr]">
               <div>
                 <label for="registration-country-code" class="sr-only">{{ t('auth.phoneCountryCode') }}</label>
-                <div class="relative">
-                  <span class="pointer-events-none absolute inset-y-0 start-3 flex items-center text-[hsl(220,13%,28%)]">+</span>
-                  <input
-                    id="registration-country-code"
-                    :value="phoneCountryCode"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="tel-country-code"
-                    maxlength="3"
-                    required
-                    :disabled="sending"
-                    :aria-invalid="Boolean(fieldErrors.phoneCountryCode)"
-                    :aria-describedby="fieldErrors.phoneCountryCode ? 'registration-country-error' : 'registration-phone-hint'"
-                    class="form-input ps-7"
-                    @input="updateCountryCode"
+                <select
+                  id="registration-country-code"
+                  v-model="phoneCountryIso"
+                  required
+                  :disabled="sending || optionsLoading"
+                  :aria-invalid="Boolean(fieldErrors.phoneCountryCode)"
+                  :aria-describedby="fieldErrors.phoneCountryCode ? 'registration-country-error' : 'registration-phone-hint'"
+                  class="form-input"
+                  @change="handlePhoneCountryChange"
+                >
+                  <option
+                    v-for="option in phoneCountries"
+                    :key="option.country_code"
+                    :value="option.country_code"
                   >
-                </div>
+                    {{ phoneCountryLabel(option) }}
+                  </option>
+                </select>
               </div>
               <div>
-                <label for="registration-phone" class="sr-only">{{ t('auth.whatsappLabel') }}</label>
+                <label for="registration-phone" class="sr-only">{{ t('auth.phoneNumberLabel') }}</label>
                 <input
                   id="registration-phone"
                   :value="phoneNumber"
@@ -88,7 +89,7 @@
               </div>
             </div>
             <p id="registration-phone-hint" class="mt-2 text-xs text-[hsl(220,13%,38%)]">
-              {{ t('auth.whatsappHint') }}
+              {{ t('auth.phoneNumberHint') }}
             </p>
             <p v-if="fieldErrors.phoneCountryCode" id="registration-country-error" class="field-error" role="alert">
               {{ fieldErrors.phoneCountryCode }}
@@ -303,6 +304,11 @@ interface RegistrationCatalogOption {
   currency_codes: string[]
 }
 
+interface PhoneCountryOption {
+  country_code: string
+  calling_code: number
+}
+
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -313,6 +319,7 @@ const { syncAuthenticatedLocale } = useAppLocale()
 const { public: { baseUrl } } = useRuntimeConfig()
 
 const email = ref('')
+const phoneCountryIso = ref('CO')
 const phoneCountryCode = ref('57')
 const phoneNumber = ref('')
 const businessName = ref('')
@@ -320,6 +327,7 @@ const businessCountryCode = ref('')
 const baseCurrencyCode = ref('')
 const consent = ref(false)
 const registrationCatalog = ref<RegistrationCatalogOption[]>([])
+const phoneCountries = ref<PhoneCountryOption[]>([])
 const optionsLoading = ref(true)
 const attribution = ref<RegistrationAttribution>({})
 const phase = ref<RegistrationPhase>('form')
@@ -348,7 +356,6 @@ const focusInput = (id: string) => {
 
 const inputValue = (event: Event) => (event.target as HTMLInputElement).value
 const updateEmail = (event: Event) => { email.value = inputValue(event) }
-const updateCountryCode = (event: Event) => { phoneCountryCode.value = normalizeRegistrationPhone(inputValue(event)).slice(0, 3) }
 const updatePhoneNumber = (event: Event) => { phoneNumber.value = normalizeRegistrationPhone(inputValue(event)) }
 const updateConsent = (event: Event) => { consent.value = (event.target as HTMLInputElement).checked }
 const updateVerificationCode = (event: Event) => { verificationCode.value = normalizeRegistrationPhone(inputValue(event)).slice(0, 6) }
@@ -373,6 +380,18 @@ const currencyLabel = (code: string) => {
   }
 }
 
+const countryFlag = (code: string) => String.fromCodePoint(
+  ...code.toUpperCase().split('').map(character => 127397 + character.charCodeAt(0)),
+)
+
+const phoneCountryLabel = (option: PhoneCountryOption) =>
+  `${countryFlag(option.country_code)} ${countryLabel(option.country_code)} (+${option.calling_code})`
+
+const handlePhoneCountryChange = () => {
+  const option = phoneCountries.value.find(item => item.country_code === phoneCountryIso.value)
+  phoneCountryCode.value = option ? String(option.calling_code) : ''
+}
+
 const handleBusinessCountryChange = () => {
   if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
     baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
@@ -388,6 +407,7 @@ const foodItemStyle = (index: number) => ({
 
 const currentDraft = () => createRegistrationDraft({
   email: email.value,
+  phoneCountryIso: phoneCountryIso.value,
   phoneCountryCode: phoneCountryCode.value,
   phoneNumber: phoneNumber.value,
   businessName: businessName.value,
@@ -416,10 +436,13 @@ const startCooldown = () => {
 
 const validateForm = () => {
   fieldErrors.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) ? '' : t('auth.emailInvalid')
-  const countryCode = normalizeRegistrationPhone(phoneCountryCode.value)
-  fieldErrors.phoneCountryCode = Number(countryCode) >= 1 && Number(countryCode) <= 999 ? '' : t('auth.phoneCountryCodeInvalid')
+  const selectedPhoneCountry = phoneCountries.value.find(option =>
+    option.country_code === phoneCountryIso.value
+    && String(option.calling_code) === phoneCountryCode.value,
+  )
+  fieldErrors.phoneCountryCode = selectedPhoneCountry ? '' : t('auth.phoneCountryCodeInvalid')
   const phone = normalizeRegistrationPhone(phoneNumber.value)
-  fieldErrors.phoneNumber = phone.length >= 7 && phone.length <= 15 ? '' : t('auth.whatsappInvalid')
+  fieldErrors.phoneNumber = phone.length >= 7 && phone.length <= 15 ? '' : t('auth.phoneNumberInvalid')
   fieldErrors.businessName = businessName.value.trim().length >= 2 ? '' : t('onboarding.businessNameHint')
   fieldErrors.businessCountryCode = registrationCatalog.value.some(option => option.country_code === businessCountryCode.value)
     ? ''
@@ -546,8 +569,7 @@ const changeDetails = async () => {
 }
 
 watch(email, () => { fieldErrors.email = ''; if (phase.value === 'form') persistDraft() })
-watch(phoneCountryCode, (value) => {
-  phoneCountryCode.value = normalizeRegistrationPhone(value).slice(0, 3)
+watch(phoneCountryIso, () => {
   fieldErrors.phoneCountryCode = ''
   if (phase.value === 'form') persistDraft()
 })
@@ -567,6 +589,7 @@ onMounted(async () => {
   const routeAttribution = sanitizeRegistrationAttribution(route.query as Record<string, unknown>)
   if (stored) {
     email.value = stored.email
+    phoneCountryIso.value = stored.phoneCountryIso
     phoneCountryCode.value = stored.phoneCountryCode
     phoneNumber.value = stored.phoneNumber
     businessName.value = stored.businessName
@@ -581,10 +604,24 @@ onMounted(async () => {
   }
   writePublicCtaAttribution(window.sessionStorage, attribution.value)
   try {
-    const response = await $fetch<{ catalog: RegistrationCatalogOption[] }>('/api/auth/registration/options', {
+    const response = await $fetch<{
+      catalog: RegistrationCatalogOption[]
+      phone_countries: PhoneCountryOption[]
+    }>('/api/auth/registration/options', {
       credentials: 'include',
     })
     registrationCatalog.value = response.catalog
+    phoneCountries.value = response.phone_countries
+    const storedPhoneCountry = phoneCountries.value.find(option =>
+      option.country_code === phoneCountryIso.value
+      && String(option.calling_code) === phoneCountryCode.value,
+    )
+    if (!storedPhoneCountry) {
+      const defaultPhoneCountry = phoneCountries.value.find(option => option.country_code === 'CO')
+        ?? phoneCountries.value[0]
+      phoneCountryIso.value = defaultPhoneCountry?.country_code ?? ''
+      phoneCountryCode.value = defaultPhoneCountry ? String(defaultPhoneCountry.calling_code) : ''
+    }
     if (!registrationCatalog.value.some(option => option.country_code === businessCountryCode.value)) {
       businessCountryCode.value = ''
       baseCurrencyCode.value = ''

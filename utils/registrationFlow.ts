@@ -12,6 +12,7 @@ export type RegistrationPhase = 'form' | 'code'
 export interface RegistrationDraft {
   version: 1
   email: string
+  phoneCountryIso: string
   phoneCountryCode: string
   phoneNumber: string
   businessName: string
@@ -66,6 +67,7 @@ export const createRegistrationDraft = (
 ): RegistrationDraft => ({
   version: 1,
   email: normalizeRegistrationEmail(values.email),
+  phoneCountryIso: normalizeCatalogCode(values.phoneCountryIso || 'CO', 2),
   phoneCountryCode: normalizeRegistrationPhone(values.phoneCountryCode || '57').slice(0, 3),
   phoneNumber: normalizeRegistrationPhone(values.phoneNumber),
   businessName: normalizeRegistrationBusinessName(values.businessName),
