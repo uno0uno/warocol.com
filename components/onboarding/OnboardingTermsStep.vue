@@ -37,6 +37,37 @@
         </div>
       </section>
 
+      <section
+        v-for="annex in annexes"
+        :key="annex.id || annex.title"
+        class="overflow-hidden rounded-lg border border-border bg-surface-secondary"
+        :aria-label="annex.title"
+      >
+        <div class="border-b border-border bg-surface px-4 py-3">
+          <h3 class="font-semibold text-text-primary">{{ annex.title }}</h3>
+          <p v-if="annex.description" class="mt-1 text-sm text-text-secondary">{{ annex.description }}</p>
+        </div>
+        <iframe
+          v-if="annex.content_url && isPdfUrl(annex.content_url)"
+          :src="pdfUrl(annex.content_url)"
+          :title="annex.title"
+          class="h-[50vh] min-h-[360px] w-full bg-white"
+        />
+        <div v-else-if="annex.content_url" class="p-6 text-center">
+          <a
+            :href="annex.content_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface"
+          >
+            {{ t('onboarding.openTerms') }}
+          </a>
+        </div>
+        <p v-else role="alert" class="p-4 text-sm text-status-critical-text">
+          {{ t('onboarding.termsUnavailable') }}
+        </p>
+      </section>
+
       <label class="flex items-start gap-3 rounded-lg border border-border bg-surface p-4 text-sm leading-6 text-text-secondary">
         <input
           v-model="confirmedRead"
@@ -54,7 +85,7 @@
         <button
           type="button"
           class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
-          :disabled="!confirmedRead || isAccepting || !sourceUrl"
+          :disabled="!confirmedRead || isAccepting || !canAccept"
           @click="handleAccept"
         >
           <UiLoadingDots v-if="isAccepting" size="7px" color="currentColor" />
@@ -84,14 +115,19 @@ const {
 } = useLegalTerms()
 
 const sourceUrl = computed(() => currentDocument.value?.source_url || '')
+const annexes = computed(() => currentDocument.value?.annexes ?? [])
+const isPdfUrl = (url: string) => /\.pdf($|[?#])/i.test(url)
 const isPdfDocument = computed(() =>
-  currentDocument.value?.display_mode === 'pdf' || /\.pdf($|[?#])/i.test(sourceUrl.value),
+  currentDocument.value?.display_mode === 'pdf' || isPdfUrl(sourceUrl.value),
 )
-const pdfViewerUrl = computed(() => {
-  if (!sourceUrl.value) return ''
-  const separator = sourceUrl.value.includes('#') ? '&' : '#'
-  return `${sourceUrl.value}${separator}navpanes=0&toolbar=1&view=FitH`
-})
+const pdfUrl = (url: string) => {
+  const separator = url.includes('#') ? '&' : '#'
+  return `${url}${separator}navpanes=0&toolbar=1&view=FitH`
+}
+const pdfViewerUrl = computed(() => sourceUrl.value ? pdfUrl(sourceUrl.value) : '')
+const canAccept = computed(() =>
+  Boolean(sourceUrl.value) && annexes.value.every(annex => Boolean(annex.content_url)),
+)
 
 const handleAccept = async () => {
   if (!confirmedRead.value || isAccepting.value) return

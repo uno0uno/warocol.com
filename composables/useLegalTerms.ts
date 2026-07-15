@@ -3,6 +3,7 @@ export interface LegalTermsAnnex {
   title: string
   version?: string | null
   description?: string | null
+  content_url?: string | null
   applies?: boolean
 }
 
@@ -124,6 +125,7 @@ const mapApiDocument = (apiDocument: ApiLegalTermsDocument | LegalTermsDocument 
       title: annex.title,
       version: annex.version,
       description: annex.metadata?.description ?? null,
+      content_url: annex.content_url ?? null,
       applies: true,
     })),
   }
