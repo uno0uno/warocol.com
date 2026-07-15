@@ -5,9 +5,6 @@ export type OnboardingAnalyticsEvent =
   | 'checkout_started'
   | 'checkout_abandoned'
   | 'payment_result'
-  | 'trial_started'
-  | 'trial_payment_clicked'
-  | 'trial_expired'
 
 interface OnboardingAnalyticsPayload {
   planId?: string | null
@@ -24,9 +21,6 @@ const EVENT_NAMES = new Set<OnboardingAnalyticsEvent>([
   'checkout_started',
   'checkout_abandoned',
   'payment_result',
-  'trial_started',
-  'trial_payment_clicked',
-  'trial_expired',
 ])
 const PAYMENT_STATUSES = new Set<OnboardingPaymentStatus>([
   'created',

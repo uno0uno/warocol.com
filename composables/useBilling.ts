@@ -41,7 +41,7 @@ export interface TenantSubscription {
   tenant_id: string
   plan_id: string
   plan_name: string
-  status: 'trialing' | 'trial_expired' | 'pending' | 'active' | 'past_due' | 'cancelled' | 'expired'
+  status: 'pending' | 'active' | 'past_due' | 'cancelled' | 'expired'
   billing_cycle: 'monthly' | 'annual'
   current_period_start: string
   current_period_end: string
@@ -49,9 +49,6 @@ export interface TenantSubscription {
   scan_limit: number
   scans_used: number
   created_at: string
-  trial_started_at?: string | null
-  trial_ends_at?: string | null
-  trial_days_remaining?: number | null
 }
 
 export interface AccessStatus {
@@ -60,9 +57,6 @@ export interface AccessStatus {
   subscription_status: string | null
   next_payment_date: string | null
   message: string
-  trial_started_at?: string | null
-  trial_ends_at?: string | null
-  trial_days_remaining?: number | null
 }
 
 export interface SubscribeResult {
