@@ -48,7 +48,7 @@
         </div>
 
         <!-- Error en la verificación -->
-        <div v-else-if="error" class="text-center">
+        <div v-else-if="error" class="text-center" role="alert" aria-live="assertive">
           <div class="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center bg-red-100">
             <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
@@ -86,7 +86,8 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
+import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { clearRegistrationDraft } from '~/utils/registrationFlow'
 
 definePageMeta({
   layout: false,
@@ -109,8 +110,13 @@ const errorActionLabel = ref('')
 const redirectProgress = ref(0)
 
 // Obtener parámetros de la URL
-const token = route.query.token
-const email = route.query.email
+const firstQueryString = (value: unknown) => {
+  const candidate = Array.isArray(value) ? value[0] : value
+  return typeof candidate === 'string' ? candidate : ''
+}
+const token = firstQueryString(route.query.token)
+const email = firstQueryString(route.query.email)
+const isRegistration = firstQueryString(route.query.purpose) === 'registration'
 const authStore = useAuthStore()
 const accessStore = useAccessStore()
 const { syncAuthenticatedLocale } = useAppLocale()
@@ -178,19 +184,18 @@ let resizeObserver = null
 // Función para verificar el token
 const verifyToken = async () => {
   try {
-    if (!token || !email) {
+    if (!token || (!isRegistration && !email)) {
       throw new Error('VERIFY_MISSING_PARAMS')
     }
 
-    // Llamar al endpoint de verificación
-    const response = await $fetch<any>('/api/auth/verify', {
+    const response = await $fetch<any>(
+      isRegistration ? '/api/auth/registration/verify' : '/api/auth/verify',
+      {
       method: 'POST',
-      body: {
-        email: email,
-        token: token
+        body: isRegistration ? { token } : { email, token },
+        credentials: 'include'
       },
-      credentials: 'include'
-    })
+    )
 
     if (response?.success === false || (
       response?.user &&
@@ -201,7 +206,8 @@ const verifyToken = async () => {
     }
 
     const sessionData = await authStore.refreshSession()
-    if (isPendingOnboardingSession(sessionData)) {
+    if (isOnboardingEntrySession(sessionData)) {
+      if (isRegistration && import.meta.client) clearRegistrationDraft(window.sessionStorage)
       redirectUrl.value = ONBOARDING_PATH
       verifying.value = false
       success.value = true
@@ -211,6 +217,7 @@ const verifyToken = async () => {
     if (!canUseInternalSession(sessionData)) {
       throw { status: 403, data: { code: 'no_internal_access' } }
     }
+    if (isRegistration && import.meta.client) clearRegistrationDraft(window.sessionStorage)
     await syncAuthenticatedLocale(sessionData)
     await accessStore.load()
     redirectUrl.value = getAccessAwareRedirect(route.query.redirect, accessStore, router)
@@ -232,12 +239,10 @@ const verifyToken = async () => {
       }
     }, 200)
 
-  } catch (err) {
-    console.error('❌ Error verifying token:', err)
-
+  } catch (err: any) {
     verifying.value = false
     error.value = true
-    errorActionTo.value = '/auth/login'
+    errorActionTo.value = isRegistration ? '/registro' : '/auth/login'
     errorActionLabel.value = t('auth.tryAgain')
 
     // Determinar mensaje de error específico

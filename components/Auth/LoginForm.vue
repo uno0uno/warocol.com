@@ -93,7 +93,10 @@
 
             <!-- Input de código -->
             <div class="space-y-6">
-              <input v-model="verificationCode" type="text" placeholder="123456" :disabled="verifyingCode"
+              <label for="login-verification-code" class="sr-only">{{ t('auth.verificationCodeLabel') }}</label>
+              <input id="login-verification-code" v-model="verificationCode" type="text" placeholder="123456"
+                inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
+                :aria-describedby="error ? 'login-auth-error' : undefined" :disabled="verifyingCode"
                 @keyup.enter="verifyCode"
                 class="w-full text-center text-2xl tracking-widest font-mono px-4 py-3.5 rounded-md transition-all border-2"
                 style="background-color: white; border-color: hsl(250, 30%, 16%); color: hsl(250, 30%, 16%);"
@@ -126,7 +129,7 @@
           </div>
 
           <!-- Error Message -->
-          <div v-if="error" class="mt-5 rounded-md p-4 border"
+          <div v-if="error" id="login-auth-error" role="alert" aria-live="assertive" class="mt-5 rounded-md p-4 border"
             style="background-color: hsl(var(--destructive) / 0.1); border-color: hsl(var(--destructive));">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -150,6 +153,18 @@
               </div>
             </div>
           </div>
+
+          <p v-if="!checkingSession" class="mt-8 text-center text-sm" style="color: hsl(220, 13%, 28%);">
+            {{ t('auth.noAccount') }}
+            <NuxtLink
+              to="/registro"
+              class="ms-1 font-semibold underline underline-offset-4"
+              style="color: hsl(250, 30%, 16%);"
+              @click="rememberEmailForRegistration"
+            >
+              {{ t('auth.createAccount') }}
+            </NuxtLink>
+          </p>
         </div>
       </div>
     </div>
@@ -164,7 +179,8 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
+import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { prefillRegistrationEmail } from '~/utils/registrationFlow'
 
 const { t } = useI18n()
 const email = ref('')
@@ -273,7 +289,7 @@ onMounted(async () => {
     const session = await $fetch('/api/auth/session', {
       credentials: 'include'
     })
-    if (isPendingOnboardingSession(session)) {
+    if (isOnboardingEntrySession(session)) {
       authStore.hydrateSession(session)
       await navigateTo(ONBOARDING_PATH)
       return
@@ -316,7 +332,7 @@ async function handleSubmit() {
 
   try {
     const route = useRoute()
-    const response = await $fetch('/api/auth/sign-in-magic-link', {
+    await $fetch('/api/auth/sign-in-magic-link', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -333,7 +349,6 @@ async function handleSubmit() {
     toast.success(t('auth.codeSentToast'))
     emailSent.value = true
   } catch (err) {
-    console.error('❌ Error al enviar magic link:', err)
     if (isInternalAccessDeniedError(err)) {
       showCustomerPortalLink.value = true
       error.value = getInternalAccessDeniedMessage()
@@ -355,7 +370,7 @@ async function verifyCode() {
   error.value = ''
 
   try {
-    const response = await $fetch('/api/auth/verify-code', {
+    await $fetch('/api/auth/verify-code', {
       method: 'POST',
       body: {
         email: email.value.trim().toLowerCase(),
@@ -365,7 +380,7 @@ async function verifyCode() {
     })
 
     const session = await authStore.refreshSession()
-    if (isPendingOnboardingSession(session)) {
+    if (isOnboardingEntrySession(session)) {
       toast.success(t('auth.accessGranted'))
       window.location.href = ONBOARDING_PATH
       return
@@ -389,7 +404,6 @@ async function verifyCode() {
     }, 1000)
 
   } catch (err) {
-    console.error('❌ Error al verificar código:', err)
     if (isInternalAccessDeniedError(err)) {
       showCustomerPortalLink.value = true
       error.value = getInternalAccessDeniedMessage()
@@ -399,6 +413,11 @@ async function verifyCode() {
   } finally {
     verifyingCode.value = false
   }
+}
+
+function rememberEmailForRegistration() {
+  if (!import.meta.client) return
+  prefillRegistrationEmail(window.sessionStorage, email.value)
 }
 
 // Reset error state when email or code changes
