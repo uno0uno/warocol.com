@@ -1,8 +1,8 @@
 <template>
   <div
-    v-if="level === 'full_with_warning' || level === 'read_only'"
     :class="bannerClass"
-    role="alert"
+    :role="kind === 'trialing' ? 'status' : 'alert'"
+    aria-live="polite"
   >
     <div class="flex items-center gap-3 px-4 sm:px-6 md:px-8 py-2.5">
       <!-- Icon -->
@@ -22,9 +22,6 @@
       <!-- Text -->
       <p class="text-xs sm:text-sm font-medium flex-1 leading-snug">
         {{ message }}
-        <span v-if="graceDaysRemaining !== null && graceDaysRemaining !== undefined && level === 'read_only'" class="opacity-80">
-          ({{ graceDaysRemaining }} {{ graceDaysRemaining === 1 ? 'día' : 'días' }} restantes)
-        </span>
       </p>
 
       <!-- CTA -->
@@ -33,26 +30,30 @@
         :class="ctaClass"
         class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[44px] flex items-center whitespace-nowrap transition-opacity hover:opacity-80"
       >
-        Renovar plan
+        {{ ctaLabel }}
       </NuxtLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { BillingLifecycleKind } from '~/utils/billingLifecycle'
+
 const props = defineProps<{
-  level: 'full_with_warning' | 'read_only'
+  kind: BillingLifecycleKind
   message: string
-  graceDaysRemaining?: number | null
+  ctaLabel: string
 }>()
 
 const bannerClass = computed(() => {
-  if (props.level === 'read_only') return 'bg-orange-100 text-orange-900 border-b border-orange-200'
-  return 'bg-yellow-100 text-yellow-900 border-b border-yellow-200'
+  if (props.kind === 'trial_expired') return 'border-b border-status-critical-text/20 bg-status-critical-bg text-status-critical-text'
+  if (props.kind === 'trialing') return 'border-b border-status-info-text/20 bg-status-info-bg text-status-info-text'
+  return 'border-b border-status-warning-text/20 bg-status-warning-bg text-status-warning-text'
 })
 
 const ctaClass = computed(() => {
-  if (props.level === 'read_only') return 'bg-orange-800 text-white'
-  return 'bg-yellow-800 text-white'
+  if (props.kind === 'trial_expired') return 'bg-status-critical-text text-white'
+  if (props.kind === 'trialing') return 'bg-status-info-text text-white'
+  return 'bg-status-warning-text text-white'
 })
 </script>

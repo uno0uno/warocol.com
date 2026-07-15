@@ -151,7 +151,14 @@ const checkLegacyReturn = async () => {
       query: { transaction_id: transactionId },
     })
     view.value = result.status === 'active' ? 'approved' : result.status === 'pending' ? 'pending' : 'failed'
-    if (result.status === 'active') await cache.invalidateQueries({ key: ['billing'] })
+    if (result.status === 'active') {
+      await Promise.all([
+        cache.invalidateQueries({ key: ['billing'] }),
+        authStore.refreshSession(),
+      ])
+      await tenantsStore.fetchUserTenants()
+      await accessStore.load()
+    }
   } catch (err: any) {
     errorMessage.value = t('onboarding.paymentError')
     view.value = 'unknown'

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useBilling, type BillingPlan, type BillingQuotaKey } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
+import { resolveBillingLifecycle } from '~/utils/billingLifecycle'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 interface Column {
   key: string
@@ -18,6 +20,7 @@ const {
   plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
 } = useBilling()
+const billingLifecycle = computed(() => resolveBillingLifecycle(subscription.value, accessStatus.value))
 
 const { currentTenant } = useTenantReactive()
 const {
@@ -235,6 +238,7 @@ const restoreBillingIntent = async () => {
 }
 
 const openModal = async () => {
+  trackTrialPaymentClick()
   subscribeError.value = null
   billingActionError.value = null
   payerEmail.value = ''
@@ -291,6 +295,7 @@ const handleSubscribe = async () => {
 
 const handleExistingCheckout = async (checkoutUrl?: string | null) => {
   if (!checkoutUrl) return
+  trackTrialPaymentClick()
   checkoutRedirecting.value = true
   billingActionError.value = null
 
@@ -316,12 +321,15 @@ const requiresTermsAcceptance = computed(() =>
 const canSubscribe = computed(() => {
   const s = subscription.value?.status
   return !subscription.value ||
+    s === 'trialing' ||
+    s === 'trial_expired' ||
     s === 'cancelled' ||
     s === 'expired' ||
     (s === 'pending' && !subscription.value.checkout_url) ||
     (isAccessBlocked.value && !subscription.value.checkout_url)
 })
 const primaryBillingActionLabel = computed(() => {
+  if (billingLifecycle.value.isTrial) return t('billing.activatePlan')
   if (!subscription.value) return t('billing.subscribe')
   if (isAccessBlocked.value) return t('billing.reactivate')
   return t('billing.reactivate')
@@ -331,6 +339,12 @@ const recoveryActionLabel = computed(() => {
   if (hasExistingCheckout.value) return t('billing.payNow')
   return subscription.value ? t('billing.reactivate') : t('billing.subscribe')
 })
+const trackTrialPaymentClick = () => {
+  if (!billingLifecycle.value.isTrial) return
+  trackOnboardingEvent('trial_payment_clicked', {
+    dedupeId: billingLifecycle.value.trialEndsAt ?? billingLifecycle.value.kind,
+  }, undefined, import.meta.client ? sessionStorage : null)
+}
 const handleRecoveryAction = async () => {
   billingActionError.value = null
   if (requiresTermsAcceptance.value) {
@@ -423,6 +437,13 @@ const cycleLabel = computed(() => {
   if (subscription.value?.billing_cycle === 'annual')  return t('billing.annual')
   return '—'
 })
+const trialStatusMessage = computed(() => {
+  if (billingLifecycle.value.kind === 'trial_expired') return t('billing.trialExpiredMessage')
+  if (billingLifecycle.value.trialDaysRemaining !== null) {
+    return t('billing.trialActiveMessage', { count: billingLifecycle.value.trialDaysRemaining })
+  }
+  return accessStatus.value?.message || t('billing.trialReminderNotice')
+})
 
 const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
 
@@ -436,6 +457,8 @@ const statusStyle = (status: string, accessLevel?: string | null) => {
   }
 
   const map: Record<string, { badge: string; dot: string; label: string }> = {
+    trialing:  { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: t('billing.trialing') },
+    trial_expired: { badge: 'bg-status-critical-bg text-status-critical-text', dot: 'bg-status-critical-text', label: t('billing.trialExpired') },
     active:    { badge: 'bg-status-success-bg text-status-success-text',   dot: 'bg-status-success-text',   label: t('billing.active') },
     pending:   { badge: 'bg-status-info-bg text-status-info-text',         dot: 'bg-status-info-text',       label: t('billing.pending') },
     past_due:  { badge: 'bg-status-warning-bg text-status-warning-text',   dot: 'bg-status-warning-text',   label: t('billing.grace') },
@@ -447,8 +470,8 @@ const statusStyle = (status: string, accessLevel?: string | null) => {
 }
 
 const subscriptionStatusStyle = computed(() =>
-  subscription.value
-    ? statusStyle(subscription.value.status, accessStatus.value?.level)
+  billingLifecycle.value.status
+    ? statusStyle(billingLifecycle.value.status, accessStatus.value?.level)
     : null
 )
 
@@ -497,6 +520,11 @@ const eventStyle = (type: string) => {
     payment_failed:         { badge: 'bg-status-critical-bg text-status-critical-text', label: t('billing.eventPaymentFailed') },
     payment_pending:        { badge: 'bg-status-warning-bg text-status-warning-text',   label: t('billing.eventPaymentPending') },
     plan_changed:           { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventPlanChanged') },
+    trial_started:          { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventTrialStarted') },
+    trial_warning_7:        { badge: 'bg-status-warning-bg text-status-warning-text',    label: t('billing.eventTrialReminder') },
+    trial_warning_3:        { badge: 'bg-status-warning-bg text-status-warning-text',    label: t('billing.eventTrialReminder') },
+    trial_warning_1:        { badge: 'bg-status-warning-bg text-status-warning-text',    label: t('billing.eventTrialReminder') },
+    trial_expired:          { badge: 'bg-status-critical-bg text-status-critical-text', label: t('billing.eventTrialExpired') },
   }
   return map[type] ?? { badge: 'bg-surface-secondary text-text-secondary', label: type }
 }
@@ -542,7 +570,7 @@ watch(() => currentTenant.value?.id, async () => {
             <div class="min-w-0">
               <p class="text-xs font-medium text-text-secondary uppercase tracking-widest leading-none mb-1">{{ t('billing.currentPlan') }}</p>
               <p class="text-2xl font-bold text-text-primary leading-tight truncate">
-                {{ subscription?.plan_name ?? t('billing.noPlan') }}
+                {{ subscription?.plan_name ?? (billingLifecycle.isTrial ? t('billing.trialPlan') : t('billing.noPlan')) }}
               </p>
             </div>
           </div>
@@ -550,7 +578,7 @@ watch(() => currentTenant.value?.id, async () => {
           <div class="shrink-0 flex items-center gap-2">
             <!-- Status badge -->
             <span
-              v-if="subscription && subscriptionStatusStyle"
+              v-if="subscriptionStatusStyle"
               :class="['inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full', subscriptionStatusStyle.badge]"
             >
               <span :class="['w-1.5 h-1.5 rounded-full', subscriptionStatusStyle.dot]" aria-hidden="true" />
@@ -583,22 +611,42 @@ watch(() => currentTenant.value?.id, async () => {
           <p class="text-sm text-destructive">{{ billingActionError }}</p>
         </div>
 
-        <!-- Metrics grid (only when subscription exists) -->
-        <div v-if="subscription" class="grid grid-cols-2 divide-x divide-border border-b border-border">
+        <div
+          v-if="billingLifecycle.isTrial"
+          :class="[
+            'px-6 py-4 border-b border-border',
+            billingLifecycle.kind === 'trial_expired' ? 'bg-status-critical-bg/40' : 'bg-status-info-bg/40',
+          ]"
+          :role="billingLifecycle.kind === 'trial_expired' ? 'alert' : 'status'"
+        >
+          <p class="text-sm font-semibold text-text-primary">{{ trialStatusMessage }}</p>
+          <p class="mt-1 text-xs leading-5 text-text-secondary">{{ t('billing.trialReminderNotice') }}</p>
+        </div>
+
+        <!-- Paid period or trial dates -->
+        <div v-if="subscription || billingLifecycle.isTrial" class="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-border border-b border-border">
           <div class="px-6 py-4">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">{{ t('billing.paymentCycle') }}</p>
-            <p class="text-base font-semibold text-text-primary">{{ cycleLabel }}</p>
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">
+              {{ billingLifecycle.isTrial ? t('billing.trialStarts') : t('billing.paymentCycle') }}
+            </p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ billingLifecycle.isTrial ? formatDate(billingLifecycle.trialStartedAt) : cycleLabel }}
+            </p>
           </div>
           <div class="px-6 py-4">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">{{ t('billing.nextRenewal') }}</p>
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-widest mb-1">
+              {{ billingLifecycle.isTrial ? t('billing.trialEnds') : t('billing.nextRenewal') }}
+            </p>
             <p class="text-base font-semibold text-text-primary">
-              {{ subscription.current_period_end ? formatDate(subscription.current_period_end) : '—' }}
+              {{ billingLifecycle.isTrial
+                ? formatDate(billingLifecycle.trialEndsAt)
+                : subscription?.current_period_end ? formatDate(subscription.current_period_end) : '—' }}
             </p>
           </div>
         </div>
 
         <!-- No subscription placeholder -->
-        <div v-if="!subscription" class="px-6 py-8 text-center">
+        <div v-if="!subscription && !billingLifecycle.isTrial" class="px-6 py-8 text-center">
           <p class="text-sm text-text-secondary mb-1">{{ t('billing.noActiveSubscription') }}</p>
           <p class="text-xs text-text-secondary">{{ t('billing.choosePlanToStart') }}</p>
         </div>

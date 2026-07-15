@@ -22,6 +22,14 @@ export interface OnboardingStatusData {
   financialProfile?: TenantFinancialProfile | null
   termsAccepted: boolean
   termsVersion?: string | null
+  subscriptionStatus?: string | null
+  subscription_status?: string | null
+  trialStartedAt?: string | null
+  trial_started_at?: string | null
+  trialEndsAt?: string | null
+  trial_ends_at?: string | null
+  trialDaysRemaining?: number | null
+  trial_days_remaining?: number | null
 }
 
 export interface OnboardingFinancialData {

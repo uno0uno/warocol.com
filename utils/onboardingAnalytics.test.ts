@@ -37,3 +37,11 @@ test('deduplicates the same event and attempt in session storage', () => {
 test('is a no-op without a browser target', () => {
   assert.equal(trackOnboardingEvent('plan_selected', { planId }, null, null), false)
 })
+
+test('emits trial lifecycle events without leaking dedupe context', () => {
+  const event = buildOnboardingAnalyticsEvent('trial_started', {
+    dedupeId: 'tenant-or-trial-private-context',
+  })
+  assert.deepEqual(event, { event: 'trial_started' })
+  assert.equal(JSON.stringify(event).includes('private-context'), false)
+})

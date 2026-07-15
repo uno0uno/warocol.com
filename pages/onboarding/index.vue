@@ -89,7 +89,11 @@
         @retry="retryPayment"
       />
 
-      <OnboardingSetupStep v-else-if="currentView === 'setup'" />
+      <OnboardingSetupStep
+        v-else-if="currentView === 'setup'"
+        :trial-ends-at="confirmedLifecycle?.trialEndsAt"
+        :trial-days-remaining="confirmedLifecycle?.trialDaysRemaining"
+      />
     </section>
   </div>
 </template>
@@ -101,6 +105,7 @@ import OnboardingPlanStep from '~/components/onboarding/OnboardingPlanStep.vue'
 import OnboardingSetupStep from '~/components/onboarding/OnboardingSetupStep.vue'
 import OnboardingTermsStep from '~/components/onboarding/OnboardingTermsStep.vue'
 import type { OnboardingBusinessDraft } from '~/composables/useOnboarding'
+import type { BillingLifecycle } from '~/utils/billingLifecycle'
 import { extractApiError } from '~/composables/useQueryError'
 import { resolveOnboardingView } from '~/utils/onboardingFlow'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
@@ -154,6 +159,7 @@ const stepPanel = ref<HTMLElement | null>(null)
 const selectedPlanId = ref('')
 const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
 const isRedirectingToCheckout = ref(false)
+const confirmedLifecycle = ref<BillingLifecycle | null>(null)
 const authStore = useAuthStore()
 const tenantsStore = useTenantsStore()
 const accessStore = useAccessStore()
@@ -190,8 +196,33 @@ const paymentStatus = computed(() => paymentAttempt.value?.status ?? 'pending')
 
 const analyticsStorage = () => import.meta.client ? sessionStorage : null
 
+const loadConfirmedLifecycle = async () => {
+  const fromStatus = resolveBillingLifecycle(status.value)
+  if (fromStatus.isTrial) return fromStatus
+  try {
+    const [subscription, accessStatus] = await Promise.all([
+      $fetch('/api/billing/subscription', { credentials: 'include' }),
+      $fetch('/api/billing/access-status', { credentials: 'include' }),
+    ])
+    return resolveBillingLifecycle(subscription, accessStatus)
+  } catch {
+    return fromStatus
+  }
+}
+
+const syncTrialPresentation = async () => {
+  confirmedLifecycle.value = await loadConfirmedLifecycle()
+  if (confirmedLifecycle.value.kind !== 'trialing') return
+  trackOnboardingEvent('trial_started', {
+    dedupeId: confirmedLifecycle.value.trialEndsAt ?? 'confirmed',
+  }, undefined, analyticsStorage())
+}
+
 const refreshActiveStores = async () => {
-  const session = await authStore.refreshSession()
+  const session = await authStore.refreshSession() as {
+    lifecycleStatus?: unknown
+    lifecycle_status?: unknown
+  } | null
   if (session?.lifecycleStatus !== 'active' && session?.lifecycle_status !== 'active') return false
   await Promise.all([tenantsStore.fetchUserTenants(), accessStore.load()])
   return true
@@ -256,6 +287,7 @@ const refreshPayment = async () => {
 const syncCurrentStep = async () => {
   if (serverView.value === 'setup') {
     await refreshActiveStores()
+    await syncTrialPresentation()
     return
   }
   if (serverView.value !== 'plan' && serverView.value !== 'payment') return

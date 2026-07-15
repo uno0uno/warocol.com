@@ -23,10 +23,10 @@
 
       <!-- Subscription Banner -->
       <SubscriptionBanner
-        v-if="accessStatus && (accessStatus.level === 'full_with_warning' || accessStatus.level === 'read_only')"
-        :level="accessStatus.level"
-        :message="accessStatus.message || (accessStatus.level === 'read_only' ? t('shell.subscriptionReadOnly') : t('shell.subscriptionExpiring'))"
-        :grace-days-remaining="accessStatus.grace_days_remaining"
+        v-if="showBillingBanner"
+        :kind="billingLifecycle.kind"
+        :message="billingBannerMessage"
+        :cta-label="billingBannerCta"
       />
 
       <!-- Content Area with Overflow -->
@@ -86,6 +86,7 @@ import {
 import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 const { t } = useI18n()
 
@@ -95,6 +96,39 @@ const { unreadCount: notificationsUnreadCount } = useNotifications()
 // Billing access status — drives banner and blocked redirect
 const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
 const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
+const billingLifecycle = computed(() => resolveBillingLifecycle(null, accessStatus.value))
+const { formatDate } = useFormatters()
+const showBillingBanner = computed(() =>
+  billingLifecycle.value.isTrial ||
+  accessStatus.value?.level === 'full_with_warning' ||
+  accessStatus.value?.level === 'read_only',
+)
+const billingBannerMessage = computed(() => {
+  const lifecycle = billingLifecycle.value
+  if (lifecycle.kind === 'trialing') {
+    if (!lifecycle.trialEndsAt || lifecycle.trialDaysRemaining === null) {
+      return accessStatus.value?.message || `${t('billing.trialing')}. ${t('billing.trialReminderNotice')}`
+    }
+    return t('shell.trialActiveBanner', {
+      date: formatDate(lifecycle.trialEndsAt),
+      count: lifecycle.trialDaysRemaining,
+    })
+  }
+  if (lifecycle.kind === 'trial_expired') return t('shell.trialExpiredBanner')
+  if (lifecycle.kind === 'paid_grace' && accessStatus.value?.grace_days_remaining != null) {
+    return `${accessStatus.value?.message || t('shell.subscriptionExpiring')} ${t('shell.subscriptionGraceDays', {
+      count: accessStatus.value?.grace_days_remaining ?? 0,
+    })}`
+  }
+  return accessStatus.value?.message || (
+    accessStatus.value?.level === 'read_only'
+      ? t('shell.subscriptionReadOnly')
+      : t('shell.subscriptionExpiring')
+  )
+})
+const billingBannerCta = computed(() =>
+  billingLifecycle.value.isTrial ? t('shell.trialActivate') : t('shell.subscriptionRenew'),
+)
 
 // Get route-based configuration
 const route = useRoute()
@@ -124,6 +158,16 @@ watch(accessStatus, (status) => {
   if (status?.level === 'blocked' && !route.path.startsWith('/gestion/billing')) {
     navigateTo('/gestion/billing')
   }
+}, { immediate: true })
+
+watch(billingLifecycle, (lifecycle) => {
+  const event = lifecycle.kind === 'trialing'
+    ? 'trial_started'
+    : lifecycle.kind === 'trial_expired' ? 'trial_expired' : null
+  if (!event) return
+  trackOnboardingEvent(event, {
+    dedupeId: lifecycle.trialEndsAt ?? 'confirmed',
+  }, undefined, import.meta.client ? sessionStorage : null)
 }, { immediate: true })
 
 onMounted(() => {
