@@ -335,12 +335,6 @@ const sendRegistration = async (isResend: boolean) => {
   }
 }
 
-const credentialWasRejected = (value: unknown) => {
-  const candidate = value as { status?: number; statusCode?: number; response?: { status?: number } }
-  const status = candidate?.statusCode ?? candidate?.status ?? candidate?.response?.status
-  return status === 400 || status === 401 || status === 403
-}
-
 const verifyCode = async () => {
   if (verifying.value || verificationCode.value.length !== 6) {
     error.value = t('auth.codeRequired')
@@ -351,12 +345,7 @@ const verifyCode = async () => {
   error.value = ''
   const body = { email: email.value.trim().toLocaleLowerCase(), code: verificationCode.value }
   try {
-    try {
-      await $fetch('/api/auth/registration/verify-code', { method: 'POST', credentials: 'include', body })
-    } catch (registrationError) {
-      if (!credentialWasRejected(registrationError)) throw registrationError
-      await $fetch('/api/auth/verify-code', { method: 'POST', credentials: 'include', body })
-    }
+    await $fetch('/api/auth/registration/verify-code', { method: 'POST', credentials: 'include', body })
 
     const session = await authStore.refreshSession()
     toast.success(t('auth.registrationComplete'))
