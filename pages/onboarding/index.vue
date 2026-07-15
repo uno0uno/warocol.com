@@ -300,7 +300,7 @@ const handleBusinessSubmit = async (draft: OnboardingBusinessDraft) => {
 }
 
 const handleTermsAccepted = async () => {
-  await redirectToBilling()
+  await reload()
 }
 
 const handleCheckout = async () => {
