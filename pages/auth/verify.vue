@@ -86,6 +86,7 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
+import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
 
 definePageMeta({
   layout: false,
@@ -182,7 +183,7 @@ const verifyToken = async () => {
     }
 
     // Llamar al endpoint de verificación
-    const response = await $fetch('/api/auth/verify', {
+    const response = await $fetch<any>('/api/auth/verify', {
       method: 'POST',
       body: {
         email: email,
@@ -191,11 +192,22 @@ const verifyToken = async () => {
       credentials: 'include'
     })
 
-    if (response?.success === false || (response?.user && !canUseInternalSession(response))) {
+    if (response?.success === false || (
+      response?.user &&
+      !response?.onboarding &&
+      !canUseInternalSession(response)
+    )) {
       throw response
     }
 
     const sessionData = await authStore.refreshSession()
+    if (isPendingOnboardingSession(sessionData)) {
+      redirectUrl.value = ONBOARDING_PATH
+      verifying.value = false
+      success.value = true
+      await navigateTo(ONBOARDING_PATH)
+      return
+    }
     if (!canUseInternalSession(sessionData)) {
       throw { status: 403, data: { code: 'no_internal_access' } }
     }

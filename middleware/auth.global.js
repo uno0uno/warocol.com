@@ -5,6 +5,7 @@ import {
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
+import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
@@ -18,6 +19,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const isPublicAccess = to.meta?.publicAccess === true
   const isCustomerPortal = to.meta?.layout === 'customer-portal'
   const isKds = to.meta?.layout === 'kds'
+  const isOnboardingAccess = to.meta?.onboardingAccess === true
 
   const authStore = useAuthStore()
   const accessStore = useAccessStore()
@@ -35,6 +37,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       const sessionResponse = await $fetch('/api/auth/session', {
         credentials: 'include',
       })
+      if (isPendingOnboardingSession(sessionResponse)) {
+        authStore.hydrateSession(sessionResponse)
+        return navigateTo(ONBOARDING_PATH)
+      }
       if (canUseInternalSession(sessionResponse)) {
         await accessStore.load()
         return navigateTo(getAccessAwareRedirect(to.query.redirect, accessStore, useRouter()))
@@ -73,6 +79,22 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const sessionResponse = await $fetch('/api/auth/session', {
       credentials: 'include',
     })
+
+    if (isPendingOnboardingSession(sessionResponse)) {
+      authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
+      if (isOnboardingAccess) return
+      return navigateTo(ONBOARDING_PATH)
+    }
+
+    if (isOnboardingAccess) {
+      if (canUseInternalSession(sessionResponse)) {
+        authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
+        await accessStore.load()
+        return navigateTo(getAccessAwareRedirect(undefined, accessStore, useRouter()))
+      }
+      clearInternalState()
+      return navigateTo(sessionResponse?.user ? CUSTOMER_PORTAL_LOGIN : '/auth/login')
+    }
 
     if (!canUseInternalSession(sessionResponse)) {
       clearInternalState()

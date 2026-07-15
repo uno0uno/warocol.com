@@ -164,6 +164,7 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
+import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
 
 const { t } = useI18n()
 const email = ref('')
@@ -272,6 +273,11 @@ onMounted(async () => {
     const session = await $fetch('/api/auth/session', {
       credentials: 'include'
     })
+    if (isPendingOnboardingSession(session)) {
+      authStore.hydrateSession(session)
+      await navigateTo(ONBOARDING_PATH)
+      return
+    }
     if (session?.success && canUseInternalSession(session)) {
 
       // Verificar que la sesión sea válida para warocol.com
@@ -328,11 +334,7 @@ async function handleSubmit() {
     emailSent.value = true
   } catch (err) {
     console.error('❌ Error al enviar magic link:', err)
-    const isUserNotFound = err?.status === 401 &&
-      err?.data?.message?.toLowerCase().includes('user not found')
-    if (isUserNotFound) {
-      useAccessRequestModal().open(email.value)
-    } else if (isInternalAccessDeniedError(err)) {
+    if (isInternalAccessDeniedError(err)) {
       showCustomerPortalLink.value = true
       error.value = getInternalAccessDeniedMessage()
     } else {
@@ -363,6 +365,11 @@ async function verifyCode() {
     })
 
     const session = await authStore.refreshSession()
+    if (isPendingOnboardingSession(session)) {
+      toast.success(t('auth.accessGranted'))
+      window.location.href = ONBOARDING_PATH
+      return
+    }
     if (!canUseInternalSession(session)) {
       throw { status: 403, data: { code: 'no_internal_access' } }
     }
