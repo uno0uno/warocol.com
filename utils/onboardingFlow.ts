@@ -1,5 +1,5 @@
 export type OnboardingNextStep = 'business_profile' | 'terms' | 'payment' | 'activation' | 'setup'
-export type OnboardingView = 'business' | 'terms' | 'complete' | 'error'
+export type OnboardingView = 'business' | 'terms' | 'plan' | 'payment' | 'setup' | 'error'
 export type AuthSessionKind = 'anonymous' | 'pending' | 'internal' | 'customer'
 
 export interface OnboardingSessionLike {
@@ -45,6 +45,11 @@ export const getSessionNextStep = (session: unknown) => {
 export const isPendingOnboardingSession = (session: unknown) =>
   Boolean(asSession(session)?.user) && getSessionLifecycle(session) === 'pending'
 
+export const isActiveOnboardingSetupSession = (session: unknown) =>
+  Boolean(asSession(session)?.user)
+  && getSessionLifecycle(session) === 'active'
+  && normalizeOnboardingNextStep(getSessionNextStep(session)) === 'setup'
+
 export const classifyAuthSession = (
   session: unknown,
   canUseInternal: boolean,
@@ -72,6 +77,8 @@ export const resolveOnboardingView = (status: unknown): OnboardingView => {
   const termsAccepted = value?.termsAccepted ?? value?.terms_accepted
   if (nextStep === 'business_profile') return 'business'
   if (nextStep === 'terms' || (nextStep === 'payment' && termsAccepted === false)) return 'terms'
-  if (nextStep === 'payment' || nextStep === 'activation' || nextStep === 'setup') return 'complete'
+  if (nextStep === 'payment') return 'plan'
+  if (nextStep === 'activation') return 'payment'
+  if (nextStep === 'setup') return 'setup'
   return 'error'
 }

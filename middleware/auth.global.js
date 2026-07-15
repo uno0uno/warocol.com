@@ -5,7 +5,11 @@ import {
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
-import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
+import {
+  ONBOARDING_PATH,
+  isActiveOnboardingSetupSession,
+  isPendingOnboardingSession,
+} from '~/utils/onboardingFlow'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
@@ -38,6 +42,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         credentials: 'include',
       })
       if (isPendingOnboardingSession(sessionResponse)) {
+        authStore.hydrateSession(sessionResponse)
+        return navigateTo(ONBOARDING_PATH)
+      }
+      if (isActiveOnboardingSetupSession(sessionResponse)) {
         authStore.hydrateSession(sessionResponse)
         return navigateTo(ONBOARDING_PATH)
       }
@@ -87,6 +95,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
 
     if (isOnboardingAccess) {
+      if (isActiveOnboardingSetupSession(sessionResponse)) {
+        authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
+        await accessStore.load()
+        return
+      }
       if (canUseInternalSession(sessionResponse)) {
         authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
         await accessStore.load()

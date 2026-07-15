@@ -9,7 +9,7 @@
     </header>
 
     <nav :aria-label="t('onboarding.progressLabel')">
-      <ol class="grid gap-3 sm:grid-cols-3">
+      <ol class="grid gap-3 sm:grid-cols-5">
         <li
           v-for="(step, index) in steps"
           :key="step.key"
@@ -68,24 +68,48 @@
         @accepted="handleTermsAccepted"
       />
 
-      <div v-else-if="currentView === 'complete'" class="py-10 text-center" role="status">
-        <CheckCircleIcon class="mx-auto h-12 w-12 text-status-success-text" aria-hidden="true" />
-        <h2 class="mt-4 text-2xl font-semibold text-text-primary">{{ t('onboarding.completeTitle') }}</h2>
-        <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
-          {{ t('onboarding.completeDescription') }}
-        </p>
-      </div>
+      <OnboardingPlanStep
+        v-else-if="currentView === 'plan'"
+        v-model="selectedPlanId"
+        :plans="plans"
+        :loading="isPlansLoading"
+        :submitting="isCheckoutLoading"
+        :error="plansErrorMessage"
+        :submit-error="checkoutErrorMessage"
+        @continue="handleCheckout"
+        @retry="loadAvailablePlans"
+      />
+
+      <OnboardingPaymentStep
+        v-else-if="currentView === 'payment'"
+        :status="paymentStatus"
+        :loading="isPaymentLoading"
+        :error="paymentErrorMessage"
+        @refresh="refreshPayment"
+        @retry="retryPayment"
+      />
+
+      <OnboardingSetupStep v-else-if="currentView === 'setup'" />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CheckCircleIcon } from '@heroicons/vue/24/outline'
 import OnboardingBusinessStep from '~/components/onboarding/OnboardingBusinessStep.vue'
+import OnboardingPaymentStep from '~/components/onboarding/OnboardingPaymentStep.vue'
+import OnboardingPlanStep from '~/components/onboarding/OnboardingPlanStep.vue'
+import OnboardingSetupStep from '~/components/onboarding/OnboardingSetupStep.vue'
 import OnboardingTermsStep from '~/components/onboarding/OnboardingTermsStep.vue'
 import type { OnboardingBusinessDraft } from '~/composables/useOnboarding'
 import { extractApiError } from '~/composables/useQueryError'
 import { resolveOnboardingView } from '~/utils/onboardingFlow'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
+import {
+  clearCheckoutContext,
+  readCheckoutContext,
+  writeCheckoutContext,
+  type OnboardingCheckoutContext,
+} from '~/utils/onboardingPayment'
 
 definePageMeta({
   layout: 'onboarding',
@@ -99,26 +123,50 @@ useHead({ title: () => t('onboarding.pageTitle') })
 const {
   status,
   financial,
+  plans,
+  paymentAttempt,
   isLoading,
   isSaving,
+  isPlansLoading,
+  isCheckoutLoading,
+  isPaymentLoading,
   loadError,
   saveError,
+  plansError,
+  checkoutError,
+  paymentError,
   load,
+  loadStatus,
   saveBusinessProfile,
+  loadPlans,
+  createCheckout,
+  loadPaymentStatus,
 } = useOnboarding()
 
 const steps = [
   { key: 'account', label: 'onboarding.stepAccount' },
   { key: 'business', label: 'onboarding.stepBusiness' },
   { key: 'terms', label: 'onboarding.stepTerms' },
+  { key: 'payment', label: 'onboarding.stepPayment' },
+  { key: 'setup', label: 'onboarding.stepSetup' },
 ]
 const stepPanel = ref<HTMLElement | null>(null)
+const selectedPlanId = ref('')
+const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
+const isRedirectingToCheckout = ref(false)
+const authStore = useAuthStore()
+const tenantsStore = useTenantsStore()
+const accessStore = useAccessStore()
 
-const currentView = computed(() => resolveOnboardingView(status.value))
+const serverView = computed(() => resolveOnboardingView(status.value))
+const currentView = computed(() =>
+  serverView.value === 'plan' && checkoutContext.value ? 'payment' : serverView.value,
+)
 const currentStepIndex = computed(() => {
   if (currentView.value === 'business') return 1
   if (currentView.value === 'terms') return 2
-  if (currentView.value === 'complete') return 2
+  if (currentView.value === 'plan' || currentView.value === 'payment') return 3
+  if (currentView.value === 'setup') return 4
   return 0
 })
 const loadErrorMessage = computed(() =>
@@ -129,10 +177,76 @@ const loadErrorMessage = computed(() =>
 const saveErrorMessage = computed(() =>
   saveError.value ? extractApiError(saveError.value, t('onboarding.saveError')) : '',
 )
+const plansErrorMessage = computed(() =>
+  plansError.value ? extractApiError(plansError.value, t('onboarding.plansError')) : '',
+)
+const checkoutErrorMessage = computed(() =>
+  checkoutError.value ? extractApiError(checkoutError.value, t('onboarding.checkoutError')) : '',
+)
+const paymentErrorMessage = computed(() =>
+  paymentError.value ? extractApiError(paymentError.value, t('onboarding.paymentError')) : '',
+)
+const paymentStatus = computed(() => paymentAttempt.value?.status ?? 'pending')
+
+const analyticsStorage = () => import.meta.client ? sessionStorage : null
+
+const refreshActiveStores = async () => {
+  const session = await authStore.refreshSession()
+  if (session?.lifecycleStatus !== 'active' && session?.lifecycle_status !== 'active') return false
+  await Promise.all([tenantsStore.fetchUserTenants(), accessStore.load()])
+  return true
+}
+
+const finishActivation = async () => {
+  const currentStatus = await loadStatus()
+  if (currentStatus.lifecycleStatus !== 'active' || currentStatus.nextStep !== 'setup') return false
+  if (import.meta.client) clearCheckoutContext(sessionStorage)
+  checkoutContext.value = null
+  await refreshActiveStores()
+  return true
+}
+
+const loadAvailablePlans = async () => {
+  try {
+    await loadPlans()
+  } catch {
+    // The plan step renders the recoverable request error.
+  }
+}
+
+const refreshPayment = async () => {
+  const context = checkoutContext.value
+  if (!context) {
+    await reload()
+    return
+  }
+  try {
+    const attempt = await loadPaymentStatus(context.attemptId)
+    trackOnboardingEvent('payment_result', {
+      planId: context.planId,
+      paymentStatus: attempt.status,
+      dedupeId: `${context.attemptId}:${attempt.status}`,
+    }, undefined, analyticsStorage())
+    if (attempt.status === 'approved') await finishActivation()
+  } catch {
+    // The payment step remains mounted and offers an explicit retry.
+  }
+}
+
+const syncCurrentStep = async () => {
+  if (serverView.value === 'setup') {
+    await refreshActiveStores()
+    return
+  }
+  if (serverView.value !== 'plan' && serverView.value !== 'payment') return
+  if (checkoutContext.value) await refreshPayment()
+  else await loadAvailablePlans()
+}
 
 const reload = async () => {
   try {
     await load()
+    await syncCurrentStep()
   } catch {
     // The reactive error state renders the recovery UI.
   }
@@ -150,11 +264,52 @@ const handleTermsAccepted = async () => {
   await reload()
 }
 
+const handleCheckout = async () => {
+  if (!selectedPlanId.value || isCheckoutLoading.value) return
+  try {
+    const checkout = await createCheckout(selectedPlanId.value)
+    const context = { attemptId: checkout.attempt_id, planId: checkout.plan_id }
+    if (import.meta.client) writeCheckoutContext(sessionStorage, context)
+    checkoutContext.value = context
+    trackOnboardingEvent('checkout_started', {
+      planId: context.planId,
+      dedupeId: context.attemptId,
+    }, undefined, analyticsStorage())
+    isRedirectingToCheckout.value = true
+    window.location.assign(checkout.checkout_url)
+  } catch {
+    // The plan step keeps the selection and renders the recoverable error.
+  }
+}
+
+const retryPayment = async () => {
+  if (import.meta.client) clearCheckoutContext(sessionStorage)
+  checkoutContext.value = null
+  paymentAttempt.value = null
+  await loadAvailablePlans()
+}
+
+watch(selectedPlanId, (planId) => {
+  if (!planId) return
+  trackOnboardingEvent('plan_selected', { planId, dedupeId: planId }, undefined, analyticsStorage())
+})
+
 watch(currentView, async (nextView, previousView) => {
   if (!previousView || nextView === previousView) return
   await nextTick()
   stepPanel.value?.focus()
 })
 
-onMounted(reload)
+onMounted(async () => {
+  checkoutContext.value = import.meta.client ? readCheckoutContext(sessionStorage) : null
+  await reload()
+})
+
+onBeforeUnmount(() => {
+  if (currentView.value !== 'plan' || !selectedPlanId.value || isRedirectingToCheckout.value) return
+  trackOnboardingEvent('checkout_abandoned', {
+    planId: selectedPlanId.value,
+    dedupeId: selectedPlanId.value,
+  }, undefined, analyticsStorage())
+})
 </script>

@@ -11,6 +11,7 @@
       <div class="mx-auto flex min-h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         <img src="/logo_waro_colombia.png" alt="WARO" class="h-8 w-auto" />
         <button
+          v-if="authStore.session?.user"
           type="button"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
           :disabled="isLoggingOut"

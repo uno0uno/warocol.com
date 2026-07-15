@@ -1,115 +1,182 @@
 <template>
-  <div class="page-layout">
-    <div class="max-w-md mx-auto flex items-center justify-center min-h-[400px]">
-      <p v-if="debugError" class="text-xs text-form-control-error absolute top-4 start-4 end-4 break-all">{{ debugError }}</p>
-      <!-- Loading -->
-      <div v-if="isLoading" class="text-center space-y-4">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-sm text-text-secondary">Verificando tu pago...</p>
+  <div class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center">
+    <div class="w-full rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
+      <div v-if="view === 'loading'" class="space-y-4" role="status">
+        <TheCustomLoader size="large" />
+        <p class="text-sm text-text-secondary">{{ t('onboarding.paymentChecking') }}</p>
       </div>
 
-      <!-- Approved -->
-      <div v-else-if="isApproved" class="text-center space-y-5">
-        <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-state-success-bg flex items-center justify-center">
-            <svg class="w-8 h-8 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-        <div class="space-y-2">
-          <h1 class="text-2xl font-bold text-text-primary">¡Suscripción activa!</h1>
-          <p class="text-sm text-text-secondary leading-relaxed">
-            Tu suscripción a WARO fue procesada exitosamente.
-            Ya tienes acceso completo a todas las funciones.
-          </p>
-        </div>
-        <NuxtLink to="/gestion/billing" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
-          Ver mi suscripción
-        </NuxtLink>
-      </div>
+      <template v-else>
+        <component :is="icon" class="mx-auto h-14 w-14" :class="iconClass" aria-hidden="true" />
+        <h1 class="mt-4 text-2xl font-bold text-text-primary">{{ title }}</h1>
+        <p class="mt-2 text-sm leading-6 text-text-secondary">{{ description }}</p>
+        <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
 
-      <!-- Pending -->
-      <div v-else-if="isPending" class="text-center space-y-5">
-        <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-state-warning-bg flex items-center justify-center">
-            <svg class="w-8 h-8 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        </div>
-        <div class="space-y-2">
-          <h1 class="text-2xl font-bold text-text-primary">Pago en proceso</h1>
-          <p class="text-sm text-text-secondary leading-relaxed">
-            Tu pago está siendo procesado. Te avisaremos por email cuando se confirme.
-            Esto puede tardar unos minutos.
-          </p>
-        </div>
-        <NuxtLink to="/gestion/billing" class="border border-border px-6 py-3 rounded-xl text-sm font-semibold inline-block text-text-primary hover:bg-surface-alt transition-colors min-h-[44px] flex items-center justify-center">
-          Ver estado de mi suscripción
-        </NuxtLink>
-      </div>
-
-      <!-- Failure / other -->
-      <div v-else class="text-center space-y-5">
-        <div class="flex justify-center">
-          <div class="w-16 h-16 rounded-full bg-state-danger-bg flex items-center justify-center">
-            <svg class="w-8 h-8 text-state-danger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-        </div>
-        <div class="space-y-2">
-          <h1 class="text-2xl font-bold text-text-primary">Pago no completado</h1>
-          <p class="text-sm text-text-secondary leading-relaxed">
-            No pudimos procesar tu pago. Puede deberse a fondos insuficientes,
-            datos de tarjeta incorrectos, o un rechazo de tu banco.
-          </p>
-        </div>
-        <div class="flex flex-col gap-3">
-          <NuxtLink to="/gestion/billing" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
-            Intentar de nuevo
+        <div class="mt-6 flex flex-col gap-3">
+          <button
+            v-if="isOnboardingReturn && view !== 'failed'"
+            type="button"
+            class="min-h-11 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+            @click="checkReturn"
+          >
+            {{ t('onboarding.paymentRefresh') }}
+          </button>
+          <NuxtLink
+            v-if="isOnboardingReturn"
+            to="/onboarding"
+            class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
+          >
+            {{ view === 'failed' ? t('onboarding.paymentRetry') : t('onboarding.backToOnboarding') }}
           </NuxtLink>
-          <NuxtLink to="/gestion/billing" class="text-sm text-text-secondary hover:text-text-primary">
-            Volver a mi suscripción
+          <NuxtLink
+            v-else
+            to="/gestion/billing"
+            class="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            {{ t('onboarding.viewSubscription') }}
           </NuxtLink>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// Billing confirmation must stay ungated so payment return/callback flows
-// can complete even before module access is available.
-definePageMeta({ layout: 'dashboard' })
+import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { isActiveOnboardingSetupSession, isPendingOnboardingSession } from '~/utils/onboardingFlow'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
+import {
+  clearCheckoutContext,
+  isUuid,
+  readCheckoutContext,
+  type OnboardingCheckoutContext,
+} from '~/utils/onboardingPayment'
 
+// The API remains the auth boundary. This meta only lets pending sessions reach
+// the Wompi return page without weakening the guards on any operational route.
+definePageMeta({ layout: 'onboarding', publicAccess: true, robots: 'noindex, nofollow' })
+
+type ReturnView = 'loading' | 'approved' | 'pending' | 'failed' | 'unknown'
+
+const { t } = useI18n()
 const route = useRoute()
-const status = ref<'loading' | 'active' | 'pending' | 'cancelled'>('loading')
-const debugError = ref<string | null>(null)
+const authStore = useAuthStore()
+const tenantsStore = useTenantsStore()
+const accessStore = useAccessStore()
+const cache = useQueryCache()
+const { loadStatus, loadPaymentStatus } = useOnboarding()
 
-const isLoading = computed(() => status.value === 'loading')
-const isApproved = computed(() => status.value === 'active')
-const isPending = computed(() => status.value === 'pending')
+const view = ref<ReturnView>('loading')
+const errorMessage = ref('')
+const isOnboardingReturn = ref(false)
+const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
 
-onMounted(async () => {
-  const transactionId = route.query.id as string | undefined
-  if (!transactionId) {
-    status.value = 'pending'
+const icon = computed(() => view.value === 'approved'
+  ? CheckCircleIcon
+  : view.value === 'pending' ? ClockIcon : ExclamationTriangleIcon)
+const iconClass = computed(() => view.value === 'approved'
+  ? 'text-status-success-text'
+  : view.value === 'pending' ? 'text-status-warning-text' : 'text-status-danger-text')
+const title = computed(() => view.value === 'approved'
+  ? t('onboarding.paymentApprovedTitle')
+  : view.value === 'pending'
+    ? t('onboarding.paymentPendingTitle')
+    : view.value === 'failed'
+      ? t('onboarding.paymentFailedTitle')
+      : t('onboarding.paymentUnknownTitle'))
+const description = computed(() => view.value === 'approved'
+  ? t('onboarding.paymentApprovedDescription')
+  : view.value === 'pending'
+    ? t('onboarding.paymentPendingDescription')
+    : view.value === 'failed'
+      ? t('onboarding.paymentFailedDescription')
+      : t('onboarding.paymentUnknownDescription'))
+
+const refreshActivatedSession = async () => {
+  const session = await authStore.refreshSession()
+  if (!isActiveOnboardingSetupSession(session)) return false
+  await Promise.all([tenantsStore.fetchUserTenants(), accessStore.load()])
+  if (import.meta.client) clearCheckoutContext(sessionStorage)
+  await navigateTo('/onboarding', { replace: true })
+  return true
+}
+
+const checkOnboardingReturn = async () => {
+  const context = checkoutContext.value
+  if (!context) {
+    view.value = 'unknown'
     return
   }
   try {
-    const result = await $fetch<{ status: string; wompi_status: string }>(
-      `/api/billing/verify-payment?transaction_id=${transactionId}`
-    )
-    status.value = result.status as any
-    if (result.status === 'active') {
-      const { fetchSubscription } = useBilling()
-      await fetchSubscription()
+    const attempt = await loadPaymentStatus(context.attemptId)
+    trackOnboardingEvent('payment_result', {
+      planId: context.planId,
+      paymentStatus: attempt.status,
+      dedupeId: `${context.attemptId}:${attempt.status}`,
+    }, undefined, import.meta.client ? sessionStorage : null)
+
+    if (attempt.status === 'approved') {
+      const status = await loadStatus()
+      if (status.lifecycleStatus === 'active' && status.nextStep === 'setup') {
+        if (await refreshActivatedSession()) return
+      }
+      view.value = 'approved'
+      return
     }
+    view.value = attempt.status === 'declined' || attempt.status === 'error' ? 'failed' : 'pending'
   } catch (err: any) {
-    debugError.value = err?.data?.detail || err?.message || String(err)
-    status.value = 'pending'
+    errorMessage.value = t('onboarding.paymentError')
+    view.value = 'unknown'
   }
+}
+
+const checkLegacyReturn = async () => {
+  const transactionId = typeof route.query.id === 'string' ? route.query.id : null
+  if (!transactionId) {
+    view.value = 'pending'
+    return
+  }
+  try {
+    const result = await $fetch<{ status: string }>('/api/billing/verify-payment', {
+      credentials: 'include',
+      query: { transaction_id: transactionId },
+    })
+    view.value = result.status === 'active' ? 'approved' : result.status === 'pending' ? 'pending' : 'failed'
+    if (result.status === 'active') await cache.invalidateQueries({ key: ['billing'] })
+  } catch (err: any) {
+    errorMessage.value = t('onboarding.paymentError')
+    view.value = 'unknown'
+  }
+}
+
+const checkReturn = async () => {
+  view.value = 'loading'
+  errorMessage.value = ''
+  try {
+    const session = await authStore.refreshSession()
+    if (isPendingOnboardingSession(session) || isActiveOnboardingSetupSession(session)) {
+      isOnboardingReturn.value = true
+      if (isActiveOnboardingSetupSession(session) && await refreshActivatedSession()) return
+      await checkOnboardingReturn()
+      return
+    }
+    isOnboardingReturn.value = false
+    await checkLegacyReturn()
+  } catch (err: any) {
+    isOnboardingReturn.value = true
+    errorMessage.value = t('onboarding.paymentSessionError')
+    view.value = 'unknown'
+  }
+}
+
+onMounted(async () => {
+  const queryAttempt = typeof route.query.attempt_id === 'string' && isUuid(route.query.attempt_id)
+    ? route.query.attempt_id
+    : null
+  const stored = import.meta.client ? readCheckoutContext(sessionStorage) : null
+  checkoutContext.value = queryAttempt && stored
+    ? { ...stored, attemptId: queryAttempt }
+    : stored
+  await checkReturn()
 })
 </script>

@@ -4,6 +4,13 @@ import type {
   TenantFinancialProfile,
 } from './useTenantFinancialProfile'
 import { resolveOnboardingView } from '~/utils/onboardingFlow'
+import {
+  buildOnboardingCheckoutBody,
+  isSafeCheckoutUrl,
+  type OnboardingCheckoutResult,
+  type OnboardingPaymentAttempt,
+  type OnboardingPlan,
+} from '~/utils/onboardingPayment'
 
 export interface OnboardingStatusData {
   tenantId: string
@@ -40,10 +47,18 @@ export interface OnboardingBusinessDraft {
 export const useOnboarding = () => {
   const status = ref<OnboardingStatusData | null>(null)
   const financial = ref<OnboardingFinancialData | null>(null)
+  const plans = ref<OnboardingPlan[]>([])
+  const paymentAttempt = ref<OnboardingPaymentAttempt | null>(null)
   const isLoading = ref(true)
   const isSaving = ref(false)
+  const isPlansLoading = ref(false)
+  const isCheckoutLoading = ref(false)
+  const isPaymentLoading = ref(false)
   const loadError = ref<unknown>(null)
   const saveError = ref<unknown>(null)
+  const plansError = ref<unknown>(null)
+  const checkoutError = ref<unknown>(null)
+  const paymentError = ref<unknown>(null)
 
   const loadStatus = async () => {
     const response = await $fetch<ApiEnvelope<OnboardingStatusData>>('/api/onboarding/status', {
@@ -96,16 +111,83 @@ export const useOnboarding = () => {
     }
   }
 
+  const loadPlans = async () => {
+    isPlansLoading.value = true
+    plansError.value = null
+    try {
+      const response = await $fetch<ApiEnvelope<OnboardingPlan[]>>('/api/onboarding/plans', {
+        credentials: 'include',
+      })
+      plans.value = response.data ?? []
+      return plans.value
+    } catch (err) {
+      plansError.value = err
+      throw err
+    } finally {
+      isPlansLoading.value = false
+    }
+  }
+
+  const createCheckout = async (planId: string) => {
+    isCheckoutLoading.value = true
+    checkoutError.value = null
+    try {
+      const response = await $fetch<OnboardingCheckoutResult>('/api/onboarding/checkout', {
+        method: 'POST',
+        credentials: 'include',
+        body: buildOnboardingCheckoutBody(planId),
+      })
+      if (!isSafeCheckoutUrl(response.checkout_url)) {
+        throw new Error('ONBOARDING_CHECKOUT_URL_INVALID')
+      }
+      return response
+    } catch (err) {
+      checkoutError.value = err
+      throw err
+    } finally {
+      isCheckoutLoading.value = false
+    }
+  }
+
+  const loadPaymentStatus = async (attemptId: string) => {
+    isPaymentLoading.value = true
+    paymentError.value = null
+    try {
+      const response = await $fetch<OnboardingPaymentAttempt>('/api/onboarding/payment-status', {
+        credentials: 'include',
+        query: { attempt_id: attemptId },
+      })
+      paymentAttempt.value = response
+      return response
+    } catch (err) {
+      paymentError.value = err
+      throw err
+    } finally {
+      isPaymentLoading.value = false
+    }
+  }
+
   return {
     status,
     financial,
+    plans,
+    paymentAttempt,
     isLoading,
     isSaving,
+    isPlansLoading,
+    isCheckoutLoading,
+    isPaymentLoading,
     loadError,
     saveError,
+    plansError,
+    checkoutError,
+    paymentError,
     load,
     loadStatus,
     loadFinancial,
     saveBusinessProfile,
+    loadPlans,
+    createCheckout,
+    loadPaymentStatus,
   }
 }
