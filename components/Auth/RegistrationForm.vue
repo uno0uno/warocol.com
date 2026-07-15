@@ -309,6 +309,11 @@ interface PhoneCountryOption {
   calling_code: number
 }
 
+interface RegistrationMagicLinkResult {
+  success: boolean
+  action: 'verification_sent' | 'login_required'
+}
+
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -470,7 +475,7 @@ const sendRegistration = async (isResend: boolean) => {
   error.value = ''
   try {
     const draft = currentDraft()
-    await $fetch('/api/auth/register-magic-link', {
+    const result = await $fetch<RegistrationMagicLinkResult>('/api/auth/register-magic-link', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -479,6 +484,16 @@ const sendRegistration = async (isResend: boolean) => {
       },
       body: buildRegistrationPayload(draft),
     })
+    if (result.action === 'login_required') {
+      const normalizedEmail = email.value.trim().toLocaleLowerCase()
+      if (import.meta.client) clearRegistrationDraft(window.sessionStorage)
+      toast.info(`${t('auth.alreadyHaveAccount')} ${t('auth.signIn')}`)
+      await navigateTo({
+        path: '/auth/login',
+        query: { email: normalizedEmail },
+      }, { replace: true })
+      return
+    }
     phase.value = 'code'
     sentAt.value = Date.now()
     persistDraft()
