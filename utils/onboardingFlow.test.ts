@@ -6,6 +6,7 @@ import {
   classifyAuthSession,
   getEditableBusinessName,
   getSessionNextStep,
+  isActiveOnboardingSetupSession,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
   resolveOnboardingView,
@@ -24,11 +25,31 @@ test('supports snake_case session aliases without weakening pending detection', 
   assert.equal(getSessionNextStep(session), 'terms')
 })
 
+test('allows onboarding setup only for an active session at the server setup step', () => {
+  assert.equal(isActiveOnboardingSetupSession({
+    user: {},
+    lifecycleStatus: 'active',
+    nextStep: 'setup',
+  }), true)
+  assert.equal(isActiveOnboardingSetupSession({
+    user: {},
+    lifecycle_status: 'active',
+    next_step: 'payment',
+  }), false)
+  assert.equal(isActiveOnboardingSetupSession({
+    user: {},
+    lifecycleStatus: 'pending',
+    nextStep: 'setup',
+  }), false)
+})
+
 test('uses server status and returns a safe error for unknown next steps', () => {
   assert.equal(resolveOnboardingView({ nextStep: 'business_profile' }), 'business')
   assert.equal(resolveOnboardingView({ nextStep: 'terms' }), 'terms')
   assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: false }), 'terms')
-  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: true }), 'complete')
+  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: true }), 'plan')
+  assert.equal(resolveOnboardingView({ nextStep: 'activation' }), 'payment')
+  assert.equal(resolveOnboardingView({ nextStep: 'setup' }), 'setup')
   assert.equal(resolveOnboardingView({ nextStep: 'unexpected' }), 'error')
   assert.equal(normalizeOnboardingNextStep('unexpected'), null)
 })
