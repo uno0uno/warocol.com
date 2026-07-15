@@ -8,6 +8,7 @@ import { isSessionAuthError } from '~/composables/useSessionExpiry'
 import {
   ONBOARDING_PATH,
   isActiveOnboardingSetupSession,
+  isOnboardingEntrySession,
   isPendingOnboardingSession,
 } from '~/utils/onboardingFlow'
 
@@ -16,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (process.server) return
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/auth/login', '/auth/verify', '/', '/bogota'] // Add other public routes as needed
+  const publicRoutes = ['/auth/login', '/auth/verify', '/registro', '/', '/bogota'] // Add other public routes as needed
 
   // Check if route uses a layout that doesn't require operator auth
   const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
@@ -36,16 +37,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
 
   // If user already has a valid internal session and tries login, redirect home.
-  if (authStore.isSessionValid && to.path === '/auth/login') {
+  if (authStore.isSessionValid && (to.path === '/auth/login' || to.path === '/registro')) {
     try {
       const sessionResponse = await $fetch('/api/auth/session', {
         credentials: 'include',
       })
-      if (isPendingOnboardingSession(sessionResponse)) {
-        authStore.hydrateSession(sessionResponse)
-        return navigateTo(ONBOARDING_PATH)
-      }
-      if (isActiveOnboardingSetupSession(sessionResponse)) {
+      if (isOnboardingEntrySession(sessionResponse)) {
         authStore.hydrateSession(sessionResponse)
         return navigateTo(ONBOARDING_PATH)
       }

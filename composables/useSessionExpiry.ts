@@ -17,6 +17,8 @@ const INTERNAL_PUBLIC_PREFIXES = [
   '/403',
 ]
 
+const INTERNAL_PUBLIC_ROUTES = new Set(['/', '/registro'])
+
 function getErrorStatus(err: unknown): number | undefined {
   const error = err as FetchErrorLike
   return error?.status ?? error?.statusCode ?? error?.response?.status
@@ -43,9 +45,13 @@ export function isSessionAuthError(err: unknown): boolean {
   )
 }
 
+export function isSessionRecoveryPublicPath(path: string): boolean {
+  return INTERNAL_PUBLIC_ROUTES.has(path)
+    || INTERNAL_PUBLIC_PREFIXES.some(prefix => path.startsWith(prefix))
+}
+
 function isInternalRecoveryRoute(route: ReturnType<typeof useRoute>): boolean {
-  if (route.path === '/' || route.path.startsWith('/auth/login')) return false
-  if (INTERNAL_PUBLIC_PREFIXES.some(prefix => route.path.startsWith(prefix))) return false
+  if (isSessionRecoveryPublicPath(route.path)) return false
 
   const layout = route.meta?.layout
   if (layout === 'public-restaurant' || layout === 'customer-portal' || layout === 'kds') {

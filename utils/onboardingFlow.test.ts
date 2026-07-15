@@ -7,6 +7,7 @@ import {
   getEditableBusinessName,
   getSessionNextStep,
   isActiveOnboardingSetupSession,
+  isOnboardingEntrySession,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
   resolveOnboardingView,
@@ -41,6 +42,13 @@ test('allows onboarding setup only for an active session at the server setup ste
     lifecycleStatus: 'pending',
     nextStep: 'setup',
   }), false)
+})
+
+test('routes pending and active setup sessions through the onboarding entry', () => {
+  assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'pending' }), true)
+  assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'setup' }), true)
+  assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'payment' }), false)
+  assert.equal(isOnboardingEntrySession({ lifecycleStatus: 'pending' }), false)
 })
 
 test('uses server status and returns a safe error for unknown next steps', () => {

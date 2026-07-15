@@ -50,6 +50,9 @@ export const isActiveOnboardingSetupSession = (session: unknown) =>
   && getSessionLifecycle(session) === 'active'
   && normalizeOnboardingNextStep(getSessionNextStep(session)) === 'setup'
 
+export const isOnboardingEntrySession = (session: unknown) =>
+  isPendingOnboardingSession(session) || isActiveOnboardingSetupSession(session)
+
 export const classifyAuthSession = (
   session: unknown,
   canUseInternal: boolean,

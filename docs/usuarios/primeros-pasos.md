@@ -35,9 +35,11 @@ Copia el código que aparece en el email, pégalo en la pantalla de WARO COLOMBI
 
 > El enlace y el código son válidos por **15 minutos**. Si expiran, vuelve a la pantalla de login y solicita uno nuevo con "Reenviar".
 
-### Si tu email no está registrado
+### Si todavía no tienes cuenta
 
-WARO COLOMBIA no permite registro libre. Si ingresas un email que no tiene cuenta, aparece un formulario para **solicitar acceso**. El equipo de WARO COLOMBIA lo revisa y te habilita.
+Abre **Crear cuenta** desde la pantalla de acceso o entra a [registro](/registro). Ingresa tu correo, el indicativo y número de WhatsApp, acepta el consentimiento y verifica el correo mediante el enlace o el código de 6 dígitos.
+
+Después de verificar, WARO COLOMBIA abre la configuración inicial de tu negocio. Si interrumpes el proceso, puedes volver a ingresar con el mismo correo para continuar desde el paso pendiente. El registro no exige una llamada ni asesoría humana.
 
 ---
 
