@@ -62,6 +62,10 @@ test('uses server status and returns a safe error for unknown next steps', () =>
   assert.equal(normalizeOnboardingNextStep('unexpected'), null)
 })
 
+test('keeps payment-pending tenants inside onboarding to select a plan', () => {
+  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: true }), 'plan')
+})
+
 test('requires a real business name instead of the server placeholder', () => {
   assert.equal(getEditableBusinessName('  Negocio   pendiente  '), '')
   assert.equal(getEditableBusinessName('  Cafe   Central  '), 'Cafe Central')
