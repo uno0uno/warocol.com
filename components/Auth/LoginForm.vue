@@ -193,6 +193,7 @@ const verifyingCode = ref(false)
 const showCustomerPortalLink = ref(false)
 const toast = useToast()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const accessStore = useAccessStore()
 const { syncAuthenticatedLocale } = useAppLocale()
@@ -268,6 +269,11 @@ const {
 
 // Verificar si ya hay sesión al cargar el componente y configurar observer de emojis
 onMounted(async () => {
+  const emailQuery = Array.isArray(route.query.email) ? route.query.email[0] : route.query.email
+  if (typeof emailQuery === 'string') {
+    email.value = emailQuery.trim().toLowerCase()
+  }
+
   // Configurar observer de emojis
   if (foodBgContainer.value) {
     const rect = foodBgContainer.value.getBoundingClientRect()
@@ -301,7 +307,6 @@ onMounted(async () => {
       const expectedTenantName = config.siteName || 'Waro Colombia'
       if (session.user.tenant_name === expectedTenantName) {
 
-        const route = useRoute()
         await syncAuthenticatedLocale(session)
         await accessStore.load()
         const redirectUrl = getAccessAwareRedirect(route.query.redirect, accessStore, router)
@@ -331,7 +336,6 @@ async function handleSubmit() {
   error.value = ''
 
   try {
-    const route = useRoute()
     await $fetch('/api/auth/sign-in-magic-link', {
       method: 'POST',
       credentials: 'include',
@@ -393,7 +397,6 @@ async function verifyCode() {
     toast.success(t('auth.accessGranted'))
 
     // Redirigir con recarga completa para asegurar que la cookie se incluya
-    const route = useRoute()
     await accessStore.load()
     const redirectUrl = getAccessAwareRedirect(route.query.redirect, accessStore, router)
 
