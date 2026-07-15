@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
+import { activatePublicCta, type PublicCta } from '~/utils/publicCta'
 
 interface Props {
   content: string
@@ -21,10 +22,10 @@ const renderedContent = computed(() => md.render(props.content))
 const readingProgress = ref(0)
 
 const articleRef = ref<HTMLElement | null>(null)
+const router = useRouter()
+const insertedCtas: HTMLElement[] = []
 
-const leadModal = useLeadModal()
-
-function buildMidCta(cta: { headline: string; body: string; button: string }): HTMLElement {
+function buildMidCta(cta: PublicCta, index: number): HTMLElement {
   const wrap = document.createElement('div')
   wrap.setAttribute('data-mid-cta', '')
 
@@ -33,7 +34,7 @@ function buildMidCta(cta: { headline: string; body: string; button: string }): H
 
   const eyebrow = document.createElement('span')
   eyebrow.setAttribute('data-mid-cta-eyebrow', '')
-  eyebrow.textContent = 'Waro Colombia'
+  eyebrow.textContent = cta.eyebrow
 
   const headline = document.createElement('p')
   headline.setAttribute('data-mid-cta-headline', '')
@@ -43,19 +44,41 @@ function buildMidCta(cta: { headline: string; body: string; button: string }): H
   text.setAttribute('data-mid-cta-body', '')
   text.textContent = cta.body
 
+  const microcopy = document.createElement('p')
+  microcopy.setAttribute('data-mid-cta-microcopy', '')
+  microcopy.textContent = cta.microcopy
+
   const btn = document.createElement('button')
   btn.setAttribute('data-blog-cta-btn', '')
   btn.textContent = cta.button
 
-  btn.addEventListener('click', () => {
-    leadModal.open(props.slug ? `blog:${props.slug}` : 'blog_cta')
-  })
+  btn.type = 'button'
+  btn.addEventListener('click', () => router.push(activatePublicCta(
+    cta,
+    { source: 'blog_article', content: `${props.slug}_${cta.placement}` },
+    undefined,
+    window.sessionStorage,
+  )))
 
   content.appendChild(eyebrow)
   content.appendChild(headline)
   content.appendChild(text)
+  content.appendChild(microcopy)
+  if (cta.comparison) {
+    const disclosure = document.createElement('p')
+    disclosure.setAttribute('data-mid-cta-disclosure', '')
+    disclosure.append(document.createTextNode(`${cta.comparison.scope} ${cta.comparison.disclosure} `))
+    const source = document.createElement('a')
+    source.href = cta.comparison.url
+    source.target = '_blank'
+    source.rel = 'noopener noreferrer'
+    source.textContent = `${cta.comparison.source} · ${cta.comparison.asOf}`
+    disclosure.appendChild(source)
+    content.appendChild(disclosure)
+  }
   wrap.appendChild(content)
   wrap.appendChild(btn)
+  wrap.setAttribute('data-mid-cta-position', String(index + 1))
   return wrap
 }
 
@@ -91,13 +114,18 @@ onMounted(() => {
 
     // Inject contextual CTA banners at natural reading breaks.
     if (props.slug) {
-      const cta = useBlogCta(props.slug)
-      getMidCtaTargets(articleRef.value).forEach((h2) => {
-        const banner = buildMidCta(cta)
+      getMidCtaTargets(articleRef.value).forEach((h2, index) => {
+        const cta = useBlogCta(props.slug, index === 0 ? 'benefit' : 'price')
+        const banner = buildMidCta(cta, index)
         h2.parentNode!.insertBefore(banner, h2)
+        insertedCtas.push(banner)
       })
     }
   })
+})
+
+onUnmounted(() => {
+  insertedCtas.splice(0).forEach(node => node.remove())
 })
 </script>
 
@@ -201,6 +229,21 @@ onMounted(() => {
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.45;
+}
+
+:deep([data-mid-cta-microcopy]),
+:deep([data-mid-cta-disclosure]) {
+  margin: 0.5rem 0 0;
+  color: hsl(var(--text-tertiary));
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+:deep([data-mid-cta-disclosure] a) {
+  color: hsl(var(--primary));
+  font-weight: 700;
+  text-underline-offset: 2px;
 }
 
 :deep([data-blog-cta-btn]) {

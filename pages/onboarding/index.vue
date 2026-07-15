@@ -109,6 +109,7 @@ import type { BillingLifecycle } from '~/utils/billingLifecycle'
 import { extractApiError } from '~/composables/useQueryError'
 import { resolveOnboardingView } from '~/utils/onboardingFlow'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
+import { readPublicCtaAnalyticsContext } from '~/utils/publicCta'
 import {
   clearCheckoutContext,
   readCheckoutContext,
@@ -195,6 +196,7 @@ const paymentErrorMessage = computed(() =>
 const paymentStatus = computed(() => paymentAttempt.value?.status ?? 'pending')
 
 const analyticsStorage = () => import.meta.client ? sessionStorage : null
+const publicAnalyticsContext = () => readPublicCtaAnalyticsContext(analyticsStorage())
 
 const loadConfirmedLifecycle = async () => {
   const fromStatus = resolveBillingLifecycle(status.value)
@@ -214,6 +216,7 @@ const syncTrialPresentation = async () => {
   confirmedLifecycle.value = await loadConfirmedLifecycle()
   if (confirmedLifecycle.value.kind !== 'trialing') return
   trackOnboardingEvent('trial_started', {
+    ...publicAnalyticsContext(),
     dedupeId: confirmedLifecycle.value.trialEndsAt ?? 'confirmed',
   }, undefined, analyticsStorage())
 }
@@ -310,6 +313,10 @@ const reload = async () => {
 const handleBusinessSubmit = async (draft: OnboardingBusinessDraft) => {
   try {
     await saveBusinessProfile(draft)
+    trackOnboardingEvent('business_profile_completed', {
+      ...publicAnalyticsContext(),
+      dedupeId: 'business-profile',
+    }, undefined, analyticsStorage())
   } catch {
     // Keep the child draft mounted for a retry.
   }
@@ -327,6 +334,7 @@ const handleCheckout = async () => {
     if (import.meta.client) writeCheckoutContext(sessionStorage, context)
     checkoutContext.value = context
     trackOnboardingEvent('checkout_started', {
+      ...publicAnalyticsContext(),
       planId: context.planId,
       dedupeId: context.attemptId,
     }, undefined, analyticsStorage())

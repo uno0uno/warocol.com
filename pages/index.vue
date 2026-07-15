@@ -1,7 +1,7 @@
 <template>
   <div class="index-page animate-fade-in">
     <PublicHomeFoodBackground />
-    <PublicHomeHero @lead="leadModal.open" />
+    <PublicHomeHero />
     <PublicHomeTrustLogos />
   </div>
 </template>
@@ -9,7 +9,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const leadModal = useLeadModal()
 const route = useRoute()
 const { public: config } = useRuntimeConfig()
 

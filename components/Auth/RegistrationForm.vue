@@ -219,6 +219,11 @@ import {
   type RegistrationAttribution,
   type RegistrationPhase,
 } from '~/utils/registrationFlow'
+import {
+  buildPublicCtaAnalyticsContext,
+  writePublicCtaAttribution,
+} from '~/utils/publicCta'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -324,6 +329,12 @@ const sendRegistration = async (isResend: boolean) => {
     phase.value = 'code'
     sentAt.value = Date.now()
     persistDraft()
+    if (!isResend && import.meta.client) {
+      trackOnboardingEvent('registration_started', {
+        ...buildPublicCtaAnalyticsContext(attribution.value),
+        dedupeId: String(sentAt.value),
+      }, undefined, window.sessionStorage)
+    }
     startCooldown()
     toast.success(t('auth.codeSentToast'))
     await nextTick()
@@ -359,20 +370,30 @@ const verifyCode = async () => {
     }
 
     const session = await authStore.refreshSession()
+    const trackEmailVerified = () => {
+      if (!import.meta.client) return
+      trackOnboardingEvent('email_verified', {
+        ...buildPublicCtaAnalyticsContext(attribution.value),
+        dedupeId: String(sentAt.value ?? 'registration-code'),
+      }, undefined, window.sessionStorage)
+    }
     toast.success(t('auth.registrationComplete'))
     if (isOnboardingEntrySession(session)) {
+      trackEmailVerified()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(ONBOARDING_PATH)
       return
     }
     if (canUseInternalSession(session)) {
+      trackEmailVerified()
       await syncAuthenticatedLocale(session)
       await accessStore.load()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(getAccessAwareRedirect(undefined, accessStore, router))
       return
     }
-    if (session?.user) {
+    if ((session as { user?: unknown } | null)?.user) {
+      trackEmailVerified()
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(CUSTOMER_PORTAL_LOGIN)
       return
@@ -423,6 +444,7 @@ onMounted(async () => {
   } else {
     attribution.value = routeAttribution
   }
+  writePublicCtaAttribution(window.sessionStorage, attribution.value)
   persistDraft()
   startCooldown()
   await nextTick()

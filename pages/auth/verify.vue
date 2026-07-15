@@ -88,6 +88,8 @@ import {
 } from '~/utils/internalAccess'
 import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import { clearRegistrationDraft } from '~/utils/registrationFlow'
+import { readPublicCtaAnalyticsContext } from '~/utils/publicCta'
+import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 definePageMeta({
   layout: false,
@@ -135,12 +137,12 @@ const foodEmojis = [
 ]
 
 // Referencias
-const foodBgContainer = ref(null)
+const foodBgContainer = ref<HTMLElement | null>(null)
 const containerWidth = ref(0)
 const containerHeight = ref(0)
 
 // Función helper para generar emojis
-const generateFoodItems = (width, height, size) => {
+const generateFoodItems = (width: number, height: number, size: number) => {
   if (width === 0 || height === 0) return []
 
   const cols = Math.ceil(width / size)
@@ -179,7 +181,7 @@ const foodItems = computed(() => {
 })
 
 // Observer para detectar cambios de tamaño
-let resizeObserver = null
+let resizeObserver: ResizeObserver | null = null
 
 // Función para verificar el token
 const verifyToken = async () => {
@@ -191,7 +193,7 @@ const verifyToken = async () => {
     const response = await $fetch<any>(
       isRegistration ? '/api/auth/registration/verify' : '/api/auth/verify',
       {
-      method: 'POST',
+        method: 'POST',
         body: isRegistration ? { token } : { email, token },
         credentials: 'include'
       },
@@ -206,6 +208,12 @@ const verifyToken = async () => {
     }
 
     const sessionData = await authStore.refreshSession()
+    if (isRegistration && (sessionData as { user?: unknown } | null)?.user && import.meta.client) {
+      trackOnboardingEvent('email_verified', {
+        ...readPublicCtaAnalyticsContext(window.sessionStorage),
+        dedupeId: 'registration-magic-link',
+      }, undefined, window.sessionStorage)
+    }
     if (isOnboardingEntrySession(sessionData)) {
       if (isRegistration && import.meta.client) clearRegistrationDraft(window.sessionStorage)
       redirectUrl.value = ONBOARDING_PATH
