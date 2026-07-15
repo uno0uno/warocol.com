@@ -67,7 +67,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
 
   const level = accessStatus?.level
-  const hasAccess = level === 'full' || level === 'full_with_warning' || level === 'read_only'
+  const hasAccess = level === 'free' || level === 'full' || level === 'full_with_warning' || level === 'read_only'
 
   if (!hasAccess) {
     return navigateTo('/gestion/billing')
