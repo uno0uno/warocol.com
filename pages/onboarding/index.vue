@@ -214,6 +214,26 @@ const loadAvailablePlans = async () => {
   }
 }
 
+const recoverLatestPayment = async () => {
+  try {
+    const attempt = await loadPaymentStatus()
+    const context = { attemptId: attempt.attempt_id, planId: attempt.plan_id }
+    if (import.meta.client) writeCheckoutContext(sessionStorage, context)
+    checkoutContext.value = context
+    trackOnboardingEvent('payment_result', {
+      planId: context.planId,
+      paymentStatus: attempt.status,
+      dedupeId: `${context.attemptId}:${attempt.status}`,
+    }, undefined, analyticsStorage())
+    if (attempt.status === 'approved') await finishActivation()
+    return true
+  } catch {
+    // A 404 means this tenant has not started checkout yet.
+    paymentError.value = null
+    return false
+  }
+}
+
 const refreshPayment = async () => {
   const context = checkoutContext.value
   if (!context) {
@@ -239,8 +259,11 @@ const syncCurrentStep = async () => {
     return
   }
   if (serverView.value !== 'plan' && serverView.value !== 'payment') return
-  if (checkoutContext.value) await refreshPayment()
-  else await loadAvailablePlans()
+  if (checkoutContext.value) {
+    await refreshPayment()
+  } else if (!await recoverLatestPayment()) {
+    await loadAvailablePlans()
+  }
 }
 
 const reload = async () => {

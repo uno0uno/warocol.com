@@ -49,6 +49,7 @@ import {
   clearCheckoutContext,
   isUuid,
   readCheckoutContext,
+  writeCheckoutContext,
   type OnboardingCheckoutContext,
 } from '~/utils/onboardingPayment'
 
@@ -70,6 +71,7 @@ const view = ref<ReturnView>('loading')
 const errorMessage = ref('')
 const isOnboardingReturn = ref(false)
 const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
+const returnAttemptId = ref<string | null>(null)
 
 const icon = computed(() => view.value === 'approved'
   ? CheckCircleIcon
@@ -103,16 +105,23 @@ const refreshActivatedSession = async () => {
 
 const checkOnboardingReturn = async () => {
   const context = checkoutContext.value
-  if (!context) {
+  const attemptId = returnAttemptId.value || context?.attemptId
+  if (!attemptId) {
     view.value = 'unknown'
     return
   }
   try {
-    const attempt = await loadPaymentStatus(context.attemptId)
+    const attempt = await loadPaymentStatus(attemptId)
+    const recoveredContext = {
+      attemptId: attempt.attempt_id,
+      planId: attempt.plan_id,
+    }
+    checkoutContext.value = recoveredContext
+    if (import.meta.client) writeCheckoutContext(sessionStorage, recoveredContext)
     trackOnboardingEvent('payment_result', {
-      planId: context.planId,
+      planId: recoveredContext.planId,
       paymentStatus: attempt.status,
-      dedupeId: `${context.attemptId}:${attempt.status}`,
+      dedupeId: `${recoveredContext.attemptId}:${attempt.status}`,
     }, undefined, import.meta.client ? sessionStorage : null)
 
     if (attempt.status === 'approved') {
@@ -174,9 +183,8 @@ onMounted(async () => {
     ? route.query.attempt_id
     : null
   const stored = import.meta.client ? readCheckoutContext(sessionStorage) : null
-  checkoutContext.value = queryAttempt && stored
-    ? { ...stored, attemptId: queryAttempt }
-    : stored
+  returnAttemptId.value = queryAttempt
+  checkoutContext.value = stored
   await checkReturn()
 })
 </script>

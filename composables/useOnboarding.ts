@@ -149,13 +149,13 @@ export const useOnboarding = () => {
     }
   }
 
-  const loadPaymentStatus = async (attemptId: string) => {
+  const loadPaymentStatus = async (attemptId?: string) => {
     isPaymentLoading.value = true
     paymentError.value = null
     try {
       const response = await $fetch<OnboardingPaymentAttempt>('/api/onboarding/payment-status', {
         credentials: 'include',
-        query: { attempt_id: attemptId },
+        query: attemptId ? { attempt_id: attemptId } : undefined,
       })
       paymentAttempt.value = response
       return response
