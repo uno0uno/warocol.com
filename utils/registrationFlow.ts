@@ -14,6 +14,9 @@ export interface RegistrationDraft {
   email: string
   phoneCountryCode: string
   phoneNumber: string
+  businessName: string
+  businessCountryCode: string
+  baseCurrencyCode: string
   consent: boolean
   attribution: RegistrationAttribution
   phase: RegistrationPhase
@@ -42,6 +45,12 @@ export const normalizeRegistrationPhone = (value: unknown) =>
     ? String(value).replace(/\D/g, '').slice(0, 15)
     : ''
 
+export const normalizeRegistrationBusinessName = (value: unknown) =>
+  typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 120) : ''
+
+const normalizeCatalogCode = (value: unknown, length: number) =>
+  typeof value === 'string' ? value.trim().toUpperCase().slice(0, length) : ''
+
 export const sanitizeRegistrationAttribution = (query: QueryLike): RegistrationAttribution => {
   const attribution: RegistrationAttribution = {}
   for (const key of ATTRIBUTION_KEYS) {
@@ -59,6 +68,9 @@ export const createRegistrationDraft = (
   email: normalizeRegistrationEmail(values.email),
   phoneCountryCode: normalizeRegistrationPhone(values.phoneCountryCode || '57').slice(0, 3),
   phoneNumber: normalizeRegistrationPhone(values.phoneNumber),
+  businessName: normalizeRegistrationBusinessName(values.businessName),
+  businessCountryCode: normalizeCatalogCode(values.businessCountryCode, 2),
+  baseCurrencyCode: normalizeCatalogCode(values.baseCurrencyCode, 3),
   consent: values.consent === true,
   attribution: sanitizeRegistrationAttribution(values.attribution ?? {}),
   phase: values.phase === 'code' ? 'code' : 'form',
@@ -124,6 +136,9 @@ export const buildRegistrationPayload = (draft: RegistrationDraft) => ({
   email: normalizeRegistrationEmail(draft.email),
   phone_country_code: Number(normalizeRegistrationPhone(draft.phoneCountryCode)),
   phone_number: normalizeRegistrationPhone(draft.phoneNumber),
+  business_name: normalizeRegistrationBusinessName(draft.businessName),
+  country_code: normalizeCatalogCode(draft.businessCountryCode, 2),
+  base_currency_code: normalizeCatalogCode(draft.baseCurrencyCode, 3),
   consent: draft.consent as true,
   ...sanitizeRegistrationAttribution(draft.attribution),
 })
