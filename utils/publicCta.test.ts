@@ -10,6 +10,7 @@ import {
   getPublicCta,
   readPublicCtaAttribution,
   resolveBlogCtaIntent,
+  writeVerifiedPublicCtaAttribution,
 } from './publicCta.ts'
 
 test('maps blog slugs to the five commercial intents', () => {
@@ -72,5 +73,24 @@ test('tracks every click and persists only safe attribution', () => {
     intent: 'team',
   })
   assert.deepEqual(readPublicCtaAttribution(storage), route.query)
+  assert.equal(values.get(PUBLIC_CTA_ATTRIBUTION_KEY)?.includes('email'), false)
+})
+
+test('restores server-bound attribution in a fresh magic-link tab', () => {
+  const values = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  }
+
+  const restored = writeVerifiedPublicCtaAttribution(storage, {
+    source: 'blog_article',
+    content: 'inventario_final',
+    campaign: 'self_service_trial',
+    variant: 'costs_final_v1',
+    email: 'must-not-be-persisted@example.com',
+  })
+
+  assert.deepEqual(readPublicCtaAttribution(storage), restored)
   assert.equal(values.get(PUBLIC_CTA_ATTRIBUTION_KEY)?.includes('email'), false)
 })

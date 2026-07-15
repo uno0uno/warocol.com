@@ -174,6 +174,17 @@ export const writePublicCtaAttribution = (
   return safe
 }
 
+export const writeVerifiedPublicCtaAttribution = (
+  storage: PublicAttributionStorage,
+  value: unknown,
+) => {
+  const safe = sanitizeRegistrationAttribution(
+    value && typeof value === 'object' ? value as Record<string, unknown> : {},
+  )
+  if (Object.keys(safe).length > 0) writePublicCtaAttribution(storage, safe)
+  return safe
+}
+
 export const readPublicCtaAttribution = (storage?: Pick<PublicAttributionStorage, 'getItem'> | null) => {
   if (!storage) return {}
   try {

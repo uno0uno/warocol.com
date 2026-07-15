@@ -222,6 +222,7 @@ import {
 import {
   buildPublicCtaAnalyticsContext,
   writePublicCtaAttribution,
+  writeVerifiedPublicCtaAttribution,
 } from '~/utils/publicCta'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
@@ -356,7 +357,17 @@ const verifyCode = async () => {
   error.value = ''
   const body = { email: email.value.trim().toLocaleLowerCase(), code: verificationCode.value }
   try {
-    await $fetch('/api/auth/registration/verify-code', { method: 'POST', credentials: 'include', body })
+    const verification = await $fetch<{ registration_attribution?: RegistrationAttribution | null }>(
+      '/api/auth/registration/verify-code',
+      { method: 'POST', credentials: 'include', body },
+    )
+    const verifiedAttribution = writeVerifiedPublicCtaAttribution(
+      window.sessionStorage,
+      verification?.registration_attribution,
+    )
+    if (Object.keys(verifiedAttribution).length > 0) {
+      attribution.value = verifiedAttribution
+    }
 
     const session = await authStore.refreshSession()
     const trackEmailVerified = () => {

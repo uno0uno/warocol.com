@@ -88,7 +88,10 @@ import {
 } from '~/utils/internalAccess'
 import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import { clearRegistrationDraft } from '~/utils/registrationFlow'
-import { readPublicCtaAnalyticsContext } from '~/utils/publicCta'
+import {
+  readPublicCtaAnalyticsContext,
+  writeVerifiedPublicCtaAttribution,
+} from '~/utils/publicCta'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
 definePageMeta({
@@ -209,6 +212,10 @@ const verifyToken = async () => {
 
     const sessionData = await authStore.refreshSession()
     if (isRegistration && (sessionData as { user?: unknown } | null)?.user && import.meta.client) {
+      writeVerifiedPublicCtaAttribution(
+        window.sessionStorage,
+        response?.registration_attribution,
+      )
       trackOnboardingEvent('email_verified', {
         ...readPublicCtaAnalyticsContext(window.sessionStorage),
         dedupeId: 'registration-magic-link',
