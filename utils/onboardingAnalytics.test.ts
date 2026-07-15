@@ -37,20 +37,11 @@ test('deduplicates the same event and attempt in session storage', () => {
 test('is a no-op without a browser target', () => {
   assert.equal(trackOnboardingEvent('plan_selected', { planId }, null, null), false)
 })
-
-test('emits trial lifecycle events without leaking dedupe context', () => {
-  const event = buildOnboardingAnalyticsEvent('trial_started', {
-    dedupeId: 'tenant-or-trial-private-context',
-  })
-  assert.deepEqual(event, { event: 'trial_started' })
-  assert.equal(JSON.stringify(event).includes('private-context'), false)
-})
-
 test('allows only slug-like public attribution for funnel events', () => {
   const event = buildOnboardingAnalyticsEvent('registration_started', {
     source: 'blog',
     content: 'food-cost_benefit',
-    campaign: 'self_service_trial',
+    campaign: 'self_service_paid',
     variant: 'costs_benefit_v1',
     intent: 'costs',
     // @ts-expect-error PII is outside the analytics contract
@@ -60,7 +51,7 @@ test('allows only slug-like public attribution for funnel events', () => {
     event: 'registration_started',
     source: 'blog',
     content: 'food-cost_benefit',
-    campaign: 'self_service_trial',
+    campaign: 'self_service_paid',
     variant: 'costs_benefit_v1',
     intent: 'costs',
   })

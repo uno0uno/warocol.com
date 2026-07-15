@@ -99,6 +99,78 @@
           </fieldset>
 
           <div>
+            <label for="registration-business-name" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+              {{ t('onboarding.businessName') }}
+            </label>
+            <input
+              id="registration-business-name"
+              v-model="businessName"
+              type="text"
+              autocomplete="organization"
+              minlength="2"
+              maxlength="120"
+              required
+              :disabled="sending"
+              :aria-invalid="Boolean(fieldErrors.businessName)"
+              :aria-describedby="fieldErrors.businessName ? 'registration-business-name-error' : 'registration-business-name-hint'"
+              class="form-input"
+            >
+            <p id="registration-business-name-hint" class="mt-2 text-xs text-[hsl(220,13%,38%)]">
+              {{ t('onboarding.businessNameHint') }}
+            </p>
+            <p v-if="fieldErrors.businessName" id="registration-business-name-error" class="field-error" role="alert">
+              {{ fieldErrors.businessName }}
+            </p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="registration-business-country" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+                {{ t('onboarding.country') }}
+              </label>
+              <select
+                id="registration-business-country"
+                v-model="businessCountryCode"
+                required
+                :disabled="sending || optionsLoading"
+                :aria-invalid="Boolean(fieldErrors.businessCountryCode)"
+                class="form-input"
+                @change="handleBusinessCountryChange"
+              >
+                <option value="" disabled>{{ t('onboarding.selectCountry') }}</option>
+                <option v-for="option in registrationCatalog" :key="option.country_code" :value="option.country_code">
+                  {{ countryLabel(option.country_code) }}
+                </option>
+              </select>
+              <p v-if="fieldErrors.businessCountryCode" class="field-error" role="alert">
+                {{ fieldErrors.businessCountryCode }}
+              </p>
+            </div>
+
+            <div>
+              <label for="registration-base-currency" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+                {{ t('onboarding.currency') }}
+              </label>
+              <select
+                id="registration-base-currency"
+                v-model="baseCurrencyCode"
+                required
+                :disabled="sending || optionsLoading || !businessCountryCode"
+                :aria-invalid="Boolean(fieldErrors.baseCurrencyCode)"
+                class="form-input"
+              >
+                <option value="" disabled>{{ t('onboarding.selectCurrency') }}</option>
+                <option v-for="code in compatibleCurrencies" :key="code" :value="code">
+                  {{ currencyLabel(code) }}
+                </option>
+              </select>
+              <p v-if="fieldErrors.baseCurrencyCode" class="field-error" role="alert">
+                {{ fieldErrors.baseCurrencyCode }}
+              </p>
+            </div>
+          </div>
+
+          <div>
             <label class="flex cursor-pointer items-start gap-3 text-sm text-[hsl(220,13%,28%)]">
               <input
                 id="registration-consent"
@@ -118,7 +190,7 @@
             </p>
           </div>
 
-          <button type="submit" :disabled="sending || cooldownSeconds > 0" class="primary-button">
+          <button type="submit" :disabled="sending || optionsLoading || !registrationCatalog.length || cooldownSeconds > 0" class="primary-button">
             <span v-if="sending" class="inline-flex items-center gap-2">
               <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
               {{ t('auth.sending') }}
@@ -226,7 +298,12 @@ import {
 } from '~/utils/publicCta'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 
-const { t } = useI18n()
+interface RegistrationCatalogOption {
+  country_code: string
+  currency_codes: string[]
+}
+
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -238,7 +315,12 @@ const { public: { baseUrl } } = useRuntimeConfig()
 const email = ref('')
 const phoneCountryCode = ref('57')
 const phoneNumber = ref('')
+const businessName = ref('')
+const businessCountryCode = ref('')
+const baseCurrencyCode = ref('')
 const consent = ref(false)
+const registrationCatalog = ref<RegistrationCatalogOption[]>([])
+const optionsLoading = ref(true)
 const attribution = ref<RegistrationAttribution>({})
 const phase = ref<RegistrationPhase>('form')
 const sentAt = ref<number | null>(null)
@@ -247,7 +329,15 @@ const sending = ref(false)
 const verifying = ref(false)
 const cooldownSeconds = ref(0)
 const error = ref('')
-const fieldErrors = reactive({ email: '', phoneCountryCode: '', phoneNumber: '', consent: '' })
+const fieldErrors = reactive({
+  email: '',
+  phoneCountryCode: '',
+  phoneNumber: '',
+  businessName: '',
+  businessCountryCode: '',
+  baseCurrencyCode: '',
+  consent: '',
+})
 
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -263,6 +353,32 @@ const updatePhoneNumber = (event: Event) => { phoneNumber.value = normalizeRegis
 const updateConsent = (event: Event) => { consent.value = (event.target as HTMLInputElement).checked }
 const updateVerificationCode = (event: Event) => { verificationCode.value = normalizeRegistrationPhone(inputValue(event)).slice(0, 6) }
 
+const compatibleCurrencies = computed(() =>
+  registrationCatalog.value.find(option => option.country_code === businessCountryCode.value)?.currency_codes ?? [],
+)
+
+const countryLabel = (code: string) => {
+  try {
+    return `${new Intl.DisplayNames([locale.value], { type: 'region' }).of(code) || code} (${code})`
+  } catch {
+    return code
+  }
+}
+
+const currencyLabel = (code: string) => {
+  try {
+    return `${new Intl.DisplayNames([locale.value], { type: 'currency' }).of(code) || code} (${code})`
+  } catch {
+    return code
+  }
+}
+
+const handleBusinessCountryChange = () => {
+  if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
+    baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
+  }
+}
+
 const foodEmojis = ['🍞', '🥐', '🍕', '🍔', '🌮', '🍟', '🥪', '🍳', '🧀', '🥗', '🍝', '🍜', '🍣', '🍰', '🍪', '🥘']
 const foodItemStyle = (index: number) => ({
   insetInlineStart: `${8 + ((index * 29) % 88)}%`,
@@ -274,6 +390,9 @@ const currentDraft = () => createRegistrationDraft({
   email: email.value,
   phoneCountryCode: phoneCountryCode.value,
   phoneNumber: phoneNumber.value,
+  businessName: businessName.value,
+  businessCountryCode: businessCountryCode.value,
+  baseCurrencyCode: baseCurrencyCode.value,
   consent: consent.value,
   attribution: attribution.value,
   phase: phase.value,
@@ -301,13 +420,23 @@ const validateForm = () => {
   fieldErrors.phoneCountryCode = Number(countryCode) >= 1 && Number(countryCode) <= 999 ? '' : t('auth.phoneCountryCodeInvalid')
   const phone = normalizeRegistrationPhone(phoneNumber.value)
   fieldErrors.phoneNumber = phone.length >= 7 && phone.length <= 15 ? '' : t('auth.whatsappInvalid')
+  fieldErrors.businessName = businessName.value.trim().length >= 2 ? '' : t('onboarding.businessNameHint')
+  fieldErrors.businessCountryCode = registrationCatalog.value.some(option => option.country_code === businessCountryCode.value)
+    ? ''
+    : t('onboarding.selectCountry')
+  fieldErrors.baseCurrencyCode = compatibleCurrencies.value.includes(baseCurrencyCode.value)
+    ? ''
+    : t('onboarding.selectCurrency')
   fieldErrors.consent = consent.value ? '' : t('auth.consentRequired')
 
   const firstInvalid = fieldErrors.email ? 'registration-email'
     : fieldErrors.phoneCountryCode ? 'registration-country-code'
       : fieldErrors.phoneNumber ? 'registration-phone'
-        : fieldErrors.consent ? 'registration-consent'
-          : null
+        : fieldErrors.businessName ? 'registration-business-name'
+          : fieldErrors.businessCountryCode ? 'registration-business-country'
+            : fieldErrors.baseCurrencyCode ? 'registration-base-currency'
+              : fieldErrors.consent ? 'registration-consent'
+                : null
   if (firstInvalid) nextTick(() => focusInput(firstInvalid))
   return !firstInvalid
 }
@@ -427,6 +556,9 @@ watch(phoneNumber, (value) => {
   fieldErrors.phoneNumber = ''
   if (phase.value === 'form') persistDraft()
 })
+watch(businessName, () => { fieldErrors.businessName = ''; if (phase.value === 'form') persistDraft() })
+watch(businessCountryCode, () => { fieldErrors.businessCountryCode = ''; if (phase.value === 'form') persistDraft() })
+watch(baseCurrencyCode, () => { fieldErrors.baseCurrencyCode = ''; if (phase.value === 'form') persistDraft() })
 watch(consent, () => { fieldErrors.consent = ''; if (phase.value === 'form') persistDraft() })
 watch(verificationCode, (value) => { verificationCode.value = normalizeRegistrationPhone(value).slice(0, 6); error.value = '' })
 
@@ -437,6 +569,9 @@ onMounted(async () => {
     email.value = stored.email
     phoneCountryCode.value = stored.phoneCountryCode
     phoneNumber.value = stored.phoneNumber
+    businessName.value = stored.businessName
+    businessCountryCode.value = stored.businessCountryCode
+    baseCurrencyCode.value = stored.baseCurrencyCode
     consent.value = stored.consent
     phase.value = stored.phase
     sentAt.value = stored.sentAt
@@ -445,6 +580,22 @@ onMounted(async () => {
     attribution.value = routeAttribution
   }
   writePublicCtaAttribution(window.sessionStorage, attribution.value)
+  try {
+    const response = await $fetch<{ catalog: RegistrationCatalogOption[] }>('/api/auth/registration/options', {
+      credentials: 'include',
+    })
+    registrationCatalog.value = response.catalog
+    if (!registrationCatalog.value.some(option => option.country_code === businessCountryCode.value)) {
+      businessCountryCode.value = ''
+      baseCurrencyCode.value = ''
+    } else if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
+      baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
+    }
+  } catch {
+    error.value = t('auth.registrationSendError')
+  } finally {
+    optionsLoading.value = false
+  }
   persistDraft()
   startCooldown()
   await nextTick()

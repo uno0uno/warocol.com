@@ -40,8 +40,7 @@ interface PublicAttributionStorage {
 export const PUBLIC_OFFER = Object.freeze({
   annualPrice: 'COP 95.900/año',
   monthlyEquivalent: 'menos de COP 8.000/mes',
-  trial: '15 días gratis, sin tarjeta',
-  payment: 'El pago es opcional durante el trial.',
+  activation: 'El acceso a los módulos se activa después del pago.',
 })
 
 // Activate only after recording a verifiable source, date, scope and disclosure here.
@@ -62,8 +61,8 @@ const BENEFIT_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>
     body: 'Gestiona caja, mesas, inventario, costos y facturas de proveedores con información conectada.',
   },
   pricing: {
-    headline: 'Empieza con la operación completa, sin pagar por adelantado.',
-    body: 'Prueba las funciones del Plan Pro durante 15 días y decide con el restaurante ya configurado.',
+    headline: 'Empieza con un precio claro desde el registro.',
+    body: 'Crea tu cuenta, confirma los datos del negocio y elige el plan antes de activar los módulos.',
   },
   costs: {
     headline: 'Convierte compras e inventario en decisiones rentables.',
@@ -81,24 +80,24 @@ const BENEFIT_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>
 
 const FINAL_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> = {
   pos: {
-    headline: 'Prueba un POS creado para restaurantes colombianos.',
+    headline: 'Activa un POS creado para restaurantes colombianos.',
     body: `Vende, controla inventario y conoce tus costos con el Plan Pro por ${PUBLIC_OFFER.annualPrice}.`,
   },
   pricing: {
-    headline: 'Prueba WARO antes de activar tu plan.',
+    headline: 'Activa WARO con un plan anual claro.',
     body: `Plan Pro por ${PUBLIC_OFFER.annualPrice}, equivalente a ${PUBLIC_OFFER.monthlyEquivalent}.`,
   },
   costs: {
     headline: 'Empieza a controlar costos e inventario con datos reales.',
-    body: 'Crea tu cuenta, configura el negocio y prueba el flujo completo sin ingresar una tarjeta.',
+    body: 'Crea tu cuenta, confirma el negocio y elige el plan que activarás desde Billing.',
   },
   management: {
     headline: 'Pon la operación de tu restaurante en orden.',
-    body: 'Crea tu cuenta y prueba durante 15 días las herramientas para administrar el negocio.',
+    body: 'Crea tu cuenta y activa las herramientas para administrar el negocio desde un solo lugar.',
   },
   team: {
     headline: 'Gestiona la operación y el equipo con menos reprocesos.',
-    body: 'Crea tu cuenta y prueba cómo WARO conecta la información diaria de tu restaurante.',
+    body: 'Crea tu cuenta y activa WARO para conectar la información diaria de tu restaurante.',
   },
 }
 
@@ -127,21 +126,21 @@ export const getPublicCta = (intent: PublicCtaIntent, placement: PublicCtaPlacem
     : placement === 'price'
       ? {
           headline: `Plan Pro por ${PUBLIC_OFFER.annualPrice}.`,
-          body: `${PUBLIC_OFFER.monthlyEquivalent}, con acceso al Plan Pro durante la prueba.`,
+          body: `${PUBLIC_OFFER.monthlyEquivalent}; el acceso se habilita después del pago.`,
         }
       : FINAL_COPY[intent]
   const button = placement === 'header'
-    ? 'Probar gratis'
+    ? 'Crear cuenta'
     : placement === 'final'
-      ? 'Crear cuenta y probar'
-      : 'Probar WARO gratis'
+      ? 'Crear cuenta y elegir plan'
+      : 'Registrarme en WARO'
 
   return {
     eyebrow: INTENT_LABELS[intent],
     ...copy,
     button,
-    microcopy: `${PUBLIC_OFFER.trial}. ${PUBLIC_OFFER.payment}`,
-    campaign: 'self_service_trial',
+    microcopy: `${PUBLIC_OFFER.annualPrice}. ${PUBLIC_OFFER.activation}`,
+    campaign: 'self_service_paid',
     variant: `${intent}_${placement}_v1`,
     intent,
     placement,

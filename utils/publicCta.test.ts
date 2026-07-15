@@ -27,15 +27,15 @@ test('keeps offer and article progression centralized and honest', () => {
   const final = getBlogPublicCta('inventario-restaurante', 'final')
   assert.equal(benefit.variant, 'costs_benefit_v1')
   assert.match(price.headline, /COP 95\.900\/año/)
-  assert.match(price.microcopy, /15 días gratis, sin tarjeta/)
-  assert.equal(final.button, 'Crear cuenta y probar')
+  assert.match(price.microcopy, /activa después del pago/)
+  assert.equal(final.button, 'Crear cuenta y elegir plan')
   assert.equal(JSON.stringify([benefit, price, final]).toLocaleLowerCase().includes('demostración'), false)
   assert.equal(PUBLIC_CTA_COMPARISON, null)
 
   const posFinal = getPublicCta('pos', 'final')
   assert.match(`${posFinal.eyebrow} ${posFinal.headline}`, /POS/)
   assert.match(posFinal.body, /COP 95\.900\/año/)
-  assert.match(posFinal.microcopy, /15 días gratis, sin tarjeta/)
+  assert.match(posFinal.microcopy, /activa después del pago/)
 })
 
 test('builds a complete allow-listed registration route from arbitrary content', () => {
@@ -48,7 +48,7 @@ test('builds a complete allow-listed registration route from arbitrary content',
   assert.equal(route.query.source, 'home-hero')
   assert.equal(route.query.content?.length, 100)
   assert.match(route.query.content ?? '', /^[a-z0-9][a-z0-9._-]{0,99}$/)
-  assert.equal(route.query.campaign, 'self_service_trial')
+  assert.equal(route.query.campaign, 'self_service_paid')
   assert.equal(route.query.variant, 'pos_hero_v1')
 })
 
@@ -68,7 +68,7 @@ test('tracks every click and persists only safe attribution', () => {
     event: 'public_cta_clicked',
     source: 'blog',
     content: 'nomina-final',
-    campaign: 'self_service_trial',
+    campaign: 'self_service_paid',
     variant: 'team_final_v1',
     intent: 'team',
   })
@@ -86,7 +86,7 @@ test('restores server-bound attribution in a fresh magic-link tab', () => {
   const restored = writeVerifiedPublicCtaAttribution(storage, {
     source: 'blog_article',
     content: 'inventario_final',
-    campaign: 'self_service_trial',
+    campaign: 'self_service_paid',
     variant: 'costs_final_v1',
     email: 'must-not-be-persisted@example.com',
   })

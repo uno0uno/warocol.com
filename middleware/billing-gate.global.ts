@@ -67,9 +67,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
 
   const level = accessStatus?.level
-  // Trial lifecycle never grants access by itself. The API remains authoritative
-  // and maps trialing/read-only expiry to one of these explicit access levels.
-  const hasAccess = isAllowedBillingAccess(level)
+  const hasAccess = level === 'free' || level === 'full' || level === 'full_with_warning' || level === 'read_only'
 
   if (!hasAccess) {
     return navigateTo('/gestion/billing')
