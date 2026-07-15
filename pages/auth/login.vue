@@ -15,6 +15,7 @@ import {
   getAccessAwareRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
+import { ONBOARDING_PATH, isPendingOnboardingSession } from '~/utils/onboardingFlow'
 
 definePageMeta({
   layout: false,
@@ -31,6 +32,10 @@ const { syncAuthenticatedLocale } = useAppLocale()
 onMounted(async () => {
   try {
     const sessionData = await $fetch('/api/auth/session')
+    if (isPendingOnboardingSession(sessionData)) {
+      useAuthStore().hydrateSession(sessionData)
+      return navigateTo(ONBOARDING_PATH)
+    }
     if (canUseInternalSession(sessionData)) {
       const accessStore = useAccessStore()
       await syncAuthenticatedLocale(sessionData)

@@ -30,7 +30,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     to.meta?.layout === 'public-restaurant' ||
     to.meta?.publicAccess === true ||
     to.meta?.layout === 'customer-portal' ||
-    to.meta?.layout === 'kds'
+    to.meta?.layout === 'kds' ||
+    to.meta?.onboardingAccess === true
   ) return
 
   const authStore = useAuthStore()
