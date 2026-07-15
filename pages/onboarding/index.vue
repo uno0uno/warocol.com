@@ -197,6 +197,12 @@ const refreshActiveStores = async () => {
   return true
 }
 
+const redirectToBilling = async () => {
+  await refreshActiveStores()
+  if (import.meta.client) clearCheckoutContext(sessionStorage)
+  window.location.assign('/gestion/billing')
+}
+
 const finishActivation = async () => {
   const currentStatus = await loadStatus()
   if (currentStatus.lifecycleStatus !== 'active' || currentStatus.nextStep !== 'setup') return false
@@ -258,6 +264,10 @@ const syncCurrentStep = async () => {
     await refreshActiveStores()
     return
   }
+  if (serverView.value === 'plan' && status.value?.lifecycleStatus === 'active') {
+    await redirectToBilling()
+    return
+  }
   if (serverView.value !== 'plan' && serverView.value !== 'payment') return
   if (checkoutContext.value) {
     await refreshPayment()
@@ -284,7 +294,7 @@ const handleBusinessSubmit = async (draft: OnboardingBusinessDraft) => {
 }
 
 const handleTermsAccepted = async () => {
-  await reload()
+  await redirectToBilling()
 }
 
 const handleCheckout = async () => {
