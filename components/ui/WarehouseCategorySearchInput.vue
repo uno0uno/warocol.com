@@ -6,6 +6,7 @@
     :placeholder="placeholder"
     :listbox-label="listboxLabel"
     :loading="loading"
+    :error="error"
     :allow-create="true"
     :can-create="!exactMatch"
     placement="top"
@@ -14,15 +15,14 @@
     :error-label="t('abastecimiento.glossary.searchError')"
     :create-label="t('abastecimiento.glossary.createNamed', { name: modelValue.trim() })"
     @update:model-value="updateValue"
-    @search="scheduleSearch"
-    @focus="scheduleSearch"
+    @search="onSearch"
+    @focus="onSearch"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
-import { WAREHOUSE_CATEGORY_SUGGESTIONS } from '~/constants/warehouseCategories'
+import { computed } from 'vue'
+import { useWarehouseCategorySearch } from '~/composables/useWarehouseCategorySearch'
 import { normalizeCatalogSearchText, rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
 
 const props = withDefaults(defineProps<{
@@ -42,43 +42,29 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
+const { query, results, loading, error } = useWarehouseCategorySearch()
 
-const searchedValue = ref(props.modelValue)
-const loading = ref(false)
-const visibleCategories = ref(
-  rankCatalogSearchOptions(WAREHOUSE_CATEGORY_SUGGESTIONS, props.modelValue, category => category),
+const rankedCategories = computed(() =>
+  rankCatalogSearchOptions(results.value, props.modelValue, category => category.name),
 )
 
 const options = computed(() =>
-  visibleCategories.value.map(category => ({
-    id: normalizeCatalogSearchText(category),
-    label: category,
+  rankedCategories.value.map(category => ({
+    id: category.name,
+    label: category.name,
     raw: category,
   })),
 )
 
 const exactMatch = computed(() => {
   const normalizedValue = normalizeCatalogSearchText(props.modelValue)
-  return !!normalizedValue && WAREHOUSE_CATEGORY_SUGGESTIONS.some(
-    category => normalizeCatalogSearchText(category) === normalizedValue,
+  return !!normalizedValue && results.value.some(
+    category => normalizeCatalogSearchText(category.name) === normalizedValue,
   )
 })
 
-const finishSearch = useDebounceFn((value: string) => {
-  visibleCategories.value = rankCatalogSearchOptions(
-    WAREHOUSE_CATEGORY_SUGGESTIONS,
-    value,
-    category => category,
-  )
-  searchedValue.value = value
-  loading.value = false
-}, 300)
-
-function scheduleSearch(value: string) {
-  if (value === searchedValue.value && !loading.value) return
-
-  loading.value = true
-  void finishSearch(value)
+function onSearch(value: string) {
+  query.value = value
 }
 
 function updateValue(value: string) {

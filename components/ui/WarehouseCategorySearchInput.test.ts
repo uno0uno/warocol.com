@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CatalogSearchCombobox from './CatalogSearchCombobox.vue'
@@ -11,8 +11,30 @@ afterEach(() => {
 })
 
 describe('WarehouseCategorySearchInput', () => {
-  it('shows searching feedback before presenting local category matches', async () => {
+  it('searches tenant warehouse categories through the API', async () => {
     vi.useFakeTimers()
+    const fetchMock = vi.fn(async (
+      _url: string,
+      options: { query: { search?: string } },
+    ) => ({
+      data: options.query.search === 'categoria'
+        ? [
+            {
+              name: 'categoria de prueba',
+              ingredient_count: 1,
+              global_count: 0,
+              tenant_count: 1,
+            },
+            {
+              name: 'ingrediente categoria',
+              ingredient_count: 1,
+              global_count: 0,
+              tenant_count: 1,
+            },
+          ]
+        : [],
+    }))
+    vi.stubGlobal('$fetch', fetchMock)
     vi.stubGlobal('useI18n', () => ({
       t: (key: string, params?: { name?: string }) => ({
         'abastecimiento.glossary.searchLoading': 'Buscando…',
@@ -46,26 +68,35 @@ describe('WarehouseCategorySearchInput', () => {
     })
     const input = wrapper.get('input')
 
-    await input.setValue('ace')
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+
+    await input.setValue('categoria')
 
     expect(wrapper.text()).toContain('Buscando…')
     expect(wrapper.find('.animate-spin').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Aceites')
     expect(wrapper.text()).not.toContain('Sin resultados')
 
     await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
 
     expect(wrapper.text()).not.toContain('Buscando…')
-    expect(wrapper.text()).toContain('Aceites')
+    expect(wrapper.text()).toContain('categoria de prueba')
+    expect(wrapper.text()).toContain('ingrediente categoria')
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/suppliers/ingredients/categories',
+      { query: { search: 'categoria', limit: 100 } },
+    )
 
     await input.setValue('holanda')
 
     expect(wrapper.text()).toContain('Buscando…')
-    expect(wrapper.text()).not.toContain('Aceites')
+    expect(wrapper.text()).not.toContain('categoria de prueba')
     expect(wrapper.text()).not.toContain('Sin resultados')
     expect(wrapper.text()).not.toContain('Crear "holanda"')
 
     await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
 
     expect(wrapper.text()).not.toContain('Buscando…')
     expect(wrapper.text()).toContain('Sin resultados')
