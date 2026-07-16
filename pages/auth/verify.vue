@@ -87,6 +87,7 @@ import {
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
 import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { markOnboardingWelcome } from '~/utils/onboardingWelcome'
 import { clearRegistrationDraft } from '~/utils/registrationFlow'
 import {
   readPublicCtaAnalyticsContext,
@@ -221,7 +222,12 @@ const verifyToken = async () => {
         dedupeId: 'registration-magic-link',
       }, undefined, window.sessionStorage)
     }
-    if (isOnboardingEntrySession(sessionData)) {
+    if (
+      isRegistration
+      && (isOnboardingEntrySession(sessionData) || canUseInternalSession(sessionData))
+    ) {
+      if (canUseInternalSession(sessionData)) await syncAuthenticatedLocale(sessionData)
+      if (import.meta.client) markOnboardingWelcome(window.sessionStorage)
       if (isRegistration && import.meta.client) clearRegistrationDraft(window.sessionStorage)
       redirectUrl.value = ONBOARDING_PATH
       verifying.value = false

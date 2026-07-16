@@ -5,6 +5,8 @@ export type OnboardingAnalyticsEvent =
   | 'registration_started'
   | 'email_verified'
   | 'business_profile_completed'
+  | 'welcome_shown'
+  | 'billing_continued'
   | 'plan_selected'
   | 'checkout_started'
   | 'checkout_abandoned'
@@ -19,6 +21,7 @@ export interface OnboardingAnalyticsPayload {
   campaign?: string | null
   variant?: string | null
   intent?: string | null
+  method?: 'cta' | 'automatic' | null
 }
 
 export interface DataLayerTarget {
@@ -30,6 +33,8 @@ const EVENT_NAMES = new Set<OnboardingAnalyticsEvent>([
   'registration_started',
   'email_verified',
   'business_profile_completed',
+  'welcome_shown',
+  'billing_continued',
   'plan_selected',
   'checkout_started',
   'checkout_abandoned',
@@ -60,6 +65,7 @@ export const buildOnboardingAnalyticsEvent = (
     const value = payload[key]
     if (value && PUBLIC_VALUE_PATTERN.test(value)) result[key] = value
   }
+  if (payload.method === 'cta' || payload.method === 'automatic') result.method = payload.method
   return result
 }
 

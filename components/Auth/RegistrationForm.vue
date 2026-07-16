@@ -277,9 +277,9 @@
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
-  getAccessAwareRedirect,
 } from '~/utils/internalAccess'
 import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { markOnboardingWelcome } from '~/utils/onboardingWelcome'
 import {
   buildRegistrationPayload,
   clearRegistrationDraft,
@@ -316,9 +316,7 @@ interface RegistrationMagicLinkResult {
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
-const accessStore = useAccessStore()
 const toast = useToast()
 const { syncAuthenticatedLocale } = useAppLocale()
 const { public: { baseUrl } } = useRuntimeConfig()
@@ -545,18 +543,12 @@ const verifyCode = async () => {
       }, undefined, window.sessionStorage)
     }
     toast.success(t('auth.registrationComplete'))
-    if (isOnboardingEntrySession(session)) {
+    if (isOnboardingEntrySession(session) || canUseInternalSession(session)) {
       trackEmailVerified()
+      if (canUseInternalSession(session)) await syncAuthenticatedLocale(session)
+      markOnboardingWelcome(window.sessionStorage)
       clearRegistrationDraft(window.sessionStorage)
       window.location.assign(ONBOARDING_PATH)
-      return
-    }
-    if (canUseInternalSession(session)) {
-      trackEmailVerified()
-      await syncAuthenticatedLocale(session)
-      await accessStore.load()
-      clearRegistrationDraft(window.sessionStorage)
-      window.location.assign(getAccessAwareRedirect(undefined, accessStore, router))
       return
     }
     if ((session as { user?: unknown } | null)?.user) {

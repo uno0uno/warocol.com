@@ -37,6 +37,16 @@ test('deduplicates the same event and attempt in session storage', () => {
 test('is a no-op without a browser target', () => {
   assert.equal(trackOnboardingEvent('plan_selected', { planId }, null, null), false)
 })
+
+test('records only supported billing continuation methods', () => {
+  assert.deepEqual(buildOnboardingAnalyticsEvent('billing_continued', {
+    method: 'automatic',
+  }), {
+    event: 'billing_continued',
+    method: 'automatic',
+  })
+})
+
 test('allows only slug-like public attribution for funnel events', () => {
   const event = buildOnboardingAnalyticsEvent('registration_started', {
     source: 'blog',

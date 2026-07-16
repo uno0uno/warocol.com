@@ -44,26 +44,24 @@ test('allows onboarding setup only for an active session at the server setup ste
   }), false)
 })
 
-test('routes pending and active setup sessions through the onboarding entry', () => {
+test('routes only pending sessions through the persistent onboarding entry', () => {
   assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'pending' }), true)
-  assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'setup' }), true)
+  assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'setup' }), false)
   assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'payment' }), false)
   assert.equal(isOnboardingEntrySession({ lifecycleStatus: 'pending' }), false)
 })
 
-test('uses server status and returns a safe error for unknown next steps', () => {
-  assert.equal(resolveOnboardingView({ nextStep: 'business_profile' }), 'business')
-  assert.equal(resolveOnboardingView({ nextStep: 'terms' }), 'terms')
-  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: false }), 'terms')
-  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: true }), 'plan')
-  assert.equal(resolveOnboardingView({ nextStep: 'activation' }), 'payment')
-  assert.equal(resolveOnboardingView({ nextStep: 'setup' }), 'setup')
+test('shows only the business step or the active welcome state', () => {
+  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'business_profile' }), 'business')
+  assert.equal(resolveOnboardingView({ lifecycleStatus: 'active', nextStep: 'payment' }), 'welcome')
+  assert.equal(resolveOnboardingView({ lifecycle_status: 'active', next_step: 'setup' }), 'welcome')
+  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'terms' }), 'error')
   assert.equal(resolveOnboardingView({ nextStep: 'unexpected' }), 'error')
   assert.equal(normalizeOnboardingNextStep('unexpected'), null)
 })
 
-test('keeps payment-pending tenants inside onboarding to select a plan', () => {
-  assert.equal(resolveOnboardingView({ nextStep: 'payment', termsAccepted: true }), 'plan')
+test('does not expose payment selection inside onboarding', () => {
+  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'payment' }), 'error')
 })
 
 test('requires a real business name instead of the server placeholder', () => {
