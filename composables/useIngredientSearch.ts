@@ -1,6 +1,7 @@
-import type { Ref } from 'vue'
+import { computed, onMounted, ref, watch, type Ref } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
+import { createLatestRequestTracker } from '~/utils/latestRequestTracker'
 
 /**
  * Composable for debounced server-side ingredient search.
@@ -30,15 +31,11 @@ export const useIngredientSearch = ({
   const loading = ref(false)
   const error = ref<Error | null>(null)
   const query = ref('')
+  const requestTracker = createLatestRequestTracker()
 
-  const doSearch = useDebounceFn(async (q: string) => {
-    if ((!q || q.trim().length < 1) && !searchOnEmpty) {
-      results.value = []
-      loading.value = false
-      return
-    }
-    loading.value = true
-    error.value = null
+  const doSearch = useDebounceFn(async (q: string, requestId: number) => {
+    if (!requestTracker.isLatest(requestId)) return
+
     try {
       const fetchQuery: Record<string, any> = { limit: 50 }
       if (q.trim()) fetchQuery.search = q.trim()
@@ -48,29 +45,38 @@ export const useIngredientSearch = ({
       const data = await $fetch<any>('/api/suppliers/ingredients', {
         query: fetchQuery
       })
+      if (!requestTracker.isLatest(requestId)) return
       results.value = data?.data ?? []
     } catch (e: any) {
+      if (!requestTracker.isLatest(requestId)) return
       error.value = e
       results.value = []
     } finally {
-      loading.value = false
+      if (requestTracker.isLatest(requestId)) {
+        loading.value = false
+      }
     }
   }, 300)
 
-  watch(query, (val) => {
-    if ((!val || val.trim().length < 1) && !searchOnEmpty) {
+  function scheduleSearch(value: string) {
+    const requestId = requestTracker.next()
+    error.value = null
+
+    if ((!value || value.trim().length < 1) && !searchOnEmpty) {
       results.value = []
       loading.value = false
       return
     }
-    loading.value = true // show loading immediately on keystroke, before debounce fires
-    doSearch(val)
-  })
+
+    loading.value = true
+    void doSearch(value, requestId)
+  }
+
+  watch(query, scheduleSearch)
 
   if (searchOnEmpty) {
     onMounted(() => {
-      loading.value = true
-      doSearch('')
+      scheduleSearch(query.value)
     })
   }
 

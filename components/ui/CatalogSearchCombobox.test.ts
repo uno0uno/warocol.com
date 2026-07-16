@@ -138,16 +138,38 @@ describe('CatalogSearchCombobox', () => {
   })
 
   it('renders loading, error, and empty feedback states', async () => {
-    const loading = mountCombobox({ options: [], loading: true })
+    const loading = mountCombobox({
+      modelValue: 'cate',
+      loading: true,
+      allowCreate: true,
+    })
     await loading.get('input').trigger('focus')
     expect(loading.text()).toContain('Cargando')
+    expect(loading.find('.animate-spin').exists()).toBe(true)
+    expect(loading.text()).not.toContain('Primera')
+    expect(loading.text()).not.toContain('Vacío')
+    expect(loading.text()).not.toContain('Create "cate"')
 
-    const error = mountCombobox({ options: [], error: new Error('boom') })
+    const error = mountCombobox({ error: new Error('boom') })
     await error.get('input').trigger('focus')
     expect(error.get('[role="alert"]').text()).toBe('Error')
+    expect(error.text()).not.toContain('Primera')
 
     const empty = mountCombobox({ modelValue: 'zzz', options: [] })
     await empty.get('input').trigger('focus')
     expect(empty.text()).toContain('Vacío')
+  })
+
+  it('keeps the empty feedback visible when creating the typed value is allowed', async () => {
+    const wrapper = mountCombobox({
+      modelValue: 'cate',
+      options: [],
+      allowCreate: true,
+    })
+
+    await wrapper.get('input').trigger('focus')
+
+    expect(wrapper.text()).toContain('Vacío')
+    expect(wrapper.text()).toContain('Create "cate"')
   })
 })
