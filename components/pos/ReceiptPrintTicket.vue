@@ -116,7 +116,7 @@ const money = (value: number | string | null | undefined) => {
 
 const modifierTotal = (modifier: ReceiptItemModifier) => {
   const explicitTotal = Number(modifier.total)
-  if (Number.isFinite(explicitTotal) && explicitTotal > 0) return explicitTotal
+  if (modifier.total != null && Number.isFinite(explicitTotal)) return explicitTotal
   return (Number(modifier.price) || 0) * (Number(modifier.quantity) || 1)
 }
 

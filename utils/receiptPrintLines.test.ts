@@ -1,6 +1,6 @@
-import { describe, it } from 'node:test'
+import { describe, it } from 'vitest'
 import assert from 'node:assert/strict'
-import { consolidateReceiptPrintLines } from './receiptPrintLines.ts'
+import { buildReceiptTicketItems, consolidateReceiptPrintLines } from './receiptPrintLines.ts'
 
 type TestLine = {
   productId: string
@@ -127,5 +127,75 @@ describe('consolidateReceiptPrintLines', () => {
     ])
 
     assert.equal(lines.length, 2)
+  })
+})
+
+describe('buildReceiptTicketItems', () => {
+  it('normalizes Rebel Rebel order 16599 without collapsing products to an empty zero line', () => {
+    const lines = buildReceiptTicketItems([
+      {
+        id: '1',
+        product: { id: 'sin-ley', name: 'Sin Ley (Chorizo y pepinillos)', price: 29000 },
+        quantity: 4,
+        modifiers: [],
+      },
+      {
+        id: '2',
+        product: { id: 'agua', name: 'Agua Sin Gas', price: 3500 },
+        quantity: 1,
+        modifiers: [],
+      },
+      {
+        id: '3',
+        product: { id: 'quatro', name: 'Quatro', price: 5000 },
+        quantity: 2,
+        modifiers: [],
+      },
+      {
+        id: '4',
+        product: { id: 'fuego', name: 'Fuego (Frutos rojos)', price: 12000 },
+        quantity: 1,
+        modifiers: [],
+      },
+    ])
+
+    assert.equal(lines.length, 4)
+    assert.deepEqual(
+      lines.map(line => ({
+        name: line.name,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        total: line.total,
+      })),
+      [
+        { name: 'Sin Ley (Chorizo y pepinillos)', quantity: 4, unitPrice: 29000, total: 116000 },
+        { name: 'Agua Sin Gas', quantity: 1, unitPrice: 3500, total: 3500 },
+        { name: 'Quatro', quantity: 2, unitPrice: 5000, total: 10000 },
+        { name: 'Fuego (Frutos rojos)', quantity: 1, unitPrice: 12000, total: 12000 },
+      ],
+    )
+    assert.equal(lines.reduce((sum, line) => sum + line.quantity, 0), 8)
+    assert.equal(lines.reduce((sum, line) => sum + line.total, 0), 141500)
+  })
+
+  it('preserves a zero-cost included modifier total', () => {
+    const [line] = buildReceiptTicketItems([
+      {
+        product: { id: 'burger', name: 'Burger', price: 20000 },
+        quantity: 1,
+        modifiers: [
+          {
+            id: 'included-cheese',
+            name: 'Queso incluido',
+            price: 2000,
+            quantity: 1,
+            included_quantity: 1,
+          },
+        ],
+      },
+    ])
+
+    assert.equal(line.total, 20000)
+    assert.equal(line.modifiers[0].total, 0)
   })
 })

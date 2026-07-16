@@ -18,7 +18,7 @@ import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/utils/promoProductMatch'
 import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
-import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 
 interface TopProduct {
@@ -1735,6 +1735,10 @@ const printablePrefacturaItems = computed(() =>
 
 const printableReceiptItems = computed(() =>
   consolidateCheckoutPrintItems(cartItemsSnapshot.value)
+)
+
+const receiptTicketItems = computed(() =>
+  buildReceiptTicketItems(cartItemsSnapshot.value)
 )
 
 function checkoutErrorMessage(error: any, fallback: string) {
@@ -5076,7 +5080,7 @@ onUnmounted(() => {
       :waiter-name="receiptPrintContext?.waiterName"
       :customer-name="receiptPrintContext?.customerName"
       :customer-fiscal-label="receiptCustomerFiscalLabel"
-      :items="printableReceiptItems"
+      :items="receiptTicketItems"
       :subtotal="orderResult.subtotal"
       :promo-breakdown="receiptPromoBreakdown"
       :discount-amount="Number(orderResult.discount_amount) || 0"
