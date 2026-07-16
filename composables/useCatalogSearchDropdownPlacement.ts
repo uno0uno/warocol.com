@@ -2,13 +2,35 @@ import { nextTick, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 
 /** Matches Tailwind max-h-48 on catalog search listboxes */
 const MAX_DROPDOWN_PX = 192
+const MIN_DROPDOWN_PX = 96
 const GAP_PX = 4
-/** Prefer flipping up when less than this space remains below the input */
-const FLIP_THRESHOLD_PX = 160
+
+export type CatalogSearchPlacement = 'auto' | 'top' | 'bottom'
+
+export function resolveCatalogSearchOpenUpward({
+  placement,
+  spaceAbove,
+  spaceBelow,
+  dropdownHeight,
+}: {
+  placement: CatalogSearchPlacement
+  spaceAbove: number
+  spaceBelow: number
+  dropdownHeight: number
+}) {
+  if (placement === 'bottom') return false
+  if (placement === 'top') {
+    return spaceAbove >= Math.min(MIN_DROPDOWN_PX, dropdownHeight)
+      || spaceAbove > spaceBelow
+  }
+  return spaceBelow < dropdownHeight && spaceAbove > spaceBelow
+}
 
 export function useCatalogSearchDropdownPlacement(
   anchorRef: Ref<HTMLElement | null>,
+  panelRef: Ref<HTMLElement | null>,
   open: Ref<boolean>,
+  placement: Ref<CatalogSearchPlacement>,
 ) {
   const openUpward = ref(false)
   const panelStyle = ref<Record<string, string>>({})
@@ -20,13 +42,24 @@ export function useCatalogSearchDropdownPlacement(
     const rect = el.getBoundingClientRect()
     const spaceBelow = window.innerHeight - rect.bottom - GAP_PX
     const spaceAbove = rect.top - GAP_PX
+    const dropdownHeight = Math.min(
+      MAX_DROPDOWN_PX,
+      Math.max(
+        MIN_DROPDOWN_PX,
+        panelRef.value?.scrollHeight || panelRef.value?.getBoundingClientRect().height || MAX_DROPDOWN_PX,
+      ),
+    )
 
-    openUpward.value =
-      spaceBelow < FLIP_THRESHOLD_PX && spaceAbove > spaceBelow
+    openUpward.value = resolveCatalogSearchOpenUpward({
+      placement: placement.value,
+      spaceAbove,
+      spaceBelow,
+      dropdownHeight,
+    })
 
     const maxH = Math.min(
       MAX_DROPDOWN_PX,
-      Math.max(96, openUpward.value ? spaceAbove : spaceBelow),
+      Math.max(MIN_DROPDOWN_PX, openUpward.value ? spaceAbove : spaceBelow),
     )
 
     panelStyle.value = {

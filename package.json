@@ -16,7 +16,8 @@
     "i18n:check:zh": "node scripts/check-i18n.mjs --locale zh",
     "i18n:check:ar": "node scripts/check-i18n.mjs --locale ar",
     "i18n:check:all": "node scripts/check-i18n.mjs --all",
-    "i18n:translate": "node scripts/translate-i18n.mjs"
+    "i18n:translate": "node scripts/translate-i18n.mjs",
+    "test:catalog-search": "vitest run components/ui/CatalogSearchCombobox.test.ts"
   },
   "dependencies": {
     "@heroicons/vue": "^2.0.18",
@@ -62,10 +63,14 @@
     "@nuxt/devtools": "^1.0.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^18.16.19",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.4.11",
     "autoprefixer": "^10.4.14",
+    "jsdom": "^26.1.0",
     "nuxt-icon": "^0.6.10",
     "postcss": "^8.4.26",
     "sass": "^1.64.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "vitest": "^3.2.7"
   }
 }

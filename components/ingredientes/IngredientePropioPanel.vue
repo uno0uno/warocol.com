@@ -373,41 +373,12 @@
             <label for="ing-category" class="text-sm font-medium text-text-primary">
               {{ t('abastecimiento.glossary.categoryRequired') }}
             </label>
-            <input
-              id="ing-category"
+            <UiWarehouseCategorySearchInput
               v-model="form.category"
-              type="text"
-              list="ing-category-list"
               :placeholder="t('abastecimiento.glossary.categoryPlaceholder')"
-              :class="inputClass"
-              @input="clearError('category')"
+              :listbox-label="t('abastecimiento.glossary.warehouseCategorySearchResults')"
+              @change="clearError('category')"
             />
-            <datalist id="ing-category-list">
-              <option value="Aceites" />
-              <option value="Azúcares" />
-              <option value="Bebidas" />
-              <option value="Café" />
-              <option value="Carnes" />
-              <option value="Condimentos" />
-              <option value="Embutidos" />
-              <option value="Empaques" />
-              <option value="Endulzantes" />
-              <option value="Especias" />
-              <option value="Frutas" />
-              <option value="Granos" />
-              <option value="Harinas" />
-              <option value="Huevos" />
-              <option value="Lácteos" />
-              <option value="Mariscos" />
-              <option value="Panadería" />
-              <option value="Pastas" />
-              <option value="Proteínas" />
-              <option value="Salsas" />
-              <option value="Snacks" />
-              <option value="Tubérculos" />
-              <option value="Vegetales" />
-              <option value="Otros" />
-            </datalist>
             <p v-if="errors.category" class="text-xs text-destructive">{{ errors.category }}</p>
           </div>
 
