@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useBilling, type BillingPlan, type BillingQuotaKey } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
+import {
+  canStartBillingSubscription,
+  shouldShowBillingRecoveryAlert,
+} from '~/utils/billingPresentation'
 
 interface Column {
   key: string
@@ -307,22 +311,24 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
 // ── Should show subscribe/reactivate button ──────────────────────
 const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
 const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
+const billingPresentationState = computed(() => ({
+  subscriptionStatus: subscription.value?.status ?? null,
+  checkoutUrl: subscription.value?.checkout_url ?? null,
+  accessLevel: accessStatus.value?.level ?? null,
+}))
 const showBillingRecoveryAlert = computed(() =>
-  subscription.value?.status === 'past_due' || isAccessBlocked.value
+  shouldShowBillingRecoveryAlert(billingPresentationState.value)
 )
 const requiresTermsAcceptance = computed(() =>
   termsStatus.value?.pending === true || termsStatus.value?.accepted === false
 )
 const canSubscribe = computed(() => {
-  const s = subscription.value?.status
-  return !subscription.value ||
-    s === 'cancelled' ||
-    s === 'expired' ||
-    (s === 'pending' && !subscription.value.checkout_url) ||
-    (isAccessBlocked.value && !subscription.value.checkout_url)
+  return canStartBillingSubscription(billingPresentationState.value)
 })
 const primaryBillingActionLabel = computed(() => {
-  if (!subscription.value) return t('billing.subscribe')
+  if (!subscription.value || subscription.value.status === 'pending') {
+    return t('billing.subscribe')
+  }
   if (isAccessBlocked.value) return t('billing.reactivate')
   return t('billing.reactivate')
 })
