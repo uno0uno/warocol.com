@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CatalogSearchCombobox from './CatalogSearchCombobox.vue'
+import { resolveCatalogSearchOpenUpward } from '~/composables/useCatalogSearchDropdownPlacement'
 
 const options = [
   { id: 'one', label: 'Primera' },
@@ -33,6 +34,27 @@ afterEach(() => {
 })
 
 describe('CatalogSearchCombobox', () => {
+  it('opens upward when preferred and when auto placement would overflow below', () => {
+    expect(resolveCatalogSearchOpenUpward({
+      placement: 'top',
+      spaceAbove: 300,
+      spaceBelow: 80,
+      dropdownHeight: 192,
+    })).toBe(true)
+    expect(resolveCatalogSearchOpenUpward({
+      placement: 'auto',
+      spaceAbove: 300,
+      spaceBelow: 150,
+      dropdownHeight: 192,
+    })).toBe(true)
+    expect(resolveCatalogSearchOpenUpward({
+      placement: 'auto',
+      spaceAbove: 100,
+      spaceBelow: 240,
+      dropdownHeight: 192,
+    })).toBe(false)
+  })
+
   it('creates unique combobox/listbox relationships per instance', async () => {
     const Pair = defineComponent(() => () => h('div', [
       h(CatalogSearchCombobox, { modelValue: '', options }),

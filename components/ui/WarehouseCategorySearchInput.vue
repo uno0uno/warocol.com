@@ -7,6 +7,7 @@
     :listbox-label="listboxLabel"
     :allow-create="true"
     :can-create="!exactMatch"
+    placement="top"
     :loading-label="t('abastecimiento.glossary.searchLoading')"
     :empty-label="t('abastecimiento.glossary.noSearchResults')"
     :error-label="t('abastecimiento.glossary.searchError')"

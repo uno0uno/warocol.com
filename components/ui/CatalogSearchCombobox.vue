@@ -35,6 +35,7 @@
     <Teleport to="body">
       <ul
         v-if="dropdownOpen"
+        ref="panelRef"
         :id="listboxId"
         role="listbox"
         :aria-label="listboxLabel"
@@ -124,7 +125,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useId, watch } from 'vue'
-import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
+import {
+  useCatalogSearchDropdownPlacement,
+  type CatalogSearchPlacement,
+} from '~/composables/useCatalogSearchDropdownPlacement'
 
 export interface CatalogSearchOption {
   id: string
@@ -149,6 +153,7 @@ interface Props {
   emptyLabel?: string
   errorLabel?: string
   createLabel?: string
+  placement?: CatalogSearchPlacement
 }
 
 interface Emits {
@@ -173,6 +178,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyLabel: 'No results',
   errorLabel: 'Could not load results',
   createLabel: '',
+  placement: 'auto',
 })
 
 const emit = defineEmits<Emits>()
@@ -181,6 +187,7 @@ const generatedId = useId().replace(/:/g, '')
 const resolvedInputId = computed(() => props.inputId || `catalog-search-${generatedId}`)
 const listboxId = computed(() => `${resolvedInputId.value}-listbox`)
 const anchorRef = ref<HTMLElement | null>(null)
+const panelRef = ref<HTMLElement | null>(null)
 const showResults = ref(false)
 const activeKey = ref<string | null>(null)
 
@@ -212,7 +219,13 @@ const activeDescendant = computed(
   () => activeKey.value ? optionDomId(activeKey.value) : undefined,
 )
 
-const { panelStyle } = useCatalogSearchDropdownPlacement(anchorRef, dropdownOpen)
+const preferredPlacement = computed(() => props.placement)
+const { panelStyle } = useCatalogSearchDropdownPlacement(
+  anchorRef,
+  panelRef,
+  dropdownOpen,
+  preferredPlacement,
+)
 
 function optionKey(option: CatalogSearchOption) {
   return option.kind === 'presentation' ? `presentation-${option.id}` : option.id
