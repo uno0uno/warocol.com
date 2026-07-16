@@ -210,7 +210,7 @@ const dropdownOpen = computed(
   ),
 )
 const showEmptyState = computed(
-  () => !props.loading && !props.error && selectableOptions.value.length === 0 && !showCreate.value,
+  () => !props.loading && !props.error && selectableOptions.value.length === 0,
 )
 const resolvedCreateLabel = computed(
   () => props.createLabel || `Create "${trimmedValue.value}"`,

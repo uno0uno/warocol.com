@@ -150,4 +150,17 @@ describe('CatalogSearchCombobox', () => {
     await empty.get('input').trigger('focus')
     expect(empty.text()).toContain('Vacío')
   })
+
+  it('keeps the empty feedback visible when creating the typed value is allowed', async () => {
+    const wrapper = mountCombobox({
+      modelValue: 'cate',
+      options: [],
+      allowCreate: true,
+    })
+
+    await wrapper.get('input').trigger('focus')
+
+    expect(wrapper.text()).toContain('Vacío')
+    expect(wrapper.text()).toContain('Create "cate"')
+  })
 })
