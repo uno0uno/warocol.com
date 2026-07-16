@@ -15,25 +15,72 @@ describe('WarehouseCategorySearchInput', () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn(async (
       _url: string,
-      options: { query: { search?: string } },
-    ) => ({
-      data: options.query.search === 'categoria'
-        ? [
-            {
-              name: 'categoria de prueba',
-              ingredient_count: 1,
-              global_count: 0,
-              tenant_count: 1,
-            },
-            {
-              name: 'ingrediente categoria',
-              ingredient_count: 1,
-              global_count: 0,
-              tenant_count: 1,
-            },
-          ]
-        : [],
-    }))
+      options: { query?: { search?: string }, method?: string, body?: { name?: string } },
+    ) => {
+      if (options.method === 'POST') {
+        return {
+          data: {
+            id: 'created-category',
+            tenant_id: 'tenant-1',
+            name: options.body?.name ?? '',
+            normalized_name: options.body?.name ?? '',
+            is_active: true,
+            scope: 'tenant',
+            can_manage: true,
+            ingredient_count: 0,
+            global_count: 0,
+            tenant_count: 0,
+          },
+        }
+      }
+      if (options.method === 'PATCH') {
+        const archived = _url.endsWith('/archive')
+        return {
+          data: {
+            id: 'created-category',
+            tenant_id: 'tenant-1',
+            name: options.body?.name ?? 'holanda',
+            normalized_name: options.body?.name ?? 'holanda',
+            is_active: !archived,
+            scope: 'tenant',
+            can_manage: true,
+            ingredient_count: 0,
+            global_count: 0,
+            tenant_count: 0,
+          },
+        }
+      }
+      return {
+        data: options.query?.search === 'categoria'
+          ? [
+              {
+                id: 'category-1',
+                tenant_id: 'tenant-1',
+                name: 'categoria de prueba',
+                normalized_name: 'categoria de prueba',
+                is_active: true,
+                scope: 'tenant',
+                can_manage: true,
+                ingredient_count: 1,
+                global_count: 0,
+                tenant_count: 1,
+              },
+              {
+                id: 'category-2',
+                tenant_id: 'tenant-1',
+                name: 'ingrediente categoria',
+                normalized_name: 'ingrediente categoria',
+                is_active: true,
+                scope: 'tenant',
+                can_manage: true,
+                ingredient_count: 1,
+                global_count: 0,
+                tenant_count: 1,
+              },
+            ]
+          : [],
+      }
+    })
     vi.stubGlobal('$fetch', fetchMock)
     vi.stubGlobal('useI18n', () => ({
       t: (key: string, params?: { name?: string }) => ({
@@ -41,15 +88,21 @@ describe('WarehouseCategorySearchInput', () => {
         'abastecimiento.glossary.noSearchResults': 'Sin resultados',
         'abastecimiento.glossary.searchError': 'Error',
         'abastecimiento.glossary.createNamed': `Crear "${params?.name ?? ''}"`,
+        'abastecimiento.glossary.warehouseCategoryPrivate': 'Privada',
+        'abastecimiento.glossary.renameWarehouseCategory': 'Renombrar',
+        'abastecimiento.glossary.archiveWarehouseCategory': 'Archivar',
+        'abastecimiento.glossary.archiveWarehouseCategoryConfirm': '¿Archivar?',
+        'abastecimiento.glossary.saveChanges': 'Guardar',
+        'abastecimiento.glossary.cancel': 'Cancelar',
       }[key] ?? key),
     }))
 
     const Host = defineComponent({
       setup() {
-        const value = ref('')
+        const value = ref<any>(null)
         return () => h(WarehouseCategorySearchInput, {
           modelValue: value.value,
-          'onUpdate:modelValue': (nextValue: string) => {
+          'onUpdate:modelValue': (nextValue: any) => {
             value.value = nextValue
           },
         })
@@ -84,7 +137,7 @@ describe('WarehouseCategorySearchInput', () => {
     expect(wrapper.text()).toContain('categoria de prueba')
     expect(wrapper.text()).toContain('ingrediente categoria')
     expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/suppliers/ingredients/categories',
+      '/api/suppliers/warehouse-categories',
       { query: { search: 'categoria', limit: 100 } },
     )
 
@@ -101,5 +154,35 @@ describe('WarehouseCategorySearchInput', () => {
     expect(wrapper.text()).not.toContain('Buscando…')
     expect(wrapper.text()).toContain('Sin resultados')
     expect(wrapper.text()).toContain('Crear "holanda"')
+
+    await wrapper.findAll('[role="option"]').at(-1)?.trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/suppliers/warehouse-categories',
+      { method: 'POST', body: { name: 'holanda' } },
+    )
+    expect(wrapper.text()).toContain('Privada')
+
+    await wrapper.findAll('button').find(button => button.text() === 'Renombrar')?.trigger('click')
+    const renameInput = wrapper.get('input[aria-label="Renombrar"]')
+    await renameInput.setValue('Holanda refrigerada')
+    await wrapper.findAll('button').find(button => button.text() === 'Guardar')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/suppliers/warehouse-categories/created-category',
+      { method: 'PATCH', body: { name: 'Holanda refrigerada' } },
+    )
+
+    await wrapper.findAll('button').find(button => button.text() === 'Archivar')?.trigger('click')
+    await wrapper.findAll('button').find(button => button.text() === 'Archivar')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/suppliers/warehouse-categories/created-category/archive',
+      { method: 'PATCH' },
+    )
+    expect(wrapper.text()).not.toContain('Privada')
   })
 })

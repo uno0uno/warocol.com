@@ -3,6 +3,7 @@ export function normalizeCatalogSearchText(value: string) {
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .trim()
+    .replace(/\s+/g, ' ')
     .toLocaleLowerCase()
 }
 
