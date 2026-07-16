@@ -17,7 +17,7 @@
     "i18n:check:ar": "node scripts/check-i18n.mjs --locale ar",
     "i18n:check:all": "node scripts/check-i18n.mjs --all",
     "i18n:translate": "node scripts/translate-i18n.mjs",
-    "test:catalog-search": "vitest run components/ui/CatalogSearchCombobox.test.ts composables/useCategorySearch.test.ts utils/latestRequestTracker.test.ts"
+    "test:catalog-search": "vitest run components/ui/CatalogSearchCombobox.test.ts components/ui/WarehouseCategorySearchInput.test.ts composables/useCategorySearch.test.ts utils/latestRequestTracker.test.ts"
   },
   "dependencies": {
     "@heroicons/vue": "^2.0.18",

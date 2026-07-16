@@ -5,6 +5,7 @@
     :input-id="inputId"
     :placeholder="placeholder"
     :listbox-label="listboxLabel"
+    :loading="loading"
     :allow-create="true"
     :can-create="!exactMatch"
     placement="top"
@@ -13,11 +14,14 @@
     :error-label="t('abastecimiento.glossary.searchError')"
     :create-label="t('abastecimiento.glossary.createNamed', { name: modelValue.trim() })"
     @update:model-value="updateValue"
+    @search="scheduleSearch"
+    @focus="scheduleSearch"
   />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { WAREHOUSE_CATEGORY_SUGGESTIONS } from '~/constants/warehouseCategories'
 import { normalizeCatalogSearchText, rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
 
@@ -39,12 +43,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n({ useScope: 'global' })
 
-const rankedCategories = computed(() =>
+const searchedValue = ref(props.modelValue)
+const loading = ref(false)
+const visibleCategories = ref(
   rankCatalogSearchOptions(WAREHOUSE_CATEGORY_SUGGESTIONS, props.modelValue, category => category),
 )
 
 const options = computed(() =>
-  rankedCategories.value.map(category => ({
+  visibleCategories.value.map(category => ({
     id: normalizeCatalogSearchText(category),
     label: category,
     raw: category,
@@ -57,6 +63,23 @@ const exactMatch = computed(() => {
     category => normalizeCatalogSearchText(category) === normalizedValue,
   )
 })
+
+const finishSearch = useDebounceFn((value: string) => {
+  visibleCategories.value = rankCatalogSearchOptions(
+    WAREHOUSE_CATEGORY_SUGGESTIONS,
+    value,
+    category => category,
+  )
+  searchedValue.value = value
+  loading.value = false
+}, 300)
+
+function scheduleSearch(value: string) {
+  if (value === searchedValue.value && !loading.value) return
+
+  loading.value = true
+  void finishSearch(value)
+}
 
 function updateValue(value: string) {
   emit('update:modelValue', value)
