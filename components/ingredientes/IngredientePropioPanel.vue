@@ -471,6 +471,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import type { WarehouseCategoryRow } from '@/composables/useWarehouseCategorySearch'
 import {
   defaultHrPurchaseUnitsDraft,
   defaultUndPurchaseUnitsDraft,
@@ -612,7 +613,16 @@ function defaultServiceUnitFromName(name: string): ServiceUnitMode {
 const unitType = ref<UnitTypeKey>('')
 const serviceUnitMode = ref<ServiceUnitMode | ''>('')
 const unitWeightUnit = ref<'gr' | 'ml'>('gr')
-const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false, type: 'food', unitWeightGr: null as number | null })
+const form = ref({
+  name: '',
+  unit: '',
+  category: null as WarehouseCategoryRow | null,
+  parentId: null as string | null,
+  parentName: '',
+  isResale: false,
+  type: 'food',
+  unitWeightGr: null as number | null,
+})
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 watch(saving, value => emit('busy-change', value))
@@ -696,7 +706,7 @@ const resetCreate = () => {
   form.value = {
     name: props.initialName ?? '',
     unit: '',
-    category: '',
+    category: null,
     parentId: null,
     parentName: '',
     isResale: false,
@@ -717,7 +727,20 @@ watch(() => props.ingredient, (ing) => {
     form.value = {
       name: ing.name ?? '',
       unit: ing.unit ?? '',
-      category: ing.category ?? '',
+      category: ing.warehouse_category_id && ing.category
+        ? {
+            id: String(ing.warehouse_category_id),
+            tenant_id: null,
+            name: ing.category,
+            normalized_name: ing.category,
+            is_active: true,
+            scope: 'global',
+            can_manage: false,
+            ingredient_count: 0,
+            global_count: 0,
+            tenant_count: 0,
+          }
+        : null,
       parentId: null,
       parentName: ing.parent_name ?? '',
       isResale: ing.is_resale ?? false,
@@ -769,7 +792,7 @@ function validate() {
   if (form.value.type === 'service' && form.value.unit !== 'hr' && form.value.unit !== 'und') {
     e.unit = 'Selecciona si el servicio se cobra por hora o por unidad'
   }
-  if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
+  if (!form.value.category) e.category = 'La categoría es obligatoria'
   if (form.value.isResale && form.value.unit !== 'und') {
     e.general = 'Los ingredientes de reventa deben tener unidad "und" (pieza).'
   }
@@ -787,7 +810,7 @@ async function submit() {
     const body: Record<string, any> = {
       name: form.value.name.trim(),
       unit: form.value.unit,
-      category: form.value.category.trim(),
+      warehouse_category_id: form.value.category?.id,
       is_resale: form.value.isResale,
     }
     if (form.value.parentId !== null) body.parent_id = form.value.parentId
