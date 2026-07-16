@@ -9,13 +9,13 @@
     </header>
 
     <nav :aria-label="t('onboarding.progressLabel')">
-      <ol class="grid gap-3 sm:grid-cols-5">
+      <ol class="grid gap-3 sm:grid-cols-2">
         <li
           v-for="(step, index) in steps"
           :key="step.key"
           class="flex items-center gap-3 rounded-lg border p-3"
           :class="index <= currentStepIndex ? 'border-primary/40 bg-primary/5' : 'border-border bg-surface'"
-          :aria-current="index === currentStepIndex ? 'step' : undefined"
+          :aria-current="currentView === 'business' && index === currentStepIndex ? 'step' : undefined"
         >
           <span
             class="flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-semibold"
@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <div v-else-if="loadError || currentView === 'error'" role="alert" class="py-10 text-center">
+      <div v-else-if="loadError || activationError || currentView === 'error'" role="alert" class="py-10 text-center">
         <h2 class="text-xl font-semibold text-text-primary">{{ t('onboarding.loadErrorTitle') }}</h2>
         <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
           {{ loadErrorMessage }}
@@ -63,54 +63,58 @@
         @submit="handleBusinessSubmit"
       />
 
-      <OnboardingTermsStep
-        v-else-if="currentView === 'terms'"
-        @accepted="handleTermsAccepted"
-      />
-
-      <OnboardingPlanStep
-        v-else-if="currentView === 'plan'"
-        v-model="selectedPlanId"
-        :plans="plans"
-        :loading="isPlansLoading"
-        :submitting="isCheckoutLoading"
-        :error="plansErrorMessage"
-        :submit-error="checkoutErrorMessage"
-        @continue="handleCheckout"
-        @retry="loadAvailablePlans"
-      />
-
-      <OnboardingPaymentStep
-        v-else-if="currentView === 'payment'"
-        :status="paymentStatus"
-        :loading="isPaymentLoading"
-        :error="paymentErrorMessage"
-        @refresh="refreshPayment"
-        @retry="retryPayment"
-      />
-
-      <OnboardingSetupStep v-else-if="currentView === 'setup'" />
+      <div v-else-if="currentView === 'welcome'" class="mx-auto max-w-2xl py-6 text-center sm:py-10">
+        <div
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" fill="none" class="h-9 w-9" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+          </svg>
+        </div>
+        <h2 class="mt-5 text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
+          {{ t('onboarding.welcomeTitle') }}
+        </h2>
+        <p class="mx-auto mt-3 max-w-xl text-base leading-7 text-text-secondary">
+          {{ t('onboarding.welcomeDescription') }}
+        </p>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-text-secondary">
+          {{ t('onboarding.welcomeAdvisor') }}
+        </p>
+        <p
+          class="mt-6 text-sm font-medium text-text-primary"
+          role="timer"
+          aria-live="off"
+          aria-atomic="true"
+        >
+          {{ t('onboarding.welcomeCountdown', { seconds: countdownSeconds }) }}
+        </p>
+        <button
+          type="button"
+          class="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-wait disabled:opacity-70"
+          :disabled="isRedirecting"
+          @click="continueToBilling('cta')"
+        >
+          {{ isRedirecting ? t('onboarding.welcomeRedirecting') : t('onboarding.welcomeCta') }}
+        </button>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import OnboardingBusinessStep from '~/components/onboarding/OnboardingBusinessStep.vue'
-import OnboardingPaymentStep from '~/components/onboarding/OnboardingPaymentStep.vue'
-import OnboardingPlanStep from '~/components/onboarding/OnboardingPlanStep.vue'
-import OnboardingSetupStep from '~/components/onboarding/OnboardingSetupStep.vue'
-import OnboardingTermsStep from '~/components/onboarding/OnboardingTermsStep.vue'
 import type { OnboardingBusinessDraft } from '~/composables/useOnboarding'
 import { extractApiError } from '~/composables/useQueryError'
-import { resolveOnboardingView } from '~/utils/onboardingFlow'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
-import { readPublicCtaAnalyticsContext } from '~/utils/publicCta'
+import { getSessionLifecycle, resolveOnboardingView } from '~/utils/onboardingFlow'
 import {
-  clearCheckoutContext,
-  readCheckoutContext,
-  writeCheckoutContext,
-  type OnboardingCheckoutContext,
-} from '~/utils/onboardingPayment'
+  clearOnboardingWelcome,
+  createOnboardingWelcomeCountdown,
+  hasOnboardingWelcome,
+  markOnboardingWelcome,
+} from '~/utils/onboardingWelcome'
+import { readPublicCtaAnalyticsContext } from '~/utils/publicCta'
 
 definePageMeta({
   layout: 'onboarding',
@@ -124,161 +128,103 @@ useHead({ title: () => t('onboarding.pageTitle') })
 const {
   status,
   financial,
-  plans,
-  paymentAttempt,
   isLoading,
   isSaving,
-  isPlansLoading,
-  isCheckoutLoading,
-  isPaymentLoading,
   loadError,
   saveError,
-  plansError,
-  checkoutError,
-  paymentError,
   load,
-  loadStatus,
   saveBusinessProfile,
-  loadPlans,
-  createCheckout,
-  loadPaymentStatus,
 } = useOnboarding()
 
 const steps = [
   { key: 'account', label: 'onboarding.stepAccount' },
   { key: 'business', label: 'onboarding.stepBusiness' },
-  { key: 'terms', label: 'onboarding.stepTerms' },
-  { key: 'payment', label: 'onboarding.stepPayment' },
-  { key: 'setup', label: 'onboarding.stepSetup' },
 ]
 const stepPanel = ref<HTMLElement | null>(null)
-const selectedPlanId = ref('')
-const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
-const isRedirectingToCheckout = ref(false)
+const countdownSeconds = ref(10)
+const activationError = ref(false)
+const isRedirecting = ref(false)
 const authStore = useAuthStore()
 const tenantsStore = useTenantsStore()
 const accessStore = useAccessStore()
+let countdown: ReturnType<typeof createOnboardingWelcomeCountdown> | null = null
+let welcomeStarted = false
 
-const serverView = computed(() => resolveOnboardingView(status.value))
-const currentView = computed(() =>
-  serverView.value === 'plan' && checkoutContext.value ? 'payment' : serverView.value,
-)
-const currentStepIndex = computed(() => {
-  if (currentView.value === 'business') return 1
-  if (currentView.value === 'terms') return 2
-  if (currentView.value === 'plan' || currentView.value === 'payment') return 3
-  if (currentView.value === 'setup') return 4
-  return 0
-})
-const loadErrorMessage = computed(() =>
-  loadError.value
+const currentView = computed(() => resolveOnboardingView(status.value))
+const currentStepIndex = 1
+const loadErrorMessage = computed(() => {
+  if (activationError.value) return t('onboarding.activationError')
+  return loadError.value
     ? extractApiError(loadError.value, t('onboarding.loadError'))
-    : t('onboarding.unknownStep'),
-)
+    : t('onboarding.unknownStep')
+})
 const saveErrorMessage = computed(() =>
   saveError.value ? extractApiError(saveError.value, t('onboarding.saveError')) : '',
 )
-const plansErrorMessage = computed(() =>
-  plansError.value ? extractApiError(plansError.value, t('onboarding.plansError')) : '',
-)
-const checkoutErrorMessage = computed(() =>
-  checkoutError.value ? extractApiError(checkoutError.value, t('onboarding.checkoutError')) : '',
-)
-const paymentErrorMessage = computed(() =>
-  paymentError.value ? extractApiError(paymentError.value, t('onboarding.paymentError')) : '',
-)
-const paymentStatus = computed(() => paymentAttempt.value?.status ?? 'pending')
 
 const analyticsStorage = () => import.meta.client ? sessionStorage : null
 const publicAnalyticsContext = () => readPublicCtaAnalyticsContext(analyticsStorage())
 
 const refreshActiveStores = async () => {
   const session = await authStore.refreshSession()
-  if (session?.lifecycleStatus !== 'active' && session?.lifecycle_status !== 'active') return false
+  if (getSessionLifecycle(session) !== 'active') return false
   await Promise.all([tenantsStore.fetchUserTenants(), accessStore.load()])
   return true
 }
 
-const redirectToBilling = async () => {
-  await refreshActiveStores()
-  if (import.meta.client) clearCheckoutContext(sessionStorage)
+const continueToBilling = (method: 'cta' | 'automatic') => {
+  if (isRedirecting.value) return
+  isRedirecting.value = true
+  countdown?.cancel()
+  trackOnboardingEvent('billing_continued', {
+    ...publicAnalyticsContext(),
+    method,
+    dedupeId: 'welcome',
+  }, undefined, analyticsStorage())
+  if (import.meta.client) clearOnboardingWelcome(sessionStorage)
   window.location.assign('/gestion/billing')
 }
 
-const finishActivation = async () => {
-  const currentStatus = await loadStatus()
-  if (currentStatus.lifecycleStatus !== 'active' || currentStatus.nextStep !== 'setup') return false
-  if (import.meta.client) clearCheckoutContext(sessionStorage)
-  checkoutContext.value = null
-  await refreshActiveStores()
-  return true
-}
-
-const loadAvailablePlans = async () => {
-  try {
-    await loadPlans()
-  } catch {
-    // The plan step renders the recoverable request error.
-  }
-}
-
-const recoverLatestPayment = async () => {
-  try {
-    const attempt = await loadPaymentStatus()
-    const context = { attemptId: attempt.attempt_id, planId: attempt.plan_id }
-    if (import.meta.client) writeCheckoutContext(sessionStorage, context)
-    checkoutContext.value = context
-    trackOnboardingEvent('payment_result', {
-      planId: context.planId,
-      paymentStatus: attempt.status,
-      dedupeId: `${context.attemptId}:${attempt.status}`,
-    }, undefined, analyticsStorage())
-    if (attempt.status === 'approved') await finishActivation()
-    return true
-  } catch {
-    // A 404 means this tenant has not started checkout yet.
-    paymentError.value = null
-    return false
-  }
-}
-
-const refreshPayment = async () => {
-  const context = checkoutContext.value
-  if (!context) {
-    await reload()
+const startWelcome = async () => {
+  if (welcomeStarted) return
+  if (!import.meta.client) return
+  if (!hasOnboardingWelcome(sessionStorage)) {
+    window.location.assign('/gestion/billing')
     return
   }
+
   try {
-    const attempt = await loadPaymentStatus(context.attemptId)
-    trackOnboardingEvent('payment_result', {
-      planId: context.planId,
-      paymentStatus: attempt.status,
-      dedupeId: `${context.attemptId}:${attempt.status}`,
-    }, undefined, analyticsStorage())
-    if (attempt.status === 'approved') await finishActivation()
+    if (!await refreshActiveStores()) {
+      activationError.value = true
+      return
+    }
   } catch {
-    // The payment step remains mounted and offers an explicit retry.
+    activationError.value = true
+    return
   }
+
+  welcomeStarted = true
+  activationError.value = false
+  trackOnboardingEvent('welcome_shown', {
+    ...publicAnalyticsContext(),
+    dedupeId: 'welcome',
+  }, undefined, analyticsStorage())
+  await nextTick()
+  stepPanel.value?.focus()
+  countdown = createOnboardingWelcomeCountdown({
+    seconds: 10,
+    onTick: remaining => { countdownSeconds.value = remaining },
+    onComplete: () => continueToBilling('automatic'),
+  })
+  countdown.start()
 }
 
 const syncCurrentStep = async () => {
-  if (serverView.value === 'setup') {
-    await refreshActiveStores()
-    return
-  }
-  if (serverView.value === 'plan' && status.value?.lifecycleStatus === 'active') {
-    await redirectToBilling()
-    return
-  }
-  if (serverView.value !== 'plan' && serverView.value !== 'payment') return
-  if (checkoutContext.value) {
-    await refreshPayment()
-  } else if (!await recoverLatestPayment()) {
-    await loadAvailablePlans()
-  }
+  if (currentView.value === 'welcome') await startWelcome()
 }
 
 const reload = async () => {
+  activationError.value = false
   try {
     await load()
     await syncCurrentStep()
@@ -290,49 +236,16 @@ const reload = async () => {
 const handleBusinessSubmit = async (draft: OnboardingBusinessDraft) => {
   try {
     await saveBusinessProfile(draft)
+    if (import.meta.client) markOnboardingWelcome(sessionStorage)
     trackOnboardingEvent('business_profile_completed', {
       ...publicAnalyticsContext(),
       dedupeId: 'business-profile',
     }, undefined, analyticsStorage())
+    await syncCurrentStep()
   } catch {
     // Keep the child draft mounted for a retry.
   }
 }
-
-const handleTermsAccepted = async () => {
-  await reload()
-}
-
-const handleCheckout = async () => {
-  if (!selectedPlanId.value || isCheckoutLoading.value) return
-  try {
-    const checkout = await createCheckout(selectedPlanId.value)
-    const context = { attemptId: checkout.attempt_id, planId: checkout.plan_id }
-    if (import.meta.client) writeCheckoutContext(sessionStorage, context)
-    checkoutContext.value = context
-    trackOnboardingEvent('checkout_started', {
-      ...publicAnalyticsContext(),
-      planId: context.planId,
-      dedupeId: context.attemptId,
-    }, undefined, analyticsStorage())
-    isRedirectingToCheckout.value = true
-    window.location.assign(checkout.checkout_url)
-  } catch {
-    // The plan step keeps the selection and renders the recoverable error.
-  }
-}
-
-const retryPayment = async () => {
-  if (import.meta.client) clearCheckoutContext(sessionStorage)
-  checkoutContext.value = null
-  paymentAttempt.value = null
-  await loadAvailablePlans()
-}
-
-watch(selectedPlanId, (planId) => {
-  if (!planId) return
-  trackOnboardingEvent('plan_selected', { planId, dedupeId: planId }, undefined, analyticsStorage())
-})
 
 watch(currentView, async (nextView, previousView) => {
   if (!previousView || nextView === previousView) return
@@ -340,16 +253,10 @@ watch(currentView, async (nextView, previousView) => {
   stepPanel.value?.focus()
 })
 
-onMounted(async () => {
-  checkoutContext.value = import.meta.client ? readCheckoutContext(sessionStorage) : null
-  await reload()
-})
+onMounted(reload)
 
 onBeforeUnmount(() => {
-  if (currentView.value !== 'plan' || !selectedPlanId.value || isRedirectingToCheckout.value) return
-  trackOnboardingEvent('checkout_abandoned', {
-    planId: selectedPlanId.value,
-    dedupeId: selectedPlanId.value,
-  }, undefined, analyticsStorage())
+  countdown?.cancel()
+  if (import.meta.client) clearOnboardingWelcome(sessionStorage)
 })
 </script>

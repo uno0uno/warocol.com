@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface-secondary text-text-primary">
+  <div class="flex min-h-screen flex-col bg-background text-text-primary">
     <a
       href="#onboarding-main"
       class="sr-only z-50 rounded-md bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
@@ -7,13 +7,13 @@
       {{ t('onboarding.skipToContent') }}
     </a>
 
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex min-h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <img src="/logo_waro_colombia.png" alt="WARO" class="h-8 w-auto" />
+    <header class="sticky top-0 z-[100] w-full border-b border-border bg-surface/95 shadow-[0_1px_4px_rgba(0,0,0,0.06)] backdrop-blur-sm">
+      <div class="mx-auto flex h-[60px] w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <img src="/logo_waro_colombia.png" alt="WARO" class="h-[26px] w-auto object-contain" />
         <button
           v-if="authStore.session?.user"
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-semibold text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
           :disabled="isLoggingOut"
           @click="handleLogout"
         >
@@ -23,9 +23,12 @@
       </div>
     </header>
 
-    <main id="onboarding-main" class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
-      <slot />
-    </main>
+    <div class="relative flex-1 overflow-hidden bg-background">
+      <div class="onboarding-dot-grid" aria-hidden="true"></div>
+      <main id="onboarding-main" class="relative z-10 mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+        <slot />
+      </main>
+    </div>
   </div>
 </template>
 
@@ -58,3 +61,15 @@ const handleLogout = async () => {
   }
 }
 </script>
+
+<style scoped>
+.onboarding-dot-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.45;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+}
+</style>

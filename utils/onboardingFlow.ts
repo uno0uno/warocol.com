@@ -1,5 +1,5 @@
 export type OnboardingNextStep = 'business_profile' | 'terms' | 'payment' | 'activation' | 'setup'
-export type OnboardingView = 'business' | 'terms' | 'plan' | 'payment' | 'setup' | 'error'
+export type OnboardingView = 'business' | 'welcome' | 'error'
 export type AuthSessionKind = 'anonymous' | 'pending' | 'internal' | 'customer'
 
 export interface OnboardingSessionLike {
@@ -13,10 +13,10 @@ export interface OnboardingSessionLike {
 }
 
 export interface OnboardingStatusLike {
+  lifecycleStatus?: unknown
+  lifecycle_status?: unknown
   nextStep?: unknown
   next_step?: unknown
-  termsAccepted?: unknown
-  terms_accepted?: unknown
 }
 
 const NEXT_STEPS = new Set<OnboardingNextStep>([
@@ -51,7 +51,7 @@ export const isActiveOnboardingSetupSession = (session: unknown) =>
   && normalizeOnboardingNextStep(getSessionNextStep(session)) === 'setup'
 
 export const isOnboardingEntrySession = (session: unknown) =>
-  isPendingOnboardingSession(session) || isActiveOnboardingSetupSession(session)
+  isPendingOnboardingSession(session)
 
 export const classifyAuthSession = (
   session: unknown,
@@ -77,11 +77,8 @@ export const getEditableBusinessName = (value: unknown): string => {
 export const resolveOnboardingView = (status: unknown): OnboardingView => {
   const value = asStatus(status)
   const nextStep = normalizeOnboardingNextStep(value?.nextStep ?? value?.next_step)
-  const termsAccepted = value?.termsAccepted ?? value?.terms_accepted
   if (nextStep === 'business_profile') return 'business'
-  if (nextStep === 'terms' || (nextStep === 'payment' && termsAccepted === false)) return 'terms'
-  if (nextStep === 'payment') return 'plan'
-  if (nextStep === 'activation') return 'payment'
-  if (nextStep === 'setup') return 'setup'
+  const lifecycle = value?.lifecycleStatus ?? value?.lifecycle_status
+  if (lifecycle === 'active') return 'welcome'
   return 'error'
 }

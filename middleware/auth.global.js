@@ -7,10 +7,10 @@ import {
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
 import {
   ONBOARDING_PATH,
-  isActiveOnboardingSetupSession,
   isOnboardingEntrySession,
   isPendingOnboardingSession,
 } from '~/utils/onboardingFlow'
+import { hasOnboardingWelcome } from '~/utils/onboardingWelcome'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
@@ -92,7 +92,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
 
     if (isOnboardingAccess) {
-      if (isActiveOnboardingSetupSession(sessionResponse)) {
+      if (
+        canUseInternalSession(sessionResponse)
+        && hasOnboardingWelcome(window.sessionStorage)
+      ) {
         authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
         await accessStore.load()
         return
