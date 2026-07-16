@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CartModifier } from '~/stores/online_cart'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
-import { modifierLineTotal } from '~/utils/saleModifierOption'
+import { saleLineTotal } from '~/utils/saleModifierOption'
 
 const modifiersSignature = (mods: CartModifier[]) =>
     // Parity with online_cart.ts modifiersKey — separate cart rows per modifier config (#1023)
@@ -79,6 +79,7 @@ export interface TabItemModifier {
     name: string
     price: number
     quantity?: number
+    included_quantity?: number
 }
 
 export interface TabItem {
@@ -159,9 +160,7 @@ export const usePOSStore = defineStore('pos', () => {
 
     const cartTotal = computed(() => {
         return cart.value.reduce((sum, item) => {
-            const productTotal = Number(item.product.price) * Number(item.quantity)
-            const modifiersTotal = item.modifiers.reduce((modSum, mod) => modSum + modifierLineTotal(mod), 0) * Number(item.quantity)
-            return sum + productTotal + modifiersTotal
+            return sum + saleLineTotal(item.product.price, item.quantity, item.modifiers)
         }, 0)
     })
 
@@ -421,6 +420,7 @@ export const usePOSStore = defineStore('pos', () => {
                         name: mod.name,
                         price: Number(mod.price) || 0,
                         quantity: Number(mod.quantity) || 1,
+                        included_quantity: Math.max(0, Number(mod.included_quantity) || 0),
                     })),
                     notes: item.notes,
                     is_resale: item.is_resale || false,

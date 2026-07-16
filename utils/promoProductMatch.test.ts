@@ -222,6 +222,18 @@ describe('computePromoEligibleSubtotal', () => {
     )
   })
 
+  it('charges only eligible modifier units above the included threshold', () => {
+    assert.equal(
+      computePromoEligibleSubtotal(
+        10000,
+        [{ id: 'required-cheese', price: 2000, quantity: 3, included_quantity: 1 }],
+        groups,
+        2,
+      ),
+      28000,
+    )
+  })
+
   it('excludes optional positive and negative modifiers from eligibility', () => {
     assert.equal(
       computePromoEligibleSubtotal(

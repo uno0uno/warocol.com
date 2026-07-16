@@ -74,7 +74,7 @@
           <div v-if="item.modifiers.length > 0 || item.notes" class="mt-1 space-y-0.5">
             <div v-for="mod in item.modifiers" :key="mod.id" class="flex justify-between gap-2 text-[11px]">
               <span class="min-w-0 truncate text-text-tertiary">+ {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template></span>
-              <span class="shrink-0 tabular-nums text-text-secondary">{{ formatCurrency(Number(mod.price) * (mod.quantity ?? 1)) }}</span>
+              <span class="shrink-0 tabular-nums text-text-secondary">{{ formatCurrency(modifierLineTotal(mod)) }}</span>
             </div>
             <p v-if="item.notes" class="text-[11px] italic text-text-tertiary">{{ t('pos.cartItem.note') }} {{ item.notes }}</p>
           </div>
@@ -154,6 +154,7 @@
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
 import { computed } from 'vue'
+import { modifierLineTotal, saleLineTotal } from '~/utils/saleModifierOption'
 import {
   MinusIcon,
   PlusIcon,
@@ -170,7 +171,7 @@ interface CartItem {
     image: string
     category: string
   }
-  modifiers: Array<{ id: string; name: string; price: number; quantity?: number }>
+  modifiers: Array<{ id: string; name: string; price: number; quantity?: number; included_quantity?: number }>
   quantity: number
   notes?: string
   is_resale?: boolean
@@ -219,12 +220,7 @@ const hideEdit = computed(() => props.hideEdit || props.hideEditDuplicate)
 const hideDuplicate = computed(() => props.hideDuplicate || props.hideEditDuplicate)
 
 const itemTotal = computed(() => {
-  const basePrice = Number(props.item.product.price) || 0
-  const modifiersPrice = props.item.modifiers.reduce(
-    (sum, mod) => sum + Number(mod.price) * (mod.quantity ?? 1),
-    0,
-  )
-  return (basePrice + modifiersPrice) * Number(props.item.quantity)
+  return saleLineTotal(props.item.product.price, props.item.quantity, props.item.modifiers)
 })
 
 const displayGrossTotal = computed(() =>

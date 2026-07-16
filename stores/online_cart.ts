@@ -36,6 +36,7 @@ export interface CartModifier {
   name: string
   price: number
   quantity?: number
+  included_quantity?: number
 }
 
 export interface OnlineCartItem {
@@ -64,6 +65,7 @@ interface BackendCartItemModifier {
   modifier_name: string
   price: number | string
   quantity?: number | string
+  included_quantity?: number | string
 }
 
 interface BackendCartItem {
@@ -486,6 +488,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
         name: mod.modifier_name,
         price: Number(mod.price),
         quantity: Number(mod.quantity) || 1,
+        included_quantity: Math.max(0, Number(mod.included_quantity) || 0),
       })),
       notes: item.notes,
       total: Number(item.subtotal),
