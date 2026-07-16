@@ -595,6 +595,7 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
       name: m.name,
       price: Number(m.price) || 0,
       quantity: Number(m.quantity) || 1,
+      included_quantity: Math.max(0, Number(m.included_quantity) || 0),
     })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? i.fulfillment_status ?? 'new',

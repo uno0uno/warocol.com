@@ -212,6 +212,7 @@ export type PromoModifierInput = {
   id: string
   price: number
   quantity?: number
+  included_quantity?: number
 }
 
 export type PromoModifierOptionInput = {
@@ -278,7 +279,9 @@ export function computePromoEligibleSubtotal(
 
   const eligibleModifiers = modifiers.reduce((sum, modifier) => {
     if (!eligibleModifierIds.has(String(modifier.id))) return sum
-    return sum + (Number(modifier.price) || 0) * (modifier.quantity ?? 1)
+    const selected = Math.max(0, Number(modifier.quantity ?? 1) || 0)
+    const included = Math.max(0, Number(modifier.included_quantity ?? 0) || 0)
+    return sum + (Number(modifier.price) || 0) * Math.max(selected - included, 0)
   }, 0)
 
   return (base + eligibleModifiers) * qty

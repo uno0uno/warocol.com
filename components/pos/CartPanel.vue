@@ -403,7 +403,7 @@ interface CartItem {
     image: string
     category: string
   }
-  modifiers: Array<{ id: string; name: string; price: number; quantity?: number }>
+  modifiers: Array<{ id: string; name: string; price: number; quantity?: number; included_quantity?: number }>
   quantity: number
   notes?: string
   is_resale?: boolean
@@ -425,7 +425,7 @@ interface TabItem {
   promoType?: string | null
   promoSavings?: number
   promoOptOut?: boolean
-  modifiers?: Array<{ id: string; name: string; price: number; quantity?: number }>
+  modifiers?: Array<{ id: string; name: string; price: number; quantity?: number; included_quantity?: number }>
   notes?: string | null
   fulfillmentStatus?: string
   sentAt?: string | null

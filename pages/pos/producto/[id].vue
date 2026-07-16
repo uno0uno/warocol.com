@@ -584,7 +584,13 @@ const selectRadioModifier = (modifier: ModifierOption, groupId: string) => {
   )
   activeStepModifiers.value = [
     ...activeStepModifiers.value,
-    { id: modifier.id, name: modifier.name, price: modifier.price, quantity: 1 },
+    {
+      id: modifier.id,
+      name: modifier.name,
+      price: modifier.price,
+      quantity: 1,
+      included_quantity: modifier.included_quantity,
+    },
   ]
 }
 
@@ -618,6 +624,7 @@ const incrementModifier = (option: ModifierOption, groupId: string) => {
         name: option.name,
         price: option.price,
         quantity: 1,
+        included_quantity: option.included_quantity,
       },
     ]
     return
@@ -718,6 +725,7 @@ const addToCart = async () => {
                     name: m.name,
                     price: Number(m.price) || 0,
                     quantity: Number(m.quantity) || 1,
+                    included_quantity: Math.max(0, Number(m.included_quantity) || 0),
                   })),
                 }
               : item,
@@ -763,6 +771,15 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
+const modifierPriceLabel = (modifier: ModifierOption) => {
+  const included = Math.max(0, Number(modifier.included_quantity) || 0)
+  return formatSaleModifierPriceLabel(modifier.price, formatCurrency, included, {
+    included: t('pos.product.modifierIncluded', { count: included }),
+    perAdditional: t('pos.product.perAdditional'),
+    noAdditionalCost: t('pos.product.noAdditionalCost'),
+  })
+}
+
 // Watch for product availability - redirect if not in cache
 watch(cachedProduct, (p) => {
   if (!p) {
@@ -798,6 +815,7 @@ watch(product, (newProduct) => {
         name: m.name,
         price: m.price,
         quantity: m.quantity ?? 1,
+        included_quantity: Math.max(0, Number(m.included_quantity) || 0),
       }))
       notes.value = tabItem.notes || ''
     }
@@ -972,7 +990,7 @@ watch(product, (newProduct) => {
                   class="mt-1.5 md:mt-2 text-xs md:text-sm font-medium"
                   :class="saleModifierPriceClass(option.price)"
                 >
-                  {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                  {{ modifierPriceLabel(option) }}
                 </div>
                 <p
                   v-if="option.option_type !== 'INGREDIENT'"
@@ -1006,7 +1024,7 @@ watch(product, (newProduct) => {
                     class="text-xs font-semibold mt-0.5"
                     :class="saleModifierPriceClass(option.price)"
                   >
-                    {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                    {{ modifierPriceLabel(option) }}
                   </div>
                   <p
                     v-if="option.option_type !== 'INGREDIENT'"

@@ -26,7 +26,7 @@
       </div>
 
       <div class="md:col-span-2">
-        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.salePrice') }}</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.additionalUnitPrice') }}</label>
         <div class="relative">
           <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
           <UiDecimalInput
@@ -35,6 +35,18 @@
             class="input-base w-full ps-8 pe-3 py-2 text-sm"
           />
         </div>
+      </div>
+
+      <div class="md:col-span-1">
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.includedShort') }}</label>
+        <input
+          v-model.number="modifier.included_quantity"
+          type="number"
+          min="0"
+          :max="modifier.max_limit"
+          step="1"
+          class="input-base w-full px-3 py-2 text-sm"
+        />
       </div>
 
       <div class="md:col-span-1">
@@ -57,7 +69,7 @@
         />
       </div>
 
-      <div class="md:col-span-2 flex items-end justify-end">
+      <div class="md:col-span-1 flex items-end justify-end">
         <button
           type="button"
           class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
@@ -70,6 +82,9 @@
         </button>
       </div>
     </div>
+    <p class="text-xs text-text-tertiary">
+      {{ t('menu.modificadores.includedQuantityHelp') }}
+    </p>
 
     <div v-if="modifier.option_type === 'INGREDIENT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-5">

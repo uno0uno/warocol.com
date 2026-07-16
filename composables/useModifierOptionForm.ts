@@ -4,6 +4,7 @@ export interface ModifierFormRow {
   name: string
   price: number
   max_limit: number
+  included_quantity: number
   is_default: boolean
   is_available: boolean
   sort_order: number
@@ -28,6 +29,7 @@ export function createEmptyModifier(sortOrder: number): ModifierFormRow {
     name: '',
     price: 0,
     max_limit: 1,
+    included_quantity: 0,
     is_default: false,
     is_available: true,
     sort_order: sortOrder,
@@ -71,6 +73,7 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     name: String(m.name || ''),
     price: Number(m.price ?? 0),
     max_limit: Number(m.max_limit ?? 1),
+    included_quantity: Number(m.included_quantity ?? 0),
     is_default: Boolean(m.is_default),
     is_available: m.is_available !== false,
     sort_order: Number(m.sort_order ?? 0),
@@ -95,6 +98,7 @@ export function serializeModifierForApi(row: ModifierFormRow) {
     name: row.name.trim(),
     price: row.price,
     max_limit: row.max_limit,
+    included_quantity: row.included_quantity,
     is_default: row.is_default,
     is_available: row.is_available,
     sort_order: row.sort_order,
@@ -112,6 +116,15 @@ export function serializeModifierForApi(row: ModifierFormRow) {
 export function validateModifierOption(row: ModifierFormRow): string | null {
   if (!row.name?.trim()) {
     return 'Cada opción debe tener un nombre.'
+  }
+  if (!Number.isInteger(row.included_quantity) || row.included_quantity < 0) {
+    return `La cantidad incluida de «${row.name}» debe ser un número entero mayor o igual a 0.`
+  }
+  if (!Number.isInteger(row.max_limit) || row.max_limit < 1) {
+    return `La cantidad máxima de «${row.name}» debe ser un número entero mayor o igual a 1.`
+  }
+  if (row.included_quantity > row.max_limit) {
+    return `La cantidad incluida de «${row.name}» no puede superar la cantidad máxima.`
   }
 
   const type = row.option_type

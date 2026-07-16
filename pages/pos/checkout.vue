@@ -19,6 +19,7 @@ import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/util
 import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+import { modifierLineTotal } from '~/utils/saleModifierOption'
 
 interface TopProduct {
   name: string
@@ -530,7 +531,7 @@ const promoLineById = computed(() => {
 
 type CheckoutPromoLineItem = {
   product: { id: string; price: number }
-  modifiers?: Array<{ id: string; price: number; quantity?: number }>
+  modifiers?: Array<{ id: string; price: number; quantity?: number; included_quantity?: number }>
   quantity: number
   orderItemId?: string
 }
@@ -541,10 +542,7 @@ function checkoutLineGross(item: CheckoutPromoLineItem): number {
     if (tab) return tab.subtotal
   }
   const base = Number(item.product.price) || 0
-  const mods = (item.modifiers ?? []).reduce(
-    (sum, mod) => sum + Number(mod.price) * (mod.quantity ?? 1),
-    0,
-  )
+  const mods = (item.modifiers ?? []).reduce((sum, mod) => sum + modifierLineTotal(mod), 0)
   return (base + mods) * (Number(item.quantity) || 1)
 }
 
@@ -818,6 +816,7 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
       name: m.name,
       price: Number(m.price) || 0,
       quantity: Number(m.quantity) || 1,
+      included_quantity: Math.max(0, Number(m.included_quantity) || 0),
     })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
@@ -1565,8 +1564,8 @@ const { formatCurrency } = useFormatters()
 const getItemTotal = (item: any) => {
   const basePrice = Number(item.product.price) || 0
   const modifiersPrice = item.modifiers.reduce(
-    (sum: number, mod: any) => sum + (Number(mod.price) || 0) * (Number(mod.quantity) || 1),
-    0
+    (sum: number, mod: any) => sum + modifierLineTotal(mod),
+    0,
   )
   return (basePrice + modifiersPrice) * (Number(item.quantity) || 1)
 }
@@ -1692,10 +1691,10 @@ const getItemUnitPrice = (item: any) => {
   return getItemTotal(item) / qty
 }
 
-type PrintModifier = { id?: string; name: string; price?: number; quantity?: number }
+type PrintModifier = { id?: string; name: string; price?: number; quantity?: number; included_quantity?: number }
 
 const getModifierLineTotal = (mod: PrintModifier) =>
-  (Number(mod.price) || 0) * (Number(mod.quantity) || 1)
+  modifierLineTotal({ ...mod, price: Number(mod.price) || 0 })
 
 const formatModifierPrintDesc = (mod: PrintModifier) => {
   const qty = Number(mod.quantity) || 1
@@ -3236,7 +3235,7 @@ onUnmounted(() => {
                 <!-- Modifiers -->
                 <div v-if="item.modifiers && item.modifiers.length > 0" class="mt-0.5 space-y-0">
                   <p v-for="mod in item.modifiers" :key="mod.id" class="text-text-tertiary text-xs">
-                    + {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity ?? 1 }}</template> · {{ formatCurrency((Number(mod.price) || 0) * (Number(mod.quantity) || 1)) }}
+                    + {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity ?? 1 }}</template> · {{ formatCurrency(modifierLineTotal(mod)) }}
                   </p>
                 </div>
 

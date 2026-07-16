@@ -4,7 +4,7 @@ definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
 useHead({ title: () => t('ventas.head.crear') })
 
-import { modifiersCartTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
+import { modifierLineTotal, saleLineTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import { firstMissingRequiredModifierGroup } from '~/utils/modifierSelection'
 import {
@@ -22,6 +22,7 @@ interface ModifierOption {
   price: number
   quantity?: number
   max_limit?: number
+  included_quantity?: number
   option_type?: string
   type_label?: string
 }
@@ -412,8 +413,16 @@ function modifierTypeLabel(option: ModifierOption): string {
 }
 
 function itemTotal(item: LineItem) {
-  const base = Number(item.quantity) * Number(item.unit_price)
-  return base + modifiersCartTotal(item.selected_modifiers)
+  return saleLineTotal(item.unit_price, item.quantity, item.selected_modifiers)
+}
+
+function modifierPriceLabel(option: ModifierOption): string {
+  const included = Math.max(0, Number(option.included_quantity) || 0)
+  return formatSaleModifierPriceLabel(option.price, formatCurrency, included, {
+    included: t('ventas.crear.modifierIncluded', { count: included }),
+    perAdditional: t('ventas.crear.perAdditional'),
+    noAdditionalCost: t('ventas.crear.noAdditionalCost'),
+  })
 }
 
 const subtotal = computed(() =>
@@ -909,7 +918,7 @@ async function submit() {
                             class="text-xs"
                             :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
                           >
-                            {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                            {{ modifierPriceLabel(option) }}
                           </span>
                         </button>
                       </div>
@@ -936,7 +945,7 @@ async function submit() {
                                   class="text-xs"
                                   :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
                                 >
-                                  {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                                  {{ modifierPriceLabel(option) }}
                                 </span>
                               </div>
                             </div>
@@ -1067,6 +1076,7 @@ async function submit() {
                     class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
                     {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
+                    · {{ formatCurrency(modifierLineTotal(mod)) }}
                   </span>
                 </div>
               </div>
@@ -1268,6 +1278,7 @@ async function submit() {
                     class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
                     {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
+                    · {{ formatCurrency(modifierLineTotal(mod)) }}
                   </span>
                 </div>
               </div>

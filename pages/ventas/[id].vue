@@ -6,6 +6,7 @@ import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
+import { modifierLineTotal as sharedModifierLineTotal } from '~/utils/saleModifierOption'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -443,8 +444,8 @@ const hasOrderTotalsBreakdown = computed(() => {
 
 const items = computed(() => itemsData.value || [])
 
-const modifierLineTotal = (mod: { price: number; quantity?: number }) =>
-  Number(mod.price) * (Number(mod.quantity) || 1)
+const modifierLineTotal = (mod: { price: number; quantity?: number; included_quantity?: number }) =>
+  sharedModifierLineTotal(mod)
 
 const editableItems = computed(() => {
   if (!isEditMode.value) return items.value
@@ -505,6 +506,7 @@ type SaleReceiptModifier = {
   name: string
   quantity?: number | string | null
   price?: number | string | null
+  included_quantity?: number | string | null
   total?: number | string | null
 }
 
@@ -521,7 +523,11 @@ const receiptTipLabel = computed(() => {
 })
 
 const itemModifierTotal = (modifier: SaleReceiptModifier) =>
-  (Number(modifier.price) || 0) * (Number(modifier.quantity) || 1)
+  sharedModifierLineTotal({
+    price: Number(modifier.price) || 0,
+    quantity: Number(modifier.quantity) || 1,
+    included_quantity: Math.max(0, Number(modifier.included_quantity) || 0),
+  })
 
 const itemReceiptTotal = (item: any) => {
   const explicitSubtotal = Number(item.subtotal ?? item.net_total)
@@ -557,6 +563,7 @@ const saleReceiptItems = computed(() =>
         name: modifier.name || t('ventas.detail.additionFallback'),
         quantity: modifier.quantity ?? 1,
         price: Number(modifier.price) || 0,
+        included_quantity: Math.max(0, Number(modifier.included_quantity) || 0),
         total: itemModifierTotal(modifier),
       })),
     }

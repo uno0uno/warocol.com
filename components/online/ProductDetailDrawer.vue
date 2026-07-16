@@ -319,6 +319,7 @@ interface Modifier {
   is_available: boolean
   is_default: boolean
   max_limit: number
+  included_quantity?: number
   option_type?: string
 }
 
@@ -407,7 +408,13 @@ function getDefaultModifiers(): CartModifier[] {
   for (const group of productDetail.value.modifier_groups) {
     for (const mod of group.modifiers) {
       if (mod.is_default && mod.is_available) {
-        defaults.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
+        defaults.push({
+          id: mod.id,
+          name: mod.name,
+          price: mod.price,
+          quantity: 1,
+          included_quantity: mod.included_quantity,
+        })
       }
     }
   }
@@ -481,7 +488,13 @@ watch(() => props.modelValue, async (val) => {
       for (const group of res.data.modifier_groups) {
         for (const mod of group.modifiers) {
           if (mod.is_default && mod.is_available) {
-            selectedModifiers.value.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
+            selectedModifiers.value.push({
+              id: mod.id,
+              name: mod.name,
+              price: mod.price,
+              quantity: 1,
+              included_quantity: mod.included_quantity,
+            })
           }
         }
       }
@@ -568,7 +581,13 @@ function groupSelectionCount(groupId: string): number {
 function selectRadio(group: ModifierGroup, mod: Modifier) {
   const current = [...activeStepModifiers.value]
   const filtered = current.filter(sel => !group.modifiers.some(m => m.id === sel.id))
-  filtered.push({ id: mod.id, name: mod.name, price: mod.price, quantity: 1 })
+  filtered.push({
+    id: mod.id,
+    name: mod.name,
+    price: mod.price,
+    quantity: 1,
+    included_quantity: mod.included_quantity,
+  })
   activeStepModifiers.value = filtered
 }
 
@@ -597,7 +616,13 @@ function incrementModifier(mod: Modifier, groupId: string) {
   if (index === -1) {
     activeStepModifiers.value = [
       ...activeStepModifiers.value,
-      { id: mod.id, name: mod.name, price: mod.price, quantity: 1 },
+      {
+        id: mod.id,
+        name: mod.name,
+        price: mod.price,
+        quantity: 1,
+        included_quantity: mod.included_quantity,
+      },
     ]
     return
   }
@@ -656,8 +681,7 @@ function modifierTypeLabel(mod: Modifier): string {
 }
 
 function formatModifierPriceLabel(mod: Modifier): string {
-  if (mod.price === 0) return 'Gratis'
-  return formatSaleModifierPriceLabel(mod.price, formatPrice)
+  return formatSaleModifierPriceLabel(mod.price, formatPrice, mod.included_quantity)
 }
 
 function formatPrice(price: number): string {
