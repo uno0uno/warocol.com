@@ -1,136 +1,85 @@
 <template>
-  <div ref="anchorRef" class="relative">
-    <input
-      :id="inputId"
-      type="text"
-      v-model="searchTerm"
-      @input="onInput"
-      @focus="onFocus"
-      @blur="onBlur"
-      role="combobox"
-      :aria-expanded="dropdownOpen"
-      aria-autocomplete="list"
-      aria-controls="product-search-results"
-      class="w-full px-3 py-2 ps-8 pe-8 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-      :placeholder="placeholder"
-      autocomplete="off"
-    />
-    <span class="absolute start-2.5 top-2.5 text-text-secondary pointer-events-none" aria-hidden="true">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
-    </span>
-    <span v-if="loading" class="absolute end-2.5 top-2.5 text-text-secondary pointer-events-none" aria-hidden="true">
-      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-      </svg>
-    </span>
-    <Teleport to="body">
-      <ul
-        v-if="dropdownOpen"
-        id="product-search-results"
-        role="listbox"
-        :style="panelStyle"
-        class="bg-surface border border-border rounded-lg shadow-lg overflow-y-auto"
-      >
-        <li
-          v-for="product in visibleResults"
-          :key="product.id"
-          role="option"
-          @mousedown.prevent="select(product)"
-          class="px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer min-h-[44px] flex items-center"
-        >
-          {{ product.name }}
-        </li>
-        <li
-          v-if="!visibleResults.length && !loading && query.trim()"
-          role="presentation"
-          aria-hidden="true"
-          class="px-3 py-2 text-sm text-text-secondary/60 select-none"
-        >
-          Sin resultados
-        </li>
-      </ul>
-    </Teleport>
-  </div>
+  <UiCatalogSearchCombobox
+    v-model="searchTerm"
+    :options="options"
+    :input-id="inputId"
+    :placeholder="placeholder"
+    :loading="loading"
+    :error="error"
+    :listbox-label="t('abastecimiento.glossary.productSearchResults')"
+    :loading-label="t('abastecimiento.glossary.searchLoading')"
+    :empty-label="t('abastecimiento.glossary.noSearchResults')"
+    :error-label="t('abastecimiento.glossary.searchError')"
+    @search="onSearch"
+    @focus="onFocus"
+    @select="onSelect"
+  >
+    <template #option="{ option }">
+      <span class="min-w-0 flex-1 break-words whitespace-normal leading-snug">
+        {{ option.label }}
+      </span>
+    </template>
+  </UiCatalogSearchCombobox>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useProductSearch, type ProductRow } from '~/composables/useProductSearch'
-import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
+import { rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
 
 interface Props {
   placeholder?: string
   inputId?: string
   initialValue?: string
   excludeIds?: string[]
-  /** Include resale products in search results (promotions scope picker). */
   includeAllTypes?: boolean
 }
 
 interface Emits {
-  (e: 'select', product: ProductRow): void
+  (event: 'select', product: ProductRow): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar producto…',
-  inputId: 'product-search-input',
+  inputId: undefined,
   initialValue: '',
   excludeIds: () => [],
   includeAllTypes: false,
 })
 
 const emit = defineEmits<Emits>()
-
-const anchorRef = ref<HTMLElement | null>(null)
+const { t } = useI18n({ useScope: 'global' })
 const searchTerm = ref(props.initialValue)
-const showResults = ref(false)
-
-const { query, results, loading } = useProductSearch({
+const { query, results, loading, error } = useProductSearch({
   includeAllTypes: props.includeAllTypes,
 })
-
 const excludeSet = computed(() => new Set(props.excludeIds))
-
-const visibleResults = computed(() =>
-  results.value.filter((p) => !excludeSet.value.has(p.id)),
+const visibleResults = computed(() => results.value.filter(product => !excludeSet.value.has(product.id)))
+const rankedResults = computed(() =>
+  rankCatalogSearchOptions(visibleResults.value, searchTerm.value, product => product.name),
 )
+const options = computed(() => rankedResults.value.map(product => ({
+  id: product.id,
+  label: product.name,
+  class: 'flex items-center',
+  raw: product,
+})))
 
-const dropdownOpen = computed(
-  () => showResults.value && (visibleResults.value.length > 0 || (!!query.value.trim() && !loading.value)),
-)
-
-const { panelStyle } = useCatalogSearchDropdownPlacement(anchorRef, dropdownOpen)
-
-watch(() => props.initialValue, (val) => {
-  searchTerm.value = val ?? ''
-  if (val) {
-    query.value = ''
-    showResults.value = false
-  }
+watch(() => props.initialValue, (value) => {
+  searchTerm.value = value ?? ''
+  query.value = value ?? ''
 })
 
-function onInput(e: Event) {
-  const val = (e.target as HTMLInputElement).value
-  query.value = val
-  showResults.value = true
+function onSearch(value: string) {
+  query.value = value
 }
 
-function onFocus() {
-  query.value = searchTerm.value
-  showResults.value = true
+function onFocus(value: string) {
+  query.value = value
 }
 
-function onBlur() {
-  setTimeout(() => { showResults.value = false }, 150)
-}
-
-function select(product: ProductRow) {
-  searchTerm.value = product.name
-  showResults.value = false
+function onSelect(option: { raw?: unknown }) {
   query.value = ''
-  emit('select', product)
+  emit('select', option.raw as ProductRow)
 }
 </script>

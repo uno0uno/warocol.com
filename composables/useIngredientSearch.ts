@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
+import { rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
 
 /**
  * Composable for debounced server-side ingredient search.
@@ -19,9 +20,11 @@ import { useDebounceFn } from '@vueuse/core'
 export const useIngredientSearch = ({
   baseOnly = false,
   type,
+  searchOnEmpty = false,
 }: {
   baseOnly?: boolean
   type?: Ref<string | undefined>
+  searchOnEmpty?: boolean
 } = {}) => {
   const results = ref<any[]>([])
   const loading = ref(false)
@@ -29,7 +32,7 @@ export const useIngredientSearch = ({
   const query = ref('')
 
   const doSearch = useDebounceFn(async (q: string) => {
-    if (!q || q.trim().length < 1) {
+    if ((!q || q.trim().length < 1) && !searchOnEmpty) {
       results.value = []
       loading.value = false
       return
@@ -37,7 +40,8 @@ export const useIngredientSearch = ({
     loading.value = true
     error.value = null
     try {
-      const fetchQuery: Record<string, any> = { search: q.trim(), limit: 50 }
+      const fetchQuery: Record<string, any> = { limit: 50 }
+      if (q.trim()) fetchQuery.search = q.trim()
       if (baseOnly) fetchQuery.base_only = true
       const typeFilter = type?.value?.trim()
       if (typeFilter) fetchQuery.type = typeFilter
@@ -54,7 +58,7 @@ export const useIngredientSearch = ({
   }, 300)
 
   watch(query, (val) => {
-    if (!val || val.trim().length < 1) {
+    if ((!val || val.trim().length < 1) && !searchOnEmpty) {
       results.value = []
       loading.value = false
       return
@@ -62,6 +66,13 @@ export const useIngredientSearch = ({
     loading.value = true // show loading immediately on keystroke, before debounce fires
     doSearch(val)
   })
+
+  if (searchOnEmpty) {
+    onMounted(() => {
+      loading.value = true
+      doSearch('')
+    })
+  }
 
   /**
    * Flat results grouped by base ingredient.
@@ -73,8 +84,12 @@ export const useIngredientSearch = ({
    * If a variant's base is not in the results, a synthetic header is created from
    * the variant's hierarchy_base_name field.
    */
+  const rankedResults = computed(() =>
+    rankCatalogSearchOptions(results.value, query.value, item => item.name ?? ''),
+  )
+
   const groupedResults = computed(() => {
-    const flat = results.value
+    const flat = rankedResults.value
     if (!flat.length) return []
 
     // Separate variants from potential bases
