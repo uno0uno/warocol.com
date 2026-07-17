@@ -20,6 +20,11 @@ import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
+import {
+  buildCustomerIdentityPresentation,
+  formatFiscalIdentityLabel,
+  type InvoiceAcquirerSource,
+} from '~/utils/customerIdentityPresentation'
 
 interface TopProduct {
   name: string
@@ -178,6 +183,8 @@ interface ReceiptPrintContext {
   tableCode: string | null
   waiterName: string | null
   customerName: string | null
+  customerPhone: string | null
+  customerEmail: string | null
   customerFiscalIdType: FiscalIdType | null
   customerFiscalId: string | null
   customerFiscalBusinessName: string | null
@@ -198,7 +205,16 @@ const isReadinessLoading = computed(() => !settingsData.value)
 
 // Invoice state
 const invoiceLoading = ref(false)
-const invoiceResult = ref<{ cufe: string; invoice_number: number; prefix: string; pdf_presigned_url: string | null; status: string; emitted_at?: string | null; created_at?: string | null } | null>(null)
+const invoiceResult = ref<{
+  cufe: string
+  invoice_number: number
+  prefix: string
+  pdf_presigned_url: string | null
+  status: string
+  emitted_at?: string | null
+  created_at?: string | null
+  presentation?: { acquirer?: InvoiceAcquirerSource | null } | null
+} | null>(null)
 const invoiceError = ref('')
 const invoiceQrDataUrl = ref('')
 const invoiceProgress = ref('')
@@ -226,6 +242,9 @@ interface PosCustomer {
   fiscal_email?: string | null
 }
 const selectedCustomer = ref<PosCustomer | null>(null)
+const selectedCustomerIdentity = computed(() =>
+  buildCustomerIdentityPresentation(selectedCustomer.value),
+)
 
 // Inline fiscal-data wizard inside the success modal — shown after the user
 // clicks "Generar factura electrónica DIAN" if the customer has no fiscal data yet.
@@ -2354,6 +2373,13 @@ const generateInvoice = async () => {
         }
         // For single order, set the legacy invoiceResult for QR/print
         if (ids.length === 1 && result.status === 'accepted') {
+          let invoiceDetail: any = null
+          try {
+            invoiceDetail = await $fetch(`/api/orders/${ids[i]}/invoice`)
+          } catch {
+            // The accepted POST remains authoritative; without presentation we
+            // omit the acquirer instead of guessing it from the mutable profile.
+          }
           invoiceResult.value = {
             cufe: result.cufe || '',
             invoice_number: result.invoice_number,
@@ -2362,6 +2388,7 @@ const generateInvoice = async () => {
             status: result.status,
             emitted_at: result.emitted_at || null,
             created_at: result.created_at || null,
+            presentation: invoiceDetail?.presentation ?? result.presentation ?? null,
           }
           if (result.cufe) {
             invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
@@ -2625,6 +2652,10 @@ const receiptIssuerLabel = computed(() => {
 const receiptInvoice = computed(() => {
   const invoice = invoiceResult.value
   if (!invoice) return null
+  const invoiceIdentity = buildCustomerIdentityPresentation(
+    selectedCustomer.value,
+    invoice.presentation?.acquirer,
+  )
   return {
     prefix: invoice.prefix,
     invoice_number: invoice.invoice_number,
@@ -2636,6 +2667,10 @@ const receiptInvoice = computed(() => {
     taxLines: receiptInvoiceTaxLines.value,
     // Emisor FE = tenant fiscal only (Matias client_uuid is technical; WARO is not issuer)
     issuerLabel: receiptIssuerLabel.value,
+    // Adquirente FE = snapshot fiscal returned by the invoice presentation.
+    acquirerLabel: invoice.presentation?.acquirer
+      ? formatFiscalIdentityLabel(invoiceIdentity.acquirer)
+      : null,
   }
 })
 
@@ -2739,7 +2774,13 @@ function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null;
     tableCode: tableName ? displayTableCode({ name: tableName }) : null,
     waiterName: prefacturaWaiterName.value,
     customerName: customer && customer.phone_number !== '0000000000'
-      ? (customer.fiscal_business_name || customer.name || customer.phone_number)
+      ? (customer.name || customer.phone_number)
+      : null,
+    customerPhone: customer && customer.phone_number !== '0000000000'
+      ? customer.phone_number
+      : null,
+    customerEmail: customer && customer.phone_number !== '0000000000'
+      ? customer.email
       : null,
     customerFiscalIdType: customer?.fiscal_id_type ?? null,
     customerFiscalId: customer?.fiscal_id ?? null,
@@ -3283,12 +3324,33 @@ onUnmounted(() => {
               {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
             <div class="flex-1 min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                {{ t('pos.receipt.saleContact') }}
+              </p>
               <p class="font-semibold text-text-primary truncate">{{ selectedCustomerDisplayName }}</p>
               <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</p>
-              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-state-success-text  truncate mt-0.5 flex items-center gap-1">
+              <p v-if="selectedCustomer.email" class="text-xs text-text-secondary truncate">{{ selectedCustomer.email }}</p>
+              <p v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="text-xs text-state-success-text truncate mt-0.5 flex items-center gap-1">
                 <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                 {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
               </p>
+              <div
+                v-if="selectedCustomerIdentity.showSeparateAcquirer"
+                class="mt-2 border-t border-primary/15 pt-2"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-state-warning-text">
+                  {{ t('pos.receipt.fiscalAcquirer') }}
+                </p>
+                <p v-if="selectedCustomerIdentity.acquirer.name" class="text-sm font-semibold text-text-primary truncate">
+                  {{ selectedCustomerIdentity.acquirer.name }}
+                </p>
+                <p v-if="selectedCustomerIdentity.acquirer.fiscalId" class="text-xs text-text-secondary truncate">
+                  {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+                </p>
+                <p v-if="selectedCustomerIdentity.acquirer.email" class="text-xs text-text-secondary truncate">
+                  {{ selectedCustomerIdentity.acquirer.email }}
+                </p>
+              </div>
               <div
                 v-if="!isAnonymousCustomer"
                 class="flex flex-wrap gap-2 mt-2"
@@ -4835,6 +4897,18 @@ onUnmounted(() => {
           <div v-if="orderResult?.status !== 'pending' && (orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0)" class="mb-4">
             <!-- Not requested yet — gated on tenant readiness (#450) -->
             <template v-if="isInvoicingReady && !isReadinessLoading && !isCreditOnlyInvoiceBlocked && !invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
+              <div
+                v-if="selectedCustomerIdentity.identitiesDiffer"
+                class="mb-2 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs leading-snug text-state-warning-text"
+              >
+                <p class="font-bold">{{ t('pos.checkout.invoice.identityWarningTitle') }}</p>
+                <p>
+                  {{ t('pos.checkout.invoice.identityWarningBody', {
+                    contact: selectedCustomerIdentity.contact.name || selectedCustomerIdentity.contact.phone,
+                    acquirer: selectedCustomerIdentity.acquirer.name || selectedCustomerIdentity.acquirer.fiscalId,
+                  }) }}
+                </p>
+              </div>
               <button
                 @click="requestInvoice"
                 class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -5079,6 +5153,8 @@ onUnmounted(() => {
       :location-label="receiptLocationLabel"
       :waiter-name="receiptPrintContext?.waiterName"
       :customer-name="receiptPrintContext?.customerName"
+      :customer-phone="receiptPrintContext?.customerPhone"
+      :customer-email="receiptPrintContext?.customerEmail"
       :customer-fiscal-label="receiptCustomerFiscalLabel"
       :items="receiptTicketItems"
       :subtotal="orderResult.subtotal"
@@ -5127,13 +5203,29 @@ onUnmounted(() => {
     </div>
     <template v-if="selectedCustomer && !isAnonymousCustomer">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.customerData') }}</div>
-      <div class="receipt-row receipt-small">
-        {{ selectedCustomer.fiscal_business_name || selectedCustomer.name || selectedCustomer.phone_number }}
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
+      <div v-if="selectedCustomer.name" class="receipt-row receipt-small">{{ selectedCustomer.name }}</div>
+      <div v-if="selectedCustomer.phone_number" class="receipt-row receipt-small">
+        {{ t('pos.receipt.phone', { phone: selectedCustomer.phone_number }) }}
       </div>
-      <div v-if="selectedCustomer.fiscal_id" class="receipt-row receipt-small">
+      <div v-if="selectedCustomer.email" class="receipt-row receipt-small">
+        {{ t('pos.receipt.email', { email: selectedCustomer.email }) }}
+      </div>
+      <div v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="receipt-row receipt-small">
         {{ selectedCustomer.fiscal_id_type }}: {{ selectedCustomer.fiscal_id }}
       </div>
+      <template v-if="selectedCustomerIdentity.showSeparateAcquirer">
+        <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.fiscalAcquirer') }}</div>
+        <div v-if="selectedCustomerIdentity.acquirer.name" class="receipt-row receipt-small">
+          {{ selectedCustomerIdentity.acquirer.name }}
+        </div>
+        <div v-if="selectedCustomerIdentity.acquirer.fiscalId" class="receipt-row receipt-small">
+          {{ selectedCustomerIdentity.acquirer.fiscalIdType }}: {{ selectedCustomerIdentity.acquirer.fiscalId }}
+        </div>
+        <div v-if="selectedCustomerIdentity.acquirer.email" class="receipt-row receipt-small">
+          {{ t('pos.receipt.email', { email: selectedCustomerIdentity.acquirer.email }) }}
+        </div>
+      </template>
     </template>
     <div class="receipt-divider">--------------------------------</div>
 
@@ -5272,11 +5364,17 @@ onUnmounted(() => {
     <div v-if="receiptPrintContext?.waiterName" class="receipt-row receipt-small">
       {{ t('pos.receipt.waiter', { name: receiptPrintContext.waiterName }) }}
     </div>
-    <template v-if="receiptPrintContext?.customerName">
+    <template v-if="receiptPrintContext?.customerName || receiptPrintContext?.customerPhone || receiptPrintContext?.customerEmail">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.customerData') }}</div>
-      <div class="receipt-row receipt-small">{{ receiptPrintContext.customerName }}</div>
-      <div v-if="receiptPrintContext.customerFiscalId" class="receipt-row receipt-small">
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
+      <div v-if="receiptPrintContext.customerName" class="receipt-row receipt-small">{{ receiptPrintContext.customerName }}</div>
+      <div v-if="receiptPrintContext.customerPhone" class="receipt-row receipt-small">
+        {{ t('pos.receipt.phone', { phone: receiptPrintContext.customerPhone }) }}
+      </div>
+      <div v-if="receiptPrintContext.customerEmail" class="receipt-row receipt-small">
+        {{ t('pos.receipt.email', { email: receiptPrintContext.customerEmail }) }}
+      </div>
+      <div v-if="!invoiceResult && receiptPrintContext.customerFiscalId" class="receipt-row receipt-small">
         {{ receiptPrintContext.customerFiscalIdType }}: {{ receiptPrintContext.customerFiscalId }}
       </div>
     </template>
@@ -5407,6 +5505,9 @@ onUnmounted(() => {
       <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
       <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
 	        {{ t('pos.receipt.issuer', { label: receiptIssuerLabel }) }}
+      </div>
+      <div v-if="receiptInvoice?.acquirerLabel" class="receipt-row receipt-small">
+        {{ t('pos.receipt.acquirer', { label: receiptInvoice.acquirerLabel }) }}
       </div>
       <div v-if="invoiceResult.cufe" class="receipt-row receipt-small receipt-cufe">
         CUFE: {{ invoiceResult.cufe }}

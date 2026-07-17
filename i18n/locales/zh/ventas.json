@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "电子发票",
       "dian": "DIAN",
+      "saleCustomer": "销售客户",
+      "fiscalAcquirerDian": "DIAN 税务购买方",
       "download": "下载",
       "downloadPdf": "下载 PDF 格式的电子发票",
       "sendEmailPdfUnavailable": "通过电子邮件发送发票（收据 + CUFE/XML；此环境下图形 PDF 不可用）",

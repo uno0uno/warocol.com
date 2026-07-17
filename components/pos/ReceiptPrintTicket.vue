@@ -71,6 +71,8 @@ const props = defineProps<{
   locationLabel?: string | null
   waiterName?: string | null
   customerName?: string | null
+  customerPhone?: string | null
+  customerEmail?: string | null
   customerFiscalLabel?: string | null
   items: ReceiptItem[]
   subtotal?: number
@@ -189,11 +191,6 @@ const hasCompleteHeaderIssuer = computed(() =>
   Boolean(props.fiscalData?.business_name?.trim() && props.fiscalData?.nit?.trim()),
 )
 
-const fallbackAcquirerLabel = computed(() => {
-  if (props.customerName && props.customerFiscalLabel) return `${props.customerName} - ${props.customerFiscalLabel}`
-  return props.customerName || props.customerFiscalLabel || null
-})
-
 const invoicePaymentLabel = computed(() => {
   if (props.invoice?.paymentLabel) return props.invoice.paymentLabel
   if ((props.payments?.length ?? 0) > 0) {
@@ -276,11 +273,13 @@ const printableItems = computed(() =>
     <div v-if="locationLabel" class="receipt-row receipt-small">{{ locationLabel }}</div>
     <div v-if="waiterName" class="receipt-row receipt-small">{{ t('pos.receipt.waiter', { name: waiterName }) }}</div>
 
-    <template v-if="customerName">
+    <template v-if="customerName || customerPhone || customerEmail">
       <div class="receipt-divider" aria-hidden="true" />
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.customerData') }}</div>
-      <div class="receipt-row receipt-small">{{ customerName }}</div>
-      <div v-if="customerFiscalLabel" class="receipt-row receipt-small">{{ customerFiscalLabel }}</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
+      <div v-if="customerName" class="receipt-row receipt-small">{{ customerName }}</div>
+      <div v-if="customerPhone" class="receipt-row receipt-small">{{ t('pos.receipt.phone', { phone: customerPhone }) }}</div>
+      <div v-if="customerEmail" class="receipt-row receipt-small">{{ t('pos.receipt.email', { email: customerEmail }) }}</div>
+      <div v-if="!invoice && customerFiscalLabel" class="receipt-row receipt-small">{{ customerFiscalLabel }}</div>
     </template>
 
     <div class="receipt-divider" aria-hidden="true" />
@@ -425,10 +424,10 @@ const printableItems = computed(() =>
           {{ t('pos.receipt.issuer', { label: invoice.issuerLabel || fallbackIssuerLabel }) }}
         </div>
         <div
-          v-if="!customerName && (invoice.acquirerLabel || fallbackAcquirerLabel)"
+          v-if="invoice.acquirerLabel"
           class="receipt-row receipt-row--start receipt-small"
         >
-          {{ t('pos.receipt.acquirer', { label: invoice.acquirerLabel || fallbackAcquirerLabel }) }}
+          {{ t('pos.receipt.acquirer', { label: invoice.acquirerLabel }) }}
         </div>
         <div v-if="invoice.resolutionText" class="receipt-row receipt-row--start receipt-small">{{ invoice.resolutionText }}</div>
         <div v-if="invoicePaymentLabel" class="receipt-row receipt-row--start receipt-small">{{ t('pos.receipt.paymentForm', { label: invoicePaymentLabel }) }}</div>

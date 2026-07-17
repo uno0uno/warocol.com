@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "Electronic invoice",
       "dian": "DIAN",
+      "saleCustomer": "Sale customer",
+      "fiscalAcquirerDian": "DIAN fiscal buyer",
       "download": "Download",
       "downloadPdf": "Download your electronic invoice as PDF",
       "sendEmailPdfUnavailable": "Send the invoice by email (receipt + CUFE/XML; graphic PDF not available in this environment)",

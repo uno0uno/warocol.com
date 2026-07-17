@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "Facture électronique",
       "dian": "DIAN",
+      "saleCustomer": "Client de la vente",
+      "fiscalAcquirerDian": "Acquéreur fiscal DIAN",
       "download": "Télécharger",
       "downloadPdf": "Téléchargez votre facture électronique au format PDF",
       "sendEmailPdfUnavailable": "Envoyez la facture par e-mail (reçu + CUFE/XML ; PDF graphique non disponible dans cet environnement)",

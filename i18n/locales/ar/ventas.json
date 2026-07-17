@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "فاتورة إلكترونية",
       "dian": "DIAN",
+      "saleCustomer": "عميل البيع",
+      "fiscalAcquirerDian": "المشتري الضريبي لدى DIAN",
       "download": "تنزيل",
       "downloadPdf": "نزّل فاتورتك الإلكترونية بصيغة PDF",
       "sendEmailPdfUnavailable": "أرسل الفاتورة عبر البريد الإلكتروني (إيصال + CUFE/XML؛ ملف PDF رسومي غير متاح في هذه البيئة)",
