@@ -52,14 +52,48 @@
         </template>
 
         <template #trailing>
-          <button
-            @click="openPanel(null)"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-          >
-            {{ nuevoButtonLabel }}
-          </button>
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              class="min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors"
+              :class="editMode
+                ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg'
+                : 'border border-border bg-background text-text-secondary hover:text-text-primary'"
+              @click="onToggleEditMode"
+            >
+              {{ editMode
+                ? t('abastecimiento.glossary.catalogViewMode')
+                : t('abastecimiento.glossary.catalogEditMode') }}
+            </button>
+            <button
+              @click="openPanel(null)"
+              class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap"
+            >
+              {{ nuevoButtonLabel }}
+            </button>
+          </div>
         </template>
       </UiAdvancedFiltersBar>
+
+      <AbastecimientoWarehouseCatalogBulkBar
+        v-if="selectedIds.length > 0"
+        v-model:category="bulkCategory"
+        variant="selection"
+        :selected-count="selectedIds.length"
+        :is-submitting="isSubmitting"
+        :can-apply="hasChanges"
+        @apply="onCatalogSave"
+        @cancel="onCancelEdit"
+        @clear-selection="clearSelection"
+      />
+      <AbastecimientoWarehouseCatalogBulkBar
+        v-else-if="editMode"
+        variant="edit-only"
+        :is-submitting="isSubmitting"
+        :can-apply="hasChanges"
+        @apply="onCatalogSave"
+        @cancel="onCancelEdit"
+      />
 
       <!-- Data View -->
       <UiResponsiveDataView
@@ -73,6 +107,12 @@
         variant="default"
         row-size="xs"
       >
+        <template v-if="editMode" #header-select>
+          <div class="flex items-center justify-center">
+            <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll(sortedIngredients)" />
+          </div>
+        </template>
+
         <template #header-type>
           <UiTableHeaderFilter
             :title="t('abastecimiento.glossary.typeFilter')"
@@ -87,12 +127,49 @@
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
-            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
-            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-            @click="openPanel(item)"
+            class="flex items-start gap-3 border-b border-border px-3 py-3 transition-colors"
+            :class="[
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              !editMode && item.is_active !== false ? 'cursor-pointer hover:bg-surface-secondary' : '',
+              selectedIds.includes(item.id) ? 'ring-1 ring-inset ring-primary/30' : '',
+            ]"
+            @click="!editMode && item.is_active !== false && openPanel(item)"
           >
+            <UiBulkSelectCheckbox
+              v-if="editMode && item.is_active !== false"
+              class="mt-1 flex-shrink-0"
+              :checked="selectedIds.includes(item.id)"
+              @change="toggleSelect(item.id)"
+            />
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5 flex-wrap">
+              <template v-if="editMode && item.is_active !== false">
+                <label class="sr-only" :for="`warehouse-mobile-name-${item.id}`">
+                  {{ t('abastecimiento.common.nombre') }}
+                </label>
+                <input
+                  :id="`warehouse-mobile-name-${item.id}`"
+                  v-model="ensureDraft(item).name"
+                  type="text"
+                  class="input-base w-full px-2 py-1.5 text-sm font-medium"
+                  :placeholder="t('abastecimiento.glossary.ingredientNamePlaceholder')"
+                  @input="clearRowError(item.id)"
+                />
+                <UiWarehouseCategorySearchInput
+                  v-model="ensureDraft(item).category"
+                  :input-id="`warehouse-mobile-category-${item.id}`"
+                  class="mt-2"
+                  :placeholder="t('abastecimiento.glossary.categoryPlaceholder')"
+                  :listbox-label="t('abastecimiento.glossary.warehouseCategorySearchResults')"
+                  compact
+                  :allow-create="false"
+                  placement="auto"
+                  @change="clearRowError(item.id)"
+                />
+                <p v-if="rowErrors[item.id]" class="mt-1 text-xs text-destructive" role="alert">
+                  {{ rowErrors[item.id] }}
+                </p>
+              </template>
+              <div v-else class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">{{ t('abastecimiento.glossary.archived') }}</span>
               </div>
@@ -102,15 +179,44 @@
                 <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString(toNumberLocaleTag(locale)) }}</span>
               </div>
             </div>
-            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
+            <button
+              v-if="item.is_active !== false"
+              type="button"
+              class="flex-shrink-0 rounded-md p-2 text-text-tertiary transition-colors hover:bg-surface-secondary hover:text-primary"
+              :aria-label="`${t('abastecimiento.glossary.editItem')} ${item.name}`"
+              @click.stop="openPanel(item)"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
           </div>
         </template>
 
         <!-- Desktop Cells -->
+        <template v-if="editMode" #cell-select="{ row }">
+          <UiBulkSelectCheckbox
+            v-if="row.is_active !== false"
+            :checked="selectedIds.includes(row.id)"
+            @change="toggleSelect(row.id)"
+          />
+        </template>
+
         <template #cell-name="{ value, row }">
-          <div class="flex items-center gap-1.5 flex-wrap">
+          <div v-if="editMode && row.is_active !== false" class="min-w-[12rem]">
+            <label class="sr-only" :for="`warehouse-name-${row.id}`">{{ t('abastecimiento.common.nombre') }}</label>
+            <input
+              :id="`warehouse-name-${row.id}`"
+              v-model="ensureDraft(row).name"
+              type="text"
+              class="input-base w-full px-2 py-1.5 text-sm font-medium"
+              @input="clearRowError(row.id)"
+            />
+            <p v-if="rowErrors[row.id]" class="mt-1 text-xs text-destructive" role="alert">
+              {{ rowErrors[row.id] }}
+            </p>
+          </div>
+          <div v-else class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold capitalize" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
             <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">{{ t('abastecimiento.glossary.archived') }}</span>
           </div>
@@ -138,8 +244,20 @@
           />
         </template>
 
-        <template #cell-category="{ value }">
-          <span class="text-sm text-text-secondary capitalize">{{ value || '—' }}</span>
+        <template #cell-category="{ value, row }">
+          <div v-if="editMode && row.is_active !== false" class="min-w-[14rem]">
+            <UiWarehouseCategorySearchInput
+              v-model="ensureDraft(row).category"
+              :input-id="`warehouse-category-${row.id}`"
+              :placeholder="t('abastecimiento.glossary.categoryPlaceholder')"
+              :listbox-label="t('abastecimiento.glossary.warehouseCategorySearchResults')"
+              compact
+              :allow-create="false"
+              placement="auto"
+              @change="clearRowError(row.id)"
+            />
+          </div>
+          <span v-else class="text-sm text-text-secondary capitalize">{{ value || '—' }}</span>
         </template>
 
         <template #cell-actions="{ row }">
@@ -250,6 +368,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
+const toast = useToast()
 
 useHead({ title: () => WAREHOUSE_COPY.warehouseCatalog })
 
@@ -313,8 +432,6 @@ const updateTypeFilter = (value: string | boolean) => {
   currentPage.value = 1
 }
 
-watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
-
 const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['ingredients', 'custom', currentTenant.value?.id, {
     archived: showArchived.value,
@@ -347,13 +464,41 @@ const supplyIngredients = computed(() =>
   ingredients.value.filter((i: any) => !i.is_resale),
 )
 
+const {
+  editMode,
+  rowErrors,
+  selectedIds,
+  bulkCategory,
+  isSubmitting,
+  displayIngredients,
+  hasChanges,
+  ensureDraft,
+  clearRowError,
+  clearSelection,
+  toggleSelect,
+  allPageSelected: isAllPageSelected,
+  toggleSelectAll,
+  saveChanges,
+  cancelEditOperation,
+  toggleEditMode,
+  resetForTenant,
+} = useWarehouseCatalogEditMode({
+  ingredients: supplyIngredients,
+  refetch,
+  messages: {
+    nameRequired: t('abastecimiento.glossary.catalogNameRequired'),
+    categoryRequired: t('abastecimiento.glossary.catalogCategoryRequired'),
+    saveFailed: t('abastecimiento.glossary.catalogRowSaveFailed'),
+  },
+})
+
 const stats = computed(() => ({
   total: supplyIngredients.value.length,
   withCost: supplyIngredients.value.filter((i: any) => i.costo_unitario != null).length,
 }))
 
 const sortedIngredients = computed(() => {
-  const list = supplyIngredients.value
+  const list = displayIngredients.value
   if (!sortField.value) return list
 
   return [...list].sort((a: any, b: any) => {
@@ -370,8 +515,40 @@ const sortedIngredients = computed(() => {
   })
 })
 
+const allPageSelected = computed(() => isAllPageSelected(sortedIngredients.value))
+
+const confirmDiscard = () => window.confirm(t('abastecimiento.glossary.catalogDiscardConfirm'))
+const onToggleEditMode = () => toggleEditMode(confirmDiscard)
+const onCancelEdit = () => cancelEditOperation(confirmDiscard)
+
+const onCatalogSave = async () => {
+  const result = await saveChanges()
+  if (result.ok > 0 && result.fail + result.invalid === 0) {
+    toast.success(t('abastecimiento.glossary.catalogSavedCount', { count: result.ok }))
+  } else if (result.ok > 0) {
+    toast.warning(t('abastecimiento.glossary.catalogPartialSave', {
+      ok: result.ok,
+      fail: result.fail + result.invalid,
+    }))
+  } else if (result.fail + result.invalid > 0) {
+    toast.error(t('abastecimiento.glossary.catalogSaveNone'))
+  }
+}
+
+watch(
+  [currentPage, appliedSearch, typeFilter, showArchived],
+  clearSelection,
+)
+
+watch(() => currentTenant.value?.id, () => {
+  currentPage.value = 1
+  resetForTenant()
+})
+
 const openPanel = (ingredient: any) => {
-  panelIngredient.value = ingredient
+  panelIngredient.value = ingredient?.id
+    ? supplyIngredients.value.find((row: any) => row.id === ingredient.id) ?? ingredient
+    : null
   showPanel.value = true
 }
 
@@ -432,6 +609,9 @@ const clearFilters = () => {
 }
 
 const tableColumns = computed(() => [
+  ...(editMode.value
+    ? [{ key: 'select', title: '', sortable: false, format: 'custom', align: 'center' }]
+    : []),
   { key: 'name',         title: t('abastecimiento.common.nombre'),   sortable: true,  format: 'custom', align: 'left' },
   { key: 'unit',         title: t('abastecimiento.common.unidad'),   sortable: false, format: 'custom', align: 'left' },
   { key: 'unit_weight_gr',title: t('abastecimiento.common.grUnd'),  sortable: false, format: 'custom', align: 'left' },

@@ -185,4 +185,65 @@ describe('WarehouseCategorySearchInput', () => {
     )
     expect(wrapper.text()).not.toContain('Privada')
   })
+
+  it('keeps compact assignment mode free of create and management actions', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn(async () => ({ data: [] }))
+    vi.stubGlobal('$fetch', fetchMock)
+    vi.stubGlobal('useI18n', () => ({
+      t: (key: string, params?: { name?: string }) => ({
+        'abastecimiento.glossary.searchLoading': 'Buscando…',
+        'abastecimiento.glossary.noSearchResults': 'Sin resultados',
+        'abastecimiento.glossary.searchError': 'Error',
+        'abastecimiento.glossary.createNamed': `Crear "${params?.name ?? ''}"`,
+        'abastecimiento.glossary.warehouseCategoryPrivate': 'Privada',
+        'abastecimiento.glossary.renameWarehouseCategory': 'Renombrar',
+        'abastecimiento.glossary.archiveWarehouseCategory': 'Archivar',
+      }[key] ?? key),
+    }))
+
+    const selected = {
+      id: 'category-1',
+      tenant_id: 'tenant-1',
+      name: 'Carnes',
+      normalized_name: 'carnes',
+      is_active: true,
+      scope: 'tenant' as const,
+      can_manage: true,
+      ingredient_count: 1,
+      global_count: 0,
+      tenant_count: 1,
+    }
+    const wrapper = mount(WarehouseCategorySearchInput, {
+      attachTo: document.body,
+      props: {
+        modelValue: selected,
+        compact: true,
+        allowCreate: false,
+        placement: 'bottom',
+      },
+      global: {
+        components: { UiCatalogSearchCombobox: CatalogSearchCombobox },
+        stubs: { Teleport: true },
+      },
+    })
+
+    expect(wrapper.text()).not.toContain('Privada')
+    expect(wrapper.text()).not.toContain('Renombrar')
+    expect(wrapper.text()).not.toContain('Archivar')
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    await wrapper.get('input').setValue('Nueva categoría')
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Sin resultados')
+    expect(wrapper.text()).not.toContain('Crear "Nueva categoría"')
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/suppliers/warehouse-categories',
+      { query: { search: 'Nueva categoría', limit: 100 } },
+    )
+  })
 })
