@@ -1,61 +1,41 @@
 <template>
-  <div class="flex w-screen h-screen overflow-hidden">
-    <!-- Formulario centrado con fondo de emojis -->
-    <div class="relative flex items-center justify-center w-full h-full px-6 sm:px-12 md:px-16 py-8 md:py-12 bg-[hsl(220,14%,97%)]">
-      <!-- Fondo de emojis -->
-      <div ref="foodBgContainer" class="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div
-          v-for="(item, index) in foodItems"
-          :key="index"
-          class="food-item"
-          :style="item.style"
-        >
-          {{ item.emoji }}
-        </div>
-      </div>
-
-      <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-8 md:p-10">
+  <AuthSplitShell
+    image-src="/brand/auth-login-trattoria.webp"
+    image-position="62% center"
+  >
         <!-- Logo -->
-        <div class="mb-8 md:mb-16 flex justify-center">
-          <img src="/logo_waro_colombia.png" alt="Waro" class="h-8 md:h-10 w-auto">
+        <div class="mb-6 flex justify-center">
+          <img src="/logo_waro_colombia.png" alt="Waro" class="h-8 w-auto">
         </div>
 
         <!-- Contenido del login -->
         <div>
           <!-- Verificando sesión -->
           <div v-if="checkingSession" class="text-center space-y-4">
-            <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-              style="border-color: hsl(250, 30%, 16%); border-top-color: transparent;"></div>
-            <p class="text-sm" style="color: hsl(220, 13%, 28%);">{{ t('auth.checkingSession') }}</p>
+            <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-text-primary border-t-transparent"></div>
+            <p class="text-sm text-text-secondary">{{ t('auth.checkingSession') }}</p>
           </div>
 
           <!-- Formulario de login -->
           <div v-else-if="!emailSent" class="text-center">
-            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">{{ t('auth.signIn') }}</h1>
-            <p class="text-base mb-10" style="color: hsl(220, 13%, 28%);">
+            <h1 class="text-2xl font-semibold text-text-primary">{{ t('auth.signIn') }}</h1>
+            <p class="mb-6 mt-2 text-sm text-text-secondary">
               {{ t('auth.emailPrompt') }}
             </p>
 
             <!-- Email Form -->
             <form @submit.prevent="handleSubmit">
               <div class="mb-6 text-start">
-                <label for="email" class="block text-xs font-semibold mb-2" style="color: hsl(250, 30%, 16%);">
+                <label for="email" class="mb-2 block text-sm font-semibold text-text-primary">
                   {{ t('auth.emailLabel') }}
                 </label>
                 <input id="email" v-model="email" type="email" required :disabled="loading"
-                  class="w-full px-4 py-3 rounded-md text-base border-2 transition-all"
-                  style="background-color: white; border-color: hsl(250, 30%, 16%); color: hsl(250, 30%, 16%);"
-                  @focus="$event.target.style.borderColor = 'hsl(250, 30%, 16%)'; $event.target.style.boxShadow = '0 0 0 3px hsl(250, 30%, 16%, 0.1)'"
-                  @blur="$event.target.style.borderColor = 'hsl(250, 30%, 16%)'; $event.target.style.boxShadow = 'none'" />
+                  autocomplete="email"
+                  class="auth-input" />
               </div>
 
               <button type="submit" :disabled="loading || !email"
-                class="w-full px-6 py-3 rounded-md text-base font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                :style="email && !loading ?
-                  'background-color: hsl(250, 30%, 16%); color: white;' :
-                  'background-color: hsl(220, 14%, 90%); color: hsl(220, 8%, 51%); cursor: not-allowed;'"
-                @mouseenter="email && !loading && ($event.target.style.backgroundColor = 'hsl(243, 26%, 23%)')"
-                @mouseleave="email && !loading && ($event.target.style.backgroundColor = 'hsl(250, 30%, 16%)')">
+                class="auth-primary-button">
                 <span v-if="loading" class="flex items-center justify-center gap-2">
                   <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   {{ t('auth.sending') }}
@@ -67,16 +47,16 @@
 
           <!-- Código de Verificación -->
           <div v-else-if="emailSent" class="text-center">
-            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">{{ t('auth.checkEmail') }}</h1>
-            <p class="text-base mb-2" style="color: hsl(220, 13%, 28%);">
+            <h1 class="mb-4 text-3xl font-semibold text-text-primary">{{ t('auth.checkEmail') }}</h1>
+            <p class="mb-2 text-base text-text-secondary">
               {{ t('auth.linkSentTo') }}
             </p>
-            <p class="text-base font-medium mb-6" style="color: hsl(250, 30%, 16%);">
+            <p class="mb-6 break-all text-base font-medium text-text-primary">
               {{ email }}
             </p>
 
-            <div class="rounded-lg p-4 mb-6" style="background-color: hsl(220, 14%, 95%); border: 1px solid hsl(220, 14%, 90%);">
-              <p class="text-sm" style="color: hsl(220, 13%, 28%);">
+            <div class="mb-6 rounded-lg border border-border bg-surface-secondary p-4">
+              <p class="text-sm text-text-secondary">
                 {{ t('auth.openEmailHint') }}
               </p>
             </div>
@@ -84,10 +64,10 @@
             <!-- Separador -->
             <div class="relative my-8">
               <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t" style="border-color: hsl(220, 14%, 90%);"></div>
+                <div class="w-full border-t border-border"></div>
               </div>
               <div class="relative flex justify-center text-sm">
-                <span class="px-4 bg-white" style="color: hsl(220, 13%, 28%);">{{ t('auth.orUseCode') }}</span>
+                <span class="bg-surface px-4 text-text-secondary">{{ t('auth.orUseCode') }}</span>
               </div>
             </div>
 
@@ -98,17 +78,11 @@
                 inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
                 :aria-describedby="error ? 'login-auth-error' : undefined" :disabled="verifyingCode"
                 @keyup.enter="verifyCode"
-                class="w-full text-center text-2xl tracking-widest font-mono px-4 py-3.5 rounded-md transition-all border-2"
-                style="background-color: white; border-color: hsl(250, 30%, 16%); color: hsl(250, 30%, 16%);"
-                @focus="$event.target.style.borderColor = 'hsl(250, 30%, 16%)'; $event.target.style.boxShadow = '0 0 0 3px hsl(250, 30%, 16%, 0.1)'"
-                @blur="$event.target.style.borderColor = 'hsl(250, 30%, 16%)'; $event.target.style.boxShadow = 'none'" />
+                class="auth-input text-center font-mono text-2xl tracking-widest" />
 
               <button @click="verifyCode"
                 :disabled="!verificationCode || verificationCode.length !== 6 || verifyingCode"
-                class="w-full py-3 rounded-md text-base font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style="background-color: hsl(250, 30%, 16%); color: white;"
-                @mouseenter="!verifyingCode && ($event.target.style.backgroundColor = 'hsl(243, 26%, 23%)')"
-                @mouseleave="!verifyingCode && ($event.target.style.backgroundColor = 'hsl(250, 30%, 16%)')">
+                class="auth-primary-button">
                 <span v-if="verifyingCode" class="flex items-center justify-center gap-2">
                   <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   {{ t('auth.verifying') }}
@@ -118,10 +92,10 @@
             </div>
 
             <div class="text-center mt-8">
-              <p class="text-sm" style="color: hsl(220, 13%, 28%);">
+              <p class="text-sm text-text-secondary">
                 {{ t('auth.noEmail') }}
                 <button @click="emailSent = false; verificationCode = ''" type="button"
-                  class="font-medium ms-1 hover:underline" style="color: hsl(250, 30%, 16%);">
+                  class="auth-text-link ms-1 font-semibold underline-offset-4 hover:underline">
                   {{ t('auth.resend') }}
                 </button>
               </p>
@@ -129,24 +103,22 @@
           </div>
 
           <!-- Error Message -->
-          <div v-if="error" id="login-auth-error" role="alert" aria-live="assertive" class="mt-5 rounded-md p-4 border"
-            style="background-color: hsl(var(--destructive) / 0.1); border-color: hsl(var(--destructive));">
+          <div v-if="error" id="login-auth-error" role="alert" aria-live="assertive" class="mt-5 rounded-md border border-form-control-error-border bg-[hsl(var(--state-danger-bg))] p-4 text-form-control-error">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-5 w-5" style="color: hsl(var(--destructive));" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                     clip-rule="evenodd" />
                 </svg>
               </div>
               <div class="ms-3">
-                <p class="text-sm font-medium" style="color: hsl(var(--destructive));">{{ t('auth.authError') }}</p>
-                <p class="text-sm mt-1" style="color: hsl(var(--destructive));">{{ error }}</p>
+                <p class="text-sm font-medium">{{ t('auth.authError') }}</p>
+                <p class="mt-1 text-sm">{{ error }}</p>
                 <NuxtLink
                   v-if="showCustomerPortalLink"
                   :to="CUSTOMER_PORTAL_LOGIN"
-                  class="inline-flex mt-3 text-sm font-semibold underline"
-                  style="color: hsl(var(--destructive));"
+                  class="mt-3 inline-flex text-sm font-semibold underline"
                 >
                   {{ t('auth.customerPortal') }}
                 </NuxtLink>
@@ -154,24 +126,22 @@
             </div>
           </div>
 
-          <p v-if="!checkingSession" class="mt-8 text-center text-sm" style="color: hsl(220, 13%, 28%);">
+          <p v-if="!checkingSession" class="mt-8 text-center text-sm text-text-secondary">
             {{ t('auth.noAccount') }}
             <NuxtLink
               to="/registro"
-              class="ms-1 font-semibold underline underline-offset-4"
-              style="color: hsl(250, 30%, 16%);"
+              class="auth-text-link ms-1 font-semibold underline underline-offset-4"
               @click="rememberEmailForRegistration"
             >
               {{ t('auth.createAccount') }}
             </NuxtLink>
           </p>
         </div>
-      </div>
-    </div>
-  </div>
+  </AuthSplitShell>
 </template>
 
 <script setup lang="ts">
+import AuthSplitShell from './SplitShell.vue'
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
@@ -199,67 +169,6 @@ const accessStore = useAccessStore()
 const { syncAuthenticatedLocale } = useAppLocale()
 
 
-// ========================================
-// LÓGICA DINÁMICA PARA EMOJIS DE COMIDA
-// ========================================
-
-// Catálogo de emojis de comida
-const foodEmojis = [
-  '🍞', '🥖', '🥐', '🍕', '🍔', '🌮', '🍟', '🥪', '🌭', '🍖',
-  '🥙', '🍗', '🥓', '🥩', '🍳', '🧀', '🥚', '🍱', '🥗', '🍝',
-  '🍜', '🍲', '🍛', '🍣', '🍤', '🥟', '🥡', '🦐', '🦞', '🦀',
-  '🐟', '🥘', '🍚', '🥫', '🧆', '🥧', '🧁', '🍰', '🎂', '🍪'
-]
-
-// Referencias a los contenedores de emojis
-const foodBgContainer = ref(null)
-
-// Dimensiones del contenedor
-const containerWidth = ref(0)
-const containerHeight = ref(0)
-
-// Función helper para generar emojis
-const generateFoodItems = (width, height, size) => {
-  if (width === 0 || height === 0) return []
-
-  const cols = Math.ceil(width / size)
-  const rows = Math.ceil(height / size)
-  const totalItems = cols * rows
-
-  const items = []
-  for (let i = 0; i < totalItems; i++) {
-    const row = Math.floor(i / cols)
-    const col = i % cols
-
-    const emoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)]
-
-    // Agregar variación aleatoria para desorganizar la cuadrícula
-    const randomOffsetX = (Math.random() - 0.5) * size * 0.6
-    const randomOffsetY = (Math.random() - 0.5) * size * 0.6
-
-    const left = (col * size) + (size / 2) + randomOffsetX
-    const top = (row * size) + (size / 2) + randomOffsetY
-
-    items.push({
-      emoji,
-      style: {
-        left: `${left}px`,
-        top: `${top}px`
-      }
-    })
-  }
-
-  return items
-}
-
-// Computed property para emojis
-const foodItems = computed(() => {
-  return generateFoodItems(containerWidth.value, containerHeight.value, 100)
-})
-
-// Observer para detectar cambios de tamaño
-let resizeObserver = null
-
 // Obtener configuración de runtime
 const {
   public: {
@@ -267,27 +176,11 @@ const {
   }
 } = useRuntimeConfig()
 
-// Verificar si ya hay sesión al cargar el componente y configurar observer de emojis
+// Verificar si ya hay sesión al cargar el componente
 onMounted(async () => {
   const emailQuery = Array.isArray(route.query.email) ? route.query.email[0] : route.query.email
   if (typeof emailQuery === 'string') {
     email.value = emailQuery.trim().toLowerCase()
-  }
-
-  // Configurar observer de emojis
-  if (foodBgContainer.value) {
-    const rect = foodBgContainer.value.getBoundingClientRect()
-    containerWidth.value = rect.width
-    containerHeight.value = rect.height
-
-    resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        containerWidth.value = entry.contentRect.width
-        containerHeight.value = entry.contentRect.height
-      }
-    })
-
-    resizeObserver.observe(foodBgContainer.value)
   }
 
   // Verificar sesión existente
@@ -431,21 +324,68 @@ watch([email, verificationCode], () => {
   showCustomerPortalLink.value = false
 })
 
-// Cleanup observer cuando el componente se desmonte
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-})
 </script>
 
 <style scoped>
-/* Estilos base para cada emoji (posición calculada dinámicamente) */
-.food-item {
-  position: absolute;
-  font-size: 50px;
-  opacity: 0.08;
-  filter: grayscale(100%) brightness(0.7);
-  transform: translate(-50%, -50%);
+.auth-input {
+  width: 100%;
+  border: 1px solid hsl(var(--form-control-border));
+  border-radius: var(--radius);
+  background: hsl(var(--form-control-bg));
+  padding: 0.75rem 1rem;
+  color: hsl(var(--form-control-text));
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.auth-input:focus-visible {
+  border-color: hsl(var(--auth-action-bg));
+  outline: 2px solid hsl(var(--auth-action-focus-ring));
+  outline-offset: 2px;
+}
+
+.auth-primary-button {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: var(--radius);
+  background: hsl(var(--auth-action-bg));
+  padding: 0.75rem 1.5rem;
+  color: hsl(var(--auth-action-text));
+  font-weight: 600;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+.auth-primary-button:hover:not(:disabled) {
+  background: hsl(var(--auth-action-hover-bg));
+}
+
+.auth-primary-button:focus-visible {
+  outline: 2px solid hsl(var(--auth-action-focus-ring));
+  outline-offset: 3px;
+}
+
+.auth-primary-button:disabled {
+  cursor: not-allowed;
+  background: hsl(var(--auth-action-disabled-bg));
+  color: hsl(var(--auth-action-disabled-text));
+}
+
+.auth-text-link {
+  color: hsl(var(--auth-link-text));
+}
+
+.auth-text-link:hover {
+  color: hsl(var(--auth-link-hover-text));
+}
+
+.auth-text-link:focus-visible {
+  outline: 2px solid hsl(var(--auth-action-focus-ring));
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-input,
+  .auth-primary-button {
+    transition: none;
+  }
 }
 </style>

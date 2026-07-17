@@ -1,30 +1,25 @@
 <template>
-  <main class="relative flex min-h-[100dvh] w-full items-center justify-center overflow-y-auto bg-[hsl(220,14%,97%)] px-4 py-8 sm:px-8">
-    <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      <span
-        v-for="(emoji, index) in foodEmojis"
-        :key="`${emoji}-${index}`"
-        class="food-item"
-        :style="foodItemStyle(index)"
-      >{{ emoji }}</span>
-    </div>
-
-    <section class="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-lg sm:p-10" aria-labelledby="registration-title">
-      <div class="mb-8 flex justify-center">
-        <img :src="'/logo_waro_colombia.png'" alt="Waro" class="h-9 w-auto">
+  <AuthSplitShell
+    image-src="/brand/auth-register-kitchen.webp"
+    image-position="67% center"
+    content-width="wide"
+  >
+    <section aria-labelledby="registration-title">
+      <div class="mb-6 flex justify-center">
+        <img :src="'/logo_waro_colombia.png'" alt="Waro" class="h-8 w-auto">
       </div>
 
       <div v-if="phase === 'form'">
-        <h1 id="registration-title" class="text-center text-3xl font-medium text-[hsl(250,30%,16%)]">
+        <h1 id="registration-title" class="text-center text-2xl font-semibold text-text-primary">
           {{ t('auth.createAccount') }}
         </h1>
-        <p class="mt-3 text-center text-base text-[hsl(220,13%,28%)]">
+        <p class="mt-2 text-center text-sm text-text-secondary">
           {{ t('auth.registrationIntro') }}
         </p>
 
-        <form class="mt-8 space-y-5" novalidate @submit.prevent="sendRegistration(false)">
+        <form class="registration-form" novalidate @submit.prevent="sendRegistration(false)">
           <div>
-            <label for="registration-email" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+            <label for="registration-email" class="mb-1.5 block text-sm font-semibold text-text-primary">
               {{ t('auth.emailLabel') }}
             </label>
             <input
@@ -45,10 +40,10 @@
           </div>
 
           <fieldset>
-            <legend class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+            <legend class="mb-1.5 block text-sm font-semibold text-text-primary">
               {{ t('auth.phoneNumberLabel') }}
             </legend>
-            <div class="grid gap-3 sm:grid-cols-[minmax(13rem,0.85fr)_1.15fr]">
+            <div class="grid gap-2 sm:grid-cols-[minmax(13rem,0.85fr)_1.15fr]">
               <div>
                 <label for="registration-country-code" class="sr-only">{{ t('auth.phoneCountryCode') }}</label>
                 <select
@@ -88,7 +83,7 @@
                 >
               </div>
             </div>
-            <p id="registration-phone-hint" class="mt-2 text-xs text-[hsl(220,13%,38%)]">
+            <p id="registration-phone-hint" class="mt-1 text-xs text-form-control-help">
               {{ t('auth.phoneNumberHint') }}
             </p>
             <p v-if="fieldErrors.phoneCountryCode" id="registration-country-error" class="field-error" role="alert">
@@ -100,7 +95,7 @@
           </fieldset>
 
           <div>
-            <label for="registration-business-name" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+            <label for="registration-business-name" class="mb-1.5 block text-sm font-semibold text-text-primary">
               {{ t('onboarding.businessName') }}
             </label>
             <input
@@ -116,7 +111,7 @@
               :aria-describedby="fieldErrors.businessName ? 'registration-business-name-error' : 'registration-business-name-hint'"
               class="form-input"
             >
-            <p id="registration-business-name-hint" class="mt-2 text-xs text-[hsl(220,13%,38%)]">
+            <p id="registration-business-name-hint" class="mt-1 text-xs text-form-control-help">
               {{ t('onboarding.businessNameHint') }}
             </p>
             <p v-if="fieldErrors.businessName" id="registration-business-name-error" class="field-error" role="alert">
@@ -124,9 +119,9 @@
             </p>
           </div>
 
-          <div class="grid gap-5 sm:grid-cols-2">
+          <div class="grid gap-3 sm:grid-cols-2">
             <div>
-              <label for="registration-business-country" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+              <label for="registration-business-country" class="mb-1.5 block text-sm font-semibold text-text-primary">
                 {{ t('onboarding.country') }}
               </label>
               <select
@@ -149,7 +144,7 @@
             </div>
 
             <div>
-              <label for="registration-base-currency" class="mb-2 block text-sm font-semibold text-[hsl(250,30%,16%)]">
+              <label for="registration-base-currency" class="mb-1.5 block text-sm font-semibold text-text-primary">
                 {{ t('onboarding.currency') }}
               </label>
               <select
@@ -172,7 +167,7 @@
           </div>
 
           <div>
-            <label class="flex cursor-pointer items-start gap-3 text-sm text-[hsl(220,13%,28%)]">
+            <label class="flex cursor-pointer items-start gap-3 text-sm text-text-secondary">
               <input
                 id="registration-consent"
                 :checked="consent"
@@ -181,7 +176,7 @@
                 :disabled="sending"
                 :aria-invalid="Boolean(fieldErrors.consent)"
                 :aria-describedby="fieldErrors.consent ? 'registration-consent-error' : undefined"
-                class="mt-0.5 h-5 w-5 rounded border-2 border-[hsl(250,30%,16%)] text-[hsl(250,30%,16%)] focus:ring-[hsl(250,30%,16%)]"
+                class="auth-checkbox mt-0.5 h-5 w-5 rounded border-2 border-form-control-border"
                 @change="updateConsent"
               >
               <span>{{ t('auth.registrationConsent') }}</span>
@@ -202,21 +197,21 @@
       </div>
 
       <div v-else class="text-center">
-        <h1 id="registration-title" class="text-3xl font-medium text-[hsl(250,30%,16%)]">
+        <h1 id="registration-title" class="text-3xl font-semibold text-text-primary">
           {{ t('auth.checkEmail') }}
         </h1>
-        <p class="mt-3 text-base text-[hsl(220,13%,28%)]">{{ t('auth.registrationLinkSentTo') }}</p>
-        <p class="mt-1 break-all font-semibold text-[hsl(250,30%,16%)]">{{ email }}</p>
-        <p class="mt-5 rounded-lg bg-[hsl(220,14%,95%)] p-4 text-sm text-[hsl(220,13%,28%)]">
+        <p class="mt-3 text-base text-text-secondary">{{ t('auth.registrationLinkSentTo') }}</p>
+        <p class="mt-1 break-all font-semibold text-text-primary">{{ email }}</p>
+        <p class="mt-5 rounded-lg border border-border bg-surface-secondary p-4 text-sm text-text-secondary">
           {{ t('auth.registrationOpenEmailHint') }}
         </p>
 
         <div class="relative my-7" aria-hidden="true">
-          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-[hsl(220,14%,90%)]"></div></div>
-          <div class="relative flex justify-center text-sm"><span class="bg-white px-4 text-[hsl(220,13%,28%)]">{{ t('auth.orUseCode') }}</span></div>
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-border"></div></div>
+          <div class="relative flex justify-center text-sm"><span class="bg-surface px-4 text-text-secondary">{{ t('auth.orUseCode') }}</span></div>
         </div>
 
-        <label for="registration-code" class="mb-2 block text-start text-sm font-semibold text-[hsl(250,30%,16%)]">
+        <label for="registration-code" class="mb-2 block text-start text-sm font-semibold text-text-primary">
           {{ t('auth.verificationCodeLabel') }}
         </label>
         <input
@@ -251,29 +246,30 @@
           <button type="button" class="text-link" :disabled="sending || cooldownSeconds > 0" @click="sendRegistration(true)">
             {{ cooldownSeconds > 0 ? t('auth.resendIn', { n: cooldownSeconds }) : t('auth.resend') }}
           </button>
-          <span class="hidden text-[hsl(220,14%,70%)] sm:inline" aria-hidden="true">•</span>
+          <span class="hidden text-text-tertiary sm:inline" aria-hidden="true">•</span>
           <button type="button" class="text-link" :disabled="sending || verifying" @click="changeDetails">
             {{ t('auth.changeRegistrationDetails') }}
           </button>
         </div>
       </div>
 
-      <div v-if="error" id="registration-error" role="alert" aria-live="assertive" class="mt-5 rounded-md border border-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] p-4 text-sm text-[hsl(var(--destructive))]">
+      <div v-if="error" id="registration-error" role="alert" aria-live="assertive" class="mt-5 rounded-md border border-form-control-error-border bg-[hsl(var(--state-danger-bg))] p-4 text-sm text-form-control-error">
         <p class="font-semibold">{{ t('auth.registrationError') }}</p>
         <p class="mt-1">{{ error }}</p>
       </div>
 
-      <p class="mt-8 text-center text-sm text-[hsl(220,13%,28%)]">
+      <p class="mt-5 text-center text-sm text-text-secondary">
         {{ t('auth.alreadyHaveAccount') }}
-        <NuxtLink to="/auth/login" class="ms-1 font-semibold underline underline-offset-4 text-[hsl(250,30%,16%)]">
+        <NuxtLink to="/auth/login" class="text-link ms-1 font-semibold underline underline-offset-4">
           {{ t('auth.signIn') }}
         </NuxtLink>
       </p>
     </section>
-  </main>
+  </AuthSplitShell>
 </template>
 
 <script setup lang="ts">
+import AuthSplitShell from './SplitShell.vue'
 import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
@@ -400,13 +396,6 @@ const handleBusinessCountryChange = () => {
     baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
   }
 }
-
-const foodEmojis = ['🍞', '🥐', '🍕', '🍔', '🌮', '🍟', '🥪', '🍳', '🧀', '🥗', '🍝', '🍜', '🍣', '🍰', '🍪', '🥘']
-const foodItemStyle = (index: number) => ({
-  insetInlineStart: `${8 + ((index * 29) % 88)}%`,
-  top: `${6 + ((index * 37) % 88)}%`,
-  transform: `translate(-50%, -50%) rotate(${(index % 5) * 9 - 18}deg)`,
-})
 
 const currentDraft = () => createRegistrationDraft({
   email: email.value,
@@ -652,53 +641,63 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.food-item {
-  position: absolute;
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  opacity: 0.07;
-  filter: grayscale(1);
+.registration-form {
+  margin-top: 1.5rem;
+}
+
+.registration-form > * + * {
+  margin-top: 1rem;
 }
 
 .form-input {
   width: 100%;
-  border: 2px solid hsl(250 30% 16%);
-  border-radius: 0.5rem;
-  background: white;
-  padding: 0.75rem 1rem;
-  color: hsl(250 30% 16%);
+  min-height: 2.75rem;
+  border: 1px solid hsl(var(--form-control-border));
+  border-radius: var(--radius);
+  background: hsl(var(--form-control-bg));
+  padding: 0.5rem 0.875rem;
+  color: hsl(var(--form-control-text));
   transition: box-shadow 150ms ease, border-color 150ms ease;
 }
 
 .form-input:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(250 30% 16% / 0.18);
+  border-color: hsl(var(--auth-action-bg));
+  outline: 2px solid hsl(var(--auth-action-focus-ring));
+  outline-offset: 2px;
 }
 
 .form-input[aria-invalid="true"] {
-  border-color: hsl(var(--destructive));
+  border-color: hsl(var(--form-error-border));
 }
 
 .field-error {
   margin-top: 0.375rem;
   font-size: 0.75rem;
-  color: hsl(var(--destructive));
+  color: hsl(var(--form-error-text));
 }
 
 .primary-button {
   width: 100%;
-  min-height: 3rem;
-  border-radius: 0.5rem;
-  background: hsl(250 30% 16%);
-  padding: 0.75rem 1.5rem;
-  color: white;
+  min-height: 2.75rem;
+  border-radius: var(--radius);
+  background: hsl(var(--auth-action-bg));
+  padding: 0.625rem 1.25rem;
+  color: hsl(var(--auth-action-text));
   font-weight: 600;
   transition: background-color 150ms ease, opacity 150ms ease;
 }
 
-.primary-button:hover:not(:disabled) { background: hsl(243 26% 23%); }
-.primary-button:focus-visible, .text-link:focus-visible { outline: 3px solid hsl(250 30% 16% / 0.3); outline-offset: 3px; }
-.primary-button:disabled, .text-link:disabled { cursor: not-allowed; opacity: 0.55; }
-.text-link { font-weight: 600; color: hsl(250 30% 16%); text-decoration: underline; text-underline-offset: 0.25rem; }
+.primary-button:hover:not(:disabled) { background: hsl(var(--auth-action-hover-bg)); }
+.primary-button:focus-visible, .text-link:focus-visible, .auth-checkbox:focus-visible { outline: 2px solid hsl(var(--auth-action-focus-ring)); outline-offset: 3px; }
+.primary-button:disabled {
+  cursor: not-allowed;
+  background: hsl(var(--auth-action-disabled-bg));
+  color: hsl(var(--auth-action-disabled-text));
+}
+.text-link:disabled { cursor: not-allowed; opacity: 0.55; }
+.text-link { font-weight: 600; color: hsl(var(--auth-link-text)); text-decoration: underline; text-underline-offset: 0.25rem; }
+.text-link:hover { color: hsl(var(--auth-link-hover-text)); }
+.auth-checkbox { accent-color: hsl(var(--auth-action-bg)); }
 
 @media (prefers-reduced-motion: reduce) {
   .primary-button, .form-input { transition: none; }
