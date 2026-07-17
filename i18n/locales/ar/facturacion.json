@@ -56,6 +56,19 @@
       "iva": "مسؤول عن ضريبة القيمة المضافة",
       "noIva": "غير مسؤول عن ضريبة القيمة المضافة"
     },
+    "salesTaxProfiles": {
+      "title": "الملف الضريبي للمبيعات",
+      "hint": "اختر الخيار المطابق لسجل RUT. سيعمل WARO على مواءمة مسؤولية Matias وحساب IVA أو INC.",
+      "required": "اختر ملفًا قبل تفعيل الفوترة الإلكترونية.",
+      "ivaTitle": "مسؤول عن IVA",
+      "ivaHint": "RUT 48. يحسب WARO ضريبة IVA ويستخدم نظام Matias المسؤول.",
+      "incTitle": "مسؤول عن INC",
+      "incHint": "RUT 33. للمبيعات الخاضعة لضريبة الاستهلاك الوطنية.",
+      "noIvaIncTitle": "غير مسؤول عن IVA أو INC",
+      "noIvaIncHint": "شخص طبيعي لديه RUT 49 و50. لا تتضمن الفاتورة IVA أو INC.",
+      "noIvaTitle": "غير مسؤول عن IVA؛ وINC غير مطبق",
+      "noIvaHint": "RUT 49 للأنشطة خارج نطاق INC للمطاعم أو الحانات."
+    },
     "taxLevels": {
       "grand": "مكلف كبير",
       "selfWithholding": "مستقطع ذاتي",

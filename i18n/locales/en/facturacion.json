@@ -56,6 +56,19 @@
       "iva": "VAT-liable",
       "noIva": "Not VAT-liable"
     },
+    "salesTaxProfiles": {
+      "title": "Sales tax profile",
+      "hint": "Choose the option that matches the RUT. WARO will align the Matias responsibility and IVA or INC calculation.",
+      "required": "Select a profile before enabling electronic invoicing.",
+      "ivaTitle": "Responsible for IVA",
+      "ivaHint": "RUT 48. WARO calculates IVA and uses Matias' responsible regime.",
+      "incTitle": "Responsible for INC",
+      "incHint": "RUT 33. For sales subject to the National Consumption Tax.",
+      "noIvaIncTitle": "Not responsible for IVA or INC",
+      "noIvaIncHint": "Natural person with RUT 49 and 50. Invoices contain neither IVA nor INC.",
+      "noIvaTitle": "Not responsible for IVA; INC does not apply",
+      "noIvaHint": "RUT 49 for activities outside restaurant or bar INC treatment."
+    },
     "taxLevels": {
       "grand": "Large taxpayer",
       "selfWithholding": "Self-withholding",
@@ -73,7 +86,7 @@
       "noResolutionTitle": "No active DIAN resolution",
       "noResolutionBody": "Configure an active resolution with available numbering in the DIAN resolution section.",
       "taxReviewTitle": "Review sales tax settings",
-      "taxReviewBody": "Enable INC or VAT only when it applies to your sales. If your business issues invoices without those taxes, confirm that fiscal data matches a non-VAT-liable natural person before saving.",
+      "taxReviewBody": "Select the tax profile that matches the RUT. WARO must keep the IVA/INC responsibility and calculation rules aligned.",
       "matiasUuidTitle": "Missing Matias client UUID",
       "matiasUuidBody": "Configure the issuer client_uuid in the Electronic invoicing provider section before issuing with Matias.",
       "ready": "Your account is ready to issue electronic invoices."

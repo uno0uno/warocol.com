@@ -56,6 +56,19 @@
       "iva": "增值税纳税人",
       "noIva": "非增值税纳税人"
     },
+    "salesTaxProfiles": {
+      "title": "销售税务档案",
+      "hint": "请选择与 RUT 一致的选项。WARO 将同步 Matias 责任以及 IVA 或 INC 的计算。",
+      "required": "启用电子发票前必须选择税务档案。",
+      "ivaTitle": "IVA 纳税人",
+      "ivaHint": "RUT 48。WARO 计算 IVA 并使用 Matias 的责任制度。",
+      "incTitle": "INC 纳税人",
+      "incHint": "RUT 33。适用于国家消费税应税销售。",
+      "noIvaIncTitle": "非 IVA 和 INC 纳税人",
+      "noIvaIncHint": "具有 RUT 49 和 50 的自然人。发票不包含 IVA 或 INC。",
+      "noIvaTitle": "非 IVA 纳税人；INC 不适用",
+      "noIvaHint": "RUT 49，适用于不属于餐厅或酒吧 INC 范围的活动。"
+    },
     "taxLevels": {
       "grand": "大型纳税人",
       "selfWithholding": "自行预扣税款人",

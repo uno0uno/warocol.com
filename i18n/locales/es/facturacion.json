@@ -56,6 +56,19 @@
       "iva": "Responsable de IVA",
       "noIva": "No responsable de IVA"
     },
+    "salesTaxProfiles": {
+      "title": "Perfil tributario de las ventas",
+      "hint": "Selecciona la opción que coincide con el RUT. WARO alineará automáticamente la responsabilidad enviada a Matias y el cálculo de IVA o INC.",
+      "required": "Debes seleccionar un perfil antes de habilitar la emisión electrónica.",
+      "ivaTitle": "Responsable de IVA",
+      "ivaHint": "RUT 48. WARO calcula IVA y usa el régimen responsable de Matias.",
+      "incTitle": "Responsable de INC",
+      "incHint": "RUT 33. Para ventas gravadas con Impuesto Nacional al Consumo.",
+      "noIvaIncTitle": "No responsable de IVA ni INC",
+      "noIvaIncHint": "Persona natural con RUT 49 y 50. La factura se emite sin IVA ni INC.",
+      "noIvaTitle": "No responsable de IVA; INC no aplica",
+      "noIvaHint": "RUT 49 para actividades que no corresponden a restaurantes o bares sujetos a INC."
+    },
     "taxLevels": {
       "grand": "Gran contribuyente",
       "selfWithholding": "Autorretenedor",
@@ -73,7 +86,7 @@
       "noResolutionTitle": "Sin resolución DIAN vigente",
       "noResolutionBody": "Configura una resolución activa con numeración disponible en la sección Resolución DIAN.",
       "taxReviewTitle": "Revisa el impuesto aplicado a ventas",
-      "taxReviewBody": "Activa INC o IVA solo cuando aplique a tus ventas. Si tu negocio emite sin esos impuestos, confirma que los datos fiscales correspondan a persona natural no responsable antes de guardar.",
+      "taxReviewBody": "Selecciona el perfil tributario que coincide con el RUT. WARO debe mantener alineadas la responsabilidad de IVA/INC y las reglas de cálculo.",
       "matiasUuidTitle": "Falta UUID cliente Matias",
       "matiasUuidBody": "Configura el client_uuid del cliente emisor en la sección Proveedor de facturación electrónica antes de emitir con Matias.",
       "ready": "Tu cuenta está lista para emitir facturas electrónicas."

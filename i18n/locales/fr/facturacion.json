@@ -56,6 +56,19 @@
       "iva": "Assujetti à la TVA",
       "noIva": "Non assujetti à la TVA"
     },
+    "salesTaxProfiles": {
+      "title": "Profil fiscal des ventes",
+      "hint": "Choisissez l’option correspondant au RUT. WARO alignera la responsabilité Matias et le calcul IVA ou INC.",
+      "required": "Sélectionnez un profil avant d’activer la facturation électronique.",
+      "ivaTitle": "Responsable IVA",
+      "ivaHint": "RUT 48. WARO calcule l’IVA et utilise le régime responsable de Matias.",
+      "incTitle": "Responsable INC",
+      "incHint": "RUT 33. Pour les ventes soumises à l’impôt national sur la consommation.",
+      "noIvaIncTitle": "Non responsable IVA ni INC",
+      "noIvaIncHint": "Personne physique avec RUT 49 et 50. La facture ne contient ni IVA ni INC.",
+      "noIvaTitle": "Non responsable IVA ; INC non applicable",
+      "noIvaHint": "RUT 49 pour les activités hors traitement INC des restaurants ou bars."
+    },
     "taxLevels": {
       "grand": "Grand contribuable",
       "selfWithholding": "Auto-reteneur",

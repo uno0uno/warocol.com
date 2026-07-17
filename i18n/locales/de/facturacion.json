@@ -56,6 +56,19 @@
       "iva": "Umsatzsteuerpflichtig",
       "noIva": "Nicht umsatzsteuerpflichtig"
     },
+    "salesTaxProfiles": {
+      "title": "Verkaufssteuerprofil",
+      "hint": "Wählen Sie die zum RUT passende Option. WARO gleicht Matias-Verantwortung und IVA- oder INC-Berechnung ab.",
+      "required": "Wählen Sie ein Profil, bevor Sie die elektronische Rechnungsstellung aktivieren.",
+      "ivaTitle": "IVA-pflichtig",
+      "ivaHint": "RUT 48. WARO berechnet IVA und nutzt das verantwortliche Matias-Regime.",
+      "incTitle": "INC-pflichtig",
+      "incHint": "RUT 33. Für Verkäufe mit nationaler Verbrauchsteuer.",
+      "noIvaIncTitle": "Nicht IVA- oder INC-pflichtig",
+      "noIvaIncHint": "Natürliche Person mit RUT 49 und 50. Rechnungen enthalten weder IVA noch INC.",
+      "noIvaTitle": "Nicht IVA-pflichtig; INC nicht anwendbar",
+      "noIvaHint": "RUT 49 für Tätigkeiten außerhalb der INC-Behandlung für Restaurants oder Bars."
+    },
     "taxLevels": {
       "grand": "Großsteuerzahler",
       "selfWithholding": "Selbst-Einbehalter",

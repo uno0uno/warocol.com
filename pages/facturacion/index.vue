@@ -242,6 +242,7 @@ watch(() => taxForm.iva_applicable, (val) => { if (val) taxForm.inc_applicable =
 const saveTaxConfig = async () => {
   isSavingTax.value = true
   try {
+    applySalesTaxProfile()
     await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
     await refreshTaxConfig()
     invalidateReadiness()
@@ -306,6 +307,7 @@ const fiscalForm = reactive({
   type_organization_id: 1,
   tax_regime_id: 2,
   tax_level_id: 5,
+  sales_tax_profile: 'unconfigured',
   fiscal_address: '',
   city: '',
   city_id: 149,
@@ -326,6 +328,7 @@ watch(fiscal, (f) => {
   fiscalForm.type_organization_id = f.type_organization_id ?? 1
   fiscalForm.tax_regime_id = f.tax_regime_id ?? 2
   fiscalForm.tax_level_id = f.tax_level_id ?? 5
+  fiscalForm.sales_tax_profile = f.sales_tax_profile || 'unconfigured'
   fiscalForm.fiscal_address = f.fiscal_address || ''
   fiscalForm.city = f.city || ''
   fiscalForm.city_id = f.city_id ?? 149
@@ -363,6 +366,7 @@ const savePrintSettings = async () => {
 const saveFiscalData = async () => {
   isSavingFiscal.value = true
   try {
+    applySalesTaxProfile()
     await $fetch('/api/api/tenant/fiscal-data', {
       method: 'PUT',
       body: {
@@ -371,6 +375,7 @@ const saveFiscalData = async () => {
       },
     })
     await refreshFiscal()
+    await refreshTaxConfig()
     invalidateReadiness()
     await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
     toast.success(t('facturacion.toasts.fiscalSaved'), { title: t('facturacion.common.saved') })
@@ -385,6 +390,25 @@ const orgTypes = [
   { value: 1, label: t('facturacion.orgTypes.legal') },
   { value: 2, label: t('facturacion.orgTypes.natural') },
 ]
+const salesTaxProfiles = [
+  { value: 'iva_responsible', label: t('facturacion.salesTaxProfiles.ivaTitle'), hint: t('facturacion.salesTaxProfiles.ivaHint') },
+  { value: 'inc_responsible', label: t('facturacion.salesTaxProfiles.incTitle'), hint: t('facturacion.salesTaxProfiles.incHint') },
+  { value: 'non_responsible_iva_inc', label: t('facturacion.salesTaxProfiles.noIvaIncTitle'), hint: t('facturacion.salesTaxProfiles.noIvaIncHint') },
+  { value: 'non_responsible_iva', label: t('facturacion.salesTaxProfiles.noIvaTitle'), hint: t('facturacion.salesTaxProfiles.noIvaHint') },
+]
+
+const applySalesTaxProfile = () => {
+  const profile = fiscalForm.sales_tax_profile
+  taxForm.iva_applicable = profile === 'iva_responsible'
+  taxForm.inc_applicable = profile === 'inc_responsible'
+  fiscalForm.tax_regime_id = profile === 'iva_responsible' ? 1 : 2
+  if (profile === 'non_responsible_iva_inc') {
+    fiscalForm.type_organization_id = 2
+  }
+}
+
+watch(() => fiscalForm.sales_tax_profile, applySalesTaxProfile)
+
 const taxRegimes = [
   { value: 1, label: t('facturacion.taxRegimes.iva') },
   { value: 2, label: t('facturacion.taxRegimes.noIva') },
@@ -841,12 +865,48 @@ const taxLevels = [
         </div>
 
         <!-- Régimen tributario -->
+        <fieldset class="flex flex-col gap-2 sm:col-span-2">
+          <legend class="text-sm font-medium text-text-primary">
+            {{ t('facturacion.salesTaxProfiles.title') }}
+            <span class="text-form-control-error">*</span>
+          </legend>
+          <p class="text-[11px] text-text-tertiary leading-snug">
+            {{ t('facturacion.salesTaxProfiles.hint') }}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              v-for="profile in salesTaxProfiles"
+              :key="profile.value"
+              type="button"
+              :aria-pressed="fiscalForm.sales_tax_profile === profile.value"
+              @click="fiscalForm.sales_tax_profile = profile.value"
+              :class="[
+                'min-h-[76px] rounded-xl border-2 p-3 text-start transition-colors',
+                fiscalForm.sales_tax_profile === profile.value
+                  ? 'border-primary bg-primary/8'
+                  : 'border-border bg-background hover:border-primary/40'
+              ]"
+            >
+              <span class="block text-sm font-semibold text-text-primary">{{ profile.label }}</span>
+              <span class="block mt-1 text-[11px] leading-snug text-text-secondary">{{ profile.hint }}</span>
+            </button>
+          </div>
+          <p
+            v-if="fiscalForm.sales_tax_profile === 'unconfigured'"
+            class="text-xs text-state-warning-text"
+          >
+            {{ t('facturacion.salesTaxProfiles.required') }}
+          </p>
+        </fieldset>
+
+        <!-- Régimen Matias derivado del perfil -->
         <div class="flex flex-col gap-1">
           <label for="fiscal-regime" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.taxRegime') }}</label>
           <select
             id="fiscal-regime"
             v-model="fiscalForm.tax_regime_id"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            disabled
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-secondary bg-surface-secondary cursor-not-allowed"
           >
             <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
@@ -919,7 +979,7 @@ const taxLevels = [
       <div class="mt-5 flex justify-end">
         <button
           @click="saveFiscalData"
-          :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name"
+          :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name || fiscalForm.sales_tax_profile === 'unconfigured'"
           class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
@@ -1020,7 +1080,7 @@ const taxLevels = [
               <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.incBody')"></p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
-              <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
+              <input v-model="taxForm.inc_applicable" type="checkbox" disabled class="sr-only peer" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
@@ -1071,7 +1131,7 @@ const taxLevels = [
               <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.ivaBody')"></p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
-              <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
+              <input v-model="taxForm.iva_applicable" type="checkbox" disabled class="sr-only peer" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
