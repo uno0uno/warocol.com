@@ -547,8 +547,18 @@
               {{ quantityError }}
             </p>
 
+            <WarehouseCategoryIngredientSelector
+              v-if="!isResaleProduct"
+              class="mb-4"
+              input-id="product-edit-category-ingredients"
+              :existing-ingredient-ids="existingIngredientIds"
+              :unit-options="getIngredientUnitOptions"
+              :loading-unit-ids="loadingUnits"
+              @update:prepared-rows="onCategoryPreparedRows"
+            />
+
             <!-- Lista de ingredientes -->
-            <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
+            <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
               <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
               <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
             </div>
@@ -855,6 +865,8 @@ import {
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -1017,6 +1029,7 @@ const { availableIngredients: ingredients } = useMenuIngredientsQuery()
 const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
+const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
@@ -1071,6 +1084,18 @@ async function loadPurchaseUnits(ingredientId: string) {
     const next = new Set(loadingUnits.value)
     next.delete(ingredientId)
     loadingUnits.value = next
+  }
+}
+
+function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
+  categoryPreparedRows.value = rows
+  for (const row of rows) {
+    cacheIngredientForUnits({
+      id: row.ingredient_id,
+      name: row.name,
+      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
+    })
+    void loadPurchaseUnits(row.ingredient_id)
   }
 }
 
@@ -1195,6 +1220,14 @@ const form = ref({
   costo_percibido: null as number | null,
 })
 
+const existingIngredientIds = computed(() =>
+  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
+)
+const combinedIngredients = computed(() => [
+  ...form.value.ingredients,
+  ...mapPreparedRowsToProduct(categoryPreparedRows.value),
+])
+
 const isSubmitting = ref(false)
 const submitError = ref('')
 const duplicateRecipeBaseError = ref('')
@@ -1206,6 +1239,7 @@ const tracksInventory = ref(true)
 // Watch product data and populate form
 watch(productData, (data) => {
   if (data?.data) {
+    categoryPreparedRows.value = []
     const product = data.data
     form.value = {
       name: product.name,
@@ -1400,6 +1434,8 @@ async function confirmConvertToResale() {
 watch(tracksInventory, (on) => {
   if (on) {
     cancelConvertResalePanel()
+  } else {
+    categoryPreparedRows.value = []
   }
 })
 
@@ -1462,9 +1498,20 @@ const handleSubmit = async () => {
 
   // Validate ingredient quantities > 0 (only when tracking inventory)
   if (!isResaleProduct.value && tracksInventory.value) {
-    const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
-    if (hasZeroQuantity) {
+    const validationError = validateMenuCompositionRows(
+      combinedIngredients.value,
+      ingredientId => getIngredientUnitOptions(ingredientId).map(option => option.value),
+    )
+    if (validationError === 'incomplete') {
       quantityError.value = WAREHOUSE_COPY.allRecipeCostLinesNeedQuantity
+      return
+    }
+    if (validationError === 'duplicate') {
+      quantityError.value = WAREHOUSE_COPY.duplicateWarehouseItemInList
+      return
+    }
+    if (validationError === 'incompatible-unit') {
+      quantityError.value = t('menu.common.incompatibleUnitError')
       return
     }
   }
@@ -1512,7 +1559,7 @@ const handleSubmit = async () => {
         ...formScalars,
         recipe_bases: cleanedRecipeBases,
         recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
-        ingredients: tracksInventory.value ? form.value.ingredients : [],
+        ingredients: tracksInventory.value ? combinedIngredients.value : [],
         image_url: form.value.image_url || null,
         costo_percibido: form.value.costo_percibido ?? null,
       }

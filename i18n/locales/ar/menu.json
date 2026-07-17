@@ -33,7 +33,8 @@
       "listo": "تم",
       "guardado": "تم الحفظ",
       "active": "نشط",
-      "inactive": "غير نشط"
+      "inactive": "غير نشط",
+      "incompatibleUnitError": "اختر وحدة متوافقة لكل مكوّن."
     },
     "productos": {
       "editMode": "وضع التعديل",

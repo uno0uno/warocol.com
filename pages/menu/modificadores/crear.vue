@@ -147,6 +147,9 @@
                     @remove="removeModifier(index)"
                     @select-ingredient="(ing) => selectIngredient(modifier, ing)"
                     @create-ingredient="(name) => openCustomIngModal(name, index)"
+                    @select-recipe-line="(lineIndex, ing) => selectRecipeLineIngredient(modifier, lineIndex, ing)"
+                    @create-recipe-line="(lineIndex, name) => openCustomRecipeLineModal(name, index, lineIndex)"
+                    @prepared-recipe-lines="rows => onPreparedRecipeLines(modifier, rows)"
                   />
                 </div>
               </MenuCatalogInlineCreateBusyOverlay>
@@ -254,6 +257,7 @@ import {
   validateModifierOption,
   type ModifierFormRow,
 } from '~/composables/useModifierOptionForm'
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -349,22 +353,62 @@ function selectIngredient(modifier: ModifierFormRow, ing: any) {
   loadPurchaseUnits(ing.id)
 }
 
+function selectRecipeLineIngredient(modifier: ModifierFormRow, lineIndex: number, ing: any) {
+  const line = modifier.recipe_lines[lineIndex]
+  if (!line) return
+  line.ingredient_id = ing.id
+  line.ingredient_name = ing.name
+  ingredientCache.value[ing.id] = ing
+  line.unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
+  void loadPurchaseUnits(ing.id)
+}
+
+function onPreparedRecipeLines(
+  modifier: ModifierFormRow,
+  rows: PreparedWarehouseCategoryIngredient[],
+) {
+  modifier.prepared_recipe_lines = rows
+  for (const row of rows) {
+    ingredientCache.value[row.ingredient_id] = {
+      ...ingredientCache.value[row.ingredient_id],
+      id: row.ingredient_id,
+      name: row.name,
+      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit,
+    }
+    void loadPurchaseUnits(row.ingredient_id)
+  }
+}
+
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const customIngModalModIndex = ref(-1)
+const customIngModalRecipeLineIndex = ref(-1)
 const inlineCatalogBusy = ref(false)
 const inlineCatalogBusyLabel = ref('')
 const inlineCatalogBusyHint = ref('')
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalModIndex.value = index
+  customIngModalRecipeLineIndex.value = -1
+  inlineCreateShell.value?.openFromSearch(name)
+}
+
+function openCustomRecipeLineModal(name: string, modifierIndex: number, lineIndex: number) {
+  customIngModalModIndex.value = modifierIndex
+  customIngModalRecipeLineIndex.value = lineIndex
   inlineCreateShell.value?.openFromSearch(name)
 }
 
 function onCustomIngredientCreated(ingredient: any) {
   const index = customIngModalModIndex.value
   if (index < 0 || index >= form.value.modifiers.length) return
-  selectIngredient(form.value.modifiers[index], ingredient)
+  const modifier = form.value.modifiers[index]
+  if (customIngModalRecipeLineIndex.value >= 0) {
+    selectRecipeLineIngredient(modifier, customIngModalRecipeLineIndex.value, ingredient)
+  } else {
+    selectIngredient(modifier, ingredient)
+  }
   customIngModalModIndex.value = -1
+  customIngModalRecipeLineIndex.value = -1
 }
 
 const { linkCreatedProductToRow } = useInlineCatalogProductLink()
@@ -373,8 +417,14 @@ async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalModIndex.value
   if (index < 0 || index >= form.value.modifiers.length) return
   await linkCreatedProductToRow(product, async (ingredient) => {
-    selectIngredient(form.value.modifiers[index], ingredient)
+    const modifier = form.value.modifiers[index]
+    if (customIngModalRecipeLineIndex.value >= 0) {
+      selectRecipeLineIngredient(modifier, customIngModalRecipeLineIndex.value, ingredient)
+    } else {
+      selectIngredient(modifier, ingredient)
+    }
     customIngModalModIndex.value = -1
+    customIngModalRecipeLineIndex.value = -1
   })
 }
 
@@ -415,6 +465,16 @@ async function validateForm(): Promise<boolean> {
   }
 
   for (const m of form.value.modifiers) {
+    if (m.option_type === 'RECIPE') {
+      const unitError = validateMenuCompositionRows(
+        [...m.recipe_lines, ...m.prepared_recipe_lines],
+        ingredientId => getIngredientUnitOptions(ingredientId).map(option => option.value),
+      )
+      if (unitError === 'incompatible-unit') {
+        submitError.value = t('menu.common.incompatibleUnitError')
+        return false
+      }
+    }
     const err = validateModifierOption(m)
     if (err) {
       submitError.value = err

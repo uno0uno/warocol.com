@@ -75,7 +75,16 @@
             >
               <MenuIngredientProductHint class="mb-4" />
 
-              <div v-if="form.ingredients.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
+              <WarehouseCategoryIngredientSelector
+                class="mb-4"
+                input-id="recipe-edit-category-ingredients"
+                :existing-ingredient-ids="existingIngredientIds"
+                :unit-options="getIngredientUnitOptions"
+                :loading-unit-ids="loadingUnits"
+                @update:prepared-rows="onCategoryPreparedRows"
+              />
+
+              <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
                 <Icon name="heroicons:cube" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
                 <p class="text-sm font-medium mb-0.5">{{ t('menu.recetas.form.emptyLines') }}</p>
                 <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
@@ -170,7 +179,7 @@
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
               <span class="text-text-secondary">{{ WAREHOUSE_COPY.recipeCompositionSummary }}</span>
-              <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
+              <span class="font-semibold text-text-primary">{{ combinedIngredients.length }}</span>
             </div>
 
             <div class="flex justify-between text-sm items-center gap-2">
@@ -242,6 +251,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
+import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 definePageMeta({
   pageTransition: {
@@ -286,6 +297,7 @@ const { availableIngredients } = useMenuIngredientsQuery()
 const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
+const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
@@ -384,6 +396,26 @@ const form = ref({
   }>
 })
 
+const existingIngredientIds = computed(() =>
+  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
+)
+const combinedIngredients = computed(() => [
+  ...form.value.ingredients,
+  ...mapPreparedRowsToRecipe(categoryPreparedRows.value),
+])
+
+function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
+  categoryPreparedRows.value = rows
+  for (const row of rows) {
+    cacheIngredientForUnits({
+      id: row.ingredient_id,
+      name: row.name,
+      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
+    })
+    void loadPurchaseUnits(row.ingredient_id)
+  }
+}
+
 const isSubmitting = ref(false)
 const submitError = ref('')
 
@@ -435,19 +467,24 @@ const handleSubmit = async () => {
   if (isSubmitting.value) return
   submitError.value = ''
 
-  const hasZeroQuantity = form.value.ingredients.some(ing => !ing.base_quantity || ing.base_quantity <= 0)
-  if (hasZeroQuantity) {
+  const validationError = validateMenuCompositionRows(
+    combinedIngredients.value.map(row => ({
+      ingredient_id: row.ingredient_id,
+      quantity: row.base_quantity,
+      unit: row.unit,
+    })),
+    ingredientId => getIngredientUnitOptions(ingredientId).map(option => option.value),
+  )
+  if (validationError === 'incomplete') {
     submitError.value = WAREHOUSE_COPY.allRecipeCostLinesNeedQuantity
     return
   }
-
-  const ingredientIds = form.value.ingredients
-    .map(ing => ing.ingredient_id)
-    .filter(id => id !== '')
-
-  const uniqueIds = new Set(ingredientIds)
-  if (ingredientIds.length !== uniqueIds.size) {
+  if (validationError === 'duplicate') {
     submitError.value = WAREHOUSE_COPY.duplicateWarehouseItemInList
+    return
+  }
+  if (validationError === 'incompatible-unit') {
+    submitError.value = t('menu.common.incompatibleUnitError')
     return
   }
 
@@ -460,7 +497,7 @@ const handleSubmit = async () => {
         name: form.value.name,
         description: form.value.description,
         is_active: form.value.is_active,
-        ingredients: form.value.ingredients.map(ing => ({
+        ingredients: combinedIngredients.value.map(ing => ({
           ingredient_id: ing.ingredient_id,
           ingredient_name: ing.ingredient_name,
           base_quantity: ing.base_quantity,

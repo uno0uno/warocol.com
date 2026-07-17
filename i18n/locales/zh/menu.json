@@ -33,7 +33,8 @@
       "listo": "完成",
       "guardado": "已保存",
       "active": "启用",
-      "inactive": "禁用"
+      "inactive": "禁用",
+      "incompatibleUnitError": "请为每种配料选择兼容的单位。"
     },
     "productos": {
       "editMode": "编辑模式",

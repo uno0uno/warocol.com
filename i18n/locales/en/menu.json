@@ -33,7 +33,8 @@
       "listo": "Done",
       "guardado": "Saved",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "incompatibleUnitError": "Select a compatible unit for every ingredient."
     },
     "productos": {
       "editMode": "Edit mode",
