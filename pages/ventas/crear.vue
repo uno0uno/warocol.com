@@ -13,6 +13,7 @@ import {
   type ApiPaymentGroup,
   type PosPaymentGroup,
 } from '~/utils/paymentDefaults'
+import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,10 @@ interface SelectedCustomer {
   name: string | null
   phone_number: string | null
   email: string | null
+  fiscal_id_type?: string | null
+  fiscal_id?: string | null
+  fiscal_business_name?: string | null
+  fiscal_email?: string | null
 }
 
 interface ManualSplitPayment {
@@ -541,6 +546,9 @@ const selectedCustomerInitial = computed(() => {
   const customer = selectedCustomer.value
   return customer?.name?.charAt(0)?.toUpperCase() || customer?.phone_number?.charAt(0) || '?'
 })
+const selectedCustomerIdentity = computed(() =>
+  buildCustomerIdentityPresentation(selectedCustomer.value),
+)
 
 // ─── Customer identification ────────────────────────────────────────────────
 
@@ -697,12 +705,41 @@ async function submit() {
               {{ selectedCustomerInitial }}
             </div>
             <div class="min-w-0 flex-1">
+              <p
+                v-if="!isAnonymousCustomer"
+                class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary"
+              >
+                {{ t('pos.customer.contactLabel') }}
+              </p>
               <p class="text-sm font-medium text-text-primary truncate">
                 {{ selectedCustomer.name || t('ventas.crear.customerNoData') }}
               </p>
               <p class="text-xs text-text-secondary truncate">
                 {{ selectedCustomer.phone_number || t('ventas.common.sinTelefono') }}
               </p>
+              <p
+                v-if="selectedCustomerIdentity.hasFiscalIdentity && !selectedCustomerIdentity.showSeparateAcquirer && selectedCustomerIdentity.acquirer.fiscalId"
+                class="text-xs text-text-secondary truncate"
+              >
+                {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+              </p>
+              <div
+                v-if="selectedCustomerIdentity.showSeparateAcquirer"
+                class="mt-1 border-s-2 border-primary/30 ps-2"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                  {{ t('pos.customer.fiscalAcquirerLabel') }}
+                </p>
+                <p class="text-xs font-semibold text-text-primary break-words">
+                  {{ selectedCustomerIdentity.acquirer.name }}
+                </p>
+                <p
+                  v-if="selectedCustomerIdentity.acquirer.fiscalId"
+                  class="text-xs text-text-secondary truncate"
+                >
+                  {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+                </p>
+              </div>
               <div
                 v-if="!isAnonymousCustomer"
                 class="flex flex-wrap gap-2 mt-1"

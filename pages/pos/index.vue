@@ -5,7 +5,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } f
 import { storeToRefs } from 'pinia'
 import { useQueryCache } from '@pinia/colada'
 import { $fetch } from 'ofetch'
-import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
+import type { CachedProduct, Customer, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { useOpenSale } from '~/composables/useOpenSale'
 import { registerTableSessionRefresh } from '~/composables/useTableSessionSync'
@@ -18,6 +18,7 @@ import {
 } from '~/composables/useComandaPrint'
 import { promoBadgeForProduct } from '~/utils/promoProductMatch'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
+import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
 
 definePageMeta({
   layout: 'dashboard',
@@ -263,6 +264,9 @@ const posCustomerId = computed(() => posStore.currentCustomer?.id ?? '')
 const isAnonymousPosCustomer = computed(
   () => posStore.currentCustomer?.phone_number === '0000000000',
 )
+const posCustomerIdentity = computed(() =>
+  buildCustomerIdentityPresentation(posStore.currentCustomer),
+)
 const { wallet: posCustomerWallet, isLoading: isLoadingPosWallet, isRefreshing: isRefreshingPosWallet, refetch: refetchPosWallet } =
   useCustomerWallet(posCustomerId)
 const {
@@ -281,13 +285,8 @@ watch(posCustomerId, (id) => {
   void refetchPosWallet()
 }, { immediate: true })
 
-const onPosCustomerIdentified = async (customer: {
-  id: string
-  name: string | null
-  phone_number: string | null
-  email: string | null
-}) => {
-  await posStore.setCustomer(customer as any)
+const onPosCustomerIdentified = async (customer: Customer) => {
+  await posStore.setCustomer(customer)
 }
 
 const posWarosBalance = computed(() => posWarosSummary.value?.current_balance ?? 0)
@@ -1959,14 +1958,37 @@ onUnmounted(() => {
             </div>
             <div class="min-w-0">
               <p class="text-[10px] font-bold text-badge-primary-text uppercase tracking-widest">
-                {{ t('pos.banner.currentCustomer') }}
+                {{ isAnonymousPosCustomer ? t('pos.banner.currentCustomer') : t('pos.customer.contactLabel') }}
               </p>
               <p class="text-base font-bold text-text-primary leading-tight truncate">
                 {{ posStore.currentCustomer.name || t('pos.banner.noName') }}
               </p>
               <p class="text-xs text-text-secondary mt-0.5">
-                📱 {{ posStore.currentCustomer.phone_number }}
+                📱 {{ posStore.currentCustomer.phone_number || t('pos.customer.noPhone') }}
               </p>
+              <p
+                v-if="posCustomerIdentity.hasFiscalIdentity && !posCustomerIdentity.showSeparateAcquirer && posCustomerIdentity.acquirer.fiscalId"
+                class="text-xs text-text-secondary mt-0.5"
+              >
+                {{ [posCustomerIdentity.acquirer.fiscalIdType, posCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+              </p>
+              <div
+                v-if="posCustomerIdentity.showSeparateAcquirer"
+                class="mt-2 border-s-2 border-badge-primary-border ps-2"
+              >
+                <p class="text-[10px] font-bold text-badge-primary-text uppercase tracking-wider">
+                  {{ t('pos.customer.fiscalAcquirerLabel') }}
+                </p>
+                <p class="text-sm font-semibold text-text-primary leading-tight break-words">
+                  {{ posCustomerIdentity.acquirer.name }}
+                </p>
+                <p
+                  v-if="posCustomerIdentity.acquirer.fiscalId"
+                  class="text-xs text-text-secondary mt-0.5"
+                >
+                  {{ [posCustomerIdentity.acquirer.fiscalIdType, posCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+                </p>
+              </div>
               <div
                 v-if="!isAnonymousPosCustomer"
                 class="flex flex-wrap gap-2 mt-2"
