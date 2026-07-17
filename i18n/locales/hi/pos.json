@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "प्रतिष्ठान की बिक्री रसीद",
       "dianIssuerTenant": "DIAN जारीकर्ता: प्रतिष्ठान (किरायेदार)",
       "tipDefault": "टिप",
-      "softwareRole": "प्रौद्योगिकी / सॉफ्टवेयर प्रदाता",
+      "softwareRole": "प्रबंधन सॉफ़्टवेयर",
       "facturadorRole": "DIAN तकनीकी ई-बिलिंग प्रदाता",
       "notIssuer": "यह इस बिक्री का जारीकर्ता नहीं है",
       "notResponsibleIva": "IVA के लिए जिम्मेदार नहीं",

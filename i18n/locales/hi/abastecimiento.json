@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "श्रेणी मौजूदा सामग्रियों पर दिखाई देगी, लेकिन दोबारा असाइन नहीं की जा सकेगी।",
       "warehouseCategorySaveError": "गोदाम श्रेणी सहेजी नहीं जा सकी।",
       "categoryIngredientSelectorTitle": "श्रेणी के अनुसार सामग्री जोड़ें",
+      "categoryIngredientsBatchLabel": "श्रेणी के अनुसार सामग्री",
+      "categoryIngredientsManualLabel": "मैन्युअल रूप से जोड़े गए",
       "categoryIngredientSelectorPlaceholder": "गोदाम श्रेणी खोजें...",
       "removeWarehouseCategorySelection": "श्रेणी {name} हटाएँ",
       "categoryIngredientsLoading": "सामग्री तैयार की जा रही है…",

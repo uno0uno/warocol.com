@@ -7,6 +7,7 @@
         type="text"
         :placeholder="placeholder"
         :required="required && !modelValue"
+        :title="getSelectedLabel() || searchTerm || undefined"
         class="input-base w-full px-4 py-2 pe-8"
         @focus="handleFocus"
         @input="handleInput"
@@ -36,7 +37,7 @@
     <!-- Dropdown -->
     <div
       v-show="isOpen"
-      class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-surface shadow-lg"
+      class="absolute z-50 mt-1 max-h-60 w-full overflow-x-hidden overflow-y-auto rounded-lg border border-border bg-surface shadow-lg"
     >
       <div class="p-1">
         <div
@@ -49,14 +50,17 @@
           v-for="option in filteredOptions"
           :key="option.value"
           type="button"
-          class="w-full text-start relative flex cursor-pointer select-none items-center rounded-md px-4 py-2 text-sm outline-none hover:bg-surface-secondary focus:bg-surface-secondary"
+          :title="option.label"
+          class="min-w-0 w-full text-start relative flex cursor-pointer select-none items-start gap-2 rounded-md px-4 py-2 text-sm outline-none whitespace-normal hover:bg-surface-secondary focus:bg-surface-secondary"
           :class="{ 'bg-surface-secondary': option.value === modelValue }"
           @click="selectOption(option)"
         >
-          <span>{{ option.label }}</span>
+          <span class="min-w-0 flex-1 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">
+            {{ option.label }}
+          </span>
           <svg
             v-if="option.value === modelValue"
-            class="ms-auto w-4 h-4"
+            class="mt-0.5 ms-auto w-4 h-4 flex-shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >

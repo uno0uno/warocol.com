@@ -172,4 +172,21 @@ describe('CatalogSearchCombobox', () => {
     expect(wrapper.text()).toContain('Vacío')
     expect(wrapper.text()).toContain('Create "cate"')
   })
+
+  it('keeps long values available and wraps long result labels', async () => {
+    const longLabel = 'Taste Of The Wild Prey Angus Beef Feline 15 Lb Alimento Para Gatos Premium A Base De Res Angus Lenteja Y Grasa De Pollo'
+    const wrapper = mountCombobox({
+      modelValue: longLabel,
+      options: [{ id: 'long', label: longLabel }],
+    })
+
+    const input = wrapper.get('input')
+    expect(input.attributes('title')).toBe(longLabel)
+
+    await input.trigger('focus')
+    const option = wrapper.get('[role="option"]')
+    expect(option.attributes('title')).toBe(longLabel)
+    expect(option.text()).toBe(longLabel)
+    expect(option.get('span').classes()).toContain('[overflow-wrap:anywhere]')
+  })
 })

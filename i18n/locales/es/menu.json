@@ -56,8 +56,8 @@
       "catalogUpdated": "Catálogo actualizado",
       "someIngredientsNotRenamed": "Algunos insumos no se renombraron",
       "ingredientNotSynced": "Insumo no sincronizado",
-      "newProduct": "+ Nuevo producto",
-      "newShort": "+ Nuevo",
+      "newProduct": "Nuevo producto",
+      "newShort": "Nuevo",
       "costWarning": "{count} producto{suffix} con costo mayor al precio de venta — posibles compras mal registradas.",
       "viewDataQuality": "Ver Calidad de Datos →",
       "closeWarning": "Cerrar aviso",
@@ -240,8 +240,8 @@
       "searchPlaceholder": "Buscar recetas...",
       "empty": "No hay recetas base registradas",
       "emptySub": "Crea una nueva receta base para comenzar",
-      "newRecipe": "+ Nueva Receta Base",
-      "newShort": "+ Nueva",
+      "newRecipe": "Nueva Receta Base",
+      "newShort": "Nueva",
       "nameCol": "Nombre de Receta",
       "editRecipe": "Editar receta",
       "backToRecipes": "Volver a recetas",
@@ -264,7 +264,7 @@
         "descriptionPlaceholder": "Breve descripción de la receta base",
         "activeRecipe": "Receta activa",
         "activeHelp": "Disponible para asignar a productos nuevos",
-        "addLine": "+ Agregar",
+        "addLine": "Agregar",
         "emptyLines": "Sin líneas en la receta",
         "quantityRequired": "Cantidad *",
         "unit": "Unidad",
@@ -292,8 +292,8 @@
       "searchPlaceholder": "Buscar grupo o producto...",
       "empty": "No hay grupos de modificadores registrados",
       "emptySub": "Crea un nuevo grupo para comenzar",
-      "newGroup": "+ Nuevo grupo",
-      "newShort": "+ Nuevo",
+      "newGroup": "Nuevo grupo",
+      "newShort": "Nuevo",
       "group": "Grupo",
       "productos": "Productos",
       "opciones": "Opciones",
@@ -335,7 +335,7 @@
       ,"displayOrderHelp": "Menor número aparece primero"
       ,"requiredToggle": "Es obligatorio"
       ,"requiredHelp": "El cliente debe seleccionar al menos una opción"
-      ,"addOption": "+ Agregar"
+      ,"addOption": "Agregar"
       ,"emptyOptions": "Sin opciones en el grupo"
       ,"emptyOptionsHelp": "Agrega modificadores que los clientes puedan seleccionar"
       ,"groupSummary": "Resumen"
@@ -404,7 +404,7 @@
       "empty": "No hay categorías",
       "emptySub": "Crea la primera para organizar tu menú.",
       "newCategory": "+ Nueva categoría",
-      "newShort": "+ Nueva",
+      "newShort": "Nueva",
       "filterTypeAria": "Filtrar por tipo",
       "global": "Global",
       "own": "Propia",

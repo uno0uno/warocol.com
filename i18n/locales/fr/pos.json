@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "Reçu de vente de l'établissement",
       "dianIssuerTenant": "Émetteur DIAN: établissement (locataire)",
       "tipDefault": "Pourboire",
-      "softwareRole": "Fournisseur technologique / logiciel",
+      "softwareRole": "Logiciel de gestion",
       "facturadorRole": "Facturier technique DIAN",
       "notIssuer": "N'est pas l'émetteur de cette vente",
       "notResponsibleIva": "Non assujetti à l'IVA",

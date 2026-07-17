@@ -111,9 +111,10 @@
                 type="button"
                 variant="default"
                 size="sm"
-                class="bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
+                class="gap-1.5 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 @click="addModifier"
               >
+                <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
                 {{ t('menu.modificadores.addOption') }}
               </UiButton>
             </template>

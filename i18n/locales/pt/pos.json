@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "Comprovante de venda do estabelecimento",
       "dianIssuerTenant": "Emissor DIAN: estabelecimento (tenant)",
       "tipDefault": "Gorjeta",
-      "softwareRole": "Provedor tecnológico / software",
+      "softwareRole": "Software de gestão",
       "facturadorRole": "Faturador técnico DIAN",
       "notIssuer": "Não é o emissor desta venda",
       "notResponsibleIva": "Não responsável por IVA",

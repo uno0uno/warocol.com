@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "إيصال بيع المؤسسة",
       "dianIssuerTenant": "جهة إصدار DIAN: المؤسسة (المستأجر)",
       "tipDefault": "إكرامية",
-      "softwareRole": "مزود التكنولوجيا / البرمجيات",
+      "softwareRole": "برنامج الإدارة",
       "facturadorRole": "مزود الفواتير الإلكترونية الفني لـ DIAN",
       "notIssuer": "ليس هو جهة إصدار هذا البيع",
       "notResponsibleIva": "غير مسؤول عن IVA",

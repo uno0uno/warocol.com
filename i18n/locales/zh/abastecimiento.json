@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "该类别仍会显示在现有配料中，但不能再次分配。",
       "warehouseCategorySaveError": "无法保存库存类别。",
       "categoryIngredientSelectorTitle": "按类别添加食材",
+      "categoryIngredientsBatchLabel": "按类别添加的食材",
+      "categoryIngredientsManualLabel": "手动添加",
       "categoryIngredientSelectorPlaceholder": "搜索库存类别...",
       "removeWarehouseCategorySelection": "移除类别 {name}",
       "categoryIngredientsLoading": "正在准备食材…",

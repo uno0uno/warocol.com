@@ -179,6 +179,16 @@
 
       <div v-if="modifier.recipe_lines.length" class="space-y-2">
         <div
+          v-if="modifier.prepared_recipe_lines.length"
+          class="flex items-center gap-3 pt-1"
+        >
+          <span class="h-px flex-1 bg-border" aria-hidden="true" />
+          <h4 class="text-xs font-medium text-text-secondary">
+            {{ t('abastecimiento.glossary.categoryIngredientsManualLabel') }}
+          </h4>
+          <span class="h-px flex-1 bg-border" aria-hidden="true" />
+        </div>
+        <div
           v-for="(line, lineIndex) in modifier.recipe_lines"
           :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
           class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
@@ -229,9 +239,10 @@
 
       <button
         type="button"
-        class="min-h-9 w-full rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
+        class="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
         @click="addRecipeLine"
       >
+        <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
         {{ t('menu.recetas.form.addLine') }}
       </button>
     </div>

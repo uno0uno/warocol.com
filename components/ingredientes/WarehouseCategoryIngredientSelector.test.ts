@@ -49,6 +49,7 @@ describe('WarehouseCategoryIngredientSelector', () => {
     vi.stubGlobal('useI18n', () => ({
       t: (key: string, params?: Record<string, string>) => ({
         'abastecimiento.glossary.categoryIngredientSelectorTitle': 'Agregar ingredientes por categoría',
+        'abastecimiento.glossary.categoryIngredientsBatchLabel': 'Ingredientes por categoría',
         'abastecimiento.glossary.categoryIngredientSelectorPlaceholder': 'Buscar categoría',
         'abastecimiento.glossary.warehouseCategorySearchResults': 'Categorías',
         'abastecimiento.glossary.removeWarehouseCategorySelection': `Quitar ${params?.name}`,
@@ -79,6 +80,11 @@ describe('WarehouseCategoryIngredientSelector', () => {
 
     expect(wrapper.text()).toContain('Granos')
     expect(wrapper.text()).toContain('Arroz')
+    expect(wrapper.get('[data-test="category-batch-label"]').text()).toBe('Ingredientes por categoría')
+    expect(wrapper.findAll('[data-test="category-batch-label"]')).toHaveLength(1)
+    expect(wrapper.get('[data-test="category-group"] h5').text()).toBe('Granos')
+    expect(wrapper.get('[data-test="category-group"] button').attributes('aria-label')).toBe('Quitar Granos')
+    expect(wrapper.get('[data-test="category-batch-label"]').classes()).not.toContain('rounded-full')
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/suppliers/ingredients/resolve-by-warehouse-categories',
@@ -101,6 +107,10 @@ describe('WarehouseCategoryIngredientSelector', () => {
     expect(emittedRows.some(event => (event[0] as any[])[0]?.quantity === 2.5)).toBe(true)
     expect(wrapper.text()).not.toContain('Arroz')
     expect(fetchMock.mock.calls.every(([url]) => url === '/api/suppliers/ingredients/resolve-by-warehouse-categories')).toBe(true)
+
+    await wrapper.get('button[aria-label="Quitar Granos"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="category-group"]').exists()).toBe(false)
   })
 
   it('shows partial states and retries recoverable failures without clearing selections', async () => {

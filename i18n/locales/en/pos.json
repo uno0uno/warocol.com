@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "Establishment sales receipt",
       "dianIssuerTenant": "DIAN issuer: establishment (tenant)",
       "tipDefault": "Tip",
-      "softwareRole": "Technology / software provider",
+      "softwareRole": "Management software",
       "facturadorRole": "DIAN technical e-invoicing provider",
       "notIssuer": "Not the issuer of this sale",
       "notResponsibleIva": "Not liable for VAT",

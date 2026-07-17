@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "The category will remain visible on existing ingredients, but cannot be assigned again.",
       "warehouseCategorySaveError": "Could not save the warehouse category.",
       "categoryIngredientSelectorTitle": "Add ingredients by category",
+      "categoryIngredientsBatchLabel": "Ingredients by category",
+      "categoryIngredientsManualLabel": "Added manually",
       "categoryIngredientSelectorPlaceholder": "Search warehouse category...",
       "removeWarehouseCategorySelection": "Remove category {name}",
       "categoryIngredientsLoading": "Preparing ingredients…",

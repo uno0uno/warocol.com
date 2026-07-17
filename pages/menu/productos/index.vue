@@ -51,19 +51,24 @@
             <div class="flex flex-wrap items-center gap-2 justify-end">
               <button
                 type="button"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-all focus:outline-none focus:ring-2"
+                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2 text-center text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus:ring-2"
                 :class="editMode
                   ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:ring-shell-action-focus-ring'
                   : 'bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:ring-shell-cta-focus-ring'"
                 @click="onToggleEditMode"
               >
+                <Icon
+                  :name="editMode ? 'heroicons:eye' : 'heroicons:pencil-square'"
+                  class="h-4 w-4 flex-shrink-0"
+                />
                 <span class="hidden sm:inline">{{ editMode ? t('menu.productos.viewCatalog') : t('menu.productos.editMode') }}</span>
                 <span class="sm:hidden">{{ editMode ? t('menu.productos.viewShort') : t('menu.productos.editShort') }}</span>
               </button>
               <NuxtLink
                 to="/menu/productos/crear"
-                class="flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
               >
+                <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
                 <span class="hidden sm:inline">{{ t('menu.productos.newProduct') }}</span>
                 <span class="sm:hidden">{{ t('menu.productos.newShort') }}</span>
               </NuxtLink>

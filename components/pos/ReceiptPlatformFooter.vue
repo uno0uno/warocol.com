@@ -23,7 +23,7 @@ const software = computed(() => legal.value.software)
 const facturador = computed(() => legal.value.facturador)
 
 const hasSoftware = computed(() =>
-  !!(software.value.commercial_name || software.value.nit || software.value.legal_name),
+  !!(software.value.commercial_name || software.value.nit || software.value.website),
 )
 
 const hasFacturador = computed(() =>
@@ -66,7 +66,7 @@ const facturadorNotIssuer = computed(() => {
 
 <template>
   <div v-if="hasSoftware || showFacturador" class="receipt-platform-footer">
-    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-divider" aria-hidden="true" />
 
     <template v-if="hasSoftware">
       <div class="receipt-row receipt-small" style="font-weight:bold;">
@@ -78,8 +78,8 @@ const facturadorNotIssuer = computed(() => {
       <div v-if="software.nit" class="receipt-row receipt-small">
         {{ t('pos.receipt.nitBare', { nit: software.nit }) }}
       </div>
-      <div v-if="software.legal_name" class="receipt-row receipt-small">
-        {{ software.legal_name }}
+      <div v-if="software.website" class="receipt-row receipt-small">
+        {{ software.website }}
       </div>
       <div v-if="softwareIvaLabel" class="receipt-row receipt-small">
         {{ softwareIvaLabel }}
@@ -90,7 +90,7 @@ const facturadorNotIssuer = computed(() => {
     </template>
 
     <template v-if="showFacturador">
-      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-divider" aria-hidden="true" />
       <div class="receipt-row receipt-small" style="font-weight:bold;">
         {{ facturadorRoleLabel }}
       </div>
@@ -125,3 +125,9 @@ const facturadorNotIssuer = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.receipt-platform-footer .receipt-row {
+  text-align: start;
+}
+</style>

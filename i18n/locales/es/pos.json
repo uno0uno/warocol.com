@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "Comprobante de venta del establecimiento",
       "dianIssuerTenant": "Emisor DIAN: establecimiento (tenant)",
       "tipDefault": "Propina",
-      "softwareRole": "Proveedor tecnológico / software",
+      "softwareRole": "Software de gestión",
       "facturadorRole": "Facturador técnico DIAN",
       "notIssuer": "No es el emisor de esta venta",
       "notResponsibleIva": "No responsable de IVA",

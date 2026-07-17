@@ -56,8 +56,8 @@
       "catalogUpdated": "Catalog updated",
       "someIngredientsNotRenamed": "Some items were not renamed",
       "ingredientNotSynced": "Item not synced",
-      "newProduct": "+ New product",
-      "newShort": "+ New",
+      "newProduct": "New product",
+      "newShort": "New",
       "costWarning": "{count} product{suffix} with cost above the sale price — possible incorrectly recorded purchases.",
       "viewDataQuality": "View Data Quality →",
       "closeWarning": "Close warning",
@@ -240,8 +240,8 @@
       "searchPlaceholder": "Search recipes...",
       "empty": "No base recipes registered",
       "emptySub": "Create a new base recipe to get started",
-      "newRecipe": "+ New base recipe",
-      "newShort": "+ New",
+      "newRecipe": "New base recipe",
+      "newShort": "New",
       "nameCol": "Recipe name",
       "editRecipe": "Edit recipe",
       "backToRecipes": "Back to recipes",
@@ -264,7 +264,7 @@
         "descriptionPlaceholder": "Brief description of the base recipe",
         "activeRecipe": "Active recipe",
         "activeHelp": "Available to assign to new products",
-        "addLine": "+ Add",
+        "addLine": "Add",
         "emptyLines": "No recipe lines",
         "quantityRequired": "Quantity *",
         "unit": "Unit",
@@ -292,8 +292,8 @@
       "searchPlaceholder": "Search group or product...",
       "empty": "No modifier groups registered",
       "emptySub": "Create a new group to get started",
-      "newGroup": "+ New group",
-      "newShort": "+ New",
+      "newGroup": "New group",
+      "newShort": "New",
       "group": "Group",
       "productos": "Products",
       "opciones": "Options",
@@ -335,7 +335,7 @@
       ,"displayOrderHelp": "Lower number appears first"
       ,"requiredToggle": "Required"
       ,"requiredHelp": "The customer must select at least one option"
-      ,"addOption": "+ Add"
+      ,"addOption": "Add"
       ,"emptyOptions": "No options in this group"
       ,"emptyOptionsHelp": "Add modifiers customers can select"
       ,"groupSummary": "Summary"
@@ -404,7 +404,7 @@
       "empty": "No categories",
       "emptySub": "Create the first one to organize your menu.",
       "newCategory": "+ New category",
-      "newShort": "+ New",
+      "newShort": "New",
       "filterTypeAria": "Filter by type",
       "global": "Global",
       "own": "Own",

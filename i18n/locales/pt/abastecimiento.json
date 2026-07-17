@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "A categoria continuará visível nos ingredientes existentes, mas não poderá ser atribuída novamente.",
       "warehouseCategorySaveError": "Não foi possível salvar a categoria de estoque.",
       "categoryIngredientSelectorTitle": "Adicionar ingredientes por categoria",
+      "categoryIngredientsBatchLabel": "Ingredientes por categoria",
+      "categoryIngredientsManualLabel": "Adicionados manualmente",
       "categoryIngredientSelectorPlaceholder": "Buscar categoria de estoque...",
       "removeWarehouseCategorySelection": "Remover categoria {name}",
       "categoryIngredientsLoading": "Preparando ingredientes…",

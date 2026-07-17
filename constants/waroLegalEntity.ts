@@ -8,8 +8,8 @@
 export type PlatformSoftwareLegal = {
   role_label: string
   commercial_name: string | null
-  legal_name: string | null
   nit: string | null
+  website: string | null
   iva_responsibility_label: string | null
   not_issuer_disclaimer: string
 }
@@ -30,10 +30,10 @@ export type PlatformLegalPrint = {
 
 export const EMPTY_PLATFORM_LEGAL: PlatformLegalPrint = {
   software: {
-    role_label: 'Proveedor tecnologico / software',
+    role_label: 'Software de gestión',
     commercial_name: null,
-    legal_name: null,
     nit: null,
+    website: 'warocol.com',
     iva_responsibility_label: null,
     not_issuer_disclaimer: 'No es el emisor de esta venta',
   },

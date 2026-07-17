@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "La catégorie restera visible sur les ingrédients existants, mais ne pourra plus être attribuée.",
       "warehouseCategorySaveError": "Impossible d’enregistrer la catégorie de stock.",
       "categoryIngredientSelectorTitle": "Ajouter des ingrédients par catégorie",
+      "categoryIngredientsBatchLabel": "Ingrédients par catégorie",
+      "categoryIngredientsManualLabel": "Ajoutés manuellement",
       "categoryIngredientSelectorPlaceholder": "Rechercher une catégorie de stock...",
       "removeWarehouseCategorySelection": "Retirer la catégorie {name}",
       "categoryIngredientsLoading": "Préparation des ingrédients…",

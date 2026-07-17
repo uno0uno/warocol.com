@@ -1,10 +1,10 @@
 <template>
   <header class="sticky top-0 z-[100] bg-white/95 backdrop-blur-sm border-b border-titan-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)] w-full">
-    <div class="flex items-center gap-4 px-6 h-[60px] max-w-[1400px] mx-auto w-full">
+    <div class="flex items-center gap-2 px-3 sm:gap-3 sm:px-4 md:gap-4 md:px-6 h-[60px] max-w-[1400px] mx-auto w-full">
 
       <!-- Logo -->
       <NuxtLink to="/" class="flex items-center gap-2.5 no-underline shrink-0">
-        <img :src="logo" alt="WARO" class="h-[26px] w-auto object-contain" />
+        <img :src="logo" alt="WARO" class="h-[22px] max-w-[96px] sm:h-[26px] sm:max-w-none w-auto object-contain" />
         <span v-if="badgeText" class="text-[10px] font-bold tracking-[0.1em] uppercase text-crocus-600 bg-crocus-50 border border-crocus-200 py-[2px] px-2 rounded-full">{{ badgeText }}</span>
       </NuxtLink>
 
@@ -36,17 +36,17 @@
       </div>
 
       <!-- Acciones derecha -->
-      <div class="flex items-center gap-2 shrink-0 ms-auto md:ms-0">
-        <!-- Ingresar — solo desktop -->
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0 ms-auto md:ms-0">
+        <!-- Ingresar / Mi Panel — siempre disponible, incluido móvil y tablet -->
         <NuxtLink
           :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"
-          class="hidden md:block text-[13px] font-semibold text-ebony-600 hover:text-crocus-600 hover:bg-titan-50 px-3 py-1.5 rounded-md transition-all no-underline whitespace-nowrap"
+          class="inline-flex items-center min-h-9 text-[12px] sm:text-[13px] font-semibold text-ebony-600 hover:text-crocus-600 hover:bg-titan-50 px-2 sm:px-3 py-1.5 rounded-md transition-all no-underline whitespace-nowrap"
         >
           {{ authStore.isSessionValid ? 'Mi Panel' : 'Ingresar' }}
         </NuxtLink>
 
         <button
-          class="text-[13px] font-bold text-white bg-crocus-600 hover:bg-crocus-700 active:scale-[0.97] py-[7px] px-4 rounded-lg cursor-pointer transition-all font-inherit whitespace-nowrap shadow-sm"
+          class="min-h-9 text-[12px] sm:text-[13px] font-bold text-white bg-crocus-600 hover:bg-crocus-700 active:scale-[0.97] py-[7px] px-2.5 sm:px-4 rounded-lg cursor-pointer transition-all font-inherit whitespace-nowrap shadow-sm"
           type="button"
           @click="startRegistration"
         >

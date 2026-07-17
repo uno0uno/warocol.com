@@ -12,6 +12,7 @@
       :aria-activedescendant="activeDescendant"
       :class="inputClass"
       :placeholder="placeholder"
+      :title="modelValue || undefined"
       autocomplete="off"
       @input="onInput"
       @focus="onFocus"
@@ -69,7 +70,7 @@
               v-if="option.kind === 'presentation'"
               role="presentation"
               aria-hidden="true"
-              class="px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none"
+              class="min-w-0 px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-normal break-words [overflow-wrap:anywhere] leading-snug"
             >
               <slot name="presentation" :option="option">
                 {{ option.label }}
@@ -80,8 +81,9 @@
               :id="optionDomId(option.id)"
               role="option"
               :aria-selected="activeKey === option.id"
+              :title="option.label"
               :class="[
-                'px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px]',
+                'min-w-0 px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px] whitespace-normal',
                 activeKey === option.id ? 'bg-surface-secondary' : 'hover:bg-surface-secondary',
                 option.class,
               ]"
@@ -90,7 +92,9 @@
               @click="chooseOption(option)"
             >
               <slot name="option" :option="option" :active="activeKey === option.id">
-                {{ option.label }}
+                <span class="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">
+                  {{ option.label }}
+                </span>
               </slot>
             </li>
           </template>
@@ -119,7 +123,7 @@
             <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="min-w-0 flex-1 whitespace-normal break-words leading-snug">
+            <span class="min-w-0 flex-1 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">
               {{ resolvedCreateLabel }}
             </span>
           </li>

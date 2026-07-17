@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "Verkaufsbeleg des Betriebs",
       "dianIssuerTenant": "DIAN-Aussteller: Betrieb (Tenant)",
       "tipDefault": "Trinkgeld",
-      "softwareRole": "Technologie- / Softwareanbieter",
+      "softwareRole": "Verwaltungssoftware",
       "facturadorRole": "Technischer DIAN-Rechnungssteller",
       "notIssuer": "Nicht der Aussteller dieses Verkaufs",
       "notResponsibleIva": "Nicht IVA-pflichtig",

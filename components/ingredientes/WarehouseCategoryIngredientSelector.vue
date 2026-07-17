@@ -16,24 +16,6 @@
       />
     </div>
 
-    <ul v-if="selectedCategories.length" class="flex flex-wrap gap-2">
-      <li
-        v-for="category in selectedCategories"
-        :key="category.id"
-        class="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs text-primary"
-      >
-        <span>{{ category.name }}</span>
-        <button
-          type="button"
-          class="min-h-6 min-w-6 rounded-full hover:bg-primary/10"
-          :aria-label="t('abastecimiento.glossary.removeWarehouseCategorySelection', { name: category.name })"
-          @click="removeSelectedCategory(category.id)"
-        >
-          ×
-        </button>
-      </li>
-    </ul>
-
     <p v-if="loading" class="text-xs text-text-secondary" aria-live="polite">
       {{ t('abastecimiento.glossary.categoryIngredientsLoading') }}
     </p>
@@ -54,61 +36,145 @@
       {{ t('abastecimiento.glossary.categoryIngredientsPartial', { categories: unavailableCategoryNames }) }}
     </p>
 
-    <div v-if="preparedRows.length" class="space-y-2">
-      <div
-        v-for="row in preparedRows"
-        :key="row.ingredient_id"
-        class="grid gap-2 rounded-lg border border-border bg-surface-secondary/30 p-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_auto] sm:items-end"
-      >
-        <div class="min-w-0">
-          <p class="truncate text-sm font-medium text-text-primary">{{ row.name }}</p>
-        </div>
-        <label class="space-y-1 text-xs text-text-secondary">
-          <span>{{ t('abastecimiento.glossary.categoryIngredientQuantity') }}</span>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text-primary"
-            :value="row.quantity ?? ''"
-            @input="onQuantityInput(row.ingredient_id, $event)"
-          />
-        </label>
-        <label class="space-y-1 text-xs text-text-secondary">
-          <span>{{ t('abastecimiento.glossary.categoryIngredientUnit') }}</span>
-          <select
-            v-if="unitOptions"
-            :value="row.unit ?? ''"
-            :disabled="loadingUnitIds?.has(row.ingredient_id)"
-            class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text-primary disabled:opacity-50"
-            @change="onUnitInput(row.ingredient_id, $event)"
-          >
-            <option
-              v-for="option in unitOptions(row.ingredient_id)"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-          <input
-            v-else
-            type="text"
-            class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text-primary"
-            :value="row.unit ?? ''"
-            @input="onUnitInput(row.ingredient_id, $event)"
-          />
-        </label>
-        <button
-          type="button"
-          class="min-h-9 rounded-md px-2 text-xs text-destructive hover:bg-destructive/10"
-          :aria-label="t('abastecimiento.glossary.removePreparedIngredient', { name: row.name })"
-          @click="removePreparedRow(row.ingredient_id)"
+    <Transition name="category-panel">
+      <div v-if="selectedCategories.length" class="category-panel">
+        <section
+          class="min-h-0 overflow-hidden rounded-xl border border-border bg-background"
+          :aria-labelledby="`${inputId}-prepared-label`"
         >
-          {{ t('abastecimiento.glossary.removePreparedIngredientAction') }}
-        </button>
+          <header
+            :id="`${inputId}-prepared-label`"
+            data-test="category-batch-label"
+            class="flex items-center gap-2 border-b border-border bg-surface-secondary/50 px-3 py-2.5"
+          >
+            <svg class="h-4 w-4 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2h9A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-10Z" />
+            </svg>
+            <h4 class="text-sm font-semibold text-text-primary">
+              {{ t('abastecimiento.glossary.categoryIngredientsBatchLabel') }}
+            </h4>
+          </header>
+
+          <TransitionGroup name="category-group">
+            <section
+              v-for="group in preparedGroups"
+              :key="group.category.id"
+              data-test="category-group"
+              class="border-b border-border last:border-b-0"
+              :aria-labelledby="`${inputId}-category-${group.category.id}`"
+            >
+              <header class="flex min-h-11 items-center justify-between gap-3 border-b border-border/70 bg-surface px-3 py-2">
+                <div class="flex min-w-0 items-center gap-2">
+              <h5
+                    :id="`${inputId}-category-${group.category.id}`"
+                    class="min-w-0 break-words text-sm font-medium text-text-primary"
+                  >
+                    {{ group.category.name }}
+                  </h5>
+                  <span class="text-xs tabular-nums text-text-tertiary" aria-hidden="true">
+                    {{ group.rows.length }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 min-w-9 flex-shrink-0 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-destructive/5 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                  :aria-label="t('abastecimiento.glossary.removeWarehouseCategorySelection', { name: group.category.name })"
+                  :title="t('abastecimiento.glossary.removeWarehouseCategorySelection', { name: group.category.name })"
+                  @click="removeSelectedCategory(group.category.id)"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </header>
+
+              <div v-if="group.rows.length" class="space-y-3 bg-surface-secondary/20 p-3" role="list">
+                <div
+                  v-for="row in group.rows"
+                  :key="row.ingredient_id"
+                  role="listitem"
+                  class="rounded-lg border border-border bg-background p-3 sm:p-4"
+                >
+                  <div class="grid grid-cols-1 gap-3 md:grid-cols-12">
+                    <div class="min-w-0 md:col-span-5">
+                      <p class="mb-1 text-xs font-medium text-text-secondary">
+                        {{ t('abastecimiento.glossary.warehouseItemOrResaleRequired') }}
+                      </p>
+                      <div
+                        class="input-base flex min-h-[38px] items-center gap-2 px-3 py-2 text-sm text-text-primary"
+                        :title="row.name"
+                      >
+                        <svg class="h-4 w-4 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                        </svg>
+                        <span class="truncate">{{ row.name }}</span>
+                      </div>
+                    </div>
+
+                    <label class="md:col-span-3">
+                      <span class="mb-1 block text-xs font-medium text-text-secondary">
+                        {{ t('abastecimiento.glossary.categoryIngredientQuantity') }} *
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        class="input-base w-full px-3 py-2 text-sm"
+                        :value="row.quantity ?? ''"
+                        @input="onQuantityInput(row.ingredient_id, $event)"
+                      />
+                    </label>
+
+                    <label class="md:col-span-3">
+                      <span class="mb-1 block text-xs font-medium text-text-secondary">
+                        {{ t('abastecimiento.glossary.categoryIngredientUnit') }}
+                      </span>
+                      <select
+                        v-if="unitOptions"
+                        :value="row.unit ?? ''"
+                        :disabled="loadingUnitIds?.has(row.ingredient_id)"
+                        class="input-base w-full px-3 py-2 text-sm disabled:opacity-50"
+                        @change="onUnitInput(row.ingredient_id, $event)"
+                      >
+                        <option
+                          v-for="option in unitOptions(row.ingredient_id)"
+                          :key="option.value"
+                          :value="option.value"
+                        >
+                          {{ option.label }}
+                        </option>
+                      </select>
+                      <input
+                        v-else
+                        type="text"
+                        class="input-base w-full px-3 py-2 text-sm"
+                        :value="row.unit ?? ''"
+                        @input="onUnitInput(row.ingredient_id, $event)"
+                      />
+                    </label>
+
+                    <div class="md:col-span-1">
+                      <span class="mb-1 hidden text-xs font-medium text-text-secondary md:block" aria-hidden="true">&nbsp;</span>
+                      <button
+                        type="button"
+                        class="flex min-h-[38px] w-full items-center justify-center rounded-lg text-destructive transition-colors hover:bg-destructive/5 focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                        :aria-label="t('abastecimiento.glossary.removePreparedIngredient', { name: row.name })"
+                        :title="t('abastecimiento.glossary.removePreparedIngredientAction')"
+                        @click="removePreparedRow(row.ingredient_id)"
+                      >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7 18.133 19.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </TransitionGroup>
+        </section>
       </div>
-    </div>
+    </Transition>
   </section>
 </template>
 
@@ -160,6 +226,10 @@ function namesForCategoryIds(ids: string[]) {
 
 const emptyCategoryNames = computed(() => namesForCategoryIds(emptyCategoryIds.value))
 const unavailableCategoryNames = computed(() => namesForCategoryIds(unavailableCategoryIds.value))
+const preparedGroups = computed(() => selectedCategories.value.map(category => ({
+  category,
+  rows: preparedRows.value.filter(row => row.warehouse_category_id === category.id),
+})))
 
 async function onCategorySelected(category: WarehouseCategoryRow | null) {
   if (!category) return
@@ -198,3 +268,47 @@ watch(
   { deep: true },
 )
 </script>
+
+<style scoped>
+.category-panel {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.category-panel-enter-active,
+.category-panel-leave-active {
+  overflow: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 160ms ease-out;
+}
+
+.category-panel-enter-from,
+.category-panel-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.category-group-enter-active,
+.category-group-leave-active {
+  transform-origin: top;
+  transition:
+    opacity 160ms ease-out,
+    transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.category-group-enter-from,
+.category-group-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scaleY(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-panel-enter-active,
+  .category-panel-leave-active,
+  .category-group-enter-active,
+  .category-group-leave-active {
+    transition: none;
+  }
+}
+</style>

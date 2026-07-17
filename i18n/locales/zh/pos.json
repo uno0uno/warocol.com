@@ -654,7 +654,7 @@
       "saleReceiptEstablishment": "门店销售凭证",
       "dianIssuerTenant": "DIAN 开票方: 门店 (tenant)",
       "tipDefault": "小费",
-      "softwareRole": "技术 / 软件提供商",
+      "softwareRole": "管理软件",
       "facturadorRole": "DIAN 技术开票方",
       "notIssuer": "非本次销售的开票方",
       "notResponsibleIva": "不承担 IVA 责任",

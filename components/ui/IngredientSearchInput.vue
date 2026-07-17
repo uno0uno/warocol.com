@@ -20,18 +20,21 @@
       {{ option.label }}
     </template>
     <template #option="{ option }">
-      <span class="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
-        <span class="min-w-0 break-words whitespace-normal leading-snug">
+      <span class="min-w-0 flex-1 flex items-start gap-1.5">
+        <span
+          class="min-w-0 flex-1 break-words whitespace-normal [overflow-wrap:anywhere] leading-snug"
+          :title="option.label"
+        >
           {{ option.label }}
           <span class="text-text-secondary">({{ option.raw.unit }})</span>
         </span>
         <span
           v-if="option.raw.is_resale"
-          class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0"
+          class="mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0"
         >{{ t('menu.common.reventa') }}</span>
         <span
           v-else-if="option.raw.is_custom"
-          class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0"
+          class="mt-0.5 text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0"
         >{{ t('abastecimiento.glossary.customLabel') }}</span>
       </span>
     </template>

@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "ستظل الفئة ظاهرة في المكونات الحالية، ولكن لن يمكن تعيينها مرة أخرى.",
       "warehouseCategorySaveError": "تعذر حفظ فئة المستودع.",
       "categoryIngredientSelectorTitle": "إضافة مكونات حسب الفئة",
+      "categoryIngredientsBatchLabel": "المكونات حسب الفئة",
+      "categoryIngredientsManualLabel": "تمت إضافتها يدويًا",
       "categoryIngredientSelectorPlaceholder": "البحث عن فئة مستودع...",
       "removeWarehouseCategorySelection": "إزالة الفئة {name}",
       "categoryIngredientsLoading": "جارٍ تجهيز المكونات…",

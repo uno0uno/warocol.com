@@ -113,8 +113,9 @@
                 <button
                   type="button"
                   @click="addModifier"
-                  class="min-h-[32px] px-3 py-1.5 rounded-lg text-sm font-medium bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
+                  class="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg bg-shell-icon-bg px-3 py-1.5 text-sm font-medium text-shell-icon-text transition-all hover:bg-shell-icon-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
                 >
+                  <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
                   {{ t('menu.modificadores.addOption') }}
                 </button>
               </template>

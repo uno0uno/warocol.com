@@ -61,9 +61,10 @@
                 type="button"
                 variant="default"
                 size="sm"
-                class="bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
+                class="gap-1.5 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring"
                 @click="addIngredient"
               >
+                <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
                 {{ t('menu.recetas.form.addLine') }}
               </UiButton>
             </template>
@@ -91,6 +92,16 @@
               </div>
 
               <div v-else class="space-y-3">
+                <div
+                  v-if="categoryPreparedRows.length && form.ingredients.length"
+                  class="flex items-center gap-3 pt-1"
+                >
+                  <span class="h-px flex-1 bg-border" aria-hidden="true" />
+                  <h4 class="text-xs font-medium text-text-secondary">
+                    {{ t('abastecimiento.glossary.categoryIngredientsManualLabel') }}
+                  </h4>
+                  <span class="h-px flex-1 bg-border" aria-hidden="true" />
+                </div>
                 <div
                   v-for="(ingredient, index) in form.ingredients"
                   :key="index"

@@ -484,6 +484,8 @@
       "archiveWarehouseCategoryConfirm": "Die Kategorie bleibt bei vorhandenen Zutaten sichtbar, kann aber nicht erneut zugewiesen werden.",
       "warehouseCategorySaveError": "Die Lagerkategorie konnte nicht gespeichert werden.",
       "categoryIngredientSelectorTitle": "Zutaten nach Kategorie hinzufügen",
+      "categoryIngredientsBatchLabel": "Zutaten nach Kategorie",
+      "categoryIngredientsManualLabel": "Manuell hinzugefügt",
       "categoryIngredientSelectorPlaceholder": "Lagerkategorie suchen...",
       "removeWarehouseCategorySelection": "Kategorie {name} entfernen",
       "categoryIngredientsLoading": "Zutaten werden vorbereitet…",
