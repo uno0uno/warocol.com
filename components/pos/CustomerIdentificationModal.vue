@@ -99,11 +99,38 @@
                   {{ customerInitial(customer) }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-medium text-text-primary truncate">{{ customer.name || t('pos.customer.noName') }}</p>
-                  <p class="text-sm text-text-secondary truncate">{{ customer.phone_number || t('pos.customer.noPhone') }}</p>
-                  <p v-if="customer.fiscal_id" class="text-xs text-text-tertiary truncate">
-                    {{ customer.fiscal_id_type || t('pos.customer.docType.doc') }}: {{ customer.fiscal_id }}
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                    {{ t('pos.customer.contactLabel') }}
                   </p>
+                  <p class="font-medium text-text-primary truncate">
+                    {{ customerIdentity(customer).contact.name || customer.name || t('pos.customer.noName') }}
+                  </p>
+                  <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-text-secondary">
+                    <span>{{ customer.phone_number || t('pos.customer.noPhone') }}</span>
+                    <span
+                      v-if="customerIdentity(customer).hasFiscalIdentity && !customerIdentity(customer).showSeparateAcquirer && customerIdentity(customer).acquirer.fiscalId"
+                      class="text-xs text-text-tertiary"
+                    >
+                      {{ [customerIdentity(customer).acquirer.fiscalIdType || t('pos.customer.docType.doc'), customerIdentity(customer).acquirer.fiscalId].filter(Boolean).join(' ') }}
+                    </span>
+                  </div>
+                  <div
+                    v-if="customerIdentity(customer).showSeparateAcquirer"
+                    class="mt-2 border-s-2 border-primary/30 ps-2"
+                  >
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                      {{ t('pos.customer.fiscalAcquirerLabel') }}
+                    </p>
+                    <p class="text-sm font-semibold text-text-primary truncate">
+                      {{ customerIdentity(customer).acquirer.name }}
+                    </p>
+                    <p
+                      v-if="customerIdentity(customer).acquirer.fiscalId"
+                      class="text-xs text-text-secondary truncate"
+                    >
+                      {{ [customerIdentity(customer).acquirer.fiscalIdType || t('pos.customer.docType.doc'), customerIdentity(customer).acquirer.fiscalId].filter(Boolean).join(' ') }}
+                    </p>
+                  </div>
                 </div>
                 <svg class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -441,6 +468,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'
 import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
+import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
 
 type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI' | ''
 
@@ -458,6 +486,7 @@ interface CustomerSummary {
   email: string | null
   fiscal_id: string | null
   fiscal_id_type: string | null
+  fiscal_business_name?: string | null
 }
 
 interface SelectedCustomer extends FiscalFields {
@@ -591,7 +620,6 @@ watch(() => props.modelValue, (open) => {
   createError.value = ''
   isCreatingGeneric.value = false
   isHydratingSelection.value = false
-  selectionError.value = ''
 
   if (props.editCustomer) {
     // Fiscal-edit flow: skip search/create and prefill from the active customer
@@ -623,35 +651,44 @@ const customerInitial = (c: CustomerSummary) => {
   return '?'
 }
 
+const customerIdentity = (customer: CustomerSummary) =>
+  buildCustomerIdentityPresentation(customer)
+
 // Select from results
 const isHydratingSelection = ref(false)
-const selectionError = ref('')
+
+const toSelectedSummary = (customer: CustomerSummary): SelectedCustomer => ({
+  id: String(customer.id),
+  name: customer.name,
+  phone_number: customer.phone_number,
+  email: customer.email,
+  fiscal_id_type: (customer.fiscal_id_type as FiscalIdType) ?? null,
+  fiscal_id: customer.fiscal_id ?? null,
+  fiscal_business_name: customer.fiscal_business_name ?? null,
+  fiscal_email: null,
+})
+
+const completeSelection = (customer: SelectedCustomer) => {
+  emit('customer-identified', customer)
+  emit('update:modelValue', false)
+}
 
 const selectCustomer = async (customer: CustomerSummary) => {
   if (isHydratingSelection.value) return
   isHydratingSelection.value = true
-  selectionError.value = ''
   try {
     const res = await $fetch<CustomerApiResponse>(`/api/customers/${customer.id}`)
     if (res?.success) {
-      emit('customer-identified', toSelected(res.data))
-      emit('update:modelValue', false)
+      completeSelection(toSelected(res.data))
       return
     }
-    // Fallback: emit what we have (no fiscal fields)
-    emit('customer-identified', {
-      id: String(customer.id),
-      name: customer.name,
-      phone_number: customer.phone_number,
-      email: customer.email,
-      fiscal_id_type: null,
-      fiscal_id: null,
-      fiscal_business_name: null,
-      fiscal_email: null,
+    completeSelection(toSelectedSummary(customer))
+  } catch (error: unknown) {
+    posDebugLog('customer-modal', 'selectCustomer:detail-fallback', {
+      customerId: customer.id,
+      error: posDebugSerializeError(error),
     })
-    emit('update:modelValue', false)
-  } catch (e: any) {
-    selectionError.value = e?.data?.detail || e?.data?.message || e?.message || t('pos.customer.loadError')
+    completeSelection(toSelectedSummary(customer))
   } finally {
     isHydratingSelection.value = false
   }

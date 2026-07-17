@@ -334,6 +334,15 @@ const invoiceAcquirerLabel = computed(() =>
     ? formatFiscalIdentityLabel(saleCustomerIdentity.value.acquirer)
     : null,
 )
+const preInvoiceContactLabel = computed(() =>
+  saleCustomerIdentity.value.contact.name
+    || saleCustomerIdentity.value.contact.phone
+    || t('ventas.common.sinNombre'),
+)
+const preInvoiceAcquirerLabel = computed(() =>
+  formatFiscalIdentityLabel(saleCustomerIdentity.value.acquirer)
+    || t('ventas.common.sinNombre'),
+)
 const orderHasInvoiceCustomer = computed(() => Boolean(orderCustomer.value?.id))
 const canAssociateOrderCustomer = computed(() => Boolean(
   order.value
@@ -1370,30 +1379,86 @@ onUnmounted(() => {
 
         <!-- No invoice — eligible completed order: show emit button -->
         <template v-else-if="canEmitInvoiceForOrder">
-          <div class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-            <span class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0" aria-hidden="true">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>
-            </span>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.noInvoiceTitle') }}</p>
-              <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.noInvoiceBody') }}</p>
-            </div>
-            <button @click="emitInvoice" :disabled="isEmittingInvoice"
-              class="flex-shrink-0 min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
-              <template v-if="isEmittingInvoice">
-                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          <div class="px-5 py-3 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
-                {{ t('ventas.detail.generating') }}
-              </template>
-              <template v-else>
-                {{ t('ventas.detail.emitCta') }}
-              </template>
-            </button>
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.noInvoiceTitle') }}</p>
+                <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.noInvoiceBody') }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                  {{ t('ventas.detail.saleCustomer') }}
+                </p>
+                <p class="mt-0.5 text-sm font-semibold text-text-primary break-words">
+                  {{ preInvoiceContactLabel }}
+                </p>
+                <p v-if="saleCustomerIdentity.contact.phone" class="text-xs text-text-secondary">
+                  {{ saleCustomerIdentity.contact.phone }}
+                </p>
+              </div>
+              <div
+                v-if="saleCustomerIdentity.hasFiscalIdentity"
+                class="rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                  {{ t('ventas.detail.fiscalAcquirer') }}
+                </p>
+                <p
+                  v-if="saleCustomerIdentity.showSeparateAcquirer"
+                  class="mt-0.5 text-sm font-semibold text-text-primary break-words"
+                >
+                  {{ saleCustomerIdentity.acquirer.name }}
+                </p>
+                <p
+                  v-else
+                  class="mt-0.5 text-xs font-medium text-text-primary"
+                >
+                  {{ t('ventas.detail.sameAsSaleCustomer') }}
+                </p>
+                <p class="text-xs text-text-secondary break-words">
+                  {{ [saleCustomerIdentity.acquirer.fiscalIdType, saleCustomerIdentity.acquirer.fiscalId, saleCustomerIdentity.acquirer.email].filter(Boolean).join(' · ') }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="saleCustomerIdentity.identitiesDiffer"
+              role="status"
+              class="flex items-start gap-2 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-state-warning-text"
+            >
+              <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M12 9v3.75m0 3.75h.008v.008H12v-.008Zm9-3.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <p class="text-xs font-medium leading-snug">
+                {{ t('ventas.detail.differentFiscalIdentityWarning', { acquirer: preInvoiceAcquirerLabel, contact: preInvoiceContactLabel }) }}
+              </p>
+            </div>
+
+            <div class="flex justify-end">
+              <button @click="emitInvoice" :disabled="isEmittingInvoice"
+                class="w-full sm:w-auto min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
+                <template v-if="isEmittingInvoice">
+                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  {{ t('ventas.detail.generating') }}
+                </template>
+                <template v-else>
+                  {{ t('ventas.detail.emitCta') }}
+                </template>
+              </button>
+            </div>
           </div>
           <p v-if="emitInvoiceError" class="px-5 pb-3 text-sm text-destructive flex items-center gap-1.5">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

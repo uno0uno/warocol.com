@@ -37,9 +37,13 @@ export interface PosCartItem {
 
 export interface Customer {
     id: string
-    phone_number: string
+    phone_number: string | null
     name: string | null
     email: string | null
+    fiscal_id_type?: string | null
+    fiscal_id?: string | null
+    fiscal_business_name?: string | null
+    fiscal_email?: string | null
 }
 
 export interface MinimumConsumptionState {
