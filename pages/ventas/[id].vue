@@ -337,6 +337,7 @@ const invoiceAcquirerLabel = computed(() =>
 const preInvoiceContactLabel = computed(() =>
   saleCustomerIdentity.value.contact.name
     || saleCustomerIdentity.value.contact.phone
+    || saleCustomerIdentity.value.contact.email
     || t('ventas.common.sinNombre'),
 )
 const preInvoiceAcquirerLabel = computed(() =>
@@ -982,10 +983,20 @@ onUnmounted(() => {
       <!-- Order Info Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
-        <div class="bg-surface border border-border rounded-xl p-4">
+        <div
+          v-if="saleCustomerIdentity.hasContact"
+          class="bg-surface border border-border rounded-xl p-4"
+        >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.detail.saleCustomer') }}</p>
-          <p class="text-lg font-bold text-text-primary">{{ order.customer_name }}</p>
-          <p v-if="orderCustomer?.email" class="mt-1 text-xs text-text-secondary break-all">{{ orderCustomer.email }}</p>
+          <p class="text-lg font-bold text-text-primary">
+            {{ preInvoiceContactLabel }}
+          </p>
+          <p
+            v-if="saleCustomerIdentity.contact.email && saleCustomerIdentity.contact.email !== preInvoiceContactLabel"
+            class="mt-1 text-xs text-text-secondary break-all"
+          >
+            {{ saleCustomerIdentity.contact.email }}
+          </p>
           <button
             v-if="canAssociateOrderCustomer"
             type="button"
@@ -1001,9 +1012,12 @@ onUnmounted(() => {
         </div>
 
         <!-- Customer Phone -->
-        <div class="bg-surface border border-border rounded-xl p-4">
+        <div
+          v-if="saleCustomerIdentity.contact.phone"
+          class="bg-surface border border-border rounded-xl p-4"
+        >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.telefono') }}</p>
-          <p class="text-lg font-bold text-text-primary">{{ order.customer_phone }}</p>
+          <p class="text-lg font-bold text-text-primary">{{ saleCustomerIdentity.contact.phone }}</p>
         </div>
 
         <!-- Waiter (checkout / mesa close attribution — #663/#665/#666) -->
@@ -1393,8 +1407,14 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div class="rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
+            <div
+              class="grid grid-cols-1 gap-3"
+              :class="saleCustomerIdentity.hasContact && saleCustomerIdentity.hasFiscalIdentity ? 'sm:grid-cols-2' : 'sm:grid-cols-1'"
+            >
+              <div
+                v-if="saleCustomerIdentity.hasContact"
+                class="rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+              >
                 <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
                   {{ t('ventas.detail.saleCustomer') }}
                 </p>
@@ -2074,9 +2094,9 @@ onUnmounted(() => {
       :sold-at="saleReceiptSoldAt"
       :location-label="saleReceiptLocationLabel"
       :waiter-name="order.served_by_member_name"
-      :customer-name="order.customer_name"
-      :customer-phone="order.customer_phone"
-      :customer-email="orderCustomer?.email"
+      :customer-name="saleCustomerIdentity.contact.name"
+      :customer-phone="saleCustomerIdentity.contact.phone"
+      :customer-email="saleCustomerIdentity.contact.email"
       :customer-fiscal-label="saleReceiptCustomerFiscalLabel"
       :items="saleReceiptItems"
       :subtotal="grossSubtotal"

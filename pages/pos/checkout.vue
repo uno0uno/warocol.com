@@ -219,7 +219,11 @@ const invoiceError = ref('')
 const invoiceQrDataUrl = ref('')
 const invoiceProgress = ref('')
 const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: number; cufe: string; status: string; error?: string }[]>([])
-const showInvoiceEmailModal = ref(false)
+const hasGeneratedInvoice = computed(() =>
+  invoiceResult.value?.status === 'accepted'
+  && Boolean(invoiceResult.value.prefix)
+  && Boolean(invoiceResult.value.invoice_number),
+)
 
 const extractInvoiceFetchError = (e: any) =>
   e?.data?.detail || e?.data?.message || e?.message || t('pos.checkout.invoice.generateError')
@@ -2674,39 +2678,6 @@ const receiptInvoice = computed(() => {
   }
 })
 
-const singleAcceptedInvoiceOrderId = computed(() => {
-  if (invoiceResult.value?.status !== 'accepted') return null
-  const ids = orderResult.value?.order_id
-    ? [orderResult.value.order_id]
-    : (orderResult.value?.order_ids ?? [])
-  if (ids.length !== 1) return null
-  if (invoiceResults.value.length > 0) {
-    const current = invoiceResults.value.find(result => result.order_id === ids[0])
-    if (!current || current.status !== 'accepted') return null
-  }
-  return ids[0]
-})
-
-const posInvoiceEmailCustomer = computed(() => {
-  const customer = selectedCustomer.value
-  if (!customer) return null
-  return {
-    name: customer.fiscal_business_name || customer.name || null,
-    phone: customer.phone_number,
-    email: customer.fiscal_email || customer.email,
-  }
-})
-
-const posInvoiceLabel = computed(() =>
-  invoiceResult.value
-    ? [invoiceResult.value.prefix, invoiceResult.value.invoice_number].filter(Boolean).join('-')
-    : '',
-)
-
-const onPosInvoiceEmailSent = (email: string) => {
-  toast.success(t('pos.checkout.invoiceSent', { email }), { title: t('pos.checkout.invoiceSentTitle') })
-}
-
 function capturePrefacturaPrintSnapshot() {
   prefacturaPrintSnapshot.value = {
     orderTotal: prefacturaOrderTotal.value,
@@ -5007,23 +4978,15 @@ onUnmounted(() => {
 	              <span class="text-sm text-text-secondary">{{ invoiceProgress || t('pos.checkout.invoice.generating') }}</span>
             </div>
 
-            <!-- Success — show ONLY invoice number -->
+            <!-- Success — the unified email action is shown below with receipt actions. -->
             <div
               v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
-              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center space-y-2"
+              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center"
             >
 	              <p class="text-xs font-semibold text-state-success-text">{{ t('pos.checkout.invoice.generated') }}</p>
               <p class="text-sm font-semibold text-state-success-text mt-1">
                 {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
               </p>
-              <button
-                v-if="singleAcceptedInvoiceOrderId"
-                type="button"
-                @click="showInvoiceEmailModal = true"
-                class="mx-auto min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold border border-state-success-border bg-surface text-state-success-text hover:bg-state-success-bg transition-colors"
-              >
-	                {{ t('pos.checkout.invoice.sendByEmail') }}
-              </button>
             </div>
 
             <!-- Error -->
@@ -5058,7 +5021,9 @@ onUnmounted(() => {
             <div class="flex flex-col gap-1.5">
               <!-- When email comes from profile: confirmation mode -->
               <template v-if="emailFromProfile && !emailSent">
-	                <p class="text-sm font-medium text-text-primary">{{ t('pos.checkout.receiptEmail.askSend') }}</p>
+	                <p class="text-sm font-medium text-text-primary">
+                    {{ hasGeneratedInvoice ? t('pos.checkout.invoice.sendByEmail') : t('pos.checkout.receiptEmail.askSend') }}
+                  </p>
                 <div class="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
                   <svg class="h-[1em] w-[1em] shrink-0 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
                   <span class="flex-1 truncate text-sm text-text-primary">{{ receiptEmail }}</span>
@@ -5077,14 +5042,19 @@ onUnmounted(() => {
               <template v-else-if="emailSent">
                 <div class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text">
                   <svg class="h-[1em] w-[1em] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-	                  <span class="text-sm font-medium">{{ t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}</span>
+	                  <span class="text-sm font-medium">
+                      {{ hasGeneratedInvoice
+                        ? t('pos.checkout.invoiceSent', { email: receiptEmail })
+                        : t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}
+                    </span>
                 </div>
               </template>
 
               <!-- When no profile email: manual input -->
               <template v-else>
                 <label for="receipt-email" class="text-xs font-semibold text-text-secondary">
-	                  {{ t('pos.checkout.receiptEmail.label') }} <span class="font-normal text-text-tertiary">{{ t('pos.checkout.optional') }}</span>
+	                  {{ hasGeneratedInvoice ? t('pos.checkout.invoice.sendByEmail') : t('pos.checkout.receiptEmail.label') }}
+                    <span class="font-normal text-text-tertiary">{{ t('pos.checkout.optional') }}</span>
                 </label>
                 <div class="flex gap-2">
                   <input
@@ -5128,15 +5098,6 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
-
-    <VentasInvoiceEmailModal
-      v-if="singleAcceptedInvoiceOrderId"
-      v-model:open="showInvoiceEmailModal"
-      :order-id="singleAcceptedInvoiceOrderId"
-      :invoice-label="posInvoiceLabel"
-      :customer="posInvoiceEmailCustomer"
-      @sent="onPosInvoiceEmailSent"
-    />
 
     <PosReceiptPrintTicket
       v-if="orderResult"
