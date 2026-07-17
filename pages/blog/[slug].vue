@@ -127,9 +127,16 @@ const articleSchema = computed(() => ({
       publisher: { '@id': `${siteUrl}#organization` },
       offers: {
         '@type': 'Offer',
-        price: '9000',
+        price: '95900',
         priceCurrency: 'COP',
-        availability: 'https://schema.org/InStock'
+        availability: 'https://schema.org/InStock',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: '7992',
+          priceCurrency: 'COP',
+          billingDuration: 'P1M',
+          description: 'Equivalente mensual del plan anual de $95.900 COP'
+        }
       },
       featureList: [
         'Punto de venta con catálogo y modificadores',
