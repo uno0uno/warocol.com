@@ -7,6 +7,10 @@ import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 import { modifierLineTotal as sharedModifierLineTotal } from '~/utils/saleModifierOption'
+import {
+  buildCustomerIdentityPresentation,
+  formatFiscalIdentityLabel,
+} from '~/utils/customerIdentityPresentation'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -319,6 +323,17 @@ const order = computed(() => {
 })
 
 const orderCustomer = computed(() => order.value?.customer ?? null)
+const invoiceAcquirer = computed(() =>
+  (invoiceData.value as any)?.presentation?.acquirer ?? null,
+)
+const saleCustomerIdentity = computed(() =>
+  buildCustomerIdentityPresentation(orderCustomer.value, invoiceAcquirer.value),
+)
+const invoiceAcquirerLabel = computed(() =>
+  invoiceAcquirer.value
+    ? formatFiscalIdentityLabel(saleCustomerIdentity.value.acquirer)
+    : null,
+)
 const orderHasInvoiceCustomer = computed(() => Boolean(orderCustomer.value?.id))
 const canAssociateOrderCustomer = computed(() => Boolean(
   order.value
@@ -669,6 +684,7 @@ const saleReceiptInvoice = computed(() => {
     paymentLabel: saleReceiptSinglePaymentLabel.value,
     taxLines: saleReceiptInvoiceTaxLines.value,
     issuerLabel: saleReceiptIssuerLabel.value,
+    acquirerLabel: invoiceAcquirerLabel.value,
   }
 })
 
@@ -958,8 +974,9 @@ onUnmounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
         <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.cliente') }}</p>
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.detail.saleCustomer') }}</p>
           <p class="text-lg font-bold text-text-primary">{{ order.customer_name }}</p>
+          <p v-if="orderCustomer?.email" class="mt-1 text-xs text-text-secondary break-all">{{ orderCustomer.email }}</p>
           <button
             v-if="canAssociateOrderCustomer"
             type="button"
@@ -1176,6 +1193,24 @@ onUnmounted(() => {
               </svg>
               {{ getInvoiceStatusLabel(invoiceData.status) }}
             </span>
+          </div>
+
+          <div
+            v-if="invoiceAcquirer"
+            class="border-b border-border bg-surface-secondary/40 px-5 py-4"
+          >
+            <p class="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
+              {{ t('ventas.detail.fiscalAcquirerDian') }}
+            </p>
+            <p v-if="saleCustomerIdentity.acquirer.name" class="mt-1 text-base font-bold text-text-primary">
+              {{ saleCustomerIdentity.acquirer.name }}
+            </p>
+            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
+              <span v-if="saleCustomerIdentity.acquirer.fiscalId">
+                {{ [saleCustomerIdentity.acquirer.fiscalIdType, saleCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+              </span>
+              <span v-if="saleCustomerIdentity.acquirer.email">{{ saleCustomerIdentity.acquirer.email }}</span>
+            </div>
           </div>
 
           <!-- Body: 3 columns -->
@@ -1975,6 +2010,8 @@ onUnmounted(() => {
       :location-label="saleReceiptLocationLabel"
       :waiter-name="order.served_by_member_name"
       :customer-name="order.customer_name"
+      :customer-phone="order.customer_phone"
+      :customer-email="orderCustomer?.email"
       :customer-fiscal-label="saleReceiptCustomerFiscalLabel"
       :items="saleReceiptItems"
       :subtotal="grossSubtotal"

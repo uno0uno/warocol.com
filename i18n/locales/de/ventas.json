@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "Elektronische Rechnung",
       "dian": "DIAN",
+      "saleCustomer": "Verkaufskunde",
+      "fiscalAcquirerDian": "DIAN-Steuerkäufer",
       "download": "Herunterladen",
       "downloadPdf": "Laden Sie Ihre elektronische Rechnung im PDF-Format herunter",
       "sendEmailPdfUnavailable": "Rechnung per E-Mail senden (Beleg + CUFE/XML; grafisches PDF in dieser Umgebung nicht verfügbar)",

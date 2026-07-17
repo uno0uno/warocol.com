@@ -164,6 +164,8 @@
     "detail": {
       "electronicInvoice": "इलेक्ट्रॉनिक चालान",
       "dian": "DIAN",
+      "saleCustomer": "बिक्री ग्राहक",
+      "fiscalAcquirerDian": "DIAN कर खरीदार",
       "download": "डाउनलोड करें",
       "downloadPdf": "अपना इलेक्ट्रॉनिक चालान PDF प्रारूप में डाउनलोड करें",
       "sendEmailPdfUnavailable": "ईमेल द्वारा चालान भेजें (रसीद + CUFE/XML; इस वातावरण में ग्राफिक PDF उपलब्ध नहीं है)",
