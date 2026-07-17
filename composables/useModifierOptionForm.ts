@@ -1,4 +1,13 @@
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+
 export type ModifierOptionType = 'INGREDIENT' | 'RECIPE' | 'PRODUCT' | 'NONE'
+
+export interface ModifierRecipeLineForm {
+  ingredient_id: string
+  ingredient_name: string
+  quantity: number | null
+  unit: string | null
+}
 
 export interface ModifierFormRow {
   name: string
@@ -16,6 +25,8 @@ export interface ModifierFormRow {
   recipe_base_type_id: string | null
   recipe_base_name: string | null
   recipe_base_quantity: number
+  recipe_lines: ModifierRecipeLineForm[]
+  prepared_recipe_lines: PreparedWarehouseCategoryIngredient[]
   linked_product_id: string | null
   linked_product_name: string | null
   linked_product_quantity: number
@@ -41,6 +52,8 @@ export function createEmptyModifier(sortOrder: number): ModifierFormRow {
     recipe_base_type_id: null,
     recipe_base_name: null,
     recipe_base_quantity: 1,
+    recipe_lines: [],
+    prepared_recipe_lines: [],
     linked_product_id: null,
     linked_product_name: null,
     linked_product_quantity: 1,
@@ -57,6 +70,8 @@ export function resetModifierFieldsForType(modifier: ModifierFormRow, nextType: 
   modifier.recipe_base_type_id = null
   modifier.recipe_base_name = null
   modifier.recipe_base_quantity = 1
+  modifier.recipe_lines = []
+  modifier.prepared_recipe_lines = []
   modifier.linked_product_id = null
   modifier.linked_product_name = null
   modifier.linked_product_quantity = 1
@@ -68,6 +83,9 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
   const ingredient = m.ingredient as { id?: string; name?: string } | undefined
   const recipeBase = m.recipe_base as { id?: string; name?: string } | undefined
   const linkedProduct = m.linked_product as { id?: string; name?: string } | undefined
+  const recipeLines = Array.isArray(m.recipe_lines)
+    ? (m.recipe_lines as Array<Record<string, unknown>>)
+    : []
 
   return {
     name: String(m.name || ''),
@@ -85,6 +103,16 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     recipe_base_type_id: (m.recipe_base_type_id as string) || recipeBase?.id || null,
     recipe_base_name: recipeBase?.name || null,
     recipe_base_quantity: Number(m.recipe_base_quantity ?? 1),
+    recipe_lines: recipeLines.map(line => {
+      const lineIngredient = line.ingredient as { name?: string } | undefined
+      return {
+        ingredient_id: String(line.ingredient_id || ''),
+        ingredient_name: lineIngredient?.name || String(line.ingredient_name || ''),
+        quantity: line.quantity != null ? Number(line.quantity) : null,
+        unit: line.unit ? String(line.unit) : null,
+      }
+    }),
+    prepared_recipe_lines: [],
     linked_product_id: (m.linked_product_id as string) || linkedProduct?.id || null,
     linked_product_name: linkedProduct?.name || null,
     linked_product_quantity: Number(m.linked_product_quantity ?? 1),
@@ -94,6 +122,14 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
 
 export function serializeModifierForApi(row: ModifierFormRow) {
   const optionType = row.option_type
+  const recipeLines = [
+    ...row.recipe_lines,
+    ...row.prepared_recipe_lines,
+  ].map(line => ({
+    ingredient_id: line.ingredient_id,
+    quantity: line.quantity,
+    unit: line.unit,
+  }))
   return {
     name: row.name.trim(),
     price: row.price,
@@ -108,6 +144,7 @@ export function serializeModifierForApi(row: ModifierFormRow) {
     ingredient_unit: optionType === 'INGREDIENT' ? row.ingredient_unit : null,
     recipe_base_type_id: optionType === 'RECIPE' ? (row.recipe_base_type_id || null) : null,
     recipe_base_quantity: optionType === 'RECIPE' ? row.recipe_base_quantity : 1,
+    recipe_lines: optionType === 'RECIPE' ? recipeLines : null,
     linked_product_id: optionType === 'PRODUCT' ? (row.linked_product_id || null) : null,
     linked_product_quantity: optionType === 'PRODUCT' ? row.linked_product_quantity : 1,
   }
@@ -137,8 +174,21 @@ export function validateModifierOption(row: ModifierFormRow): string | null {
       return `Indica la unidad del ingrediente en «${row.name}».`
     }
   }
-  if (type === 'RECIPE' && !row.recipe_base_type_id) {
-    return `La opción «${row.name}» requiere una receta base.`
+  if (type === 'RECIPE') {
+    const recipeLines = [...row.recipe_lines, ...row.prepared_recipe_lines]
+    if (!row.recipe_base_type_id && recipeLines.length === 0) {
+      return `La opción «${row.name}» requiere una receta base o ingredientes.`
+    }
+    const seenIds = new Set<string>()
+    for (const line of recipeLines) {
+      if (!line.ingredient_id || line.quantity == null || line.quantity <= 0 || !line.unit?.trim()) {
+        return `Completa ingrediente, cantidad y unidad en la receta de «${row.name}».`
+      }
+      if (seenIds.has(line.ingredient_id)) {
+        return `La receta de «${row.name}» tiene ingredientes duplicados.`
+      }
+      seenIds.add(line.ingredient_id)
+    }
   }
   if (type === 'PRODUCT') {
     if (!row.linked_product_id) return `La opción «${row.name}» requiere un producto del menú.`

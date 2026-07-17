@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
+import { describe, expect, it } from 'vitest'
 import {
   createEmptyModifier,
   mapModifierFromApi,
@@ -14,10 +13,10 @@ describe('included modifier quantity form contract', () => {
       option_type: 'NONE',
       max_limit: 3,
     })
-    assert.equal(row.included_quantity, 0)
+    expect(row.included_quantity).toBe(0)
 
     row.included_quantity = 1
-    assert.equal(serializeModifierForApi(row).included_quantity, 1)
+    expect(serializeModifierForApi(row).included_quantity).toBe(1)
   })
 
   it('rejects included quantity above max_limit with the option name', () => {
@@ -27,8 +26,8 @@ describe('included modifier quantity form contract', () => {
     row.max_limit = 1
     row.included_quantity = 2
 
-    assert.match(validateModifierOption(row) ?? '', /Queso/)
-    assert.match(validateModifierOption(row) ?? '', /no puede superar/)
+    expect(validateModifierOption(row) ?? '').toMatch(/Queso/)
+    expect(validateModifierOption(row) ?? '').toMatch(/no puede superar/)
   })
 
   it('requires integer thresholds', () => {
@@ -37,6 +36,51 @@ describe('included modifier quantity form contract', () => {
     row.option_type = 'NONE'
     row.included_quantity = 0.5
 
-    assert.match(validateModifierOption(row) ?? '', /número entero/)
+    expect(validateModifierOption(row) ?? '').toMatch(/número entero/)
+  })
+
+  it('hydrates, validates, and serializes RECIPE recipe_lines', () => {
+    const row = mapModifierFromApi({
+      name: 'Salsa',
+      option_type: 'RECIPE',
+      recipe_lines: [{
+        ingredient_id: 'ingredient-1',
+        quantity: 2,
+        unit: 'gr',
+        ingredient: { name: 'Sal' },
+      }],
+    })
+
+    expect(row.recipe_lines[0]?.ingredient_name).toBe('Sal')
+    expect(validateModifierOption(row)).toBeNull()
+    expect(serializeModifierForApi(row).recipe_lines).toEqual([{
+      ingredient_id: 'ingredient-1',
+      quantity: 2,
+      unit: 'gr',
+    }])
+  })
+
+  it('rejects incomplete and duplicate persisted/prepared RECIPE lines', () => {
+    const row = createEmptyModifier(0)
+    row.name = 'Mezcla'
+    row.option_type = 'RECIPE'
+    row.recipe_lines = [{
+      ingredient_id: 'ingredient-1',
+      ingredient_name: 'Sal',
+      quantity: 1,
+      unit: 'gr',
+    }]
+    row.prepared_recipe_lines = [{
+      ingredient_id: 'ingredient-1',
+      name: 'Sal',
+      quantity: 2,
+      unit: 'gr',
+      warehouse_category_id: 'category-1',
+    }]
+    expect(validateModifierOption(row) ?? '').toMatch(/duplicados/)
+
+    row.prepared_recipe_lines[0]!.ingredient_id = 'ingredient-2'
+    row.prepared_recipe_lines[0]!.quantity = null
+    expect(validateModifierOption(row) ?? '').toMatch(/Completa/)
   })
 })

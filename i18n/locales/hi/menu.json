@@ -33,7 +33,8 @@
       "listo": "हो गया",
       "guardado": "सहेजा गया",
       "active": "सक्रिय",
-      "inactive": "निष्क्रिय"
+      "inactive": "निष्क्रिय",
+      "incompatibleUnitError": "हर सामग्री के लिए संगत इकाई चुनें।"
     },
     "productos": {
       "editMode": "संपादन मोड",

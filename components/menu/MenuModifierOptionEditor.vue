@@ -110,7 +110,7 @@
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.unit') }}</label>
         <select
           v-model="modifier.ingredient_unit"
-          :disabled="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id)"
+          :disabled="Boolean(modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id))"
           class="input-base w-full py-2 px-3 text-sm disabled:opacity-50"
         >
           <option
@@ -135,7 +135,7 @@
             @change="onRecipeBaseChange"
           >
             <option value="">{{ t('menu.modificadores.chooseRecipe') }}</option>
-            <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
+            <option v-for="recipe in recipeBases" :key="String(recipe.id)" :value="String(recipe.id)">
               {{ recipe.name }}
             </option>
           </select>
@@ -168,6 +168,72 @@
           </div>
         </div>
       </div>
+
+      <WarehouseCategoryIngredientSelector
+        :input-id="`modifier-recipe-category-${index}`"
+        :existing-ingredient-ids="existingRecipeIngredientIds"
+        :unit-options="getIngredientUnitOptions"
+        :loading-unit-ids="loadingUnits"
+        @update:prepared-rows="rows => $emit('prepared-recipe-lines', rows)"
+      />
+
+      <div v-if="modifier.recipe_lines.length" class="space-y-2">
+        <div
+          v-for="(line, lineIndex) in modifier.recipe_lines"
+          :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
+          class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
+        >
+          <div class="md:col-span-5">
+            <UiIngredientSearchInput
+              :key="`modifier-recipe-line-${line.ingredient_id || lineIndex}`"
+              :initial-value="recipeLineSearchLabel(line)"
+              :allow-create="true"
+              @select="ingredient => $emit('select-recipe-line', lineIndex, ingredient)"
+              @create="name => $emit('create-recipe-line', lineIndex, name)"
+            />
+          </div>
+          <div class="md:col-span-3">
+            <UiDecimalInput
+              v-model="line.quantity"
+              :min="0.01"
+              :precision="6"
+              class="input-base w-full px-3 py-2 text-sm"
+              :placeholder="t('menu.modificadores.quantity')"
+            />
+          </div>
+          <div class="md:col-span-3">
+            <select
+              v-model="line.unit"
+              :disabled="!!line.ingredient_id && loadingUnits.has(line.ingredient_id)"
+              class="input-base w-full px-3 py-2 text-sm disabled:opacity-50"
+            >
+              <option
+                v-for="option in getIngredientUnitOptions(line.ingredient_id)"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <button
+            type="button"
+            class="min-h-9 text-destructive md:col-span-1"
+            :aria-label="t('abastecimiento.glossary.removePreparedIngredient', { name: line.ingredient_name })"
+            @click="removeRecipeLine(lineIndex)"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="min-h-9 w-full rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
+        @click="addRecipeLine"
+      >
+        {{ t('menu.recetas.form.addLine') }}
+      </button>
     </div>
 
     <div v-else-if="modifier.option_type === 'PRODUCT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -220,8 +286,11 @@ import {
   resetModifierFieldsForType,
   type ModifierFormRow,
   type ModifierOptionType,
+  type ModifierRecipeLineForm,
 } from '~/composables/useModifierOptionForm'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -249,7 +318,33 @@ defineEmits<{
   remove: []
   'select-ingredient': [ingredient: Record<string, unknown>]
   'create-ingredient': [name: string]
+  'select-recipe-line': [lineIndex: number, ingredient: Record<string, unknown>]
+  'create-recipe-line': [lineIndex: number, name: string]
+  'prepared-recipe-lines': [rows: PreparedWarehouseCategoryIngredient[]]
 }>()
+
+const existingRecipeIngredientIds = computed(() =>
+  props.modifier.recipe_lines.map(line => line.ingredient_id).filter(Boolean),
+)
+
+function recipeLineSearchLabel(line: ModifierRecipeLineForm) {
+  if (line.ingredient_name?.trim()) return line.ingredient_name.trim()
+  if (!line.ingredient_id) return ''
+  return String(props.getIngredientById(line.ingredient_id)?.name || '')
+}
+
+function addRecipeLine() {
+  props.modifier.recipe_lines.push({
+    ingredient_id: '',
+    ingredient_name: '',
+    quantity: null,
+    unit: null,
+  })
+}
+
+function removeRecipeLine(lineIndex: number) {
+  props.modifier.recipe_lines.splice(lineIndex, 1)
+}
 
 function onTypeChange(raw: string) {
   resetModifierFieldsForType(props.modifier, raw.toUpperCase() as ModifierOptionType)

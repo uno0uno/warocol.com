@@ -33,7 +33,8 @@
       "listo": "Listo",
       "guardado": "Guardado",
       "active": "Activa",
-      "inactive": "Inactiva"
+      "inactive": "Inactiva",
+      "incompatibleUnitError": "Selecciona una unidad compatible para cada ingrediente."
     },
     "productos": {
       "editMode": "Modo edición",

@@ -432,7 +432,16 @@
               <UiFormSection :title="WAREHOUSE_COPY.recipeCostLines">
                 <MenuIngredientProductHint class="mb-3" />
 
-                <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
+                <WarehouseCategoryIngredientSelector
+                  class="mb-4"
+                  input-id="product-create-category-ingredients"
+                  :existing-ingredient-ids="existingIngredientIds"
+                  :unit-options="getIngredientUnitOptions"
+                  :loading-unit-ids="loadingUnits"
+                  @update:prepared-rows="onCategoryPreparedRows"
+                />
+
+                <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
                     <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
                   <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
                 </div>
@@ -705,6 +714,8 @@ import {
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 import { resolveResaleIngredientId } from '@/composables/useResaleLinkedIngredient'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
+import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -760,6 +771,8 @@ function setProductCreateMode(mode: ProductCreateMode) {
     resaleUnitWeightGr.value = null
     resaleUnitWeightUnit.value = 'gr'
     resalePurchaseUnits.value = defaultUndPurchaseUnitsDraft()
+  } else {
+    categoryPreparedRows.value = []
   }
 }
 
@@ -846,6 +859,15 @@ const inheritedStation = computed(() => {
 const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
+const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
+
+const existingIngredientIds = computed(() =>
+  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
+)
+const combinedIngredients = computed(() => [
+  ...form.value.ingredients,
+  ...mapPreparedRowsToProduct(categoryPreparedRows.value),
+])
 
 const {
   getIngredientUnitOptions: buildUnitOptions,
@@ -900,6 +922,18 @@ async function loadPurchaseUnits(ingredientId: string) {
     const next = new Set(loadingUnits.value)
     next.delete(ingredientId)
     loadingUnits.value = next
+  }
+}
+
+function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
+  categoryPreparedRows.value = rows
+  for (const row of rows) {
+    cacheIngredientForUnits({
+      id: row.ingredient_id,
+      name: row.name,
+      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
+    })
+    void loadPurchaseUnits(row.ingredient_id)
   }
 }
 
@@ -1051,14 +1085,21 @@ async function validateForm(): Promise<boolean> {
     return true
   }
 
-  if (form.value.ingredients.length > 0) {
-    const invalid = form.value.ingredients.some(
-      i => !i.ingredient_id || !i.quantity || i.quantity <= 0,
-    )
-    if (invalid) {
-      submitError.value = WAREHOUSE_COPY.completeRecipeCostLinesError
-      return false
-    }
+  const validationError = validateMenuCompositionRows(
+    combinedIngredients.value,
+    ingredientId => getIngredientUnitOptions(ingredientId).map(option => option.value),
+  )
+  if (validationError === 'incomplete') {
+    submitError.value = WAREHOUSE_COPY.completeRecipeCostLinesError
+    return false
+  }
+  if (validationError === 'duplicate') {
+    submitError.value = WAREHOUSE_COPY.duplicateWarehouseItemInList
+    return false
+  }
+  if (validationError === 'incompatible-unit') {
+    submitError.value = t('menu.common.incompatibleUnitError')
+    return false
   }
 
   return true
@@ -1288,7 +1329,7 @@ async function submitProduct() {
       ...form.value,
       recipe_bases: cleanedRecipeBases,
       recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
-      ingredients: form.value.ingredients,
+      ingredients: combinedIngredients.value,
       image_url: form.value.image_url || null,
       costo_percibido: form.value.costo_percibido ?? null,
     }

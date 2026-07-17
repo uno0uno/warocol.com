@@ -33,7 +33,8 @@
       "listo": "Fertig",
       "guardado": "Gespeichert",
       "active": "Aktiv",
-      "inactive": "Inaktiv"
+      "inactive": "Inaktiv",
+      "incompatibleUnitError": "Wähle für jede Zutat eine kompatible Einheit."
     },
     "productos": {
       "editMode": "Bearbeitungsmodus",

@@ -33,7 +33,7 @@ afterEach(() => {
 
 describe('WarehouseCategoryIngredientSelector', () => {
   it('prepares editable local rows once and never calls a persistence endpoint', async () => {
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (_url: string, _options?: unknown) => ({
       data: {
         ingredients: [{
           ingredient_id: 'ingredient-1',
@@ -152,5 +152,41 @@ describe('WarehouseCategoryIngredientSelector', () => {
     await wrapper.findAll('button').find(button => button.text() === 'Reintentar')?.trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('Sin nuevos: Granos')
+  })
+
+  it('uses caller-provided compatible unit options when available', async () => {
+    vi.stubGlobal('$fetch', vi.fn(async () => ({
+      data: {
+        ingredients: [{
+          ingredient_id: 'ingredient-1',
+          name: 'Arroz',
+          unit: 'gr',
+          warehouse_category_id: 'category-1',
+        }],
+        empty_category_ids: [],
+        unavailable_category_ids: [],
+      },
+    })))
+    vi.stubGlobal('useI18n', () => ({
+      t: (key: string) => key,
+    }))
+    const wrapper = mount(WarehouseCategoryIngredientSelector, {
+      props: {
+        unitOptions: () => [
+          { value: 'gr', label: 'Gramos' },
+          { value: 'kg', label: 'Kilogramos' },
+        ],
+      },
+      global: {
+        components: { UiWarehouseCategorySearchInput: WarehouseCategorySearchInputStub },
+      },
+    })
+
+    await wrapper.get('[data-test="select-category"]').trigger('click')
+    await flushPromises()
+
+    const select = wrapper.find('select')
+    expect(select.exists()).toBe(true)
+    expect(select.findAll('option').map(option => option.attributes('value'))).toEqual(['gr', 'kg'])
   })
 })

@@ -76,7 +76,23 @@
         </label>
         <label class="space-y-1 text-xs text-text-secondary">
           <span>{{ t('abastecimiento.glossary.categoryIngredientUnit') }}</span>
+          <select
+            v-if="unitOptions"
+            :value="row.unit ?? ''"
+            :disabled="loadingUnitIds?.has(row.ingredient_id)"
+            class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text-primary disabled:opacity-50"
+            @change="onUnitInput(row.ingredient_id, $event)"
+          >
+            <option
+              v-for="option in unitOptions(row.ingredient_id)"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
           <input
+            v-else
             type="text"
             class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text-primary"
             :value="row.unit ?? ''"
@@ -107,6 +123,8 @@ import {
 const props = withDefaults(defineProps<{
   existingIngredientIds?: string[]
   inputId?: string
+  unitOptions?: (ingredientId: string) => Array<{ value: string, label: string }>
+  loadingUnitIds?: Set<string>
 }>(), {
   existingIngredientIds: () => [],
   inputId: 'warehouse-category-ingredient-selector',
