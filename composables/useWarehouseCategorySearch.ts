@@ -15,7 +15,7 @@ export interface WarehouseCategoryRow {
   tenant_count: number
 }
 
-export const useWarehouseCategorySearch = () => {
+export const useWarehouseCategorySearch = (options: { searchOnMount?: boolean } = {}) => {
   const results = ref<WarehouseCategoryRow[]>([])
   const loading = ref(false)
   const error = ref<Error | null>(null)
@@ -59,7 +59,7 @@ export const useWarehouseCategorySearch = () => {
   watch(query, scheduleSearch)
 
   onMounted(() => {
-    scheduleSearch(query.value)
+    if (options.searchOnMount !== false) scheduleSearch(query.value)
   })
 
   async function createCategory(name: string) {

@@ -7,9 +7,9 @@
     :listbox-label="listboxLabel"
     :loading="loading || mutating"
     :error="error"
-    :allow-create="true"
+    :allow-create="allowCreate"
     :can-create="canCreate"
-    placement="top"
+    :placement="placement"
     :loading-label="t('abastecimiento.glossary.searchLoading')"
     :empty-label="t('abastecimiento.glossary.noSearchResults')"
     :error-label="t('abastecimiento.glossary.searchError')"
@@ -21,7 +21,7 @@
     @create="onCreate"
   />
 
-  <div v-if="selectedCategory" class="mt-2 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
+  <div v-if="selectedCategory && !compact" class="mt-2 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
     <div class="flex items-center justify-between gap-3">
       <div class="min-w-0">
         <p class="truncate text-xs font-medium text-text-primary">{{ selectedCategory.name }}</p>
@@ -87,6 +87,7 @@ import {
   useWarehouseCategorySearch,
   type WarehouseCategoryRow,
 } from '~/composables/useWarehouseCategorySearch'
+import type { CatalogSearchPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
 import { normalizeCatalogSearchText, rankCatalogSearchOptions } from '~/utils/catalogSearchRanking'
 
 const props = withDefaults(defineProps<{
@@ -94,10 +95,16 @@ const props = withDefaults(defineProps<{
   inputId?: string
   placeholder?: string
   listboxLabel?: string
+  compact?: boolean
+  allowCreate?: boolean
+  placement?: CatalogSearchPlacement
 }>(), {
   inputId: 'ing-category',
   placeholder: '',
   listboxLabel: 'Warehouse categories',
+  compact: false,
+  allowCreate: true,
+  placement: 'top',
 })
 
 const emit = defineEmits<{
@@ -115,7 +122,7 @@ const {
   createCategory,
   renameCategory,
   archiveCategory,
-} = useWarehouseCategorySearch()
+} = useWarehouseCategorySearch({ searchOnMount: !props.compact })
 const queryText = ref(props.modelValue?.name ?? '')
 const renaming = ref(false)
 const renameValue = ref('')
@@ -133,7 +140,7 @@ watch(
     } else {
       queryText.value = ''
     }
-    if (category?.name) query.value = category.name
+    if (category?.name && !props.compact) query.value = category.name
     renaming.value = false
     confirmingArchive.value = false
   },
@@ -165,7 +172,7 @@ const selectedCategory = computed(() => {
 })
 
 const canCreate = computed(() =>
-  !exactMatch.value && !!queryText.value.trim() && !mutating.value,
+  props.allowCreate && !exactMatch.value && !!queryText.value.trim() && !mutating.value,
 )
 
 function onSearch(value: string) {
