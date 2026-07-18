@@ -360,3 +360,12 @@
     }
   }
 }
+      "emailHistoryCta": "Verlauf anzeigen",
+      "emailHistory": {
+        "title": "E-Mail-Zustellverlauf", "description": "Prüfen Sie den Status der für diese Rechnung gesendeten E-Mails.", "close": "Schließen",
+        "unavailableTitle": "Verlauf noch nicht verfügbar", "unavailableBody": "Der Verlaufsdienst wird bald verfügbar sein. Die Rechnung funktioniert weiterhin normal.",
+        "errorTitle": "Verlauf konnte nicht geladen werden", "errorBody": "Bitte versuchen Sie es in wenigen Augenblicken erneut.", "retry": "Erneut versuchen",
+        "emptyTitle": "Noch keine Sendungen", "emptyBody": "Künftige E-Mails für diese Rechnung werden hier angezeigt.",
+        "sentAt": "Gesendet", "failedAt": "Fehlgeschlagen", "openSignal": "Öffnungssignal", "openCount": "{count} erkannte Öffnungen", "failureCode": "Fehlercode",
+        "status": { "sent": "Gesendet", "failed": "Fehlgeschlagen", "pending": "Ausstehend" }
+      },
