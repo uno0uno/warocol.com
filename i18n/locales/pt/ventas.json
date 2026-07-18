@@ -253,6 +253,15 @@
       "issued": "Emitida",
       "downloadPdfCta": "Baixar PDF",
       "emailInvoiceCta": "Enviar por e-mail",
+      "emailHistoryCta": "Ver histórico",
+      "emailHistory": {
+        "title": "Histórico de envios por e-mail", "description": "Consulte o status dos e-mails enviados para esta fatura.", "close": "Fechar",
+        "unavailableTitle": "O histórico ainda não está disponível", "unavailableBody": "O serviço de histórico estará disponível em breve. A fatura continua funcionando normalmente.",
+        "errorTitle": "Não foi possível carregar o histórico", "errorBody": "Tente novamente em alguns instantes.", "retry": "Tentar novamente",
+        "emptyTitle": "Ainda não há envios", "emptyBody": "Os próximos e-mails enviados para esta fatura aparecerão aqui.",
+        "sentAt": "Enviado", "failedAt": "Falhou", "openSignal": "Sinal de abertura", "openCount": "{count} aberturas detectadas", "failureCode": "Código de falha",
+        "status": { "sent": "Enviado", "failed": "Falhou", "pending": "Pendente" }
+      },
       "invoiceAcceptedOnly": "Disponível quando a fatura for aceita.",
       "invoiceReconcileSupport": "Entre em contato com o suporte para reconciliar o documento — não o emita novamente, isso consumiria outro número da resolução sem sucesso.",
       "retrying": "Tentando novamente…",
@@ -360,12 +369,3 @@
     }
   }
 }
-      "emailHistoryCta": "Ver histórico",
-      "emailHistory": {
-        "title": "Histórico de envios por e-mail", "description": "Consulte o status dos e-mails enviados para esta fatura.", "close": "Fechar",
-        "unavailableTitle": "O histórico ainda não está disponível", "unavailableBody": "O serviço de histórico estará disponível em breve. A fatura continua funcionando normalmente.",
-        "errorTitle": "Não foi possível carregar o histórico", "errorBody": "Tente novamente em alguns instantes.", "retry": "Tentar novamente",
-        "emptyTitle": "Ainda não há envios", "emptyBody": "Os próximos e-mails enviados para esta fatura aparecerão aqui.",
-        "sentAt": "Enviado", "failedAt": "Falhou", "openSignal": "Sinal de abertura", "openCount": "{count} aberturas detectadas", "failureCode": "Código de falha",
-        "status": { "sent": "Enviado", "failed": "Falhou", "pending": "Pendente" }
-      },
