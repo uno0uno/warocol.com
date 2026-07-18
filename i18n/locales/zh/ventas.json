@@ -253,6 +253,15 @@
       "issued": "已开具",
       "downloadPdfCta": "下载 PDF",
       "emailInvoiceCta": "通过邮件发送",
+      "emailHistoryCta": "查看历史记录",
+      "emailHistory": {
+        "title": "电子邮件发送历史", "description": "查看此发票发送的电子邮件状态。", "close": "关闭",
+        "unavailableTitle": "历史记录暂不可用", "unavailableBody": "历史记录服务即将上线。发票仍可正常使用。",
+        "errorTitle": "无法加载历史记录", "errorBody": "请稍后重试。", "retry": "重试",
+        "emptyTitle": "尚无发送记录", "emptyBody": "今后为此发票发送的电子邮件将显示在这里。",
+        "sentAt": "已发送", "failedAt": "失败", "openSignal": "打开检测信号", "openCount": "检测到 {count} 次打开", "failureCode": "失败代码",
+        "status": { "sent": "已发送", "failed": "失败", "pending": "待处理" }
+      },
       "invoiceAcceptedOnly": "发票接受后可用。",
       "invoiceReconcileSupport": "请联系支持人员协调此文档 — 请勿重新开具，否则将无效地占用另一个决议编号。",
       "retrying": "正在重试…",
@@ -360,12 +369,3 @@
     }
   }
 }
-      "emailHistoryCta": "查看历史记录",
-      "emailHistory": {
-        "title": "电子邮件发送历史", "description": "查看此发票发送的电子邮件状态。", "close": "关闭",
-        "unavailableTitle": "历史记录暂不可用", "unavailableBody": "历史记录服务即将上线。发票仍可正常使用。",
-        "errorTitle": "无法加载历史记录", "errorBody": "请稍后重试。", "retry": "重试",
-        "emptyTitle": "尚无发送记录", "emptyBody": "今后为此发票发送的电子邮件将显示在这里。",
-        "sentAt": "已发送", "failedAt": "失败", "openSignal": "打开检测信号", "openCount": "检测到 {count} 次打开", "failureCode": "失败代码",
-        "status": { "sent": "已发送", "failed": "失败", "pending": "待处理" }
-      },
