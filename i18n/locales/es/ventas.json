@@ -360,3 +360,12 @@
     }
   }
 }
+      "emailHistoryCta": "Ver historial",
+      "emailHistory": {
+        "title": "Historial de envíos por correo", "description": "Consulta el estado de los correos enviados con esta factura.", "close": "Cerrar",
+        "unavailableTitle": "Historial no disponible todavía", "unavailableBody": "El servicio de historial estará disponible pronto. La factura sigue funcionando normalmente.",
+        "errorTitle": "No se pudo cargar el historial", "errorBody": "Inténtalo nuevamente en unos momentos.", "retry": "Reintentar",
+        "emptyTitle": "Aún no hay envíos", "emptyBody": "Los próximos correos enviados con esta factura aparecerán aquí.",
+        "sentAt": "Enviado", "failedAt": "Falló", "openSignal": "Señal de apertura", "openCount": "{count} aperturas detectadas", "failureCode": "Código de fallo",
+        "status": { "sent": "Enviado", "failed": "Fallido", "pending": "Pendiente" }
+      },

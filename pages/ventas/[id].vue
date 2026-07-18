@@ -157,8 +157,11 @@ const invoiceQrDataUrl = ref('')
 
 // warocol.com#598 — invoice email modal trigger
 const showEmailModal = ref(false)
+const showInvoiceEmailHistory = ref(false)
+const invoiceEmailHistoryRefreshKey = ref(0)
 const toast = useToast()
 const onInvoiceEmailSent = (email: string) => {
+  invoiceEmailHistoryRefreshKey.value += 1
   toast.success(t('ventas.detail.emailSent', { email }), { title: t('ventas.detail.emailSentTitle') })
 }
 
@@ -1283,6 +1286,15 @@ onUnmounted(() => {
                   </svg>
                   {{ t('ventas.detail.emailInvoiceCta') }}
                 </button>
+                <button v-if="invoiceData.status === 'accepted'"
+                  type="button"
+                  @click="showInvoiceEmailHistory = true"
+                  class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-semibold border border-border text-text-primary hover:bg-surface-secondary transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8.25v3.75l2.25 1.5m6-1.5a8.25 8.25 0 1 1-16.5 0 8.25 8.25 0 0 1 16.5 0Z" />
+                  </svg>
+                  {{ t('ventas.detail.emailHistoryCta') }}
+                </button>
                 <p v-else class="text-xs text-text-tertiary">
                   {{ t('ventas.detail.invoiceAcceptedOnly') }}
                 </p>
@@ -2073,6 +2085,12 @@ onUnmounted(() => {
       :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
       :customer="orderData?.customer ?? null"
       @sent="onInvoiceEmailSent"
+    />
+
+    <VentasInvoiceEmailHistorySlideover
+      v-model:open="showInvoiceEmailHistory"
+      :order-id="orderId"
+      :refresh-key="invoiceEmailHistoryRefreshKey"
     />
 
     <PosCustomerIdentificationModal

@@ -360,3 +360,12 @@
     }
   }
 }
+      "emailHistoryCta": "View history",
+      "emailHistory": {
+        "title": "Email delivery history", "description": "Check the status of emails sent for this invoice.", "close": "Close",
+        "unavailableTitle": "History is not available yet", "unavailableBody": "The history service will be available soon. The invoice continues to work normally.",
+        "errorTitle": "Could not load history", "errorBody": "Please try again in a few moments.", "retry": "Try again",
+        "emptyTitle": "No deliveries yet", "emptyBody": "Future emails sent for this invoice will appear here.",
+        "sentAt": "Sent", "failedAt": "Failed", "openSignal": "Open-detection signal", "openCount": "{count} detected opens", "failureCode": "Failure code",
+        "status": { "sent": "Sent", "failed": "Failed", "pending": "Pending" }
+      },
