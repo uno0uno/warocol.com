@@ -229,7 +229,7 @@ async function handleSubmit() {
   error.value = ''
 
   try {
-    await $fetch('/api/auth/sign-in-magic-link', {
+    const response = await $fetch('/api/auth/sign-in-magic-link', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -241,6 +241,14 @@ async function handleSubmit() {
         redirect: route.query.redirect
       }
     })
+
+    // Correo no registrado: redirigir al registro con el email pre-llenado
+    if (response?.action === 'registration_required') {
+      rememberEmailForRegistration()
+      toast.info(`${t('auth.noAccount')} ${t('auth.createAccount')}`)
+      await navigateTo('/registro')
+      return
+    }
 
     // Mostrar toast de éxito y activar UI de código
     toast.success(t('auth.codeSentToast'))
