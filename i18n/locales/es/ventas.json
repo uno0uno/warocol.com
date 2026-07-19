@@ -221,6 +221,7 @@
       "retryEmit": "Reintentar emisión",
       "tipTax": "Impuesto propina",
       "assigned": "Asignado",
+      "unassigned": "No asignado",
       "waroRedemption": "Canje WaRo",
       "productFallback": "Producto",
       "additionFallback": "Adición",

@@ -221,6 +221,7 @@
       "retryEmit": "Retry emission",
       "tipTax": "Tip tax",
       "assigned": "Assigned",
+      "unassigned": "Not assigned",
       "waroRedemption": "WaRo redemption",
       "productFallback": "Product",
       "additionFallback": "Addition",

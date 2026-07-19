@@ -221,6 +221,7 @@
       "retryEmit": "Tentar emissão novamente",
       "tipTax": "Imposto sobre gorjeta",
       "assigned": "Atribuído",
+      "unassigned": "Não atribuído",
       "waroRedemption": "Resgate WaRo",
       "productFallback": "Produto",
       "additionFallback": "Adição",
