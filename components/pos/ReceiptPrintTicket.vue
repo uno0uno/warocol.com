@@ -631,6 +631,14 @@ const printableItems = computed(() =>
     visibility: hidden;
   }
 
+  /* Remove the hidden app from print layout entirely. The ticket is
+     teleported to <body>; siblings that stay in flow (visibility:hidden
+     still occupies space) would push the static ticket to page 2,
+     producing a blank first page. */
+  body.printing-receipt-ticket > :not(.receipt-print-ticket) {
+    display: none !important;
+  }
+
   body.printing-receipt-ticket #pos-receipt,
   body.printing-receipt-ticket #pos-receipt *,
   body.printing-receipt-ticket #pos-prefactura,

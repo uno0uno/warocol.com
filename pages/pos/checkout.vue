@@ -5190,30 +5190,30 @@ onUnmounted(() => {
     </template>
     <div class="receipt-divider">--------------------------------</div>
 
-    <div class="receipt-grid-header receipt-small">
+    <div class="receipt-product-header receipt-small">
       <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>
-      <span class="receipt-col-qty">{{ t('pos.receipt.qty') }}</span>
-      <span class="receipt-col-price">{{ t('pos.receipt.price') }}</span>
       <span class="receipt-col-total">{{ t('pos.receipt.total') }}</span>
     </div>
     <template v-for="item in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
-      <div class="receipt-grid-row receipt-small">
-        <span class="receipt-col-desc">
+      <div class="receipt-product-line receipt-small">
+        <div class="receipt-product-name">
           {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
-        </span>
-        <span class="receipt-col-qty">{{ item.quantity }}</span>
-        <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
-        <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
+        </div>
+        <div class="receipt-product-values">
+          <span>{{ item.quantity }} × {{ formatCurrency(getItemUnitPrice(item)) }}</span>
+          <strong>{{ formatCurrency(getItemTotal(item)) }}</strong>
+        </div>
       </div>
       <div
         v-for="mod in (item.modifiers ?? [])"
         :key="`${item.id ?? item.orderItemId}-${mod.id}`"
-        class="receipt-grid-row receipt-small receipt-modifier-row"
+        class="receipt-product-line receipt-small receipt-modifier-row"
       >
-        <span class="receipt-col-desc">{{ formatModifierPrintDesc(mod) }}</span>
-        <span class="receipt-col-qty">{{ (Number(mod.quantity) || 1) > 1 ? mod.quantity : '' }}</span>
-        <span class="receipt-col-price">{{ formatCurrency(Number(mod.price) || 0) }}</span>
-        <span class="receipt-col-total">{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+        <div class="receipt-product-name">{{ formatModifierPrintDesc(mod) }}</div>
+        <div class="receipt-product-values">
+          <span>{{ (Number(mod.quantity) || 1) > 1 ? `${mod.quantity} × ` : '' }}{{ formatCurrency(Number(mod.price) || 0) }}</span>
+          <span>{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+        </div>
       </div>
     </template>
     <div class="receipt-divider">--------------------------------</div>
@@ -5535,6 +5535,44 @@ onUnmounted(() => {
 .receipt-col-total { text-align: right; white-space: nowrap; }
 .receipt-grid-header { font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 2px; margin-bottom: 4px; }
 .receipt-modifier-row .receipt-col-desc { padding-left: 8px; font-size: 0.92em; }
+
+/* Prefactura product-line layout — mirrors ReceiptPrintTicket so numbers
+   (qty × price = total) never overlap on narrow thermal paper. */
+#pos-prefactura .receipt-product-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2mm;
+  align-items: baseline;
+  font-weight: bold;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 2px;
+  margin-bottom: 3px;
+}
+#pos-prefactura .receipt-product-line {
+  margin: 0 0 3px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+#pos-prefactura .receipt-product-name {
+  overflow-wrap: anywhere;
+}
+#pos-prefactura .receipt-product-values {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2mm;
+  align-items: baseline;
+  padding-left: 2mm;
+}
+#pos-prefactura .receipt-product-values span:last-child,
+#pos-prefactura .receipt-product-values strong {
+  text-align: right;
+  white-space: nowrap;
+}
+#pos-prefactura .receipt-modifier-row {
+  padding-left: 2mm;
+  margin-top: -1px;
+  font-size: 0.92em;
+}
 </style>
 
 <style>
