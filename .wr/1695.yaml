@@ -1,0 +1,40 @@
+issue: 1695
+title: "Login magic link: redirigir a registro cuando el correo no está registrado"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA
+stack: both
+branch: wr-1695-login-registration-redirect
+
+paths:
+  - api_warocol.com/app/models/auth.py
+  - api_warocol.com/app/services/magic_link_service.py
+  - api_warocol.com/tests/test_magic_link_registration_contract.py
+  - front_nuxt/components/Auth/LoginForm.vue
+
+ac:
+  - "MagicLinkResponse incluye action ('email_sent' | 'registration_required'), default retrocompatible"
+  - "send_magic_link devuelve registration_required cuando no hay identidad interna ni draft"
+  - "Tests de contrato: correo inexistente -> registration_required; draft -> email_sent; registrado -> login normal"
+  - "Front: action=registration_required -> prefillRegistrationEmail + toast + navigateTo('/registro')"
+  - "Front: flujo normal (registrado -> revisa tu correo) sin cambios"
+
+out_of_scope:
+  - cambios al endpoint de registro existente
+  - nuevas keys i18n (se reusan auth.noAccount + auth.createAccount)
+  - QA/regresión general (validación manual del usuario)
+
+hints:
+  entry: "POST /auth/sign-in-magic-link -> send_magic_link (magic_link_service.py:245)"
+  pattern: "RegistrationMagicLinkResponse.action (models/auth.py:83) ya expone Literal action"
+  tests: "cd api_warocol.com && pytest tests/test_magic_link_registration_contract.py -q"
+
+risk:
+  sensitive: true
+  areas: [auth]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "auto review wr-review sobre ambos PRs"
