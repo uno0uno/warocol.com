@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1693
+title: "POS: eliminar/reducir barra de estados (Ocupada/Cuenta/Libre) en vista de planta principal"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1693-pos-floor-legend
+
+paths:
+  - components/pos/MesasFloorPlan.vue
+
+ac:
+  - La barra de estados Ocupada/Cuenta/Libre ya no ocupa una franja dedicada en la vista de planta principal
+  - El estado de cada mesa sigue distinguible en el propio tile (dot de color, label, strip de estado)
+  - El layout del floor plan no deja huecos ni saltos tras el cambio
+  - Sin regresion visual en movil y desktop en /pos
+  - Tests del modulo pos siguen pasando
+
+out_of_scope:
+  - cambios de API
+  - cambios en la logica de estados de mesa
+  - otras vistas del POS
+  - limpieza de claves i18n pos.floor.* (siguen en uso en los tiles)
+  - computed sin uso preexistentes (freeCount/openCount/billCount/totalVentas)
+
+hints:
+  entry: "pages/pos/index.vue -> components/pos/MesasFloorPlan.vue"
+  pattern: "components/pos/MesasFloorPlan.vue:279-300 bloque Legend eliminado"
+  tests: "npx vitest run components/pos"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-review del PR abierto"

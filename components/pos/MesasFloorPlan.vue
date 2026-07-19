@@ -276,29 +276,6 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <!-- Legend -->
-      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <p class="text-sm text-text-secondary">{{ t('pos.floor.mainPlan') }}</p>
-        <div class="flex gap-2 flex-wrap">
-          <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
-            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.bar') }}</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text/40" />
-            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.occupied') }}</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
-            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.bill') }}</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-surface border-2 border-border" />
-            <span class="text-xs font-medium text-text-secondary">{{ t('pos.floor.free') }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Bar tile — always visible, pinned before regular tables -->
       <div v-if="barTable" class="mb-4">
         <button
