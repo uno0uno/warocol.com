@@ -221,6 +221,7 @@
       "retryEmit": "إعادة محاولة الإصدار",
       "tipTax": "ضريبة الإكرامية",
       "assigned": "مخصص",
+      "unassigned": "غير مخصص",
       "waroRedemption": "استرداد WaRo",
       "productFallback": "منتج",
       "additionFallback": "إضافة",

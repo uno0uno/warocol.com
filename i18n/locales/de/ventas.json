@@ -221,6 +221,7 @@
       "retryEmit": "Erneut ausstellen",
       "tipTax": "Trinkgeldsteuer",
       "assigned": "Zugewiesen",
+      "unassigned": "Nicht zugewiesen",
       "waroRedemption": "WaRo-Einlösung",
       "productFallback": "Produkt",
       "additionFallback": "Zusatz",

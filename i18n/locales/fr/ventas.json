@@ -221,6 +221,7 @@
       "retryEmit": "Réessayer l'émission",
       "tipTax": "Taxe sur le pourboire",
       "assigned": "Assigné",
+      "unassigned": "Non attribué",
       "waroRedemption": "Échange WaRo",
       "productFallback": "Produit",
       "additionFallback": "Supplément",

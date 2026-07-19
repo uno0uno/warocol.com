@@ -221,6 +221,7 @@
       "retryEmit": "重试开具",
       "tipTax": "小费税",
       "assigned": "已分配",
+      "unassigned": "未分配",
       "waroRedemption": "WaRo 兑换",
       "productFallback": "产品",
       "additionFallback": "加项",

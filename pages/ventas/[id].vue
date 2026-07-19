@@ -133,6 +133,11 @@ watch(
   { immediate: true },
 )
 const invoiceData = computed(() => invoiceSnapshot.value ?? invoiceQueryData.value ?? null)
+const trimmedCufe = computed(() => {
+  const cufe = String(invoiceData.value?.cufe ?? '').trim()
+  if (cufe.length <= 32) return cufe
+  return `${cufe.slice(0, 16)}...${cufe.slice(-12)}`
+})
 
 // DIAN invoicing readiness — read from the POS restaurant-context aggregator.
 // /api/api/tenant/invoicing-readiness (the richer detail) is owner-only MI_NEGOCIO;
@@ -343,6 +348,13 @@ const preInvoiceContactLabel = computed(() =>
     || saleCustomerIdentity.value.contact.email
     || t('ventas.common.sinNombre'),
 )
+const saleCustomerCardLabel = computed(() =>
+  saleCustomerIdentity.value.contact.name
+    || saleCustomerIdentity.value.acquirer.name
+    || saleCustomerIdentity.value.contact.email
+    || saleCustomerIdentity.value.contact.phone
+    || t('ventas.common.sinNombre'),
+)
 const preInvoiceAcquirerLabel = computed(() =>
   formatFiscalIdentityLabel(saleCustomerIdentity.value.acquirer)
     || t('ventas.common.sinNombre'),
@@ -372,6 +384,12 @@ const shouldShowInvoiceSection = computed(() => Boolean(
       && orderHasInvoiceCustomer.value
     ),
 ))
+const invoiceSectionTransitionKey = computed(() => {
+  if (invoiceData.value) return 'invoice-loaded'
+  if (isCreditOnlyInvoiceBlocked.value) return 'invoice-credit-blocked'
+  if (canEmitInvoiceForOrder.value) return 'invoice-ready'
+  return 'invoice-unavailable'
+})
 
 const openCustomerModal = () => {
   if (!canAssociateOrderCustomer.value) return
@@ -987,12 +1005,11 @@ onUnmounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
         <div
-          v-if="saleCustomerIdentity.hasContact"
           class="bg-surface border border-border rounded-xl p-4"
         >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.detail.saleCustomer') }}</p>
           <p class="text-lg font-bold text-text-primary">
-            {{ preInvoiceContactLabel }}
+            {{ saleCustomerCardLabel }}
           </p>
           <p
             v-if="saleCustomerIdentity.contact.email && saleCustomerIdentity.contact.email !== preInvoiceContactLabel"
@@ -1016,25 +1033,32 @@ onUnmounted(() => {
 
         <!-- Customer Phone -->
         <div
-          v-if="saleCustomerIdentity.contact.phone"
           class="bg-surface border border-border rounded-xl p-4"
         >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.telefono') }}</p>
-          <p class="text-lg font-bold text-text-primary">{{ saleCustomerIdentity.contact.phone }}</p>
+          <p
+            class="text-lg font-bold"
+            :class="saleCustomerIdentity.contact.phone ? 'text-text-primary' : 'text-text-tertiary'"
+          >
+            {{ saleCustomerIdentity.contact.phone || t('ventas.common.sinTelefono') }}
+          </p>
         </div>
 
         <!-- Waiter (checkout / mesa close attribution — #663/#665/#666) -->
         <div
-          v-if="order.served_by_member_id"
           class="bg-surface border border-border rounded-xl p-4"
         >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.mesero') }}</p>
           <NuxtLink
+            v-if="order.served_by_member_id"
             :to="`/equipo/miembros/${order.served_by_member_id}`"
             class="text-lg font-bold text-primary hover:underline"
           >
             {{ order.served_by_member_name || t('ventas.detail.assigned') }}
           </NuxtLink>
+          <p v-else class="text-lg font-bold text-text-tertiary">
+            {{ t('ventas.detail.unassigned') }}
+          </p>
         </div>
 
         <!-- Payment Method -->
@@ -1175,10 +1199,12 @@ onUnmounted(() => {
            (b) the tenant has DIAN invoicing configured and ready and the order
                has an associated customer. Payment method is not part of this gate.
            Otherwise hidden entirely (matches the POS checkout guard pattern). -->
-      <div
-        v-if="shouldShowInvoiceSection"
-        class="bg-surface border border-border rounded-2xl overflow-hidden"
-      >
+      <Transition name="slide-down" mode="out-in" appear>
+        <div
+          v-if="shouldShowInvoiceSection"
+          :key="invoiceSectionTransitionKey"
+          class="bg-surface border border-border rounded-2xl overflow-hidden"
+        >
         <!-- Invoice exists -->
         <template v-if="invoiceData">
           <!-- Header -->
@@ -1308,14 +1334,22 @@ onUnmounted(() => {
                 <p class="text-sm text-text-secondary">
                   {{ t('ventas.detail.cufeTitle') }}
                 </p>
-                <div v-if="invoiceData.cufe" class="rounded-xl border border-border bg-surface-secondary/50 p-3">
-                  <p class="text-xs font-mono text-text-secondary break-all leading-relaxed">
-                    {{ invoiceData.cufe }}
+                <div v-if="invoiceData.cufe" class="h-11 rounded-xl border border-border bg-surface-secondary/50 px-3 flex items-center overflow-hidden">
+                  <p class="w-full truncate text-xs font-mono text-text-secondary">
+                    {{ trimmedCufe }}
                   </p>
                 </div>
                 <button v-if="invoiceData.cufe" @click="copyCufe(invoiceData.cufe)"
-                  class="w-full min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors">
-                  {{ copiedCufe ? t('ventas.detail.cufeCopied') : t('ventas.detail.copyCode') }}
+                  class="w-full min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors inline-flex items-center justify-center gap-2"
+                  :aria-label="copiedCufe ? t('ventas.detail.cufeCopied') : t('ventas.detail.copyCode')">
+                  <svg v-if="!copiedCufe" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612a.75.75 0 0 1-.75.75H9.75A.75.75 0 0 1 9 4.5c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5A2.25 2.25 0 0 1 18 21.75H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  <span>{{ copiedCufe ? t('ventas.detail.cufeCopied') : t('ventas.detail.copyCode') }}</span>
                 </button>
               </div>
             </div>
@@ -1406,7 +1440,7 @@ onUnmounted(() => {
         <!-- No invoice — eligible completed order: show emit button -->
         <template v-else-if="canEmitInvoiceForOrder">
           <div class="px-5 py-3 space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex items-center gap-3">
               <span class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0" aria-hidden="true">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round"
@@ -1417,6 +1451,19 @@ onUnmounted(() => {
                 <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.noInvoiceTitle') }}</p>
                 <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.noInvoiceBody') }}</p>
               </div>
+              <button @click="emitInvoice" :disabled="isEmittingInvoice"
+                class="ml-auto flex-shrink-0 min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
+                <template v-if="isEmittingInvoice">
+                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  {{ t('ventas.detail.generating') }}
+                </template>
+                <template v-else>
+                  {{ t('ventas.detail.emitCta') }}
+                </template>
+              </button>
             </div>
 
             <div
@@ -1475,22 +1522,6 @@ onUnmounted(() => {
                 {{ t('ventas.detail.differentFiscalIdentityWarning', { acquirer: preInvoiceAcquirerLabel, contact: preInvoiceContactLabel }) }}
               </p>
             </div>
-
-            <div class="flex justify-end">
-              <button @click="emitInvoice" :disabled="isEmittingInvoice"
-                class="w-full sm:w-auto min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
-                <template v-if="isEmittingInvoice">
-                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  {{ t('ventas.detail.generating') }}
-                </template>
-                <template v-else>
-                  {{ t('ventas.detail.emitCta') }}
-                </template>
-              </button>
-            </div>
           </div>
           <p v-if="emitInvoiceError" class="px-5 pb-3 text-sm text-destructive flex items-center gap-1.5">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1510,7 +1541,8 @@ onUnmounted(() => {
             <p class="text-sm text-text-tertiary">{{ t('ventas.detail.invoiceWhenComplete') }}</p>
           </div>
         </template>
-      </div>
+        </div>
+      </Transition>
 
       <!-- Status Update Panel (mesa and barra orders) -->
       <div v-if="order.source === 'mesa' || order.source === 'barra'"
@@ -2141,13 +2173,17 @@ onUnmounted(() => {
 <style>
 .slide-down-enter-active,
 .slide-down-leave-active {
-  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top;
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
 .slide-down-enter-from,
 .slide-down-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(-10px);
 }
 
 .panel-enter-active,
@@ -2158,6 +2194,18 @@ onUnmounted(() => {
 .panel-enter-from,
 .panel-leave-to {
   transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-down-enter-active,
+  .slide-down-leave-active {
+    transition-duration: 0.01ms;
+  }
+
+  .slide-down-enter-from,
+  .slide-down-leave-to {
+    transform: none;
+  }
 }
 
 @media (min-width: 768px) {
