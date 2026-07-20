@@ -49,6 +49,7 @@ export default defineNuxtConfig({
     '/finanzas/pagos/**': { ssr: false },
     '/financiero/**': { ssr: false },
     '/auth/**': { ssr: false },
+    '/analitica/**': { ssr: false },
     '/onboarding': { ssr: false },
     '/analitica/**': { ssr: false },
     '/asistente/**': { ssr: false },

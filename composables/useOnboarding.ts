@@ -1,8 +1,3 @@
-import type {
-  CountryCurrencyOption,
-  CurrencyMetadata,
-  TenantFinancialProfile,
-} from './useTenantFinancialProfile'
 import {
   type OnboardingPaymentAttempt,
 } from '~/utils/onboardingPayment'
@@ -14,18 +9,8 @@ export interface OnboardingStatusData {
   nextStep: string | null
   emailVerifiedAt?: string | null
   businessName: string
-  financialProfile?: TenantFinancialProfile | null
   termsAccepted: boolean
   termsVersion?: string | null
-}
-
-export interface OnboardingFinancialData {
-  businessName: string
-  profile: TenantFinancialProfile | null
-  catalog: CountryCurrencyOption[]
-  currencies: CurrencyMetadata[]
-  state: string
-  nextStep: string | null
 }
 
 interface ApiEnvelope<T> {
@@ -36,7 +21,6 @@ interface ApiEnvelope<T> {
 export const useOnboarding = () => {
   const status = ref<OnboardingStatusData | null>(null)
   const paymentAttempt = ref<OnboardingPaymentAttempt | null>(null)
-  const isLoading = ref(true)
   const isPaymentLoading = ref(false)
   const loadError = ref<unknown>(null)
   const paymentError = ref<unknown>(null)
@@ -70,7 +54,6 @@ export const useOnboarding = () => {
   return {
     status,
     paymentAttempt,
-    isLoading,
     isPaymentLoading,
     loadError,
     paymentError,
