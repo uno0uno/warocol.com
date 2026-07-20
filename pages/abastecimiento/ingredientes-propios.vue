@@ -95,8 +95,14 @@
         @cancel="onCancelEdit"
       />
 
+      <!-- Table loading (page/filter change, no cached rows yet) -->
+      <div v-if="isRefreshing && sortedIngredients.length === 0" class="flex items-center justify-center min-h-[200px]">
+        <CommonsTheCustomLoader size="medium" />
+      </div>
+
       <!-- Data View -->
       <UiResponsiveDataView
+        v-else
         :columns="tableColumns"
         :data="sortedIngredients"
         :sort-field="sortField"
@@ -298,6 +304,45 @@
           </div>
         </template>
       </UiResponsiveDataView>
+
+      <!-- Pagination -->
+      <div v-if="ingredientsTotal > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            :disabled="currentPage >= ingredientsTotalPages"
+            @click="goToPage(currentPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage >= ingredientsTotalPages"
+            @click="goToPage(ingredientsTotalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Create / Edit Panel -->
@@ -457,6 +502,15 @@ const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQue
 const isLoading = computed(() => !ingredientsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && ingredientsData.value != null)
 
+const ingredientsTotal = computed(() => (ingredientsData.value as any)?.total ?? 0)
+const ingredientsTotalPages = computed(() =>
+  Math.max(1, Math.ceil(ingredientsTotal.value / itemsPerPage.value)),
+)
+
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, ingredientsTotalPages.value))
+}
+
 const ingredients = computed(() => (ingredientsData.value as any)?.data || [])
 
 /** Manual supply ingredients only — resale stock rows are managed from Menú → productos (#869). */
@@ -493,7 +547,7 @@ const {
 })
 
 const stats = computed(() => ({
-  total: supplyIngredients.value.length,
+  total: ingredientsTotal.value,
   withCost: supplyIngredients.value.filter((i: any) => i.costo_unitario != null).length,
 }))
 
