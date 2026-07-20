@@ -11,7 +11,7 @@
           <option value="WAREHOUSE">{{ WAREHOUSE_COPY.warehouseItem }}</option>
           <option value="RESALE">{{ t('menu.common.reventa') }}</option>
           <option value="RECIPE">{{ t('menu.modificadores.baseRecipe') }}</option>
-          <option value="PRODUCT">{{ t('menu.modificadores.menuProduct') }}</option>
+          <option value="PRODUCT">{{ WAREHOUSE_COPY.menuProduct }}</option>
           <option value="NONE">{{ t('menu.modificadores.priceOnly') }}</option>
         </select>
       </div>
@@ -211,25 +211,29 @@
         </div>
       </div>
 
-      <div v-if="modifier.recipe_lines.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
-        <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
-        <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
-      </div>
+      <div class="space-y-2 pt-2 border-t border-border">
+        <h4 class="text-sm font-medium text-text-primary">{{ WAREHOUSE_COPY.recipeCostLines }}</h4>
 
-      <div v-if="modifier.recipe_lines.length" class="space-y-2">
-        <div
-          v-for="(line, lineIndex) in modifier.recipe_lines"
-          :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
-          class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
-        >
-          <div class="md:col-span-5">
-            <UiIngredientSearchInput
-              :key="`modifier-recipe-line-${line.ingredient_id || lineIndex}`"
-              :initial-value="recipeLineSearchLabel(line)"
-              :allow-create="true"
-              @select="ingredient => $emit('select-recipe-line', lineIndex, ingredient)"
-              @create="name => $emit('create-recipe-line', lineIndex, name)"
-            />
+        <div v-if="modifier.recipe_lines.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
+          <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
+          <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
+        </div>
+
+        <div v-if="modifier.recipe_lines.length" class="space-y-2">
+          <div
+            v-for="(line, lineIndex) in modifier.recipe_lines"
+            :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
+            class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
+          >
+            <div class="md:col-span-5">
+              <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
+              <UiIngredientSearchInput
+                :key="`modifier-recipe-line-${line.ingredient_id || lineIndex}`"
+                :initial-value="recipeLineSearchLabel(line)"
+                :allow-create="true"
+                @select="ingredient => $emit('select-recipe-line', lineIndex, ingredient)"
+                @create="name => $emit('create-recipe-line', lineIndex, name)"
+              />
           </div>
           <div class="md:col-span-3">
             <UiDecimalInput
@@ -263,22 +267,23 @@
           >
             ×
           </button>
+          </div>
         </div>
-      </div>
 
-      <button
-        type="button"
-        class="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
-        @click="addRecipeLine"
-      >
-        <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
-        {{ t('menu.recetas.form.addLine') }}
-      </button>
+        <button
+          type="button"
+          class="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
+          @click="addRecipeLine"
+        >
+          <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
+          {{ t('menu.recetas.form.addLine') }}
+        </button>
+      </div>
     </div>
 
     <div v-else-if="uiOptionType === 'PRODUCT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-6">
-        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.menuProductRequired') }}</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.menuProduct }} *</label>
         <UiProductSearchInput
           :key="`modifier-prod-${modifier.linked_product_id ?? index}`"
           :input-id="`modifier-option-product-${index}`"

@@ -34,7 +34,7 @@
       "guardado": "Guardado",
       "active": "Activa",
       "inactive": "Inactiva",
-      "incompatibleUnitError": "Selecciona una unidad compatible para cada ingrediente."
+      "incompatibleUnitError": "Selecciona una unidad compatible para cada artículo de bodega."
     },
     "productos": {
       "editMode": "Modo edición",
@@ -348,12 +348,11 @@
       ,"saveBusy": "Guardando..."
       ,"saveGroup": "Guardar grupo"
       ,"cancel": "Cancelar"
-      ,"ingredientOrResale": "Ingrediente / reventa"
       ,"warehouseItemRequired": "Artículo de bodega *"
       ,"resaleProductRequired": "Producto de reventa *"
       ,"resaleProductHelp": "Selecciona un producto de reventa; WARO usa su artículo de bodega vinculado (1:1)."
       ,"baseRecipe": "Receta base"
-      ,"menuProduct": "Producto del menú"
+      ,"menuProduct": "Producto de menú"
       ,"priceOnly": "Solo precio"
       ,"optionTypeRequired": "Tipo *"
       ,"optionNameRequired": "Nombre *"
@@ -365,14 +364,13 @@
       ,"maxShort": "Máx"
       ,"order": "Orden"
       ,"removeOption": "Eliminar opción"
-      ,"ingredientOrResaleRequired": "Ingrediente o reventa *"
       ,"quantity": "Cantidad"
       ,"unit": "Unidad"
       ,"unitCost": "Costo unit.:"
       ,"baseRecipeRequired": "Receta base *"
       ,"chooseRecipe": "Elegir receta…"
       ,"recipeQuantity": "Cantidad × receta"
-      ,"menuProductRequired": "Producto del menú *"
+      ,"menuProductRequired": "Producto de menú *"
       ,"productQuantity": "Cantidad × producto"
       ,"noInventoryComposition": "Opción sin composición de inventario; solo aplica el precio de venta."
       ,"isDefault": "Por defecto"

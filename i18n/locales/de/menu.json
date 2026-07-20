@@ -34,7 +34,7 @@
       "guardado": "Gespeichert",
       "active": "Aktiv",
       "inactive": "Inaktiv",
-      "incompatibleUnitError": "Wähle für jede Zutat eine kompatible Einheit."
+      "incompatibleUnitError": "Wähle für jeden Lagerartikel eine kompatible Einheit."
     },
     "productos": {
       "editMode": "Bearbeitungsmodus",
@@ -348,7 +348,6 @@
       "saveBusy": "Speichern...",
       "saveGroup": "Gruppe speichern",
       "cancel": "Abbrechen",
-      "ingredientOrResale": "Zutat / Wiederverkauf",
       "baseRecipe": "Basisrezept",
       "menuProduct": "Menüprodukt",
       "priceOnly": "Nur Preis",
@@ -362,7 +361,6 @@
       "maxShort": "Max.",
       "order": "Reihenfolge",
       "removeOption": "Option entfernen",
-      "ingredientOrResaleRequired": "Zutat oder Wiederverkauf *",
       "quantity": "Menge",
       "unit": "Einheit",
       "unitCost": "Stückkosten:",
