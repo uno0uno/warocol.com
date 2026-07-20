@@ -213,7 +213,6 @@
 
       <div class="space-y-2 pt-2 border-t border-border">
         <h4 class="text-sm font-medium text-text-primary">{{ WAREHOUSE_COPY.recipeCostLines }}</h4>
-        <MenuIngredientProductHint class="mb-1" />
 
         <div v-if="modifier.recipe_lines.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
           <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
