@@ -46,7 +46,9 @@ export const trackOnboardingEvent = (
   target?: DataLayerTarget | null,
   storage?: Pick<Storage, 'getItem' | 'setItem'> | null,
 ): boolean => {
-  const browserTarget = target ?? (typeof window === 'undefined' ? null : window as DataLayerTarget)
+  const browserTarget = target === undefined
+    ? (typeof window === 'undefined' ? null : window as DataLayerTarget)
+    : target
   if (!browserTarget) return false
 
   const dedupeId = payload.dedupeId ?? 'flow'
