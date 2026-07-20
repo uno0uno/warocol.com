@@ -86,7 +86,7 @@ describe('included modifier quantity form contract', () => {
     expect(validateModifierOption(row) ?? '').toMatch(/Completa/)
   })
 
-  it('collects excluded recipe ingredient ids from manual, prepared, and recipe base rows', () => {
+  it('collects excluded recipe ingredient ids from manual lines and recipe base rows', () => {
     const row = createEmptyModifier(0)
     row.option_type = 'RECIPE'
     row.recipe_lines = [{
@@ -106,7 +106,6 @@ describe('included modifier quantity form contract', () => {
     expect(collectModifierRecipeExcludedIngredientIds(row, ['base-1'])).toEqual([
       'base-1',
       'manual-1',
-      'prepared-1',
     ])
   })
 

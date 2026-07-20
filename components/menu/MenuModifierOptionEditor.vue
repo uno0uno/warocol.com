@@ -179,7 +179,7 @@
       />
 
       <div
-        v-if="!modifier.recipe_base_type_id && modifier.recipe_lines.length === 0 && modifier.prepared_recipe_lines.length === 0"
+        v-if="modifier.recipe_lines.length === 0 && modifier.prepared_recipe_lines.length === 0"
         class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4"
       >
         <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>

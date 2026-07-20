@@ -98,7 +98,6 @@ export function collectModifierRecipeExcludedIngredientIds(
   return [
     ...recipeBaseIngredientIds,
     ...row.recipe_lines.map(line => line.ingredient_id),
-    ...row.prepared_recipe_lines.map(line => line.ingredient_id),
   ].filter(Boolean)
 }
 
