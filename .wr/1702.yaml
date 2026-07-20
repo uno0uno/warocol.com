@@ -1,0 +1,28 @@
+issue: 1702
+title: Add pagination UI to warehouse catalog (ingredientes-propios)
+repo: uno0uno/warocol.com
+cwd: front_nuxt
+stack: nuxt
+branch: wr-1702-ingredientes-propios-pagination
+
+paths:
+  - front_nuxt/pages/abastecimiento/ingredientes-propios.vue
+
+reference:
+  - front_nuxt/pages/ventas/ordenes.vue
+
+ac:
+  - Pagination controls (first/prev/current/next/last) like ordenes
+  - Total pages from API total field (IngredientsListResponse.total)
+  - Inline loader when isRefreshing && no cached rows
+  - Stats total from API, not page slice
+  - Filters reset page 1 (existing)
+
+plan:
+  - Add ingredientsTotal, ingredientsTotalPages, goToPage
+  - Wrap table with isRefreshing empty-state loader + v-else on UiResponsiveDataView
+  - Add pagination bar after table (reuse ventas.common aria labels)
+  - Point stats.total at API total
+
+hints:
+  tests: none (front-only, no targeted test command for this page)
