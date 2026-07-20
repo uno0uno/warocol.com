@@ -145,7 +145,7 @@
 
           <template #header-tipo>
             <UiTableHeaderFilter
-              v-model="productTypeFilter"
+              v-model="productTypeHeaderFilter"
               :title="t('menu.common.tipo')"
               filter-type="select"
               :options="productTypeHeaderOptions"
@@ -932,10 +932,17 @@ function productTypeFromRouteQuery(tipo: unknown): ProductTypeFilter {
   return QUERY_TO_PRODUCT_TYPE[tipo] ?? 'all'
 }
 
-function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | undefined {
-  if (filter === 'all') return undefined
-  if (filter === 'resale') return 'reventa'
+function routeQueryTipoFromProductType(filter: ProductTypeFilter | string): string | undefined {
+  const normalized = normalizeProductTypeFilter(filter)
+  if (normalized === 'all') return undefined
+  if (normalized === 'resale') return 'reventa'
   return 'menu'
+}
+
+function normalizeProductTypeFilter(value: string | ProductTypeFilter): ProductTypeFilter {
+  if (!value || value === 'all') return 'all'
+  if (value === 'menu' || value === 'resale') return value
+  return 'all'
 }
 
 const cache = useQueryCache()
@@ -964,6 +971,25 @@ let syncingProductTypeRoute = false
 
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
+
+const productTypeHeaderFilter = computed({
+  get: () => (normalizeProductTypeFilter(productTypeFilter.value) === 'all' ? '' : productTypeFilter.value),
+  set: (value: string | boolean) => {
+    productTypeFilter.value = normalizeProductTypeFilter(typeof value === 'string' ? value : '')
+    currentPage.value = 1
+  },
+})
+
+watch(
+  productTypeFilter,
+  (filter) => {
+    const normalized = normalizeProductTypeFilter(String(filter))
+    if (filter !== normalized) {
+      productTypeFilter.value = normalized
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query.tipo,

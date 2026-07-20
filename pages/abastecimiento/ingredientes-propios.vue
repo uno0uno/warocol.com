@@ -119,6 +119,40 @@
           </div>
         </template>
 
+        <template #header-name>
+          <UiTableHeaderFilter
+            :title="t('abastecimiento.common.nombre')"
+            column-key="name"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="none"
+            @sort="handleSort"
+          />
+        </template>
+
+        <template #header-unit>
+          <UiTableHeaderFilter
+            :title="t('abastecimiento.common.unidad')"
+            filter-type="select"
+            :model-value="unitFilter"
+            :options="unitHeaderOptions"
+            :all-label="t('abastecimiento.common.todos')"
+            @update:model-value="updateUnitFilter"
+          />
+        </template>
+
+        <template #header-unit_weight_gr>
+          <UiTableHeaderFilter
+            :title="t('abastecimiento.common.grUnd')"
+            filter-type="select"
+            :model-value="unitWeightFilter"
+            :options="unitWeightHeaderOptions"
+            :all-label="t('abastecimiento.common.todos')"
+            @update:model-value="updateUnitWeightFilter"
+          />
+        </template>
+
         <template #header-type>
           <UiTableHeaderFilter
             :title="t('abastecimiento.glossary.typeFilter')"
@@ -127,6 +161,33 @@
             :options="typeHeaderOptions"
             :all-label="t('abastecimiento.common.todos')"
             @update:model-value="updateTypeFilter"
+          />
+        </template>
+
+        <template #header-costo_unitario>
+          <UiTableHeaderFilter
+            :title="t('abastecimiento.common.costo')"
+            column-key="costo_unitario"
+            sortable
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            filter-type="select"
+            :model-value="costFilter"
+            :options="costHeaderOptions"
+            :all-label="t('abastecimiento.common.todos')"
+            @sort="handleSort"
+            @update:model-value="updateCostFilter"
+          />
+        </template>
+
+        <template #header-category>
+          <UiTableHeaderFilter
+            :title="t('abastecimiento.common.categoria')"
+            filter-type="select"
+            :model-value="categoryFilter"
+            :options="categoryHeaderOptions"
+            :all-label="t('abastecimiento.common.todas')"
+            @update:model-value="updateCategoryFilter"
           />
         </template>
 
@@ -431,8 +492,31 @@ const typeHeaderOptions = computed(() => [
   { value: 'service', label: WAREHOUSE_COPY.typeService },
 ])
 
+const unitHeaderOptions = [
+  { value: 'gr', label: 'gr' },
+  { value: 'ml', label: 'ml' },
+  { value: 'kg', label: 'kg' },
+  { value: 'und', label: 'und' },
+  { value: 'lt', label: 'lt' },
+  { value: 'hr', label: 'hr' },
+]
+
+const costHeaderOptions = computed(() => [
+  { value: 'with', label: t('abastecimiento.glossary.withCost') },
+  { value: 'without', label: t('abastecimiento.common.sinCosto') },
+])
+
+const unitWeightHeaderOptions = computed(() => [
+  { value: 'with', label: t('common.yes') },
+  { value: 'without', label: t('common.no') },
+])
+
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
+const categoryFilter = ref('')
+const unitFilter = ref('')
+const costFilter = ref('')
+const unitWeightFilter = ref('')
 
 const panelInitialType = computed(() => {
   const t = typeFilter.value
@@ -462,6 +546,10 @@ const hasActiveFilters = computed(
     !!localSearchTerm.value
     || !!appliedSearch.value
     || !!typeFilter.value
+    || !!categoryFilter.value
+    || !!unitFilter.value
+    || !!costFilter.value
+    || !!unitWeightFilter.value
     || showArchived.value,
 )
 
@@ -477,11 +565,49 @@ const updateTypeFilter = (value: string | boolean) => {
   currentPage.value = 1
 }
 
+const updateCategoryFilter = (value: string | boolean) => {
+  categoryFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const updateUnitFilter = (value: string | boolean) => {
+  unitFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const updateCostFilter = (value: string | boolean) => {
+  costFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const updateUnitWeightFilter = (value: string | boolean) => {
+  unitWeightFilter.value = typeof value === 'string' ? value : ''
+  currentPage.value = 1
+}
+
+const { data: categoriesData } = useQuery({
+  key: () => ['ingredients', 'categories', currentTenant.value?.id],
+  query: () => $fetch('/api/suppliers/ingredients/categories', { params: { limit: 250 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+
+const categoryHeaderOptions = computed(() =>
+  ((categoriesData.value as { data?: { name: string }[] })?.data ?? []).map(category => ({
+    label: category.name,
+    value: category.name,
+  })),
+)
+
 const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['ingredients', 'custom', currentTenant.value?.id, {
     archived: showArchived.value,
     search: appliedSearch.value || null,
     type: typeFilter.value || null,
+    category: categoryFilter.value || null,
+    unit: unitFilter.value || null,
+    cost: costFilter.value || null,
+    unitWeight: unitWeightFilter.value || null,
     page: currentPage.value,
   }],
   query: () => {
@@ -493,6 +619,12 @@ const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQue
     }
     if (appliedSearch.value) params.search = appliedSearch.value
     if (typeFilter.value) params.type = typeFilter.value
+    if (categoryFilter.value) params.category = categoryFilter.value
+    if (unitFilter.value) params.unit = unitFilter.value
+    if (costFilter.value === 'with') params.has_cost = true
+    if (costFilter.value === 'without') params.has_cost = false
+    if (unitWeightFilter.value === 'with') params.has_unit_weight = true
+    if (unitWeightFilter.value === 'without') params.has_unit_weight = false
     if (showArchived.value) params.show_archived = true
     return $fetch('/api/suppliers/ingredients', { params })
   },
@@ -591,7 +723,7 @@ const onCatalogSave = async () => {
 }
 
 watch(
-  [currentPage, appliedSearch, typeFilter, showArchived],
+  [currentPage, appliedSearch, typeFilter, categoryFilter, unitFilter, costFilter, unitWeightFilter, showArchived],
   clearSelection,
 )
 
@@ -659,6 +791,10 @@ const handleSort = (field: string) => {
 const clearFilters = () => {
   clearSearch()
   typeFilter.value = ''
+  categoryFilter.value = ''
+  unitFilter.value = ''
+  costFilter.value = ''
+  unitWeightFilter.value = ''
   showArchived.value = false
   currentPage.value = 1
 }
