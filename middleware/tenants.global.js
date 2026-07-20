@@ -9,7 +9,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const isPublicAccess = to.meta?.publicAccess === true
   const isCustomerPortal = to.meta?.layout === 'customer-portal'
   const isKds = to.meta?.layout === 'kds'
-  const isOnboardingAccess = to.meta?.onboardingAccess === true
   if (
     to.path.startsWith('/auth') ||
     to.path === '/' ||
@@ -21,8 +20,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     isPublicRestaurant ||
     isPublicAccess ||
     isCustomerPortal ||
-    isKds ||
-    isOnboardingAccess
+    isKds
   ) return
 
   const authStore = useAuthStore()

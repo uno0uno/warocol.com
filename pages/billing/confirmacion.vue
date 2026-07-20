@@ -23,10 +23,10 @@
           </button>
           <NuxtLink
             v-if="isOnboardingReturn"
-            to="/onboarding"
+            to="/gestion/billing"
             class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
           >
-            {{ view === 'failed' ? t('onboarding.paymentRetry') : t('onboarding.backToOnboarding') }}
+            {{ view === 'failed' ? t('onboarding.paymentRetry') : t('billing.backToBilling') }}
           </NuxtLink>
           <NuxtLink
             v-else
@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { isActiveOnboardingSetupSession, isPendingOnboardingSession } from '~/utils/onboardingFlow'
-import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 import {
   clearCheckoutContext,
   isUuid,
@@ -118,11 +117,6 @@ const checkOnboardingReturn = async () => {
     }
     checkoutContext.value = recoveredContext
     if (import.meta.client) writeCheckoutContext(sessionStorage, recoveredContext)
-    trackOnboardingEvent('payment_result', {
-      planId: recoveredContext.planId,
-      paymentStatus: attempt.status,
-      dedupeId: `${recoveredContext.attemptId}:${attempt.status}`,
-    }, undefined, import.meta.client ? sessionStorage : null)
 
     if (attempt.status === 'approved') {
       const status = await loadStatus()
