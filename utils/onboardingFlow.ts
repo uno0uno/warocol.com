@@ -1,5 +1,4 @@
 export type OnboardingNextStep = 'business_profile' | 'terms' | 'payment' | 'activation' | 'setup'
-export type OnboardingView = 'business' | 'welcome' | 'error'
 export type AuthSessionKind = 'anonymous' | 'pending' | 'internal' | 'customer'
 
 export interface OnboardingSessionLike {
@@ -26,8 +25,6 @@ const NEXT_STEPS = new Set<OnboardingNextStep>([
   'activation',
   'setup',
 ])
-
-export const ONBOARDING_PATH = '/onboarding'
 
 const asSession = (session: unknown) => session as OnboardingSessionLike | null | undefined
 const asStatus = (status: unknown) => status as OnboardingStatusLike | null | undefined
@@ -72,13 +69,4 @@ export const getEditableBusinessName = (value: unknown): string => {
   if (typeof value !== 'string') return ''
   const normalized = value.trim().replace(/\s+/g, ' ')
   return normalized.toLocaleLowerCase() === 'negocio pendiente' ? '' : normalized
-}
-
-export const resolveOnboardingView = (status: unknown): OnboardingView => {
-  const value = asStatus(status)
-  const nextStep = normalizeOnboardingNextStep(value?.nextStep ?? value?.next_step)
-  if (nextStep === 'business_profile') return 'business'
-  const lifecycle = value?.lifecycleStatus ?? value?.lifecycle_status
-  if (lifecycle === 'active') return 'welcome'
-  return 'error'
 }

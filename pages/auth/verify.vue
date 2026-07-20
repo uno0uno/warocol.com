@@ -86,8 +86,7 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
-import { markOnboardingWelcome } from '~/utils/onboardingWelcome'
+import { isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import { clearRegistrationDraft } from '~/utils/registrationFlow'
 import {
   readPublicCtaAnalyticsContext,
@@ -227,12 +226,11 @@ const verifyToken = async () => {
       && (isOnboardingEntrySession(sessionData) || canUseInternalSession(sessionData))
     ) {
       if (canUseInternalSession(sessionData)) await syncAuthenticatedLocale(sessionData)
-      if (import.meta.client) markOnboardingWelcome(window.sessionStorage)
       if (isRegistration && import.meta.client) clearRegistrationDraft(window.sessionStorage)
-      redirectUrl.value = ONBOARDING_PATH
+      redirectUrl.value = '/gestion/billing'
       verifying.value = false
       success.value = true
-      await navigateTo(ONBOARDING_PATH)
+      await navigateTo('/gestion/billing')
       return
     }
     if (!canUseInternalSession(sessionData)) {

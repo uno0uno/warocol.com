@@ -149,7 +149,7 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import { prefillRegistrationEmail } from '~/utils/registrationFlow'
 
 const { t } = useI18n()
@@ -190,7 +190,7 @@ onMounted(async () => {
     })
     if (isOnboardingEntrySession(session)) {
       authStore.hydrateSession(session)
-      await navigateTo(ONBOARDING_PATH)
+      await navigateTo('/gestion/billing')
       return
     }
     if (session?.success && canUseInternalSession(session)) {
@@ -287,7 +287,7 @@ async function verifyCode() {
     const session = await authStore.refreshSession()
     if (isOnboardingEntrySession(session)) {
       toast.success(t('auth.accessGranted'))
-      window.location.href = ONBOARDING_PATH
+      window.location.href = '/gestion/billing'
       return
     }
     if (!canUseInternalSession(session)) {
