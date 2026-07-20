@@ -34,7 +34,7 @@
       "guardado": "सहेजा गया",
       "active": "सक्रिय",
       "inactive": "निष्क्रिय",
-      "incompatibleUnitError": "हर सामग्री के लिए संगत इकाई चुनें।"
+      "incompatibleUnitError": "हर गोदाम वस्तु के लिए संगत इकाई चुनें।"
     },
     "productos": {
       "editMode": "संपादन मोड",
@@ -348,7 +348,6 @@
       "saveBusy": "सहेजा जा रहा है...",
       "saveGroup": "समूह सहेजें",
       "cancel": "रद्द करें",
-      "ingredientOrResale": "सामग्री / पुनर्विक्रय",
       "baseRecipe": "मूल रेसिपी",
       "menuProduct": "मेनू उत्पाद",
       "priceOnly": "केवल कीमत",
@@ -362,7 +361,6 @@
       "maxShort": "अधिकतम",
       "order": "क्रम",
       "removeOption": "विकल्प हटाएँ",
-      "ingredientOrResaleRequired": "सामग्री या पुनर्विक्रय *",
       "quantity": "मात्रा",
       "unit": "इकाई",
       "unitCost": "इकाई लागत:",

@@ -67,8 +67,8 @@ Haz clic en **+ Agregar Modificador** para agregar más opciones.
 |------------------|---------------|----------------|---------------------|
 | **Artículo de bodega** | Un insumo del catálogo sin producto de menú vinculado (materia prima, insumo, servicio) | Artículo de bodega + cantidad + unidad; también puedes **agregar opciones por categoría** | Se descuenta ese artículo × cantidad del modificador × cantidad del producto |
 | **Reventa** | Un producto de reventa (vinculado 1:1 a un artículo de bodega) | Producto de reventa + cantidad + unidad | Se descuenta el artículo de bodega vinculado al producto |
-| **Receta base** | Varias materias primas según una preparación ya definida | Receta base + multiplicador (cantidad × receta) | Se descuentan **todos** los ingredientes de la receta, escalados por el multiplicador |
-| **Producto del menú** | La opción consume la composición de otro producto del menú (plato con receta, no reventa) | Producto del menú + multiplicador | Se descuenta la receta/composición de ese producto (como si vendieras una porción) |
+| **Receta base** | Varias materias primas según una preparación ya definida | Receta base + multiplicador (cantidad × receta) | Se descuentan **todos** los artículos de bodega de la receta, escalados por el multiplicador |
+| **Producto de menú** | La opción consume la composición de otro producto del menú (plato con receta, no reventa) | Producto de menú + multiplicador | Se descuenta la receta/composición de ese producto (como si vendieras una porción) |
 | **Solo precio** | Extra sin impacto en bodega (ej. empaque, servicio, “sin hielo”) | Solo nombre y precio | **No** mueve inventario; solo suma al total de la venta |
 
 > **Reventa vs artículo de bodega:** ambos descuentan inventario vía un **artículo de bodega**. En reventa eliges el **producto de menú** y WARO resuelve el artículo vinculado (1 und). En artículo de bodega eliges directamente del catálogo (sin producto asociado).
@@ -92,9 +92,9 @@ Cuando el cliente elige una opción con precio adicional, ese valor se suma auto
 ## Inventario y costos al vender
 
 - El **precio de venta** del modificador siempre se guarda en la orden (lo que cobraste).
-- El **descuento de bodega** depende del **tipo** de la opción: ingrediente, receta o producto descontan según su composición; **Solo precio** no descuenta nada.
+- El **descuento de bodega** depende del **tipo** de la opción: artículo de bodega, reventa, receta base o producto de menú descontan según su composición; **Solo precio** no descuenta nada.
 - Si editas una venta y **eliminas** un modificador, WARO devuelve al inventario los insumos que se habían descontado por esa opción.
-- Los costos de food cost / cierre contable usan el detalle de ingredientes explotados por cada modificador (no solo un solo insumo cuando la opción es receta o producto).
+- Los costos de food cost / cierre contable usan el detalle de insumos explotados por cada modificador (no solo un artículo de bodega cuando la opción es receta base o producto de menú).
 
 ---
 
@@ -113,7 +113,7 @@ El grupo se crea vacío. Los clientes no verán nada para seleccionar. Agrégala
 No. Si el grupo es obligatorio, el botón de "Agregar al carrito" no se activa hasta que el cliente elija.
 
 **¿Puedo mezclar tipos en el mismo grupo?**
-Sí. Por ejemplo: tamaños con **Solo precio**, extras con **Ingrediente / reventa** y un combo con **Receta base**.
+Sí. Por ejemplo: tamaños con **Solo precio**, extras con **Artículo de bodega** o **Reventa**, y un combo con **Receta base**.
 
 **¿El cliente elige el tipo de opción?**
 No. El tipo solo lo configuras tú en administración; en caja el cliente ve nombre y precio.

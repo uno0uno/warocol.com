@@ -34,7 +34,7 @@
       "guardado": "تم الحفظ",
       "active": "نشط",
       "inactive": "غير نشط",
-      "incompatibleUnitError": "اختر وحدة متوافقة لكل مكوّن."
+      "incompatibleUnitError": "اختر وحدة متوافقة لكل عنصر مستودع."
     },
     "productos": {
       "editMode": "وضع التعديل",
@@ -348,7 +348,6 @@
       "saveBusy": "جارٍ الحفظ...",
       "saveGroup": "حفظ المجموعة",
       "cancel": "إلغاء",
-      "ingredientOrResale": "مكون / إعادة بيع",
       "baseRecipe": "وصفة أساسية",
       "menuProduct": "منتج القائمة",
       "priceOnly": "السعر فقط",
@@ -362,7 +361,6 @@
       "maxShort": "أقصى",
       "order": "الترتيب",
       "removeOption": "إزالة الخيار",
-      "ingredientOrResaleRequired": "مكون أو إعادة بيع *",
       "quantity": "الكمية",
       "unit": "الوحدة",
       "unitCost": "تكلفة الوحدة:",

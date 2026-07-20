@@ -581,6 +581,7 @@
               >
                 <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
                     <UiIngredientSearchInput
                       :key="ingredient.ingredient_id || `new-${index}`"
                       :initial-value="ingredient.ingredient_name || ingredientCache[ingredient.ingredient_id]?.name || ''"

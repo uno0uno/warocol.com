@@ -34,7 +34,7 @@
       "guardado": "Enregistré",
       "active": "Active",
       "inactive": "Inactive",
-      "incompatibleUnitError": "Sélectionnez une unité compatible pour chaque ingrédient."
+      "incompatibleUnitError": "Sélectionnez une unité compatible pour chaque article de stock."
     },
     "productos": {
       "editMode": "Mode édition",
@@ -348,7 +348,6 @@
       "saveBusy": "Enregistrement...",
       "saveGroup": "Enregistrer le groupe",
       "cancel": "Annuler",
-      "ingredientOrResale": "Ingrédient / revente",
       "baseRecipe": "Recette de base",
       "menuProduct": "Produit du menu",
       "priceOnly": "Prix seulement",
@@ -362,7 +361,6 @@
       "maxShort": "Max",
       "order": "Ordre",
       "removeOption": "Supprimer l'option",
-      "ingredientOrResaleRequired": "Ingrédient ou revente *",
       "quantity": "Quantité",
       "unit": "Unité",
       "unitCost": "Coût unitaire :",

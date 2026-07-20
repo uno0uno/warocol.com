@@ -1,0 +1,41 @@
+issue: 1710
+title: Audit and align recipe composition terminology across productos, recetas, and modificadores
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1710-terminology-align
+
+paths:
+  - components/menu/MenuModifierOptionEditor.vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - i18n/locales/*/menu.json
+  - docs/usuarios/menu/modificadores.md
+
+ac:
+  - Align modifier option labels with warehouse glossary (#1113)
+  - Add recipe cost line labels in modificadores RECIPE block matching recetas
+  - Add warehouseItemOrResaleRequired labels on productos manual recipe lines
+  - Remove stale ingredientOrResale i18n keys; fix menuProduct preposition
+  - Update modificadores user docs terminology
+
+out_of_scope:
+  - API changes
+  - Modifier search filters or category bulk-add logic (#1708)
+  - Abastecimiento pages outside menu
+
+hints:
+  entry: MenuModifierOptionEditor.vue
+  pattern: recetas/crear.vue:130 WAREHOUSE_COPY.warehouseItemOrResaleRequired
+  tests: bun test composables/useModifierOptionForm.test.ts
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: wr-review

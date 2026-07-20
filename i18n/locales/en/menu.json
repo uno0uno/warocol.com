@@ -34,7 +34,7 @@
       "guardado": "Saved",
       "active": "Active",
       "inactive": "Inactive",
-      "incompatibleUnitError": "Select a compatible unit for every ingredient."
+      "incompatibleUnitError": "Select a compatible unit for each warehouse item."
     },
     "productos": {
       "editMode": "Edit mode",
@@ -348,7 +348,6 @@
       ,"saveBusy": "Saving..."
       ,"saveGroup": "Save group"
       ,"cancel": "Cancel"
-      ,"ingredientOrResale": "Ingredient / resale"
       ,"warehouseItemRequired": "Warehouse item *"
       ,"resaleProductRequired": "Resale product *"
       ,"resaleProductHelp": "Pick a resale product; WARO uses its linked warehouse item (1:1)."
@@ -365,7 +364,6 @@
       ,"maxShort": "Max"
       ,"order": "Order"
       ,"removeOption": "Remove option"
-      ,"ingredientOrResaleRequired": "Ingredient or resale *"
       ,"quantity": "Quantity"
       ,"unit": "Unit"
       ,"unitCost": "Unit cost:"
