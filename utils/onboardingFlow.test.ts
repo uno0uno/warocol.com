@@ -8,9 +8,9 @@ import {
   getSessionNextStep,
   isActiveOnboardingSetupSession,
   isOnboardingEntrySession,
+  isPendingBillingPath,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
-  resolveOnboardingView,
 } from './onboardingFlow.ts'
 
 test('classifies active, pending, customer and anonymous sessions', () => {
@@ -51,17 +51,16 @@ test('routes only pending sessions through the persistent onboarding entry', () 
   assert.equal(isOnboardingEntrySession({ lifecycleStatus: 'pending' }), false)
 })
 
-test('shows only the business step or the active welcome state', () => {
-  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'business_profile' }), 'business')
-  assert.equal(resolveOnboardingView({ lifecycleStatus: 'active', nextStep: 'payment' }), 'welcome')
-  assert.equal(resolveOnboardingView({ lifecycle_status: 'active', next_step: 'setup' }), 'welcome')
-  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'terms' }), 'error')
-  assert.equal(resolveOnboardingView({ nextStep: 'unexpected' }), 'error')
-  assert.equal(normalizeOnboardingNextStep('unexpected'), null)
+test('allows pending sessions to stay on billing and payment return paths', () => {
+  assert.equal(isPendingBillingPath('/gestion/billing'), true)
+  assert.equal(isPendingBillingPath('/gestion/billing/uso'), true)
+  assert.equal(isPendingBillingPath('/billing/confirmacion'), true)
+  assert.equal(isPendingBillingPath('/ventas'), false)
 })
 
-test('does not expose payment selection inside onboarding', () => {
-  assert.equal(resolveOnboardingView({ lifecycleStatus: 'pending', nextStep: 'payment' }), 'error')
+test('normalizes onboarding steps safely', () => {
+  assert.equal(normalizeOnboardingNextStep('business_profile'), 'business_profile')
+  assert.equal(normalizeOnboardingNextStep('unexpected'), null)
 })
 
 test('requires a real business name instead of the server placeholder', () => {

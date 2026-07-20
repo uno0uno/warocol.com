@@ -6,12 +6,10 @@ import {
 } from '~/utils/internalAccess'
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
 import {
-  ONBOARDING_PATH,
   isOnboardingEntrySession,
+  isPendingBillingPath,
   isPendingOnboardingSession,
 } from '~/utils/onboardingFlow'
-import { hasOnboardingWelcome } from '~/utils/onboardingWelcome'
-
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
   if (process.server) return
@@ -24,7 +22,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const isPublicAccess = to.meta?.publicAccess === true
   const isCustomerPortal = to.meta?.layout === 'customer-portal'
   const isKds = to.meta?.layout === 'kds'
-  const isOnboardingAccess = to.meta?.onboardingAccess === true
 
   const authStore = useAuthStore()
   const accessStore = useAccessStore()
@@ -44,7 +41,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       })
       if (isOnboardingEntrySession(sessionResponse)) {
         authStore.hydrateSession(sessionResponse)
-        return navigateTo(ONBOARDING_PATH)
+        return navigateTo('/gestion/billing')
       }
       if (canUseInternalSession(sessionResponse)) {
         await accessStore.load()
@@ -87,26 +84,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     if (isPendingOnboardingSession(sessionResponse)) {
       authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
-      if (isOnboardingAccess) return
-      return navigateTo(ONBOARDING_PATH)
-    }
-
-    if (isOnboardingAccess) {
-      if (
-        canUseInternalSession(sessionResponse)
-        && hasOnboardingWelcome(window.sessionStorage)
-      ) {
-        authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
-        await accessStore.load()
-        return
-      }
-      if (canUseInternalSession(sessionResponse)) {
-        authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
-        await accessStore.load()
-        return navigateTo(getAccessAwareRedirect(undefined, accessStore, useRouter()))
-      }
-      clearInternalState()
-      return navigateTo(sessionResponse?.user ? CUSTOMER_PORTAL_LOGIN : '/auth/login')
+      if (isPendingBillingPath(to.path)) return
+      return navigateTo('/gestion/billing')
     }
 
     if (!canUseInternalSession(sessionResponse)) {

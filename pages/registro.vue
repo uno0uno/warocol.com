@@ -15,7 +15,7 @@ import {
   getAccessAwareRedirect,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
+import { isOnboardingEntrySession } from '~/utils/onboardingFlow'
 
 definePageMeta({ layout: false, robots: 'noindex, nofollow' })
 
@@ -33,7 +33,7 @@ onMounted(async () => {
     const session = await $fetch('/api/auth/session', { credentials: 'include' })
     if (isOnboardingEntrySession(session)) {
       authStore.hydrateSession(session)
-      await navigateTo(ONBOARDING_PATH)
+      await navigateTo('/gestion/billing')
       return
     }
     if (canUseInternalSession(session)) {

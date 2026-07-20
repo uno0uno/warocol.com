@@ -274,8 +274,7 @@ import {
   CUSTOMER_PORTAL_LOGIN,
   canUseInternalSession,
 } from '~/utils/internalAccess'
-import { ONBOARDING_PATH, isOnboardingEntrySession } from '~/utils/onboardingFlow'
-import { markOnboardingWelcome } from '~/utils/onboardingWelcome'
+import { isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import {
   buildRegistrationPayload,
   clearRegistrationDraft,
@@ -535,9 +534,8 @@ const verifyCode = async () => {
     if (isOnboardingEntrySession(session) || canUseInternalSession(session)) {
       trackEmailVerified()
       if (canUseInternalSession(session)) await syncAuthenticatedLocale(session)
-      markOnboardingWelcome(window.sessionStorage)
       clearRegistrationDraft(window.sessionStorage)
-      window.location.assign(ONBOARDING_PATH)
+      window.location.assign('/gestion/billing')
       return
     }
     if ((session as { user?: unknown } | null)?.user) {
