@@ -55,7 +55,7 @@ import {
 
 // The API remains the auth boundary. This meta only lets pending sessions reach
 // the Wompi return page without weakening the guards on any operational route.
-definePageMeta({ layout: 'onboarding', publicAccess: true, robots: 'noindex, nofollow' })
+definePageMeta({ publicAccess: true, robots: 'noindex, nofollow' })
 
 type ReturnView = 'loading' | 'approved' | 'pending' | 'failed' | 'unknown'
 
@@ -99,7 +99,7 @@ const refreshActivatedSession = async () => {
   if (!isActiveOnboardingSetupSession(session)) return false
   await Promise.all([tenantsStore.fetchUserTenants(), accessStore.load()])
   if (import.meta.client) clearCheckoutContext(sessionStorage)
-  await navigateTo('/onboarding', { replace: true })
+  await navigateTo('/gestion/billing', { replace: true })
   return true
 }
 

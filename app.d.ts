@@ -31,8 +31,6 @@ declare module '#app' {
      * middleware even when layout is false (e.g. city/tenant dispatch).
      */
     publicAccess?: boolean
-    /** Protected route available only to a verified pending onboarding session. */
-    onboardingAccess?: boolean
   }
 }
 
