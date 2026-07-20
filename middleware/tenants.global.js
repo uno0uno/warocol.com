@@ -1,4 +1,5 @@
 import { CUSTOMER_PORTAL_LOGIN } from '~/utils/internalAccess'
+import { isPendingOnboardingSession } from '~/utils/onboardingFlow'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
@@ -26,6 +27,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const authStore = useAuthStore()
   const accessStore = useAccessStore()
   const tenantsStore = useTenantsStore()
+
+  if (isPendingOnboardingSession(authStore.session)) return
 
   const clearInternalState = () => {
     authStore.expireSession()

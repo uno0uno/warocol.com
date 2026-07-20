@@ -7,6 +7,7 @@ import {
 import { isSessionAuthError } from '~/composables/useSessionExpiry'
 import {
   isOnboardingEntrySession,
+  isPendingBillingPath,
   isPendingOnboardingSession,
 } from '~/utils/onboardingFlow'
 export default defineNuxtRouteMiddleware(async (to, from) => {
@@ -83,6 +84,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     if (isPendingOnboardingSession(sessionResponse)) {
       authStore.initializeFromMiddleware({ session: sessionResponse, profileData: null })
+      if (isPendingBillingPath(to.path)) return
       return navigateTo('/gestion/billing')
     }
 

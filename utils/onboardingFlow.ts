@@ -50,6 +50,9 @@ export const isActiveOnboardingSetupSession = (session: unknown) =>
 export const isOnboardingEntrySession = (session: unknown) =>
   isPendingOnboardingSession(session)
 
+export const isPendingBillingPath = (path: string) =>
+  path.startsWith('/gestion/billing') || path.startsWith('/billing')
+
 export const classifyAuthSession = (
   session: unknown,
   canUseInternal: boolean,

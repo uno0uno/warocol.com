@@ -8,6 +8,7 @@ import {
   getSessionNextStep,
   isActiveOnboardingSetupSession,
   isOnboardingEntrySession,
+  isPendingBillingPath,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
 } from './onboardingFlow.ts'
@@ -48,6 +49,13 @@ test('routes only pending sessions through the persistent onboarding entry', () 
   assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'setup' }), false)
   assert.equal(isOnboardingEntrySession({ user: {}, lifecycleStatus: 'active', nextStep: 'payment' }), false)
   assert.equal(isOnboardingEntrySession({ lifecycleStatus: 'pending' }), false)
+})
+
+test('allows pending sessions to stay on billing and payment return paths', () => {
+  assert.equal(isPendingBillingPath('/gestion/billing'), true)
+  assert.equal(isPendingBillingPath('/gestion/billing/uso'), true)
+  assert.equal(isPendingBillingPath('/billing/confirmacion'), true)
+  assert.equal(isPendingBillingPath('/ventas'), false)
 })
 
 test('normalizes onboarding steps safely', () => {
