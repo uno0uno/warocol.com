@@ -78,6 +78,29 @@ export function resetModifierFieldsForType(modifier: ModifierFormRow, nextType: 
   modifier.unit_cost = null
 }
 
+export function getRecipeBaseIngredientIds(
+  recipeBaseTypeId: string | null,
+  recipeBases: Array<Record<string, unknown>>,
+): string[] {
+  if (!recipeBaseTypeId) return []
+  const base = recipeBases.find(row => String(row.id) === recipeBaseTypeId)
+  const ingredients = base?.ingredients
+  if (!Array.isArray(ingredients)) return []
+  return ingredients
+    .map((ing: Record<string, unknown>) => String(ing.ingredient_id || ing.id || ''))
+    .filter(Boolean)
+}
+
+export function collectModifierRecipeExcludedIngredientIds(
+  row: ModifierFormRow,
+  recipeBaseIngredientIds: string[] = [],
+): string[] {
+  return [
+    ...recipeBaseIngredientIds,
+    ...row.recipe_lines.map(line => line.ingredient_id),
+  ].filter(Boolean)
+}
+
 export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow {
   const optionType = String(m.option_type || 'INGREDIENT').toUpperCase() as ModifierOptionType
   const ingredient = m.ingredient as { id?: string; name?: string } | undefined
@@ -150,7 +173,10 @@ export function serializeModifierForApi(row: ModifierFormRow) {
   }
 }
 
-export function validateModifierOption(row: ModifierFormRow): string | null {
+export function validateModifierOption(
+  row: ModifierFormRow,
+  options?: { recipeBaseIngredientIds?: string[] },
+): string | null {
   if (!row.name?.trim()) {
     return 'Cada opción debe tener un nombre.'
   }
@@ -179,7 +205,7 @@ export function validateModifierOption(row: ModifierFormRow): string | null {
     if (!row.recipe_base_type_id && recipeLines.length === 0) {
       return `La opción «${row.name}» requiere una receta base o ingredientes.`
     }
-    const seenIds = new Set<string>()
+    const seenIds = new Set<string>(options?.recipeBaseIngredientIds ?? [])
     for (const line of recipeLines) {
       if (!line.ingredient_id || line.quantity == null || line.quantity <= 0 || !line.unit?.trim()) {
         return `Completa ingrediente, cantidad y unidad en la receta de «${row.name}».`

@@ -170,12 +170,21 @@
       </div>
 
       <WarehouseCategoryIngredientSelector
+        class="mb-4"
         :input-id="`modifier-recipe-category-${index}`"
         :existing-ingredient-ids="existingRecipeIngredientIds"
         :unit-options="getIngredientUnitOptions"
         :loading-unit-ids="loadingUnits"
         @update:prepared-rows="rows => $emit('prepared-recipe-lines', rows)"
       />
+
+      <div
+        v-if="modifier.recipe_lines.length === 0 && modifier.prepared_recipe_lines.length === 0"
+        class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4"
+      >
+        <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
+        <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
+      </div>
 
       <div v-if="modifier.recipe_lines.length" class="space-y-2">
         <div
@@ -293,7 +302,9 @@
 import { computed } from 'vue'
 import type { ProductRow } from '~/composables/useProductSearch'
 import {
+  collectModifierRecipeExcludedIngredientIds,
   formatModifierCurrency,
+  getRecipeBaseIngredientIds,
   resetModifierFieldsForType,
   type ModifierFormRow,
   type ModifierOptionType,
@@ -304,6 +315,7 @@ import WarehouseCategoryIngredientSelector from '~/components/ingredientes/Wareh
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 const { t } = useI18n({ useScope: 'global' })
+const WAREHOUSE_COPY = useWarehouseCopy()
 
 const props = defineProps<{
   modifier: ModifierFormRow
@@ -335,7 +347,10 @@ defineEmits<{
 }>()
 
 const existingRecipeIngredientIds = computed(() =>
-  props.modifier.recipe_lines.map(line => line.ingredient_id).filter(Boolean),
+  collectModifierRecipeExcludedIngredientIds(
+    props.modifier,
+    getRecipeBaseIngredientIds(props.modifier.recipe_base_type_id, props.recipeBases),
+  ),
 )
 
 function recipeLineSearchLabel(line: ModifierRecipeLineForm) {

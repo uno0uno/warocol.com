@@ -1,0 +1,28 @@
+issue: 1704
+title: Fix warehouse category ingredient batch add on modifier create/edit
+repo: uno0uno/warocol.com
+cwd: front_nuxt
+stack: nuxt
+branch: wr-1704-modifier-category-ingredients
+
+paths:
+  - front_nuxt/components/menu/MenuModifierOptionEditor.vue
+  - front_nuxt/pages/menu/modificadores/crear.vue
+  - front_nuxt/pages/menu/modificadores/[id].vue
+  - front_nuxt/composables/useModifierOptionForm.ts
+  - front_nuxt/composables/useModifierOptionForm.test.ts
+
+ac:
+  - Category selector excludes manual, prepared, and recipe-base ingredient ids
+  - RECIPE option UX parity (empty state, separator)
+  - Save/load round-trip via existing serializeModifierForApi
+  - Validation rejects duplicates vs recipe base
+
+plan:
+  - Add collectModifierRecipeExcludedIngredientIds + getRecipeBaseIngredientIds helpers
+  - Fix existingRecipeIngredientIds in MenuModifierOptionEditor
+  - Pass recipeBaseIngredientIds into validateModifierOption from crear/edit
+  - Add empty-state UX in editor; extend unit tests
+
+hints:
+  tests: composables/useModifierOptionForm.test.ts (vitest)
