@@ -1,5 +1,13 @@
 export type OnboardingPaymentStatus = 'created' | 'pending' | 'approved' | 'declined' | 'error'
 
+export interface OnboardingPaymentAttempt {
+  attempt_id: string
+  plan_id: string
+  amount_in_cents: number
+  currency: 'COP'
+  status: OnboardingPaymentStatus
+}
+
 export interface OnboardingCheckoutContext {
   attemptId: string
   planId: string

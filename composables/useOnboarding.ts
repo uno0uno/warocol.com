@@ -6,17 +6,6 @@ import type {
 import {
   type OnboardingPaymentAttempt,
 } from '~/utils/onboardingPayment'
-  CountryCurrencyOption,
-  CurrencyMetadata,
-  TenantFinancialProfile,
-} from './useTenantFinancialProfile'
-import {
-  buildOnboardingCheckoutBody,
-  isSafeCheckoutUrl,
-  type OnboardingCheckoutResult,
-  type OnboardingPaymentAttempt,
-  type OnboardingPlan,
-} from '~/utils/onboardingPayment'
 
 export interface OnboardingStatusData {
   tenantId: string
