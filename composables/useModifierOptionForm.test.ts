@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   createEmptyModifier,
+  collectModifierRecipeExcludedIngredientIds,
+  getRecipeBaseIngredientIds,
   mapModifierFromApi,
   serializeModifierForApi,
   validateModifierOption,
@@ -82,5 +84,73 @@ describe('included modifier quantity form contract', () => {
     row.prepared_recipe_lines[0]!.ingredient_id = 'ingredient-2'
     row.prepared_recipe_lines[0]!.quantity = null
     expect(validateModifierOption(row) ?? '').toMatch(/Completa/)
+  })
+
+  it('collects excluded recipe ingredient ids from manual, prepared, and recipe base rows', () => {
+    const row = createEmptyModifier(0)
+    row.option_type = 'RECIPE'
+    row.recipe_lines = [{
+      ingredient_id: 'manual-1',
+      ingredient_name: 'Manual',
+      quantity: 1,
+      unit: 'gr',
+    }]
+    row.prepared_recipe_lines = [{
+      ingredient_id: 'prepared-1',
+      name: 'Prepared',
+      quantity: 1,
+      unit: 'gr',
+      warehouse_category_id: 'category-1',
+    }]
+
+    expect(collectModifierRecipeExcludedIngredientIds(row, ['base-1'])).toEqual([
+      'base-1',
+      'manual-1',
+      'prepared-1',
+    ])
+  })
+
+  it('rejects recipe lines that duplicate recipe base ingredients', () => {
+    const row = createEmptyModifier(0)
+    row.name = 'Extra'
+    row.option_type = 'RECIPE'
+    row.recipe_base_type_id = 'base-recipe-1'
+    row.recipe_lines = [{
+      ingredient_id: 'base-ingredient-1',
+      ingredient_name: 'Harina',
+      quantity: 1,
+      unit: 'gr',
+    }]
+
+    expect(validateModifierOption(row, {
+      recipeBaseIngredientIds: getRecipeBaseIngredientIds('base-recipe-1', [{
+        id: 'base-recipe-1',
+        ingredients: [{ ingredient_id: 'base-ingredient-1' }],
+      }]),
+    }) ?? '').toMatch(/duplicados/)
+  })
+
+  it('merges prepared category rows when serializing RECIPE modifiers', () => {
+    const row = createEmptyModifier(0)
+    row.name = 'Mix'
+    row.option_type = 'RECIPE'
+    row.recipe_lines = [{
+      ingredient_id: 'manual-1',
+      ingredient_name: 'Manual',
+      quantity: 1,
+      unit: 'gr',
+    }]
+    row.prepared_recipe_lines = [{
+      ingredient_id: 'prepared-1',
+      name: 'Prepared',
+      quantity: 2,
+      unit: 'ml',
+      warehouse_category_id: 'category-1',
+    }]
+
+    expect(serializeModifierForApi(row).recipe_lines).toEqual([
+      { ingredient_id: 'manual-1', quantity: 1, unit: 'gr' },
+      { ingredient_id: 'prepared-1', quantity: 2, unit: 'ml' },
+    ])
   })
 })

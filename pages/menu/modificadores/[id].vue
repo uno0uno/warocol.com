@@ -243,6 +243,7 @@ import {
   mapModifierFromApi,
   serializeModifierForApi,
   validateModifierOption,
+  getRecipeBaseIngredientIds,
   type ModifierFormRow,
 } from '~/composables/useModifierOptionForm'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
@@ -565,7 +566,9 @@ function validateForm(): boolean {
         return false
       }
     }
-    const err = validateModifierOption(m)
+    const err = validateModifierOption(m, {
+      recipeBaseIngredientIds: getRecipeBaseIngredientIds(m.recipe_base_type_id, recipeBases.value),
+    })
     if (err) {
       submitError.value = err
       return false
