@@ -1,6 +1,8 @@
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
 export type ModifierOptionType = 'INGREDIENT' | 'RECIPE' | 'PRODUCT' | 'NONE'
+export type ModifierIngredientMode = 'warehouse' | 'resale'
+export type ModifierUiOptionType = 'WAREHOUSE' | 'RESALE' | 'RECIPE' | 'PRODUCT' | 'NONE'
 
 export interface ModifierRecipeLineForm {
   ingredient_id: string
@@ -18,6 +20,8 @@ export interface ModifierFormRow {
   is_available: boolean
   sort_order: number
   option_type: ModifierOptionType
+  /** Front-only: warehouse catalog vs resale product link (both persist as INGREDIENT). */
+  ingredient_mode: ModifierIngredientMode
   ingredient_id: string | null
   ingredient_name: string | null
   ingredient_quantity: number | null
@@ -45,6 +49,7 @@ export function createEmptyModifier(sortOrder: number): ModifierFormRow {
     is_available: true,
     sort_order: sortOrder,
     option_type: 'INGREDIENT',
+    ingredient_mode: 'warehouse',
     ingredient_id: null,
     ingredient_name: null,
     ingredient_quantity: null,
@@ -61,8 +66,31 @@ export function createEmptyModifier(sortOrder: number): ModifierFormRow {
   }
 }
 
-export function resetModifierFieldsForType(modifier: ModifierFormRow, nextType: ModifierOptionType) {
+export function getModifierUiOptionType(row: ModifierFormRow): ModifierUiOptionType {
+  if (row.option_type === 'RECIPE') return 'RECIPE'
+  if (row.option_type === 'PRODUCT') return 'PRODUCT'
+  if (row.option_type === 'NONE') return 'NONE'
+  return row.ingredient_mode === 'resale' ? 'RESALE' : 'WAREHOUSE'
+}
+
+export function applyModifierUiOptionType(
+  modifier: ModifierFormRow,
+  uiType: ModifierUiOptionType,
+) {
+  if (uiType === 'WAREHOUSE' || uiType === 'RESALE') {
+    resetModifierFieldsForType(modifier, 'INGREDIENT', uiType === 'RESALE' ? 'resale' : 'warehouse')
+    return
+  }
+  resetModifierFieldsForType(modifier, uiType)
+}
+
+export function resetModifierFieldsForType(
+  modifier: ModifierFormRow,
+  nextType: ModifierOptionType,
+  ingredientMode: ModifierIngredientMode = 'warehouse',
+) {
   modifier.option_type = nextType
+  modifier.ingredient_mode = nextType === 'INGREDIENT' ? ingredientMode : 'warehouse'
   modifier.ingredient_id = null
   modifier.ingredient_name = null
   modifier.ingredient_quantity = null
@@ -103,7 +131,8 @@ export function collectModifierRecipeExcludedIngredientIds(
 
 export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow {
   const optionType = String(m.option_type || 'INGREDIENT').toUpperCase() as ModifierOptionType
-  const ingredient = m.ingredient as { id?: string; name?: string } | undefined
+  const ingredient = m.ingredient as { id?: string; name?: string; is_resale?: boolean } | undefined
+  const ingredientIsResale = Boolean(m.is_resale ?? ingredient?.is_resale)
   const recipeBase = m.recipe_base as { id?: string; name?: string } | undefined
   const linkedProduct = m.linked_product as { id?: string; name?: string } | undefined
   const recipeLines = Array.isArray(m.recipe_lines)
@@ -119,6 +148,7 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     is_available: m.is_available !== false,
     sort_order: Number(m.sort_order ?? 0),
     option_type: OPTION_TYPES.includes(optionType) ? optionType : 'INGREDIENT',
+    ingredient_mode: optionType === 'INGREDIENT' && ingredientIsResale ? 'resale' : 'warehouse',
     ingredient_id: (m.ingredient_id as string) || ingredient?.id || null,
     ingredient_name: ingredient?.name || (m.ingredient_name as string) || null,
     ingredient_quantity: m.ingredient_quantity != null ? Number(m.ingredient_quantity) : null,
@@ -192,7 +222,11 @@ export function validateModifierOption(
 
   const type = row.option_type
   if (type === 'INGREDIENT') {
-    if (!row.ingredient_id) return `La opción «${row.name}» requiere un ingrediente o reventa.`
+    if (!row.ingredient_id) {
+      return row.ingredient_mode === 'resale'
+        ? `La opción «${row.name}» requiere un producto de reventa.`
+        : `La opción «${row.name}» requiere un artículo de bodega.`
+    }
     if (row.ingredient_quantity == null || row.ingredient_quantity <= 0) {
       return `Indica la cantidad del ingrediente en «${row.name}».`
     }
@@ -225,10 +259,47 @@ export function validateModifierOption(
   return null
 }
 
+export function createWarehouseModifierFromPreparedRow(
+  row: PreparedWarehouseCategoryIngredient,
+  sortOrder: number,
+): ModifierFormRow {
+  const modifier = createEmptyModifier(sortOrder)
+  modifier.option_type = 'INGREDIENT'
+  modifier.ingredient_mode = 'warehouse'
+  modifier.ingredient_id = row.ingredient_id
+  modifier.ingredient_name = row.name
+  modifier.name = row.name
+  modifier.ingredient_quantity = row.quantity ?? 1
+  modifier.ingredient_unit = row.unit
+  return modifier
+}
+
+export function appendWarehouseModifiersFromCategory(
+  modifiers: ModifierFormRow[],
+  rows: PreparedWarehouseCategoryIngredient[],
+): ModifierFormRow[] {
+  const existingIds = new Set(
+    modifiers
+      .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
+      .map(m => m.ingredient_id as string),
+  )
+  const next = [...modifiers]
+  for (const row of rows) {
+    if (!row.ingredient_id || existingIds.has(row.ingredient_id)) continue
+    existingIds.add(row.ingredient_id)
+    next.push(createWarehouseModifierFromPreparedRow(row, next.length))
+  }
+  return next
+}
+
 export function formatModifierOptionTypeLabel(type: string): string {
   switch (String(type).toUpperCase()) {
+    case 'WAREHOUSE':
+      return 'Artículo de bodega'
+    case 'RESALE':
+      return 'Reventa'
     case 'INGREDIENT':
-      return 'Ingrediente'
+      return 'Artículo de bodega'
     case 'RECIPE':
       return 'Receta'
     case 'PRODUCT':

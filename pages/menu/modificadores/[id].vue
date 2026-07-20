@@ -126,6 +126,16 @@
             >
               <MenuIngredientProductHint class="mb-4" />
 
+              <WarehouseCategoryIngredientSelector
+                class="mb-4"
+                :input-id="`modifier-edit-warehouse-category-bulk-${groupId}`"
+                :existing-ingredient-ids="existingWarehouseIngredientIds"
+                :unit-options="getIngredientUnitOptions"
+                :loading-unit-ids="loadingUnits"
+                exclude-resale
+                @update:prepared-rows="onGroupWarehouseCategoryRows"
+              />
+
               <div v-if="form.modifiers.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
                 <Icon name="heroicons:tag" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
                 <p class="text-sm font-medium mb-0.5">{{ t('menu.modificadores.emptyOptions') }}</p>
@@ -147,7 +157,7 @@
                   @create-ingredient="(name) => openCustomIngModal(name, index)"
                   @select-recipe-line="(lineIndex, ing) => selectRecipeLineIngredient(modifier, lineIndex, ing)"
                   @create-recipe-line="(lineIndex, name) => openCustomRecipeLineModal(name, index, lineIndex)"
-                  @prepared-recipe-lines="rows => onPreparedRecipeLines(modifier, rows)"
+                  @select-resale-ingredient="(ing) => onResaleIngredientLinked(modifier, ing)"
                 />
               </div>
             </MenuCatalogInlineCreateBusyOverlay>
@@ -239,6 +249,7 @@ import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import {
+  appendWarehouseModifiersFromCategory,
   createEmptyModifier,
   mapModifierFromApi,
   serializeModifierForApi,
@@ -247,6 +258,7 @@ import {
   type ModifierFormRow,
 } from '~/composables/useModifierOptionForm'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -327,6 +339,9 @@ function rehydrateModifierIngredientCaches() {
     if (!m.ingredient_name && catalogRow?.name) {
       m.ingredient_name = catalogRow.name
     }
+    if (m.option_type === 'INGREDIENT' && catalogRow?.is_resale) {
+      m.ingredient_mode = 'resale'
+    }
     for (const line of m.recipe_lines) {
       const recipeCatalogRow = availableIngredients.value.find((i: any) => i.id === line.ingredient_id)
       if (!line.ingredient_name && recipeCatalogRow?.name) {
@@ -377,6 +392,7 @@ async function loadPurchaseUnits(ingredientId: string) {
 
 function selectIngredient(modifier: ModifierFormRow, ing: any) {
   modifier.option_type = 'INGREDIENT'
+  modifier.ingredient_mode = 'warehouse'
   modifier.ingredient_id = ing.id
   modifier.name = ing.name
   modifier.ingredient_name = ing.name
@@ -384,6 +400,33 @@ function selectIngredient(modifier: ModifierFormRow, ing: any) {
   cacheIngredientForUnits(ing)
   modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   loadPurchaseUnits(ing.id)
+}
+
+const existingWarehouseIngredientIds = computed(() =>
+  form.value.modifiers
+    .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
+    .map(m => m.ingredient_id as string),
+)
+
+function onGroupWarehouseCategoryRows(rows: PreparedWarehouseCategoryIngredient[]) {
+  form.value.modifiers = appendWarehouseModifiersFromCategory(form.value.modifiers, rows)
+  for (const row of rows) {
+    cacheIngredientForUnits({
+      id: row.ingredient_id,
+      name: row.name,
+      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
+    })
+    void loadPurchaseUnits(row.ingredient_id)
+  }
+}
+
+function onResaleIngredientLinked(modifier: ModifierFormRow, ing: Record<string, unknown>) {
+  cacheIngredientForUnits(ing)
+  modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[String(ing.id)])
+  if (modifier.ingredient_quantity == null || modifier.ingredient_quantity <= 0) {
+    modifier.ingredient_quantity = 1
+  }
+  void loadPurchaseUnits(String(ing.id))
 }
 
 function selectRecipeLineIngredient(modifier: ModifierFormRow, lineIndex: number, ing: any) {
@@ -394,21 +437,6 @@ function selectRecipeLineIngredient(modifier: ModifierFormRow, lineIndex: number
   cacheIngredientForUnits(ing)
   line.unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   void loadPurchaseUnits(ing.id)
-}
-
-function onPreparedRecipeLines(
-  modifier: ModifierFormRow,
-  rows: PreparedWarehouseCategoryIngredient[],
-) {
-  modifier.prepared_recipe_lines = rows
-  for (const row of rows) {
-    cacheIngredientForUnits({
-      id: row.ingredient_id,
-      name: row.name,
-      unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
-    })
-    void loadPurchaseUnits(row.ingredient_id)
-  }
 }
 
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)

@@ -65,12 +65,13 @@ Haz clic en **+ Agregar Modificador** para agregar más opciones.
 
 | Tipo en pantalla | Cuándo usarlo | Qué configuras | Inventario al vender |
 |------------------|---------------|----------------|---------------------|
-| **Ingrediente / reventa** | Un solo insumo (o producto de reventa vinculado a un ingrediente) | Artículo de bodega + cantidad + unidad | Se descuenta ese ingrediente × cantidad del modificador × cantidad del producto |
+| **Artículo de bodega** | Un insumo del catálogo sin producto de menú vinculado (materia prima, insumo, servicio) | Artículo de bodega + cantidad + unidad; también puedes **agregar opciones por categoría** | Se descuenta ese artículo × cantidad del modificador × cantidad del producto |
+| **Reventa** | Un producto de reventa (vinculado 1:1 a un artículo de bodega) | Producto de reventa + cantidad + unidad | Se descuenta el artículo de bodega vinculado al producto |
 | **Receta base** | Varias materias primas según una preparación ya definida | Receta base + multiplicador (cantidad × receta) | Se descuentan **todos** los ingredientes de la receta, escalados por el multiplicador |
-| **Producto del menú** | La opción consume la composición de otro producto del menú | Producto del menú + multiplicador | Se descuenta la receta/composición de ese producto (como si vendieras una porción) |
+| **Producto del menú** | La opción consume la composición de otro producto del menú (plato con receta, no reventa) | Producto del menú + multiplicador | Se descuenta la receta/composición de ese producto (como si vendieras una porción) |
 | **Solo precio** | Extra sin impacto en bodega (ej. empaque, servicio, “sin hielo”) | Solo nombre y precio | **No** mueve inventario; solo suma al total de la venta |
 
-> **Reventa:** en tipo **Ingrediente / reventa**, si el insumo no existe puedes crear un producto de reventa desde el buscador; WARO lo vincula al ingrediente equivalente.
+> **Reventa vs artículo de bodega:** ambos descuentan inventario vía un **artículo de bodega**. En reventa eliges el **producto de menú** y WARO resuelve el artículo vinculado (1 und). En artículo de bodega eliges directamente del catálogo (sin producto asociado).
 
 Si al buscar un artículo de bodega no aparece, usa **+ Crear artículo de bodega** en el panel lateral (Nombre, Tipo de medida y Categoría obligatorios).
 

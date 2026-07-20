@@ -57,6 +57,7 @@ interface Props {
   allowCreate?: boolean
   baseOnly?: boolean
   type?: string
+  excludeResale?: boolean
 }
 
 interface Emits {
@@ -83,6 +84,7 @@ const { query, groupedResults, loading, error } = useIngredientSearch({
   baseOnly: props.baseOnly,
   type: ingredientType,
   searchOnEmpty: true,
+  excludeResale: props.excludeResale,
 })
 
 const options = computed(() => groupedResults.value.map((row: Ingredient & { _isHeader?: boolean }) => ({
