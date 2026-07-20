@@ -1,0 +1,34 @@
+issue: 1697
+repo: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1697-pos-bogo-crossline-fallback
+title: fix(pos) panel Orden Actual duplica unidades gratis BOGO cuando el API las asigna a la linea hermana
+
+paths:
+  - composables/usePosOrderPromoTotals.ts
+  - composables/usePosOrderPromoTotals.test.ts
+
+ac:
+  - Caso 4+2 con API (linea 1 = 66000, linea 2 = 0): panel muestra -66000 / total 170000; no inventa el gratis extra.
+  - El fallback client-side no contradice la evaluacion del servidor cuando existe (0 por linea es respuesta valida).
+  - Si el servidor no evaluo (todas las lineas en 0), el fallback agrega BOGO cross-line por producto+promo (cheapest-first), no por linea aislada.
+  - Tests unitarios del composable: API 66000+0; fallback cross-line 4+2 -> 3 gratis; optOut -> 0; control linea sola x2 -> 22000.
+  - Sin cambios en lineas de carrito de mostrador ni badges de catalogo.
+
+hints:
+  root_cause: usePosOrderPromoTotals.ts tabLinePromoSavings trata promoSavings=0 del API como
+    "no evaluado" y cae a linePromoSavingsForProduct por linea aislada, duplicando unidades
+    gratis que el servidor asigno a la linea hermana (cross-line cheapest-first, api #1023/#665).
+  store_mapping: usePOSStore.ts:151 mapea promoSavings numerico siempre (0 si no hay).
+  server_rule: agrupar por producto+promo, expandir unidades, gratis cheapest-first, cap por subtotal.
+  case_real: mesa 11 Rebel Rebel orden 16759 — panel -88000/148000 vs checkout correcto 170000.
+  tests:
+    - npx vitest run composables/usePosOrderPromoTotals.test.ts
+
+plan:
+  - apiTabEvaluated = alguna linea del tab con promoSavings > 0 -> confiar en valores API por linea.
+  - Si no, fallback cross-line: agrupar lineas del tab por producto, elegir mejor promo, si es bogo
+    asignar unidades gratis cheapest-first entre lineas; si no es bogo, calculo por linea actual.
+  - orderPromoSavings suma tab (API o fallback) + cart (sin cambios).
+  - Tests vitest del composable con stubs de usePOSStore y useActivePromotions.
