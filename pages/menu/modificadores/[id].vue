@@ -339,6 +339,9 @@ function rehydrateModifierIngredientCaches() {
     if (!m.ingredient_name && catalogRow?.name) {
       m.ingredient_name = catalogRow.name
     }
+    if (m.option_type === 'INGREDIENT' && catalogRow?.is_resale) {
+      m.ingredient_mode = 'resale'
+    }
     for (const line of m.recipe_lines) {
       const recipeCatalogRow = availableIngredients.value.find((i: any) => i.id === line.ingredient_id)
       if (!line.ingredient_name && recipeCatalogRow?.name) {
@@ -401,7 +404,7 @@ function selectIngredient(modifier: ModifierFormRow, ing: any) {
 
 const existingWarehouseIngredientIds = computed(() =>
   form.value.modifiers
-    .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_mode === 'warehouse' && m.ingredient_id)
+    .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
     .map(m => m.ingredient_id as string),
 )
 
