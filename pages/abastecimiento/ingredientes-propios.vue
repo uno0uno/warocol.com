@@ -487,6 +487,7 @@ const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQue
   query: () => {
     const params: Record<string, string | number | boolean> = {
       tenant_only: true,
+      is_resale: false,
       limit: itemsPerPage.value,
       page: currentPage.value,
     }
