@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  appendWarehouseModifiersFromCategory,
+  applyModifierUiOptionType,
   createEmptyModifier,
   collectModifierRecipeExcludedIngredientIds,
+  getModifierUiOptionType,
   getRecipeBaseIngredientIds,
   mapModifierFromApi,
   serializeModifierForApi,
@@ -151,5 +154,53 @@ describe('included modifier quantity form contract', () => {
       { ingredient_id: 'manual-1', quantity: 1, unit: 'gr' },
       { ingredient_id: 'prepared-1', quantity: 2, unit: 'ml' },
     ])
+  })
+
+  it('maps UI option types and bulk warehouse modifiers from categories', () => {
+    const warehouse = createEmptyModifier(0)
+    warehouse.option_type = 'INGREDIENT'
+    warehouse.ingredient_mode = 'warehouse'
+    expect(getModifierUiOptionType(warehouse)).toBe('WAREHOUSE')
+
+    const resale = createEmptyModifier(1)
+    resale.option_type = 'INGREDIENT'
+    resale.ingredient_mode = 'resale'
+    expect(getModifierUiOptionType(resale)).toBe('RESALE')
+
+    applyModifierUiOptionType(warehouse, 'RESALE')
+    expect(warehouse.option_type).toBe('INGREDIENT')
+    expect(warehouse.ingredient_mode).toBe('resale')
+    expect(warehouse.ingredient_id).toBeNull()
+
+    const appended = appendWarehouseModifiersFromCategory([], [{
+      ingredient_id: 'ing-1',
+      name: 'Harina',
+      quantity: 1,
+      unit: 'kg',
+      warehouse_category_id: 'cat-1',
+    }])
+    expect(appended).toHaveLength(1)
+    expect(appended[0]?.ingredient_mode).toBe('warehouse')
+    expect(appended[0]?.name).toBe('Harina')
+
+    const deduped = appendWarehouseModifiersFromCategory(appended, [{
+      ingredient_id: 'ing-1',
+      name: 'Harina',
+      quantity: 2,
+      unit: 'kg',
+      warehouse_category_id: 'cat-1',
+    }])
+    expect(deduped).toHaveLength(1)
+  })
+
+  it('hydrates resale ingredient mode from API rows', () => {
+    const row = mapModifierFromApi({
+      name: 'Gaseosa',
+      option_type: 'INGREDIENT',
+      ingredient_id: 'ing-resale',
+      ingredient: { id: 'ing-resale', name: 'Gaseosa', is_resale: true },
+    })
+    expect(row.ingredient_mode).toBe('resale')
+    expect(getModifierUiOptionType(row)).toBe('RESALE')
   })
 })

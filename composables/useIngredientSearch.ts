@@ -22,10 +22,12 @@ export const useIngredientSearch = ({
   baseOnly = false,
   type,
   searchOnEmpty = false,
+  excludeResale = false,
 }: {
   baseOnly?: boolean
   type?: Ref<string | undefined>
   searchOnEmpty?: boolean
+  excludeResale?: boolean
 } = {}) => {
   const results = ref<any[]>([])
   const loading = ref(false)
@@ -42,6 +44,7 @@ export const useIngredientSearch = ({
       if (baseOnly) fetchQuery.base_only = true
       const typeFilter = type?.value?.trim()
       if (typeFilter) fetchQuery.type = typeFilter
+      if (excludeResale) fetchQuery.is_resale = false
       const data = await $fetch<any>('/api/suppliers/ingredients', {
         query: fetchQuery
       })

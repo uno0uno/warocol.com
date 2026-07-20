@@ -191,9 +191,11 @@ const props = withDefaults(defineProps<{
   inputId?: string
   unitOptions?: (ingredientId: string) => Array<{ value: string, label: string }>
   loadingUnitIds?: Set<string>
+  excludeResale?: boolean
 }>(), {
   existingIngredientIds: () => [],
   inputId: 'warehouse-category-ingredient-selector',
+  excludeResale: false,
 })
 
 const emit = defineEmits<{
@@ -217,6 +219,7 @@ const {
   retry,
 } = useWarehouseCategoryIngredientSelector({
   getExistingIngredientIds: () => props.existingIngredientIds,
+  excludeResale: props.excludeResale,
 })
 
 function namesForCategoryIds(ids: string[]) {

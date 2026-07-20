@@ -4,11 +4,12 @@
       <div class="md:col-span-3">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.optionTypeRequired') }}</label>
         <select
-          :value="modifier.option_type"
+          :value="uiOptionType"
           class="input-base w-full px-3 py-2 text-sm"
-          @change="onTypeChange(($event.target as HTMLSelectElement).value)"
+          @change="onUiTypeChange(($event.target as HTMLSelectElement).value)"
         >
-          <option value="INGREDIENT">{{ t('menu.modificadores.ingredientOrResale') }}</option>
+          <option value="WAREHOUSE">{{ WAREHOUSE_COPY.warehouseItem }}</option>
+          <option value="RESALE">{{ t('menu.common.reventa') }}</option>
           <option value="RECIPE">{{ t('menu.modificadores.baseRecipe') }}</option>
           <option value="PRODUCT">{{ t('menu.modificadores.menuProduct') }}</option>
           <option value="NONE">{{ t('menu.modificadores.priceOnly') }}</option>
@@ -86,13 +87,14 @@
       {{ t('menu.modificadores.includedQuantityHelp') }}
     </p>
 
-    <div v-if="modifier.option_type === 'INGREDIENT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
+    <div v-if="uiOptionType === 'WAREHOUSE'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-5">
-        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.ingredientOrResaleRequired') }}</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.warehouseItemRequired') }}</label>
         <UiIngredientSearchInput
           :key="`modifier-ing-${modifier.ingredient_id ?? index}`"
           :initial-value="ingredientSearchLabel"
           :allow-create="true"
+          exclude-resale
           @select="(ing) => $emit('select-ingredient', ing)"
           @create="(name) => $emit('create-ingredient', name)"
         />
@@ -125,7 +127,47 @@
       </div>
     </div>
 
-    <div v-else-if="modifier.option_type === 'RECIPE'" class="space-y-2">
+    <div v-else-if="uiOptionType === 'RESALE'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div class="md:col-span-5">
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.resaleProductRequired') }}</label>
+        <UiProductSearchInput
+          :key="`modifier-resale-${modifier.ingredient_id ?? index}`"
+          :input-id="`modifier-option-resale-${index}`"
+          :initial-value="ingredientSearchLabel"
+          resale-only
+          @select="onResaleProductSelect"
+        />
+        <p class="mt-1 text-xs text-text-tertiary">{{ t('menu.modificadores.resaleProductHelp') }}</p>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.quantity') }}</label>
+        <UiDecimalInput
+          v-model="modifier.ingredient_quantity"
+          :min="0.01"
+          :precision="6"
+          class="input-base w-full px-3 py-2 text-sm"
+        />
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.unit') }}</label>
+        <select
+          v-model="modifier.ingredient_unit"
+          :disabled="Boolean(modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id))"
+          class="input-base w-full py-2 px-3 text-sm disabled:opacity-50"
+        >
+          <option
+            v-for="opt in getIngredientUnitOptions(modifier.ingredient_id)"
+            :key="opt.value"
+            :value="opt.value"
+          >{{ opt.label }}</option>
+        </select>
+      </div>
+      <div class="md:col-span-2 flex items-end">
+        <p class="text-xs text-text-secondary pb-2">{{ t('menu.modificadores.unitCost') }} {{ ingredientCostLabel }}</p>
+      </div>
+    </div>
+
+    <div v-else-if="uiOptionType === 'RECIPE'" class="space-y-2">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
         <div class="md:col-span-6">
           <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.baseRecipeRequired') }}</label>
@@ -169,34 +211,12 @@
         </div>
       </div>
 
-      <WarehouseCategoryIngredientSelector
-        class="mb-4"
-        :input-id="`modifier-recipe-category-${index}`"
-        :existing-ingredient-ids="existingRecipeIngredientIds"
-        :unit-options="getIngredientUnitOptions"
-        :loading-unit-ids="loadingUnits"
-        @update:prepared-rows="rows => $emit('prepared-recipe-lines', rows)"
-      />
-
-      <div
-        v-if="modifier.recipe_lines.length === 0 && modifier.prepared_recipe_lines.length === 0"
-        class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4"
-      >
+      <div v-if="modifier.recipe_lines.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
         <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
         <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
       </div>
 
       <div v-if="modifier.recipe_lines.length" class="space-y-2">
-        <div
-          v-if="modifier.prepared_recipe_lines.length"
-          class="flex items-center gap-3 pt-1"
-        >
-          <span class="h-px flex-1 bg-border" aria-hidden="true" />
-          <h4 class="text-xs font-medium text-text-secondary">
-            {{ t('abastecimiento.glossary.categoryIngredientsManualLabel') }}
-          </h4>
-          <span class="h-px flex-1 bg-border" aria-hidden="true" />
-        </div>
         <div
           v-for="(line, lineIndex) in modifier.recipe_lines"
           :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
@@ -256,14 +276,14 @@
       </button>
     </div>
 
-    <div v-else-if="modifier.option_type === 'PRODUCT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
+    <div v-else-if="uiOptionType === 'PRODUCT'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
       <div class="md:col-span-6">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.menuProductRequired') }}</label>
         <UiProductSearchInput
           :key="`modifier-prod-${modifier.linked_product_id ?? index}`"
           :input-id="`modifier-option-product-${index}`"
           :initial-value="productSearchLabel"
-          include-all-types
+          exclude-resale
           @select="onProductSelect"
         />
       </div>
@@ -281,7 +301,7 @@
       </div>
     </div>
 
-    <p v-else-if="modifier.option_type === 'NONE'" class="text-xs text-text-tertiary">
+    <p v-else-if="uiOptionType === 'NONE'" class="text-xs text-text-tertiary">
       {{ t('menu.modificadores.noInventoryComposition') }}
     </p>
 
@@ -302,17 +322,15 @@
 import { computed } from 'vue'
 import type { ProductRow } from '~/composables/useProductSearch'
 import {
-  collectModifierRecipeExcludedIngredientIds,
+  applyModifierUiOptionType,
   formatModifierCurrency,
-  getRecipeBaseIngredientIds,
-  resetModifierFieldsForType,
+  getModifierUiOptionType,
   type ModifierFormRow,
-  type ModifierOptionType,
   type ModifierRecipeLineForm,
+  type ModifierUiOptionType,
 } from '~/composables/useModifierOptionForm'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
-import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
-import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+import { fetchResaleLinkedIngredient } from '~/composables/useResaleLinkedIngredient'
 
 const { t } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
@@ -337,21 +355,16 @@ const ingredientSearchLabel = computed(() => {
 
 const productSearchLabel = computed(() => props.modifier.linked_product_name?.trim() ?? '')
 
-defineEmits<{
+const emit = defineEmits<{
   remove: []
   'select-ingredient': [ingredient: Record<string, unknown>]
   'create-ingredient': [name: string]
   'select-recipe-line': [lineIndex: number, ingredient: Record<string, unknown>]
   'create-recipe-line': [lineIndex: number, name: string]
-  'prepared-recipe-lines': [rows: PreparedWarehouseCategoryIngredient[]]
+  'select-resale-ingredient': [ingredient: Record<string, unknown>]
 }>()
 
-const existingRecipeIngredientIds = computed(() =>
-  collectModifierRecipeExcludedIngredientIds(
-    props.modifier,
-    getRecipeBaseIngredientIds(props.modifier.recipe_base_type_id, props.recipeBases),
-  ),
-)
+const uiOptionType = computed(() => getModifierUiOptionType(props.modifier))
 
 function recipeLineSearchLabel(line: ModifierRecipeLineForm) {
   if (line.ingredient_name?.trim()) return line.ingredient_name.trim()
@@ -372,8 +385,28 @@ function removeRecipeLine(lineIndex: number) {
   props.modifier.recipe_lines.splice(lineIndex, 1)
 }
 
-function onTypeChange(raw: string) {
-  resetModifierFieldsForType(props.modifier, raw.toUpperCase() as ModifierOptionType)
+function onUiTypeChange(raw: string) {
+  applyModifierUiOptionType(props.modifier, raw as ModifierUiOptionType)
+}
+
+async function onResaleProductSelect(product: ProductRow) {
+  try {
+    const detail = await $fetch<{ data?: Record<string, unknown> }>(`/api/menu/products/${product.id}`)
+    const payload = detail?.data ?? (detail as Record<string, unknown>)
+    const ingredient = await fetchResaleLinkedIngredient(payload)
+    if (!ingredient) return
+    props.modifier.option_type = 'INGREDIENT'
+    props.modifier.ingredient_mode = 'resale'
+    props.modifier.ingredient_id = String(ingredient.id)
+    props.modifier.ingredient_name = String(ingredient.name ?? product.name)
+    if (!props.modifier.name.trim()) {
+      props.modifier.name = String(ingredient.name ?? product.name)
+    }
+    props.modifier.unit_cost = null
+    emit('select-resale-ingredient', ingredient)
+  } catch {
+    // Parent toast optional; keep row unchanged on failure.
+  }
 }
 
 function onRecipeBaseChange() {

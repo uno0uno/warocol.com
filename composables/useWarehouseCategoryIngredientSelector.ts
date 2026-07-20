@@ -26,6 +26,7 @@ interface ResolutionResponse {
 
 export function useWarehouseCategoryIngredientSelector(options: {
   getExistingIngredientIds?: () => string[]
+  excludeResale?: boolean
 } = {}) {
   const selectedCategories = ref<WarehouseCategoryRow[]>([])
   const preparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
@@ -66,6 +67,7 @@ export function useWarehouseCategoryIngredientSelector(options: {
           body: {
             category_ids: categoryIds,
             exclude_ingredient_ids: excludeIngredientIds,
+            exclude_resale: options.excludeResale ?? false,
           },
         },
       )

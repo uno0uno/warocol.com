@@ -33,6 +33,8 @@ interface Props {
   initialValue?: string
   excludeIds?: string[]
   includeAllTypes?: boolean
+  resaleOnly?: boolean
+  excludeResale?: boolean
 }
 
 interface Emits {
@@ -45,6 +47,8 @@ const props = withDefaults(defineProps<Props>(), {
   initialValue: '',
   excludeIds: () => [],
   includeAllTypes: false,
+  resaleOnly: false,
+  excludeResale: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -52,6 +56,8 @@ const { t } = useI18n({ useScope: 'global' })
 const searchTerm = ref(props.initialValue)
 const { query, results, loading, error } = useProductSearch({
   includeAllTypes: props.includeAllTypes,
+  resaleOnly: props.resaleOnly,
+  excludeResale: props.excludeResale,
 })
 const excludeSet = computed(() => new Set(props.excludeIds))
 const visibleResults = computed(() => results.value.filter(product => !excludeSet.value.has(product.id)))

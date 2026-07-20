@@ -16,6 +16,10 @@ export interface ProductRow {
 export interface UseProductSearchOptions {
   /** Include resale products (API default excludes them unless include_all_types=true). */
   includeAllTypes?: boolean
+  /** When true, only resale products (`is_resale=true`). */
+  resaleOnly?: boolean
+  /** When true, exclude resale products (`is_resale=false`). */
+  excludeResale?: boolean
 }
 
 export const useProductSearch = (options: UseProductSearchOptions = {}) => {
@@ -38,6 +42,11 @@ export const useProductSearch = (options: UseProductSearchOptions = {}) => {
       }
       if (options.includeAllTypes) {
         baseQuery.include_all_types = true
+      }
+      if (options.resaleOnly) {
+        baseQuery.is_resale = true
+      } else if (options.excludeResale) {
+        baseQuery.is_resale = false
       }
       const res = await $fetch<{ success?: boolean; data?: ProductRow[] }>('/api/menu/products', {
         query: baseQuery,
