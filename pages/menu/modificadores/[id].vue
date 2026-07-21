@@ -147,7 +147,7 @@
               <div v-else class="space-y-3">
                 <MenuModifierOptionEditor
                   v-for="(modifier, index) in form.modifiers"
-                  :key="index"
+                  :key="getModifierFormRowKey(modifier, index)"
                   :modifier="modifier"
                   :index="index"
                   :recipe-bases="recipeBases"
@@ -246,13 +246,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import {
   createEmptyModifier,
-  isCategoryBulkWarehouseModifier,
+  getModifierFormRowKey,
   mapModifierFromApi,
   serializeModifierForApi,
   syncWarehouseModifiersFromCategory,
@@ -310,9 +310,14 @@ const { data: groupData, pending: isLoadingGroup, refresh: refreshGroup } = useA
   `modifier-group-${groupId}`,
   () => $fetch(`/api/menu/modifier-groups/${groupId}`),
   {
-    server: false
-  }
+    server: false,
+  },
 )
+
+const isRefreshingGroup = computed(() => isLoadingGroup.value && groupData.value != null)
+
+/** After save, keep the edited form instead of re-hydrating from GET. */
+const skipNextGroupHydrate = ref(false)
 
 const { availableIngredients } = useMenuIngredientsQuery()
 
@@ -391,6 +396,52 @@ async function loadPurchaseUnits(ingredientId: string) {
     next.delete(ingredientId)
     loadingUnits.value = next
   }
+}
+
+function mapApiModifierToFormRow(m: Record<string, unknown>) {
+  const row = mapModifierFromApi(m)
+  if (row.ingredient_id && m.ingredient) {
+    const ingredient = m.ingredient as { name?: string; unit?: string; costo_unitario?: number }
+    cacheIngredientForUnits({
+      id: row.ingredient_id,
+      name: ingredient.name,
+      unit: ingredient.unit,
+      costo_unitario: ingredient.costo_unitario,
+    })
+    void loadPurchaseUnits(row.ingredient_id)
+  }
+  for (const line of row.recipe_lines) {
+    const sourceLine = Array.isArray(m.recipe_lines)
+      ? (m.recipe_lines as Array<Record<string, unknown>>).find(
+        candidate => candidate.ingredient_id === line.ingredient_id,
+      )
+      : null
+    cacheIngredientForUnits({
+      id: line.ingredient_id,
+      name: line.ingredient_name,
+      unit: line.unit,
+      ...(sourceLine?.ingredient as Record<string, unknown> | undefined || {}),
+    })
+    void loadPurchaseUnits(line.ingredient_id)
+  }
+  return row
+}
+
+function hydrateFormFromGroup(group: Record<string, any>) {
+  form.value = {
+    product_ids: group.products?.map((p: { id: string }) => p.id) || [],
+    name: group.name,
+    min_qty: group.min_qty,
+    max_qty: group.max_qty,
+    is_required: group.is_required,
+    sort_order: group.sort_order,
+    modifiers: (group.modifiers || []).map((m: Record<string, unknown>) => mapApiModifierToFormRow(m)),
+    tenant_id: currentTenant.value?.id || '',
+  }
+  selectedProducts.value = (group.products || []).map((p: { id: string; name: string }) => ({
+    id: p.id,
+    name: p.name,
+  }))
 }
 
 function selectIngredient(modifier: ModifierFormRow, ing: any) {
@@ -498,47 +549,8 @@ watch(selectedProducts, (list) => {
 }, { deep: true })
 
 watch(groupData, (data) => {
-  if (data?.data) {
-    const group = data.data
-    form.value = {
-      product_ids: group.products?.map((p: any) => p.id) || [],
-      name: group.name,
-      min_qty: group.min_qty,
-      max_qty: group.max_qty,
-      is_required: group.is_required,
-      sort_order: group.sort_order,
-      modifiers: group.modifiers.map((m: any) => {
-        const row = mapModifierFromApi(m)
-        if (row.ingredient_id && m.ingredient) {
-          cacheIngredientForUnits({
-            id: row.ingredient_id,
-            name: m.ingredient.name,
-            unit: m.ingredient.unit,
-            costo_unitario: m.ingredient.costo_unitario,
-          })
-          loadPurchaseUnits(row.ingredient_id)
-        }
-        for (const line of row.recipe_lines) {
-          const sourceLine = Array.isArray(m.recipe_lines)
-            ? m.recipe_lines.find((candidate: any) => candidate.ingredient_id === line.ingredient_id)
-            : null
-          cacheIngredientForUnits({
-            id: line.ingredient_id,
-            name: line.ingredient_name,
-            unit: line.unit,
-            ...(sourceLine?.ingredient || {}),
-          })
-          loadPurchaseUnits(line.ingredient_id)
-        }
-        return row
-      }),
-      tenant_id: currentTenant.value?.id || ''
-    }
-    selectedProducts.value = (group.products || []).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-    }))
-  }
+  if (!data?.data || skipNextGroupHydrate.value) return
+  hydrateFormFromGroup(data.data)
 }, { immediate: true })
 
 watch(availableIngredients, (list) => {
@@ -563,9 +575,8 @@ const warehouseCategorySelectorRef = ref<{ dismissPreparedIngredient: (id: strin
 
 function removeModifier(index: number) {
   const modifier = form.value.modifiers[index]
-  if (modifier && isCategoryBulkWarehouseModifier(modifier) && modifier.ingredient_id) {
+  if (modifier?.option_type === 'INGREDIENT' && modifier.ingredient_id) {
     warehouseCategorySelectorRef.value?.dismissPreparedIngredient(modifier.ingredient_id)
-    return
   }
   form.value.modifiers.splice(index, 1)
 }
@@ -622,11 +633,12 @@ async function handleSubmit() {
 
   isSubmitting.value = true
   submitError.value = ''
+  const savedFormSnapshot = structuredClone(form.value)
 
   try {
     form.value.tenant_id = currentTenant.value?.id || ''
 
-    await $fetch(`/api/menu/modifier-groups/${groupId}`, {
+    const response = await $fetch<{ data: Record<string, unknown> }>(`/api/menu/modifier-groups/${groupId}`, {
       method: 'PUT',
       body: {
         ...form.value,
@@ -634,8 +646,14 @@ async function handleSubmit() {
       },
     })
 
-    cache.invalidateQueries()
-    await refreshGroup()
+    // Optimistic: trust the saved form; sync cache without overwriting local edits.
+    skipNextGroupHydrate.value = true
+    groupData.value = response
+    form.value = savedFormSnapshot
+    skipNextGroupHydrate.value = false
+
+    cache.invalidateQueries({ key: ['menu', 'modifier-groups'] })
+    cache.invalidateQueries({ key: ['menu', 'modifier-stats'] })
     toast.success(t('menu.modificadores.updatedSuccess'), { title: t('menu.modificadores.saved') })
   } catch (error: any) {
     console.error('Error updating modifier group:', error)
@@ -644,6 +662,20 @@ async function handleSubmit() {
     isSubmitting.value = false
   }
 }
+
+async function handleHeaderRefresh() {
+  await refreshGroup()
+}
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+
+onMounted(() => {
+  setRefreshHandler(handleHeaderRefresh)
+})
+registerProgressiveLoading(isRefreshingGroup)
+onUnmounted(() => {
+  clearRefreshHandler(handleHeaderRefresh)
+})
 
 function cancel() {
   router.push('/menu/modificadores')
