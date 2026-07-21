@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1718
+title: "fix(modificadores): improve Incl./Máx. editing UX and validation messaging"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1718-incl-max-ux
+
+paths:
+  - components/menu/MenuModifierOptionEditor.vue
+  - composables/useModifierOptionForm.ts
+  - composables/useModifierOptionForm.test.ts
+  - i18n/locales/es/menu.json
+  - i18n/locales/en/menu.json
+  - pages/menu/modificadores/[id].vue
+  - pages/menu/modificadores/crear.vue
+
+ac:
+  - Reorder Máx. before Incl.; clearer per-option help copy
+  - Auto-adjust max/incl with inline hint instead of HTML5-only block
+  - Group selection help distinct from per-option thresholds
+  - Unit tests for incl/max sync helpers
+
+out_of_scope:
+  - API changes
+  - Business rule Incl <= Máx change
+
+hints:
+  entry: "MenuModifierOptionEditor incl/max inputs"
+  pattern: "applyModifierIncludedQuantity raises max; applyModifierMaxLimit clamps incl"
+  tests: "npx vitest run composables/useModifierOptionForm.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Deploy front prod when ready"

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyModifierIncludedQuantity,
+  applyModifierMaxLimit,
   applyModifierUiOptionType,
   createEmptyModifier,
   collectModifierRecipeExcludedIngredientIds,
@@ -34,7 +36,30 @@ describe('included modifier quantity form contract', () => {
     row.included_quantity = 2
 
     expect(validateModifierOption(row) ?? '').toMatch(/Queso/)
-    expect(validateModifierOption(row) ?? '').toMatch(/no puede superar/)
+    expect(validateModifierOption(row) ?? '').toMatch(/máximo por opción/)
+  })
+
+  it('raises max when included quantity exceeds current max', () => {
+    const row = createEmptyModifier(0)
+    row.name = 'Salsa'
+    row.option_type = 'NONE'
+    row.max_limit = 1
+    expect(applyModifierIncludedQuantity(row, 2)).toBe('max-raised')
+    expect(row.max_limit).toBe(2)
+    expect(row.included_quantity).toBe(2)
+    expect(validateModifierOption(row)).toBeNull()
+  })
+
+  it('clamps included quantity when max is lowered below it', () => {
+    const row = createEmptyModifier(0)
+    row.name = 'Salsa'
+    row.option_type = 'NONE'
+    row.max_limit = 3
+    row.included_quantity = 3
+    expect(applyModifierMaxLimit(row, 1)).toBe('included-clamped')
+    expect(row.max_limit).toBe(1)
+    expect(row.included_quantity).toBe(1)
+    expect(validateModifierOption(row)).toBeNull()
   })
 
   it('requires integer thresholds', () => {

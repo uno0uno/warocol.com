@@ -43,6 +43,40 @@ export interface ModifierFormRow {
 
 const OPTION_TYPES: ModifierOptionType[] = ['INGREDIENT', 'RECIPE', 'PRODUCT', 'NONE']
 
+export function applyModifierMaxLimit(
+  row: ModifierFormRow,
+  rawMax: number | null,
+): 'none' | 'included-clamped' {
+  row.max_limit = normalizeModifierMaxLimit(rawMax)
+  if (row.included_quantity > row.max_limit) {
+    row.included_quantity = row.max_limit
+    return 'included-clamped'
+  }
+  return 'none'
+}
+
+export function applyModifierIncludedQuantity(
+  row: ModifierFormRow,
+  rawIncluded: number | null,
+): 'none' | 'max-raised' {
+  row.included_quantity = normalizeModifierIncludedQuantity(rawIncluded)
+  if (row.included_quantity > row.max_limit) {
+    row.max_limit = row.included_quantity
+    return 'max-raised'
+  }
+  return 'none'
+}
+
+function normalizeModifierMaxLimit(value: number | null | undefined): number {
+  if (value == null || !Number.isFinite(value)) return 1
+  return Math.max(1, Math.trunc(value))
+}
+
+function normalizeModifierIncludedQuantity(value: number | null | undefined): number {
+  if (value == null || !Number.isFinite(value)) return 0
+  return Math.max(0, Math.trunc(value))
+}
+
 export function getModifierFormRowKey(row: ModifierFormRow, index: number): string {
   if (row.id) return row.id
   if (row.ingredient_id) return `ingredient-${row.ingredient_id}`
@@ -234,7 +268,7 @@ export function validateModifierOption(
     return `La cantidad máxima de «${row.name}» debe ser un número entero mayor o igual a 1.`
   }
   if (row.included_quantity > row.max_limit) {
-    return `La cantidad incluida de «${row.name}» no puede superar la cantidad máxima.`
+    return `La cantidad incluida de «${row.name}» (${row.included_quantity}) no puede superar el máximo por opción (${row.max_limit}). Ajusta Máx. e Incl.`
   }
 
   const type = row.option_type

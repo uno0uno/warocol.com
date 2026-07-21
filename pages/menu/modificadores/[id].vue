@@ -69,6 +69,7 @@
                     class="input-base w-full px-4 py-2"
                   />
                   <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.maxSelectionHelp') }}</p>
+                  <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.groupSelectionVsOptionHelp') }}</p>
                 </div>
               </div>
 

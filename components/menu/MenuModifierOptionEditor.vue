@@ -39,24 +39,26 @@
       </div>
 
       <div class="md:col-span-1">
-        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.includedShort') }}</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.maxShort') }}</label>
         <input
-          v-model.number="modifier.included_quantity"
+          :value="modifier.max_limit"
           type="number"
-          min="0"
-          :max="modifier.max_limit"
+          min="1"
           step="1"
           class="input-base w-full px-3 py-2 text-sm"
+          @input="onMaxLimitInput"
         />
       </div>
 
       <div class="md:col-span-1">
-        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.maxShort') }}</label>
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.includedShort') }}</label>
         <input
-          v-model.number="modifier.max_limit"
+          :value="modifier.included_quantity"
           type="number"
-          min="1"
+          min="0"
+          step="1"
           class="input-base w-full px-3 py-2 text-sm"
+          @input="onIncludedQuantityInput"
         />
       </div>
 
@@ -84,7 +86,10 @@
       </div>
     </div>
     <p class="text-xs text-text-tertiary">
-      {{ t('menu.modificadores.includedQuantityHelp') }}
+      {{ t('menu.modificadores.optionQuantityThresholdHelp') }}
+    </p>
+    <p v-if="quantityAdjustmentHint" class="text-xs text-warning" role="status">
+      {{ quantityAdjustmentHint }}
     </p>
 
     <div v-if="uiOptionType === 'WAREHOUSE'" class="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -324,9 +329,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { ProductRow } from '~/composables/useProductSearch'
 import {
+  applyModifierIncludedQuantity,
+  applyModifierMaxLimit,
   applyModifierUiOptionType,
   formatModifierCurrency,
   getModifierUiOptionType,
@@ -370,6 +377,31 @@ const emit = defineEmits<{
 }>()
 
 const uiOptionType = computed(() => getModifierUiOptionType(props.modifier))
+const quantityAdjustmentHint = ref('')
+
+function parseQuantityInput(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function onMaxLimitInput(event: Event) {
+  const result = applyModifierMaxLimit(props.modifier, parseQuantityInput((event.target as HTMLInputElement).value))
+  quantityAdjustmentHint.value = result === 'included-clamped'
+    ? t('menu.modificadores.includedClampedToMax', { max: props.modifier.max_limit })
+    : ''
+}
+
+function onIncludedQuantityInput(event: Event) {
+  const result = applyModifierIncludedQuantity(
+    props.modifier,
+    parseQuantityInput((event.target as HTMLInputElement).value),
+  )
+  quantityAdjustmentHint.value = result === 'max-raised'
+    ? t('menu.modificadores.maxRaisedForIncluded', { max: props.modifier.max_limit })
+    : ''
+}
 
 function recipeLineSearchLabel(line: ModifierRecipeLineForm) {
   if (line.ingredient_name?.trim()) return line.ingredient_name.trim()
