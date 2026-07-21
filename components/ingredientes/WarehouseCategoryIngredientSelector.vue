@@ -88,7 +88,12 @@
                 </button>
               </header>
 
-              <div v-if="group.rows.length" class="space-y-3 bg-surface-secondary/20 p-3" role="list">
+              <div
+                v-if="group.rows.length && !hidePreparedIngredientRows"
+                class="space-y-3 bg-surface-secondary/20 p-3"
+                role="list"
+                data-test="category-prepared-rows"
+              >
                 <div
                   v-for="row in group.rows"
                   :key="row.ingredient_id"
@@ -192,10 +197,13 @@ const props = withDefaults(defineProps<{
   unitOptions?: (ingredientId: string) => Array<{ value: string, label: string }>
   loadingUnitIds?: Set<string>
   excludeResale?: boolean
+  /** Hide compact quantity/unit rows when parent syncs prepared rows elsewhere (e.g. modifier options). */
+  hidePreparedIngredientRows?: boolean
 }>(), {
   existingIngredientIds: () => [],
   inputId: 'warehouse-category-ingredient-selector',
   excludeResale: false,
+  hidePreparedIngredientRows: false,
 })
 
 const emit = defineEmits<{

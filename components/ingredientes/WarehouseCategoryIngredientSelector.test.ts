@@ -202,6 +202,52 @@ describe('WarehouseCategoryIngredientSelector', () => {
     expect(select.findAll('option').map(option => option.attributes('value'))).toEqual(['gr', 'kg'])
   })
 
+  it('hides compact prepared rows in summary mode while keeping category header', async () => {
+    vi.stubGlobal('$fetch', vi.fn(async () => ({
+      data: {
+        ingredients: [{
+          ingredient_id: 'ingredient-1',
+          name: 'Arroz',
+          unit: 'gr',
+          warehouse_category_id: 'category-1',
+        }],
+        empty_category_ids: [],
+        unavailable_category_ids: [],
+      },
+    })))
+    vi.stubGlobal('useI18n', () => ({
+      t: (key: string, params?: Record<string, string>) => ({
+        'abastecimiento.glossary.categoryIngredientSelectorTitle': 'Agregar ingredientes por categoría',
+        'abastecimiento.glossary.categoryIngredientsBatchLabel': 'Ingredientes por categoría',
+        'abastecimiento.glossary.categoryIngredientSelectorPlaceholder': 'Buscar categoría',
+        'abastecimiento.glossary.warehouseCategorySearchResults': 'Categorías',
+        'abastecimiento.glossary.removeWarehouseCategorySelection': `Quitar ${params?.name}`,
+        'abastecimiento.glossary.categoryIngredientsLoading': 'Cargando',
+      }[key] ?? key),
+    }))
+    const wrapper = mount(WarehouseCategoryIngredientSelector, {
+      props: { hidePreparedIngredientRows: true },
+      global: {
+        components: { UiWarehouseCategorySearchInput: WarehouseCategorySearchInputStub },
+      },
+    })
+
+    await wrapper.get('[data-test="select-category"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Granos')
+    expect(wrapper.find('[data-test="category-prepared-rows"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Arroz')
+    const emittedRows = wrapper.emitted('update:preparedRows') ?? []
+    expect(emittedRows.at(-1)?.[0]).toEqual([{
+      ingredient_id: 'ingredient-1',
+      name: 'Arroz',
+      quantity: null,
+      unit: 'gr',
+      warehouse_category_id: 'category-1',
+    }])
+  })
+
   it('does not re-resolve when existing ingredient ids grow after category sync', async () => {
     const fetchMock = vi.fn(async (_url: string, options: any) => ({
       data: {

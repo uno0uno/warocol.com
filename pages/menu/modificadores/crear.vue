@@ -135,6 +135,7 @@
                   :existing-ingredient-ids="existingWarehouseIngredientIds"
                   :unit-options="getIngredientUnitOptions"
                   :loading-unit-ids="loadingUnits"
+                  hide-prepared-ingredient-rows
                   exclude-resale
                   @update:prepared-rows="onGroupWarehouseCategoryRows"
                 />
