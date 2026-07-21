@@ -633,7 +633,6 @@ async function handleSubmit() {
 
   isSubmitting.value = true
   submitError.value = ''
-  const savedFormSnapshot = structuredClone(form.value)
 
   try {
     form.value.tenant_id = currentTenant.value?.id || ''
@@ -646,10 +645,9 @@ async function handleSubmit() {
       },
     })
 
-    // Optimistic: trust the saved form; sync cache without overwriting local edits.
+    // Optimistic: keep current form (products, options, etc.); sync cache only.
     skipNextGroupHydrate.value = true
     groupData.value = response
-    form.value = savedFormSnapshot
     skipNextGroupHydrate.value = false
 
     cache.invalidateQueries({ key: ['menu', 'modifier-groups'] })
