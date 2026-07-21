@@ -265,7 +265,6 @@ import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import {
   createEmptyModifier,
-  isCategoryBulkWarehouseModifier,
   serializeModifierForApi,
   syncWarehouseModifiersFromCategory,
   validateModifierOption,
@@ -465,9 +464,8 @@ const warehouseCategorySelectorRef = ref<{ dismissPreparedIngredient: (id: strin
 
 function removeModifier(index: number) {
   const modifier = form.value.modifiers[index]
-  if (modifier && isCategoryBulkWarehouseModifier(modifier) && modifier.ingredient_id) {
+  if (modifier?.option_type === 'INGREDIENT' && modifier.ingredient_id) {
     warehouseCategorySelectorRef.value?.dismissPreparedIngredient(modifier.ingredient_id)
-    return
   }
   form.value.modifiers.splice(index, 1)
 }

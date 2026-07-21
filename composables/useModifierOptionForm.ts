@@ -12,6 +12,8 @@ export interface ModifierRecipeLineForm {
 }
 
 export interface ModifierFormRow {
+  /** Server id when loaded from API; null for new rows in create flow. */
+  id?: string | null
   name: string
   price: number
   max_limit: number
@@ -41,8 +43,17 @@ export interface ModifierFormRow {
 
 const OPTION_TYPES: ModifierOptionType[] = ['INGREDIENT', 'RECIPE', 'PRODUCT', 'NONE']
 
+export function getModifierFormRowKey(row: ModifierFormRow, index: number): string {
+  if (row.id) return row.id
+  if (row.ingredient_id) return `ingredient-${row.ingredient_id}`
+  if (row.recipe_base_type_id) return `recipe-${row.recipe_base_type_id}`
+  if (row.linked_product_id) return `product-${row.linked_product_id}`
+  return `draft-${row.name}-${row.sort_order}-${index}`
+}
+
 export function createEmptyModifier(sortOrder: number): ModifierFormRow {
   return {
+    id: null,
     name: '',
     price: 0,
     max_limit: 1,
@@ -144,6 +155,7 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     : []
 
   return {
+    id: (m.id as string) || null,
     name: String(m.name || ''),
     price: Number(m.price ?? 0),
     max_limit: Number(m.max_limit ?? 1),
