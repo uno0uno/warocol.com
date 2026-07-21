@@ -491,7 +491,7 @@
       "categoryIngredientsLoading": "Preparando ingredientes…",
       "categoryIngredientsError": "No se pudieron preparar los ingredientes. Puedes reintentar.",
       "categoryIngredientsRetry": "Reintentar",
-      "categoryIngredientsEmpty": "Sin ingredientes nuevos en: {categories}.",
+      "categoryIngredientsEmpty": "Sin artículos de bodega nuevos en: {categories}. Verifica que la categoría tenga artículos activos o que no estén ya en las opciones del grupo.",
       "categoryIngredientsPartial": "No se pudieron cargar estas categorías: {categories}.",
       "categoryIngredientQuantity": "Cantidad",
       "categoryIngredientUnit": "Unidad",

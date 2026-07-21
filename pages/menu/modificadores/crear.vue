@@ -128,6 +128,7 @@
                 <MenuIngredientProductHint class="mb-4" />
 
                 <WarehouseCategoryIngredientSelector
+                  ref="warehouseCategorySelectorRef"
                   class="mb-4"
                   input-id="modifier-create-warehouse-category-bulk"
                   :existing-ingredient-ids="existingWarehouseIngredientIds"
@@ -263,9 +264,10 @@
 import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import {
-  appendWarehouseModifiersFromCategory,
   createEmptyModifier,
+  isCategoryBulkWarehouseModifier,
   serializeModifierForApi,
+  syncWarehouseModifiersFromCategory,
   validateModifierOption,
   getRecipeBaseIngredientIds,
   type ModifierFormRow,
@@ -385,7 +387,7 @@ function cachePreparedIngredient(row: PreparedWarehouseCategoryIngredient) {
 }
 
 function onGroupWarehouseCategoryRows(rows: PreparedWarehouseCategoryIngredient[]) {
-  form.value.modifiers = appendWarehouseModifiersFromCategory(form.value.modifiers, rows)
+  form.value.modifiers = syncWarehouseModifiersFromCategory(form.value.modifiers, rows)
   for (const row of rows) {
     cachePreparedIngredient(row)
   }
@@ -459,7 +461,14 @@ async function onInlineProductCreated(product: Record<string, unknown>) {
   })
 }
 
+const warehouseCategorySelectorRef = ref<{ dismissPreparedIngredient: (id: string) => void } | null>(null)
+
 function removeModifier(index: number) {
+  const modifier = form.value.modifiers[index]
+  if (modifier && isCategoryBulkWarehouseModifier(modifier) && modifier.ingredient_id) {
+    warehouseCategorySelectorRef.value?.dismissPreparedIngredient(modifier.ingredient_id)
+    return
+  }
   form.value.modifiers.splice(index, 1)
 }
 

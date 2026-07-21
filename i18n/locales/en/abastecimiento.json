@@ -491,7 +491,7 @@
       "categoryIngredientsLoading": "Preparing ingredients…",
       "categoryIngredientsError": "Ingredients could not be prepared. You can retry.",
       "categoryIngredientsRetry": "Retry",
-      "categoryIngredientsEmpty": "No new ingredients in: {categories}.",
+      "categoryIngredientsEmpty": "No new warehouse items in: {categories}. Check that the category has active items or that they are not already in the group options.",
       "categoryIngredientsPartial": "These categories could not be loaded: {categories}.",
       "categoryIngredientQuantity": "Quantity",
       "categoryIngredientUnit": "Unit",

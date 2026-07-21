@@ -1,0 +1,42 @@
+issue: 1712
+title: Modifier bulk warehouse category sync prepared rows with options list
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1712-category-sync
+
+paths:
+  - composables/useModifierOptionForm.ts
+  - composables/useModifierOptionForm.test.ts
+  - pages/menu/modificadores/crear.vue
+  - pages/menu/modificadores/[id].vue
+  - components/ingredientes/WarehouseCategoryIngredientSelector.vue
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+
+ac:
+  - syncWarehouseModifiersFromCategory add/update/remove category-sourced warehouse options
+  - warehouse_category_id tags category bulk options; manual warehouse options untouched
+  - remove category option dismisses prepared row; prepared dismiss syncs modifiers
+  - edit page resets category selector via key
+  - tests for sync; clearer empty category copy
+
+out_of_scope:
+  - API resolve endpoint changes
+  - legacy resale-as-INGREDIENT migration
+
+hints:
+  entry: syncWarehouseModifiersFromCategory in useModifierOptionForm.ts
+  pattern: useWarehouseCategoryIngredientSelector dismissIngredientIds on removePreparedRow
+  tests: bun test composables/useModifierOptionForm.test.ts
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: wr-review

@@ -270,6 +270,14 @@ watch(
   },
   { deep: true },
 )
+
+function dismissPreparedIngredient(ingredientId: string) {
+  removePreparedRow(ingredientId)
+}
+
+defineExpose({
+  dismissPreparedIngredient,
+})
 </script>
 
 <style scoped>
