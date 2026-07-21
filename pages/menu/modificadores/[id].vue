@@ -127,6 +127,8 @@
               <MenuIngredientProductHint class="mb-4" />
 
               <WarehouseCategoryIngredientSelector
+                ref="warehouseCategorySelectorRef"
+                :key="`modifier-edit-category-bulk-${groupId}`"
                 class="mb-4"
                 :input-id="`modifier-edit-warehouse-category-bulk-${groupId}`"
                 :existing-ingredient-ids="existingWarehouseIngredientIds"
@@ -249,10 +251,11 @@ import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import {
-  appendWarehouseModifiersFromCategory,
   createEmptyModifier,
+  isCategoryBulkWarehouseModifier,
   mapModifierFromApi,
   serializeModifierForApi,
+  syncWarehouseModifiersFromCategory,
   validateModifierOption,
   getRecipeBaseIngredientIds,
   type ModifierFormRow,
@@ -409,7 +412,7 @@ const existingWarehouseIngredientIds = computed(() =>
 )
 
 function onGroupWarehouseCategoryRows(rows: PreparedWarehouseCategoryIngredient[]) {
-  form.value.modifiers = appendWarehouseModifiersFromCategory(form.value.modifiers, rows)
+  form.value.modifiers = syncWarehouseModifiersFromCategory(form.value.modifiers, rows)
   for (const row of rows) {
     cacheIngredientForUnits({
       id: row.ingredient_id,
@@ -556,7 +559,14 @@ function addModifier() {
   form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
 }
 
+const warehouseCategorySelectorRef = ref<{ dismissPreparedIngredient: (id: string) => void } | null>(null)
+
 function removeModifier(index: number) {
+  const modifier = form.value.modifiers[index]
+  if (modifier && isCategoryBulkWarehouseModifier(modifier) && modifier.ingredient_id) {
+    warehouseCategorySelectorRef.value?.dismissPreparedIngredient(modifier.ingredient_id)
+    return
+  }
   form.value.modifiers.splice(index, 1)
 }
 

@@ -35,6 +35,8 @@ export interface ModifierFormRow {
   linked_product_name: string | null
   linked_product_quantity: number
   unit_cost: number | null
+  /** Front-only: set when the option came from warehouse category bulk-add. */
+  warehouse_category_id: string | null
 }
 
 const OPTION_TYPES: ModifierOptionType[] = ['INGREDIENT', 'RECIPE', 'PRODUCT', 'NONE']
@@ -63,6 +65,7 @@ export function createEmptyModifier(sortOrder: number): ModifierFormRow {
     linked_product_name: null,
     linked_product_quantity: 1,
     unit_cost: null,
+    warehouse_category_id: null,
   }
 }
 
@@ -104,6 +107,7 @@ export function resetModifierFieldsForType(
   modifier.linked_product_name = null
   modifier.linked_product_quantity = 1
   modifier.unit_cost = null
+  modifier.warehouse_category_id = null
 }
 
 export function getRecipeBaseIngredientIds(
@@ -170,6 +174,7 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     linked_product_name: linkedProduct?.name || null,
     linked_product_quantity: Number(m.linked_product_quantity ?? 1),
     unit_cost: m.unit_cost != null ? Number(m.unit_cost) : null,
+    warehouse_category_id: null,
   }
 }
 
@@ -259,6 +264,12 @@ export function validateModifierOption(
   return null
 }
 
+export function isCategoryBulkWarehouseModifier(modifier: ModifierFormRow): boolean {
+  return modifier.option_type === 'INGREDIENT'
+    && modifier.ingredient_mode === 'warehouse'
+    && modifier.warehouse_category_id != null
+}
+
 export function createWarehouseModifierFromPreparedRow(
   row: PreparedWarehouseCategoryIngredient,
   sortOrder: number,
@@ -271,25 +282,66 @@ export function createWarehouseModifierFromPreparedRow(
   modifier.name = row.name
   modifier.ingredient_quantity = row.quantity ?? 1
   modifier.ingredient_unit = row.unit
+  modifier.warehouse_category_id = row.warehouse_category_id
   return modifier
 }
 
+function applyPreparedRowToWarehouseModifier(
+  modifier: ModifierFormRow,
+  row: PreparedWarehouseCategoryIngredient,
+) {
+  modifier.ingredient_id = row.ingredient_id
+  modifier.ingredient_name = row.name
+  modifier.name = row.name
+  modifier.ingredient_quantity = row.quantity ?? modifier.ingredient_quantity ?? 1
+  modifier.ingredient_unit = row.unit ?? modifier.ingredient_unit
+  modifier.warehouse_category_id = row.warehouse_category_id
+}
+
+export function syncWarehouseModifiersFromCategory(
+  modifiers: ModifierFormRow[],
+  rows: PreparedWarehouseCategoryIngredient[],
+): ModifierFormRow[] {
+  const preparedById = new Map(rows.map(row => [row.ingredient_id, row]))
+  const preparedIds = new Set(rows.map(row => row.ingredient_id))
+  const preservedIngredientIds = new Set<string>()
+  const preserved: ModifierFormRow[] = []
+
+  for (const modifier of modifiers) {
+    if (!isCategoryBulkWarehouseModifier(modifier)) {
+      preserved.push(modifier)
+      if (modifier.option_type === 'INGREDIENT' && modifier.ingredient_id) {
+        preservedIngredientIds.add(modifier.ingredient_id)
+      }
+      continue
+    }
+    if (!modifier.ingredient_id || !preparedIds.has(modifier.ingredient_id)) {
+      continue
+    }
+    const row = preparedById.get(modifier.ingredient_id)
+    if (row) {
+      applyPreparedRowToWarehouseModifier(modifier, row)
+    }
+    preserved.push(modifier)
+    preservedIngredientIds.add(modifier.ingredient_id)
+  }
+
+  const synced = [...preserved]
+  for (const row of rows) {
+    if (!row.ingredient_id || preservedIngredientIds.has(row.ingredient_id)) continue
+    synced.push(createWarehouseModifierFromPreparedRow(row, synced.length))
+    preservedIngredientIds.add(row.ingredient_id)
+  }
+
+  return synced.map((modifier, index) => ({ ...modifier, sort_order: index }))
+}
+
+/** @deprecated Use syncWarehouseModifiersFromCategory */
 export function appendWarehouseModifiersFromCategory(
   modifiers: ModifierFormRow[],
   rows: PreparedWarehouseCategoryIngredient[],
 ): ModifierFormRow[] {
-  const existingIds = new Set(
-    modifiers
-      .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
-      .map(m => m.ingredient_id as string),
-  )
-  const next = [...modifiers]
-  for (const row of rows) {
-    if (!row.ingredient_id || existingIds.has(row.ingredient_id)) continue
-    existingIds.add(row.ingredient_id)
-    next.push(createWarehouseModifierFromPreparedRow(row, next.length))
-  }
-  return next
+  return syncWarehouseModifiersFromCategory(modifiers, rows)
 }
 
 export function formatModifierOptionTypeLabel(type: string): string {

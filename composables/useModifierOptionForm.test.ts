@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-  appendWarehouseModifiersFromCategory,
   applyModifierUiOptionType,
   createEmptyModifier,
   collectModifierRecipeExcludedIngredientIds,
+  createWarehouseModifierFromPreparedRow,
   getModifierUiOptionType,
   getRecipeBaseIngredientIds,
+  isCategoryBulkWarehouseModifier,
   mapModifierFromApi,
   serializeModifierForApi,
+  syncWarehouseModifiersFromCategory,
   validateModifierOption,
 } from './useModifierOptionForm.ts'
 
@@ -156,7 +158,7 @@ describe('included modifier quantity form contract', () => {
     ])
   })
 
-  it('maps UI option types and bulk warehouse modifiers from categories', () => {
+  it('maps UI option types and syncs bulk warehouse modifiers from categories', () => {
     const warehouse = createEmptyModifier(0)
     warehouse.option_type = 'INGREDIENT'
     warehouse.ingredient_mode = 'warehouse'
@@ -172,25 +174,44 @@ describe('included modifier quantity form contract', () => {
     expect(warehouse.ingredient_mode).toBe('resale')
     expect(warehouse.ingredient_id).toBeNull()
 
-    const appended = appendWarehouseModifiersFromCategory([], [{
+    const row = {
       ingredient_id: 'ing-1',
       name: 'Harina',
       quantity: 1,
       unit: 'kg',
       warehouse_category_id: 'cat-1',
-    }])
-    expect(appended).toHaveLength(1)
-    expect(appended[0]?.ingredient_mode).toBe('warehouse')
-    expect(appended[0]?.name).toBe('Harina')
+    }
 
-    const deduped = appendWarehouseModifiersFromCategory(appended, [{
-      ingredient_id: 'ing-1',
-      name: 'Harina',
+    const synced = syncWarehouseModifiersFromCategory([], [row])
+    expect(synced).toHaveLength(1)
+    expect(synced[0]?.ingredient_mode).toBe('warehouse')
+    expect(synced[0]?.name).toBe('Harina')
+    expect(isCategoryBulkWarehouseModifier(synced[0]!)).toBe(true)
+
+    const updated = syncWarehouseModifiersFromCategory(synced, [{
+      ...row,
       quantity: 2,
       unit: 'kg',
-      warehouse_category_id: 'cat-1',
     }])
+    expect(updated).toHaveLength(1)
+    expect(updated[0]?.ingredient_quantity).toBe(2)
+
+    const removed = syncWarehouseModifiersFromCategory(updated, [])
+    expect(removed).toHaveLength(0)
+
+    const manual = createEmptyModifier(0)
+    manual.option_type = 'INGREDIENT'
+    manual.ingredient_mode = 'warehouse'
+    manual.ingredient_id = 'ing-1'
+    manual.ingredient_name = 'Harina manual'
+    manual.name = 'Harina manual'
+    const deduped = syncWarehouseModifiersFromCategory([manual], [row])
     expect(deduped).toHaveLength(1)
+    expect(deduped[0]?.name).toBe('Harina manual')
+    expect(isCategoryBulkWarehouseModifier(deduped[0]!)).toBe(false)
+
+    const categoryRow = createWarehouseModifierFromPreparedRow(row, 0)
+    expect(categoryRow.warehouse_category_id).toBe('cat-1')
   })
 
   it('hydrates resale ingredient mode from API rows', () => {
