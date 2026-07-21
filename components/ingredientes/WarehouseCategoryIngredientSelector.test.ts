@@ -93,6 +93,7 @@ describe('WarehouseCategoryIngredientSelector', () => {
         body: {
           category_ids: ['category-1'],
           exclude_ingredient_ids: ['manual-ingredient'],
+          exclude_resale: false,
         },
       },
     )
@@ -157,7 +158,8 @@ describe('WarehouseCategoryIngredientSelector', () => {
     await wrapper.setProps({ existingIngredientIds: ['manual-ingredient'] })
     await flushPromises()
     expect(wrapper.text()).toContain('Granos')
-    expect(wrapper.text()).toContain('No se pudo cargar')
+    expect(wrapper.text()).not.toContain('No se pudo cargar')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
 
     await wrapper.findAll('button').find(button => button.text() === 'Reintentar')?.trigger('click')
     await flushPromises()
@@ -198,5 +200,49 @@ describe('WarehouseCategoryIngredientSelector', () => {
     const select = wrapper.find('select')
     expect(select.exists()).toBe(true)
     expect(select.findAll('option').map(option => option.attributes('value'))).toEqual(['gr', 'kg'])
+  })
+
+  it('does not re-resolve when existing ingredient ids grow after category sync', async () => {
+    const fetchMock = vi.fn(async (_url: string, options: any) => ({
+      data: {
+        ingredients: (options.body.exclude_ingredient_ids?.length ?? 0) > 0
+          ? []
+          : [{
+              ingredient_id: 'ingredient-1',
+              name: 'Arroz',
+              unit: 'gr',
+              warehouse_category_id: 'category-1',
+            }],
+        empty_category_ids: [],
+        unavailable_category_ids: [],
+      },
+    }))
+    vi.stubGlobal('$fetch', fetchMock)
+    vi.stubGlobal('useI18n', () => ({ t: (key: string) => key }))
+    const wrapper = mount(WarehouseCategoryIngredientSelector, {
+      props: { existingIngredientIds: [] },
+      global: {
+        components: { UiWarehouseCategorySearchInput: WarehouseCategorySearchInputStub },
+      },
+    })
+
+    await wrapper.get('[data-test="select-category"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Arroz')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await wrapper.setProps({ existingIngredientIds: ['ingredient-1'] })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Arroz')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const emittedRows = wrapper.emitted('update:preparedRows') ?? []
+    expect(emittedRows.at(-1)?.[0]).toEqual([{
+      ingredient_id: 'ingredient-1',
+      name: 'Arroz',
+      quantity: null,
+      unit: 'gr',
+      warehouse_category_id: 'category-1',
+    }])
   })
 })

@@ -214,6 +214,29 @@ describe('included modifier quantity form contract', () => {
     expect(categoryRow.warehouse_category_id).toBe('cat-1')
   })
 
+  it('preserves API-loaded warehouse options when category sync adds bulk rows', () => {
+    const manual = mapModifierFromApi({
+      id: 'mod-1',
+      name: 'Manual',
+      option_type: 'INGREDIENT',
+      ingredient_id: 'ing-manual',
+      ingredient: { id: 'ing-manual', name: 'Manual' },
+    })
+    const categoryRow = {
+      ingredient_id: 'ing-bulk',
+      name: 'Bulk',
+      quantity: 1,
+      unit: 'gr',
+      warehouse_category_id: 'cat-1',
+    }
+
+    const synced = syncWarehouseModifiersFromCategory([manual], [categoryRow])
+    expect(synced).toHaveLength(2)
+    expect(synced[0]?.ingredient_id).toBe('ing-manual')
+    expect(synced[1]?.ingredient_id).toBe('ing-bulk')
+    expect(isCategoryBulkWarehouseModifier(synced[1]!)).toBe(true)
+  })
+
   it('hydrates resale ingredient mode from API rows', () => {
     const row = mapModifierFromApi({
       name: 'Gaseosa',

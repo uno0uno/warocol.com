@@ -270,17 +270,11 @@ watch(
 
     const previous = new Set(previousIds ?? [])
     const current = new Set(ids ?? [])
-    let dismissed = false
 
     for (const ingredientId of previous) {
       if (!current.has(ingredientId)) {
         removePreparedRow(ingredientId)
-        dismissed = true
       }
-    }
-
-    if (!dismissed && current.size > previous.size) {
-      void resolve()
     }
   },
   { deep: true },

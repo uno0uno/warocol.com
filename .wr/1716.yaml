@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1716
+title: "fix(modificadores): category bulk selection clears options after resolve feedback loop"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1716-category-resolve-loop
+
+paths:
+  - components/ingredientes/WarehouseCategoryIngredientSelector.vue
+  - components/ingredientes/WarehouseCategoryIngredientSelector.test.ts
+  - composables/useModifierOptionForm.test.ts
+
+ac:
+  - Category select adds options and they stay visible on edit/create
+  - Category panel keeps prepared rows after sync (no flash to empty)
+  - API-loaded INGREDIENT options without warehouse_category_id preserved
+  - Manual delete dismiss flow from #1714 still works
+  - Unit test covers category select → sync → no second resolve wipe
+
+out_of_scope:
+  - API changes
+  - Deploy
+  - syncWarehouseModifiersFromCategory rewrite
+
+hints:
+  entry: "WarehouseCategoryIngredientSelector watch existingIngredientIds"
+  pattern: "Remove resolve() on id growth; keep removePreparedRow on shrink only (#1714 regression)"
+  tests: "npx vitest run composables/useModifierOptionForm.test.ts components/ingredientes/WarehouseCategoryIngredientSelector.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Deploy front prod when ready"
