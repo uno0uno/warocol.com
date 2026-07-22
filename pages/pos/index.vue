@@ -38,6 +38,8 @@ const route = useRoute()
 const toast = useToast()
 const queryCache = useQueryCache()
 const posStore = usePOSStore()
+const accessStore = useAccessStore()
+const { accessStatus } = useBilling()
 const { tabItems: storeTabItems, tabTotal: storeTabTotal, activeTableSession } = storeToRefs(posStore)
 
 const { activePromos, hasActivePromos, activePromoHint } = useActivePromotions()
@@ -126,6 +128,10 @@ const isResolvingSettings = computed(() => {
 
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+const isStarterPlan = computed(() =>
+  accessStore.planSlug === 'starter' || accessStatus.value?.level === 'starter',
+)
+const comandaPrintEnabled = computed(() => comandasEnabled.value && !isStarterPlan.value)
 
 // Issue #537 — expediter mode (waiter advances comanda state from POS)
 const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
@@ -557,7 +563,7 @@ async function openComandasReprintPanel() {
 }
 
 async function printLatestComanda() {
-  if (!canPrintLatestComanda.value) return
+  if (!comandaPrintEnabled.value || !canPrintLatestComanda.value) return
   const queue = mapComandasForPrint(lastFiredComandasRaw.value)
   if (!queue.length) return
   printQueueComandas.value = queue
@@ -2115,6 +2121,7 @@ onUnmounted(() => {
         :tab-total="storeTabTotal"
         :tab-items-loading="tabItemsLoading"
         :comandas-enabled="comandasEnabled"
+        :comanda-print-enabled="comandaPrintEnabled"
         :unfired-count="unfiredCount"
         :can-print-latest-comanda="canPrintLatestComanda"
         :persisted-comandas-count="sentComandasForPanel.length"
@@ -2228,13 +2235,13 @@ onUnmounted(() => {
   />
 
   <PosComandaPrintTickets
-    v-if="comandasEnabled"
+    v-if="comandaPrintEnabled"
     :comandas="printQueueComandas"
     :business-name="posBusinessName"
   />
 
   <PosComandasReprintPanel
-    v-if="comandasEnabled"
+    v-if="comandaPrintEnabled"
     v-model="showComandasReprintPanel"
     :comandas="sentComandasForPanel"
     :selected-ids="selectedComandaIds"
@@ -2266,6 +2273,7 @@ onUnmounted(() => {
       :tab-total="storeTabTotal"
       :tab-items-loading="tabItemsLoading"
       :comandas-enabled="comandasEnabled"
+      :comanda-print-enabled="comandaPrintEnabled"
       :unfired-count="unfiredCount"
       :can-print-latest-comanda="canPrintLatestComanda"
       :persisted-comandas-count="sentComandasForPanel.length"

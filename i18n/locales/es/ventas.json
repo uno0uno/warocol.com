@@ -5,8 +5,19 @@
       "productos": "Productos",
       "propinas": "Propinas"
     },
+    "dashboard": {
+      "monthSales": "Ventas del mes",
+      "monthOrders": "Órdenes del mes",
+      "avgTicket": "Ticket promedio",
+      "topProducts": "Productos más vendidos",
+      "topProductsHint": "Top 5 del mes en curso",
+      "viewAllProducts": "Ver todos",
+      "noSalesYet": "Aún no hay ventas registradas en este período.",
+      "unitsSold": "{count} unidades"
+    },
     "head": {
       "module": "Ventas - Warocol",
+      "dashboard": "Resumen de ventas - Ventas",
       "ordenes": "Órdenes - Ventas",
       "crear": "Nueva Venta",
       "detail": "Detalle de Venta",

@@ -303,6 +303,21 @@
         </div>
       </div>
 
+      <div
+        v-if="isStarterPlan && businessProfile?.accepts_online_orders && !isEditMode"
+        class="rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20"
+      >
+        <p class="text-sm font-medium text-amber-900 dark:text-amber-100">
+          {{ t('billing.starterOnlineQuotaOwnerHint') }}
+        </p>
+        <NuxtLink
+          to="/gestion/billing"
+          class="mt-2 inline-flex text-sm font-semibold text-primary hover:text-primary/80"
+        >
+          {{ t('billing.upgrade.cta') }}
+        </NuxtLink>
+      </div>
+
       <!-- ══════ CONTACTO ══════ -->
       <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
@@ -768,6 +783,8 @@ const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('negocio.pageTitle') })
 
 const { isOpenNow, currentTenant } = useTenantReactive()
+const accessStore = useAccessStore()
+const isStarterPlan = computed(() => accessStore.planSlug === 'starter')
 const tenantsStore = useTenantsStore()
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],

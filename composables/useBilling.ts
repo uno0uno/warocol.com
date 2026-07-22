@@ -20,6 +20,11 @@ export type BillingQuotaKey =
   | 'active_qr_tables'
   | 'completed_online_orders_per_month'
   | 'electronic_invoices_per_period'
+  | 'menu_products'
+  | 'tenant_ingredients'
+  | 'modifier_groups'
+  | 'recipe_lines_per_product'
+  | 'modifier_options_per_group'
 
 export type BillingPlanQuotas = Partial<Record<BillingQuotaKey, number>>
 
@@ -57,6 +62,17 @@ export interface AccessStatus {
   subscription_status: string | null
   next_payment_date: string | null
   message: string
+}
+
+export const STARTER_PLAN_SLUG = 'starter'
+export const PRO_PLAN_SLUG = 'pro'
+
+export function isStarterPlanSlug(slug?: string | null): boolean {
+  return slug === STARTER_PLAN_SLUG
+}
+
+export function isStarterAccessLevel(level?: AccessStatus['level'] | null): boolean {
+  return level === 'starter' || level === 'free'
 }
 
 export interface SubscribeResult {
@@ -202,7 +218,55 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     unlimitedMessage: 'La facturación electrónica no tiene límite por override.',
     zeroLabel: 'No incluido',
   },
+  menu_products: {
+    key: 'menu_products',
+    label: 'Productos del menú',
+    description: 'Productos activos en el catálogo',
+    unit: 'productos',
+    blockedMessage: 'Alcanzaste el límite de productos del menú de tu plan.',
+    unlimitedMessage: 'Puedes crear productos sin límite por override.',
+  },
+  tenant_ingredients: {
+    key: 'tenant_ingredients',
+    label: 'Ingredientes propios',
+    description: 'Ingredientes del almacén del establecimiento',
+    unit: 'ingredientes',
+    blockedMessage: 'Alcanzaste el límite de ingredientes de tu plan.',
+    unlimitedMessage: 'Puedes crear ingredientes sin límite por override.',
+  },
+  modifier_groups: {
+    key: 'modifier_groups',
+    label: 'Grupos de modificadores',
+    description: 'Grupos de modificadores del menú',
+    unit: 'grupos',
+    blockedMessage: 'Alcanzaste el límite de grupos de modificadores de tu plan.',
+    unlimitedMessage: 'Puedes crear grupos de modificadores sin límite por override.',
+  },
+  recipe_lines_per_product: {
+    key: 'recipe_lines_per_product',
+    label: 'Líneas de receta por producto',
+    description: 'Ingredientes y bases por producto',
+    unit: 'líneas',
+    blockedMessage: 'Alcanzaste el límite de líneas de receta por producto de tu plan.',
+    unlimitedMessage: 'Las líneas de receta no tienen límite por override.',
+  },
+  modifier_options_per_group: {
+    key: 'modifier_options_per_group',
+    label: 'Opciones por modificador',
+    description: 'Opciones dentro de un grupo de modificadores',
+    unit: 'opciones',
+    blockedMessage: 'Alcanzaste el límite de opciones por modificador de tu plan.',
+    unlimitedMessage: 'Las opciones por modificador no tienen límite por override.',
+  },
 }
+
+export const STARTER_DISPLAY_QUOTA_KEYS: BillingQuotaKey[] = [
+  'menu_products',
+  'tenant_ingredients',
+  'modifier_groups',
+  'completed_online_orders_per_month',
+  'admin_users',
+]
 
 export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'admin_users',

@@ -653,6 +653,11 @@
                 <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 {{ submitError }}
               </p>
+              <BillingPlanUpgradeCta
+                v-if="showUpgradeCta"
+                :message="upgradeMessage"
+                compact
+              />
               <UiButton
                 type="submit"
                 variant="default"
@@ -743,6 +748,7 @@ const router = useRouter()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
+const { showUpgradeCta, upgradeMessage, handleQuotaError, clearQuotaError } = useQuotaExceeded()
 
 const { data: taxConfigData } = useQuery({
   key: () => ['tenant', 'tax-config', currentTenant.value?.id],
@@ -1263,6 +1269,7 @@ async function submitProduct() {
 
   isSubmitting.value = true
   submitError.value = null
+  clearQuotaError()
 
   try {
     const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
@@ -1355,6 +1362,10 @@ async function submitProduct() {
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)
+    if (handleQuotaError(error, { resource: 'menu_products' })) {
+      submitError.value = upgradeMessage.value
+      return
+    }
     const detail = error.data?.detail
     if (Array.isArray(detail)) {
       submitError.value = t('menu.productos.validationError')

@@ -5,8 +5,19 @@
       "productos": "Products",
       "propinas": "Tips"
     },
+    "dashboard": {
+      "monthSales": "Sales this month",
+      "monthOrders": "Orders this month",
+      "avgTicket": "Average ticket",
+      "topProducts": "Top products",
+      "topProductsHint": "Top 5 for the current month",
+      "viewAllProducts": "View all",
+      "noSalesYet": "No sales recorded for this period yet.",
+      "unitsSold": "{count} units"
+    },
     "head": {
       "module": "Sales - Warocol",
+      "dashboard": "Sales overview - Sales",
       "ordenes": "Orders - Sales",
       "crear": "New sale",
       "detail": "Sale detail",

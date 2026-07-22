@@ -59,7 +59,20 @@
                 <span class="w-2 h-2 bg-destructive rounded-full me-2" />
                 Cerrado
               </span>
+              <span
+                v-if="restaurant.public_ordering_status === 'closed_quota'"
+                class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-900"
+              >
+                {{ t('billing.starterOnlineQuotaPublicBadge') }}
+              </span>
             </div>
+
+            <p
+              v-if="closedQuotaMessage"
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              {{ closedQuotaMessage }}
+            </p>
 
             <p v-if="restaurant.description" class="mt-1 text-muted-foreground text-sm line-clamp-2">
               {{ restaurant.description }}
@@ -188,6 +201,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+const { t } = useI18n({ useScope: 'global' })
+
 const props = defineProps({
   restaurant: {
     type: Object,
@@ -200,6 +215,12 @@ const showContact = ref(false)
 
 const isOrderable = computed(() =>
   props.restaurant.public_ordering_status === 'open'
+)
+
+const closedQuotaMessage = computed(() =>
+  props.restaurant.public_ordering_status === 'closed_quota'
+    ? props.restaurant.online_orders_unavailable_message
+    : null,
 )
 
 const hasSocialMedia = computed(() => {
