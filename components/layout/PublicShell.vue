@@ -1,5 +1,5 @@
 <template>
-  <div :class="rootClass">
+  <div :class="[rootClass, 'bg-surface text-text-primary']">
     <NuxtLoadingIndicator />
     <LayoutHeader />
     <div :class="contentClass">

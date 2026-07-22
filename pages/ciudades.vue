@@ -139,7 +139,7 @@ useHead({
   padding: 48px 24px 80px;
   max-width: 1200px;
   margin: 0 auto;
-  background: hsl(220, 14%, 97%);
+  background: transparent;
 }
 
 /* Hero */

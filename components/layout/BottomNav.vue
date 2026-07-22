@@ -1,5 +1,5 @@
 <template>
-  <nav aria-label="Navegación móvil" class="md:hidden fixed bottom-0 start-0 end-0 z-[50] bg-white/95 backdrop-blur-sm border-t border-titan-200 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
+  <nav aria-label="Navegación móvil" class="md:hidden fixed bottom-0 start-0 end-0 z-[50] bg-surface/95 backdrop-blur-sm border-t border-titan-200 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
     <div class="flex items-stretch h-[58px]">
 
       <!-- Inicio -->
