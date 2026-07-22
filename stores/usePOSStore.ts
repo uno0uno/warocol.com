@@ -502,6 +502,48 @@ export const usePOSStore = defineStore('pos', () => {
         return cachedProducts.value.find(p => p.id === productId)
     }
 
+    const upsertProduct = (product: CachedProduct) => {
+        const idx = cachedProducts.value.findIndex(p => p.id === product.id)
+        if (idx >= 0) {
+            cachedProducts.value[idx] = product
+        } else {
+            cachedProducts.value.push(product)
+        }
+    }
+
+    const mapApiProductToCached = (p: Record<string, unknown>): CachedProduct | null => {
+        if (p.open_priced) return null
+        const categoryObj = p.category as { name?: string } | null | undefined
+        return {
+            id: String(p.id),
+            name: String(p.name ?? ''),
+            description: String(p.description ?? ''),
+            price: Number(p.price) || 0,
+            image: '🍽️',
+            image_url: (p.image_url as string | null | undefined) ?? null,
+            category: String(p.category_name ?? categoryObj?.name ?? ''),
+            category_id: (p.category_id as string | null | undefined) ?? null,
+            is_available: p.is_available !== false,
+            is_resale: Boolean(p.is_resale),
+            modifier_groups: Array.isArray(p.modifier_groups) ? p.modifier_groups : [],
+        }
+    }
+
+    const fetchAndCacheProduct = async (productId: string): Promise<CachedProduct | null> => {
+        try {
+            const res = await $fetch<{ success: boolean; data: Record<string, unknown> }>(
+                `/api/pos/products/${productId}`,
+            )
+            if (!res?.success || !res.data) return null
+            const cached = mapApiProductToCached(res.data)
+            if (!cached) return null
+            upsertProduct(cached)
+            return cached
+        } catch {
+            return null
+        }
+    }
+
     const hasProducts = computed(() => cachedProducts.value.length > 0)
 
     // Sincronizar carrito local al backend en batch (sin cliente)
@@ -622,6 +664,8 @@ export const usePOSStore = defineStore('pos', () => {
         waitForPendingOperations,
         setProducts,
         getProduct,
+        upsertProduct,
+        fetchAndCacheProduct,
         syncCartBatch
     }
 })
