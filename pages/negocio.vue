@@ -669,6 +669,9 @@
         </template>
       </div>
 
+      <!-- ══════ ORDEN CATEGORÍAS MENÚ ONLINE ══════ -->
+      <NegocioOnlineMenuCategoryOrder />
+
       <!-- ══════ REDES SOCIALES ══════ -->
       <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
