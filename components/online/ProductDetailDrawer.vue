@@ -34,7 +34,10 @@
         </div>
 
         <!-- Hero image -->
-        <div class="flex-shrink-0 w-full aspect-[16/10] max-h-48 bg-surface-secondary overflow-hidden border-b border-border">
+        <div
+          v-if="!wizardMode"
+          class="flex-shrink-0 w-full aspect-[16/10] max-h-48 bg-surface-secondary overflow-hidden border-b border-border"
+        >
           <div v-if="isLoading" class="w-full h-full animate-pulse bg-surface-secondary" />
           <img
             v-else-if="heroImageUrl"
