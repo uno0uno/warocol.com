@@ -26,6 +26,96 @@ export interface PublicCity {
   department_name?: string | null
 }
 
+/** Common misspellings / spoken variants → catalog slug (warocol.com#1740). */
+export const CITY_SEARCH_ALIASES: Record<string, string> = {
+  aguasul: 'aguazul',
+}
+
+export function normalizeCitySearch(value: string | null | undefined): string {
+  return (value ?? '')
+    .toLocaleLowerCase('es-CO')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+export function cityDepartmentLabel(city: PublicCity): string | null {
+  return city.department_name || city.department || null
+}
+
+export function citySearchHaystack(city: PublicCity): string {
+  return normalizeCitySearch([
+    city.city,
+    city.city_slug,
+    cityDepartmentLabel(city),
+  ].filter(Boolean).join(' '))
+}
+
+export function filterCityCatalog(
+  cities: PublicCity[],
+  query: string,
+  limit = 20,
+): PublicCity[] {
+  const normalized = normalizeCitySearch(query)
+  if (!normalized) return cities.slice(0, limit)
+
+  const aliasSlug = CITY_SEARCH_ALIASES[normalized]
+  if (aliasSlug) {
+    const aliased = cities.find((city) => city.city_slug === aliasSlug)
+    if (aliased) return [aliased]
+  }
+
+  const startsWithMatches: PublicCity[] = []
+  const includesMatches: PublicCity[] = []
+
+  for (const city of cities) {
+    const cityName = normalizeCitySearch(city.city)
+    const haystack = citySearchHaystack(city)
+    if (cityName.startsWith(normalized)) {
+      startsWithMatches.push(city)
+    } else if (haystack.includes(normalized)) {
+      includesMatches.push(city)
+    }
+    if (startsWithMatches.length + includesMatches.length >= limit) break
+  }
+
+  return [...startsWithMatches, ...includesMatches].slice(0, limit)
+}
+
+export function resolveCityFromSearchTerm(
+  cities: PublicCity[],
+  term: string,
+): PublicCity | null {
+  const normalized = normalizeCitySearch(term)
+  if (!normalized) return null
+
+  const aliasSlug = CITY_SEARCH_ALIASES[normalized]
+  if (aliasSlug) {
+    return cities.find((city) => city.city_slug === aliasSlug) ?? null
+  }
+
+  const exactMatches = cities.filter((city) => normalizeCitySearch(city.city) === normalized)
+  if (exactMatches.length === 1) return exactMatches[0]
+
+  const filtered = filterCityCatalog(cities, term, 5)
+  if (filtered.length === 1) {
+    const only = filtered[0]
+    const onlyName = normalizeCitySearch(only.city)
+    if (onlyName === normalized || onlyName.startsWith(normalized)) return only
+  }
+
+  return null
+}
+
+export function formatApiValidationError(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0] as { msg?: string }
+    if (typeof first?.msg === 'string') return first.msg
+  }
+  return fallback
+}
+
 export function useCityCatalog() {
   const cities = useState<PublicCity[]>('city-catalog', () => [])
   const isLoading = useState<boolean>('city-catalog-loading', () => false)

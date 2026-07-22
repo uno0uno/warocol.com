@@ -1,0 +1,33 @@
+issue: 1740
+title: Fix Mi Negocio save and city selector for Bubablue (add Aguasul if missing)
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1740-negocio-save-city
+
+paths:
+  - front_nuxt/pages/negocio.vue
+  - front_nuxt/composables/useCityCatalog.ts
+  - front_nuxt/composables/useCityCatalog.search.test.ts
+  - api_warocol.com/sql/20260722_public_cities_missing_municipalities.sql
+
+ac:
+  - PATCH public-profile excludes country/currency_code
+  - City combobox commits valid matches on blur (Bogotá sticks)
+  - aguasul typo resolves to aguazul catalog entry
+  - 19 missing DIVIPOLA municipalities inserted (incl. San Andrés isla)
+  - Friendly validation toast on save errors
+
+out_of_scope:
+  - API validator changes for country on public-profile
+  - Full catalog rebuild (1103 already present)
+
+hints:
+  entry: negocio.vue saveChanges — remove country from payload
+  pattern: useCityCatalog.ts — pure search helpers + CITY_SEARCH_ALIASES
+  tests: node --test composables/useCityCatalog.search.test.ts
+  api: apply sql/20260722_public_cities_missing_municipalities.sql on prod after deploy
+
+skip:
+  audits: [ux, color, typography]
