@@ -135,11 +135,8 @@ useHead({
 
 <style scoped>
 .ciudades-page {
-  min-height: calc(100vh - 60px);
-  padding: 48px 24px 80px;
-  max-width: 1200px;
-  margin: 0 auto;
-  background: transparent;
+  padding: 0 0 80px;
+  width: 100%;
 }
 
 /* Hero */
@@ -186,33 +183,22 @@ useHead({
   color: hsl(262, 83%, 58%);
 }
 
-/* Row — horizontal scroll on mobile, grid on wider viewports.
-   Matches the "Próximos Viajes" card-strip pattern. */
+/* Grid — 2 cols on mobile, auto-fit from md up. */
 .ciudades-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-.ciudades-row > * {
-  scroll-snap-align: start;
 }
 @media (min-width: 768px) {
   .ciudades-row {
-    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    overflow: visible;
-    padding-bottom: 0;
   }
 }
 
 /* Card — outer pill, inner image with rounded-[28px], meta row below. */
 .city-card {
   display: block;
-  flex: 0 0 240px;
-  min-width: 240px;
+  min-width: 0;
   background: #ffffff;
   border-radius: 32px;
   padding: 8px;
@@ -221,12 +207,6 @@ useHead({
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   border: 1px solid hsl(220, 14%, 92%);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-@media (min-width: 768px) {
-  .city-card {
-    flex: initial;
-    min-width: 0;
-  }
 }
 .city-card:hover {
   transform: translateY(-2px);
@@ -360,10 +340,39 @@ useHead({
   padding: 80px 24px;
 }
 
-@media (max-width: 640px) {
-  .ciudades-page {
-    padding: 32px 16px 64px;
+@media (max-width: 767px) {
+  .city-card {
+    border-radius: 24px;
+    padding: 6px;
   }
+  .city-card__image {
+    height: 140px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .city-card__overlay-name {
+    font-size: 1rem;
+    padding: 0 10px;
+  }
+  .city-card__meta {
+    padding: 0 8px 6px;
+    gap: 6px;
+  }
+  .city-card__meta-text {
+    font-size: 0.75rem;
+  }
+  .city-card__count-pill {
+    bottom: 8px;
+    right: 8px;
+    padding: 3px 8px;
+    font-size: 0.65rem;
+  }
+  .city-card__count-pill > span:first-child {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
   .ciudades-hero {
     margin-bottom: 40px;
   }

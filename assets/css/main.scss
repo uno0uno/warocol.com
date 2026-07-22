@@ -2,9 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Article Layout Container */
+/* Public page layout — shared by blog, ciudades, docs (horizontal alignment with header) */
+.public-page-container {
+  width: 100%;
+  max-width: var(--layout-public-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--layout-public-page-padding-x);
+}
+
+@media (min-width: 640px) {
+  .public-page-container {
+    padding-inline: var(--layout-public-page-padding-x-sm);
+  }
+}
+
+@media (min-width: 768px) {
+  .public-page-container {
+    padding-inline: var(--layout-public-page-padding-x-md);
+  }
+}
+
+.public-page-shell {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: var(--layout-public-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--layout-public-page-padding-x);
+  padding-top: var(--layout-public-page-padding-top);
+  padding-bottom: calc(2rem + var(--layout-public-bottom-nav-height));
+}
+
+@media (min-width: 640px) {
+  .public-page-shell {
+    padding-inline: var(--layout-public-page-padding-x-sm);
+  }
+}
+
+@media (min-width: 768px) {
+  .public-page-shell {
+    padding-inline: var(--layout-public-page-padding-x-md);
+    padding-top: var(--layout-public-page-padding-top-md);
+    padding-bottom: 2rem;
+  }
+}
+
+/* Article Layout Container — alias of public-page-container for blog prose */
 .article-container {
-  @apply px-3 sm:px-5 md:px-8 lg:px-16 xl:px-24 2xl:px-48;
+  width: 100%;
+  max-width: var(--layout-public-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--layout-public-page-padding-x);
+}
+
+@media (min-width: 640px) {
+  .article-container {
+    padding-inline: var(--layout-public-page-padding-x-sm);
+  }
+}
+
+@media (min-width: 768px) {
+  .article-container {
+    padding-inline: var(--layout-public-page-padding-x-md);
+  }
 }
 
 .p-cards{
