@@ -734,7 +734,15 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, watch } from 'vue'
-import { useCityCatalog, type PublicCity } from '~/composables/useCityCatalog'
+import {
+  useCityCatalog,
+  type PublicCity,
+  normalizeCitySearch,
+  cityDepartmentLabel,
+  filterCityCatalog,
+  resolveCityFromSearchTerm,
+  formatApiValidationError,
+} from '~/composables/useCityCatalog'
 import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
 import { usePOSStore } from '~/stores/usePOSStore'
 import {
@@ -822,47 +830,15 @@ const citySearchTerm = ref('')
 const citySearchOpen = ref(false)
 const citySearchActiveIndex = ref(0)
 
-const normalizeCitySearch = (value: string | null | undefined) =>
-  (value ?? '')
-    .toLocaleLowerCase('es-CO')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-
-const cityDepartment = (city: PublicCity) => city.department_name || city.department || null
-
-const citySearchText = (city: PublicCity) =>
-  normalizeCitySearch([city.city, city.city_slug, cityDepartment(city)].filter(Boolean).join(' '))
+const cityDepartment = (city: PublicCity) => cityDepartmentLabel(city)
 
 const selectedCity = computed(() =>
   cityCatalog.value.find((c) => c.city_slug === editForm.city_slug) ?? null,
 )
 
-const visibleCityResults = computed(() => {
-  const query = normalizeCitySearch(citySearchTerm.value)
-  const source = cityCatalog.value
-
-  if (!query) {
-    return source.slice(0, CITY_RESULT_LIMIT)
-  }
-
-  const startsWithMatches: PublicCity[] = []
-  const includesMatches: PublicCity[] = []
-
-  for (const city of source) {
-    const cityName = normalizeCitySearch(city.city)
-    const haystack = citySearchText(city)
-    if (cityName.startsWith(query)) {
-      startsWithMatches.push(city)
-    } else if (haystack.includes(query)) {
-      includesMatches.push(city)
-    }
-
-    if (startsWithMatches.length + includesMatches.length >= CITY_RESULT_LIMIT) break
-  }
-
-  return [...startsWithMatches, ...includesMatches].slice(0, CITY_RESULT_LIMIT)
-})
+const visibleCityResults = computed(() =>
+  filterCityCatalog(cityCatalog.value, citySearchTerm.value, CITY_RESULT_LIMIT),
+)
 
 const cityDropdownOpen = computed(() =>
   citySearchOpen.value
@@ -902,7 +878,6 @@ const onCityChange = (slug: string) => {
   editForm.city_slug = slug
   const entry = cityCatalog.value.find((c) => c.city_slug === slug)
   editForm.city = entry?.city || ''
-  editForm.country = entry?.country || 'Colombia'
   syncCitySearchTerm()
 }
 
@@ -915,18 +890,22 @@ const clearCitySelection = () => {
   citySearchTerm.value = ''
   editForm.city_slug = ''
   editForm.city = ''
-  editForm.country = 'Colombia'
   citySearchActiveIndex.value = 0
   citySearchOpen.value = true
   nextTick(updateCitySearchPlacement)
 }
 
 const onCitySearchInput = () => {
-  const currentSelection = selectedCity.value
-  if (!currentSelection || normalizeCitySearch(citySearchTerm.value) !== normalizeCitySearch(currentSelection.city)) {
-    editForm.city_slug = ''
-    editForm.city = ''
-    editForm.country = 'Colombia'
+  const resolved = resolveCityFromSearchTerm(cityCatalog.value, citySearchTerm.value)
+  if (resolved) {
+    editForm.city_slug = resolved.city_slug
+    editForm.city = resolved.city
+  } else {
+    const currentSelection = selectedCity.value
+    if (!currentSelection || normalizeCitySearch(citySearchTerm.value) !== normalizeCitySearch(currentSelection.city)) {
+      editForm.city_slug = ''
+      editForm.city = ''
+    }
   }
   citySearchActiveIndex.value = 0
   citySearchOpen.value = true
@@ -938,6 +917,10 @@ const openCitySearch = () => {
 }
 
 const closeCitySearch = () => {
+  if (!editForm.city_slug && citySearchTerm.value.trim()) {
+    const match = resolveCityFromSearchTerm(cityCatalog.value, citySearchTerm.value)
+    if (match) onCityChange(match.city_slug)
+  }
   citySearchOpen.value = false
   citySearchActiveIndex.value = 0
   syncCitySearchTerm()
@@ -1239,7 +1222,6 @@ const saveChanges = async () => {
       phone_number: editForm.phone_number || null,
       email: editForm.email || null,
       address: editForm.address || null,
-      country: editForm.country || 'Colombia',
       city: editForm.city || null,
       city_slug: editForm.city_slug || null,
       neighborhood: editForm.neighborhood || null,
@@ -1260,7 +1242,10 @@ const saveChanges = async () => {
     isEditMode.value = false
     toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
   } catch (error: any) {
-    toast.error(error.data?.detail || t('negocio.saveError'), { title: t('negocio.error') })
+    toast.error(
+      formatApiValidationError(error.data?.detail, t('negocio.saveError')),
+      { title: t('negocio.error') },
+    )
   } finally {
     isSaving.value = false
   }
