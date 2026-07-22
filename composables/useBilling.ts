@@ -52,7 +52,7 @@ export interface TenantSubscription {
 }
 
 export interface AccessStatus {
-  level: 'free' | 'full' | 'full_with_warning' | 'read_only' | 'blocked'
+  level: 'free' | 'starter' | 'full' | 'full_with_warning' | 'read_only' | 'blocked'
   grace_days_remaining: number | null
   subscription_status: string | null
   next_payment_date: string | null

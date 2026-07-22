@@ -204,6 +204,24 @@ export const getFirstAccessibleHome = (modules: readonly string[] | undefined | 
   return '/'
 }
 
+export const getDashboardHome = (
+  modules: readonly string[] | undefined | null,
+  options?: { isLoaded?: boolean },
+) => {
+  if (options?.isLoaded === false) return INTERNAL_APP_HOME
+  return getFirstAccessibleHome(modules)
+}
+
+export const getModuleAccessDenialRedirect = (accessStore: {
+  planSlug: string | null
+  can: (module: string) => boolean
+}) => {
+  if (accessStore.planSlug === 'starter' && accessStore.can('mi_plan')) {
+    return '/gestion/billing'
+  }
+  return '/403'
+}
+
 const getSafeRedirectTarget = (redirect: unknown) => {
   const target = Array.isArray(redirect) ? redirect[0] : redirect
   if (typeof target !== 'string') return null

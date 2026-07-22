@@ -19,7 +19,7 @@
   >
     <template #brand>
       <NuxtLink
-        to="/financiero"
+        :to="dashboardHome"
         class="flex h-11 w-[7.25rem] min-w-0 items-center justify-center overflow-hidden"
         :aria-label="t('shell.goToDashboardHome')"
       >
@@ -174,6 +174,7 @@ import {
   type ActivePage,
   type DashboardNavItem,
 } from '~/constants/dashboardNavigation'
+import { getDashboardHome } from '~/utils/internalAccess'
 
 interface Props {
   activePage?: ActivePage
@@ -212,6 +213,10 @@ const authStore = useAuthStore()
 const { can } = useModuleAccess()
 const { hasFeature } = useFeatureAccess()
 const accessStore = useAccessStore()
+
+const dashboardHome = computed(() =>
+  getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
+)
 
 const canSeeNavItem = (item: DashboardNavItem) =>
   can(item.module).value && (!item.feature || hasFeature(item.feature).value)

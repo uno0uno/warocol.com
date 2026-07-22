@@ -24,6 +24,7 @@ export const useModuleAccess = () => {
   const store = useAccessStore()
 
   const role = computed(() => store.role)
+  const planSlug = computed(() => store.planSlug)
   const enforcementMode = computed(() => store.enforcementMode)
   const isLoaded = computed(() => store.isLoaded)
 
@@ -31,20 +32,11 @@ export const useModuleAccess = () => {
    * Returns a `ComputedRef<boolean>` that's `true` when the current user
    * can access `module`.
    *
-   * Fail-open semantics — always `true` when `enforcementMode` is
-   * `'disabled'` or `'shadow'`. Only `'enforce'` mode actually checks
-   * membership. This mirrors the backend's gate behavior so the UI matches
-   * runtime authorization without surprises.
-   *
-   * Usage in templates:
-   *   <button v-if="can('finanzas').value">Ver finanzas</button>
-   *
-   * Usage in script setup:
-   *   const finanzasAccess = can('finanzas')
-   *   watch(finanzasAccess, (newVal) => { ... })
+   * After access loads, membership reflects effective modules from
+   * `/me/access` (role ∩ plan). Pre-load fail-open preserves hydration UX.
    */
   const can = (module: Module): ComputedRef<boolean> =>
     computed(() => store.can(module))
 
-  return { role, enforcementMode, isLoaded, can }
+  return { role, planSlug, enforcementMode, isLoaded, can }
 }

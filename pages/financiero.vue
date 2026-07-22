@@ -1,10 +1,20 @@
 <script setup lang="ts">
-// Redirect /financiero to /finanzas/gastos
+import { getFirstAccessibleHome } from '~/utils/internalAccess'
+
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
 })
 
-navigateTo('/finanzas/gastos')
+const accessStore = useAccessStore()
+if (!accessStore.isLoaded) {
+  await accessStore.load()
+}
+
+const target = accessStore.modules.includes('finanzas')
+  ? '/finanzas/gastos'
+  : getFirstAccessibleHome(accessStore.modules)
+
+await navigateTo(target, { replace: true })
 </script>
 
 <template>

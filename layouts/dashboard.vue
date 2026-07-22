@@ -36,7 +36,7 @@
           <nav v-if="showBreadcrumb" class="flex mb-6" :aria-label="t('shell.breadcrumb')">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
               <li class="inline-flex items-center">
-                <NuxtLink to="/financiero"
+                <NuxtLink :to="dashboardHome"
                   class="text-sm font-medium text-text-secondary hover:text-primary transition-colors">
                   {{ t('shell.financiero') }}
                 </NuxtLink>
@@ -86,6 +86,7 @@ import {
 import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
+import { getDashboardHome } from '~/utils/internalAccess'
 
 const { t } = useI18n()
 
@@ -94,6 +95,9 @@ const { unreadCount: notificationsUnreadCount } = useNotifications()
 
 // Billing access status — drives banner and blocked redirect (Mi Plan roles only)
 const accessStore = useAccessStore()
+const dashboardHome = computed(() =>
+  getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
+)
 const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
 const isBillingBlocked = computed(() =>
   accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
