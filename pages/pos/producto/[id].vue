@@ -43,17 +43,33 @@ const { activePromos } = useActivePromotions()
 // Product ID from route
 const productId = computed(() => route.params.id as string)
 
-// Obtener producto del cache (NO del backend)
+// Obtener producto del cache; si falta, hidratar desde GET /pos/products/{id}
 const cachedProduct = computed(() => posStore.getProduct(productId.value))
 
-// Si no hay producto en cache, redirigir a POS (el usuario navegó directamente)
 const loadingProduct = ref(false)
+const productLoadAttempted = ref(false)
 
-onMounted(() => {
-  if (!cachedProduct.value) {
-    // No hay producto en cache - redirigir a POS para cargar productos
+const ensureProductLoaded = async () => {
+  if (cachedProduct.value) {
+    productLoadAttempted.value = true
+    return
+  }
+  loadingProduct.value = true
+  productLoadAttempted.value = true
+  const loaded = await posStore.fetchAndCacheProduct(productId.value)
+  loadingProduct.value = false
+  if (!loaded) {
     router.push('/pos')
   }
+}
+
+onMounted(() => {
+  ensureProductLoaded()
+})
+
+watch(productId, () => {
+  productLoadAttempted.value = false
+  ensureProductLoaded()
 })
 
 // Redirect on tenant change
@@ -780,12 +796,12 @@ const modifierPriceLabel = (modifier: ModifierOption) => {
   })
 }
 
-// Watch for product availability - redirect if not in cache
-watch(cachedProduct, (p) => {
-  if (!p) {
+// Watch for failed load after fetch attempt (not while loading)
+watch([cachedProduct, loadingProduct, productLoadAttempted], ([p, loading, attempted]) => {
+  if (attempted && !loading && !p) {
     router.push('/pos')
   }
-}, { immediate: true })
+})
 
 // Load cart or tab item data in edit mode
 watch(product, (newProduct) => {
