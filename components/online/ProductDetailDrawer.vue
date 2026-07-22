@@ -761,8 +761,6 @@ const headerSubtitle = computed(() => {
   if (wizardMode.value) {
     return productDetail.value?.name ?? props.product?.name ?? ''
   }
-  const desc = productDetail.value?.description
-  if (desc) return desc.length > 80 ? `${desc.slice(0, 80)}…` : desc
   const price = productDetail.value?.price ?? props.product?.price
   if (price != null) return formatPrice(Number(price))
   return ''
