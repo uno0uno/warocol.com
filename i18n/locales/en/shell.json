@@ -175,7 +175,6 @@
     "onlineMenuCategories": {
       "title": "Online menu category order",
       "description": "Drag categories to control how they appear on your public page and delivery menu.",
-      "dragHint": "Drag the handle to reorder categories shown on your online menu.",
       "dragToOrder": "Drag to change order on your online menu",
       "dragHandleAria": "Drag category {name}",
       "needTwoCategories": "You need at least 2 categories with products available for delivery",

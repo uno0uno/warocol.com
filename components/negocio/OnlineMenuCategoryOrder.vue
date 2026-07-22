@@ -13,6 +13,7 @@ interface OnlineMenuCategory {
 }
 
 const { t } = useI18n({ useScope: 'global' })
+const toast = useToast()
 const { currentTenant } = useTenantReactive()
 
 const {
@@ -186,7 +187,7 @@ watch(eligibleCategories, () => {
         tag="div"
         handle=".category-order-handle"
         :disabled="isCategoryDragDisabled"
-        :options="{ direction: 'horizontal' }"
+        direction="horizontal"
         ghost-class="opacity-50"
         chosen-class="ring-2 ring-primary/30"
         drag-class="shadow-lg"

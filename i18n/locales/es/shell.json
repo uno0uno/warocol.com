@@ -175,7 +175,6 @@
     "onlineMenuCategories": {
       "title": "Orden de categorías en menú online",
       "description": "Arrastra las categorías para definir cómo se ven en tu página pública y en domicilios.",
-      "dragHint": "Arrastra el asa para reordenar las categorías visibles en tu menú online.",
       "dragToOrder": "Arrastra para cambiar el orden en tu menú online",
       "dragHandleAria": "Arrastrar categoría {name}",
       "needTwoCategories": "Necesitas al menos 2 categorías con productos disponibles para domicilios",
