@@ -1,189 +1,86 @@
 <template>
-  <!-- Vertical layout (default) -->
   <div
-    v-if="layout === 'vertical'"
-    class="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group"
-    :class="{ 'opacity-50': !product.is_available }"
+    class="product-card group cursor-pointer bg-card border border-border"
+    :class="{ 'product-card--unavailable': !product.is_available }"
     role="button"
     tabindex="0"
     @click="handleClick"
     @keydown.enter="handleClick"
     @keydown.space.prevent="handleClick"
   >
-    <!-- Product Image/Emoji -->
-    <div class="relative h-48 bg-gradient-to-br from-surface-secondary to-surface-tertiary overflow-hidden">
+    <div class="product-card__media bg-muted h-fit w-full">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
         :alt="product.name"
-        class="absolute inset-0 w-full h-full object-cover"
-      />
-      <div v-else class="absolute inset-0 flex items-center justify-center text-7xl">
+        class="product-card__photo max-w-none"
+        loading="lazy"
+        decoding="async"
+      >
+      <div v-else class="product-card__emoji">
         {{ product.image_url || '🍽️' }}
       </div>
 
-      <!-- Availability badge -->
-      <div v-if="!product.is_available" class="absolute top-3 end-3">
-        <span class="px-3 py-1 text-xs font-semibold bg-state-danger-action-bg text-state-danger-action-text rounded-full">
-          No disponible
-        </span>
-      </div>
-
-      <!-- Modifier indicator -->
-      <div v-if="product.has_modifiers" class="absolute top-3 start-3">
-        <span class="px-2 py-1 text-xs font-medium bg-primary/80 text-primary-foreground rounded-full">
-          Personalizable
-        </span>
+      <div v-if="!product.is_available" class="product-card__media-badge">
+        No disponible
       </div>
     </div>
 
-    <!-- Product Info -->
-    <div class="p-4">
-      <!-- Name -->
-      <h3 class="text-lg font-semibold text-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
-        {{ product.name }}
-      </h3>
-
-      <!-- Description -->
-      <p v-if="product.description" class="text-base text-muted-foreground mb-3 line-clamp-2">
-        {{ product.description }}
-      </p>
-
-      <!-- Footer: Price, Category, and Cart Controls -->
-      <div class="flex items-center justify-between mt-auto">
-        <!-- Price -->
-        <div class="text-2xl font-bold text-foreground">
-          {{ formatPrice(product.price) }}
-        </div>
-
-        <!-- NOT in cart → + button -->
-        <button
-          v-if="!isInCart"
-          @click.stop="handleClick"
-          :disabled="!product.is_available || restaurantClosed"
-          class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text text-xl font-bold hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
-          aria-label="Agregar al carrito"
-        >+</button>
-
-        <!-- IN cart → − N + inline controls -->
-        <div v-else class="flex items-center gap-1" @click.stop>
-          <button
-            @click="decrease"
-            :disabled="cartStore.isLoading"
-            class="w-10 h-10 flex items-center justify-center rounded-xl bg-icon-button-neutral-bg hover:bg-icon-button-destructive-hover-bg text-icon-button-neutral-text hover:text-icon-button-destructive-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
-            aria-label="Quitar uno"
-          >−</button>
-          <span class="min-w-[1.5rem] text-center font-bold text-foreground text-sm">
-            {{ totalQtyInCart }}
-          </span>
-          <button
-            @click="increase"
-            :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
-            class="w-10 h-10 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
-            aria-label="Agregar uno más"
-          >+</button>
-        </div>
-      </div>
-
-      <!-- Category badge -->
-      <div class="flex items-center justify-between mt-2">
-        <div class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-xl">
-          {{ product.category_name }}
-        </div>
-
-        <!-- Preparation time -->
-        <div v-if="product.preparation_time" class="flex items-center gap-1 text-xs text-muted-foreground">
-          <span>⏱️</span>
-          <span>{{ product.preparation_time }} min</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Horizontal layout variant (image left, text+price+button right) -->
-  <div
-    v-else
-    class="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group flex flex-row"
-    :class="{ 'opacity-50': !product.is_available }"
-    role="button"
-    tabindex="0"
-    @click="handleClick"
-    @keydown.enter="handleClick"
-    @keydown.space.prevent="handleClick"
-  >
-    <!-- Left: square image 96×96 -->
-    <div class="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-surface-secondary to-surface-tertiary overflow-hidden">
-      <img
-        v-if="product.image_url && product.image_url.startsWith('http')"
-        :src="product.image_url"
-        :alt="product.name"
-        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-      />
-      <div v-else class="absolute inset-0 flex items-center justify-center text-4xl">
-        {{ product.image_url || '🍽️' }}
-      </div>
-
-      <!-- Availability badge (horizontal) -->
-      <div v-if="!product.is_available" class="absolute inset-0 flex items-center justify-center bg-overlay-backdrop/40">
-        <span class="px-1.5 py-0.5 text-xs font-semibold bg-state-danger-action-bg text-state-danger-action-text rounded-full text-center leading-tight">
-          No disponible
-        </span>
-      </div>
-    </div>
-
-    <!-- Right: name, description, price + cart controls -->
-    <div class="flex flex-1 items-center px-3 py-3 gap-2 min-w-0">
-      <div class="flex-1 min-w-0">
-        <!-- Modifier indicator inline -->
-        <span
-          v-if="product.has_modifiers"
-          class="inline-block px-1.5 py-0.5 text-xs font-medium bg-primary/80 text-primary-foreground rounded-full mb-0.5"
-        >
-          Personalizable
-        </span>
-
-        <h3 class="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+    <div class="product-card__body">
+      <div class="product-card__main">
+        <h3 class="product-card__title">
           {{ product.name }}
         </h3>
 
-        <p v-if="product.description" class="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+        <p v-if="product.description" class="product-card__description">
           {{ product.description }}
         </p>
 
-        <div class="flex items-center gap-2 mt-1">
-          <span class="text-base font-bold text-foreground">{{ formatPrice(product.price) }}</span>
-          <span v-if="product.preparation_time" class="text-xs text-muted-foreground">⏱️ {{ product.preparation_time }} min</span>
-        </div>
+        <p v-if="product.has_modifiers || product.preparation_time" class="product-card__meta">
+          <span v-if="product.has_modifiers" class="product-card__badge">Personalizable</span>
+          <span v-if="product.has_modifiers && product.preparation_time"> · </span>
+          <span v-if="product.preparation_time">{{ product.preparation_time }} min</span>
+        </p>
       </div>
 
-      <!-- Cart controls (compact) -->
-      <div class="flex-shrink-0" @click.stop>
-        <!-- NOT in cart → + button -->
-        <button
-          v-if="!isInCart"
-          @click.stop="handleClick"
-          :disabled="!product.is_available || restaurantClosed"
-          class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text text-lg font-bold hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
-          aria-label="Agregar al carrito"
-        >+</button>
+      <div class="product-card__footer">
+        <span class="product-card__price">{{ formatPrice(product.price) }}</span>
 
-        <!-- IN cart → − N + inline controls (compact) -->
-        <div v-else class="flex items-center gap-1">
+        <div class="product-card__actions" @click.stop>
           <button
-            @click="decrease"
-            :disabled="cartStore.isLoading"
-            class="w-11 h-11 flex items-center justify-center rounded-xl bg-icon-button-neutral-bg hover:bg-icon-button-destructive-hover-bg text-icon-button-neutral-text hover:text-icon-button-destructive-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
-            aria-label="Quitar uno"
-          >−</button>
-          <span class="min-w-[1.25rem] text-center font-bold text-foreground text-sm">
-            {{ totalQtyInCart }}
-          </span>
-          <button
-            @click="increase"
-            :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
-            class="w-11 h-11 flex items-center justify-center rounded-xl bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-action-primary-focus-ring focus-visible:outline-none"
-            aria-label="Agregar uno más"
-          >+</button>
+            v-if="!isInCart"
+            type="button"
+            class="product-card__cart-btn"
+            :disabled="!product.is_available || restaurantClosed"
+            aria-label="Agregar al carrito"
+            @click.stop="handleClick"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          <div v-else class="product-card__qty">
+            <button
+              type="button"
+              class="product-card__qty-btn product-card__qty-btn--minus"
+              :disabled="cartStore.isLoading"
+              aria-label="Quitar uno"
+              @click="decrease"
+            >
+              −
+            </button>
+            <span class="product-card__qty-value">{{ totalQtyInCart }}</span>
+            <button
+              type="button"
+              class="product-card__qty-btn product-card__qty-btn--plus"
+              :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
+              aria-label="Agregar uno más"
+              @click="increase"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -197,35 +94,28 @@ import { useOnlineCartStore } from '~/stores/online_cart'
 const props = defineProps({
   product: {
     type: Object,
-    required: true
-  },
-  layout: {
-    type: String as () => 'vertical' | 'horizontal',
-    default: 'vertical'
+    required: true,
   },
   restaurantClosed: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['click'])
 
 const cartStore = useOnlineCartStore()
 
-// All cart items that belong to this product
 const cartItemsForProduct = computed(() =>
-  cartStore.items.filter(i => i.product_id === props.product.id)
+  cartStore.items.filter(i => i.product_id === props.product.id),
 )
 
-// Sum of quantities across all cart items for this product
 const totalQtyInCart = computed(() =>
-  cartItemsForProduct.value.reduce((sum, i) => sum + i.quantity, 0)
+  cartItemsForProduct.value.reduce((sum, i) => sum + i.quantity, 0),
 )
 
 const isInCart = computed(() => totalQtyInCart.value > 0)
 
-// Decrement: target the last item added (LIFO)
 const decrease = async () => {
   const item = cartItemsForProduct.value.at(-1)
   if (!item) return
@@ -236,7 +126,6 @@ const decrease = async () => {
   }
 }
 
-// Increment: always open drawer so user confirms via "Agregar al carrito"
 const increase = () => {
   emit('click', props.product)
 }
@@ -247,13 +136,328 @@ function handleClick() {
   emit('click', props.product)
 }
 
-function formatPrice(price) {
+function formatPrice(price: string | number) {
   const numPrice = typeof price === 'string' ? parseFloat(price) : price
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(numPrice)
 }
 </script>
+
+<style scoped>
+/* Mobile: width from parent (2/5), image container hugs content */
+.product-card {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  align-items: stretch;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.05);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:active {
+  border-color: hsl(var(--border));
+  box-shadow: 0 2px 8px hsl(var(--foreground) / 0.08);
+}
+
+.product-card:focus-visible {
+  outline: 2px solid hsl(var(--badge-primary-text));
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+.product-card--unavailable {
+  opacity: 0.55;
+}
+
+.product-card__media {
+  position: relative;
+  width: 100%;
+  height: fit-content;
+  align-self: start;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  line-height: 0;
+}
+
+.product-card__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center;
+}
+
+.product-card__emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.product-card__media-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  background: hsl(var(--foreground) / 0.5);
+  color: hsl(var(--surface));
+}
+
+.product-card__body {
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: hsl(var(--text-primary));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  background: hsl(var(--surface-secondary));
+  color: hsl(var(--badge-primary-text));
+}
+
+.product-card__description {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: hsl(var(--text-secondary));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card__meta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: hsl(var(--text-tertiary));
+}
+
+.product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.product-card__price {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: hsl(var(--text-primary));
+  letter-spacing: -0.01em;
+}
+
+.product-card__cart-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--text-primary));
+  color: hsl(var(--surface));
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.product-card__cart-btn:hover:not(:disabled) {
+  background: hsl(var(--action-primary-bg));
+  color: hsl(var(--action-primary-text));
+}
+
+.product-card__cart-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.product-card__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.product-card__qty-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.product-card__qty-btn--minus {
+  background: hsl(var(--surface-secondary));
+  color: hsl(var(--text-primary));
+}
+
+.product-card__qty-btn--minus:hover:not(:disabled) {
+  background: hsl(var(--icon-button-destructive-hover-bg));
+  color: hsl(var(--icon-button-destructive-text));
+}
+
+.product-card__qty-btn--plus {
+  background: hsl(var(--action-primary-bg));
+  color: hsl(var(--action-primary-text));
+}
+
+.product-card__qty-btn--plus:hover:not(:disabled) {
+  background: hsl(var(--action-primary-hover-bg));
+}
+
+.product-card__qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.product-card__qty-value {
+  min-width: 1.125rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--text-primary));
+}
+
+/* Desktop: photo tile */
+@media (min-width: 768px) {
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 0;
+    padding: 0;
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .product-card:hover {
+    border-color: hsl(var(--border));
+    box-shadow: 0 4px 16px -8px hsl(var(--foreground) / 0.12);
+  }
+
+  .product-card__media {
+    flex: none;
+    width: 100%;
+    height: 11rem;
+    min-height: 11rem;
+    line-height: normal;
+    border-radius: 0;
+  }
+
+  .product-card__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    object-fit: cover;
+  }
+
+  .product-card__emoji {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    aspect-ratio: auto;
+    font-size: 3rem;
+  }
+
+  .product-card__media-badge {
+    inset: auto;
+    top: 0.625rem;
+    left: 0.625rem;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    height: auto;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.6875rem;
+  }
+
+  .product-card__body {
+    min-height: 0;
+    padding: 0.875rem 1rem 1rem;
+    gap: 0.625rem;
+    justify-content: space-between;
+  }
+
+  .product-card__title {
+    font-size: 1rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-card__description {
+    font-size: 0.875rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-card__price {
+    font-size: 1.125rem;
+  }
+
+  .product-card__cart-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+  }
+
+  .product-card__qty-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+  }
+}
+</style>

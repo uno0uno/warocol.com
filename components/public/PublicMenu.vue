@@ -59,14 +59,14 @@
     </div>
 
     <!-- Products Grid -->
-    <div v-if="!isLoading && filteredProducts.length > 0" class="max-w-7xl mx-auto px-4 py-8">
+    <div v-if="!isLoading && filteredProducts.length > 0" class="max-w-7xl mx-auto px-4 py-6 md:py-8">
       <!-- Products by category -->
-      <div v-for="category in categoriesWithProducts" :key="category.id" class="mb-12">
-        <h2 class="font-bold text-foreground mb-6">
+      <div v-for="category in categoriesWithProducts" :key="category.id" class="mb-8 md:mb-12">
+        <h2 class="text-sm md:text-base font-bold uppercase tracking-[0.08em] text-text-primary/70 mb-4 md:mb-6">
           {{ category.name }}
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6">
           <PublicProductCard
             v-for="product in category.products"
             :key="product.id"
