@@ -20,14 +20,9 @@
           <img src="/logo_waro_colombia.png" alt="Waro" class="h-8 md:h-10 w-auto">
         </div>
 
-        <!-- Verificando invitación -->
-        <div v-if="verifying" class="text-center">
-          <div class="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center"
-            style="background-color: hsl(250, 30%, 16%, 0.1);">
-            <div class="w-8 h-8 animate-spin rounded-full border-2 border-t-transparent"
-              style="border-color: hsl(250, 30%, 16%); border-top-color: transparent;"></div>
-          </div>
-          <h1 class="text-2xl font-bold mb-2" style="color: hsl(250, 30%, 16%);">{{ t('auth.acceptingInvite') }}</h1>
+        <div v-if="verifying" class="space-y-4 text-center">
+          <CommonsTheCustomLoader size="large" :show-phrase="false" />
+          <h1 class="text-2xl font-bold" style="color: hsl(250, 30%, 16%);">{{ t('auth.acceptingInvite') }}</h1>
           <p class="text-base" style="color: hsl(220, 13%, 28%);">{{ t('auth.acceptingInviteHint') }}</p>
         </div>
 

@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section class="min-w-0">
-        <div class="space-y-6 rounded-xl border border-border bg-surface-secondary/70 p-4 sm:p-6">
+        <div class="space-y-6 rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-6">
           <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">
               <UiStatusBadge :value="documentVersionLabel" variant="primary" size="sm" />
@@ -50,11 +50,16 @@
             </div>
 
             <div v-else class="mt-6">
-              <div v-if="isPdfDocument" class="overflow-hidden rounded-lg border border-border bg-surface-secondary">
+              <div
+                v-if="isPdfDocument"
+                class="relative overflow-hidden rounded-lg border border-border bg-white"
+              >
                 <iframe
+                  ref="pdfFrameRef"
                   :src="pdfViewerUrl"
                   :title="t('terms.pdfTitle')"
                   class="h-[72vh] min-h-[640px] w-full bg-white"
+                  @load="markPdfLoaded"
                 />
               </div>
 
@@ -86,16 +91,23 @@
           </div>
 
           <div v-else-if="hasTenantSession" class="mt-5 space-y-4">
-            <label class="flex items-start gap-3 rounded-lg border border-border p-3 text-sm leading-6 text-text-secondary">
+            <label
+              class="flex items-start gap-3 rounded-lg border border-border p-3 text-sm leading-6 text-text-secondary"
+              :class="{ 'opacity-60': !canEnableReadCheckbox }"
+            >
               <input
                 v-model="hasConfirmedRead"
                 type="checkbox"
-                class="mt-1 h-4 w-4 flex-shrink-0 rounded border-border text-primary focus:ring-primary"
+                class="mt-1 h-4 w-4 flex-shrink-0 rounded border-border text-primary focus:ring-primary disabled:cursor-not-allowed"
+                :disabled="!canEnableReadCheckbox"
               />
               <span>
                 {{ t('terms.readConfirmation', { version: document.version }) }}
               </span>
             </label>
+            <p v-if="!canEnableReadCheckbox" class="text-xs leading-5 text-text-tertiary">
+              {{ t('terms.readConfirmationHint') }}
+            </p>
 
             <button
               type="button"
@@ -163,6 +175,9 @@ const placeholderDocument: LegalTermsDocument = {
 }
 
 const hasConfirmedRead = ref(false)
+const hasPdfLoaded = ref(false)
+const hasEngagedWithPdf = ref(false)
+const pdfFrameRef = ref<HTMLIFrameElement | null>(null)
 const acceptErrorMessage = ref('')
 const hasAcceptedLocally = ref(false)
 const isRedirectingAfterAccept = ref(false)
@@ -183,6 +198,32 @@ const isDocumentLoading = computed(() => !currentDocument.value && isInitialLoad
 const isAccepted = computed(() => hasAcceptedLocally.value || statusData.value?.accepted === true)
 const isAcceptingOrRedirecting = computed(() => isAccepting.value || isRedirectingAfterAccept.value)
 const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocument.value && isPdfDocument.value)
+const canEnableReadCheckbox = computed(() =>
+  !isDocumentLoading.value && isPdfDocument.value && hasPdfLoaded.value && hasEngagedWithPdf.value,
+)
+
+const markPdfLoaded = () => {
+  hasPdfLoaded.value = true
+}
+
+const markPdfEngaged = () => {
+  hasEngagedWithPdf.value = true
+}
+
+const handleWindowBlur = () => {
+  if (!hasPdfLoaded.value || hasEngagedWithPdf.value) return
+  if (document.activeElement === pdfFrameRef.value) {
+    markPdfEngaged()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('blur', handleWindowBlur)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('blur', handleWindowBlur)
+})
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return ''
@@ -208,6 +249,12 @@ const acceptanceDescription = computed(() => {
 
 watch(() => statusData.value?.accepted, (accepted) => {
   if (accepted) hasConfirmedRead.value = false
+})
+
+watch([currentDocument, isPdfDocument], () => {
+  hasPdfLoaded.value = false
+  hasEngagedWithPdf.value = false
+  hasConfirmedRead.value = false
 })
 
 watch(acceptError, (err) => {

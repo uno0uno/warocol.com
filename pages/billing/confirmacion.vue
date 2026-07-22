@@ -1,42 +1,39 @@
 <template>
-  <div class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center">
+  <div v-if="view === 'loading'" class="flex min-h-[420px] items-center justify-center px-4" role="status">
+    <CommonsTheCustomLoader size="large" />
+  </div>
+
+  <div v-else class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center">
     <div class="w-full rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
-      <div v-if="view === 'loading'" class="space-y-4" role="status">
-        <TheCustomLoader size="large" />
-        <p class="text-sm text-text-secondary">{{ t('onboarding.paymentChecking') }}</p>
+      <component :is="icon" class="mx-auto h-14 w-14" :class="iconClass" aria-hidden="true" />
+      <h1 class="mt-4 text-2xl font-bold text-text-primary">{{ title }}</h1>
+      <p class="mt-2 text-sm leading-6 text-text-secondary">{{ description }}</p>
+      <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
+
+      <div class="mt-6 flex flex-col gap-3">
+        <button
+          v-if="isOnboardingReturn && view !== 'failed'"
+          type="button"
+          class="min-h-11 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          @click="checkReturn"
+        >
+          {{ t('onboarding.paymentRefresh') }}
+        </button>
+        <NuxtLink
+          v-if="isOnboardingReturn"
+          to="/gestion/billing"
+          class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
+        >
+          {{ view === 'failed' ? t('onboarding.paymentRetry') : t('billing.backToBilling') }}
+        </NuxtLink>
+        <NuxtLink
+          v-else
+          to="/gestion/billing"
+          class="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+        >
+          {{ t('onboarding.viewSubscription') }}
+        </NuxtLink>
       </div>
-
-      <template v-else>
-        <component :is="icon" class="mx-auto h-14 w-14" :class="iconClass" aria-hidden="true" />
-        <h1 class="mt-4 text-2xl font-bold text-text-primary">{{ title }}</h1>
-        <p class="mt-2 text-sm leading-6 text-text-secondary">{{ description }}</p>
-        <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
-
-        <div class="mt-6 flex flex-col gap-3">
-          <button
-            v-if="isOnboardingReturn && view !== 'failed'"
-            type="button"
-            class="min-h-11 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
-            @click="checkReturn"
-          >
-            {{ t('onboarding.paymentRefresh') }}
-          </button>
-          <NuxtLink
-            v-if="isOnboardingReturn"
-            to="/gestion/billing"
-            class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
-          >
-            {{ view === 'failed' ? t('onboarding.paymentRetry') : t('billing.backToBilling') }}
-          </NuxtLink>
-          <NuxtLink
-            v-else
-            to="/gestion/billing"
-            class="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
-          >
-            {{ t('onboarding.viewSubscription') }}
-          </NuxtLink>
-        </div>
-      </template>
     </div>
   </div>
 </template>

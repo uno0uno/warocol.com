@@ -11,8 +11,8 @@
         <!-- Contenido del login -->
         <div>
           <!-- Verificando sesión -->
-          <div v-if="checkingSession" class="text-center space-y-4">
-            <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-text-primary border-t-transparent"></div>
+          <div v-if="checkingSession" class="space-y-4 text-center">
+            <CommonsTheCustomLoader size="large" :show-phrase="false" />
             <p class="text-sm text-text-secondary">{{ t('auth.checkingSession') }}</p>
           </div>
 
@@ -37,7 +37,7 @@
               <button type="submit" :disabled="loading || !email"
                 class="auth-primary-button">
                 <span v-if="loading" class="flex items-center justify-center gap-2">
-                  <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <UiLoadingDots size="8px" color="currentColor" />
                   {{ t('auth.sending') }}
                 </span>
                 <span v-else>{{ t('auth.next') }}</span>
@@ -84,7 +84,7 @@
                 :disabled="!verificationCode || verificationCode.length !== 6 || verifyingCode"
                 class="auth-primary-button">
                 <span v-if="verifyingCode" class="flex items-center justify-center gap-2">
-                  <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <UiLoadingDots size="8px" color="currentColor" />
                   {{ t('auth.verifying') }}
                 </span>
                 <span v-else>{{ t('auth.verifyCode') }}</span>
