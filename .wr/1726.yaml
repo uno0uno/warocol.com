@@ -1,0 +1,44 @@
+issue: 1726
+title: Align terms, billing return, and auth loading states with matrix/inline dots pattern
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1726-loading-matrix
+
+paths:
+  - pages/terminos-y-condiciones.vue
+  - pages/billing/confirmacion.vue
+  - pages/auth/login.vue
+  - pages/registro.vue
+  - pages/auth/verify.vue
+  - pages/auth/accept-invitation.vue
+  - components/Auth/LoginForm.vue
+  - components/Auth/RegistrationForm.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+
+ac:
+  - Terms page white bg-surface; checkbox gated until PDF load + interaction
+  - Billing confirmacion uses CommonsTheCustomLoader full-page while checking
+  - Auth pages/forms use matrix for block loading and UiLoadingDots on buttons
+
+out_of_scope:
+  - Repo-wide spinner migration
+  - API changes
+  - Non-en/es i18n locales (copy unchanged unless mirrored later)
+
+hints:
+  entry: pages/gestion/billing/index.vue:527 CommonsTheCustomLoader initial load
+  pattern: components/Commons/TheCustomLoader.vue matrix loader
+  tests: none (manual smoke per issue)
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: manual smoke terms, billing/confirmacion, login, registro, verify

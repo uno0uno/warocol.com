@@ -1,9 +1,6 @@
 <template>
-  <div v-if="checking" class="flex items-center justify-center min-h-screen">
-    <div class="text-center">
-      <TheCustomLoader size="large" />
-      <p class="text-text-secondary font-medium mt-6">{{ t('auth.checkingSession') }}</p>
-    </div>
+  <div v-if="checking" class="flex min-h-screen items-center justify-center">
+    <CommonsTheCustomLoader size="large" />
   </div>
   <AuthLoginForm v-else />
 </template>

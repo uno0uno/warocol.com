@@ -188,7 +188,7 @@
 
           <button type="submit" :disabled="sending || optionsLoading || !registrationCatalog.length || cooldownSeconds > 0" class="primary-button">
             <span v-if="sending" class="inline-flex items-center gap-2">
-              <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+              <UiLoadingDots size="8px" color="currentColor" />
               {{ t('auth.sending') }}
             </span>
             <span v-else>{{ t('auth.registrationSubmit') }}</span>
@@ -236,7 +236,7 @@
           @click="verifyCode"
         >
           <span v-if="verifying" class="inline-flex items-center gap-2">
-            <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+            <UiLoadingDots size="8px" color="currentColor" />
             {{ t('auth.verifying') }}
           </span>
           <span v-else>{{ t('auth.verifyCode') }}</span>
@@ -699,6 +699,5 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .primary-button, .form-input { transition: none; }
-  .animate-spin { animation-duration: 1.5s; }
 }
 </style>

@@ -1,9 +1,6 @@
 <template>
   <main v-if="checking" class="flex min-h-[100dvh] items-center justify-center bg-[hsl(220,14%,97%)]" role="status" aria-live="polite">
-    <div class="text-center">
-      <span class="mx-auto block h-10 w-10 animate-spin rounded-full border-2 border-[hsl(250,30%,16%)] border-t-transparent" aria-hidden="true"></span>
-      <p class="mt-6 font-medium text-text-secondary">{{ t('auth.checkingSession') }}</p>
-    </div>
+    <CommonsTheCustomLoader size="large" />
   </main>
   <AuthRegistrationForm v-else />
 </template>
