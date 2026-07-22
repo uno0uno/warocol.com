@@ -170,10 +170,6 @@
                     <span class="option-name">{{ mod.name }}</span>
                     <span class="option-meta">
                       <span
-                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
-                        class="option-type"
-                      >{{ modifierTypeLabel(mod) }}</span>
-                      <span
                         class="option-price"
                         :class="{
                           'option-price-free': mod.price === 0,
@@ -196,10 +192,6 @@
                   >
                     <span class="option-name">{{ mod.name }}</span>
                     <span class="option-meta">
-                      <span
-                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
-                        class="option-type"
-                      >{{ modifierTypeLabel(mod) }}</span>
                       <span
                         class="option-price"
                         :class="{
@@ -345,11 +337,9 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOnlineCartStore, type CartModifier } from '~/stores/online_cart'
 import { useTableQrCartStore } from '~/stores/table_qr_cart'
-import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import {
   formatSaleModifierPriceLabel,
   modifiersCartTotal,
-  normalizeModifierOptionType,
 } from '~/utils/saleModifierOption'
 import {
   canIncrementModifierSelection,
@@ -740,10 +730,6 @@ const totalPrice = computed(() => {
   return formatPrice((base + modTotal) * quantity.value)
 })
 
-function modifierTypeLabel(mod: Modifier): string {
-  return formatModifierOptionTypeLabel(normalizeModifierOptionType(mod.option_type))
-}
-
 function formatModifierPriceLabel(mod: Modifier): string {
   return formatSaleModifierPriceLabel(mod.price, formatPrice, mod.included_quantity)
 }
@@ -968,13 +954,6 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
-}
-
-.option-type {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: hsl(var(--muted-foreground));
 }
 
 .modifier-stepper {
