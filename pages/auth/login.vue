@@ -1,6 +1,7 @@
 <template>
-  <div v-if="checking" class="flex min-h-screen items-center justify-center">
-    <CommonsTheCustomLoader size="large" />
+  <div v-if="checking" class="flex min-h-screen flex-col items-center justify-center gap-4">
+    <CommonsTheCustomLoader size="large" :show-phrase="false" />
+    <p class="text-sm font-medium text-text-secondary">{{ t('auth.checkingSession') }}</p>
   </div>
   <AuthLoginForm v-else />
 </template>

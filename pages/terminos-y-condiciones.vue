@@ -52,10 +52,10 @@
             <div v-else class="mt-6">
               <div
                 v-if="isPdfDocument"
-                class="overflow-hidden rounded-lg border border-border bg-white"
-                @pointerdown="markPdfEngaged"
+                class="relative overflow-hidden rounded-lg border border-border bg-white"
               >
                 <iframe
+                  ref="pdfFrameRef"
                   :src="pdfViewerUrl"
                   :title="t('terms.pdfTitle')"
                   class="h-[72vh] min-h-[640px] w-full bg-white"
@@ -177,6 +177,7 @@ const placeholderDocument: LegalTermsDocument = {
 const hasConfirmedRead = ref(false)
 const hasPdfLoaded = ref(false)
 const hasEngagedWithPdf = ref(false)
+const pdfFrameRef = ref<HTMLIFrameElement | null>(null)
 const acceptErrorMessage = ref('')
 const hasAcceptedLocally = ref(false)
 const isRedirectingAfterAccept = ref(false)
@@ -208,6 +209,21 @@ const markPdfLoaded = () => {
 const markPdfEngaged = () => {
   hasEngagedWithPdf.value = true
 }
+
+const handleWindowBlur = () => {
+  if (!hasPdfLoaded.value || hasEngagedWithPdf.value) return
+  if (document.activeElement === pdfFrameRef.value) {
+    markPdfEngaged()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('blur', handleWindowBlur)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('blur', handleWindowBlur)
+})
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return ''
