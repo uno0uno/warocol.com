@@ -1,5 +1,5 @@
 <template>
-  <header class="sticky top-0 z-[100] bg-white/95 backdrop-blur-sm border-b border-titan-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)] w-full">
+  <header class="sticky top-0 z-[100] bg-surface/95 backdrop-blur-sm border-b border-titan-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)] w-full">
     <div class="flex items-center gap-2 px-3 sm:gap-3 sm:px-4 md:gap-4 md:px-6 h-[60px] max-w-[1400px] mx-auto w-full">
 
       <!-- Logo -->
@@ -32,7 +32,7 @@
           placeholder="Buscar..."
           readonly
         />
-        <span class="absolute end-3 text-[10px] text-ebony-400 bg-white border border-titan-200 py-[1px] px-1.5 rounded tracking-[0.02em] font-mono">⌘K</span>
+        <span class="absolute end-3 text-[10px] text-ebony-400 bg-surface border border-titan-200 py-[1px] px-1.5 rounded tracking-[0.02em] font-mono">⌘K</span>
       </div>
 
       <!-- Acciones derecha -->

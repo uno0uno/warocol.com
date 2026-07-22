@@ -38,7 +38,7 @@ useHead({
     position: relative;
     min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: hsl(220, 14%, 97%); /* Titan 100 - Fondo claro neutral */
+    background: transparent;
     color: hsl(250, 30%, 16%); /* Ebony 900 - Texto oscuro con alto contraste */
     overflow-x: hidden;
 }

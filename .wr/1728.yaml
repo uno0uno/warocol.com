@@ -1,0 +1,40 @@
+issue: 1728
+title: Unify public page background with white header (fix grey seam under nav)
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1728-public-bg-white
+
+paths:
+  - assets/css/design-tokens.css
+  - components/layout/PublicShell.vue
+  - components/layout/Header.vue
+  - components/layout/BottomNav.vue
+  - pages/index.vue
+  - pages/ciudades.vue
+
+ac:
+  - PublicShell bg-surface end-to-end
+  - Remove titan-100 hardcode on index and ciudades
+  - Light --background aligned to titan-50 / surface white
+  - Header and BottomNav use bg-surface/95
+
+out_of_scope:
+  - Dark theme token redesign
+  - Intentional grey hero sections inside pages
+
+hints:
+  entry: components/layout/PublicShell.vue
+  pattern: assets/css/design-tokens.css:96 --surface white
+  tests: none (manual visual QA)
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color]
+
+next:
+  after_pr: visual QA /, /ciudades, /blog, /docs, one dashboard route

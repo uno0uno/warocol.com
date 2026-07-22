@@ -62,7 +62,7 @@
   --ebony-900: 250 30% 16%; /* #1F1D35 */
 
   /* === TEMA CLARO (Titan White Base) === */
-  --background: var(--titan-200); /* Fondo claro suave */
+  --background: var(--titan-50); /* Canvas alineado con surface (blanco) */
   --foreground: var(--ebony-900); /* Texto oscuro */
   
   --card: 0 0% 100%; /* Tarjetas blancas */
@@ -571,7 +571,7 @@
 
 /* === TEMA CLARO EXPLÍCITO === */
 .light {
-  --background: var(--titan-100); /* Fondo claro */
+  --background: var(--titan-50); /* Canvas alineado con surface (blanco) */
   --foreground: var(--ebony-900); /* Texto oscuro */
   
   --card: var(--titan-50); /* Tarjetas blanco puro */
