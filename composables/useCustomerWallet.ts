@@ -26,14 +26,21 @@ export interface WalletResponse {
   data: CustomerWalletData
 }
 
-export const useCustomerWallet = (customerId: Ref<string> | string) => {
+export type CustomerWalletScope = 'ventas' | 'pos'
+
+export const useCustomerWallet = (
+  customerId: Ref<string> | string,
+  options?: { scope?: CustomerWalletScope },
+) => {
   const idRef = isRef(customerId) ? customerId : ref(customerId)
   const cache = useQueryCache()
+  const scope = options?.scope ?? 'ventas'
+  const walletBasePath = scope === 'pos' ? '/api/pos/customers' : '/api/customers'
 
   const { data, asyncStatus, error, refetch } = useQuery({
-    key: () => ['customer-wallet', idRef.value],
+    key: () => ['customer-wallet', scope, idRef.value],
     query: () =>
-      $fetch<WalletResponse>(`/api/customers/${idRef.value}/wallet`),
+      $fetch<WalletResponse>(`${walletBasePath}/${idRef.value}/wallet`),
     enabled: () => !!idRef.value,
     staleTime: 15_000,
   })
@@ -62,7 +69,7 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
         body: vars,
       }),
     onSettled: () =>
-      cache.invalidateQueries({ key: ['customer-wallet', idRef.value] }),
+      cache.invalidateQueries({ key: ['customer-wallet', scope, idRef.value] }),
   })
 
   const recharge = (

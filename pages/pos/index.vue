@@ -260,15 +260,18 @@ const shouldPollTableSession = computed(
 
 // Customer identification on POS main screen (#1063)
 const showCustomerModal = ref(false)
-const posCustomerId = computed(() => posStore.currentCustomer?.id ?? '')
 const isAnonymousPosCustomer = computed(
   () => posStore.currentCustomer?.phone_number === '0000000000',
 )
+const posCustomerId = computed(() => {
+  if (isAnonymousPosCustomer.value) return ''
+  return posStore.currentCustomer?.id ?? ''
+})
 const posCustomerIdentity = computed(() =>
   buildCustomerIdentityPresentation(posStore.currentCustomer),
 )
 const { wallet: posCustomerWallet, isLoading: isLoadingPosWallet, isRefreshing: isRefreshingPosWallet, refetch: refetchPosWallet } =
-  useCustomerWallet(posCustomerId)
+  useCustomerWallet(posCustomerId, { scope: 'pos' })
 const {
   summary: posWarosSummary,
   isLoadingSummary: isLoadingPosWaros,
