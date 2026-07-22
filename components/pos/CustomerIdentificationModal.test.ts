@@ -32,6 +32,7 @@ const mountModal = () => {
   vi.stubGlobal('useI18n', () => ({
     t: (key: string) => translations[key] ?? key,
   }))
+  vi.stubGlobal('useRoute', () => ({ path: '/ventas/crear' }))
 
   return mount(CustomerIdentificationModal, {
     attachTo: document.body,

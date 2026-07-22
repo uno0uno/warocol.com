@@ -510,6 +510,11 @@ interface Emits {
 }
 
 const props = defineProps<Props>()
+
+const route = useRoute()
+const customerApiBase = computed(() =>
+  route.path.startsWith('/pos') ? '/api/pos/customers' : '/api/customers',
+)
 const emit = defineEmits<Emits>()
 
 // UI state
@@ -581,7 +586,7 @@ const commitSearch = useDebounceFn(async (q: string) => {
   }
   try {
     const data = await $fetch<{ success: boolean; data: CustomerSummary[] }>(
-      '/api/customers/search-by-query',
+      `${customerApiBase.value}/search-by-query`,
       { query: { q, limit: 20 } }
     )
     searchResults.value = data?.data ?? []
@@ -677,7 +682,7 @@ const selectCustomer = async (customer: CustomerSummary) => {
   if (isHydratingSelection.value) return
   isHydratingSelection.value = true
   try {
-    const res = await $fetch<CustomerApiResponse>(`/api/customers/${customer.id}`)
+    const res = await $fetch<CustomerApiResponse>(`${customerApiBase.value}/${customer.id}`)
     if (res?.success) {
       completeSelection(toSelected(res.data))
       return
@@ -723,7 +728,7 @@ const toSelected = (data: CustomerApiResponse['data']): SelectedCustomer => ({
 const selectGenericCustomer = async () => {
   isCreatingGeneric.value = true
   try {
-    const response = await $fetch<CustomerApiResponse>('/api/customers/search-or-create', {
+    const response = await $fetch<CustomerApiResponse>(`${customerApiBase.value}/search-or-create`, {
       method: 'POST',
       body: { phone_number: '0000000000', name: t('pos.customer.customerNoData') }
     })
@@ -755,7 +760,7 @@ const handleCreate = async () => {
       fiscal_email: createForm.value.email?.trim() || null,
     } : {}
 
-    const response = await $fetch<CustomerApiResponse>('/api/customers/search-or-create', {
+    const response = await $fetch<CustomerApiResponse>(`${customerApiBase.value}/search-or-create`, {
       method: 'POST',
       body: {
         phone_number: createForm.value.phone_number,
@@ -791,7 +796,7 @@ const handleSaveFiscal = async () => {
   createError.value = ''
   try {
     const response = await $fetch<CustomerApiResponse>(
-      `/api/customers/${fiscalForm.value.customer_id}`,
+      `${customerApiBase.value}/${fiscalForm.value.customer_id}`,
       {
         method: 'PATCH',
         body: {
