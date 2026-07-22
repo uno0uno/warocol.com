@@ -89,12 +89,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="docs-shell">
+  <div class="docs-shell bg-surface">
     <NuxtLoadingIndicator />
 
     <Header />
 
-    <div class="docs-body">
+    <div class="docs-body public-page-container">
 
       <!-- Sidebar -->
       <aside class="docs-sidebar">
@@ -181,8 +181,7 @@ onMounted(() => {
 .docs-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: hsl(var(--background));
+  min-height: 100dvh;
   font-family: 'Lato', sans-serif;
 }
 
@@ -319,19 +318,20 @@ onMounted(() => {
   display: flex;
   flex: 1;
   width: 100%;
+  --layout-docs-column-top: 20px;
 }
 
 /* ─── Sidebar ────────────────────────────────────────── */
 .docs-sidebar {
   width: 256px;
   flex-shrink: 0;
-  background: hsl(var(--background));
+  background: hsl(var(--surface));
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 58px;
+  top: var(--layout-public-header-offset);
   align-self: flex-start;
-  height: calc(100vh - 58px);
+  height: calc(100dvh - var(--layout-public-header-offset));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -351,7 +351,7 @@ onMounted(() => {
 
 /* ─── Nav card ───────────────────────────────────────── */
 .docs-nav-card {
-  margin: 20px 12px 0;
+  margin: var(--layout-docs-column-top) 12px 0;
   background: hsl(var(--surface));
   border: 1px solid hsl(var(--border));
   border-radius: 10px;
@@ -525,25 +525,30 @@ onMounted(() => {
 .docs-main {
   flex: 1;
   min-width: 0;
-  padding: 24px 24px 64px 32px;
-  background: hsl(var(--background));
+  padding-top: var(--layout-docs-column-top);
+  padding-bottom: 64px;
+  background: hsl(var(--surface));
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Tablet */
 @media (max-width: 1023px) {
   .docs-main {
-    padding: 16px 12px calc(64px + 58px);
+    padding-bottom: calc(64px + var(--layout-public-bottom-nav-height));
   }
 }
 
 /* Mobile — sin padding lateral, el card maneja su propio espacio */
 @media (max-width: 639px) {
+  .docs-body.public-page-container {
+    max-width: none;
+    padding-inline: 0;
+  }
+
   .docs-main {
-    padding: 0 0 calc(48px + 58px);
-    background: hsl(var(--background));
+    padding-inline: 0;
+    padding-bottom: calc(48px + var(--layout-public-bottom-nav-height));
     align-items: stretch;
   }
 }
@@ -553,8 +558,8 @@ onMounted(() => {
   width: 248px;
   flex-shrink: 0;
   display: none;
-  padding: 20px 12px 0;
-  background: hsl(var(--background));
+  padding: var(--layout-docs-column-top) 12px 0;
+  background: hsl(var(--surface));
 }
 
 @media (min-width: 1280px) {
@@ -565,12 +570,12 @@ onMounted(() => {
 
 .docs-toc-inner {
   position: sticky;
-  top: calc(58px + 20px);
+  top: calc(var(--layout-public-header-offset) + 20px);
   background: hsl(var(--surface));
   border: 1px solid hsl(var(--border));
   border-radius: 10px;
   padding: 14px 16px 16px;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100dvh - var(--layout-public-header-offset) - 40px);
   overflow-y: auto;
   scrollbar-width: none;
   box-shadow: 0 1px 4px hsl(var(--overlay-backdrop-bg) / 0.04);

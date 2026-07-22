@@ -272,6 +272,15 @@
 
   --shell-header-bg: var(--surface);
   --shell-header-border: var(--border);
+  --layout-public-header-height: 3.75rem; /* 60px inner bar */
+  --layout-public-header-offset: calc(var(--layout-public-header-height) + 1px); /* incl. border-b */
+  --layout-public-bottom-nav-height: 3.625rem; /* 58px — LayoutBottomNav */
+  --layout-public-page-max-width: 87.5rem; /* 1400px — matches LayoutHeader inner */
+  --layout-public-page-padding-x: 0.75rem; /* 12px — header px-3 */
+  --layout-public-page-padding-x-sm: 1rem; /* 16px — header sm:px-4 */
+  --layout-public-page-padding-x-md: 1.5rem; /* 24px — header md:px-6 */
+  --layout-public-page-padding-top: 2rem; /* 32px — aligns with blog hero pt-8 */
+  --layout-public-page-padding-top-md: 2rem;
   --shell-title-text: var(--text-primary);
   --shell-subtitle-text: var(--text-secondary);
   --shell-cta-bg: var(--action-primary-bg);

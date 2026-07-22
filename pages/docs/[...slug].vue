@@ -126,8 +126,9 @@ function handleClick(e: MouseEvent) {
   background: hsl(var(--surface));
   border: 1px solid hsl(220 13% 91%);
   border-radius: 14px;
-  padding: 48px 56px 64px;
+  padding: 32px 56px 64px;
   max-width: 860px;
+  width: 100%;
   box-shadow: 0 1px 4px hsl(var(--overlay-backdrop-bg) / 0.04);
 }
 

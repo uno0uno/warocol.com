@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
+definePageMeta({
+  layout: 'blog',
+  publicAccess: true,
+})
+
 // Efecto de máquina de escribir para el título del hero
 const heroTitle = 'El conocimiento que necesita tu restaurante'
 const displayedTitle = ref('')
@@ -153,7 +158,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col font-sans">
+  <div class="min-h-dvh bg-background flex flex-col font-sans">
 
     <!-- ════════════════════════════════════════
          HERO SECTION
@@ -167,7 +172,7 @@ useHead({
       <!-- Accent blob superior derecho -->
       <div class="absolute -top-32 -end-32 w-96 h-96 bg-badge-primary-bg/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
 
-      <div class="relative z-10 max-w-5xl mx-auto px-5 lg:px-12 pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
+      <div class="relative z-10 public-page-container pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
         <!-- Eyebrow badge -->
         <div class="inline-flex items-center gap-2 mb-5 lg:mb-7">
           <span class="w-5 h-px bg-badge-primary-border"></span>
@@ -203,7 +208,7 @@ useHead({
     <!-- ════════════════════════════════════════
          MAIN CONTENT
     ════════════════════════════════════════ -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 w-full flex-1">
+    <div class="public-page-container flex-1 w-full py-8 sm:py-12 lg:py-16 pb-[calc(2rem+var(--layout-public-bottom-nav-height))] md:pb-16">
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
@@ -242,7 +247,7 @@ useHead({
         />
 
       </template>
-    </main>
+    </div>
   </div>
 </template>
 

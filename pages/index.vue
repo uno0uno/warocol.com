@@ -36,7 +36,7 @@ useHead({
 <style scoped>
 .index-page {
     position: relative;
-    min-height: 100vh;
+    min-height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: transparent;
     color: hsl(250, 30%, 16%); /* Ebony 900 - Texto oscuro con alto contraste */
