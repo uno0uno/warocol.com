@@ -101,23 +101,6 @@ export function useWarehouseCategoryIngredientSelector(options: {
     }
   }
 
-  async function hydrateFromSnapshot(
-    categories: WarehouseCategoryRow[],
-    rows: PreparedWarehouseCategoryIngredient[] = [],
-  ) {
-    const seenCategoryIds = new Set<string>()
-    selectedCategories.value = categories.filter((category) => {
-      if (!category?.id || seenCategoryIds.has(category.id)) return false
-      seenCategoryIds.add(category.id)
-      return true
-    })
-    preparedRows.value = rows.map(row => ({ ...row }))
-    emptyCategoryIds.value = []
-    unavailableCategoryIds.value = []
-    error.value = null
-    loading.value = false
-  }
-
   async function addCategory(category: WarehouseCategoryRow | null) {
     if (!category || selectedCategories.value.some(selected => selected.id === category.id)) {
       return false
@@ -159,7 +142,6 @@ export function useWarehouseCategoryIngredientSelector(options: {
     loading,
     error,
     addCategory,
-    hydrateFromSnapshot,
     removeCategory,
     removePreparedRow,
     updatePreparedRow,

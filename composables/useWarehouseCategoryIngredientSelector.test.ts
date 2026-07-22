@@ -72,7 +72,6 @@ describe('useWarehouseCategoryIngredientSelector', () => {
         body: {
           category_ids: ['category-1', 'category-2'],
           exclude_ingredient_ids: ['manual-ingredient'],
-          exclude_resale: false,
         },
       },
     )
@@ -162,38 +161,5 @@ describe('useWarehouseCategoryIngredientSelector', () => {
     await firstRequest
 
     expect(selector.preparedRows.value.map(row => row.ingredient_id)).toEqual(['ingredient-new'])
-  })
-
-  it('hydrates selected categories and prepared rows from a snapshot', async () => {
-    const selector = useWarehouseCategoryIngredientSelector()
-    const category = {
-      id: 'category-1',
-      tenant_id: 'tenant-1',
-      name: 'Granos',
-      normalized_name: 'granos',
-      is_active: true,
-      scope: 'tenant' as const,
-      can_manage: true,
-      ingredient_count: 1,
-      global_count: 0,
-      tenant_count: 1,
-    }
-
-    await selector.hydrateFromSnapshot([category], [{
-      ingredient_id: 'ingredient-1',
-      name: 'Arroz',
-      quantity: 2,
-      unit: 'kg',
-      warehouse_category_id: 'category-1',
-    }])
-
-    expect(selector.selectedCategories.value).toEqual([category])
-    expect(selector.preparedRows.value).toEqual([{
-      ingredient_id: 'ingredient-1',
-      name: 'Arroz',
-      quantity: 2,
-      unit: 'kg',
-      warehouse_category_id: 'category-1',
-    }])
   })
 })

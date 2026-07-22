@@ -133,8 +133,6 @@
                 class="mb-4"
                 :input-id="`modifier-edit-warehouse-category-bulk-${groupId}`"
                 :existing-ingredient-ids="existingWarehouseIngredientIds"
-                :initial-categories="categorySelectorHydration.categories"
-                :initial-prepared-rows="categorySelectorHydration.preparedRows"
                 :unit-options="getIngredientUnitOptions"
                 :loading-unit-ids="loadingUnits"
                 hide-prepared-ingredient-rows
@@ -266,7 +264,6 @@ import {
 } from '~/composables/useModifierOptionForm'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
-import { buildWarehouseCategorySelectorHydration } from '~/composables/useMenuCategoryIngredientRows'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -466,24 +463,6 @@ const existingWarehouseIngredientIds = computed(() =>
     .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
     .map(m => m.ingredient_id as string),
 )
-
-const categorySelectorHydration = computed(() => {
-  if (!availableIngredients.value.length) {
-    return { categories: [], preparedRows: [] as PreparedWarehouseCategoryIngredient[] }
-  }
-
-  return buildWarehouseCategorySelectorHydration(
-    form.value.modifiers
-      .filter(m => m.option_type === 'INGREDIENT' && m.ingredient_id)
-      .map(m => ({
-        ingredient_id: m.ingredient_id!,
-        ingredient_name: m.ingredient_name ?? undefined,
-        quantity: m.ingredient_quantity,
-        unit: m.ingredient_unit,
-      })),
-    availableIngredients.value,
-  )
-})
 
 function onGroupWarehouseCategoryRows(rows: PreparedWarehouseCategoryIngredient[]) {
   form.value.modifiers = syncWarehouseModifiersFromCategory(form.value.modifiers, rows)
