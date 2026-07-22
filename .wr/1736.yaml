@@ -1,0 +1,38 @@
+issue: 1736
+title: Align public product slideover with ingredient panel design + hero image
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1736-product-slideover-design
+
+paths:
+  - components/online/ProductDetailDrawer.vue
+
+ac:
+  - Panel shell matches IngredientePropioPanel (backdrop, drag handle, header, scroll body, footer)
+  - Product hero image at top (URL or emoji fallback)
+  - Header title + subtitle (description snippet or base price)
+  - Modifier wizard, quantity, notes, add-to-cart unchanged
+  - Loading/error/unavailable states preserved
+  - Mobile bottom sheet + desktop right slide-over
+
+out_of_scope:
+  - API changes
+  - Cart logic
+  - Other slide-over panels
+
+hints:
+  entry: components/online/ProductDetailDrawer.vue
+  pattern: components/ingredientes/IngredientePropioPanel.vue:1-60 shell layout
+  tests: none targeted for this component
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: /wr-review

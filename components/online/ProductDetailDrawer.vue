@@ -1,32 +1,85 @@
 <template>
   <Teleport to="body">
     <!-- Backdrop -->
-    <Transition name="fade">
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
       <div
         v-if="modelValue"
-        class="product-backdrop"
+        class="fixed inset-0 z-[100] bg-black/40"
+        aria-hidden="true"
         @click="close"
       />
     </Transition>
 
-    <!-- Drawer -->
-    <Transition name="product-slide">
-      <aside v-if="modelValue" class="product-drawer">
-        <!-- Header -->
-        <header class="product-drawer-header">
-          <div class="header-titles">
-            <h2 class="product-drawer-title">
-              {{ wizardMode ? `Ítem ${wizardStep + 1} de ${quantity}` : (product?.name || '') }}
-            </h2>
-            <p v-if="wizardMode" class="header-product-name">{{ product?.name }}</p>
+    <!-- Panel: bottom sheet on mobile, slide-over on desktop -->
+    <Transition name="panel">
+      <div
+        v-if="modelValue"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="headerTitle"
+        class="fixed z-[101] flex flex-col bg-surface shadow-2xl
+               inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+      >
+        <!-- Mobile drag handle -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+        </div>
+
+        <!-- Hero image -->
+        <div
+          v-if="!wizardMode"
+          class="flex-shrink-0 w-full aspect-[16/10] max-h-48 bg-surface-secondary overflow-hidden border-b border-border"
+        >
+          <div v-if="isLoading" class="w-full h-full animate-pulse bg-surface-secondary" />
+          <img
+            v-else-if="heroImageUrl"
+            :src="heroImageUrl"
+            :alt="heroAlt"
+            class="w-full h-full object-cover object-center"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center text-6xl bg-surface-secondary">
+            {{ heroEmoji }}
           </div>
-          <button class="product-close-btn" @click="close" aria-label="Cerrar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </header>
+        </div>
+
+        <!-- Header -->
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight truncate">
+                  {{ headerTitle }}
+                </h2>
+                <p v-if="headerSubtitle" class="text-xs text-text-secondary leading-snug mt-0.5 line-clamp-2">
+                  {{ headerSubtitle }}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              aria-label="Cerrar"
+              @click="close"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <!-- Wizard progress dots -->
         <div v-if="wizardMode" class="wizard-progress">
@@ -39,11 +92,10 @@
         </div>
 
         <!-- Scrollable body -->
-        <div class="product-drawer-body">
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
           <!-- Skeleton while loading -->
           <template v-if="isLoading">
-            <div class="skeleton skeleton-image" />
             <div class="skeleton skeleton-title" />
             <div class="skeleton skeleton-line" />
             <div class="skeleton skeleton-line short" />
@@ -74,19 +126,6 @@
           </template>
 
           <template v-else-if="productDetail">
-            <!-- Product image / emoji — hidden in wizard steps after 1 to save space -->
-            <div v-if="!wizardMode" class="product-visual">
-              <img
-                v-if="productDetail.image_url && productDetail.image_url.startsWith('http')"
-                :src="productDetail.image_url"
-                :alt="productDetail.name"
-                class="product-image"
-              />
-              <div v-else class="product-emoji">
-                {{ productDetail.image_url || '🍽️' }}
-              </div>
-            </div>
-
             <!-- Description -->
             <p v-if="productDetail.description && !wizardMode" class="product-description">
               {{ productDetail.description }}
@@ -131,10 +170,6 @@
                     <span class="option-name">{{ mod.name }}</span>
                     <span class="option-meta">
                       <span
-                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
-                        class="option-type"
-                      >{{ modifierTypeLabel(mod) }}</span>
-                      <span
                         class="option-price"
                         :class="{
                           'option-price-free': mod.price === 0,
@@ -157,10 +192,6 @@
                   >
                     <span class="option-name">{{ mod.name }}</span>
                     <span class="option-meta">
-                      <span
-                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
-                        class="option-type"
-                      >{{ modifierTypeLabel(mod) }}</span>
                       <span
                         class="option-price"
                         :class="{
@@ -244,31 +275,31 @@
           </template>
         </div>
 
-        <!-- Sticky footer CTA -->
-        <footer class="product-drawer-footer">
-          <!-- Wizard mode footer -->
+        <!-- Footer -->
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex flex-col gap-2">
           <template v-if="wizardMode">
-            <div class="wizard-cta-row">
+            <div class="flex gap-2">
               <button
-                class="wizard-back-btn"
+                type="button"
+                class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="wizardStep === 0"
                 @click="wizardStep--"
               >
                 ← Anterior
               </button>
-              <!-- Not last step -->
               <button
                 v-if="wizardStep < quantity - 1"
-                class="cta-btn wizard-next-btn"
+                type="button"
+                class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
                 :disabled="!isValid"
                 @click="goToNextStep"
               >
                 Siguiente →
               </button>
-              <!-- Last step -->
               <button
                 v-else
-                class="cta-btn"
+                type="button"
+                class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
                 :disabled="!isValid || cartStore.isLoading"
                 @click="handleAddToCart"
               >
@@ -278,20 +309,26 @@
             </div>
           </template>
 
-          <!-- Normal mode footer -->
-          <button
-            v-else
-            class="cta-btn"
-            :disabled="!isValid || cartStore.isLoading || isLoading || fetchError || isProductUnavailable"
-            @click="handleAddToCart"
-          >
-            <span v-if="cartStore.isLoading">Agregando...</span>
-            <span v-else>
-              Agregar {{ quantity }} al carrito — {{ totalPrice }}
-            </span>
-          </button>
-        </footer>
-      </aside>
+          <div v-else class="flex gap-2">
+            <button
+              type="button"
+              class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+              @click="close"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
+              :disabled="!isValid || cartStore.isLoading || isLoading || fetchError || isProductUnavailable"
+              @click="handleAddToCart"
+            >
+              <span v-if="cartStore.isLoading">Agregando...</span>
+              <span v-else>Agregar {{ quantity }} al carrito — {{ totalPrice }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </Transition>
   </Teleport>
 </template>
@@ -300,11 +337,9 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOnlineCartStore, type CartModifier } from '~/stores/online_cart'
 import { useTableQrCartStore } from '~/stores/table_qr_cart'
-import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import {
   formatSaleModifierPriceLabel,
   modifiersCartTotal,
-  normalizeModifierOptionType,
 } from '~/utils/saleModifierOption'
 import {
   canIncrementModifierSelection,
@@ -371,6 +406,25 @@ const tableQrCartStore = useTableQrCartStore()
 const cartStore = computed(() =>
   props.channel === 'table-qr' ? tableQrCartStore : onlineCartStore,
 )
+
+const heroImageUrl = computed(() => {
+  const url = productDetail.value?.image_url ?? props.product?.image_url
+  return typeof url === 'string' && url.startsWith('http') ? url : null
+})
+
+const heroEmoji = computed(() => {
+  const url = productDetail.value?.image_url ?? props.product?.image_url
+  return typeof url === 'string' && url && !url.startsWith('http') ? url : '🍽️'
+})
+
+const heroAlt = computed(() =>
+  productDetail.value?.name ?? props.product?.name ?? 'Producto',
+)
+
+const headerTitle = computed(() => {
+  if (wizardMode.value) return `Ítem ${wizardStep.value + 1} de ${quantity.value}`
+  return productDetail.value?.name ?? props.product?.name ?? ''
+})
 
 const isProductUnavailable = computed(() => {
   if (!productDetail.value) return false
@@ -676,10 +730,6 @@ const totalPrice = computed(() => {
   return formatPrice((base + modTotal) * quantity.value)
 })
 
-function modifierTypeLabel(mod: Modifier): string {
-  return formatModifierOptionTypeLabel(normalizeModifierOptionType(mod.option_type))
-}
-
 function formatModifierPriceLabel(mod: Modifier): string {
   return formatSaleModifierPriceLabel(mod.price, formatPrice, mod.included_quantity)
 }
@@ -692,6 +742,15 @@ function formatPrice(price: number): string {
     maximumFractionDigits: 0,
   }).format(price)
 }
+
+const headerSubtitle = computed(() => {
+  if (wizardMode.value) {
+    return productDetail.value?.name ?? props.product?.name ?? ''
+  }
+  const price = productDetail.value?.price ?? props.product?.price
+  if (price != null) return formatPrice(Number(price))
+  return ''
+})
 
 // --- Add to cart ---
 
@@ -734,92 +793,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Backdrop */
-.product-backdrop {
-  position: fixed;
-  inset: 0;
-  background: hsl(var(--foreground) / 0.5);
-  z-index: 100;
-  backdrop-filter: blur(2px);
-}
-
-/* Drawer */
-.product-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  max-width: 480px;
-  background: hsl(var(--card));
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 20px hsl(var(--overlay-backdrop-bg) / 0.15);
-  overflow: hidden;
-}
-
-/* Header */
-.product-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid hsl(var(--border));
-  background: hsl(var(--card));
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  flex-shrink: 0;
-}
-
-.header-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-  max-width: calc(100% - 48px);
-}
-
-.product-drawer-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: hsl(var(--foreground));
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.header-product-name {
-  font-size: 13px;
-  color: hsl(var(--muted-foreground));
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-close-btn {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(var(--muted));
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: hsl(var(--muted-foreground));
-  transition: all 0.2s ease;
-}
-
-.product-close-btn:hover {
-  background: hsl(var(--border));
-  color: hsl(var(--foreground));
-}
-
 /* Wizard progress dots */
 .wizard-progress {
   display: flex;
@@ -847,16 +820,6 @@ onMounted(() => {
   background: hsl(var(--success));
 }
 
-/* Body */
-.product-drawer-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 /* Skeleton */
 .skeleton {
   background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--border)) 50%, hsl(var(--muted)) 75%);
@@ -870,36 +833,10 @@ onMounted(() => {
   100% { background-position: 200% 0; }
 }
 
-.skeleton-image { height: 180px; border-radius: 12px; }
 .skeleton-title { height: 28px; width: 60%; }
 .skeleton-line { height: 16px; width: 90%; }
 .skeleton-line.short { width: 50%; }
 .skeleton-group { height: 100px; border-radius: 8px; }
-
-/* Product visual */
-.product-visual {
-  border-radius: 12px;
-  overflow: hidden;
-  height: 180px;
-  background: hsl(var(--muted));
-}
-
-.product-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.product-emoji {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 72px;
-}
 
 .product-description {
   font-size: 16px;
@@ -1017,13 +954,6 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
-}
-
-.option-type {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: hsl(var(--muted-foreground));
 }
 
 .modifier-stepper {
@@ -1218,94 +1148,25 @@ onMounted(() => {
   margin: 6px 0 0 52px;
 }
 
-/* Footer CTA */
-.product-drawer-footer {
-  padding: 16px 24px;
-  border-top: 1px solid hsl(var(--border));
-  background: hsl(var(--card));
-  flex-shrink: 0;
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
-
-.cta-btn {
-  width: 100%;
-  padding: 16px;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cta-btn:hover:not(:disabled) {
-  background: hsl(var(--primary) / 0.85);
-}
-
-.cta-btn:disabled {
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  cursor: not-allowed;
-}
-
-/* Wizard footer */
-.wizard-cta-row {
-  display: flex;
-  gap: 10px;
-}
-
-.wizard-back-btn {
-  flex: 0 0 36%;
-  padding: 16px 8px;
-  background: transparent;
-  color: hsl(var(--foreground));
-  border: 2px solid hsl(var(--border));
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.wizard-back-btn:hover:not(:disabled) {
-  border-color: hsl(var(--primary));
-  color: hsl(var(--primary));
-}
-
-.wizard-back-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.wizard-next-btn {
-  flex: 1;
-}
-
-/* Transitions — desktop: slide from right */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
+.panel-enter-from,
+.panel-leave-to {
   opacity: 0;
+  transform: translateY(100%);
 }
-
-.product-slide-enter-active,
-.product-slide-leave-active {
-  transition: transform 0.3s ease;
-}
-.product-slide-enter-from,
-.product-slide-leave-to {
-  transform: translateX(100%);
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fade-enter-active,
-  .fade-leave-active,
-  .product-slide-enter-active,
-  .product-slide-leave-active {
+  .panel-enter-active,
+  .panel-leave-active {
     transition: none;
   }
 }
@@ -1370,34 +1231,5 @@ onMounted(() => {
   margin: 0;
   line-height: 1.55;
   max-width: 28ch;
-}
-
-/* Mobile: drawer slides from bottom */
-@media (max-width: 640px) {
-  .product-drawer {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    max-width: 100%;
-    max-height: 92vh;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -4px 20px hsl(var(--overlay-backdrop-bg) / 0.15);
-  }
-
-  .product-slide-enter-from,
-  .product-slide-leave-to {
-    transform: translateY(100%);
-  }
-
-  .wizard-cta-row {
-    gap: 8px;
-  }
-
-  .wizard-back-btn {
-    flex: 0 0 32%;
-    font-size: 14px;
-    padding: 14px 6px;
-  }
 }
 </style>
