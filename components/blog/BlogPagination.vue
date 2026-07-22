@@ -14,7 +14,7 @@ const emit = defineEmits<{
     <nav class="flex items-center gap-1.5 bg-surface p-1.5 rounded-xl shadow-sm border border-border">
       <button
         :disabled="currentPage === 1"
-        class="p-2 rounded-lg hover:bg-surface-secondary text-text-secondary disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+        class="p-2 rounded-xl hover:bg-surface-secondary text-text-secondary disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
         aria-label="Página anterior"
         @click="emit('page', currentPage - 1)"
       >
@@ -27,10 +27,10 @@ const emit = defineEmits<{
         v-for="page in totalPages"
         :key="page"
         :class="[
-          'w-9 h-9 rounded-lg text-sm font-medium transition-all',
+          'w-9 h-9 rounded-xl text-sm font-medium transition-all',
           currentPage === page
-            ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
-            : 'text-text-secondary hover:bg-surface-secondary'
+            ? 'bg-text-primary text-surface ring-2 ring-badge-primary-border shadow-sm'
+            : 'bg-text-primary text-surface hover:bg-action-primary-bg hover:text-action-primary-text'
         ]"
         @click="emit('page', page)"
       >
@@ -39,7 +39,7 @@ const emit = defineEmits<{
 
       <button
         :disabled="currentPage === totalPages"
-        class="p-2 rounded-lg hover:bg-surface-secondary text-text-secondary disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+        class="p-2 rounded-xl hover:bg-surface-secondary text-text-secondary disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
         aria-label="Página siguiente"
         @click="emit('page', currentPage + 1)"
       >

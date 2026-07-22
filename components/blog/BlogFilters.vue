@@ -1,36 +1,37 @@
 <script setup lang="ts">
-interface Props {
-  filters: string[]
-  activeFilter?: string
-}
+import type { BlogPillar } from '~/utils/blogPillars'
 
-const props = withDefaults(defineProps<Props>(), {
-  activeFilter: 'All'
-})
-
-const emit = defineEmits<{
-  'update:activeFilter': [filter: string]
+defineProps<{
+  pillars: BlogPillar[]
+  activePillar: string | null
 }>()
-
-const handleFilterClick = (filter: string) => {
-  emit('update:activeFilter', filter)
-}
 </script>
 
 <template>
-  <div class="flex gap-2 flex-wrap">
-    <button
-      v-for="filter in filters"
-      :key="filter"
+  <div class="flex gap-2 flex-wrap mb-8 sm:mb-10">
+    <NuxtLink
+      to="/blog"
       :class="[
-        'px-4 py-2 rounded-full text-sm font-medium transition-all',
-        activeFilter === filter
-          ? 'bg-action-primary-bg text-action-primary-text'
-          : 'bg-transparent text-text-secondary hover:bg-surface-secondary hover:text-text-primary'
+        'px-4 py-2 rounded-xl text-sm font-medium transition-all',
+        activePillar === null
+          ? 'bg-text-primary text-surface ring-2 ring-badge-primary-border'
+          : 'bg-text-primary text-surface hover:bg-action-primary-bg hover:text-action-primary-text'
       ]"
-      @click="handleFilterClick(filter)"
     >
-      {{ filter }}
-    </button>
+      Todos
+    </NuxtLink>
+    <NuxtLink
+      v-for="pillar in pillars"
+      :key="pillar.id"
+      :to="`/blog?pillar=${pillar.id}`"
+      :class="[
+        'px-4 py-2 rounded-xl text-sm font-medium transition-all',
+        activePillar === pillar.id
+          ? 'bg-text-primary text-surface ring-2 ring-badge-primary-border'
+          : 'bg-text-primary text-surface hover:bg-action-primary-bg hover:text-action-primary-text'
+      ]"
+    >
+      {{ pillar.label }}
+    </NuxtLink>
   </div>
 </template>

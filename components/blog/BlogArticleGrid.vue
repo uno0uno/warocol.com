@@ -7,6 +7,7 @@ interface ArticleSummary {
   thumbnail: string
   cover: string
   tags: string
+  pillar?: string | null
   views: number
   published: boolean
   created_at: string
@@ -18,8 +19,22 @@ const props = withDefaults(defineProps<{
   articles: ArticleSummary[]
   gradientClasses: string[]
   showEmpty?: boolean
+  showHeader?: boolean
+  columns?: 2 | 3 | 4
 }>(), {
   showEmpty: true,
+  showHeader: true,
+  columns: 3,
+})
+
+const gridClass = computed(() => {
+  if (props.columns === 4) {
+    return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-7'
+  }
+  if (props.columns === 2) {
+    return 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5'
+  }
+  return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-7'
 })
 
 const formatDate = (dateString: string) => {
@@ -41,17 +56,17 @@ const getGradientClass = (index: number) => props.gradientClasses[index % props.
 </script>
 
 <template>
-  <section class="mb-10 lg:mb-20">
-    <div class="flex items-center gap-3 mb-6 sm:mb-10">
+  <section :class="showHeader ? 'mb-10 lg:mb-20' : 'mb-0'">
+    <div v-if="showHeader" class="flex items-center gap-3 mb-6 sm:mb-10">
       <div class="w-1 h-5 bg-border rounded-full"></div>
       <span class="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary">Más Artículos</span>
     </div>
 
-    <div v-if="props.articles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-7">
+    <div v-if="props.articles.length > 0" :class="[gridClass, 'items-stretch auto-rows-fr']">
       <article
         v-for="(article, index) in props.articles"
         :key="article.id"
-        class="group bg-surface rounded-2xl overflow-hidden border border-border hover:border-badge-primary-border transition-colors duration-300 flex flex-col h-full"
+        class="group bg-surface rounded-2xl overflow-hidden border border-border hover:border-badge-primary-border transition-colors duration-300 flex flex-col h-full min-h-0"
       >
         <NuxtLink :to="`/blog/${article.slug}`" class="relative h-40 sm:h-48 lg:h-52 overflow-hidden flex-shrink-0">
           <img
@@ -63,7 +78,7 @@ const getGradientClass = (index: number) => props.gradientClasses[index % props.
           <div v-else :class="['absolute inset-0', getGradientClass(index + 1)]"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
-          <span class="absolute bottom-3.5 end-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-overlay-backdrop/50 text-action-primary-text text-[10px] font-medium backdrop-blur-sm">
+          <span class="absolute bottom-3.5 end-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-overlay-backdrop/50 text-action-primary-text text-[10px] font-medium backdrop-blur-sm">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -71,18 +86,20 @@ const getGradientClass = (index: number) => props.gradientClasses[index % props.
           </span>
         </NuxtLink>
 
-        <div class="p-4 sm:p-5 lg:p-6 flex flex-col flex-1">
-          <NuxtLink :to="`/blog/${article.slug}`" class="block mb-3 flex-1">
-            <h3 class="text-lg font-bold text-text-primary leading-snug group-hover:text-badge-primary-text transition-colors duration-200 line-clamp-2">
-              {{ article.title }}
-            </h3>
-          </NuxtLink>
+        <div class="p-4 sm:p-5 lg:p-6 flex flex-col flex-1 min-h-0">
+          <div class="flex-1 min-h-0">
+            <NuxtLink :to="`/blog/${article.slug}`" class="block mb-3">
+              <h3 class="text-lg font-bold text-text-primary leading-snug group-hover:text-badge-primary-text transition-colors duration-200 line-clamp-2">
+                {{ article.title }}
+              </h3>
+            </NuxtLink>
 
-          <p class="text-text-tertiary text-sm leading-relaxed mb-5 line-clamp-2">
-            {{ article.description }}
-          </p>
+            <p class="text-text-tertiary text-sm leading-relaxed line-clamp-2">
+              {{ article.description }}
+            </p>
+          </div>
 
-          <div class="flex items-center justify-between pt-4 border-t border-border mt-auto">
+          <div class="flex items-center justify-between pt-4 border-t border-border mt-5 shrink-0">
             <div class="flex items-center gap-2.5">
               <img
                 v-if="article.author_avatar"
@@ -101,10 +118,10 @@ const getGradientClass = (index: number) => props.gradientClasses[index % props.
 
             <NuxtLink
               :to="`/blog/${article.slug}`"
-              class="w-8 h-8 rounded-full bg-surface-secondary hover:bg-action-primary-bg flex items-center justify-center transition-colors duration-200 group/btn"
+              class="w-8 h-8 rounded-full bg-text-primary text-surface hover:bg-action-primary-bg hover:text-action-primary-text flex items-center justify-center transition-colors duration-200 group/btn"
               aria-label="Leer artículo"
             >
-              <svg class="w-3.5 h-3.5 text-text-secondary group-hover/btn:text-action-primary-text transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
               </svg>
             </NuxtLink>
