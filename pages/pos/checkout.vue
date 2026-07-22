@@ -51,6 +51,22 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
+
+/** POS-scoped tenant display/settings — available to cashier via restaurant-context. */
+const posCheckoutContext = computed(() => settingsData.value?.data ?? null)
+const posCheckoutBusiness = computed(() => {
+  const ctx = posCheckoutContext.value
+  const profile = businessProfile.value
+  const fiscal = ctx?.fiscal_data
+  return {
+    display_name: ctx?.display_name ?? profile?.display_name ?? null,
+    address: fiscal?.fiscal_address ?? profile?.address ?? null,
+    city: fiscal?.city ?? profile?.city ?? null,
+    phone_number: fiscal?.phone ?? profile?.phone_number ?? null,
+    auto_select_generic_enabled:
+      ctx?.auto_select_generic_enabled ?? profile?.auto_select_generic_enabled ?? false,
+  }
+})
 const { timezone } = useTenantTimezone()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -985,6 +1001,43 @@ const splitAmountToCharge = computed(() =>
     : 0
 )
 
+function openSplitSuccessModal(completeData: Record<string, any>) {
+  captureReceiptPrintContext()
+  orderResult.value = {
+    order_id: completeData.order_id,
+    order_ids: completeData.order_ids,
+    order_number: Number(completeData.order_number) || 0,
+    order_numbers: completeData.order_numbers,
+    total_amount: Number(completeData.total_amount ?? discountedTotal.value),
+    payment_method: completeData.payment_method ?? selectedPaymentMethod.value,
+    status: completeData.status ?? 'completed',
+    payment_status: completeData.payment_status ?? 'paid',
+    ...promoFieldsForReceipt(cartTotal.value),
+    ...(discountEnabled.value && discountAmount.value > 0
+      ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
+      : {}),
+    standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
+    liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
+    standard_tax_label: localizedInternalTaxLabel(completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label),
+    ...(tipAmount.value > 0
+      ? {
+          tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
+          charged_amount: Number(completeData.charged_amount ?? splitAmountDue.value),
+        }
+      : {}),
+    ...waroOrderResultFields(completeData.waro_redemption_summary, cartTotal.value),
+  }
+  cartItemsSnapshot.value = [...cartItems.value]
+  receiptEmail.value = ''
+  emailSent.value = false
+  emailFromProfile.value = false
+  splitMode.value = false
+  posStore.clearAll()
+  showSuccessModal.value = true
+  document.body.classList.remove('printing-prefactura')
+  prefacturaPrintSnapshot.value = null
+}
+
 const addSplitPayment = async () => {
   if ((!isKitchenServiceMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
     processingError.value = t('pos.checkout.split.selectMethodAndCustomer')
@@ -1015,7 +1068,7 @@ const addSplitPayment = async () => {
     let remaining = 0
     let isComplete = false
     let paymentId = ''
-    let completionData: any = null
+    let lastPaymentData: Record<string, any> | null = null
 
     if (isKitchenServiceMode.value) {
       const session = posStore.activeTableSession!
@@ -1045,7 +1098,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
-        if (isComplete) completionData = response.data
+        lastPaymentData = response.data
         // Issue warocol.com#649 — real UUID from backend so the trash button can DELETE it.
         paymentId = response.data.payment_id
       } else {
@@ -1064,7 +1117,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total
         remaining = response.data.remaining
         isComplete = response.data.is_complete
-        if (isComplete) completionData = response.data
+        lastPaymentData = response.data
         // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
         paymentId = response.data.payment_id
       }
@@ -1097,7 +1150,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
-        if (isComplete) completionData = response.data
+        lastPaymentData = response.data
         // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
         paymentId = response.data.payment_id
       } else {
@@ -1118,7 +1171,7 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total
         remaining = response.data.remaining
         isComplete = response.data.is_complete
-        if (isComplete) completionData = response.data
+        lastPaymentData = response.data
         paymentId = response.data.payment_id
       }
     }
@@ -1150,42 +1203,8 @@ const addSplitPayment = async () => {
       })
     }
 
-    if (isComplete) {
-      const completeData = completionData ?? {}
-      captureReceiptPrintContext()
-      orderResult.value = {
-        order_id: completeData.order_id,
-        order_ids: completeData.order_ids,
-        order_number: Number(completeData.order_number) || 0,
-        order_numbers: completeData.order_numbers,
-        total_amount: Number(completeData.total_amount ?? discountedTotal.value),
-        payment_method: completeData.payment_method ?? selectedPaymentMethod.value,
-        status: completeData.status,
-        payment_status: completeData.payment_status,
-        ...promoFieldsForReceipt(cartTotal.value),
-        ...(discountEnabled.value && discountAmount.value > 0
-          ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
-          : {}),
-        standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
-        liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
-        standard_tax_label: localizedInternalTaxLabel(completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label),
-        ...(tipAmount.value > 0
-          ? {
-              tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
-              charged_amount: Number(completeData.charged_amount ?? splitAmountDue.value),
-            }
-          : {}),
-        ...waroOrderResultFields(completeData.waro_redemption_summary, cartTotal.value),
-      }
-      cartItemsSnapshot.value = [...cartItems.value]
-      receiptEmail.value = ''
-      emailSent.value = false
-      emailFromProfile.value = false
-      splitMode.value = false
-      posStore.clearAll()
-      showSuccessModal.value = true
-      document.body.classList.remove('printing-prefactura')
-      prefacturaPrintSnapshot.value = null
+    if (isComplete || splitRemaining.value <= 0.01) {
+      openSplitSuccessModal(lastPaymentData ?? {})
     }
   } catch (e: any) {
     processingError.value = checkoutErrorMessage(e, t('pos.checkout.split.partialPaymentError'))
@@ -1263,9 +1282,13 @@ const selectedCustomerDisplayName = computed(() =>
     ? t('pos.checkout.customerNoData')
     : selectedCustomer.value?.name || t('pos.checkout.customerNoData'),
 )
-const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
+const walletCustomerIdRef = computed(() => {
+  const customer = selectedCustomer.value
+  if (!customer || customer.phone_number === '0000000000') return ''
+  return customer.id
+})
 const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefreshingWallet, refetch: refetchWallet } =
-  useCustomerWallet(customerIdRef)
+  useCustomerWallet(walletCustomerIdRef, { scope: 'pos' })
 const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
 const isWalletPending = computed(() => isLoadingWallet.value || isRefreshingWallet.value)
 const { config: redemptionConfig } = useRedemptionConfig()
@@ -2871,10 +2894,10 @@ const sendReceiptEmail = async () => {
         total_amount: orderResult.value.total_amount,
         payment_method: orderResult.value.payment_method,
         items: itemsForEmail,
-        business_name: businessProfile.value?.display_name ?? null,
-        business_address: businessProfile.value?.address ?? null,
-        business_city: businessProfile.value?.city ?? null,
-        business_phone: businessProfile.value?.phone_number ?? null,
+        business_name: posCheckoutBusiness.value.display_name,
+        business_address: posCheckoutBusiness.value.address,
+        business_city: posCheckoutBusiness.value.city,
+        business_phone: posCheckoutBusiness.value.phone_number,
         discount_amount: orderResult.value.discount_amount ?? 0,
         subtotal: orderResult.value.subtotal ?? 0,
         standard_tax: orderResult.value.standard_tax ?? 0,
@@ -3073,9 +3096,8 @@ onUnmounted(() => {
 // Issue #529 — auto-select the anonymous customer when the tenant flag is on. Applies to
 // counter, bar, AND mesa modes: the customer is only attached to orders at
 // close time anyway, so pre-selecting the anonymous customer is safe and uniform across
-// modes. Uses a watcher (not onMounted) because businessProfile is loaded
-// asynchronously by the tenants store and may still be undefined when
-// checkout mounts on a fresh page load.
+// modes. Uses a watcher (not onMounted) because restaurant-context loads
+// asynchronously and may still be undefined when checkout mounts on a fresh page load.
 watch(
   () => posStore.currentCustomer,
   (customer) => {
@@ -3092,11 +3114,11 @@ watch(
 
 const autoSelectAttempted = ref(false)
 watch(
-  () => businessProfile.value,
-  async (profile) => {
+  () => posCheckoutBusiness.value,
+  async (business) => {
     if (autoSelectAttempted.value) return
-    if (!profile) return                                  // not loaded yet — wait
-    if (!profile.auto_select_generic_enabled) return      // tenant opted out
+    if (!posCheckoutContext.value) return                 // not loaded yet — wait
+    if (!business.auto_select_generic_enabled) return     // tenant opted out
     if (selectedCustomer.value) return                    // already chosen — don't override
     autoSelectAttempted.value = true
     try {
@@ -5103,10 +5125,10 @@ onUnmounted(() => {
       v-if="orderResult"
       :fiscal-data="fiscalData"
       :platform-legal="platformLegal"
-      :display-name="businessProfile?.display_name"
-      :address="businessProfile?.address"
-      :city="businessProfile?.city"
-      :phone="businessProfile?.phone_number"
+      :display-name="posCheckoutBusiness.display_name"
+      :address="posCheckoutBusiness.address"
+      :city="posCheckoutBusiness.city"
+      :phone="posCheckoutBusiness.phone_number"
       :logo-url="receiptLogoUrl"
       :document-label="receiptDocumentLabel"
       :order-number="orderResult.order_number"
@@ -5143,10 +5165,10 @@ onUnmounted(() => {
   <div id="pos-prefactura" aria-hidden="true">
     <PosReceiptPrintHeader
       :fiscal-data="fiscalData"
-      :display-name="businessProfile?.display_name"
-      :address="businessProfile?.address"
-      :city="businessProfile?.city"
-      :phone="businessProfile?.phone_number"
+      :display-name="posCheckoutBusiness.display_name"
+      :address="posCheckoutBusiness.address"
+      :city="posCheckoutBusiness.city"
+      :phone="posCheckoutBusiness.phone_number"
       :logo-url="receiptLogoUrl"
     />
     <div class="receipt-divider">================================</div>
@@ -5306,10 +5328,10 @@ onUnmounted(() => {
   <div id="pos-receipt" aria-hidden="true">
     <PosReceiptPrintHeader
       :fiscal-data="fiscalData"
-      :display-name="businessProfile?.display_name"
-      :address="businessProfile?.address"
-      :city="businessProfile?.city"
-      :phone="businessProfile?.phone_number"
+      :display-name="posCheckoutBusiness.display_name"
+      :address="posCheckoutBusiness.address"
+      :city="posCheckoutBusiness.city"
+      :phone="posCheckoutBusiness.phone_number"
       :logo-url="receiptLogoUrl"
     />
     <div class="receipt-divider">================================</div>
