@@ -549,9 +549,12 @@
 
             <WarehouseCategoryIngredientSelector
               v-if="!isResaleProduct"
+              :key="`product-edit-category-ingredients-${productId}`"
               class="mb-4"
               input-id="product-edit-category-ingredients"
               :existing-ingredient-ids="existingIngredientIds"
+              :initial-categories="categorySelectorCategories"
+              :initial-prepared-rows="categoryPreparedRows"
               :unit-options="getIngredientUnitOptions"
               :loading-unit-ids="loadingUnits"
               @update:prepared-rows="onCategoryPreparedRows"
@@ -878,6 +881,8 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+import type { WarehouseCategoryRow } from '~/composables/useWarehouseCategorySearch'
+import { applyCategorySelectorLayout } from '~/composables/useMenuCategoryIngredientRows'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -1041,6 +1046,7 @@ const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
+const categorySelectorCategories = ref<WarehouseCategoryRow[]>([])
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
@@ -1064,6 +1070,24 @@ function cacheIngredientForUnits(ing: any, productFallback?: Record<string, unkn
     merged.unit_weight_unit = 'ml'
   }
   ingredientCache.value[ing.id] = merged
+}
+
+function syncCategorySelectorLayout() {
+  if (!ingredients.value.length) return
+
+  const sourceRows = [
+    ...form.value.ingredients,
+    ...categoryPreparedRows.value.map(row => ({
+      ingredient_id: row.ingredient_id,
+      ingredient_name: row.name,
+      quantity: row.quantity,
+      unit: row.unit,
+    })),
+  ]
+  const layout = applyCategorySelectorLayout(sourceRows, ingredients.value)
+  categorySelectorCategories.value = layout.categories
+  categoryPreparedRows.value = layout.preparedRows
+  form.value.ingredients = layout.manualRows as typeof form.value.ingredients
 }
 
 function rehydrateProductIngredientCaches() {
@@ -1251,6 +1275,7 @@ const tracksInventory = ref(true)
 watch(productData, (data) => {
   if (data?.data) {
     categoryPreparedRows.value = []
+    categorySelectorCategories.value = []
     const product = data.data
     form.value = {
       name: product.name,
@@ -1305,12 +1330,14 @@ watch(productData, (data) => {
     }
     // Pre-fill the category search input with the product's current category name
     selectedCategoryName.value = product.category_name || ''
+    syncCategorySelectorLayout()
   }
 }, { immediate: true })
 
 watch(ingredients, (list) => {
   if (list.length && form.value.ingredients.some(ing => ing.ingredient_id)) {
     rehydrateProductIngredientCaches()
+    syncCategorySelectorLayout()
   }
 })
 

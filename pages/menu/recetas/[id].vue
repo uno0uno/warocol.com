@@ -77,9 +77,12 @@
               <MenuIngredientProductHint class="mb-4" />
 
               <WarehouseCategoryIngredientSelector
+                :key="`recipe-edit-category-ingredients-${recipeId}`"
                 class="mb-4"
                 input-id="recipe-edit-category-ingredients"
                 :existing-ingredient-ids="existingIngredientIds"
+                :initial-categories="categorySelectorCategories"
+                :initial-prepared-rows="categoryPreparedRows"
                 :unit-options="getIngredientUnitOptions"
                 :loading-unit-ids="loadingUnits"
                 @update:prepared-rows="onCategoryPreparedRows"
@@ -264,6 +267,8 @@ import { useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+import type { WarehouseCategoryRow } from '~/composables/useWarehouseCategorySearch'
+import { applyCategorySelectorLayout } from '~/composables/useMenuCategoryIngredientRows'
 
 definePageMeta({
   pageTransition: {
@@ -309,6 +314,25 @@ const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
+const categorySelectorCategories = ref<WarehouseCategoryRow[]>([])
+
+function syncCategorySelectorLayout() {
+  if (!availableIngredients.value.length) return
+
+  const sourceRows = [
+    ...form.value.ingredients,
+    ...categoryPreparedRows.value.map(row => ({
+      ingredient_id: row.ingredient_id,
+      ingredient_name: row.name,
+      base_quantity: row.quantity,
+      unit: row.unit,
+    })),
+  ]
+  const layout = applyCategorySelectorLayout(sourceRows, availableIngredients.value)
+  categorySelectorCategories.value = layout.categories
+  categoryPreparedRows.value = layout.preparedRows
+  form.value.ingredients = layout.manualRows as typeof form.value.ingredients
+}
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
@@ -432,6 +456,8 @@ const submitError = ref('')
 
 watch(recipeData, (data) => {
   if (data?.data) {
+    categoryPreparedRows.value = []
+    categorySelectorCategories.value = []
     const recipe = data.data
     form.value = {
       name: recipe.name,
@@ -451,12 +477,15 @@ watch(recipeData, (data) => {
         }
       })
     }
+    syncCategorySelectorLayout()
   }
 }, { immediate: true })
 
 watch(availableIngredients, (list) => {
-  if (list.length && form.value.ingredients.some(ing => ing.ingredient_id)) {
+  if (!list.length) return
+  if (form.value.ingredients.some(ing => ing.ingredient_id) || categoryPreparedRows.value.length) {
     rehydrateRecipeIngredientCaches()
+    syncCategorySelectorLayout()
   }
 })
 
