@@ -174,8 +174,8 @@
     "maximumOnlineLimitCop": "Límite máximo online (COP)",
     "onlineMenuCategories": {
       "title": "Orden de categorías en menú online",
-      "description": "Arrastra las categorías para definir cómo se ven en tu página pública y en domicilios.",
-      "dragToOrder": "Arrastra para cambiar el orden en tu menú online",
+      "description": "Arrastra las categorías de arriba hacia abajo para definir cómo se ven en tu página pública y en domicilios.",
+      "dragToOrder": "Arrastra de arriba hacia abajo para cambiar el orden en tu menú online",
       "dragHandleAria": "Arrastrar categoría {name}",
       "needTwoCategories": "Necesitas al menos 2 categorías con productos disponibles para domicilios",
       "savingOrder": "Guardando orden...",

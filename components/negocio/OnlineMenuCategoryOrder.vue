@@ -110,6 +110,9 @@ const onCategoryOrderDragEnd = async () => {
   await saveCategoryOrder()
 }
 
+const categoryRowClass = (index: number) =>
+  index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'
+
 watch(eligibleCategories, () => {
   if (!isDraggingCategoryOrder.value && !isSavingCategoryOrder.value) {
     syncConfirmedCategoryOrder()
@@ -170,51 +173,58 @@ watch(eligibleCategories, () => {
     </div>
 
     <template v-else>
-      <div v-if="categoryOrderError" class="mb-3 rounded-lg border border-destructive/20 bg-destructive/8 px-4 py-3">
-        <p class="text-sm font-medium text-destructive">{{ categoryOrderError }}</p>
-      </div>
-
-      <p
-        v-if="eligibleCategories.length < 2"
-        class="mb-3 text-xs text-text-secondary"
-      >
-        {{ categoryDragDisabledReason }}
-      </p>
-
-      <Draggable
-        v-model="categoryOrderDraft"
-        item-key="id"
-        tag="div"
-        handle=".category-order-handle"
-        :disabled="isCategoryDragDisabled"
-        direction="horizontal"
-        ghost-class="opacity-50"
-        chosen-class="ring-2 ring-primary/30"
-        drag-class="shadow-lg"
-        class="flex gap-2 overflow-x-auto scrollbar-hide pb-1"
+      <section
+        class="rounded-xl border border-data-table-border bg-data-table-container-bg shadow-sm overflow-hidden"
         :aria-label="t('negocio.onlineMenuCategories.title')"
-        @start="onCategoryOrderDragStart"
-        @end="onCategoryOrderDragEnd"
       >
-        <template #item="{ element: category, index }">
-          <div
-            class="inline-flex items-center gap-2 flex-shrink-0 px-3 py-2 min-h-[44px] rounded-xl border border-border bg-action-secondary-bg text-action-secondary-text"
-          >
-            <button
-              type="button"
-              class="category-order-handle flex h-8 w-8 items-center justify-center rounded-lg border border-border text-text-tertiary transition-colors"
-              :class="isCategoryDragDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-grab hover:bg-surface-secondary hover:text-text-primary active:cursor-grabbing'"
-              :title="categoryDragDisabledReason"
-              :aria-label="t('negocio.onlineMenuCategories.dragHandleAria', { name: category.name })"
-              :disabled="isCategoryDragDisabled"
+        <div v-if="categoryOrderError" class="border-b border-destructive/20 bg-destructive/8 px-4 py-3">
+          <p class="text-sm font-medium text-destructive">{{ categoryOrderError }}</p>
+        </div>
+
+        <div
+          v-if="eligibleCategories.length < 2"
+          class="border-b border-data-table-border px-4 py-3"
+        >
+          <p class="text-xs text-text-secondary">{{ categoryDragDisabledReason }}</p>
+        </div>
+
+        <Draggable
+          v-model="categoryOrderDraft"
+          item-key="id"
+          tag="ol"
+          handle=".category-order-handle"
+          :disabled="isCategoryDragDisabled"
+          ghost-class="opacity-50"
+          chosen-class="bg-data-table-row-hover-bg"
+          drag-class="shadow-lg"
+          class="divide-y divide-data-table-border"
+          @start="onCategoryOrderDragStart"
+          @end="onCategoryOrderDragEnd"
+        >
+          <template #item="{ element: category, index }">
+            <li
+              class="grid grid-cols-[auto_1fr] items-center gap-3 px-4 py-3 transition-colors duration-200 hover:bg-data-table-row-hover-bg"
+              :class="categoryRowClass(index)"
             >
-              <span class="text-base font-black leading-none tracking-tight" aria-hidden="true">⋮⋮</span>
-            </button>
-            <span class="text-xs font-black text-text-tertiary tabular-nums">{{ index + 1 }}</span>
-            <span class="text-sm font-medium whitespace-nowrap">{{ category.name }}</span>
-          </div>
-        </template>
-      </Draggable>
+              <button
+                type="button"
+                class="category-order-handle flex h-10 w-10 items-center justify-center rounded-lg border border-border text-text-tertiary transition-colors"
+                :class="isCategoryDragDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-grab hover:bg-surface-secondary hover:text-text-primary active:cursor-grabbing'"
+                :title="categoryDragDisabledReason"
+                :aria-label="t('negocio.onlineMenuCategories.dragHandleAria', { name: category.name })"
+                :disabled="isCategoryDragDisabled"
+              >
+                <span class="text-lg font-black leading-none tracking-tight" aria-hidden="true">⋮⋮</span>
+              </button>
+
+              <div class="min-w-0 flex items-center gap-2">
+                <span class="text-xs font-black text-text-tertiary tabular-nums">{{ index + 1 }}</span>
+                <span class="truncate text-sm font-bold text-text-primary">{{ category.name }}</span>
+              </div>
+            </li>
+          </template>
+        </Draggable>
+      </section>
 
       <p
         v-if="eligibleCategories.length >= 2 && !isCategoryDragDisabled"
