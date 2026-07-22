@@ -174,8 +174,8 @@
     "maximumOnlineLimitCop": "Maximum online limit (COP)",
     "onlineMenuCategories": {
       "title": "Online menu category order",
-      "description": "Drag categories to control how they appear on your public page and delivery menu.",
-      "dragToOrder": "Drag to change order on your online menu",
+      "description": "Drag categories top to bottom to control how they appear on your public page and delivery menu.",
+      "dragToOrder": "Drag top to bottom to change order on your online menu",
       "dragHandleAria": "Drag category {name}",
       "needTwoCategories": "You need at least 2 categories with products available for delivery",
       "savingOrder": "Saving order...",
