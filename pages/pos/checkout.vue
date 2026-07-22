@@ -1558,7 +1558,7 @@ watch(selectedCustomer, async (customer) => {
   // Fetch insights + Waros in parallel so the right column doesn't fill in step by step.
   const insightsPromise = (async () => {
     try {
-      const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
+      const res = await $fetch<{ data: CustomerInsights }>(`/api/pos/customers/${customer.id}/insights`)
       customerInsights.value = res.data
     } catch {
       customerInsights.value = null
@@ -2356,7 +2356,7 @@ const generateInvoice = async () => {
     for (let i = 0; i < ids.length; i++) {
       if (ids.length > 1) invoiceProgress.value = t('pos.checkout.invoice.billingProgress', { current: i + 1, total: ids.length })
       try {
-        const result = await $fetch(`/api/orders/${ids[i]}/invoice`, { method: 'POST' }) as any
+        const result = await $fetch(`/api/pos/orders/${ids[i]}/invoice`, { method: 'POST' }) as any
         if (result.status === 'accepted') {
           invoiceResults.value.push({
             order_id: ids[i],
@@ -2379,7 +2379,7 @@ const generateInvoice = async () => {
         if (ids.length === 1 && result.status === 'accepted') {
           let invoiceDetail: any = null
           try {
-            invoiceDetail = await $fetch(`/api/orders/${ids[i]}/invoice`)
+            invoiceDetail = await $fetch(`/api/pos/orders/${ids[i]}/invoice`)
           } catch {
             // The accepted POST remains authoritative; without presentation we
             // omit the acquirer instead of guessing it from the mutable profile.
@@ -2826,7 +2826,7 @@ const submitFiscalAndInvoice = async () => {
   fiscalWizardError.value = ''
   try {
     const res = await $fetch<{ success: boolean; data: PosCustomer }>(
-      `/api/customers/${selectedCustomer.value.id}`,
+      `/api/pos/customers/${selectedCustomer.value.id}`,
       {
         method: 'PATCH',
         body: {
@@ -3101,7 +3101,7 @@ watch(
     autoSelectAttempted.value = true
     try {
       const res = await $fetch<{ success: boolean; data: PosCustomer }>(
-        '/api/customers/search-or-create',
+        '/api/pos/customers/search-or-create',
         {
           method: 'POST',
           body: { phone_number: '0000000000', name: t('pos.checkout.customerNoData') },
