@@ -193,6 +193,8 @@ import {
 
 const props = withDefaults(defineProps<{
   existingIngredientIds?: string[]
+  initialCategories?: WarehouseCategoryRow[]
+  initialPreparedRows?: PreparedWarehouseCategoryIngredient[]
   inputId?: string
   unitOptions?: (ingredientId: string) => Array<{ value: string, label: string }>
   loadingUnitIds?: Set<string>
@@ -201,6 +203,8 @@ const props = withDefaults(defineProps<{
   hidePreparedIngredientRows?: boolean
 }>(), {
   existingIngredientIds: () => [],
+  initialCategories: () => [],
+  initialPreparedRows: () => [],
   inputId: 'warehouse-category-ingredient-selector',
   excludeResale: false,
   hidePreparedIngredientRows: false,
@@ -220,6 +224,7 @@ const {
   loading,
   error,
   addCategory,
+  hydrateFromSnapshot,
   removeCategory,
   removePreparedRow,
   updatePreparedRow,
@@ -268,6 +273,18 @@ function onUnitInput(ingredientId: string, event: Event) {
 watch(
   preparedRows,
   rows => emit('update:preparedRows', rows.map(row => ({ ...row }))),
+  { deep: true, immediate: true },
+)
+
+watch(
+  () => ({
+    categories: props.initialCategories,
+    rows: props.initialPreparedRows,
+  }),
+  async ({ categories, rows }) => {
+    if (!categories.length || selectedCategories.value.length) return
+    await hydrateFromSnapshot(categories, rows)
+  },
   { deep: true, immediate: true },
 )
 

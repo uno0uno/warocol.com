@@ -248,6 +248,50 @@ describe('WarehouseCategoryIngredientSelector', () => {
     }])
   })
 
+  it('hydrates category headers from initial props on mount', async () => {
+    const category = {
+      id: 'category-1',
+      tenant_id: 'tenant-1',
+      name: 'Granos',
+      normalized_name: 'granos',
+      is_active: true,
+      scope: 'tenant',
+      can_manage: true,
+      ingredient_count: 1,
+      global_count: 0,
+      tenant_count: 1,
+    }
+    vi.stubGlobal('useI18n', () => ({
+      t: (key: string, params?: Record<string, string>) => ({
+        'abastecimiento.glossary.categoryIngredientSelectorTitle': 'Agregar ingredientes por categoría',
+        'abastecimiento.glossary.categoryIngredientsBatchLabel': 'Ingredientes por categoría',
+        'abastecimiento.glossary.categoryIngredientSelectorPlaceholder': 'Buscar categoría',
+        'abastecimiento.glossary.warehouseCategorySearchResults': 'Categorías',
+        'abastecimiento.glossary.removeWarehouseCategorySelection': `Quitar ${params?.name}`,
+      }[key] ?? key),
+    }))
+    const wrapper = mount(WarehouseCategoryIngredientSelector, {
+      props: {
+        initialCategories: [category],
+        initialPreparedRows: [{
+          ingredient_id: 'ingredient-1',
+          name: 'Arroz',
+          quantity: 2,
+          unit: 'kg',
+          warehouse_category_id: 'category-1',
+        }],
+      },
+      global: {
+        components: { UiWarehouseCategorySearchInput: WarehouseCategorySearchInputStub },
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="category-group"] h5').text()).toBe('Granos')
+    expect(wrapper.get('[data-test="category-group"] span.text-xs').text()).toBe('1')
+  })
+
   it('does not re-resolve when existing ingredient ids grow after category sync', async () => {
     const fetchMock = vi.fn(async (_url: string, options: any) => ({
       data: {
