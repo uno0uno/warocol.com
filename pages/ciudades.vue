@@ -135,35 +135,42 @@ useHead({
 
 <style scoped>
 .ciudades-page {
-  padding: 0 0 80px;
+  padding: 0 0 3rem;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .ciudades-page {
+    padding-bottom: 4rem;
+  }
 }
 
 /* Hero */
 .ciudades-hero {
   text-align: center;
-  margin-bottom: 56px;
+  margin-bottom: 3rem;
 }
 .ciudades-title {
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.85rem, 4vw, 3rem);
   font-weight: 900;
-  color: hsl(250, 30%, 16%);
-  letter-spacing: -1px;
+  color: hsl(var(--text-primary));
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   line-height: 1.05;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 .ciudades-subtitle {
-  font-size: clamp(1rem, 1.5vw, 1.125rem);
-  color: hsl(250, 10%, 45%);
-  max-width: 540px;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 300;
+  color: hsl(var(--text-secondary));
+  max-width: 34rem;
   margin: 0 auto;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* Sections */
 .ciudades-section {
-  margin-bottom: 48px;
+  margin-bottom: 2.5rem;
 }
 .ciudades-section-title {
   display: flex;
@@ -173,14 +180,14 @@ useHead({
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: hsl(250, 30%, 16%);
-  opacity: 0.7;
-  margin-bottom: 20px;
+  color: hsl(var(--text-primary));
+  opacity: 0.72;
+  margin-bottom: 1.25rem;
 }
 .ciudades-section-icon {
   width: 16px;
   height: 16px;
-  color: hsl(262, 83%, 58%);
+  color: hsl(var(--badge-primary-text));
 }
 
 /* Grid — 2 cols on mobile, auto-fit from md up. */
@@ -199,22 +206,22 @@ useHead({
 .city-card {
   display: block;
   min-width: 0;
-  background: #ffffff;
+  background: hsl(var(--surface));
   border-radius: 32px;
   padding: 8px;
   text-decoration: none;
-  color: hsl(250, 30%, 16%);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  border: 1px solid hsl(220, 14%, 92%);
+  color: hsl(var(--text-primary));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04);
+  border: 1px solid hsl(var(--border));
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .city-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px -10px rgba(124, 58, 237, 0.18);
-  border-color: hsl(262, 83%, 88%);
+  box-shadow: 0 12px 24px -10px hsl(var(--badge-primary-text) / 0.18);
+  border-color: hsl(var(--badge-primary-border));
 }
 .city-card:focus-visible {
-  outline: 2px solid hsl(262, 83%, 58%);
+  outline: 2px solid hsl(var(--badge-primary-text));
   outline-offset: 2px;
 }
 /* Image area inside the card. Uses uploaded city artwork when available,
@@ -317,13 +324,13 @@ useHead({
   align-items: flex-start;
   gap: 12px;
   max-width: 680px;
-  margin: 8px auto 48px;
+  margin: 0.5rem auto 2.5rem;
   padding: 16px 18px;
-  border: 1px solid hsl(220, 14%, 88%);
-  border-radius: 8px;
-  background: #ffffff;
-  color: hsl(250, 10%, 35%);
-  font-size: 0.95rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  background: hsl(var(--surface));
+  color: hsl(var(--text-secondary));
+  font-size: 0.9375rem;
   line-height: 1.5;
 }
 .ciudades-note__icon {
@@ -331,7 +338,7 @@ useHead({
   height: 20px;
   flex: 0 0 auto;
   margin-top: 1px;
-  color: hsl(262, 83%, 58%);
+  color: hsl(var(--badge-primary-text));
 }
 
 /* Empty (defensive) */
