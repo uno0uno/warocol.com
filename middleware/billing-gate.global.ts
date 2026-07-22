@@ -38,6 +38,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Same check used by tenants.global.js
   if (!(authStore as any).session?.success) return
 
+  const accessStore = useAccessStore()
+  if (!accessStore.can('mi_plan')) return
+
   const { currentTenant } = useTenantReactive()
   const tenantId = currentTenant.value?.id ?? 'none'
   const cacheKey = ['billing', 'subscription', tenantId]

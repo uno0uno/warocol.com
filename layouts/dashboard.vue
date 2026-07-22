@@ -92,9 +92,12 @@ const { t } = useI18n()
 // Notifications SSE is owned by plugins/notifications.client.ts.
 const { unreadCount: notificationsUnreadCount } = useNotifications()
 
-// Billing access status — drives banner and blocked redirect
+// Billing access status — drives banner and blocked redirect (Mi Plan roles only)
+const accessStore = useAccessStore()
 const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
-const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
+const isBillingBlocked = computed(() =>
+  accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
+)
 
 // Get route-based configuration
 const route = useRoute()
@@ -119,15 +122,18 @@ const {
   backButton,
 } = useDashboardPageConfig()
 
-// Redirect to billing portal when subscription is expired
+// Redirect to billing portal when subscription is expired (Mi Plan roles only)
 watch(accessStatus, (status) => {
+  if (!accessStore.can('mi_plan')) return
   if (status?.level === 'blocked' && !route.path.startsWith('/gestion/billing')) {
     navigateTo('/gestion/billing')
   }
 }, { immediate: true })
 
 onMounted(() => {
-  fetchAccessStatus()
+  if (accessStore.can('mi_plan')) {
+    fetchAccessStatus()
+  }
 })
 
 // Refresh handler - shared via composable (provide/inject unreliable in Nuxt 3 layout↔page)

@@ -294,8 +294,12 @@ export const resolveOperationalQuota = (
 export const useBilling = (options: { overview?: boolean } = {}) => {
   const cache = useQueryCache()
   const { currentTenant } = useTenantReactive()
+  const accessStore = useAccessStore()
   const tenantId = computed(() => currentTenant.value?.id ?? 'none')
   const loadOverview = options.overview !== false
+  const canViewBilling = () => accessStore.can('mi_plan')
+  const billingQueriesEnabled = () =>
+    import.meta.client && !!currentTenant.value && canViewBilling()
 
   // ── Pagination state ──────────────────────────────────────────────────────────
   const eventsPage = ref(0)
@@ -306,7 +310,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
 
   const { data: plans, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
     key: ['billing', 'plans'],
-    enabled: () => import.meta.client && loadOverview,
+    enabled: () => import.meta.client && loadOverview && canViewBilling(),
     query: () => $fetch<BillingPlan[]>('/api/billing/plans'),
   })
 
@@ -320,7 +324,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
         throw err
       }
     },
-    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
+    enabled: () => billingQueriesEnabled() && loadOverview,
   })
 
   const { data: accessStatus, status: accessStatus_status, asyncStatus: accessStatusAsyncStatus } = useQuery({
@@ -333,13 +337,13 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
         throw err
       }
     },
-    enabled: () => import.meta.client && !!currentTenant.value,
+    enabled: () => billingQueriesEnabled(),
   })
 
   const { data: usageHistoryData, status: usageStatus, asyncStatus: usageAsyncStatus } = useQuery({
     key: () => ['billing', 'usage-history', tenantId.value, usageMonths.value],
     query: () => $fetch<ScanMonthlyEntry[]>(`/api/billing/usage-history?months=${usageMonths.value}`),
-    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
+    enabled: () => billingQueriesEnabled() && loadOverview,
   })
 
   const { data: remainingUsage, status: remainingUsageStatus, asyncStatus: remainingUsageAsyncStatus } = useQuery({
@@ -352,7 +356,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
         throw err
       }
     },
-    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
+    enabled: () => billingQueriesEnabled() && loadOverview,
   })
 
   const { data: eventsData, status: eventsStatus, asyncStatus: eventsAsyncStatus } = useQuery({
@@ -360,7 +364,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
     query: () => $fetch<BillingEventsResponse>(
       `/api/billing/events?limit=${eventsLimit.value}&offset=${eventsPage.value * eventsLimit.value}`
     ),
-    enabled: () => import.meta.client && loadOverview && !!currentTenant.value,
+    enabled: () => billingQueriesEnabled() && loadOverview,
   })
 
   // ── Mutations ─────────────────────────────────────────────────────────────────
@@ -427,29 +431,39 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
   // ── Public action wrappers ────────────────────────────────────────────────────
 
   /** Awaitable — used by billing-gate middleware to block navigation */
-  const fetchSubscription = () =>
-    cache.invalidateQueries({ key: ['billing', 'subscription', tenantId.value] })
+  const fetchSubscription = () => {
+    if (!canViewBilling()) return Promise.resolve()
+    return cache.invalidateQueries({ key: ['billing', 'subscription', tenantId.value] })
+  }
 
-  const fetchPlans = () =>
-    cache.invalidateQueries({ key: ['billing', 'plans'] })
+  const fetchPlans = () => {
+    if (!canViewBilling()) return Promise.resolve()
+    return cache.invalidateQueries({ key: ['billing', 'plans'] })
+  }
 
-  const fetchAccessStatus = () =>
-    cache.invalidateQueries({ key: ['billing', 'access-status', tenantId.value] })
+  const fetchAccessStatus = () => {
+    if (!canViewBilling()) return Promise.resolve()
+    return cache.invalidateQueries({ key: ['billing', 'access-status', tenantId.value] })
+  }
 
   const fetchUsageHistory = (months = 12) => {
+    if (!canViewBilling()) return Promise.resolve()
     usageMonths.value = months
     return cache.invalidateQueries({ key: ['billing', 'usage-history'] })
   }
 
   const fetchMyEvents = (limit = 20, offset = 0) => {
+    if (!canViewBilling()) return Promise.resolve()
     eventsLimit.value = limit
     eventsPage.value = Math.floor(offset / limit)
     return cache.invalidateQueries({ key: ['billing', 'events'] })
   }
 
   /** Invalidates all billing queries — replaces the old Promise.all pattern */
-  const fetchBillingOverview = () =>
-    cache.invalidateQueries({ key: ['billing'] })
+  const fetchBillingOverview = () => {
+    if (!canViewBilling()) return Promise.resolve()
+    return cache.invalidateQueries({ key: ['billing'] })
+  }
 
   const subscribe = async (
     plan_id: string,
