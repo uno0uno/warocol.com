@@ -16,6 +16,7 @@ import {
   parseFireTableResponse,
   printComandaTickets,
 } from '~/composables/useComandaPrint'
+import { isStarterAccessLevel, isStarterPlanSlug } from '~/composables/useBilling'
 import { promoBadgeForProduct } from '~/utils/promoProductMatch'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
@@ -129,7 +130,7 @@ const isResolvingSettings = computed(() => {
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
 const isStarterPlan = computed(() =>
-  accessStore.planSlug === 'starter' || accessStatus.value?.level === 'starter',
+  isStarterPlanSlug(accessStore.planSlug) || isStarterAccessLevel(accessStatus.value?.level),
 )
 const comandaPrintEnabled = computed(() => comandasEnabled.value && !isStarterPlan.value)
 

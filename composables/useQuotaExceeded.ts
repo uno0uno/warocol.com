@@ -80,7 +80,6 @@ function isBillingQuotaKey(resource: string): resource is BillingQuotaKey {
 
 export function useQuotaExceeded() {
   const { t, locale } = useI18n({ useScope: 'global' })
-  const { numberLocaleTag } = useFormatters()
   const toast = useToast()
 
   const showUpgradeCta = ref(false)
