@@ -765,7 +765,7 @@
               v-else
               type="button"
               @click="handleSubmit"
-              :disabled="isSubmitting"
+              :disabled="!isStepValid || isSubmitting"
               class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base"
             >
               <span class="hidden sm:inline">{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
@@ -1132,7 +1132,12 @@ const previousStep = () => {
 // Submit
 // Submit
 const handleSubmit = async () => {
-  if (!isStepValid.value) return
+  if (!isStepValid.value) {
+    if (form.value.payment_type === 'contado' && !hasPaymentSelected.value) {
+      alert('Contado requiere un método de pago. Elige uno o cambia a Crédito.')
+    }
+    return
+  }
 
   isSubmitting.value = true
 
