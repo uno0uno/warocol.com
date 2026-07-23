@@ -466,50 +466,52 @@
                   <div
                     v-for="(ingredient, index) in form.ingredients"
                     :key="index"
-                    class="flex items-start gap-3 p-4 bg-surface-secondary rounded-lg border border-border"
+                    class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
                   >
-                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
-                        <UiIngredientSearchInput
-                          :key="ingredient.ingredient_id || `new-${index}`"
-                          :initial-value="getIngredientSearchLabel(ingredient)"
-                          :allow-create="true"
-                          @select="(ing) => selectIngredient(ing, index)"
-                          @create="(name) => openCustomIngModal(name, index)"
-                        />
-                      </div>
-                      <div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="flex-1 min-w-0">
+                          <UiIngredientSearchInput
+                            :key="ingredient.ingredient_id || `new-${index}`"
+                            :initial-value="getIngredientSearchLabel(ingredient)"
+                            :allow-create="true"
+                            :aria-label="WAREHOUSE_COPY.warehouseItemOrResaleRequired"
+                            @select="(ing) => selectIngredient(ing, index)"
+                            @create="(name) => openCustomIngModal(name, index)"
+                          />
+                        </div>
                         <UiDecimalInput
                           v-model="ingredient.quantity"
                           :min="0.01"
                           :placeholder="t('menu.productos.quantity')"
                           :precision="6"
-                          class="input-base w-full px-3 py-2 text-sm"
+                          class="input-base w-full sm:w-24 min-h-[44px] px-3 py-2 text-sm"
+                          :aria-label="t('menu.productos.quantity')"
                         />
-                      </div>
-                      <div class="relative">
-                        <select
-                          v-model="ingredient.unit"
-                          :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                          class="input-base w-full py-2 pe-3 text-sm disabled:opacity-50"
-                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'ps-7' : 'ps-3'"
-                        >
-                          <option v-if="!ingredient.ingredient_id" value="" disabled>
-                            {{ WAREHOUSE_COPY.selectWarehouseItem }}
-                          </option>
-                          <option
-                            v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute start-2 top-2.5 pointer-events-none text-text-secondary">
-                          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                          </svg>
-                        </span>
+                        <div class="relative w-full sm:w-36">
+                          <select
+                            v-model="ingredient.unit"
+                            :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                            class="input-base w-full min-h-[44px] py-2 pe-3 text-sm disabled:opacity-50"
+                            :class="loadingUnits.has(ingredient.ingredient_id) ? 'ps-7' : 'ps-3'"
+                            :aria-label="t('abastecimiento.glossary.categoryIngredientUnit')"
+                          >
+                            <option v-if="!ingredient.ingredient_id" value="" disabled>
+                              {{ WAREHOUSE_COPY.selectWarehouseItem }}
+                            </option>
+                            <option
+                              v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                              :key="opt.value"
+                              :value="opt.value"
+                            >{{ opt.label }}</option>
+                          </select>
+                          <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute start-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                            </svg>
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <button
@@ -517,6 +519,7 @@
                       @click="removeIngredient(index)"
                       class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
                       :title="WAREHOUSE_COPY.removeWarehouseItemLine"
+                      :aria-label="WAREHOUSE_COPY.removeWarehouseItemLine"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
