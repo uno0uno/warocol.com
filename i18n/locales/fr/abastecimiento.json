@@ -90,7 +90,12 @@
       "stockMax": "Stock max.",
       "pctStock": "% Stock",
       "costoUnit": "Coût unitaire",
-      "ingrediente": "Ingrédient"
+      "ingrediente": "Ingrédient",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "Identifiant fiscal"
+      }
     },
     "stock": {
       "emptySub": "Commencez par réceptionner les achats dans Approvisionnement",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "Informations de base",
       "supplierNameRequired": "Nom du fournisseur *",
-      "taxIdRequired": "NIT/Cédula *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "Description",
       "descriptionPlaceholder": "Brève description du fournisseur, produits proposés, etc.",
       "namePlaceholder": "Ex: Frutas del Valle S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "Fournisseur actif",
       "summary": "Résumé du fournisseur",
       "noName": "Sans nom",
-      "noTaxId": "Sans NIT",
+      "noTaxId": "Sans document",
       "saveChanges": "Enregistrer les modifications",
       "saving": "Enregistrement en cours...",
       "cancel": "Annuler",

@@ -77,6 +77,11 @@
       "sinCosto": "Sin costo",
       "noEspecificado": "No especificado",
       "nit": "NIT",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "Documento fiscal"
+      },
       "email": "Email",
       "telefono": "Teléfono",
       "numero": "Numero",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "Información básica",
       "supplierNameRequired": "Nombre del proveedor *",
-      "taxIdRequired": "NIT/Cédula *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "Descripción",
       "descriptionPlaceholder": "Breve descripción del proveedor, productos que ofrece, etc.",
       "namePlaceholder": "Ej: Frutas del Valle S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "Proveedor activo",
       "summary": "Resumen del proveedor",
       "noName": "Sin nombre",
-      "noTaxId": "Sin NIT",
+      "noTaxId": "Sin documento",
       "saveChanges": "Guardar cambios",
       "saving": "Guardando...",
       "cancel": "Cancelar",

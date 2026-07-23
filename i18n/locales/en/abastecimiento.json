@@ -77,6 +77,11 @@
       "sinCosto": "No cost",
       "noEspecificado": "Not specified",
       "nit": "Tax ID",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "Tax ID"
+      },
       "email": "Email",
       "telefono": "Phone",
       "numero": "Number",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "Basic information",
       "supplierNameRequired": "Supplier name *",
-      "taxIdRequired": "Tax ID *",
+      "taxIdRequired": "Tax ID",
       "description": "Description",
       "descriptionPlaceholder": "Brief description of the supplier and products offered, etc.",
       "namePlaceholder": "E.g. Valley Fruits LLC",
@@ -243,7 +248,7 @@
       "supplierActive": "Supplier active",
       "summary": "Supplier summary",
       "noName": "No name",
-      "noTaxId": "No tax ID",
+      "noTaxId": "No document",
       "saveChanges": "Save changes",
       "saving": "Saving...",
       "cancel": "Cancel",

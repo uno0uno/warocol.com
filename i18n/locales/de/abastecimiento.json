@@ -90,7 +90,12 @@
       "stockMax": "Höchstbestand",
       "pctStock": "% Lagerbestand",
       "costoUnit": "Stückkosten",
-      "ingrediente": "Zutat"
+      "ingrediente": "Zutat",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "Steuer-ID"
+      }
     },
     "stock": {
       "emptySub": "Beginnen Sie, indem Sie Einkäufe in Beschaffung empfangen",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "Basisinformationen",
       "supplierNameRequired": "Lieferantenname *",
-      "taxIdRequired": "NIT/Cédula *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Kurze Beschreibung des Lieferanten, angebotene Produkte usw.",
       "namePlaceholder": "Bsp: Frutas del Valle S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "Lieferant aktiv",
       "summary": "Lieferantenübersicht",
       "noName": "Ohne Namen",
-      "noTaxId": "Ohne NIT",
+      "noTaxId": "Kein Dokument",
       "saveChanges": "Änderungen speichern",
       "saving": "Wird gespeichert...",
       "cancel": "Abbrechen",

@@ -33,14 +33,13 @@
               
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  {{ t('abastecimiento.proveedorDetalle.taxIdRequired') }}
+                  {{ taxIdLabel }}
                 </label>
                 <input
                   v-model="form.tax_id"
                   type="text"
-                  required
                   class="input-base w-full px-4 py-2"
-                  :placeholder="t('abastecimiento.proveedorDetalle.taxIdPlaceholder')"
+                  :placeholder="taxIdPlaceholder"
                 />
               </div>
 
@@ -196,8 +195,8 @@
                 <p class="font-medium text-text-primary">{{ form.name || t('abastecimiento.proveedorDetalle.noName') }}</p>
               </div>
               <div>
-                <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.proveedorDetalle.taxIdRequired').replace(' *', '') }}</p>
-                <p class="font-medium text-text-primary">{{ form.tax_id || t('abastecimiento.proveedorDetalle.noTaxId') }}</p>
+                <p class="text-sm text-text-secondary mb-1">{{ taxIdLabel }}</p>
+                <p class="font-medium text-text-primary">{{ form.tax_id || noTaxIdLabel }}</p>
               </div>
               <div>
                 <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.proveedorDetalle.status') }}</p>
@@ -408,11 +407,16 @@
 <script setup lang="ts">
 import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
+import {
+  useSupplierTaxIdLabel,
+  normalizeOptionalSupplierFields,
+} from '~/composables/useSupplierTaxIdLabel'
 
 const route = useRoute()
 const router = useRouter()
 const supplierId = route.params.id
 const { t } = useI18n({ useScope: 'global' })
+const { taxIdLabel, taxIdPlaceholder, noTaxIdLabel } = useSupplierTaxIdLabel()
 
 useHead({
   title: () => t('abastecimiento.head.proveedores')
@@ -480,7 +484,7 @@ const handleSubmit = async () => {
   try {
     await $fetch(`/api/suppliers/providers/${supplierId}`, {
       method: 'PUT',
-      body: form,
+      body: normalizeOptionalSupplierFields({ ...form }),
     })
     
     await navigateTo('/abastecimiento/proveedores')

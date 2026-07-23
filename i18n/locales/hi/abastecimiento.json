@@ -90,7 +90,12 @@
       "stockMax": "अधिकतम स्टॉक",
       "pctStock": "% स्टॉक",
       "costoUnit": "इकाई लागत",
-      "ingrediente": "सामग्री"
+      "ingrediente": "सामग्री",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "टैक्स आईडी"
+      }
     },
     "stock": {
       "emptySub": "आपूर्ति में खरीदारी प्राप्त करके शुरू करें",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "मूल जानकारी",
       "supplierNameRequired": "सप्लायर का नाम *",
-      "taxIdRequired": "NIT/पहचान पत्र *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "विवरण",
       "descriptionPlaceholder": "सप्लायर और उसके उत्पादों का संक्षिप्त विवरण, आदि।",
       "namePlaceholder": "उदा: फ्रूट्स डेल वैले S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "सप्लायर सक्रिय",
       "summary": "सप्लायर सारांश",
       "noName": "कोई नाम नहीं",
-      "noTaxId": "कोई NIT नहीं",
+      "noTaxId": "कोई दस्तावेज़ नहीं",
       "saveChanges": "परिवर्तन सहेजें",
       "saving": "सहेजा जा रहा है...",
       "cancel": "रद्द करें",

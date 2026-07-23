@@ -126,15 +126,15 @@
         </template>
 
         <template #cell-tax_id="{ value }">
-          <span class="text-sm text-text-secondary">{{ value }}</span>
+          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
         </template>
 
         <template #cell-email="{ value }">
-          <span class="text-sm text-text-primary">{{ value || t('abastecimiento.common.noEspecificado') }}</span>
+          <span class="text-sm text-text-primary">{{ value || '—' }}</span>
         </template>
 
         <template #cell-phone="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || t('abastecimiento.common.noEspecificado') }}</span>
+          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
         </template>
 
         <template #cell-is_active="{ value }">
@@ -160,41 +160,41 @@
       </UiResponsiveDataView>
 
       <!-- Pagination -->
-      <div class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button @click="prevPage" :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
-            {{ t('abastecimiento.proveedores.previous') }}
+      <div v-if="totalSuppliers > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
           </button>
-          <button @click="nextPage" :disabled="currentPage === totalPages"
-            class="ms-3 relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg">
-            {{ t('abastecimiento.proveedores.next') }}
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
-        </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-text-secondary">
-              {{ t('abastecimiento.proveedores.showing', { start: startIndex, end: endIndex, total: totalSuppliers }) }}
-            </p>
-          </div>
-          <div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button @click="prevPage" :disabled="currentPage === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
-                <ChevronLeftIcon class="h-5 w-5" />
-              </button>
-              <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
-                'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium',
-                currentPage === page ? 'bg-badge-primary-bg border-badge-primary-border text-badge-primary-text' : 'bg-action-outline-bg text-action-outline-text hover:bg-action-outline-hover-bg'
-              ]">
-                {{ page }}
-              </button>
-              <button @click="nextPage" :disabled="currentPage === totalPages"
-                class="relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text hover:bg-action-outline-hover-bg">
-                <ChevronRightIcon class="h-5 w-5" />
-              </button>
-            </nav>
-          </div>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            :disabled="currentPage >= totalPages"
+            @click="goToPage(currentPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage >= totalPages"
+            @click="goToPage(totalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
         </div>
       </div>
 
@@ -213,13 +213,13 @@ import {
   PencilIcon,
   EyeIcon,
   EyeSlashIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from '@heroicons/vue/24/outline'
 import { ref, computed, watch, inject, onMounted } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { useSupplierTaxIdLabel } from '~/composables/useSupplierTaxIdLabel'
 
 const { t } = useI18n({ useScope: 'global' })
+const { taxIdLabel } = useSupplierTaxIdLabel()
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -241,7 +241,7 @@ const paymentTermsFilter = ref('')
 
 const searchFields = computed(() => [
   { label: t('abastecimiento.common.proveedor'), value: 'name' },
-  { label: t('abastecimiento.common.nit'), value: 'tax_id' },
+  { label: taxIdLabel.value, value: 'tax_id' },
   { label: t('abastecimiento.common.email'), value: 'email' },
   { label: t('abastecimiento.common.telefono'), value: 'phone' },
 ])
@@ -428,7 +428,7 @@ const proveedoresTableColumns = computed(() => [
   },
   {
     key: 'tax_id',
-    title: t('abastecimiento.common.nit'),
+    title: taxIdLabel.value,
     sortable: true,
     format: 'text',
     align: 'left'
@@ -479,48 +479,15 @@ const proveedoresTableColumns = computed(() => [
 
 // Computed properties for pagination display
 
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
-
-const endIndex = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalSuppliers.value));
-
-const totalPages = computed(() => Math.ceil(totalSuppliers.value / itemsPerPage.value));
+const totalPages = computed(() => Math.max(1, Math.ceil(totalSuppliers.value / itemsPerPage.value)));
 
 
 
 // Pagination methods
 
 const goToPage = (page) => {
-
-  if (page >= 1 && page <= totalPages.value) {
-
-    currentPage.value = page;
-
-  }
-
-};
-
-
-
-const nextPage = () => {
-
-  if (currentPage.value < totalPages.value) {
-
-    currentPage.value++;
-
-  }
-
-};
-
-
-
-const prevPage = () => {
-
-  if (currentPage.value > 1) {
-
-    currentPage.value--;
-
-  }
-
+  const next = Math.max(1, Math.min(page, totalPages.value))
+  currentPage.value = next
 };
 
 

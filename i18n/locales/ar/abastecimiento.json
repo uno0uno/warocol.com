@@ -90,7 +90,12 @@
       "stockMax": "الحد الأقصى للمخزون",
       "pctStock": "% المخزون",
       "costoUnit": "تكلفة الوحدة",
-      "ingrediente": "المكون"
+      "ingrediente": "المكون",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "الرقم الضريبي"
+      }
     },
     "stock": {
       "emptySub": "ابدأ باستلام المشتريات في التوريد",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "معلومات أساسية",
       "supplierNameRequired": "اسم المورد *",
-      "taxIdRequired": "NIT/Cédula *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "الوصف",
       "descriptionPlaceholder": "وصف موجز للمورد والمنتجات التي يقدمها، إلخ.",
       "namePlaceholder": "مثال: Frutas del Valle S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "المورد نشط",
       "summary": "ملخص المورد",
       "noName": "بدون اسم",
-      "noTaxId": "بدون NIT",
+      "noTaxId": "بدون مستند",
       "saveChanges": "حفظ التغييرات",
       "saving": "جارٍ الحفظ...",
       "cancel": "إلغاء",

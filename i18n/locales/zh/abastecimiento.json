@@ -90,7 +90,12 @@
       "stockMax": "最大库存",
       "pctStock": "% 库存",
       "costoUnit": "单位成本",
-      "ingrediente": "食材"
+      "ingrediente": "食材",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "税号"
+      }
     },
     "stock": {
       "emptySub": "从在“供应”中接收采购开始",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "基本信息",
       "supplierNameRequired": "供应商名称 *",
-      "taxIdRequired": "NIT/身份证 *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "描述",
       "descriptionPlaceholder": "供应商的简要描述，提供的产品等。",
       "namePlaceholder": "例如：Valley Fruits S.A.S",
@@ -243,7 +248,7 @@
       "supplierActive": "供应商已启用",
       "summary": "供应商摘要",
       "noName": "无名称",
-      "noTaxId": "无 NIT",
+      "noTaxId": "无证件",
       "saveChanges": "保存更改",
       "saving": "正在保存...",
       "cancel": "取消",

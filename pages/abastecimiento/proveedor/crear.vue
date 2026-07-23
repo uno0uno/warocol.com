@@ -35,21 +35,15 @@
             
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
-                {{ t('abastecimiento.proveedorDetalle.taxIdRequired') }}
+                {{ taxIdLabel }}
               </label>
               <input
                 v-model="form.tax_id"
                 type="text"
-                :class="[
-                  'input-base w-full px-4 py-2',
-                  fieldErrors.tax_id ? 'border-destructive focus:ring-destructive/20' : ''
-                ]"
-                :placeholder="t('abastecimiento.proveedorDetalle.taxIdPlaceholder')"
-                @input="clearFieldError('tax_id')"
+                class="input-base w-full px-4 py-2"
+                :placeholder="taxIdPlaceholder"
+                @input="clearFieldError('name')"
               />
-              <p v-if="fieldErrors.tax_id" class="mt-2 text-sm text-destructive">
-                {{ fieldErrors.tax_id }}
-              </p>
             </div>
 
             <div class="sm:col-span-2">
@@ -204,8 +198,8 @@
               <p class="font-medium text-text-primary">{{ form.name || t('abastecimiento.proveedorDetalle.noName') }}</p>
             </div>
             <div>
-              <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.proveedorDetalle.taxIdRequired').replace(' *', '') }}</p>
-              <p class="font-medium text-text-primary">{{ form.tax_id || t('abastecimiento.proveedorDetalle.noTaxId') }}</p>
+              <p class="text-sm text-text-secondary mb-1">{{ taxIdLabel }}</p>
+              <p class="font-medium text-text-primary">{{ form.tax_id || noTaxIdLabel }}</p>
             </div>
             <div>
               <p class="text-sm text-text-secondary mb-1">{{ t('abastecimiento.proveedorDetalle.status') }}</p>
@@ -388,7 +382,13 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useToast } from '~/composables/useToast'
+import {
+  useSupplierTaxIdLabel,
+  normalizeOptionalSupplierFields,
+} from '~/composables/useSupplierTaxIdLabel'
+
 const { t } = useI18n({ useScope: 'global' })
+const { taxIdLabel, taxIdPlaceholder, noTaxIdLabel } = useSupplierTaxIdLabel()
 
 useHead({
   title: () => t('abastecimiento.head.proveedores')
@@ -413,7 +413,6 @@ const toast = useToast()
 
 const fieldErrors = reactive({
   name: '',
-  tax_id: ''
 })
 
 // Payment Agreements State (temporal, saved after supplier creation)
@@ -514,7 +513,7 @@ const formatAgreementType = (type) => {
   return types[type] || type
 }
 
-const clearFieldError = (field: 'name' | 'tax_id') => {
+const clearFieldError = (field: 'name') => {
   fieldErrors[field] = ''
   if (submitError.value) {
     submitError.value = ''
@@ -523,11 +522,8 @@ const clearFieldError = (field: 'name' | 'tax_id') => {
 
 const validateForm = () => {
   fieldErrors.name = form.name.trim() ? '' : t('abastecimiento.proveedorDetalle.requiredNameError')
-  fieldErrors.tax_id = form.tax_id.trim() ? '' : t('abastecimiento.proveedorDetalle.requiredTaxIdError')
 
-  const hasErrors = Boolean(fieldErrors.name || fieldErrors.tax_id)
-
-  if (hasErrors) {
+  if (fieldErrors.name) {
     submitError.value = t('abastecimiento.proveedorDetalle.requiredFieldsError')
     toast.error(t('abastecimiento.proveedorDetalle.requiredContinueError'), { title: t('abastecimiento.proveedorDetalle.incompleteForm') })
     return false
@@ -542,7 +538,7 @@ const { data: supplierData, execute: createSupplier, error: createError } = useA
   'create-supplier-call', // Unique key
   () => $fetch('/api/suppliers/providers', {
     method: 'POST',
-    body: form,
+    body: normalizeOptionalSupplierFields({ ...form }),
   }),
   {
     immediate: false, // Don't run on component load

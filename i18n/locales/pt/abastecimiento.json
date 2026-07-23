@@ -90,7 +90,12 @@
       "stockMax": "Estoque máx.",
       "pctStock": "% Estoque",
       "costoUnit": "Custo unit.",
-      "ingrediente": "Ingrediente"
+      "ingrediente": "Ingrediente",
+      "taxIdLabel": {
+        "co": "NIT/Cédula",
+        "mx": "RFC/CURP",
+        "fallback": "Documento fiscal"
+      }
     },
     "stock": {
       "emptySub": "Comece recebendo compras em Abastecimento",
@@ -220,7 +225,7 @@
     "proveedorDetalle": {
       "basicInfo": "Informações básicas",
       "supplierNameRequired": "Nome do fornecedor *",
-      "taxIdRequired": "NIT/CPF/CNPJ *",
+      "taxIdRequired": "NIT/Cédula",
       "description": "Descrição",
       "descriptionPlaceholder": "Breve descrição do fornecedor, produtos que oferece, etc.",
       "namePlaceholder": "Ex: Frutas do Vale S.A.",
@@ -243,7 +248,7 @@
       "supplierActive": "Fornecedor ativo",
       "summary": "Resumo do fornecedor",
       "noName": "Sem nome",
-      "noTaxId": "Sem NIT/CPF/CNPJ",
+      "noTaxId": "Sem documento",
       "saveChanges": "Salvar alterações",
       "saving": "Salvando...",
       "cancel": "Cancelar",
