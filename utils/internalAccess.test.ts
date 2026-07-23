@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import {
   canUseInternalSession,
   getAccessAwareRedirect,
+  getDashboardHome,
   getFirstAccessibleHome,
+  getModuleAccessDenialRedirect,
   hasExplicitInternalAccessAllow,
   hasExplicitInternalAccessDenial,
 } from './internalAccess.ts'
@@ -131,5 +133,38 @@ describe('module-aware internal redirects', () => {
 
   it('returns public home when no modules are available', () => {
     assert.equal(getFirstAccessibleHome([]), '/')
+  })
+})
+
+describe('dashboard home helpers', () => {
+  it('returns POS for starter-like module sets', () => {
+    assert.equal(
+      getDashboardHome(['pos', 'ventas', 'menu', 'mi_negocio', 'mi_plan']),
+      '/pos',
+    )
+  })
+
+  it('falls back to POS before access loads', () => {
+    assert.equal(getDashboardHome([], { isLoaded: false }), '/pos')
+  })
+
+  it('sends starter owners with mi_plan to billing on plan denial', () => {
+    assert.equal(
+      getModuleAccessDenialRedirect({
+        planSlug: 'starter',
+        can: (module) => module === 'mi_plan',
+      }),
+      '/gestion/billing',
+    )
+  })
+
+  it('sends non-starter denials to /403', () => {
+    assert.equal(
+      getModuleAccessDenialRedirect({
+        planSlug: 'pro',
+        can: () => false,
+      }),
+      '/403',
+    )
   })
 })

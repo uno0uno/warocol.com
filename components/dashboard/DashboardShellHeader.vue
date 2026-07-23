@@ -4,7 +4,7 @@
       <div class="flex min-w-0 items-center gap-2 sm:gap-4">
         <NuxtLink
           v-if="!hideLogo"
-          to="/financiero"
+          :to="dashboardHome"
           class="dashboard-header-logo hidden xl:flex h-12 w-fit min-w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
           :aria-label="t('shell.goToDashboardHome')"
         >
@@ -108,8 +108,15 @@
 </template>
 
 <script setup lang="ts">
+import { getDashboardHome } from '~/utils/internalAccess'
+
 const route = useRoute()
 const { t } = useI18n()
+const accessStore = useAccessStore()
+
+const dashboardHome = computed(() =>
+  getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
+)
 
 const logoAnimationSrc = computed(() =>
   `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,

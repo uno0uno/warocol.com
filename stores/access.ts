@@ -39,6 +39,7 @@ type AccessFeatures = Partial<Record<AccessFeature, boolean>>
 interface AccessResponse {
   role: string | null
   modules: string[]
+  plan_slug?: string | null
   enforcement_mode: EnforcementMode
   features?: AccessFeatures
 }
@@ -54,6 +55,7 @@ let pollingHandle: ReturnType<typeof setInterval> | null = null
 export const useAccessStore = defineStore('access', () => {
   const role = ref<string | null>(null)
   const modules = ref<string[]>([])
+  const planSlug = ref<string | null>(null)
   const enforcementMode = ref<EnforcementMode>('disabled')
   const features = ref<AccessFeatures>({})
   const isLoaded = ref(false)
@@ -68,6 +70,7 @@ export const useAccessStore = defineStore('access', () => {
       const data = await $fetch<AccessResponse>('/api/me/access')
       role.value = data.role
       modules.value = data.modules ?? []
+      planSlug.value = data.plan_slug ?? null
       enforcementMode.value = data.enforcement_mode ?? 'disabled'
       features.value = data.features ?? {}
       isLoaded.value = true
@@ -89,6 +92,7 @@ export const useAccessStore = defineStore('access', () => {
     stopPolling()
     role.value = null
     modules.value = []
+    planSlug.value = null
     enforcementMode.value = 'disabled'
     features.value = {}
     isLoaded.value = false
@@ -113,14 +117,15 @@ export const useAccessStore = defineStore('access', () => {
   /**
    * Returns true if the current user can access `module`.
    *
-   * Fail-open semantics: when enforcementMode is 'disabled' or 'shadow',
-   * always returns true so the frontend renders today's behavior (no menu
-   * items hidden, no redirects). Backend mirrors this — shadow mode logs
-   * but does not deny.
-   *
-   * Only 'enforce' mode actually checks membership against `modules`.
+   * `/me/access` modules are already role ∩ plan (api-warolabs#694). Once
+   * loaded, membership is always enforced so Starter nav/routes match the API
+   * regardless of RBAC enforcement_mode. Pre-load keeps Epic 4 fail-open so
+   * the shell does not flash empty during hydration.
    */
   function can(module: Module): boolean {
+    if (isLoaded.value) {
+      return modulesSet.value.has(module)
+    }
     if (enforcementMode.value !== 'enforce') return true
     return modulesSet.value.has(module)
   }
@@ -137,6 +142,7 @@ export const useAccessStore = defineStore('access', () => {
   return {
     role: readonly(role),
     modules: readonly(modules),
+    planSlug: readonly(planSlug),
     enforcementMode: readonly(enforcementMode),
     features: readonly(features),
     isLoaded: readonly(isLoaded),
