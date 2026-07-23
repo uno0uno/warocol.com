@@ -1,0 +1,39 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1748
+title: "Menu recetas: show recipe-base cost with unit_weight conversion"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1748-recipe-base-cost-display
+
+paths:
+  - utils/recipeIngredientLineCost.ts
+  - utils/recipeIngredientLineCost.test.ts
+  - pages/menu/recetas/index.vue
+  - pages/menu/productos/[id].vue
+  - pages/menu/productos/crear.vue
+
+ac:
+  - /menu/recetas prefers costo_linea; fallback converts via unit_weight
+  - Base Margarita shows ~21 not 15750
+  - Product create/edit base preview uses same conversion + multiplier
+  - Same-unit lines unchanged
+
+out_of_scope:
+  - API (api-warolabs#704 already merged)
+
+hints:
+  entry: "utils/recipeIngredientLineCost.ts + pages/menu/recetas/index.vue"
+  pattern: "API costo_linea from #704"
+  tests: "npx vitest run utils/recipeIngredientLineCost.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"

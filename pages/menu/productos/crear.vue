@@ -729,6 +729,7 @@ import {
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 import { resolveResaleIngredientId } from '@/composables/useResaleLinkedIngredient'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import { recipeIngredientLineCost } from '~/utils/recipeIngredientLineCost'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 
@@ -1019,18 +1020,27 @@ const calculatedCost = computed<number | null>(() => {
 
   let totalCost = 0
 
-  if (selectedRecipeBaseIngredients.value.length > 0) {
-    totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
-      const ingredient = availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
-      return sum + (ing.base_quantity * Number(ingredient?.costo_unitario || ingredient?.price || 0))
-    }, 0)
-  }
+  form.value.recipe_bases.forEach((link) => {
+    if (!link.recipe_base_id) return
+    const selectedRecipe = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+    if (!selectedRecipe?.ingredients) return
+    const multiplier = Number(link.quantity) || 1
+    selectedRecipe.ingredients.forEach((ing: any) => {
+      totalCost += recipeIngredientLineCost(ing, { multiplier })
+    })
+  })
 
   totalCost += form.value.ingredients.reduce((sum, ing) => {
     const cached = ingredientCache.value[ing.ingredient_id]
     const ingredient = cached || availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
     if (!ingredient) return sum
-    return sum + (ing.quantity * Number(ingredient.costo_unitario || ingredient.price || 0))
+    return sum + recipeIngredientLineCost({
+      quantity: ing.quantity,
+      unit: ing.unit,
+      stock_unit: ingredient.unit,
+      unit_weight_gr: ingredient.unit_weight_gr,
+      costo_unitario: ingredient.costo_unitario ?? ingredient.price,
+    })
   }, 0)
 
   return totalCost

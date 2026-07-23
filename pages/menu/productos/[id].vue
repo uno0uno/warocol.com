@@ -878,6 +878,7 @@ import {
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import { recipeIngredientLineCost } from '~/utils/recipeIngredientLineCost'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 import type { WarehouseCategoryRow } from '~/composables/useWarehouseCategorySearch'
@@ -1356,18 +1357,26 @@ const calculatedCost = computed<number | null>(() => {
 
   let totalCost = 0
 
-  if (selectedRecipeBaseIngredients.value.length > 0) {
-    totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
-      const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
-      const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
-      return sum + (ing.base_quantity * Number(costPerUnit))
-    }, 0)
-  }
+  form.value.recipe_bases.forEach((link) => {
+    if (!link.recipe_base_id) return
+    const selectedRecipe = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+    if (!selectedRecipe?.ingredients) return
+    const multiplier = Number(link.quantity) || 1
+    selectedRecipe.ingredients.forEach((ing: any) => {
+      totalCost += recipeIngredientLineCost(ing, { multiplier })
+    })
+  })
 
   totalCost += form.value.ingredients.reduce((sum, ing) => {
     const ingredient = ingredientCache.value[ing.ingredient_id]
-    const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
-    return sum + (ing.quantity * Number(costPerUnit))
+    if (!ingredient) return sum
+    return sum + recipeIngredientLineCost({
+      quantity: ing.quantity,
+      unit: ing.unit,
+      stock_unit: ingredient.unit,
+      unit_weight_gr: ingredient.unit_weight_gr,
+      costo_unitario: ingredient.costo_unitario ?? ingredient.price,
+    })
   }, 0)
 
   return totalCost
