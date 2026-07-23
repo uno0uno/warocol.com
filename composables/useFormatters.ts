@@ -70,7 +70,7 @@ export const useFormatters = () => {
 
   /** Display-only money; currency_code from prefs (default COP) + locale punctuation. */
   const formatCurrency = (
-    value: number | null | undefined,
+    value: number | string | null | undefined,
     options?: Pick<FormatMoneyOptions, 'notation'>,
   ): string => {
     return formatMoney(value, {

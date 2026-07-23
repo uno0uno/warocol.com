@@ -50,18 +50,36 @@ export function normalizeMinorUnits(value?: number | null, fallback = 0): number
 }
 
 /**
+ * Coerce API/display money values to a finite number.
+ * Pydantic Decimals serialize as JSON strings (e.g. `"120.00"`); those must
+ * format correctly. null/undefined/''/non-numeric → null (caller maps to 0).
+ */
+export function coerceMoneyNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    const n = Number(trimmed)
+    return Number.isFinite(n) ? n : null
+  }
+  return null
+}
+
+/**
  * Format a money amount for UI display only.
- * null/undefined/non-finite values render as zero in the resolved currency.
+ * null/undefined/non-numeric values render as zero in the resolved currency.
+ * Accepts numeric strings from Decimal JSON serialization.
  * Does not convert amounts or touch storage/API payloads.
  */
 export function formatMoney(
-  value: number | null | undefined,
+  value: number | string | null | undefined,
   options?: FormatMoneyOptions,
 ): string {
   const currency = normalizeCurrencyCode(options?.currency)
   const localeTag = localeToNumberFormatTag(options?.locale)
   const minorUnits = normalizeMinorUnits(options?.minorUnits, 0)
-  const numericValue = value === null || value === undefined || !Number.isFinite(value) ? 0 : value
+  const numericValue = coerceMoneyNumber(value) ?? 0
 
   return new Intl.NumberFormat(localeTag, {
     style: 'currency',
