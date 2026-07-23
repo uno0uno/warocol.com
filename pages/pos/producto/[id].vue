@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -779,13 +779,7 @@ const addToCart = async () => {
   }
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
+const { formatCurrency } = useFormatters()
 
 const modifierPriceLabel = (modifier: ModifierOption) => {
   const included = Math.max(0, Number(modifier.included_quantity) || 0)

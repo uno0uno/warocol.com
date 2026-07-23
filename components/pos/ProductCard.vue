@@ -41,8 +41,9 @@
 </template>
 
 <script setup lang="ts">
-const { locale } = useI18n({ useScope: 'global' })
 import { ref, computed } from 'vue'
+
+const { formatCurrency } = useFormatters()
 
 interface Product {
   id: string
@@ -167,12 +168,4 @@ const iconSlotStyle = computed(() => {
   const colors = getColorForProduct(props.product.category, props.product.name)
   return { backgroundColor: colors.slotBg }
 })
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
 </script>

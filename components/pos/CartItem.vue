@@ -163,6 +163,8 @@ import {
   TrashIcon,
 } from '@heroicons/vue/24/outline'
 
+const { formatCurrency } = useFormatters()
+
 interface CartItem {
   product: {
     id: string
@@ -242,14 +244,6 @@ const unitNet = computed(() => {
   const qty = Number(props.item.quantity) || 1
   return netTotal.value / qty
 })
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
-}
 
 const formatTime = (isoString: string) => {
   return new Date(isoString).toLocaleTimeString(toNumberLocaleTag(locale.value), {

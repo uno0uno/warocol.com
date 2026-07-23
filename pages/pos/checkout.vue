@@ -1627,7 +1627,7 @@ watch(selectedCustomer, async (customer) => {
 })
 
 // Methods — display currency from tenant prefs (default COP); see display-currency.md
-const { formatCurrency } = useFormatters()
+const { formatCurrency, currencyCode } = useFormatters()
 
 const getItemTotal = (item: any) => {
   const basePrice = Number(item.product.price) || 0
@@ -4038,7 +4038,7 @@ onUnmounted(() => {
 	                <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
                 <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
               </div>
-              <p class="text-end text-xs text-text-tertiary">COP</p>
+              <p class="text-end text-xs text-text-tertiary">{{ currencyCode }}</p>
             </div>
           </div>
         </div>
@@ -4539,7 +4539,7 @@ onUnmounted(() => {
 	              <span class="text-text-secondary font-medium">{{ t('pos.checkout.summary.totalToPay') }}</span>
               <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
             </div>
-            <p class="text-end text-xs text-text-tertiary">COP</p>
+            <p class="text-end text-xs text-text-tertiary">{{ currencyCode }}</p>
           </div>
         </div>
       </div>

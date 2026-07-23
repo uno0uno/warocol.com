@@ -28,6 +28,8 @@ definePageMeta({
 
 useHead({ title: () => t('pos.banner.pageTitle') })
 
+const { formatCurrency } = useFormatters()
+
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
@@ -813,8 +815,7 @@ registerTableSessionRefresh(
   { isMutationActive: isTableSessionMutationActive },
 )
 
-const formatCurrencyPOS = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(normalizeUiLocale(locale.value)))}`
+const formatCurrencyPOS = (amount: number): string => formatCurrency(amount)
 
 const activeMinimumConsumption = computed(() => posStore.activeTableSession?.minimumConsumption ?? null)
 const showActiveMinimumConsumption = computed(() =>
@@ -2037,20 +2038,6 @@ onUnmounted(() => {
             {{ t('pos.banner.change') }}
           </button>
         </div>
-      </div>
-
-      <!-- Identify customer CTA (counter/bar, no table session) -->
-      <div v-else>
-        <button
-          type="button"
-          class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-badge-primary-border text-badge-primary-text font-semibold text-sm hover:bg-badge-primary-bg transition-colors"
-          @click="showCustomerModal = true"
-        >
-          <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          {{ t('pos.banner.identifyCustomer') }}
-        </button>
       </div>
 
           <!-- Search and Filters -->
