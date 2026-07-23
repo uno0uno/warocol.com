@@ -423,6 +423,7 @@
     "pdfTitle": "WARO Colombia Terms and Conditions",
     "pdfLoadError": "The current Terms and Conditions PDF could not be loaded.",
     "openPdfInNewTab": "Open PDF in a new tab",
+    "pdfPreviewHint": "If the PDF preview does not appear,",
     "accepted": "Accepted",
     "redirectingToPayment": "Redirecting to payment",
     "readConfirmation": "I check this box only after reviewing the current Terms and Conditions PDF (version {version}).",

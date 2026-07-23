@@ -67,12 +67,23 @@
                   :src="pdfViewerUrl"
                   :title="t('terms.pdfTitle')"
                   class="h-[72vh] min-h-[640px] w-full bg-white"
-                  @load="markPdfLoaded"
                 />
               </div>
 
+              <p v-if="isPdfDocument && sourceUrl" class="text-xs leading-5 text-text-tertiary">
+                {{ t('terms.pdfPreviewHint') }}
+                <a
+                  :href="sourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-medium text-text-secondary underline underline-offset-2 hover:text-text-primary"
+                >
+                  {{ t('terms.openPdfInNewTab') }}
+                </a>
+              </p>
+
               <div
-                v-if="showPdfFallbackMessage"
+                v-else-if="currentDocument && !isPdfDocument"
                 class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text"
               >
                 <p>{{ t('terms.pdfLoadError') }}</p>
@@ -171,9 +182,6 @@ import type { LegalTermsDocument } from '~/composables/useLegalTerms'
 // before module-gated dashboard workflows are available.
 definePageMeta({ layout: 'dashboard' })
 
-/** Wait for iframe @load; if it never fires (common for cross-origin PDF viewers), unlock the checkbox anyway. */
-const PDF_LOAD_FALLBACK_MS = 4000
-
 const route = useRoute()
 const toast = useToast()
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -198,12 +206,9 @@ const placeholderDocument: LegalTermsDocument = {
 }
 
 const hasConfirmedRead = ref(false)
-const hasPdfLoaded = ref(false)
-const pdfLoadTimedOut = ref(false)
 const acceptErrorMessage = ref('')
 const hasAcceptedLocally = ref(false)
 const isRedirectingAfterAccept = ref(false)
-let pdfLoadTimer: ReturnType<typeof setTimeout> | null = null
 
 const document = computed<LegalTermsDocument>(() => currentDocument.value ?? placeholderDocument)
 const sourceUrl = computed(() => currentDocument.value?.source_url || '')
@@ -224,43 +229,16 @@ const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocumen
 
 /**
  * Why the checkbox was stuck disabled:
- * - Required hasPdfLoaded (iframe @load) AND hasEngagedWithPdf
- * - Engagement only via window.blur when activeElement === iframe
- * - Mobile / embedded PDF viewers almost never fire that blur path → permanently disabled
- * - No POST /legal/terms/accept reached the API
+ * - Required hasPdfLoaded (iframe @load) AND hasEngagedWithPdf via window.blur
+ * - Chrome/mobile PDF viewers rarely fire that path → permanently disabled
  *
- * Now: enable once the published PDF document is available. Explicit checkbox remains the consent gate.
- * Iframe load timeout only controls the fallback “open in new tab” message.
+ * Checkbox enables once the published PDF document metadata is available.
+ * Do NOT infer “PDF failed” from missing iframe @load — Chrome often never fires
+ * load for application/pdf embeds even when the preview works (false positive banner).
  */
 const canEnableReadCheckbox = computed(() =>
   !isDocumentLoading.value && !!currentDocument.value && isPdfDocument.value,
 )
-
-const showPdfFallbackMessage = computed(() =>
-  isPdfDocument.value && !hasPdfLoaded.value && pdfLoadTimedOut.value,
-)
-
-function clearPdfLoadTimer() {
-  if (pdfLoadTimer) {
-    clearTimeout(pdfLoadTimer)
-    pdfLoadTimer = null
-  }
-}
-
-function startPdfLoadTimer() {
-  clearPdfLoadTimer()
-  pdfLoadTimedOut.value = false
-  if (!isPdfDocument.value || !sourceUrl.value) return
-  pdfLoadTimer = setTimeout(() => {
-    if (!hasPdfLoaded.value) pdfLoadTimedOut.value = true
-  }, PDF_LOAD_FALLBACK_MS)
-}
-
-const markPdfLoaded = () => {
-  hasPdfLoaded.value = true
-  pdfLoadTimedOut.value = false
-  clearPdfLoadTimer()
-}
 
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
@@ -289,20 +267,13 @@ watch(() => statusData.value?.accepted, (accepted) => {
   if (accepted) hasConfirmedRead.value = false
 })
 
-watch([currentDocument, isPdfDocument, sourceUrl], () => {
-  hasPdfLoaded.value = false
-  pdfLoadTimedOut.value = false
+watch([currentDocument, isPdfDocument], () => {
   hasConfirmedRead.value = false
-  startPdfLoadTimer()
-}, { immediate: true })
+})
 
 watch(acceptError, (err) => {
   if (!err) return
   acceptErrorMessage.value = extractApiError(err, t('terms.acceptanceError'))
-})
-
-onUnmounted(() => {
-  clearPdfLoadTimer()
 })
 
 const handleAccept = async () => {

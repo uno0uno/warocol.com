@@ -423,6 +423,7 @@
     "pdfTitle": "Términos y Condiciones WARO Colombia",
     "pdfLoadError": "No se pudo cargar el PDF vigente de términos y condiciones.",
     "openPdfInNewTab": "Abrir PDF en una pestaña nueva",
+    "pdfPreviewHint": "Si no ves la vista previa del PDF,",
     "accepted": "Aceptado",
     "redirectingToPayment": "Redirigiendo al pago",
     "readConfirmation": "Marco esta casilla solo después de revisar el PDF vigente de Términos y Condiciones (versión {version}).",
