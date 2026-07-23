@@ -409,11 +409,12 @@ export function formatModifierOptionTypeLabel(type: string): string {
   }
 }
 
-export function formatModifierCurrency(value: number | null | undefined): string {
+import { formatMoney } from '~/utils/currencyDisplay'
+
+export function formatModifierCurrency(
+  value: number | null | undefined,
+  currency?: string | null,
+): string {
   if (value == null) return '—'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
+  return formatMoney(value, { currency })
 }

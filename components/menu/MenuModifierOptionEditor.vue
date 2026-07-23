@@ -29,11 +29,11 @@
       <div class="md:col-span-2">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.additionalUnitPrice') }}</label>
         <div class="relative">
-          <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+          <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
           <UiDecimalInput
             v-model="modifier.price"
-            :precision="0"
-            class="input-base w-full ps-8 pe-3 py-2 text-sm"
+            :precision="currencyMinorUnits"
+            class="input-base w-full ps-12 pe-3 py-2 text-sm"
           />
         </div>
       </div>
@@ -335,7 +335,6 @@ import {
   applyModifierIncludedQuantity,
   applyModifierMaxLimit,
   applyModifierUiOptionType,
-  formatModifierCurrency,
   getModifierUiOptionType,
   type ModifierFormRow,
   type ModifierRecipeLineForm,
@@ -345,6 +344,7 @@ import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 import { fetchResaleLinkedIngredient } from '~/composables/useResaleLinkedIngredient'
 
 const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 const props = defineProps<{
@@ -498,24 +498,24 @@ function estimateRecipeCost(): number | null {
 }
 
 const ingredientCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatModifierCurrency(props.modifier.unit_cost)
+  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
   const ing = props.modifier.ingredient_id
     ? props.getIngredientById(props.modifier.ingredient_id)
     : undefined
   const unit = Number(ing?.costo_unitario ?? 0)
   const qty = Number(props.modifier.ingredient_quantity) || 0
   if (!unit || !qty) return '—'
-  return formatModifierCurrency(unit * qty)
+  return formatCurrency(unit * qty)
 })
 
 const recipeCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatModifierCurrency(props.modifier.unit_cost)
+  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
   const est = estimateRecipeCost()
-  return est != null ? formatModifierCurrency(est) : '—'
+  return est != null ? formatCurrency(est) : '—'
 })
 
 const productCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatModifierCurrency(props.modifier.unit_cost)
+  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
   return '—'
 })
 </script>

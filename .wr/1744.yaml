@@ -1,0 +1,44 @@
+# Compact plan — wr-fast #1744. Keep <=80 lines.
+issue: 1744
+title: "feat(menu): use tenant display currency across menu money UI"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1744-menu-display-currency
+
+paths:
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - pages/menu/productos/index.vue
+  - pages/menu/modificadores/index.vue
+  - composables/useModifierOptionForm.ts
+  - components/menu/MenuModifierOptionEditor.vue
+  - components/menu/ProductQuickCreatePanel.vue
+  - .wr/1744.yaml
+
+ac:
+  - Product create/edit/list use useFormatters formatCurrency — no local COP helpers
+  - Modifier list + option editor use shared formatter; formatModifierCurrency not COP-hardcoded
+  - Quick-create panel uses tenant currency indicator
+  - Input prefixes / amounts reflect tenant currency (e.g. MXN)
+  - Recipes list smoke-ok; no FX/API/FE changes
+  - Optional: UiDecimalInput precision from currencyMinorUnits
+
+out_of_scope:
+  - FX, ledger conversion, FE/DIAN, abastecimiento non-menu, API price schema
+
+hints:
+  entry: "useFormatters currencyCode + formatCurrency; mirror pages/menu/recetas/index.vue"
+  pattern: "composables/useFormatters.ts:71-82; utils/currencyDisplay.ts formatMoney"
+  tests: "bun test utils/currencyDisplay.test.ts composables/useModifierOptionForm.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"

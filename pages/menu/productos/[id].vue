@@ -183,13 +183,13 @@
                   {{ t('menu.productos.salePriceRequired') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
                   <UiDecimalInput
                     v-model="form.price"
                     required
-                    :precision="0"
+                    :precision="currencyMinorUnits"
                     :min="0"
-                    class="input-base w-full ps-8 pe-4 py-2"
+                    class="input-base w-full ps-12 pe-4 py-2"
                     placeholder="15000"
                   />
                 </div>
@@ -200,12 +200,11 @@
                   {{ t('menu.productos.realCostSystem') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
                     :value="displayRealCost === null ? '—' : formatCurrency(displayRealCost)"
                     type="text"
                     disabled
-                    class="input-base w-full ps-8 pe-4 py-2 bg-surface-secondary cursor-not-allowed"
+                    class="input-base w-full px-4 py-2 bg-surface-secondary cursor-not-allowed"
                     placeholder="0"
                   />
                 </div>
@@ -222,12 +221,12 @@
                   {{ t('menu.productos.dishCost') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
                   <UiDecimalInput
                     v-model="form.costo_percibido"
-                    :precision="0"
+                    :precision="currencyMinorUnits"
                     :min="0"
-                    class="input-base w-full ps-8 pe-4 py-2"
+                    class="input-base w-full ps-12 pe-4 py-2"
                     :placeholder="t('menu.productos.optional')"
                   />
                 </div>
@@ -905,7 +904,8 @@ const route = useRoute()
 const router = useRouter()
 const cache = useQueryCache()
 const toast = useToast()
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { currentTenant, businessProfile } = useTenantReactive()
 
@@ -1698,14 +1698,6 @@ const confirmDelete = async () => {
 const cancel = () => {
   // clearNuxtData()
   router.push('/menu/productos')
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
 }
 
 useHead({

@@ -286,7 +286,8 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -446,14 +447,6 @@ const gruposTableColumns = [
     align: 'center'
   }
 ]
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
 
 const toggleExpanded = (grupoId: string) => {
   if (expandedRows.value.has(grupoId)) {
