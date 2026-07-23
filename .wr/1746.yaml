@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1746
+title: "Menu: replace button spinners with UiLoadingDots"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1746-menu-button-loading-dots
+
+paths:
+  - pages/menu/productos/[id].vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/recetas/[id].vue
+  - pages/menu/recetas/crear.vue
+  - pages/menu/modificadores/[id].vue
+  - pages/menu/modificadores/crear.vue
+
+ac:
+  - Primary busy buttons under /menu show UiLoadingDots instead of arrow-path spin
+  - Idle state keeps check icon + label; busy uses dots + busy label
+  - No arrow-path + animate-spin left on those CTAs
+  - Unit-select and list-toggle spinners unchanged
+
+out_of_scope:
+  - Unit-select SVG spinners
+  - Product list online/QR toggle spinners
+  - API changes
+  - categorias/reventa
+
+hints:
+  entry: "pages/menu/*/crear|[id] submit UiButton busy icon"
+  pattern: "pages/menu/productos/[id].vue delete modal UiLoadingDots size=8px color=currentColor"
+  tests: "none — UI-only; no page unit tests"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review subagent"
