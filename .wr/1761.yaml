@@ -1,0 +1,37 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1761
+title: "Restore /ventas redirect to /ventas/ordenes (remove dashboard)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1761-ventas-redirect-ordenes
+
+paths:
+  - pages/ventas/index.vue
+
+ac:
+  - index.vue is redirect-only middleware to /ventas/ordenes — no dashboard UI
+  - Clicking Ventas ends on /ventas/ordenes
+  - Direct /ventas and /ventas/ redirect to ordenes
+  - Productos / Propinas / Órdenes sub-nav unchanged
+
+out_of_scope:
+  - Removing Productos/Propinas
+  - API changes
+  - Recreating dashboard elsewhere
+
+hints:
+  entry: "pages/ventas/index.vue definePageMeta middleware"
+  pattern: "pre-0c7e428b redirect: if path === /ventas → navigateTo(/ventas/ordenes)"
+  tests: "manual — no targeted front unit test for this page"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual click Ventas + open /ventas"
