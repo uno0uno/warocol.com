@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1754
+title: "fix(terms): enable accept checkbox when PDF engagement is unreliable"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1754-terms-accept-checkbox
+
+paths:
+  - pages/terminos-y-condiciones.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+
+ac:
+  - Checkbox enables after published PDF document is available (no iframe blur/focus gate)
+  - Works on desktop and mobile for v1.1 PDF
+  - Accept still POSTs /legal/terms/accept
+  - Onboarding trial → subscribe not blocked by permanently disabled checkbox
+  - PDF load failure shows clear message + open in new tab
+
+out_of_scope:
+  - Local API 500s on /api/me/access etc.
+  - API accept/onboarding business rules
+  - Billing checkout after terms
+
+hints:
+  entry: "pages/terminos-y-condiciones.vue canEnableReadCheckbox"
+  pattern: "Removed hasEngagedWithPdf + window.blur; enable when currentDocument + isPdfDocument"
+  tests: "none (page-only UI; manual verify)"
+
+risk:
+  sensitive: false
+  areas: [legal-ux]
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""

@@ -40,6 +40,15 @@
                   {{ t('terms.legalDocumentDescription') }}
                 </p>
               </div>
+              <a
+                v-if="sourceUrl"
+                :href="sourceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-secondary"
+              >
+                {{ t('terms.openPdfInNewTab') }}
+              </a>
             </div>
 
             <div v-if="isDocumentLoading" class="flex min-h-64 items-center justify-center">
@@ -49,13 +58,12 @@
               </div>
             </div>
 
-            <div v-else class="mt-6">
+            <div v-else class="mt-6 space-y-3">
               <div
                 v-if="isPdfDocument"
                 class="relative overflow-hidden rounded-lg border border-border bg-white"
               >
                 <iframe
-                  ref="pdfFrameRef"
                   :src="pdfViewerUrl"
                   :title="t('terms.pdfTitle')"
                   class="h-[72vh] min-h-[640px] w-full bg-white"
@@ -63,8 +71,20 @@
                 />
               </div>
 
-              <div v-else class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text">
-                {{ t('terms.pdfLoadError') }}
+              <div
+                v-if="showPdfFallbackMessage"
+                class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text"
+              >
+                <p>{{ t('terms.pdfLoadError') }}</p>
+                <a
+                  v-if="sourceUrl"
+                  :href="sourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-2 inline-flex font-medium underline underline-offset-2"
+                >
+                  {{ t('terms.openPdfInNewTab') }}
+                </a>
               </div>
             </div>
           </section>
@@ -151,6 +171,9 @@ import type { LegalTermsDocument } from '~/composables/useLegalTerms'
 // before module-gated dashboard workflows are available.
 definePageMeta({ layout: 'dashboard' })
 
+/** Wait for iframe @load; if it never fires (common for cross-origin PDF viewers), unlock the checkbox anyway. */
+const PDF_LOAD_FALLBACK_MS = 4000
+
 const route = useRoute()
 const toast = useToast()
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -176,11 +199,11 @@ const placeholderDocument: LegalTermsDocument = {
 
 const hasConfirmedRead = ref(false)
 const hasPdfLoaded = ref(false)
-const hasEngagedWithPdf = ref(false)
-const pdfFrameRef = ref<HTMLIFrameElement | null>(null)
+const pdfLoadTimedOut = ref(false)
 const acceptErrorMessage = ref('')
 const hasAcceptedLocally = ref(false)
 const isRedirectingAfterAccept = ref(false)
+let pdfLoadTimer: ReturnType<typeof setTimeout> | null = null
 
 const document = computed<LegalTermsDocument>(() => currentDocument.value ?? placeholderDocument)
 const sourceUrl = computed(() => currentDocument.value?.source_url || '')
@@ -198,32 +221,47 @@ const isDocumentLoading = computed(() => !currentDocument.value && isInitialLoad
 const isAccepted = computed(() => hasAcceptedLocally.value || statusData.value?.accepted === true)
 const isAcceptingOrRedirecting = computed(() => isAccepting.value || isRedirectingAfterAccept.value)
 const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocument.value && isPdfDocument.value)
+
+/**
+ * Why the checkbox was stuck disabled:
+ * - Required hasPdfLoaded (iframe @load) AND hasEngagedWithPdf
+ * - Engagement only via window.blur when activeElement === iframe
+ * - Mobile / embedded PDF viewers almost never fire that blur path → permanently disabled
+ * - No POST /legal/terms/accept reached the API
+ *
+ * Now: enable once the published PDF document is available. Explicit checkbox remains the consent gate.
+ * Iframe load timeout only controls the fallback “open in new tab” message.
+ */
 const canEnableReadCheckbox = computed(() =>
-  !isDocumentLoading.value && isPdfDocument.value && hasPdfLoaded.value && hasEngagedWithPdf.value,
+  !isDocumentLoading.value && !!currentDocument.value && isPdfDocument.value,
 )
 
-const markPdfLoaded = () => {
-  hasPdfLoaded.value = true
-}
+const showPdfFallbackMessage = computed(() =>
+  isPdfDocument.value && !hasPdfLoaded.value && pdfLoadTimedOut.value,
+)
 
-const markPdfEngaged = () => {
-  hasEngagedWithPdf.value = true
-}
-
-const handleWindowBlur = () => {
-  if (!hasPdfLoaded.value || hasEngagedWithPdf.value) return
-  if (document.activeElement === pdfFrameRef.value) {
-    markPdfEngaged()
+function clearPdfLoadTimer() {
+  if (pdfLoadTimer) {
+    clearTimeout(pdfLoadTimer)
+    pdfLoadTimer = null
   }
 }
 
-onMounted(() => {
-  window.addEventListener('blur', handleWindowBlur)
-})
+function startPdfLoadTimer() {
+  clearPdfLoadTimer()
+  pdfLoadTimedOut.value = false
+  if (!isPdfDocument.value || !sourceUrl.value) return
+  pdfLoadTimer = setTimeout(() => {
+    if (!hasPdfLoaded.value) pdfLoadTimedOut.value = true
+  }, PDF_LOAD_FALLBACK_MS)
+}
 
-onUnmounted(() => {
-  window.removeEventListener('blur', handleWindowBlur)
-})
+const markPdfLoaded = () => {
+  hasPdfLoaded.value = true
+  pdfLoadTimedOut.value = false
+  clearPdfLoadTimer()
+}
+
 const returnTarget = computed(() => {
   const raw = Array.isArray(route.query.return) ? route.query.return[0] : route.query.return
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return ''
@@ -251,15 +289,20 @@ watch(() => statusData.value?.accepted, (accepted) => {
   if (accepted) hasConfirmedRead.value = false
 })
 
-watch([currentDocument, isPdfDocument], () => {
+watch([currentDocument, isPdfDocument, sourceUrl], () => {
   hasPdfLoaded.value = false
-  hasEngagedWithPdf.value = false
+  pdfLoadTimedOut.value = false
   hasConfirmedRead.value = false
-})
+  startPdfLoadTimer()
+}, { immediate: true })
 
 watch(acceptError, (err) => {
   if (!err) return
   acceptErrorMessage.value = extractApiError(err, t('terms.acceptanceError'))
+})
+
+onUnmounted(() => {
+  clearPdfLoadTimer()
 })
 
 const handleAccept = async () => {
