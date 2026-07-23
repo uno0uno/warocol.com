@@ -1,0 +1,37 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1763
+title: "POS receipt email: allow edit for generic/walk-in customers"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1763-pos-receipt-email-generic
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Generic walk-in (phone 0000000000 or @customer.temp) does not lock confirmation mode
+  - Success modal shows editable email input for generics
+  - Real customers with profile email keep confirmation mode
+  - Receipt send works with typed email
+  - Mesa close uses same generic rule as POS complete
+
+out_of_scope:
+  - Changing Genérico customer creation/storage
+  - API email endpoints
+
+hints:
+  entry: "applyReceiptEmailAfterSale / isGenericReceiptCustomer in checkout.vue"
+  pattern: "components/ventas/InvoiceEmailModal.vue isGenericCustomer (#603)"
+  tests: "rg applyReceiptEmailAfterSale pages/pos/checkout.vue — no targeted Vue unit test"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual POS sale as Cliente sin datos — type another email and send"
