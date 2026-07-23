@@ -181,10 +181,13 @@
                   v-model="form.payment_type"
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="contado">Contado - Pago Inmediato</option>
                   <option value="credito">Credito - Pago Diferido</option>
+                  <option value="contado">Contado - Pago Inmediato</option>
                   <option value="contraentrega">Contraentrega</option>
                 </select>
+                <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
+                  Contado exige un método de pago abajo. Sin pago, usa Crédito.
+                </p>
               </div>
 
               <div>
@@ -480,7 +483,10 @@
                 </h4>
 
                 <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Método de pago</label>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">
+                    Método de pago
+                    <span v-if="form.payment_type === 'contado'" class="text-destructive">*</span>
+                  </label>
                   <select v-model="paymentSelectValue" class="input-base w-full px-4 py-2">
                     <option value="">Sin pago aun</option>
                     <template v-for="group in paymentGroups" :key="group.slug">
@@ -781,7 +787,7 @@ const localPurchaseUnits = ref<LocalPurchaseUnit[]>([])
 // Form
 const form = ref({
   supplier_id: '',
-  payment_type: 'contado',
+  payment_type: 'credito',
   purchase_date: localDateAtNoon(todayISO()) as Date | null,
   notes: '',
   invoice_number: '',
@@ -827,6 +833,10 @@ watch(hasPaymentSelected, (selected) => {
   form.value.payment_reference = ''
   form.value.payment_date = null
   form.value.payment_files = []
+  // Contado without method is invalid — treat unpaid as crédito
+  if (form.value.payment_type === 'contado') {
+    form.value.payment_type = 'credito'
+  }
 })
 
 // Fetch next purchase number
@@ -925,6 +935,11 @@ function validateForm(): boolean {
   )
   if (invalidItem) {
     submitError.value = WAREHOUSE_COPY.purchaseCompleteItemsError
+    return false
+  }
+
+  if (form.value.payment_type === 'contado' && !hasPaymentSelected.value) {
+    submitError.value = 'Contado requiere un método de pago. Elige uno o cambia a Crédito.'
     return false
   }
 
@@ -1507,6 +1522,10 @@ const handleScanFileSelect = async (event: Event) => {
       // Pre-fill invoice fields for Step 3
       if (data.numero_factura) form.value.invoice_number = data.numero_factura
       form.value.invoice_files = [optimizedFile]
+      // OCR does not detect payment — unpaid stays as crédito (not Contado)
+      if (!hasPaymentSelected.value) {
+        form.value.payment_type = 'credito'
+      }
     }
   } catch (e) {
     const err = e as { data?: { detail?: { error?: string; scans_used?: number; scans_limit?: number; period_end?: string } }; status?: number }

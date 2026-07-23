@@ -432,7 +432,25 @@
                 <div class="space-y-4">
                   <div>
                     <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Tipo de pago
+                    </label>
+                    <select
+                      v-model="form.payment_type"
+                      class="input-base w-full px-4 py-2"
+                    >
+                      <option value="credito">Credito - Pago Diferido</option>
+                      <option value="contado">Contado - Pago Inmediato</option>
+                      <option value="contraentrega">Contraentrega</option>
+                    </select>
+                    <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
+                      Contado exige un método de pago. Sin pago, usa Crédito.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
                       Metodo de Pago
+                      <span v-if="form.payment_type === 'contado'" class="text-destructive">*</span>
                     </label>
                     <select
                       v-model="paymentSelectValue"
@@ -818,6 +836,7 @@ const form = ref({
   notes: '',
   invoice_number: '',
   invoice_files: [] as File[],
+  payment_type: 'credito' as string,
   payment_method: '',
   payment_method_id: null as string | null,
   payment_reference: '',
@@ -825,7 +844,6 @@ const form = ref({
   items: [] as PurchaseItem[]
 })
 
-// Fetch existing purchase
 // Payment methods
 const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
   '/api/pos/payment-methods',
@@ -836,6 +854,17 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+
+watch(hasPaymentSelected, (selected) => {
+  if (selected) return
+  form.value.payment_reference = ''
+  if (form.value.payment_type === 'contado') {
+    form.value.payment_type = 'credito'
+  }
+})
+
+// Fetch existing purchase
+// (payment helpers above — originalPurchase watch fills form)
 
 const { data: purchaseResponse, pending: loadingPurchase, error: fetchError } = useFetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
   server: false
@@ -859,9 +888,14 @@ watch(originalPurchase, (purchase) => {
       : localDateAtNoon(todayISO())
     form.value.notes = purchase.notes || ''
     form.value.invoice_number = purchase.invoice_number || ''
+    form.value.payment_type = purchase.payment_type || 'credito'
     form.value.payment_method = purchase.payment_method || ''
     form.value.payment_method_id = purchase.payment_method_id || null
     form.value.payment_reference = purchase.payment_reference || ''
+    // Contado without method is invalid on load — normalize to crédito
+    if (form.value.payment_type === 'contado' && !form.value.payment_method && !form.value.payment_method_id) {
+      form.value.payment_type = 'credito'
+    }
     form.value.items = (purchase.items || []).map((item: any) => {
       const purchaseQty = item.purchase_quantity || item.quantity || 1
       const totalCost = item.total_cost || 0
@@ -921,7 +955,11 @@ const isStepValid = computed(() => {
       item.unit_cost >= 0
     )
   }
-  // Step 2 (documents) is always valid
+  if (currentStep.value === 2 || currentStep.value === 3) {
+    if (form.value.payment_type === 'contado' && !hasPaymentSelected.value) {
+      return false
+    }
+  }
   return true
 })
 
@@ -1113,6 +1151,7 @@ const handleSubmit = async () => {
       purchase_date: form.value.purchase_date ? purchaseDatePayloadISO(form.value.purchase_date) : null,
       notes: form.value.notes,
       invoice_number: form.value.invoice_number,
+      payment_type: form.value.payment_type,
       payment_method: form.value.payment_method || null,
       payment_method_id: form.value.payment_method_id || null,
       payment_reference: form.value.payment_reference || null,

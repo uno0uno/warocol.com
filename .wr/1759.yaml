@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1759
+title: "Compras directas: Contado must require payment method (else Crédito)"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1759-contado-requires-payment
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+  - pages/abastecimiento/compras-directas/[id]/editar.vue
+  - ../api_warocol.com/app/services/direct_purchase_service.py
+  - ../api_warocol.com/app/models/purchase.py
+  - ../api_warocol.com/app/routers/purchases.py
+  - ../api_warocol.com/tests/test_direct_purchase_payment_type.py
+
+ac:
+  - Create/edit: contado requires payment method before submit
+  - Sin pago aun only with credito (or deferred); clearing method on contado → credito
+  - OCR/default unpaid → credito
+  - API POST/PUT rejects contado without payment_method with 400
+  - Contado+method paid path; credito+empty pending payment
+
+out_of_scope:
+  - ACCOUNT_ROLE_MISSING / ACCOUNTS_PAYABLE provisioning
+  - GL posting changes
+  - DIAN XML import
+
+hints:
+  entry: "assert_contado_requires_payment_method + crear/editar validateForm"
+  pattern: "direct_purchase_service create/update payment_method gates status paid"
+  tests: "python3 -m pytest tests/test_direct_purchase_payment_type.py -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge API then front; manual Contado+method and Credito+Sin pago"
