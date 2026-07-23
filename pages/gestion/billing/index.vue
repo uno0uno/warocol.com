@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey, STARTER_DISPLAY_QUOTA_KEYS, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
@@ -24,6 +24,7 @@ const {
 } = useBilling()
 
 const { currentTenant } = useTenantReactive()
+const accessStore = useAccessStore()
 const {
   statusData: termsStatus,
   refreshTermsStatus,
@@ -54,6 +55,11 @@ const quotaDisplayConfig: QuotaDisplayConfig[] = [
   { key: 'active_qr_tables', label: '', unit: '' },
   { key: 'completed_online_orders_per_month', label: '', unit: '' },
   { key: 'electronic_invoices_per_period', label: '', unit: '', zeroLabel: '' },
+  { key: 'menu_products', label: '', unit: '' },
+  { key: 'tenant_ingredients', label: '', unit: '' },
+  { key: 'modifier_groups', label: '', unit: '' },
+  { key: 'recipe_lines_per_product', label: '', unit: '' },
+  { key: 'modifier_options_per_group', label: '', unit: '' },
 ]
 
 const quotaLabels = computed<Record<string, { label: string; unit: string; zeroLabel?: string }>>(() => ({
@@ -64,6 +70,11 @@ const quotaLabels = computed<Record<string, { label: string; unit: string; zeroL
   active_qr_tables: { label: t('billing.quotaQrTables'), unit: t('billing.unitQrTables') },
   completed_online_orders_per_month: { label: t('billing.quotaOnlineOrders'), unit: t('billing.unitOnlineOrders') },
   electronic_invoices_per_period: { label: t('billing.quotaInvoices'), unit: t('billing.unitInvoices'), zeroLabel: t('billing.notIncluded') },
+  menu_products: { label: t('billing.quota.menu_products'), unit: t('billing.unitProducts') },
+  tenant_ingredients: { label: t('billing.quota.tenant_ingredients'), unit: t('billing.unitIngredients') },
+  modifier_groups: { label: t('billing.quota.modifier_groups'), unit: t('billing.unitModifierGroups') },
+  recipe_lines_per_product: { label: t('billing.quota.recipe_lines_per_product'), unit: t('billing.unitRecipeLines') },
+  modifier_options_per_group: { label: t('billing.quota.modifier_options_per_group'), unit: t('billing.unitModifierOptions') },
 }))
 
 // ── Pagination ───────────────────────────────────────────────────
@@ -129,6 +140,22 @@ const BILLING_TERMS_PATH = '/terminos-y-condiciones'
 const BILLING_INTENT_TTL_MS = 30 * 60 * 1000
 
 const activePlans = computed(() => (plans.value ?? []).filter(p => p.is_active))
+const isStarterTenant = computed(() =>
+  accessStatus.value?.level === 'starter' || accessStore.planSlug === STARTER_PLAN_SLUG,
+)
+const starterPlan = computed(() => (plans.value ?? []).find(p => p.slug === STARTER_PLAN_SLUG) ?? null)
+const proPlan = computed(() => (plans.value ?? []).find(p => p.slug === PRO_PLAN_SLUG) ?? null)
+const displayPlanName = computed(() => {
+  if (subscription.value?.plan_name) return subscription.value.plan_name
+  if (isStarterTenant.value) return starterPlan.value?.name ?? t('billing.starterPlanName')
+  return t('billing.noPlan')
+})
+const starterQuotaRows = computed(() => {
+  if (!starterPlan.value) return []
+  return STARTER_DISPLAY_QUOTA_KEYS
+    .map((key) => quotaRowsForPlan(starterPlan.value!).find(row => row.key === key))
+    .filter((row): row is NonNullable<typeof row> => row != null)
+})
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
   currentTenantId.value ? `waro:billing-terms-intent:${currentTenantId.value}` : ''
@@ -548,7 +575,10 @@ watch(() => currentTenant.value?.id, async () => {
             <div class="min-w-0">
               <p class="text-xs font-medium text-text-secondary uppercase tracking-widest leading-none mb-1">{{ t('billing.currentPlan') }}</p>
               <p class="text-2xl font-bold text-text-primary leading-tight truncate">
-                {{ subscription?.plan_name ?? t('billing.noPlan') }}
+                {{ displayPlanName }}
+              </p>
+              <p v-if="isStarterTenant && !subscription" class="text-xs text-text-secondary mt-1">
+                {{ t('billing.starterPlanBadge') }}
               </p>
             </div>
           </div>
@@ -605,8 +635,20 @@ watch(() => currentTenant.value?.id, async () => {
 
         <!-- No subscription placeholder -->
         <div v-if="!subscription" class="px-6 py-8 text-center">
-          <p class="text-sm text-text-secondary mb-1">{{ t('billing.noActiveSubscription') }}</p>
-          <p class="text-xs text-text-secondary">{{ t('billing.choosePlanToStart') }}</p>
+          <p class="text-sm text-text-secondary mb-1">
+            {{ isStarterTenant ? t('billing.starterActiveMessage') : t('billing.noActiveSubscription') }}
+          </p>
+          <p class="text-xs text-text-secondary">
+            {{ isStarterTenant ? t('billing.starterUpgradeHint') : t('billing.choosePlanToStart') }}
+          </p>
+          <button
+            v-if="isStarterTenant && proPlan"
+            type="button"
+            class="mt-4 min-h-[40px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
+            @click="openModal"
+          >
+            {{ t('billing.upgradeToPro') }}
+          </button>
         </div>
 
         <!-- Alert: past_due -->
@@ -635,6 +677,60 @@ watch(() => currentTenant.value?.id, async () => {
 
       </div>
       <!-- ── End plan card ─────────────────────────────────────── -->
+
+      <div
+        v-if="isStarterTenant && starterPlan && proPlan"
+        class="bg-surface border border-border rounded-xl overflow-hidden"
+      >
+        <div class="px-6 py-5 border-b border-border bg-surface-secondary">
+          <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
+          <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
+        </div>
+        <div class="grid gap-4 p-6 lg:grid-cols-2">
+          <div class="rounded-xl border border-border p-5 bg-surface-secondary/40">
+            <p class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</p>
+            <p class="mt-2 text-sm text-text-secondary">{{ starterPlan.description || t('billing.starterPlanBadge') }}</p>
+            <ul class="mt-4 space-y-2">
+              <li
+                v-for="quota in starterQuotaRows"
+                :key="quota.key"
+                class="flex items-start gap-2 text-sm text-text-secondary"
+              >
+                <span class="text-status-success-text">✓</span>
+                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
+              </li>
+              <li class="flex items-start gap-2 text-sm text-text-secondary">
+                <span class="text-status-success-text">✓</span>
+                <span>{{ starterPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-primary/30 p-5 bg-primary/5">
+            <p class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</p>
+            <p class="mt-2 text-2xl font-bold text-text-primary">
+              {{ formatCOP(proPlan.price_annual) }}
+              <span class="text-sm font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li
+                v-for="quota in quotaRowsForPlan(proPlan)"
+                :key="quota.key"
+                class="flex items-start gap-2 text-sm text-text-secondary"
+              >
+                <span class="text-status-success-text">✓</span>
+                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
+              </li>
+            </ul>
+            <button
+              type="button"
+              class="mt-5 w-full min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
+              @click="openModal"
+            >
+              {{ t('billing.upgradeToPro') }}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Historial de pagos agrupado por mes -->
       <!-- Historial de pagos -->

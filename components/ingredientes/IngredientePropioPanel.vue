@@ -386,6 +386,11 @@
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {{ errors.general }}
           </p>
+          <BillingPlanUpgradeCta
+            v-if="showUpgradeCta"
+            :message="upgradeMessage"
+            compact
+          />
         </div>
 
         <!-- Footer -->
@@ -484,6 +489,7 @@ import {
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 
 const { t } = useI18n({ useScope: 'global' })
+const { showUpgradeCta, upgradeMessage, handleQuotaError, clearQuotaError } = useQuotaExceeded()
 
 interface Props {
   modelValue: boolean
@@ -805,6 +811,7 @@ async function submit() {
   if (!validate()) return
   saving.value = true
   errors.value = {}
+  clearQuotaError()
 
   try {
     const body: Record<string, any> = {
@@ -879,6 +886,10 @@ async function submit() {
       useAuthStore().clearAuth()
       useAccessStore().clear()
       await navigateTo('/auth/login')
+      return
+    }
+    if (handleQuotaError(err, { resource: 'tenant_ingredients' })) {
+      errors.value.general = upgradeMessage.value
       return
     }
     const detail = err?.data?.detail ?? err?.message ?? 'Error al guardar'

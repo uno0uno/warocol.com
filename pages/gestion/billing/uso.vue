@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import {
   BILLING_QUOTA_RESOURCE_CONFIG,
+  STARTER_DISPLAY_QUOTA_KEYS,
+  STARTER_PLAN_SLUG,
   useBilling,
+  type BillingQuotaKey,
   type BillingUsageMetric,
 } from '~/composables/useBilling'
 
@@ -17,16 +20,27 @@ definePageMeta({})
 const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('billing.remainingUsageTitle') })
 
-const { subscription, remainingUsage, isRefreshing, fetchBillingOverview } = useBilling()
+const { subscription, remainingUsage, isRefreshing, fetchBillingOverview, accessStatus, plans } = useBilling()
 
 const { currentTenant } = useTenantReactive()
+const accessStore = useAccessStore()
+const isStarterTenant = computed(() =>
+  accessStatus.value?.level === 'starter' || accessStore.planSlug === STARTER_PLAN_SLUG,
+)
+const starterPlan = computed(() => (plans.value ?? []).find(plan => plan.slug === STARTER_PLAN_SLUG) ?? null)
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 const isInitialLoading = computed(() =>
   !!currentTenant.value &&
   (
     subscription.value === undefined ||
-    (subscription.value !== null && remainingUsage.value === undefined)
+    accessStatus.value === undefined ||
+    plans.value === undefined ||
+    (
+      !isStarterTenant.value
+      && subscription.value !== null
+      && remainingUsage.value === undefined
+    )
   )
 )
 
@@ -57,13 +71,14 @@ interface UsageDisplayRow {
   resourceKey: string
   resource: string
   description: string
-  used: number
+  used: number | null
   limit: number | null
   remaining: number | null
-  percentage: number
+  percentage: number | null
   unit: string
   emptyMessage: string | null
   zeroLabel?: string
+  limitsOnly?: boolean
 }
 
 const hasLimitedQuota = (metric: UsageMetricValue) =>
@@ -87,10 +102,16 @@ const metricRemainingLabel = (metric: UsageMetricValue, zeroLabel = t('billing.n
   return (metric.remaining ?? 0).toLocaleString(localeCode.value)
 }
 
-const scanUsage = computed<BillingUsageMetric>(() =>
-  remainingUsage.value?.scan_usage ??
-  fallbackUsageMetric(subscription.value?.scans_used ?? 0, subscription.value?.scan_limit ?? 0)
-)
+const scanUsage = computed<BillingUsageMetric>(() => {
+  if (remainingUsage.value?.scan_usage) return remainingUsage.value.scan_usage
+  if (isStarterTenant.value && starterPlan.value && !remainingUsage.value) {
+    return {
+      ...fallbackUsageMetric(0, starterPlan.value.scan_limit),
+      used: 0,
+    }
+  }
+  return fallbackUsageMetric(subscription.value?.scans_used ?? 0, subscription.value?.scan_limit ?? 0)
+})
 const electronicInvoiceUsage = computed<BillingUsageMetric>(() =>
   remainingUsage.value?.electronic_invoice_usage ?? fallbackUsageMetric()
 )
@@ -113,6 +134,11 @@ const usageLabels = computed<Record<string, { resource: string; description: str
   active_qr_tables: { resource: t('billing.quotaQrTables'), description: t('billing.quotaQrTablesDescription'), unit: t('billing.unitQrTables') },
   completed_online_orders_per_month: { resource: t('billing.quotaOnlineOrders'), description: t('billing.quotaOnlineOrdersDescription'), unit: t('billing.unitOnlineOrders') },
   electronic_invoices_per_period: { resource: t('billing.quotaInvoices'), description: t('billing.quotaInvoicesDescription'), unit: t('billing.unitInvoices'), notIncluded: t('billing.notIncluded') },
+  menu_products: { resource: t('billing.quota.menu_products'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitProducts') },
+  tenant_ingredients: { resource: t('billing.quota.tenant_ingredients'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitIngredients') },
+  modifier_groups: { resource: t('billing.quota.modifier_groups'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitModifierGroups') },
+  recipe_lines_per_product: { resource: t('billing.quota.recipe_lines_per_product'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitRecipeLines') },
+  modifier_options_per_group: { resource: t('billing.quota.modifier_options_per_group'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitModifierOptions') },
 }))
 
 const quotaUsageRows = computed(() =>
@@ -144,6 +170,32 @@ const quotaUsageRows = computed(() =>
     .filter((row): row is UsageDisplayRow => row !== null)
 )
 
+const starterFallbackRows = computed(() => {
+  if (!isStarterTenant.value || !starterPlan.value || remainingUsage.value) return [] as UsageDisplayRow[]
+
+  return STARTER_DISPLAY_QUOTA_KEYS
+    .map((key: BillingQuotaKey): UsageDisplayRow | null => {
+      const rawLimit = starterPlan.value?.quotas?.[key]
+      if (rawLimit === null || rawLimit === undefined) return null
+      const limit = Number(rawLimit)
+      if (!Number.isFinite(limit) || limit <= 0) return null
+      const config = BILLING_QUOTA_RESOURCE_CONFIG[key]
+      return {
+        resourceKey: key,
+        resource: usageLabels.value[key]?.resource ?? config.label,
+        description: t('billing.starterUsageValidatedOnSave'),
+        used: null,
+        limit,
+        remaining: null,
+        percentage: null,
+        unit: usageLabels.value[key]?.unit ?? config.unit,
+        emptyMessage: null,
+        limitsOnly: true,
+      }
+    })
+    .filter((row): row is UsageDisplayRow => row !== null)
+})
+
 const columns = computed<Column[]>(() => [
   { key: 'resource', title: t('billing.resource'), sortable: false },
   { key: 'used', title: t('billing.used'), sortable: false, align: 'right' },
@@ -154,18 +206,33 @@ const columns = computed<Column[]>(() => [
 
 const tableData = computed(() => {
   const quotaRows = quotaUsageRows.value
+  const starterScanRow = isStarterTenant.value && !remainingUsage.value && starterPlan.value
+    ? {
+        resourceKey: 'scans',
+        resource: t('billing.scans'),
+        description: t('billing.starterUsageValidatedOnSave'),
+        used: null,
+        limit: starterPlan.value.scan_limit,
+        remaining: null,
+        percentage: null,
+        unit: t('billing.scansUnit'),
+        emptyMessage: null,
+        limitsOnly: true,
+      }
+    : {
+        resourceKey: 'scans',
+        resource: t('billing.scans'),
+        description: t('billing.currentPeriodQuota'),
+        used: scanUsage.value.used,
+        limit: scanUsage.value.limit,
+        remaining: scanUsage.value.remaining,
+        percentage: usagePercentage(scanUsage.value),
+        unit: t('billing.scansUnit'),
+        emptyMessage: null,
+      }
+
   return [
-    {
-      resourceKey: 'scans',
-      resource: t('billing.scans'),
-      description: t('billing.currentPeriodQuota'),
-      used: scanUsage.value.used,
-      limit: scanUsage.value.limit,
-      remaining: scanUsage.value.remaining,
-      percentage: usagePercentage(scanUsage.value),
-      unit: t('billing.scansUnit'),
-      emptyMessage: null,
-    },
+    starterScanRow,
     {
       resourceKey: 'electronic_invoices_per_period',
       resource: t('billing.quotaInvoices'),
@@ -181,6 +248,7 @@ const tableData = computed(() => {
       zeroLabel: t('billing.noPaidQuota'),
     },
     ...quotaRows.filter((row) => row.resourceKey !== 'electronic_invoices_per_period'),
+    ...starterFallbackRows.value,
   ]
 })
 
@@ -226,7 +294,9 @@ const periodLabel = computed(() => {
               <div class="grid grid-cols-4 gap-3 text-right flex-shrink-0">
                 <div>
                   <p class="text-xs text-text-secondary">{{ t('billing.used') }}</p>
-                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ item.used.toLocaleString(localeCode) }}</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">
+                    {{ item.limitsOnly || item.used === null ? '—' : item.used.toLocaleString(localeCode) }}
+                  </p>
                 </div>
                 <div>
                   <p class="text-xs text-text-secondary">{{ t('billing.availableShort') }}</p>
@@ -234,11 +304,15 @@ const periodLabel = computed(() => {
                 </div>
                 <div>
                   <p class="text-xs text-text-secondary">{{ t('billing.remainingShort') }}</p>
-                  <p class="text-sm font-semibold text-text-primary tabular-nums">{{ metricRemainingLabel(item, item.zeroLabel) }}</p>
+                  <p class="text-sm font-semibold text-text-primary tabular-nums">
+                    {{ item.limitsOnly || item.remaining === null ? '—' : metricRemainingLabel(item, item.zeroLabel) }}
+                  </p>
                 </div>
                 <div>
                   <p class="text-xs text-text-secondary">%</p>
-                  <p class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</p>
+                  <p class="text-sm text-text-secondary tabular-nums">
+                    {{ item.limitsOnly || item.percentage === null ? '—' : `${item.percentage}%` }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -252,7 +326,7 @@ const periodLabel = computed(() => {
 
           <template #cell-used="{ item }">
             <span class="text-sm font-semibold text-text-primary tabular-nums">
-              {{ item.used.toLocaleString(localeCode) }}
+              {{ item.limitsOnly || item.used === null ? '—' : item.used.toLocaleString(localeCode) }}
             </span>
           </template>
 
@@ -265,12 +339,14 @@ const periodLabel = computed(() => {
 
           <template #cell-remaining="{ item }">
             <span class="text-sm font-semibold text-text-primary tabular-nums">
-              {{ metricRemainingLabel(item, item.zeroLabel) }}
+              {{ item.limitsOnly || item.remaining === null ? '—' : metricRemainingLabel(item, item.zeroLabel) }}
             </span>
           </template>
 
           <template #cell-percentage="{ item }">
-            <span class="text-sm text-text-secondary tabular-nums">{{ item.percentage }}%</span>
+            <span class="text-sm text-text-secondary tabular-nums">
+              {{ item.limitsOnly || item.percentage === null ? '—' : `${item.percentage}%` }}
+            </span>
           </template>
         </UiResponsiveDataView>
       </div>

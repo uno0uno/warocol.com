@@ -226,7 +226,7 @@
 
 
         <!-- #753 / #812 — Kitchen ticket reprint actions stay compact; history lives in a panel. -->
-        <div v-if="comandasEnabled" class="grid grid-cols-2 gap-2">
+        <div v-if="showComandaPrintActions" class="grid grid-cols-2 gap-2">
           <button
             type="button"
             :disabled="!canPrintLatestComanda"
@@ -442,6 +442,7 @@ interface Props {
   tabTotal?: number
   tabItemsLoading?: Set<string>
   comandasEnabled?: boolean
+  comandaPrintEnabled?: boolean
   unfiredCount?: number
   canPrintLatestComanda?: boolean
   persistedComandasCount?: number
@@ -489,6 +490,7 @@ const props = withDefaults(defineProps<Props>(), {
   tabTotal: 0,
   tabItemsLoading: () => new Set(),
   comandasEnabled: false,
+  comandaPrintEnabled: undefined,
   unfiredCount: 0,
   canPrintLatestComanda: false,
   persistedComandasCount: 0,
@@ -504,6 +506,10 @@ const props = withDefaults(defineProps<Props>(), {
   showBarProcessOrder: false,
   fitHeight: false,
 })
+
+const showComandaPrintActions = computed(
+  () => props.comandaPrintEnabled ?? props.comandasEnabled,
+)
 
 const hasCartItems = computed(() => props.items.length > 0)
 const hasTabItems = computed(() => (props.tabItems?.length ?? 0) > 0)
