@@ -88,14 +88,14 @@
               Precio de venta <span class="text-destructive">*</span>
             </label>
             <div class="relative">
-              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
               <UiDecimalInput
                 id="product-quick-price"
                 v-model="form.price"
                 :min="0"
-                :precision="0"
+                :precision="currencyMinorUnits"
                 placeholder="2500"
-                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-8 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-12 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                 @input="clearError('price')"
               />
             </div>
@@ -107,14 +107,14 @@
               Mi costo del plato
             </label>
             <div class="relative">
-              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
               <UiDecimalInput
                 id="product-quick-costo"
                 v-model="form.costo_percibido"
                 :min="0"
-                :precision="0"
+                :precision="currencyMinorUnits"
                 placeholder="Opcional"
-                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-8 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                class="h-10 w-full rounded-lg border-2 border-border bg-background ps-12 pe-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               />
             </div>
             <p class="text-xs text-text-tertiary">
@@ -215,6 +215,7 @@ const emit = defineEmits<Emits>()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant } = useTenantReactive()
+const { currencyCode, currencyMinorUnits } = useFormatters()
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 

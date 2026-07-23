@@ -200,13 +200,13 @@
                     {{ t('menu.productos.salePriceRequired') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
                     <UiDecimalInput
                       v-model="form.price"
                       required
-                      :precision="0"
+                      :precision="currencyMinorUnits"
                       :min="0"
-                      class="input-base w-full ps-8 pe-4 py-2"
+                      class="input-base w-full ps-12 pe-4 py-2"
                       placeholder="15000"
                     />
                   </div>
@@ -217,12 +217,11 @@
                     {{ t('menu.productos.calculatedCost') }}
                   </label>
                   <div class="relative">
-                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                     <input
                       :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
                       type="text"
                       disabled
-                      class="input-base w-full ps-8 pe-4 py-2 bg-surface-secondary cursor-not-allowed"
+                      class="input-base w-full px-4 py-2 bg-surface-secondary cursor-not-allowed"
                       placeholder="0"
                     />
                   </div>
@@ -236,12 +235,12 @@
                     {{ t('menu.productos.dishCost') }} <span class="text-text-tertiary font-normal">{{ t('menu.recetas.form.optionalSuffix') }}</span>
                   </label>
                   <div class="relative">
-                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary">{{ currencyCode }}</span>
                     <UiDecimalInput
                       v-model="form.costo_percibido"
-                      :precision="0"
+                      :precision="currencyMinorUnits"
                       :min="0"
-                      class="input-base w-full ps-8 pe-4 py-2"
+                      class="input-base w-full ps-12 pe-4 py-2"
                       :placeholder="t('menu.productos.referenceInternal')"
                     />
                   </div>
@@ -738,7 +737,8 @@ definePageMeta({
   module: 'menu',
 })
 
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 useHead({ title: t('menu.recetas.form.createTitle') })
@@ -1377,12 +1377,4 @@ async function submitProduct() {
   }
 }
 
-function formatCurrency(value: number) {
-  if (!value) return '$0'
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
 </script>

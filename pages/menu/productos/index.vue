@@ -273,14 +273,14 @@
                   />
                   <div class="flex flex-wrap gap-2 mt-2">
                     <div class="relative w-fit shrink-0">
-                      <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
+                      <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] font-medium pointer-events-none">{{ currencyCode }}</span>
                       <label class="sr-only" :for="`mobile-price-${item.id}`">{{ t('menu.common.precio') }}</label>
                       <UiDecimalInput
                         :id="`mobile-price-${item.id}`"
                         v-model="ensureDraft(item).price"
                         :min="0"
-                        :precision="0"
-                        class="input-base input-money w-fit min-w-[7rem] max-w-none ps-5 pe-2 py-1.5 text-sm tabular-nums text-end"
+                        :precision="currencyMinorUnits"
+                        class="input-base input-money w-fit min-w-[7rem] max-w-none ps-9 pe-2 py-1.5 text-sm tabular-nums text-end"
                         :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                         :placeholder="t('menu.common.precio')"
                       />
@@ -291,7 +291,7 @@
                         :id="`mobile-costo-${item.id}`"
                         v-model="ensureDraft(item).costo_percibido"
                         :min="0"
-                        :precision="0"
+                        :precision="currencyMinorUnits"
                         class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm tabular-nums text-end"
                         :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                         :placeholder="t('menu.productos.miCosto')"
@@ -509,12 +509,12 @@
               class="relative w-fit ms-auto shrink-0"
               @click.stop
             >
-              <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
+              <span class="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] font-medium pointer-events-none">{{ currencyCode }}</span>
               <UiDecimalInput
                 v-model="ensureDraft(item).price"
                 :min="0"
-                :precision="0"
-                class="input-base input-money w-fit min-w-[7rem] max-w-none ps-5 pe-2 py-1.5 text-sm text-end tabular-nums"
+                :precision="currencyMinorUnits"
+                class="input-base input-money w-fit min-w-[7rem] max-w-none ps-9 pe-2 py-1.5 text-sm text-end tabular-nums"
                 :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                 :aria-label="`Precio de ${item.name}`"
                 placeholder="0"
@@ -542,7 +542,7 @@
                 <UiDecimalInput
                   v-model="ensureDraft(item).costo_percibido"
                   :min="0"
-                  :precision="0"
+                  :precision="currencyMinorUnits"
                   class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm text-end tabular-nums"
                   :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                   :aria-label="`Mi costo de ${item.name}`"
@@ -885,7 +885,8 @@ import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -1665,21 +1666,11 @@ const productosTableColumns = computed(() => {
   return cols
 })
 
-/** Ancho dinámico en `ch` para inputs de montos (incl. $ y padding). */
+/** Ancho dinámico en `ch` para inputs de montos (incl. código moneda y padding). */
 function moneyInputWidth(value: number | null | undefined): string {
   if (value == null || Number.isNaN(Number(value))) return '7rem'
   const digits = String(Math.abs(Math.round(Number(value)))).length
   return `${Math.max(11, digits + 5)}ch`
-}
-
-// Format currency
-const formatCurrency = (value: number) => {
-  if (!value) return '$0'
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
 }
 
 const {
