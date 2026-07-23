@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   DEFAULT_CURRENCY_CODE,
   DEFAULT_NUMBER_LOCALE,
+  coerceMoneyNumber,
   formatMoney,
   localeToNumberFormatTag,
   normalizeCurrencyCode,
@@ -44,7 +45,30 @@ describe('localeToNumberFormatTag', () => {
   })
 })
 
+describe('coerceMoneyNumber', () => {
+  it('accepts numbers and Decimal-like numeric strings', () => {
+    assert.equal(coerceMoneyNumber(120), 120)
+    assert.equal(coerceMoneyNumber('120.00'), 120)
+    assert.equal(coerceMoneyNumber(' 55.5 '), 55.5)
+    assert.equal(coerceMoneyNumber(null), null)
+    assert.equal(coerceMoneyNumber(''), null)
+    assert.equal(coerceMoneyNumber('abc'), null)
+    assert.equal(coerceMoneyNumber(Number.NaN), null)
+  })
+})
+
 describe('formatMoney', () => {
+  it('formats Decimal JSON strings like finite numbers', () => {
+    const expected = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(120)
+    assert.equal(formatMoney('120.00', { currency: 'MXN', locale: 'es', minorUnits: 2 }), expected)
+    assert.equal(formatMoney(120, { currency: 'MXN', locale: 'es', minorUnits: 2 }), expected)
+  })
+
   it('formats empty values as zero in the resolved currency', () => {
     const expectedCop = new Intl.NumberFormat('es-CO', {
       style: 'currency',
