@@ -33,8 +33,8 @@ out_of_scope:
 
 hints:
   entry: "pages/abastecimiento/proveedor/crear.vue validateForm; pages/abastecimiento/proveedores.vue pagination"
-  pattern: "pages/abastecimiento/ingredientes-propios.vue:369-410 ventas pagination; useTenantFinancialProfile country_code"
-  tests: "none (front UI); manual create without tax_id"
+  pattern: "pages/abastecimiento/ingredientes-propios.vue:369-410 ventas pagination; useTenantFinancialProfile country_code; taxIdLabel for all COUNTRY_CURRENCY_PAIRS"
+  tests: "none (front UI); manual create without tax_id; switch tenant country labels"
 
 risk:
   sensitive: false

@@ -1,9 +1,11 @@
 /**
- * Country-aware supplier tax/document labels.
- * CO → NIT/Cédula, MX → RFC/CURP, else → Tax ID / Documento fiscal.
+ * Country-aware supplier tax/document labels for WARO-supported countries
+ * (see api COUNTRY_CURRENCY_PAIRS).
+ *
+ * Names follow local fiscal identifiers used for suppliers/businesses.
  */
 export const useSupplierTaxIdLabel = () => {
-  const { t } = useI18n({ useScope: 'global' })
+  const { t, te } = useI18n({ useScope: 'global' })
   const { profile } = useTenantFinancialProfile()
 
   const countryCode = computed(() =>
@@ -11,18 +13,18 @@ export const useSupplierTaxIdLabel = () => {
   )
 
   const taxIdLabel = computed(() => {
-    if (countryCode.value === 'CO') {
-      return t('abastecimiento.common.taxIdLabel.co')
-    }
-    if (countryCode.value === 'MX') {
-      return t('abastecimiento.common.taxIdLabel.mx')
-    }
+    const key = countryCode.value.toLowerCase()
+    const path = `abastecimiento.common.taxIdLabel.${key}`
+    if (key && te(path)) return t(path)
     return t('abastecimiento.common.taxIdLabel.fallback')
   })
 
-  const taxIdPlaceholder = computed(() =>
-    t('abastecimiento.proveedorDetalle.taxIdPlaceholder'),
-  )
+  const taxIdPlaceholder = computed(() => {
+    const key = countryCode.value.toLowerCase()
+    const path = `abastecimiento.proveedorDetalle.taxIdPlaceholderByCountry.${key}`
+    if (key && te(path)) return t(path)
+    return t('abastecimiento.proveedorDetalle.taxIdPlaceholder')
+  })
 
   const noTaxIdLabel = computed(() => t('abastecimiento.proveedorDetalle.noTaxId'))
 
