@@ -42,7 +42,6 @@
                 type="text"
                 class="input-base w-full px-4 py-2"
                 :placeholder="taxIdPlaceholder"
-                @input="clearFieldError('name')"
               />
             </div>
 
