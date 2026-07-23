@@ -1277,6 +1277,28 @@ const { estimatedWaros, earnEligible: warosEarnEligible, isLoadingEstimate, syst
 const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
+
+/** Same rule as InvoiceEmailModal (#603 / #1763): Genérico walk-in must not lock receipt email. */
+function isGenericReceiptCustomer(customer: { phone_number?: string | null; email?: string | null } | null | undefined): boolean {
+  if (!customer) return true
+  const phone = customer.phone_number ?? ''
+  const email = (customer.email ?? '').toLowerCase()
+  return phone === '0000000000' || email.endsWith('@customer.temp')
+}
+
+function applyReceiptEmailAfterSale(customer: { phone_number?: string | null; email?: string | null } | null | undefined) {
+  emailSent.value = false
+  if (isGenericReceiptCustomer(customer)) {
+    receiptEmail.value = ''
+    emailFromProfile.value = false
+    return
+  }
+  const email = customer?.email ?? ''
+  const usable = email && !email.toLowerCase().endsWith('@customer.temp') ? email : ''
+  receiptEmail.value = usable
+  emailFromProfile.value = !!usable
+}
+
 const selectedCustomerDisplayName = computed(() =>
   isAnonymousCustomer.value
     ? t('pos.checkout.customerNoData')
@@ -1966,9 +1988,7 @@ const processOrder = async () => {
           : null,
         singleCashChange: isCashMethod.value ? cashChange.value : null,
       })
-      const customerEmail = selectedCustomer.value?.email ?? ''
-      receiptEmail.value = customerEmail && !customerEmail.endsWith('@customer.temp') ? customerEmail : ''
-      emailSent.value = false
+      applyReceiptEmailAfterSale(selectedCustomer.value)
       posStore.clearAll()
       if (session.isBar) {
         posStore.exitSession()
@@ -2004,9 +2024,6 @@ const processOrder = async () => {
     isProcessing.value = true
     processingError.value = ''
     if (!(await ensureWalletTenderCanPay(finalAmountToCollect.value))) return
-
-    const preEmail = selectedCustomer.value?.email ?? ''
-    const emailForReceipt = preEmail && !preEmail.endsWith('@customer.temp') ? preEmail : undefined
 
     const _discountAmtPos = discountAmount.value
     const _subtotalPos = cartTotal.value
@@ -2107,9 +2124,7 @@ const processOrder = async () => {
           : null,
         singleCashChange: isCashMethod.value ? cashChange.value : null,
       })
-      receiptEmail.value = emailForReceipt ?? ''
-      emailSent.value = false
-      emailFromProfile.value = !!emailForReceipt
+      applyReceiptEmailAfterSale(selectedCustomer.value)
       posStore.clearAll()
       // After a bar POS sale, drop the local session so /pos shows the floor
       // plan again (clearAll keeps bar sessions alive on purpose; here we
