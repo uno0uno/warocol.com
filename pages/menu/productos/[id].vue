@@ -440,7 +440,7 @@
                 :disabled="isConvertingToResale"
                 @click="confirmConvertToResale"
               >
-                <Icon v-if="isConvertingToResale" name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
+                <UiLoadingDots v-if="isConvertingToResale" size="8px" color="currentColor" class="me-2" />
                 {{ isConvertingToResale ? t('menu.productos.converting') : t('menu.productos.confirmConversion') }}
               </UiButton>
               <UiButton
@@ -772,7 +772,7 @@
               :disabled="isSubmitting"
             >
               <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 me-2" />
-              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 me-2 animate-spin" />
+              <UiLoadingDots v-else size="8px" color="currentColor" class="me-2" />
               {{ isSubmitting ? t('menu.productos.saving') : t('menu.productos.updateProduct') }}
             </UiButton>
 
