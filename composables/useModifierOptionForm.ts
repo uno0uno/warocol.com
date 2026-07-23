@@ -408,13 +408,3 @@ export function formatModifierOptionTypeLabel(type: string): string {
       return type
   }
 }
-
-import { formatMoney } from '~/utils/currencyDisplay'
-
-export function formatModifierCurrency(
-  value: number | null | undefined,
-  currency?: string | null,
-): string {
-  if (value == null) return '—'
-  return formatMoney(value, { currency })
-}
