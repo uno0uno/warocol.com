@@ -1,0 +1,41 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1750
+title: "fix(menu): align category ingredient rows UI with base recipes"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1750-category-ingredient-row-ui
+
+paths:
+  - components/ingredientes/WarehouseCategoryIngredientSelector.vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - components/ingredientes/WarehouseCategoryIngredientSelector.test.ts
+
+ac:
+  - Category prepared rows match Recetas base compact flex row (item, qty, unit, remove)
+  - Same layout on product create and edit
+  - Manual additional ingredient lines use the same compact row pattern
+  - Behavior unchanged for qty/unit/remove/submit
+  - No regressions on empty/loading/category header
+
+out_of_scope:
+  - API/cost logic
+  - Recipe base data model
+  - Warehouse category search behavior
+
+hints:
+  entry: "WarehouseCategoryIngredientSelector prepared rows + product manual ingredient rows"
+  pattern: "pages/menu/productos/[id].vue recipe_bases flex card row (~486)"
+  tests: "bunx vitest run components/ingredientes/WarehouseCategoryIngredientSelector.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""

@@ -98,15 +98,12 @@
                   v-for="row in group.rows"
                   :key="row.ingredient_id"
                   role="listitem"
-                  class="rounded-lg border border-border bg-background p-3 sm:p-4"
+                  class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
                 >
-                  <div class="grid grid-cols-1 gap-3 md:grid-cols-12">
-                    <div class="min-w-0 md:col-span-5">
-                      <p class="mb-1 text-xs font-medium text-text-secondary">
-                        {{ t('abastecimiento.glossary.warehouseItemOrResaleRequired') }}
-                      </p>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row gap-2">
                       <div
-                        class="input-base flex min-h-[38px] items-center gap-2 px-3 py-2 text-sm text-text-primary"
+                        class="input-base flex flex-1 min-h-[44px] min-w-0 items-center gap-2 px-3 py-2 text-sm text-text-primary"
                         :title="row.name"
                       >
                         <svg class="h-4 w-4 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -114,31 +111,21 @@
                         </svg>
                         <span class="truncate">{{ row.name }}</span>
                       </div>
-                    </div>
-
-                    <label class="md:col-span-3">
-                      <span class="mb-1 block text-xs font-medium text-text-secondary">
-                        {{ t('abastecimiento.glossary.categoryIngredientQuantity') }} *
-                      </span>
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        class="input-base w-full px-3 py-2 text-sm"
+                        class="input-base w-full sm:w-24 min-h-[44px] px-3 py-2 text-sm"
                         :value="row.quantity ?? ''"
+                        :aria-label="t('abastecimiento.glossary.categoryIngredientQuantity')"
                         @input="onQuantityInput(row.ingredient_id, $event)"
                       />
-                    </label>
-
-                    <label class="md:col-span-3">
-                      <span class="mb-1 block text-xs font-medium text-text-secondary">
-                        {{ t('abastecimiento.glossary.categoryIngredientUnit') }}
-                      </span>
                       <select
                         v-if="unitOptions"
                         :value="row.unit ?? ''"
                         :disabled="loadingUnitIds?.has(row.ingredient_id)"
-                        class="input-base w-full px-3 py-2 text-sm disabled:opacity-50"
+                        class="input-base w-full sm:w-36 min-h-[44px] px-3 py-2 text-sm disabled:opacity-50"
+                        :aria-label="t('abastecimiento.glossary.categoryIngredientUnit')"
                         @change="onUnitInput(row.ingredient_id, $event)"
                       >
                         <option
@@ -152,27 +139,24 @@
                       <input
                         v-else
                         type="text"
-                        class="input-base w-full px-3 py-2 text-sm"
+                        class="input-base w-full sm:w-36 min-h-[44px] px-3 py-2 text-sm"
                         :value="row.unit ?? ''"
+                        :aria-label="t('abastecimiento.glossary.categoryIngredientUnit')"
                         @input="onUnitInput(row.ingredient_id, $event)"
                       />
-                    </label>
-
-                    <div class="md:col-span-1">
-                      <span class="mb-1 hidden text-xs font-medium text-text-secondary md:block" aria-hidden="true">&nbsp;</span>
-                      <button
-                        type="button"
-                        class="flex min-h-[38px] w-full items-center justify-center rounded-lg text-destructive transition-colors hover:bg-destructive/5 focus:outline-none focus:ring-2 focus:ring-destructive/30"
-                        :aria-label="t('abastecimiento.glossary.removePreparedIngredient', { name: row.name })"
-                        :title="t('abastecimiento.glossary.removePreparedIngredientAction')"
-                        @click="removePreparedRow(row.ingredient_id)"
-                      >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7 18.133 19.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    class="min-h-[44px] min-w-[44px] p-2 bg-destructive/10 text-destructive hover:bg-destructive/15 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                    :aria-label="t('abastecimiento.glossary.removePreparedIngredient', { name: row.name })"
+                    :title="t('abastecimiento.glossary.removePreparedIngredientAction')"
+                    @click="removePreparedRow(row.ingredient_id)"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7 18.133 19.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </section>
