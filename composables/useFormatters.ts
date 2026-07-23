@@ -1,3 +1,4 @@
+import { computed } from 'vue'
 import { formatMoney, normalizeCurrencyCode, type FormatMoneyOptions } from '~/utils/currencyDisplay'
 import { toNumberLocaleTag } from '~/utils/appLocales'
 import {
@@ -6,6 +7,9 @@ import {
   normalizeUiLocale,
   type UiLocale,
 } from '~/utils/parseLocaleDecimal'
+import { useTenantTimezone } from '~/composables/useTenantTimezone'
+import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
+import { useTenantsStore } from '~/stores/tenants'
 
 export const useFormatters = () => {
   const { timezone, dateAtNoon } = useTenantTimezone()
