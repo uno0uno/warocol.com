@@ -124,7 +124,8 @@
       "dishCost": "تكلفة طبقي",
       "operationalCostHelp": "التكلفة التشغيلية التي تحددها؛ لا يغيرها النظام.",
       "realMargin": "الهامش الفعلي",
-      "operatingMargin": "الهامش التشغيلي",
+      "operatingMargin": "الهامش التشغيلي"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
       "taxCategory": "فئة الضريبة",
       "foodBeverage": "طعام / شراب",
       "incVatRates": "INC 8% أو IVA 19%",

@@ -125,6 +125,7 @@
       ,"operationalCostHelp": "Operating cost you define; the system does not change it."
       ,"realMargin": "Real margin"
       ,"operatingMargin": "Operating margin"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin’s cost."
       ,"taxCategory": "Tax category"
       ,"foodBeverage": "Food / Beverage"
       ,"incVatRates": "INC 8% or VAT 19%"

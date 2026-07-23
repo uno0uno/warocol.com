@@ -124,7 +124,8 @@
       "dishCost": "我的菜品成本",
       "operationalCostHelp": "您定义的运营成本；系统不会更改。",
       "realMargin": "实际利润",
-      "operatingMargin": "运营利润",
+      "operatingMargin": "运营利润"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
       "taxCategory": "税费分类",
       "foodBeverage": "食品 / 饮料",
       "incVatRates": "INC 8% 或 IVA 19%",

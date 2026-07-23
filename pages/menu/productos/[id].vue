@@ -239,35 +239,42 @@
             <!-- Dual margins -->
             <div
               v-if="form.price > 0 && (displayRealCost !== null || form.costo_percibido)"
-              class="mt-4 p-4 bg-surface-secondary rounded-lg space-y-3"
+              class="mt-4 p-3.5 bg-surface-secondary/70 rounded-lg border border-border/60 space-y-2.5"
             >
-              <div v-if="displayRealCost !== null && displayRealCost > 0" class="flex items-center justify-between">
-                <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.realMargin') }}</span>
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-text-primary">
+              <p class="text-xs text-text-secondary leading-snug">
+                {{ t('menu.productos.marginsHelp') }}
+              </p>
+              <div v-if="displayRealCost !== null && displayRealCost > 0" class="flex items-center justify-between gap-3">
+                <span class="text-xs font-medium text-text-secondary">{{ t('menu.productos.realMargin') }}</span>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-sm font-semibold text-text-primary tabular-nums">
                     {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
                   </span>
                   <UiStatusBadge
                     v-if="marginRealPct(marginPreview) !== null"
-                    :label="`${marginRealPct(marginPreview)!.toFixed(1)}%`"
+                    size="sm"
                     :variant="(marginRealPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
-                  />
+                  >
+                    {{ marginRealPct(marginPreview)!.toFixed(1) }}%
+                  </UiStatusBadge>
                 </div>
               </div>
               <div
                 v-if="form.costo_percibido != null && form.costo_percibido > 0"
-                class="flex items-center justify-between"
+                class="flex items-center justify-between gap-3"
               >
-                <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.operatingMargin') }}</span>
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-text-primary">
+                <span class="text-xs font-medium text-text-secondary">{{ t('menu.productos.operatingMargin') }}</span>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-sm font-semibold text-text-primary tabular-nums">
                     {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
                   </span>
                   <UiStatusBadge
                     v-if="marginOperativoPct(marginPreview) !== null"
-                    :label="`${marginOperativoPct(marginPreview)!.toFixed(1)}%`"
-                    variant="secondary"
-                  />
+                    size="sm"
+                    :variant="(marginOperativoPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
+                  >
+                    {{ marginOperativoPct(marginPreview)!.toFixed(1) }}%
+                  </UiStatusBadge>
                 </div>
               </div>
             </div>
@@ -337,15 +344,13 @@
                 <UiLoadingDots size="8px" color="var(--color-primary)" />
                 {{ WAREHOUSE_COPY.linkedWarehouseItemLoading }}
               </div>
-              <NuxtLink
+              <p
                 v-else-if="linkedResaleIngredient"
-                to="/abastecimiento/ingredientes-propios"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-primary"
               >
-                <Icon name="heroicons:cube" class="h-4 w-4" />
-                {{ linkedResaleIngredient.name }}
-                <Icon name="heroicons:arrow-top-end-on-square" class="h-3.5 w-3.5" />
-              </NuxtLink>
+                <Icon name="heroicons:cube" class="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span class="min-w-0 truncate">{{ linkedResaleIngredient.name }}</span>
+              </p>
               <p v-else class="text-xs text-text-tertiary">
                 {{ WAREHOUSE_COPY.linkedWarehouseItemNotFoundCatalog }}
               </p>

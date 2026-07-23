@@ -125,6 +125,7 @@
       ,"operationalCostHelp": "Costo operativo que tú defines; no lo cambia el sistema."
       ,"realMargin": "Margen real"
       ,"operatingMargin": "Margen operativo"
+      ,"marginsHelp": "Real = compras/bodega. Operativo = mi costo. El % usa el costo de cada margen."
       ,"taxCategory": "Categoría de impuesto"
       ,"foodBeverage": "Alimento / Bebida"
       ,"incVatRates": "INC 8% o IVA 19%"

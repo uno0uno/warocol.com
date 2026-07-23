@@ -40,7 +40,9 @@ import {
   MoonIcon,
   TrashIcon,
   ShoppingCartIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  CubeIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/outline'
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/vue/24/solid'
 
@@ -95,7 +97,9 @@ const iconComponent = computed(() => {
     'heroicons:moon': MoonIcon,
     'heroicons:trash': TrashIcon,
     'heroicons:shopping-cart': ShoppingCartIcon,
-    'heroicons:pencil-square': PencilSquareIcon
+    'heroicons:pencil-square': PencilSquareIcon,
+    'heroicons:cube': CubeIcon,
+    'heroicons:arrow-top-right-on-square': ArrowTopRightOnSquareIcon
   }
 
   return iconMap[props.name] || 'div'

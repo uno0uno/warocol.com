@@ -124,7 +124,8 @@
       "dishCost": "Meu custo do prato",
       "operationalCostHelp": "Custo operacional que você define; o sistema não o altera.",
       "realMargin": "Margem real",
-      "operatingMargin": "Margem operacional",
+      "operatingMargin": "Margem operacional"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
       "taxCategory": "Categoria de imposto",
       "foodBeverage": "Alimento / Bebida",
       "incVatRates": "INC 8% ou IVA 19%",

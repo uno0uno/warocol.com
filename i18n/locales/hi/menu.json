@@ -124,7 +124,8 @@
       "dishCost": "मेरे व्यंजन की लागत",
       "operationalCostHelp": "परिचालन लागत जिसे आप परिभाषित करते हैं; सिस्टम इसे नहीं बदलता है।",
       "realMargin": "वास्तविक मार्जिन",
-      "operatingMargin": "परिचालन मार्जिन",
+      "operatingMargin": "परिचालन मार्जिन"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
       "taxCategory": "कर श्रेणी",
       "foodBeverage": "खाद्य / पेय",
       "incVatRates": "INC 8% या IVA 19%",

@@ -254,33 +254,40 @@
                 v-if="form.price > 0 && calculatedCost !== null"
                 class="mt-4 p-3.5 bg-surface-secondary/70 rounded-lg border border-border/60 space-y-2.5"
               >
+                <p class="text-xs text-text-secondary leading-snug">
+                  {{ t('menu.productos.marginsHelp') }}
+                </p>
                 <div v-if="calculatedCost > 0" class="flex items-center justify-between gap-3">
-                  <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.realMargin') }}</span>
-                  <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-text-secondary">{{ t('menu.productos.realMargin') }}</span>
+                  <div class="flex items-center gap-2 min-w-0">
                     <span class="text-sm font-semibold text-text-primary tabular-nums">
                       {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
                     </span>
                     <UiStatusBadge
                       v-if="marginRealPct(marginPreview) !== null"
-                      :label="`${marginRealPct(marginPreview)!.toFixed(1)}%`"
+                      size="sm"
                       :variant="(marginRealPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
-                    />
+                    >
+                      {{ marginRealPct(marginPreview)!.toFixed(1) }}%
+                    </UiStatusBadge>
                   </div>
                 </div>
                 <div
                   v-if="form.costo_percibido != null && form.costo_percibido > 0"
                   class="flex items-center justify-between gap-3"
                 >
-                  <span class="text-sm font-medium text-text-primary">{{ t('menu.productos.operatingMargin') }}</span>
-                  <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-text-secondary">{{ t('menu.productos.operatingMargin') }}</span>
+                  <div class="flex items-center gap-2 min-w-0">
                     <span class="text-sm font-semibold text-text-primary tabular-nums">
                       {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
                     </span>
                     <UiStatusBadge
                       v-if="marginOperativoPct(marginPreview) !== null"
-                      :label="`${marginOperativoPct(marginPreview)!.toFixed(1)}%`"
-                      variant="secondary"
-                    />
+                      size="sm"
+                      :variant="(marginOperativoPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
+                    >
+                      {{ marginOperativoPct(marginPreview)!.toFixed(1) }}%
+                    </UiStatusBadge>
                   </div>
                 </div>
               </div>

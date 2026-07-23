@@ -124,7 +124,8 @@
       "dishCost": "Meine Gerichtskosten",
       "operationalCostHelp": "Betriebskosten, die Sie definieren; das System ändert sie nicht.",
       "realMargin": "Reale Marge",
-      "operatingMargin": "Betriebsmarge",
+      "operatingMargin": "Betriebsmarge"
+      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
       "taxCategory": "Steuerkategorie",
       "foodBeverage": "Speise / Getränk",
       "incVatRates": "INC 8% oder IVA 19%",
