@@ -260,6 +260,7 @@ import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { formatDomainQuantity, normalizeDomainNumber } from '~/utils/domainNumberFormat'
+import { recipeIngredientLineCost } from '~/utils/recipeIngredientLineCost'
 const { t } = useI18n()
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { formatCurrency } = useFormatters()
@@ -353,6 +354,14 @@ const recetas = computed(() => {
     ingredientes: recipeBase.ingredients?.map((ing: any) => {
       const costoUnitario = Number(ing.costo_unitario || 0)
       const cantidad = normalizeDomainNumber(ing.base_quantity, 6)
+      const costoTotal = recipeIngredientLineCost({
+        costo_linea: ing.costo_linea,
+        base_quantity: ing.base_quantity,
+        unit: ing.unit,
+        stock_unit: ing.stock_unit,
+        unit_weight_gr: ing.unit_weight_gr,
+        costo_unitario: costoUnitario,
+      })
       return {
         ingrediente_id: ing.ingredient_id,
         ingrediente_name: ing.ingredient_name,
@@ -360,12 +369,19 @@ const recetas = computed(() => {
         unidad: ing.unit,
         notes: ing.notes,
         costo_unitario: costoUnitario,
-        costo_total: costoUnitario * cantidad,
+        costo_total: costoTotal,
         controla_inventario: ing.controla_inventario || false
       }
     }) || [],
     costo_total: recipeBase.ingredients?.reduce((total: number, ing: any) => {
-      return total + (Number(ing.costo_unitario || 0) * Number(ing.base_quantity || 0))
+      return total + recipeIngredientLineCost({
+        costo_linea: ing.costo_linea,
+        base_quantity: ing.base_quantity,
+        unit: ing.unit,
+        stock_unit: ing.stock_unit,
+        unit_weight_gr: ing.unit_weight_gr,
+        costo_unitario: ing.costo_unitario,
+      })
     }, 0) || 0,
     rendimiento: 1
   }))
