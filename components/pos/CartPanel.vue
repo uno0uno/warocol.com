@@ -387,11 +387,12 @@
 </template>
 
 <script setup lang="ts">
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 import { usePOSStore } from '~/stores/usePOSStore'
 import { storeToRefs } from 'pinia'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 
+const { formatCurrency } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
@@ -590,14 +591,6 @@ const displayItemCount = computed(() =>
 const onServedByChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
   emit('update:served-by', target.value || null)
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
 }
 
 function tabLineStatus(item: TabItem): string {

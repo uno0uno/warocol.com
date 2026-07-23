@@ -11,6 +11,11 @@ paths:
   - pages/pos/index.vue
   - pages/pos/checkout.vue
   - pages/pos/producto/[id].vue
+  - components/pos/ProductCard.vue
+  - components/pos/CartPanel.vue
+  - components/pos/CartItem.vue
+  - components/pos/MesasFloorPlan.vue
+  - components/pos/TableSessionAdvancePanel.vue
 
 ac:
   - formatCurrencyPOS / POS totals use tenant base_currency_code

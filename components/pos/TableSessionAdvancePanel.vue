@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 import { computed, ref, watch } from 'vue'
 import {
   BanknotesIcon,
@@ -78,8 +78,7 @@ const suggestedAmount = computed(() => {
   return remaining > 0 ? remaining : Number(state.amount) || 0
 })
 
-const formatCurrency = (value: number) =>
-  `$${Math.round(Number(value) || 0).toLocaleString(toNumberLocaleTag(locale.value))}`
+const { formatCurrency } = useFormatters()
 
 const methodLabel = (advance: SessionAdvance) => {
   const group = paymentGroups.value.find(g => g.slug === advance.payment_method)

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const { t, locale } = useI18n({ useScope: 'global' })
-import { toNumberLocaleTag } from '~/utils/appLocales'
+const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
 
+const { formatCurrency } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
@@ -161,9 +161,6 @@ const formatDuration = (openedAt: string): string => {
   const m = totalMins % 60
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
-
-const formatCurrency = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString(toNumberLocaleTag(normalizeUiLocale(locale.value)))}`
 
 const minimumConsumptionLabel = (table: any): string | null => {
   const state = table.session?.minimum_consumption
