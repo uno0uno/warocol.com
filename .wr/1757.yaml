@@ -1,0 +1,47 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1757
+title: "Suppliers: optional tax ID/contact fields, country-aware labels, match ventas pagination"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1757-supplier-optional-taxid-pagination
+
+paths:
+  - pages/abastecimiento/proveedores.vue
+  - pages/abastecimiento/proveedor/crear.vue
+  - pages/abastecimiento/proveedor/[id].vue
+  - components/purchases/QuickSupplierModal.vue
+  - composables/useSupplierTaxIdLabel.ts
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+  - i18n/locales/{ar,de,fr,hi,pt,zh}/abastecimiento.json
+
+ac:
+  - Creating/editing a supplier requires name only; tax ID, email, and phone can be empty
+  - Form UI: optional fields have no asterisk; required fields keep *
+  - Tax/document label is country-aware (CO NIT/Cédula, MX RFC/CURP, fallback Tax ID / Documento fiscal)
+  - List pagination on /abastecimiento/proveedores matches /ventas/ordenes
+  - Empty tax ID / email / phone render cleanly (e.g. —)
+  - Quick-create supplier modal uses same optional rules and country-aware label
+
+out_of_scope:
+  - Country-specific fiscal validation
+  - E-invoicing rules
+  - Renaming tax_id API field
+  - Pagination on other abastecimiento pages
+
+hints:
+  entry: "pages/abastecimiento/proveedor/crear.vue validateForm; pages/abastecimiento/proveedores.vue pagination"
+  pattern: "pages/abastecimiento/ingredientes-propios.vue:369-410 ventas pagination; useTenantFinancialProfile country_code; taxIdLabel for all COUNTRY_CURRENCY_PAIRS"
+  tests: "none (front UI); manual create without tax_id; switch tenant country labels"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""

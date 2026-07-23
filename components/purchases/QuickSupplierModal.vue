@@ -1,52 +1,52 @@
 <template>
-  <UiModal v-model="isOpen" title="Crear Proveedor">
+  <UiModal v-model="isOpen" :title="t('abastecimiento.proveedorDetalle.createSupplier')">
     <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">
-          Nombre del Proveedor *
+          {{ t('abastecimiento.proveedorDetalle.supplierNameRequired') }}
         </label>
         <input
           v-model="form.name"
           type="text"
           required
           class="input-base w-full px-4 py-2"
-          placeholder="Ej: Distribuidora XYZ"
+          :placeholder="t('abastecimiento.proveedorDetalle.namePlaceholder')"
         />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">
-          NIT/Cedula
+          {{ taxIdLabel }}
         </label>
         <input
           v-model="form.tax_id"
           type="text"
           class="input-base w-full px-4 py-2"
-          placeholder="Ej: 900123456-7"
+          :placeholder="taxIdPlaceholder"
         />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">
-          Telefono
+          {{ t('abastecimiento.common.telefono') }}
         </label>
         <input
           v-model="form.phone"
           type="tel"
           class="input-base w-full px-4 py-2"
-          placeholder="+57 300 123 4567"
+          :placeholder="t('abastecimiento.proveedorDetalle.phonePlaceholder')"
         />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">
-          Email
+          {{ t('abastecimiento.common.email') }}
         </label>
         <input
           v-model="form.email"
           type="email"
           class="input-base w-full px-4 py-2"
-          placeholder="proveedor@email.com"
+          :placeholder="t('abastecimiento.proveedorDetalle.emailPlaceholder')"
         />
       </div>
     </form>
@@ -58,14 +58,14 @@
           @click="closeModal"
           class="flex-1 py-2 border border-border rounded-lg hover:bg-surface-secondary transition-colors font-medium"
         >
-          Cancelar
+          {{ t('abastecimiento.proveedorDetalle.cancel') }}
         </button>
         <button
           @click="handleSubmit"
           :disabled="isSubmitting || !form.name"
           class="flex-1 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
         >
-          {{ isSubmitting ? 'Creando...' : 'Crear Proveedor' }}
+          {{ isSubmitting ? t('abastecimiento.proveedorDetalle.creating') : t('abastecimiento.proveedorDetalle.createSupplier') }}
         </button>
       </div>
     </template>
@@ -73,6 +73,11 @@
 </template>
 
 <script setup lang="ts">
+import {
+  useSupplierTaxIdLabel,
+  normalizeOptionalSupplierFields,
+} from '~/composables/useSupplierTaxIdLabel'
+
 interface Props {
   modelValue: boolean
 }
@@ -84,6 +89,8 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n({ useScope: 'global' })
+const { taxIdLabel, taxIdPlaceholder } = useSupplierTaxIdLabel()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -119,7 +126,7 @@ const handleSubmit = async () => {
   try {
     const response = await $fetch('/api/suppliers/providers', {
       method: 'POST',
-      body: form
+      body: normalizeOptionalSupplierFields({ ...form })
     })
 
     if (response.data) {
@@ -128,7 +135,7 @@ const handleSubmit = async () => {
     }
   } catch (error: any) {
     console.error('Error creating supplier:', error)
-    alert(error.response?._data?.detail || 'Error al crear el proveedor')
+    alert(error.response?._data?.detail || t('abastecimiento.proveedorDetalle.createError'))
   } finally {
     isSubmitting.value = false
   }
