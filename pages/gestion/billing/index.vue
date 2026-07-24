@@ -752,7 +752,7 @@ watch(() => currentTenant.value?.id, async () => {
         v-if="isStarterTenant && starterPlan && proPlan"
         class="bg-surface border border-border rounded-xl overflow-hidden"
       >
-        <div class="px-6 py-5 border-b border-border bg-surface-secondary">
+        <div class="px-6 py-5 border-b border-border bg-[hsl(var(--titan-150))]">
           <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
