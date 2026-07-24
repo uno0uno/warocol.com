@@ -58,14 +58,14 @@ describe('tenant financial-profile helpers', () => {
     assert.deepEqual(getCompatibleCurrencyCodes(response.catalog, 'XX'), [])
   })
 
-  it('submits only eligible, changed and compatible pairs', () => {
+  it('never submits country/currency changes after hard lock', () => {
     const unchanged = { country_code: 'CO', base_currency_code: 'COP' }
     const panama = { country_code: 'PA', base_currency_code: 'PAB' }
     const invalid = { country_code: 'PA', base_currency_code: 'COP' }
 
     assert.equal(hasFinancialProfileChanges(response.profile, unchanged), false)
     assert.equal(canSubmitFinancialProfile(response, unchanged), false)
-    assert.equal(canSubmitFinancialProfile(response, panama), true)
+    assert.equal(canSubmitFinancialProfile(response, panama), false)
     assert.equal(canSubmitFinancialProfile(response, invalid), false)
     assert.equal(canSubmitFinancialProfile({
       ...response,
