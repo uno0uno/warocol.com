@@ -80,7 +80,8 @@ const stockCopy = computed(() => ({
 }))
 
 const stockStatusOptions = computed(() => [
-  { value: 'critical', label: t('abastecimiento.common.critico'), variant: 'destructive' },
+  { value: 'negative', label: t('abastecimiento.common.critico'), variant: 'destructive' },
+  { value: 'zero', label: t('abastecimiento.common.sinStock'), variant: 'secondary' },
   { value: 'low', label: t('abastecimiento.common.bajo'), variant: 'warning' },
   { value: 'ok', label: t('abastecimiento.common.normal'), variant: 'success' },
 ])

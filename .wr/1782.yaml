@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1782
+title: "Improve abastecimiento stock list: show zero-stock items and named status badges"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1782-stock-zero-badges
+
+paths:
+  - ../api_warocol.com/app/services/inventory_service.py
+  - ../api_warocol.com/app/services/ingredients_service.py
+  - ../api_warocol.com/app/routers/inventory.py
+  - ../api_warocol.com/tests/test_inventory.py
+  - components/inventario/StockInventoryView.vue
+  - pages/abastecimiento/stock.vue
+  - pages/inventario/stock.vue
+  - i18n/locales/*/abastecimiento.json
+
+ac:
+  - Stock list includes items with stock 0
+  - Zero-stock rows show 0 and named badge Sin stock
+  - Estado badges use UiStatusBadge value+format=text like Ventas
+  - Row adjust remains available for zero-stock items
+  - New warehouse articles get tenant_inventory at 0 and appear immediately
+  - Shared inventario/stock stays consistent
+
+out_of_scope:
+  - Redesign of adjustment panel
+  - Movements history
+  - Backfill migration for legacy ingredients without inventory rows
+
+hints:
+  entry: "GET /inventory/stock + InventarioStockInventoryView"
+  pattern: "inventory_service.py: remove current_stock != 0; CASE zero; StockInventoryView cell-status like ventas ordenes"
+  tests: "cd api_warocol.com && ./venv/bin/pytest tests/test_inventory.py::test_inventory_stock_includes_zero_and_filters_zero_status tests/test_inventory.py::test_inventory_stock_core_uses_explicit_tenant_without_session -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge API then front; smoke /abastecimiento/stock"

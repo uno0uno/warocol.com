@@ -218,8 +218,10 @@
 
         <template #cell-status="{ value }">
           <UiStatusBadge
-            :label="getStatusLabel(value)"
+            :value="getStatusLabel(value)"
             :variant="getStockVariant(value)"
+            size="sm"
+            format="text"
           />
         </template>
 

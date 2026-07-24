@@ -48,6 +48,7 @@
       "critico": "गंभीर",
       "bajo": "कम",
       "normal": "सामान्य",
+      "sinStock": "स्टॉक नहीं",
       "compra": "खरीद",
       "compras": "खरीदें",
       "consumo": "खपत",
