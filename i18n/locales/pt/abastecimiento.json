@@ -201,7 +201,11 @@
         "transfer": "Transferência interna",
         "supplier_return": "Devolução ao fornecedor",
         "other": "Outro"
-      }
+      },
+      "sinMax": "Sem máx",
+      "sinPct": "Sem %",
+      "sinCosto": "Sem custo",
+      "sinCategoria": "Sem categoria"
     },
     "movimientos": {
       "empty": "Nenhum movimento registrado",

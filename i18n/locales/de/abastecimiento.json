@@ -201,7 +201,11 @@
         "transfer": "Interne Umlagerung",
         "supplier_return": "Lieferantenrücksendung",
         "other": "Sonstiges"
-      }
+      },
+      "sinMax": "Kein Max",
+      "sinPct": "Kein %",
+      "sinCosto": "Kein Kosten",
+      "sinCategoria": "Keine Kategorie"
     },
     "movimientos": {
       "empty": "Keine Bewegungen erfasst",

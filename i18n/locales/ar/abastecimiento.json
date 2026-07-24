@@ -201,7 +201,11 @@
         "transfer": "تحويل داخلي",
         "supplier_return": "إرجاع إلى المورد",
         "other": "أخرى"
-      }
+      },
+      "sinMax": "بلا حد",
+      "sinPct": "بلا %",
+      "sinCosto": "بلا تكلفة",
+      "sinCategoria": "بلا فئة"
     },
     "movimientos": {
       "empty": "لا توجد حركات مسجلة",
