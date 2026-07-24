@@ -20,6 +20,7 @@
       :end-item="endItem"
       :can-go-previous="canGoPrevious"
       :can-go-next="canGoNext"
+      :page-size="itemsPerPage"
       :has-active-filters="hasActiveFilters"
       :categories="categories"
       :units="units"
@@ -37,7 +38,6 @@
       @sort="handleSort"
       @previous-page="previousPage"
       @next-page="nextPage"
-      @go-to-page="goToPage"
       @adjust="openAdjustment"
     />
 
@@ -66,7 +66,7 @@ const categoryFilter = ref('')
 const statusFilter = ref('all')
 const unitFilter = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(50)
+const itemsPerPage = ref(20)
 
 const adjustmentOpen = ref(false)
 const adjustmentPreselect = ref<StockAdjustmentPreselect | null>(null)
@@ -179,9 +179,6 @@ const previousPage = () => {
 }
 const nextPage = () => {
   if (canGoNext.value) currentPage.value++
-}
-const goToPage = (page: number) => {
-  currentPage.value = Math.max(1, Math.min(page, totalPages.value || 1))
 }
 
 const updateStatusFilter = (value: string) => {

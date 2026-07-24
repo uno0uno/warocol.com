@@ -207,9 +207,9 @@
         </template>
 
         <template #cell-stock_percentage="{ row }">
-          <div v-if="row.maximum_stock" class="w-full bg-surface-secondary rounded-full h-2">
+          <div v-if="row.maximum_stock" class="w-full bg-surface-secondary rounded-full h-1.5">
             <div
-              class="h-2 rounded-full transition-all"
+              class="h-1.5 rounded-full transition-all"
               :class="{
                 'bg-destructive': getStockVariant(row.status) === 'destructive',
                 'bg-warning': getStockVariant(row.status) === 'warning',
@@ -259,7 +259,7 @@
               type="button"
               :title="t('abastecimiento.stock.viewMovements')"
               :aria-label="t('abastecimiento.stock.viewMovements')"
-              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
+              class="text-text-secondary hover:text-primary transition-colors"
               @click="navigateTo(`${movementsPath}?ingredient_id=${row.ingredient_id}`)"
             >
               <ClipboardDocumentListIcon class="h-4 w-4" />
@@ -268,7 +268,7 @@
               type="button"
               :title="t('abastecimiento.stock.adjustAction')"
               :aria-label="t('abastecimiento.stock.adjustAction')"
-              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
+              class="text-text-secondary hover:text-primary transition-colors"
               @click="emitAdjust(row)"
             >
               <AdjustmentsHorizontalIcon class="h-4 w-4" />
@@ -277,51 +277,80 @@
         </template>
     </UiResponsiveDataView>
 
+    <!-- Pagination (same pattern as abastecimiento/compras-directas) -->
     <div
-      v-if="totalPages > 1"
-      class="mt-4 flex items-center justify-between gap-3 px-1 py-2"
+      v-if="total > pageSize"
+      class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg"
     >
-      <p class="text-sm text-text-secondary">
-        {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total }) }}
-      </p>
-      <div class="flex items-center gap-1">
+      <div class="flex-1 flex justify-between sm:hidden">
         <button
           type="button"
           :disabled="!canGoPrevious"
-          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          :aria-label="t('ventas.common.primeraPagina')"
-          @click="$emit('go-to-page', 1)"
-        >
-          <ChevronDoubleLeftIcon class="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          :disabled="!canGoPrevious"
-          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          :aria-label="t('ventas.common.paginaAnterior')"
+          :class="[
+            'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+            canGoPrevious
+              ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+              : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+          ]"
           @click="$emit('previous-page')"
         >
-          <ChevronLeftIcon class="h-4 w-4" />
+          {{ t('abastecimiento.comprasDirectas.previous') }}
         </button>
-        <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
         <button
           type="button"
           :disabled="!canGoNext"
-          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          :aria-label="t('ventas.common.paginaSiguiente')"
+          :class="[
+            'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+            canGoNext
+              ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+              : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+          ]"
           @click="$emit('next-page')"
         >
-          <ChevronRightIcon class="h-4 w-4" />
+          {{ t('abastecimiento.comprasDirectas.next') }}
         </button>
-        <button
-          type="button"
-          :disabled="!canGoNext"
-          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          :aria-label="t('ventas.common.ultimaPagina')"
-          @click="$emit('go-to-page', totalPages)"
-        >
-          <ChevronDoubleRightIcon class="h-4 w-4" />
-        </button>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-text-secondary">
+            {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total }) }}
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            <button
+              type="button"
+              :disabled="!canGoPrevious"
+              :class="[
+                'relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border text-sm font-medium',
+                canGoPrevious
+                  ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                  : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+              ]"
+              :aria-label="t('abastecimiento.comprasDirectas.previous')"
+              @click="$emit('previous-page')"
+            >
+              <ChevronLeftIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+            <span class="relative inline-flex items-center px-4 py-2 border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text">
+              {{ currentPage }} / {{ totalPages }}
+            </span>
+            <button
+              type="button"
+              :disabled="!canGoNext"
+              :class="[
+                'relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border text-sm font-medium',
+                canGoNext
+                  ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                  : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+              ]"
+              :aria-label="t('abastecimiento.comprasDirectas.next')"
+              @click="$emit('next-page')"
+            >
+              <ChevronRightIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </nav>
+        </div>
       </div>
     </div>
   </div>
@@ -330,8 +359,6 @@
 <script setup lang="ts">
 import {
   AdjustmentsHorizontalIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClipboardDocumentListIcon,
@@ -388,6 +415,7 @@ const props = withDefaults(defineProps<{
   endItem: number
   canGoPrevious: boolean
   canGoNext: boolean
+  pageSize: number
   search: string
   hasActiveFilters: boolean
   categories: string[]
@@ -418,7 +446,6 @@ const emit = defineEmits<{
   sort: [field: string]
   'previous-page': []
   'next-page': []
-  'go-to-page': [page: number]
   adjust: [item: StockItem]
 }>()
 

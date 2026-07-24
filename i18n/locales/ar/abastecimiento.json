@@ -154,6 +154,7 @@
       "unitCostSummary": "تكلفة الوحدة: ${value} لكل {unit}",
       "notSelected": "غير محدد",
       "closePanel": "إغلاق اللوحة",
+      "changeArticle": "تغيير",
       "adjustmentRecorded": "تم تسجيل التسوية",
       "currentStock": "المخزون الحالي",
       "minimum": "الحد الأدنى",

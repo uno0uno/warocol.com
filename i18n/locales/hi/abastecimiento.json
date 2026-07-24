@@ -154,6 +154,7 @@
       "unitCostSummary": "इकाई लागत: ${value} प्रति {unit}",
       "notSelected": "चयनित नहीं",
       "closePanel": "पैनल बंद करें",
+      "changeArticle": "बदलें",
       "adjustmentRecorded": "समायोजन दर्ज किया गया",
       "currentStock": "वर्तमान स्टॉक",
       "minimum": "न्यूनतम",

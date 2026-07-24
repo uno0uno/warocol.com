@@ -154,6 +154,7 @@
       "unitCostSummary": "Stückkosten: ${value} pro {unit}",
       "notSelected": "Nicht ausgewählt",
       "closePanel": "Panel schließen",
+      "changeArticle": "Ändern",
       "adjustmentRecorded": "Anpassung erfasst",
       "currentStock": "Aktueller Bestand",
       "minimum": "Minimum",

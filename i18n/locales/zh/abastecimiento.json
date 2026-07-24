@@ -154,6 +154,7 @@
       "unitCostSummary": "单位成本: ${value} 每 {unit}",
       "notSelected": "未选择",
       "closePanel": "关闭面板",
+      "changeArticle": "更换",
       "adjustmentRecorded": "调整已记录",
       "currentStock": "当前库存",
       "minimum": "最低",

@@ -154,6 +154,7 @@
       "unitCostSummary": "Costo unitario: ${value} por {unit}",
       "notSelected": "Sin seleccionar",
       "closePanel": "Cerrar panel",
+      "changeArticle": "Cambiar",
       "adjustmentRecorded": "Ajuste registrado",
       "currentStock": "Stock actual",
       "minimum": "Mínimo",
