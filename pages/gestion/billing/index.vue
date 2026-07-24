@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey, STARTER_DISPLAY_QUOTA_KEYS, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey, BILLING_UNLIMITED_SENTINEL, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
@@ -154,11 +154,78 @@ const displayPlanName = computed(() => {
   if (isStarterTenant.value) return starterPlan.value?.name ?? t('billing.starterPlanName')
   return t('billing.noPlan')
 })
-const starterQuotaRows = computed(() => {
-  if (!starterPlan.value) return []
-  return STARTER_DISPLAY_QUOTA_KEYS
-    .map((key) => quotaRowsForPlan(starterPlan.value!).find(row => row.key === key))
-    .filter((row): row is NonNullable<typeof row> => row != null)
+// Quota-first compare matrix (#1804): same rows for both plans.
+// Display rule: key absent OR limit >= BILLING_UNLIMITED_SENTINEL → no cap for that plan.
+const COMPARE_QUOTA_KEYS: BillingQuotaKey[] = [
+  'menu_products',
+  'menu_categories',
+  'recipe_bases',
+  'modifier_groups',
+  'tenant_ingredients',
+  'completed_online_orders_per_month',
+  'admin_users',
+  'active_tables_including_bar',
+  'active_kitchens',
+  'active_qr_tables',
+]
+
+const planQuotaCell = (plan: BillingPlan, key: BillingQuotaKey) => {
+  const raw = plan.quotas?.[key]
+  const limit = raw === null || raw === undefined ? Number.POSITIVE_INFINITY : Number(raw)
+  // Absent key or the API CATALOG_UNLIMITED sentinel both mean "no cap".
+  if (!Number.isFinite(limit) || limit >= BILLING_UNLIMITED_SENTINEL) {
+    return { text: t('billing.noLimit'), muted: false, limit: Number.POSITIVE_INFINITY }
+  }
+  if (limit <= 0) {
+    return { text: quotaLabels.value[key]?.zeroLabel ?? t('billing.notIncluded'), muted: true, limit }
+  }
+  const unit = quotaLabels.value[key]?.unit ?? ''
+  return { text: `${limit.toLocaleString(toNumberLocaleTag(locale.value))} ${unit}`.trim(), muted: false, limit }
+}
+
+const compareQuotaRows = computed(() => {
+  const starter = starterPlan.value
+  const pro = proPlan.value
+  if (!starter || !pro) return []
+  return COMPARE_QUOTA_KEYS
+    .map((key) => ({
+      key,
+      label: quotaLabels.value[key]?.label ?? key,
+      starter: planQuotaCell(starter, key),
+      pro: planQuotaCell(pro, key),
+    }))
+    // Rows excluded in both plans add no comparison value.
+    .filter((row) => !(row.starter.limit <= 0 && row.pro.limit <= 0))
+})
+
+// Grid rows (ventas-style UiResponsiveDataView): quota rows + plan-level scans row.
+const compareColumns = computed<Column[]>(() => [
+  { key: 'resource', title: t('billing.compareResource'), align: 'left' },
+  { key: 'starter', title: starterPlan.value?.name ?? t('billing.starterPlanName'), align: 'center' },
+  { key: 'pro', title: proPlan.value?.name ?? 'Pro', align: 'center' },
+])
+
+const compareTableRows = computed(() => {
+  const starter = starterPlan.value
+  const pro = proPlan.value
+  if (!starter || !pro) return []
+  const rows = compareQuotaRows.value.map((row) => ({
+    id: row.key,
+    resource: row.label,
+    starterText: row.starter.text,
+    starterMuted: row.starter.muted,
+    proText: row.pro.text,
+    proMuted: row.pro.muted,
+  }))
+  rows.push({
+    id: 'scans',
+    resource: t('billing.scansPerMonth'),
+    starterText: starter.scan_limit.toLocaleString(toNumberLocaleTag(locale.value)),
+    starterMuted: false,
+    proText: pro.scan_limit.toLocaleString(toNumberLocaleTag(locale.value)),
+    proMuted: false,
+  })
+  return rows
 })
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
@@ -637,22 +704,21 @@ watch(() => currentTenant.value?.id, async () => {
           </div>
         </div>
 
-        <!-- No subscription placeholder -->
-        <div v-if="!subscription" class="px-6 py-8 text-center">
+        <!-- No subscription placeholder (compare matrix below owns the upgrade sell) -->
+        <div v-if="!subscription" class="px-6 py-6 text-center">
           <p class="text-sm text-text-secondary mb-1">
             {{ isStarterTenant ? t('billing.starterActiveMessage') : t('billing.noActiveSubscription') }}
           </p>
-          <p class="text-xs text-text-secondary">
-            {{ isStarterTenant ? t('billing.starterUpgradeHint') : t('billing.choosePlanToStart') }}
+          <p v-if="!isStarterTenant" class="text-xs text-text-secondary">
+            {{ t('billing.choosePlanToStart') }}
           </p>
-          <button
-            v-if="isStarterTenant && proPlan"
-            type="button"
-            class="mt-4 min-h-[40px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
-            @click="openModal"
+          <NuxtLink
+            v-if="isStarterTenant"
+            to="/gestion/billing/uso"
+            class="inline-block mt-1 text-xs font-semibold text-primary hover:underline"
           >
-            {{ t('billing.upgradeToPro') }}
-          </button>
+            {{ t('billing.viewMyUsage') }}
+          </NuxtLink>
         </div>
 
         <!-- Alert: past_due -->
@@ -690,49 +756,81 @@ watch(() => currentTenant.value?.id, async () => {
           <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
-        <div class="grid gap-4 p-6 lg:grid-cols-2">
-          <div class="rounded-xl border border-border p-5 bg-surface-secondary/40">
-            <p class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</p>
-            <p class="mt-2 text-sm text-text-secondary">{{ starterPlan.description || t('billing.starterPlanBadge') }}</p>
-            <ul class="mt-4 space-y-2">
-              <li
-                v-for="quota in starterQuotaRows"
-                :key="quota.key"
-                class="flex items-start gap-2 text-sm text-text-secondary"
+
+        <!-- Quota matrix as ventas-style grid -->
+        <div class="p-4 sm:p-6">
+          <UiResponsiveDataView
+            row-size="sm"
+            variant="default"
+            :columns="compareColumns"
+            :data="compareTableRows"
+            item-key="id"
+          >
+            <!-- Column headers: Starter (Tu plan) + Pro (precio) -->
+            <template #header-starter>
+              <div class="flex flex-col items-center gap-1 py-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-data-table-header-text">{{ starterPlan.name }}</span>
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-full border border-data-table-border bg-data-table-container-bg text-data-table-cell-muted">
+                  {{ t('billing.yourPlan') }}
+                </span>
+              </div>
+            </template>
+            <template #header-pro>
+              <div class="flex flex-col items-center gap-0.5 py-1">
+                <span class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</span>
+                <span class="text-sm font-bold text-text-primary leading-tight">
+                  {{ formatCOP(proPlan.price_annual) }}
+                  <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
+                </span>
+              </div>
+            </template>
+
+            <!-- Desktop cells -->
+            <template #cell-resource="{ row }">
+              <span class="text-sm text-text-secondary">{{ row.resource }}</span>
+            </template>
+            <template #cell-starter="{ row }">
+              <span
+                :class="['block text-sm text-center', row.starterMuted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']"
               >
-                <span class="text-status-success-text">✓</span>
-                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
-              </li>
-              <li class="flex items-start gap-2 text-sm text-text-secondary">
-                <span class="text-status-success-text">✓</span>
-                <span>{{ starterPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}</span>
-              </li>
-            </ul>
-          </div>
-          <div class="rounded-xl border border-primary/30 p-5 bg-primary/5">
-            <p class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</p>
-            <p class="mt-2 text-2xl font-bold text-text-primary">
-              {{ formatCOP(proPlan.price_annual) }}
-              <span class="text-sm font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
-            </p>
-            <ul class="mt-4 space-y-2">
-              <li
-                v-for="quota in quotaRowsForPlan(proPlan)"
-                :key="quota.key"
-                class="flex items-start gap-2 text-sm text-text-secondary"
+                {{ row.starterText }}
+              </span>
+            </template>
+            <template #cell-pro="{ row }">
+              <span
+                :class="['block text-sm text-center', row.proMuted ? 'text-text-secondary italic' : 'font-semibold text-primary']"
               >
-                <span class="text-status-success-text">✓</span>
-                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
-              </li>
-            </ul>
-            <button
-              type="button"
-              class="mt-5 w-full min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
-              @click="openModal"
-            >
-              {{ t('billing.upgradeToPro') }}
-            </button>
-          </div>
+                {{ row.proText }}
+              </span>
+            </template>
+
+            <!-- Mobile card -->
+            <template #card="{ item, index }">
+              <div
+                class="flex items-center gap-3 py-3 px-3 border-b border-border"
+                :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              >
+                <span class="flex-1 min-w-0 text-sm text-text-secondary">{{ item.resource }}</span>
+                <span class="flex flex-col items-end gap-0.5 flex-shrink-0 text-right">
+                  <span :class="['text-xs', item.starterMuted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']">
+                    {{ starterPlan.name }}: {{ item.starterText }}
+                  </span>
+                  <span :class="['text-xs', item.proMuted ? 'text-text-secondary italic' : 'font-semibold text-primary']">
+                    {{ proPlan.name }}: {{ item.proText }}
+                  </span>
+                </span>
+              </div>
+            </template>
+          </UiResponsiveDataView>
+
+          <!-- Single primary CTA -->
+          <button
+            type="button"
+            class="mt-5 w-full sm:w-auto sm:ms-auto sm:flex min-h-[44px] px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all items-center justify-center"
+            @click="openModal"
+          >
+            {{ t('billing.upgradeToPro') }}
+          </button>
         </div>
       </div>
 

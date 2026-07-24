@@ -66,6 +66,9 @@ export interface AccessStatus {
   message: string
 }
 
+/** API sentinel from billing_service.CATALOG_UNLIMITED: limits at/above this mean "no cap". */
+export const BILLING_UNLIMITED_SENTINEL = 1_000_000
+
 export const STARTER_PLAN_SLUG = 'starter'
 export const PRO_PLAN_SLUG = 'pro'
 
