@@ -267,7 +267,7 @@
         },
         "fieldsLegend": "Configuración de país y moneda", "country": "País", "currency": "Moneda",
         "currencyHelp": "WARO no convierte importes entre monedas.",
-        "irreversibleHelp": "Podrás cambiar esta configuración hasta registrar actividad financiera.",
+        "irreversibleHelp": "El país y la moneda se definen en el onboarding y no se pueden cambiar después.",
         "saving": "Guardando…", "reviewChange": "Guardar cambios", "confirmTitle": "Confirmar país y moneda",
         "confirmMessage": "Cambiarás {currentCountry} / {currentCurrency} por {nextCountry} / {nextCurrency}. Después de registrar actividad financiera no podrás revertir esta decisión.",
         "confirmAction": "Sí, cambiar configuración", "cancel": "Cancelar", "saveSuccess": "País y moneda base actualizados",

@@ -267,7 +267,7 @@
         },
         "fieldsLegend": "Country and currency settings", "country": "Country", "currency": "Currency",
         "currencyHelp": "WARO does not convert amounts between currencies.",
-        "irreversibleHelp": "You can change this setting until financial activity is recorded.",
+        "irreversibleHelp": "Country and currency are set during onboarding and cannot be changed afterward.",
         "saving": "Saving…", "reviewChange": "Save changes", "confirmTitle": "Confirm country and currency",
         "confirmMessage": "You will change {currentCountry} / {currentCurrency} to {nextCountry} / {nextCurrency}. You cannot reverse this decision after financial activity is recorded.",
         "confirmAction": "Yes, change settings", "cancel": "Cancel", "saveSuccess": "Country and base currency updated",

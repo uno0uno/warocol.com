@@ -104,12 +104,11 @@ export const hasFinancialProfileChanges = (
 
 export const canSubmitFinancialProfile = (
   response: TenantFinancialProfileResponse | null,
-  draft: FinancialProfileDraft,
+  _draft: FinancialProfileDraft,
 ): boolean => {
-  if (!response?.eligibility.eligible) return false
-  if (!hasFinancialProfileChanges(response.profile, draft)) return false
-  return getCompatibleCurrencyCodes(response.catalog, draft.country_code)
-    .includes(draft.base_currency_code)
+  // Country/currency are immutable once a profile exists (hard lock).
+  void _draft
+  return false
 }
 
 export const useTenantFinancialProfile = () => {
@@ -148,6 +147,9 @@ export const useTenantFinancialProfile = () => {
   )
   const isMatiasDian = computed(() =>
     Boolean(response.value?.capabilities.matias_dian),
+  )
+  const isColombiaPayroll = computed(() =>
+    Boolean(response.value?.capabilities.colombia_payroll),
   )
   const isWaroCommercial = computed(() =>
     profile.value?.document_mode === 'waro_commercial',
@@ -193,6 +195,7 @@ export const useTenantFinancialProfile = () => {
     isFiscalIntegrated,
     isColombiaPuc,
     isMatiasDian,
+    isColombiaPayroll,
     isWaroCommercial,
     currencyMinorUnits,
     isLoading: computed(() => !!currentTenant.value && status.value === 'pending'),
