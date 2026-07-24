@@ -276,13 +276,13 @@
                       Precio Unit. *
                     </label>
                     <div class="relative">
-                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                      <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
                       <UiDecimalInput
                         v-model="item.unit_cost"
                         :min="0"
                         :precision="UNIT_COST_PRECISION"
                         required
-                        class="w-full ps-8 pe-4 py-2"
+                        class="w-full ps-12 pe-4 py-2"
                         @update:model-value="updateItemTotal(index)"
                       />
                     </div>

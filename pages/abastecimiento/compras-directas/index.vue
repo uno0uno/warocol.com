@@ -136,7 +136,7 @@
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <p class="text-sm font-bold text-primary tabular-nums">${{ formatCurrency(item.total_amount) }}</p>
+              <p class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
               <UiStatusBadge
                 :value="getStatusText(item.status)"
                 format="text"
@@ -167,7 +167,7 @@
         </template>
 
         <template #cell-total_amount="{ value }">
-          <span class="text-sm font-bold text-primary">${{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-items_count="{ value }">
@@ -262,7 +262,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 
 useHead({
   title: () => t('abastecimiento.head.comprasDirectas')
@@ -390,7 +390,7 @@ const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 
 const endItem = computed(() => Math.min(currentPage.value * itemsPerPage.value, purchasesData.value.total))
 
 // Methods
-const { formatDate: _fmtDate } = useFormatters()
+const { formatDate: _fmtDate, formatCurrency } = useFormatters()
 const formatDate = (date: string) => _fmtDate(date)
 
 const getPaymentDateValue = (purchase: any) => {
@@ -402,11 +402,6 @@ const getPaymentDateValue = (purchase: any) => {
 const getPaymentDateLabel = (purchase: any) => {
   const value = getPaymentDateValue(purchase)
   return value ? formatDate(value) : t('abastecimiento.common.sinPago')
-}
-
-const formatCurrency = (value: number) => {
-  if (!value) return '0'
-  return value.toLocaleString(toNumberLocaleTag(locale.value), { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 const getStatusText = (status: string) => {
