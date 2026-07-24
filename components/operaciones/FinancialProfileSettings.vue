@@ -39,7 +39,8 @@ watch(() => draft.value.country_code, () => {
 })
 
 const canSubmit = computed(() => canSubmitFinancialProfile(response.value, draft.value))
-const isLocked = computed(() => response.value?.eligibility.eligible === false)
+// Hard lock: country/currency read-only after first configure (profile exists).
+const isLocked = computed(() => !!response.value?.profile)
 
 const makeDisplayNames = (type: 'region' | 'currency') => {
   try {
@@ -140,14 +141,16 @@ const confirmSave = async () => {
         aria-live="polite"
       >
         <p class="text-sm font-semibold text-state-warning-text">
-          {{ response.eligibility.lock_type === 'permanent'
-            ? t('operaciones.personalizar.financial.permanentLockTitle')
-            : t('operaciones.personalizar.financial.temporaryLockTitle') }}
+          {{ response.eligibility.lock_type === 'temporary'
+            ? t('operaciones.personalizar.financial.temporaryLockTitle')
+            : t('operaciones.personalizar.financial.permanentLockTitle') }}
         </p>
         <p class="mt-1 text-xs leading-snug text-state-warning-text/90">
-          {{ response.eligibility.lock_type === 'permanent'
-            ? t('operaciones.personalizar.financial.permanentLockHelp')
-            : t('operaciones.personalizar.financial.temporaryLockHelp') }}
+          {{ response.eligibility.lock_type === 'temporary'
+            ? t('operaciones.personalizar.financial.temporaryLockHelp')
+            : response.eligibility.lock_type === 'permanent'
+              ? t('operaciones.personalizar.financial.permanentLockHelp')
+              : t('operaciones.personalizar.financial.irreversibleHelp') }}
         </p>
       </div>
 
