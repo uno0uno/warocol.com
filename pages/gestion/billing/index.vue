@@ -629,7 +629,7 @@ watch(() => currentTenant.value?.id, async () => {
     <!-- Error -->
     <CommonsTheErrorState v-else-if="error" />
 
-    <div v-else class="flex flex-col gap-3 md:gap-4">
+    <div v-else class="billing-neutral-tables flex flex-col gap-3 md:gap-4">
 
       <!-- ── Plan card ──────────────────────────────────────────── -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
@@ -752,7 +752,7 @@ watch(() => currentTenant.value?.id, async () => {
         v-if="isStarterTenant && starterPlan && proPlan"
         class="bg-surface border border-border rounded-xl overflow-hidden"
       >
-        <div class="px-6 py-5 border-b border-border bg-surface-secondary">
+        <div class="px-6 py-5 border-b border-border bg-[hsl(var(--titan-150))]">
           <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
@@ -1343,5 +1343,11 @@ watch(() => currentTenant.value?.id, async () => {
   .billing-panel-leave-to {
     transform: translateX(100%);
   }
+}
+
+/* Neutral gray table headers on this page: the theme lavender
+   (surface-secondary → titan-200) reads too saturated for data tables here. */
+.billing-neutral-tables {
+  --data-table-header-bg: var(--titan-150);
 }
 </style>
