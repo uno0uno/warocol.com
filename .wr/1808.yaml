@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1808
+title: "Menu quotas: independent modifiers gate + clickable Nuevo/add-line limit modals"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1808-menu-quota-modals
+
+paths:
+  - composables/useMenuCatalogQuotaGate.ts
+  - composables/useBilling.ts
+  - pages/menu/modificadores/index.vue
+  - pages/menu/modificadores/crear.vue
+  - pages/menu/modificadores/[id].vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - ../api_warocol.com/app/services/billing_service.py
+  - ../api_warocol.com/tests/test_billing_remaining_usage.py
+
+ac:
+  - Modifiers create gated only by modifier_groups (not menu_products)
+  - Nuevo/add-line stay clickable and open UiConfirmActionModal → Mi Plan
+  - Product recipe lines use recipe_lines_per_product (local count vs plan limit)
+  - Modifier options use modifier_options_per_group the same way
+  - remaining-usage exposes scoped limits for front
+
+out_of_scope:
+  - Changing Starter numeric caps
+  - Recipe-base template line UI
+  - Mi Plan matrix redesign
+
+hints:
+  entry: "useMenuCatalogQuotaGate + remaining-usage scoped metrics"
+  pattern: "pages/menu/productos/crear.vue categoriesLimitModal (#1806)"
+  tests: "cd api_warocol.com && python -m pytest tests/test_billing_remaining_usage.py -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "wr-review"

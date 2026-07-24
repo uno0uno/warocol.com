@@ -770,7 +770,7 @@ const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 const { showUpgradeCta, upgradeMessage, handleQuotaError, clearQuotaError } = useQuotaExceeded()
-const { redirectIfProductsCreateBlocked, handleInlineCategoryCreate, categoriesLimitModalOpen, categoriesLimitModalMessage, closeCategoriesLimitModal, goToBillingFromCategoriesLimitModal } = useMenuCatalogQuotaGate()
+const { redirectIfProductsCreateBlocked, handleInlineCategoryCreate, handleAddProductRecipeLine, categoriesLimitModalOpen, categoriesLimitModalMessage, closeCategoriesLimitModal, goToBillingFromCategoriesLimitModal } = useMenuCatalogQuotaGate()
 
 onMounted(async () => {
   await redirectIfProductsCreateBlocked('/menu/productos')
@@ -1270,11 +1270,13 @@ function getCategoryName(categoryId: string) {
 }
 
 function addIngredient() {
-  form.value.ingredients.push({
-    ingredient_id: '',
-    ingredient_name: '',
-    quantity: 0,
-    unit: 'g',
+  void handleAddProductRecipeLine(form.value.ingredients.length, () => {
+    form.value.ingredients.push({
+      ingredient_id: '',
+      ingredient_name: '',
+      quantity: 0,
+      unit: 'g',
+    })
   })
 }
 

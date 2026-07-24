@@ -1,6 +1,7 @@
 /**
- * Menú catalog create gating (warocol.com#1796 / #1798 / #1800 / #1806).
+ * Menú catalog create gating (warocol.com#1796 / #1798 / #1800 / #1806 / #1808).
  * Productos, Categorías, Modificadores, and Recetas each use their own growth quota.
+ * Scoped line/option caps compare local editor counts to plan limits.
  */
 import type {
   BillingRemainingUsage,
@@ -24,8 +25,11 @@ export function useMenuCatalogQuotaGate() {
     message: string
   } | null>(null)
 
-  const categoriesLimitModalOpen = ref(false)
-  const categoriesLimitModalMessage = ref('')
+  /** Shared limit modal (categories inline, modifiers Nuevo, product add-line). */
+  const quotaLimitModalOpen = ref(false)
+  const quotaLimitModalMessage = ref('')
+  const categoriesLimitModalOpen = quotaLimitModalOpen
+  const categoriesLimitModalMessage = quotaLimitModalMessage
 
   const menuProductsQuota = computed(() => getOperationalQuota('menu_products'))
   const menuCategoriesQuota = computed(() => getOperationalQuota('menu_categories'))
@@ -33,10 +37,8 @@ export function useMenuCatalogQuotaGate() {
   const recipeBasesQuota = computed(() => getOperationalQuota('recipe_bases'))
 
   const isProductsCreateBlocked = computed(() => menuProductsQuota.value.blocked)
-  /** Modificadores: own group cap OR shared catalog product cap exhausted. */
-  const isModifiersCreateBlocked = computed(
-    () => menuProductsQuota.value.blocked || modifierGroupsQuota.value.blocked,
-  )
+  /** Modificadores: own group cap only (independent of menu_products — #1808). */
+  const isModifiersCreateBlocked = computed(() => modifierGroupsQuota.value.blocked)
   const isRecipesCreateBlocked = computed(() => recipeBasesQuota.value.blocked)
   const isCategoriesCreateBlocked = computed(
     () => categoriesQuotaFresh.value?.blocked === true || menuCategoriesQuota.value.blocked,
@@ -59,12 +61,23 @@ export function useMenuCatalogQuotaGate() {
     return formatMetricMessage(resource, metric)
   }
 
+  const formatScopedCountMessage = (
+    resource: 'recipe_lines_per_product' | 'modifier_options_per_group',
+    currentCount: number,
+    limit: number,
+  ) => {
+    return formatMetricMessage(resource, {
+      used: currentCount,
+      limit,
+      remaining: Math.max(limit - currentCount, 0),
+      period_start: '',
+      period_end: '',
+    })
+  }
+
   const productsCreateBlockedMessage = computed(() => formatBlockedMessage('menu_products'))
   const categoriesCreateBlockedMessage = computed(() => formatBlockedMessage('menu_categories'))
-  const modifiersCreateBlockedMessage = computed(() => {
-    if (menuProductsQuota.value.blocked) return formatBlockedMessage('menu_products')
-    return formatBlockedMessage('modifier_groups')
-  })
+  const modifiersCreateBlockedMessage = computed(() => formatBlockedMessage('modifier_groups'))
   const recipesCreateBlockedMessage = computed(() => formatBlockedMessage('recipe_bases'))
   const sharedCatalogCreateBlockedMessage = computed(() => productsCreateBlockedMessage.value)
 
@@ -124,24 +137,49 @@ export function useMenuCatalogQuotaGate() {
     }
   }
 
-  const openCategoriesLimitModal = async (opts?: { skipRefresh?: boolean }) => {
-    if (!opts?.skipRefresh) {
+  const fetchScopedQuotaLimit = async (
+    resource: 'recipe_lines_per_product' | 'modifier_options_per_group',
+  ): Promise<number | null> => {
+    const cached = remainingUsage.value?.quota_usage?.[resource]?.limit
+    if (cached !== undefined) return cached
+    try {
+      const usage = await fetchRemainingUsage()
+      return usage.quota_usage?.[resource]?.limit ?? null
+    } catch {
+      return null
+    }
+  }
+
+  const openQuotaLimitModalWithMessage = (message: string) => {
+    quotaLimitModalMessage.value = message
+      || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado')
+    quotaLimitModalOpen.value = true
+  }
+
+  const openQuotaLimitModal = async (resource: OperationalQuotaKey, opts?: { skipRefresh?: boolean }) => {
+    if (resource === 'menu_categories' && !opts?.skipRefresh) {
       await refreshCategoriesCreateGate()
     }
-    categoriesLimitModalMessage.value = categoriesCreateBlockedMessage.value
-      || BILLING_QUOTA_RESOURCE_CONFIG.menu_categories?.blockedMessage
+    const message = formatBlockedMessage(resource)
+      || BILLING_QUOTA_RESOURCE_CONFIG[resource]?.blockedMessage
       || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado')
-    categoriesLimitModalOpen.value = true
+    openQuotaLimitModalWithMessage(message)
   }
 
-  const closeCategoriesLimitModal = () => {
-    categoriesLimitModalOpen.value = false
+  const openCategoriesLimitModal = async (opts?: { skipRefresh?: boolean }) => {
+    await openQuotaLimitModal('menu_categories', opts)
   }
 
-  const goToBillingFromCategoriesLimitModal = async () => {
-    categoriesLimitModalOpen.value = false
+  const closeQuotaLimitModal = () => {
+    quotaLimitModalOpen.value = false
+  }
+  const closeCategoriesLimitModal = closeQuotaLimitModal
+
+  const goToBillingFromQuotaLimitModal = async () => {
+    quotaLimitModalOpen.value = false
     await navigateTo('/gestion/billing')
   }
+  const goToBillingFromCategoriesLimitModal = goToBillingFromQuotaLimitModal
 
   /** Inline product flows: allow click, show modal instead of create panel when blocked. */
   const handleInlineCategoryCreate = async (typedName: string, openCreate: (name: string) => void) => {
@@ -150,6 +188,48 @@ export function useMenuCatalogQuotaGate() {
       return false
     }
     openCreate(typedName)
+    return true
+  }
+
+  /** Modificadores list Nuevo: stay clickable; open limit modal when groups cap reached. */
+  const handleModifiersCreateClick = async (navigate: () => void) => {
+    if (await fetchQuotaBlocked('modifier_groups')) {
+      await openQuotaLimitModal('modifier_groups')
+      return false
+    }
+    navigate()
+    return true
+  }
+
+  /**
+   * Product recipe editor: stay clickable when at recipe_lines_per_product;
+   * open limit modal instead of appending a line.
+   */
+  const handleAddProductRecipeLine = async (currentCount: number, add: () => void) => {
+    const limit = await fetchScopedQuotaLimit('recipe_lines_per_product')
+    if (limit !== null && currentCount >= limit) {
+      openQuotaLimitModalWithMessage(
+        formatScopedCountMessage('recipe_lines_per_product', currentCount, limit),
+      )
+      return false
+    }
+    add()
+    return true
+  }
+
+  /**
+   * Modifier option editor: stay clickable when at modifier_options_per_group;
+   * open limit modal instead of appending an option.
+   */
+  const handleAddModifierOption = async (currentCount: number, add: () => void) => {
+    const limit = await fetchScopedQuotaLimit('modifier_options_per_group')
+    if (limit !== null && currentCount >= limit) {
+      openQuotaLimitModalWithMessage(
+        formatScopedCountMessage('modifier_options_per_group', currentCount, limit),
+      )
+      return false
+    }
+    add()
     return true
   }
 
@@ -163,9 +243,7 @@ export function useMenuCatalogQuotaGate() {
   }
 
   const redirectIfModifiersCreateBlocked = async (listPath = '/menu/modificadores') => {
-    const productsBlocked = await fetchQuotaBlocked('menu_products')
-    const groupsBlocked = productsBlocked ? true : await fetchQuotaBlocked('modifier_groups')
-    if (productsBlocked || groupsBlocked) {
+    if (await fetchQuotaBlocked('modifier_groups')) {
       showModifiersCreateBlocked()
       await navigateTo(listPath)
       return true
@@ -215,10 +293,18 @@ export function useMenuCatalogQuotaGate() {
     refreshCategoriesCreateGate,
     fetchQuotaBlocked,
     handleInlineCategoryCreate,
+    handleModifiersCreateClick,
+    handleAddProductRecipeLine,
+    handleAddModifierOption,
+    quotaLimitModalOpen,
+    quotaLimitModalMessage,
     categoriesLimitModalOpen,
     categoriesLimitModalMessage,
+    openQuotaLimitModal,
     openCategoriesLimitModal,
+    closeQuotaLimitModal,
     closeCategoriesLimitModal,
+    goToBillingFromQuotaLimitModal,
     goToBillingFromCategoriesLimitModal,
     redirectIfProductsCreateBlocked,
     redirectIfModifiersCreateBlocked,
