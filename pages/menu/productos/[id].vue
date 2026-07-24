@@ -854,6 +854,16 @@
       @saved="onCategoryCreated"
     />
 
+    <UiConfirmActionModal
+      v-model="categoriesLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="categoriesLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromCategoriesLimitModal"
+      @cancel="closeCategoriesLimitModal"
+    />
+
     <CocinaStationPanel
       v-model="showNewStationModal"
       @saved="onStationCreated"
@@ -917,6 +927,13 @@ const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { currentTenant, businessProfile } = useTenantReactive()
+const {
+  handleInlineCategoryCreate,
+  categoriesLimitModalOpen,
+  categoriesLimitModalMessage,
+  closeCategoriesLimitModal,
+  goToBillingFromCategoriesLimitModal,
+} = useMenuCatalogQuotaGate()
 
 // Tax config — only show selector when tenant has taxes enabled
 const { data: taxConfigData } = useQuery({
@@ -1192,8 +1209,10 @@ function onCategorySelected(cat: { id: string; name: string }) {
 }
 
 function onCategoryCreateRequested(typedName: string) {
-  newCategoryName.value = typedName
-  showNewCategoryModal.value = true
+  void handleInlineCategoryCreate(typedName, (name) => {
+    newCategoryName.value = name
+    showNewCategoryModal.value = true
+  })
 }
 
 function onCategoryCreated(cat: { id: string; name: string }) {
