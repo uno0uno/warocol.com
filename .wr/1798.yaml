@@ -10,11 +10,16 @@ paths:
   - composables/useBilling.ts
   - composables/useMenuCatalogQuotaGate.ts
   - pages/menu/categorias/index.vue
+  - pages/gestion/billing/index.vue
+  - pages/gestion/billing/uso.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
   - .wr/1798.yaml
 
 ac:
   - "Billing contract includes menu_categories"
   - "Categorías Nuevo uses its own quota instead of menu_products"
+  - "Mi Plan and usage screens show menu_categories for Starter"
   - "Recetas continues using the shared menu_products gate"
   - "Modificadores continues enforcing its modifier group gate"
 
