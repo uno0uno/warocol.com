@@ -14,7 +14,6 @@
       :stats="stats"
       :inventory="inventory"
       :total="inventoryData?.total ?? 0"
-      :items-per-page="itemsPerPage"
       :current-page="currentPage"
       :total-pages="totalPages"
       :start-item="startItem"

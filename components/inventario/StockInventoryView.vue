@@ -379,7 +379,6 @@ const props = withDefaults(defineProps<{
   stats: StockStats
   inventory: StockItem[]
   total: number
-  itemsPerPage: number
   currentPage: number
   totalPages: number
   startItem: number
