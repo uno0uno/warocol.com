@@ -153,13 +153,13 @@
               <div class="px-4 py-3 flex items-center justify-between gap-4">
                 <div>
                   <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">{{ t('abastecimiento.compraDirectaDetalle.price') }}</p>
-                  <p class="text-sm font-medium text-text-primary">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</p>
+                  <p class="text-sm font-medium text-text-primary">{{ formatUnitCost(getPurchaseUnitCost(item)) }}</p>
                   <p class="text-[11px] text-text-secondary">/ {{ item.purchase_unit || item.unit }}</p>
                 </div>
                 <div class="h-8 w-px bg-border"></div>
                 <div class="text-end">
                   <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">{{ t('abastecimiento.compraDirectaDetalle.total') }}</p>
-                  <p class="text-base font-bold text-text-primary">${{ formatCurrency(item.total_cost) }}</p>
+                  <p class="text-base font-bold text-text-primary">{{ formatCurrency(item.total_cost) }}</p>
                 </div>
               </div>
               <div v-if="item.notes" class="px-4 pb-3">
@@ -169,7 +169,7 @@
             <!-- Mobile total -->
             <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
               <span class="text-sm font-medium text-primary">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</span>
-              <span class="text-lg font-bold text-primary">${{ formatCurrency(purchase.total_amount) }}</span>
+              <span class="text-lg font-bold text-primary">{{ formatCurrency(purchase.total_amount) }}</span>
             </div>
           </div>
 
@@ -207,10 +207,10 @@
                     <span class="text-sm text-text-primary">{{ item.purchase_unit || item.unit }}</span>
                   </td>
                   <td class="px-4 py-3.5 text-end border-r border-dashed border-border/60">
-                    <span class="text-sm text-text-primary tabular-nums">${{ formatUnitCost(getPurchaseUnitCost(item)) }}</span>
+                    <span class="text-sm text-text-primary tabular-nums">{{ formatUnitCost(getPurchaseUnitCost(item)) }}</span>
                   </td>
                   <td class="px-4 py-3.5 text-end">
-                    <span class="text-sm font-bold text-text-primary tabular-nums">${{ formatCurrency(item.total_cost) }}</span>
+                    <span class="text-sm font-bold text-text-primary tabular-nums">{{ formatCurrency(item.total_cost) }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -218,7 +218,7 @@
                 <tr class="bg-primary/5 border-t-2 border-primary/20">
                   <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-end border-r border-dashed border-border/60">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</td>
                   <td class="px-4 py-3.5 text-end">
-                    <span class="text-base font-bold text-primary tabular-nums">${{ formatCurrency(purchase.total_amount) }}</span>
+                    <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(purchase.total_amount) }}</span>
                   </td>
                 </tr>
               </tfoot>
@@ -295,7 +295,7 @@
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.total') }}</label>
                 <div class="input-base w-full px-3 py-2 text-sm bg-primary/10 text-primary font-bold">
-                  ${{ formatCurrency(item.total_cost) }}
+                  {{ formatCurrency(item.total_cost) }}
                 </div>
               </div>
             </div>
@@ -398,7 +398,7 @@
                 <div>
                   <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('abastecimiento.compraDirectaDetalle.total') }}</label>
                   <div class="input-base w-full px-3 py-2 text-sm bg-primary/10 text-primary font-bold">
-                    ${{ formatCurrency(roundMoney(newItem.purchase_quantity * newItem.unit_cost)) }}
+                    {{ formatCurrency(roundMoney(newItem.purchase_quantity * newItem.unit_cost)) }}
                   </div>
                 </div>
               </div>
@@ -433,7 +433,7 @@
         <div v-if="isEditMode" class="flex justify-end mt-4">
           <div class="bg-primary/10 border border-primary/20 rounded-xl px-5 py-3 flex items-center gap-4">
             <p class="text-sm font-medium text-primary">{{ t('abastecimiento.compraDirectaDetalle.purchaseTotal') }}</p>
-            <p class="text-xl font-bold text-primary">${{ formatCurrency(editTotal) }}</p>
+            <p class="text-xl font-bold text-primary">{{ formatCurrency(editTotal) }}</p>
           </div>
         </div>
 
@@ -646,6 +646,7 @@ import { format as fnsFormat } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
 import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 import { useQuery } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useWarehouseCopy } from '~/composables/useWarehouseCopy'
@@ -1033,20 +1034,17 @@ const copyPurchaseLink = async () => {
 }
 
 // Formatting methods
-const { formatDate: _fmtDate } = useFormatters()
+const { formatDate: _fmtDate, formatCurrency, currencyCode, uiLocale } = useFormatters()
 const formatDate = (date: string) => _fmtDate(date)
 
-const formatCurrency = (value: number) => {
-  if (!value) return '0'
-  return value.toLocaleString(toNumberLocaleTag(locale.value), { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
-
 const formatUnitCost = (value: number) => {
-  if (!value) return '0'
-  return value.toLocaleString(toNumberLocaleTag(locale.value), {
+  const numeric = Number.isFinite(Number(value)) ? Number(value) : 0
+  return new Intl.NumberFormat(localeToNumberFormatTag(uiLocale.value), {
+    style: 'currency',
+    currency: normalizeCurrencyCode(currencyCode.value),
     minimumFractionDigits: 0,
     maximumFractionDigits: UNIT_COST_PRECISION,
-  })
+  }).format(numeric)
 }
 
 const getStatusText = (status: string) => {

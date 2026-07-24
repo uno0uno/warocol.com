@@ -346,13 +346,13 @@
                           </span>
                         </label>
                         <div class="relative">
-                          <span class="absolute start-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <span class="absolute start-2 top-1.5 text-text-secondary text-[10px] font-medium pointer-events-none">{{ currencyCode }}</span>
                           <UiDecimalInput
                             v-model="item.unit_cost"
                             :min="0"
                             :precision="UNIT_COST_PRECISION"
                             required
-                            class="input-base w-full ps-5 pe-2 py-1.5 text-sm"
+                            class="input-base w-full ps-10 pe-2 py-1.5 text-sm"
                             @update:model-value="() => onUnitCostChange(index)"
                             placeholder="0"
                           />
@@ -361,13 +361,13 @@
                       <div>
                         <label class="block text-xs font-medium text-text-primary mb-1">Total *</label>
                         <div class="relative">
-                          <span class="absolute start-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <span class="absolute start-2 top-1.5 text-text-secondary text-[10px] font-medium pointer-events-none">{{ currencyCode }}</span>
                           <UiDecimalInput
                             v-model="item.total_cost"
                             :min="0"
                             :precision="MONEY_PRECISION"
                             required
-                            class="input-base w-full ps-5 pe-2 py-1.5 text-sm"
+                            class="input-base w-full ps-10 pe-2 py-1.5 text-sm"
                             @update:model-value="() => onTotalCostChange(index)"
                             placeholder="0"
                           />
