@@ -119,22 +119,28 @@ export function useMenuCatalogQuotaGate() {
     await refreshCategoriesCreateGate()
   }
 
-  const fetchQuotaBlocked = async (resource: OperationalQuotaKey) => {
+  const fetchQuotaStatus = async (resource: OperationalQuotaKey) => {
     try {
       const usage = await fetchRemainingUsage()
       const metric = usage.quota_usage?.[resource] ?? null
       const blocked = resolveOperationalQuota(resource, metric).blocked
+      const message = formatMetricMessage(resource, metric)
       if (resource === 'menu_categories') {
         categoriesQuotaFresh.value = {
           blocked,
-          message: formatMetricMessage('menu_categories', metric),
+          message,
         }
       }
-      return blocked
+      return { blocked, message, metric }
     } catch {
       // Fail open — API CREATE still enforces 429.
-      return false
+      return { blocked: false, message: '', metric: null }
     }
+  }
+
+  /** Boolean helper for callers that only need blocked (categories list, redirects). */
+  const fetchQuotaBlocked = async (resource: OperationalQuotaKey) => {
+    return (await fetchQuotaStatus(resource)).blocked
   }
 
   const fetchScopedQuotaLimit = async (
@@ -183,8 +189,14 @@ export function useMenuCatalogQuotaGate() {
 
   /** Inline product flows: allow click, show modal instead of create panel when blocked. */
   const handleInlineCategoryCreate = async (typedName: string, openCreate: (name: string) => void) => {
-    if (await fetchQuotaBlocked('menu_categories')) {
-      await openCategoriesLimitModal({ skipRefresh: true })
+    const result = await fetchQuotaStatus('menu_categories')
+    if (result.blocked) {
+      openQuotaLimitModalWithMessage(
+        result.message
+          || categoriesCreateBlockedMessage.value
+          || BILLING_QUOTA_RESOURCE_CONFIG.menu_categories?.blockedMessage
+          || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado'),
+      )
       return false
     }
     openCreate(typedName)
@@ -193,8 +205,13 @@ export function useMenuCatalogQuotaGate() {
 
   /** Modificadores list Nuevo: stay clickable; open limit modal when groups cap reached. */
   const handleModifiersCreateClick = async (navigate: () => void) => {
-    if (await fetchQuotaBlocked('modifier_groups')) {
-      await openQuotaLimitModal('modifier_groups')
+    const result = await fetchQuotaStatus('modifier_groups')
+    if (result.blocked) {
+      openQuotaLimitModalWithMessage(
+        result.message
+          || BILLING_QUOTA_RESOURCE_CONFIG.modifier_groups?.blockedMessage
+          || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado'),
+      )
       return false
     }
     navigate()
