@@ -48,6 +48,7 @@
       "critico": "紧急",
       "bajo": "低",
       "normal": "正常",
+      "sinStock": "无库存",
       "compra": "采购",
       "compras": "采购",
       "consumo": "消耗",

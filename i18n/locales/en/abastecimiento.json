@@ -48,6 +48,7 @@
       "critico": "Critical",
       "bajo": "Low",
       "normal": "Normal",
+      "sinStock": "Out of stock",
       "compra": "Purchase",
       "compras": "Purchases",
       "consumo": "Consumption",
