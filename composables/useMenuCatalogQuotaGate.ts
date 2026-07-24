@@ -124,8 +124,10 @@ export function useMenuCatalogQuotaGate() {
     }
   }
 
-  const openCategoriesLimitModal = async () => {
-    await refreshCategoriesCreateGate()
+  const openCategoriesLimitModal = async (opts?: { skipRefresh?: boolean }) => {
+    if (!opts?.skipRefresh) {
+      await refreshCategoriesCreateGate()
+    }
     categoriesLimitModalMessage.value = categoriesCreateBlockedMessage.value
       || BILLING_QUOTA_RESOURCE_CONFIG.menu_categories?.blockedMessage
       || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado')
@@ -144,7 +146,7 @@ export function useMenuCatalogQuotaGate() {
   /** Inline product flows: allow click, show modal instead of create panel when blocked. */
   const handleInlineCategoryCreate = async (typedName: string, openCreate: (name: string) => void) => {
     if (await fetchQuotaBlocked('menu_categories')) {
-      await openCategoriesLimitModal()
+      await openCategoriesLimitModal({ skipRefresh: true })
       return false
     }
     openCreate(typedName)
