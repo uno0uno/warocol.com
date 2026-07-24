@@ -29,6 +29,11 @@
           <span class="text-text-secondary">({{ option.raw.unit }})</span>
         </span>
         <span
+          v-if="showTypeLabel && typeBadgeLabel(option.raw?.type)"
+          class="mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+          :class="typeBadgeClass(option.raw?.type)"
+        >{{ typeBadgeLabel(option.raw?.type) }}</span>
+        <span
           v-if="option.raw.is_resale"
           class="mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0"
         >{{ t('menu.common.reventa') }}</span>
@@ -58,6 +63,8 @@ interface Props {
   baseOnly?: boolean
   type?: string
   excludeResale?: boolean
+  /** Show Alimento / Servicio / Insumo badges when searching across types */
+  showTypeLabel?: boolean
 }
 
 interface Emits {
@@ -70,6 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   initialValue: '',
   allowCreate: false,
   baseOnly: false,
+  showTypeLabel: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -86,6 +94,19 @@ const { query, groupedResults, loading, error } = useIngredientSearch({
   searchOnEmpty: true,
   excludeResale: props.excludeResale,
 })
+
+function typeBadgeLabel(type: unknown): string {
+  if (type === 'supply') return t('abastecimiento.glossary.supply')
+  if (type === 'service') return t('abastecimiento.glossary.service')
+  if (type === 'food') return t('abastecimiento.glossary.food')
+  return ''
+}
+
+function typeBadgeClass(type: unknown): string {
+  if (type === 'supply') return 'bg-surface-secondary text-text-secondary'
+  if (type === 'service') return 'bg-warning/10 text-warning'
+  return 'bg-primary/10 text-primary'
+}
 
 const options = computed(() => groupedResults.value.map((row: Ingredient & { _isHeader?: boolean }) => ({
   id: row._isHeader ? `header-${row.id}` : row.id,
