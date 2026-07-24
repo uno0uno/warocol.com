@@ -781,7 +781,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import { formatMoney } from '~/utils/currencyDisplay'
+import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
@@ -796,7 +796,6 @@ const {
   formatCurrency,
   formatDate: _fmtDate,
   currencyCode,
-  currencyMinorUnits,
   uiLocale,
 } = useFormatters()
 
@@ -981,11 +980,15 @@ const QUANTITY_PRECISION = 6
 const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
 const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
 
-const formatUnitCost = (price: number) => formatMoney(price, {
-  currency: currencyCode.value,
-  locale: uiLocale.value,
-  minorUnits: Math.max(currencyMinorUnits.value ?? 0, UNIT_COST_PRECISION),
-})
+const formatUnitCost = (price: number) => {
+  const numeric = Number.isFinite(price) ? price : 0
+  return new Intl.NumberFormat(localeToNumberFormatTag(uiLocale.value), {
+    style: 'currency',
+    currency: normalizeCurrencyCode(currencyCode.value),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: UNIT_COST_PRECISION,
+  }).format(numeric)
+}
 
 function roundDecimal(value: number, precision: number) {
   if (!Number.isFinite(value)) return 0
