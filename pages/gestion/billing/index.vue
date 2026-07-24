@@ -836,52 +836,52 @@ watch(() => currentTenant.value?.id, async () => {
 
       <!-- Historial de pagos (neutral gray header; compare matrix keeps theme lavender) -->
       <div v-if="eventsTotal > 0" class="billing-neutral-tables">
-      <UiResponsiveDataView
-        row-size="sm"
-        :columns="columns"
-        :data="events"
-        :empty-message="t('billing.emptyPayments')"
-        :empty-sub-message="t('billing.emptyPaymentsSub')"
-        variant="default"
-        @row-click="openEventDetail"
-      >
-        <template #card="{ item, index }">
-          <div
-            v-if="item"
-            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
-            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-            @click="openEventDetail(item)"
-          >
-            <div class="flex-1 min-w-0">
-              <span :class="['inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full', eventStyle(item.event_type).badge]">
-                {{ eventStyle(item.event_type).label }}
-              </span>
-              <p class="text-xs text-text-secondary mt-1 truncate">
-                {{ formatDateTime(item.created_at) }} · {{ eventReference(item) }}
-              </p>
+        <UiResponsiveDataView
+          row-size="sm"
+          :columns="columns"
+          :data="events"
+          :empty-message="t('billing.emptyPayments')"
+          :empty-sub-message="t('billing.emptyPaymentsSub')"
+          variant="default"
+          @row-click="openEventDetail"
+        >
+          <template #card="{ item, index }">
+            <div
+              v-if="item"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              @click="openEventDetail(item)"
+            >
+              <div class="flex-1 min-w-0">
+                <span :class="['inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full', eventStyle(item.event_type).badge]">
+                  {{ eventStyle(item.event_type).label }}
+                </span>
+                <p class="text-xs text-text-secondary mt-1 truncate">
+                  {{ formatDateTime(item.created_at) }} · {{ eventReference(item) }}
+                </p>
+              </div>
+              <div class="flex-shrink-0">
+                <span v-if="eventAmount(item)" class="text-sm font-bold text-primary">{{ eventAmount(item) }}</span>
+                <span v-else class="text-sm text-text-secondary italic">—</span>
+              </div>
             </div>
-            <div class="flex-shrink-0">
-              <span v-if="eventAmount(item)" class="text-sm font-bold text-primary">{{ eventAmount(item) }}</span>
-              <span v-else class="text-sm text-text-secondary italic">—</span>
-            </div>
-          </div>
-        </template>
-        <template #cell-created_at="{ value }">
-          <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDateTime(value) }}</span>
-        </template>
-        <template #cell-event_type="{ value }">
-          <span :class="['text-xs font-medium px-2.5 py-1 rounded-full inline-block', eventStyle(value).badge]">
-            {{ eventStyle(value).label }}
-          </span>
-        </template>
-        <template #cell-amount="{ row }">
-          <span v-if="eventAmount(row)" class="text-sm font-semibold text-text-primary">{{ eventAmount(row) }}</span>
-          <span v-else class="text-sm text-text-secondary italic">—</span>
-        </template>
-        <template #cell-metadata="{ value }">
-          <span class="text-xs font-mono text-text-secondary">{{ eventReference({ metadata: value }) }}</span>
-        </template>
-      </UiResponsiveDataView>
+          </template>
+          <template #cell-created_at="{ value }">
+            <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDateTime(value) }}</span>
+          </template>
+          <template #cell-event_type="{ value }">
+            <span :class="['text-xs font-medium px-2.5 py-1 rounded-full inline-block', eventStyle(value).badge]">
+              {{ eventStyle(value).label }}
+            </span>
+          </template>
+          <template #cell-amount="{ row }">
+            <span v-if="eventAmount(row)" class="text-sm font-semibold text-text-primary">{{ eventAmount(row) }}</span>
+            <span v-else class="text-sm text-text-secondary italic">—</span>
+          </template>
+          <template #cell-metadata="{ value }">
+            <span class="text-xs font-mono text-text-secondary">{{ eventReference({ metadata: value }) }}</span>
+          </template>
+        </UiResponsiveDataView>
       </div>
 
       <!-- Pagination — solo si hay más de una página -->
