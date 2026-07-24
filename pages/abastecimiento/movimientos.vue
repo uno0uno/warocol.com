@@ -15,24 +15,21 @@
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
-      >
-        <template #additional-filters>
-          <UiIngredientFilterSearch v-model="ingredientFilter" />
+      />
 
-          <select
-            v-model="movementTypeFilter"
-            :class="[filterSelectClass, 'md:hidden']"
-            :aria-label="t('abastecimiento.movimientos.filterTypeAria')"
-          >
-            <option value="">{{ t('abastecimiento.movimientos.typeFilter') }}</option>
-            <option value="purchase">{{ t('abastecimiento.common.compras') }}</option>
-            <option value="consumption">{{ t('abastecimiento.common.consumo') }}</option>
-            <option value="adjustment">{{ t('abastecimiento.common.ajustes') }}</option>
-            <option value="return">{{ t('abastecimiento.common.devoluciones') }}</option>
-            <option value="loss">{{ t('abastecimiento.common.perdidas') }}</option>
-          </select>
-        </template>
-      </UiAdvancedFiltersBar>
+      <!-- Mobile-only movement type filter (desktop uses table header filter) -->
+      <select
+        v-model="movementTypeFilter"
+        :class="[filterSelectClass, 'md:hidden']"
+        :aria-label="t('abastecimiento.movimientos.filterTypeAria')"
+      >
+        <option value="">{{ t('abastecimiento.movimientos.typeFilter') }}</option>
+        <option value="purchase">{{ t('abastecimiento.common.compras') }}</option>
+        <option value="consumption">{{ t('abastecimiento.common.consumo') }}</option>
+        <option value="adjustment">{{ t('abastecimiento.common.ajustes') }}</option>
+        <option value="return">{{ t('abastecimiento.common.devoluciones') }}</option>
+        <option value="loss">{{ t('abastecimiento.common.perdidas') }}</option>
+      </select>
 
       <UiResponsiveDataView
         row-size="sm"
