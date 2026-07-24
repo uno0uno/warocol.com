@@ -1,0 +1,39 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1786
+title: "Use tenant currency (MXN) on stock and compra directa create/edit"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1786-tenant-currency-display
+
+paths:
+  - components/inventario/StockInventoryView.vue
+  - pages/abastecimiento/compras-directas/crear.vue
+  - pages/abastecimiento/compras-directas/[id]/editar.vue
+
+ac:
+  - Stock money uses tenant base_currency_code via useFormatters
+  - Compra directa crear/editar use same path; no blind $ + es-CO
+  - Shared StockInventoryView keeps inventario consistent
+  - COP tenants unchanged via profile currency
+
+out_of_scope:
+  - Financial profile setup
+  - FX conversion
+  - List/detalle compra pages (unless same helpers)
+
+hints:
+  entry: "useFormatters.formatCurrency + formatMoney"
+  pattern: "utils/currencyDisplay.ts formatMoney; composables/useFormatters.ts"
+  tests: "npx vitest run utils/currencyDisplay.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "smoke MXN tenant on stock + compra crear/editar"
