@@ -245,7 +245,7 @@
             </div>
 
             <p class="text-xs text-text-tertiary mb-2 leading-relaxed">
-              En cada línea elige el tipo (alimento, servicio o insumo) y vincula el ítem de bodega.
+              {{ WAREHOUSE_COPY.purchaseItemsHelper }}
             </p>
 
           <MenuCatalogInlineCreateBusyOverlay
@@ -269,21 +269,11 @@
                 <div class="flex justify-between items-center gap-2 mb-2 flex-wrap">
                   <div class="flex items-center gap-2 min-w-0">
                     <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex-shrink-0">{{ index + 1 }}</span>
-                    <label :for="`item-type-${index}`" class="sr-only">Tipo de ítem</label>
-                    <select
-                      :id="`item-type-${index}`"
-                      v-model="item.item_type"
-                      class="input-base text-xs py-1.5 ps-2 pe-7 max-w-[11rem] h-[30px]"
-                      @change="onLineTypeChange(index)"
-                    >
-                      <option
-                        v-for="typeOption in ingredientTypeOptions"
-                        :key="typeOption.value"
-                        :value="typeOption.value"
-                      >
-                        {{ typeOption.label }}
-                      </option>
-                    </select>
+                    <span
+                      v-if="item.ingredient_id"
+                      class="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      :class="itemTypeBadgeClass(item.item_type)"
+                    >{{ itemTypeLabel(item.item_type) }}</span>
                   </div>
                   <button
                     type="button"
@@ -302,10 +292,10 @@
                       {{ WAREHOUSE_COPY.purchaseItemLineRequired }}
                     </label>
                     <UiIngredientSearchInput
-                      :key="`${index}-${normalizeItemType(item.item_type)}`"
+                      :key="index"
                       :initial-value="item.searchTerm ?? ''"
                       :allow-create="true"
-                      :type="normalizeItemType(item.item_type)"
+                      :show-type-label="true"
                       :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
                       @select="(ing) => selectIngredient(ing, index)"
                       @create="(name) => openCreateModal(index, name)"
@@ -873,12 +863,23 @@ const cacheIngredient = (ing: any) => {
   }
 }
 
-// Opciones de tipo por línea
-const ingredientTypeOptions = [
-  { value: 'food', label: 'Alimentos' },
-  { value: 'service', label: 'Servicios' },
-  { value: 'supply', label: 'Insumos' },
-]
+// Opciones de tipo por línea (labels for selected badge)
+const ITEM_TYPE_LABELS: Record<'food' | 'service' | 'supply', string> = {
+  food: WAREHOUSE_COPY.typeFood,
+  service: WAREHOUSE_COPY.typeService,
+  supply: WAREHOUSE_COPY.typeSupply,
+}
+
+function itemTypeLabel(type: unknown): string {
+  return ITEM_TYPE_LABELS[normalizeItemType(type)]
+}
+
+function itemTypeBadgeClass(type: unknown): string {
+  const normalized = normalizeItemType(type)
+  if (normalized === 'supply') return 'bg-surface-secondary text-text-secondary'
+  if (normalized === 'service') return 'bg-warning/10 text-warning'
+  return 'bg-primary/10 text-primary'
+}
 
 // Conversiones legacy (fallback cuando no hay unidades configuradas)
 const unitConversions: Record<string, number> = {
@@ -1402,7 +1403,7 @@ const createSupplierFromOcr = async () => {
 const selectIngredient = (ingredient: any, index: number) => {
   const item = form.value.items[index]
   item.ingredient_id = ingredient.id
-  if (ingredient.type) item.item_type = ingredient.type
+  item.item_type = normalizeItemType(ingredient.type)
   cacheIngredient(ingredient)
   onIngredientChange(index)
 }
@@ -1564,23 +1565,6 @@ const inlineCatalogBusyHint = ref('')
 function normalizeItemType(type: unknown): 'food' | 'supply' | 'service' {
   if (type === 'supply' || type === 'service') return type
   return 'food'
-}
-
-function onLineTypeChange(index: number) {
-  const item = form.value.items[index]
-  if (!item) return
-  item.item_type = normalizeItemType(item.item_type)
-  if (!item.ingredient_id) return
-  const cached = ingredientCache.value[item.ingredient_id]
-  const cachedType = cached?.type ? normalizeItemType(cached.type) : null
-  if (cachedType && cachedType !== item.item_type) {
-    item.ingredient_id = ''
-    item.searchTerm = ''
-    item.purchase_unit = ''
-    item.suggested_price = null
-    item.unit_cost = 0
-    updateItemTotal(index)
-  }
 }
 
 /** OCR/Gemini no devuelve item_type; usamos catálogo o heurística sobre la descripción. */

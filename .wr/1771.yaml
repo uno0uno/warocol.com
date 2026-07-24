@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1771
+title: "feat(compras-directas): unify warehouse item search without type pre-select"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1771-unify-purchase-item-search
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+  - components/ui/IngredientSearchInput.vue
+  - constants/warehouseCopy.ts
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+
+ac:
+  - No type pre-select before search on create direct purchase
+  - Single search returns food + service + supply
+  - Clear type label on each result (Alimento / Servicio / Insumo)
+  - Updated field label and helper copy for Ítem / Artículo de bodega
+  - Selecting a result sets item_type from catalog item
+  - OCR, inline create, quantity/unit flows still work
+
+out_of_scope:
+  - compras-directas/[id]/editar.vue
+  - API changes
+  - Other modules that intentionally filter by type
+
+hints:
+  entry: "pages/abastecimiento/compras-directas/crear.vue + UiIngredientSearchInput"
+  pattern: "useIngredientSearch omits type query when type unset; glossary food/supply/service labels"
+  tests: "none (front UX; no targeted unit test file)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-review on PR"
