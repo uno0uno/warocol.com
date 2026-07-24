@@ -769,8 +769,8 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Column headers: Starter (Tu plan) + Pro (precio) -->
             <template #header-starter>
               <div class="flex flex-col items-center gap-1 py-1">
-                <span class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</span>
-                <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
+                <span class="text-xs font-semibold uppercase tracking-wider text-data-table-header-text">{{ starterPlan.name }}</span>
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-full border border-data-table-border bg-data-table-container-bg text-data-table-cell-muted">
                   {{ t('billing.yourPlan') }}
                 </span>
               </div>
