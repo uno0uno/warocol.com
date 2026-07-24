@@ -146,6 +146,9 @@ export const useTenantFinancialProfile = () => {
   const isColombiaPuc = computed(() =>
     isColombiaPucProfile(response.value, currentTenant.value?.id),
   )
+  const isColombiaPayroll = computed(() =>
+    Boolean(response.value?.capabilities.colombia_payroll),
+  )
   const isWaroCommercial = computed(() =>
     profile.value?.document_mode === 'waro_commercial',
   )
@@ -189,6 +192,7 @@ export const useTenantFinancialProfile = () => {
     profile,
     isFiscalIntegrated,
     isColombiaPuc,
+    isColombiaPayroll,
     isWaroCommercial,
     currencyMinorUnits,
     isLoading: computed(() => !!currentTenant.value && status.value === 'pending'),
