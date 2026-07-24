@@ -1,0 +1,31 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 1767
+title: "POS checkout: Genérico resolution, create loader dots, compact customer card"
+repo: both
+repo_remote: uno0uno/warocol.com + uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA
+stack: both
+branch: wr-1767-pos-generico-loader-card
+
+paths:
+  - api_warocol.com/app/services/customers_service.py
+  - api_warocol.com/tests/test_anonymous_customer_resolution.py
+  - front_nuxt/components/pos/CustomerIdentificationModal.vue
+  - front_nuxt/pages/pos/checkout.vue
+
+ac:
+  - Identify modal create/save uses UiLoadingDots (not CommonsTheCustomLoader)
+  - Phone 0000000000 lookup prefers Genérico (generico@warocol.com / name Genérico)
+  - Checkout Datos del cliente card denser L→R; keep Cambiar + wallet
+
+out_of_scope:
+  - Merging duplicate 0000000000 profiles in DB
+  - Changing shared Genérico email data
+
+hints:
+  entry: "search-or-create + search_by_phone — customers_service.py"
+  pattern: "ORDER BY email/name rank then created_at; rank_anonymous_phone_profile for unit tests"
+  tests: "./venv/bin/pytest tests/test_anonymous_customer_resolution.py -q"
+
+skip:
+  audits: [ux, color, typography]
