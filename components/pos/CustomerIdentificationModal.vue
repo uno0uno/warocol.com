@@ -194,7 +194,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
               </div>
-              <span class="font-semibold text-sm text-text-primary leading-tight text-center">
+              <span class="font-semibold text-sm text-text-primary leading-tight text-center inline-flex items-center gap-2">
+                <UiLoadingDots v-if="isCreatingGeneric" size="7px" color="currentColor" />
                 {{ isCreatingGeneric ? t('common.loading') : t('pos.customer.noData') }}
               </span>
             </button>
@@ -354,7 +355,7 @@
                 :disabled="!canSubmitCreate || isCreating"
                 class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <CommonsTheCustomLoader v-if="isCreating" size="small" />
+                <UiLoadingDots v-if="isCreating" size="8px" color="currentColor" />
                 <span>{{ isCreating ? t('common.loading') : t('pos.customer.saveAndContinue') }}</span>
               </button>
             </div>
@@ -449,7 +450,7 @@
                 :disabled="!canSubmitFiscal || isCreating"
                 class="flex-1 min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text font-semibold rounded-xl hover:bg-action-primary-hover-bg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <CommonsTheCustomLoader v-if="isCreating" size="small" />
+                <UiLoadingDots v-if="isCreating" size="8px" color="currentColor" />
                 <span>{{ isCreating ? t('common.loading') : t('pos.customer.saveData') }}</span>
               </button>
             </div>

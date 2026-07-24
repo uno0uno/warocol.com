@@ -3326,25 +3326,30 @@ onUnmounted(() => {
             {{ t('pos.checkout.customerData') }}
           </h2>
 
-          <!-- Customer selected: show card -->
-          <div v-if="selectedCustomer" class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/20 rounded-xl">
-            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+          <!-- Customer selected: compact contact | fiscal layout -->
+          <div v-if="selectedCustomer" class="flex items-start gap-3 p-3 md:p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
               {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
-                {{ t('pos.receipt.saleContact') }}
-              </p>
-              <p class="font-semibold text-text-primary truncate">{{ selectedCustomerDisplayName }}</p>
-              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</p>
-              <p v-if="selectedCustomer.email" class="text-xs text-text-secondary truncate">{{ selectedCustomer.email }}</p>
-              <p v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="text-xs text-state-success-text truncate mt-0.5 flex items-center gap-1">
-                <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
-              </p>
+            <div
+              class="flex-1 min-w-0 grid grid-cols-1 gap-3 md:gap-4"
+              :class="selectedCustomerIdentity.showSeparateAcquirer ? 'md:grid-cols-2' : ''"
+            >
+              <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                  {{ t('pos.receipt.saleContact') }}
+                </p>
+                <p class="font-semibold text-text-primary truncate">{{ selectedCustomerDisplayName }}</p>
+                <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</p>
+                <p v-if="selectedCustomer.email" class="text-xs text-text-secondary truncate">{{ selectedCustomer.email }}</p>
+                <p v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="text-xs text-state-success-text truncate mt-0.5 flex items-center gap-1">
+                  <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                  {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
+                </p>
+              </div>
               <div
                 v-if="selectedCustomerIdentity.showSeparateAcquirer"
-                class="mt-2 border-t border-primary/15 pt-2"
+                class="min-w-0 md:border-s md:border-primary/15 md:ps-4"
               >
                 <p class="text-[10px] font-bold uppercase tracking-wider text-state-warning-text">
                   {{ t('pos.receipt.fiscalAcquirer') }}
@@ -3361,7 +3366,7 @@ onUnmounted(() => {
               </div>
               <div
                 v-if="!isAnonymousCustomer"
-                class="flex flex-wrap gap-2 mt-2"
+                class="flex flex-wrap gap-2 md:col-span-2"
                 aria-live="polite"
               >
                 <div
@@ -3379,7 +3384,7 @@ onUnmounted(() => {
             </div>
             <button
               @click="showCustomerModal = true"
-              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0 self-center"
             >
               {{ t('pos.checkout.changeCustomer') }}
             </button>
