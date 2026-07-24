@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1804
+title: "refactor(billing): quota-first plan comparison matrix in Mi Plan"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1804-quota-compare-matrix
+
+paths:
+  - pages/gestion/billing/index.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .wr/1804.yaml
+
+ac:
+  - Compare section is a resource|Starter|Pro matrix with the same rows for both plans
+  - Key absent in a plan's quotas JSON renders billing.noLimit; 0 renders zero/not-included label
+  - Rows: catalog quotas + online orders + admins + tables/kitchens/QR + scans; skip rows not included in both and per-item detail quotas
+  - Starter column badged as current plan; single upgrade CTA in Pro column only
+  - Duplicated starterUpgradeHint + upgradeToPro removed from plan card placeholder
+  - No plain <table>; grid layout; ES+EN i18n for new labels
+
+out_of_scope:
+  - Plan prices, checkout modal redesign, /uso page, API plan JSON changes
+
+hints:
+  entry: "pages/gestion/billing/index.vue compare section (isStarterTenant && starterPlan && proPlan)"
+  pattern: "quotaLabels + quotaRowsForPlan existing helpers; billing.noLimit/notIncluded i18n"
+  tests: "none (manual visual check); i18n JSON parse"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"

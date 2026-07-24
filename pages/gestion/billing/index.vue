@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey, STARTER_DISPLAY_QUOTA_KEYS, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
@@ -154,11 +154,47 @@ const displayPlanName = computed(() => {
   if (isStarterTenant.value) return starterPlan.value?.name ?? t('billing.starterPlanName')
   return t('billing.noPlan')
 })
-const starterQuotaRows = computed(() => {
-  if (!starterPlan.value) return []
-  return STARTER_DISPLAY_QUOTA_KEYS
-    .map((key) => quotaRowsForPlan(starterPlan.value!).find(row => row.key === key))
-    .filter((row): row is NonNullable<typeof row> => row != null)
+// Quota-first compare matrix (#1804): same rows for both plans.
+// Display rule: key absent in a plan's quotas JSON → no cap for that plan.
+const COMPARE_QUOTA_KEYS: BillingQuotaKey[] = [
+  'menu_products',
+  'menu_categories',
+  'recipe_bases',
+  'modifier_groups',
+  'tenant_ingredients',
+  'completed_online_orders_per_month',
+  'admin_users',
+  'active_tables_including_bar',
+  'active_kitchens',
+  'active_qr_tables',
+]
+
+const planQuotaCell = (plan: BillingPlan, key: BillingQuotaKey) => {
+  const raw = plan.quotas?.[key]
+  if (raw === null || raw === undefined) return { text: t('billing.noLimit'), muted: false }
+  const limit = Number(raw)
+  if (!Number.isFinite(limit)) return { text: t('billing.noLimit'), muted: false }
+  if (limit <= 0) {
+    return { text: quotaLabels.value[key]?.zeroLabel ?? t('billing.notIncluded'), muted: true }
+  }
+  const unit = quotaLabels.value[key]?.unit ?? ''
+  return { text: `${limit.toLocaleString(toNumberLocaleTag(locale.value))} ${unit}`.trim(), muted: false }
+}
+
+const compareQuotaRows = computed(() => {
+  const starter = starterPlan.value
+  const pro = proPlan.value
+  if (!starter || !pro) return []
+  const notIncluded = t('billing.notIncluded')
+  return COMPARE_QUOTA_KEYS
+    .map((key) => ({
+      key,
+      label: quotaLabels.value[key]?.label ?? key,
+      starter: planQuotaCell(starter, key),
+      pro: planQuotaCell(pro, key),
+    }))
+    // Rows excluded in both plans add no comparison value.
+    .filter((row) => !(row.starter.text === notIncluded && row.pro.text === notIncluded))
 })
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
@@ -637,22 +673,21 @@ watch(() => currentTenant.value?.id, async () => {
           </div>
         </div>
 
-        <!-- No subscription placeholder -->
-        <div v-if="!subscription" class="px-6 py-8 text-center">
+        <!-- No subscription placeholder (compare matrix below owns the upgrade sell) -->
+        <div v-if="!subscription" class="px-6 py-6 text-center">
           <p class="text-sm text-text-secondary mb-1">
             {{ isStarterTenant ? t('billing.starterActiveMessage') : t('billing.noActiveSubscription') }}
           </p>
-          <p class="text-xs text-text-secondary">
-            {{ isStarterTenant ? t('billing.starterUpgradeHint') : t('billing.choosePlanToStart') }}
+          <p v-if="!isStarterTenant" class="text-xs text-text-secondary">
+            {{ t('billing.choosePlanToStart') }}
           </p>
-          <button
-            v-if="isStarterTenant && proPlan"
-            type="button"
-            class="mt-4 min-h-[40px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
-            @click="openModal"
+          <NuxtLink
+            v-if="isStarterTenant"
+            to="/gestion/billing/uso"
+            class="inline-block mt-1 text-xs font-semibold text-primary hover:underline"
           >
-            {{ t('billing.upgradeToPro') }}
-          </button>
+            {{ t('billing.viewMyUsage') }}
+          </NuxtLink>
         </div>
 
         <!-- Alert: past_due -->
@@ -690,44 +725,74 @@ watch(() => currentTenant.value?.id, async () => {
           <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
-        <div class="grid gap-4 p-6 lg:grid-cols-2">
-          <div class="rounded-xl border border-border p-5 bg-surface-secondary/40">
-            <p class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</p>
-            <p class="mt-2 text-sm text-text-secondary">{{ starterPlan.description || t('billing.starterPlanBadge') }}</p>
-            <ul class="mt-4 space-y-2">
-              <li
-                v-for="quota in starterQuotaRows"
-                :key="quota.key"
-                class="flex items-start gap-2 text-sm text-text-secondary"
-              >
-                <span class="text-status-success-text">✓</span>
-                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
-              </li>
-              <li class="flex items-start gap-2 text-sm text-text-secondary">
-                <span class="text-status-success-text">✓</span>
-                <span>{{ starterPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}</span>
-              </li>
-            </ul>
+
+        <!-- Quota matrix: resource | Starter | Pro -->
+        <div class="px-2 sm:px-6 py-4">
+          <!-- Column headers -->
+          <div class="grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-widest text-text-secondary self-end">
+              {{ t('billing.compareResource') }}
+            </span>
+            <div class="text-center">
+              <p class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</p>
+              <span class="inline-block mt-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
+                {{ t('billing.yourPlan') }}
+              </span>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</p>
+              <p class="mt-1 text-sm font-bold text-text-primary leading-tight">
+                {{ formatCOP(proPlan.price_annual) }}
+                <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
+              </p>
+            </div>
           </div>
-          <div class="rounded-xl border border-primary/30 p-5 bg-primary/5">
-            <p class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</p>
-            <p class="mt-2 text-2xl font-bold text-text-primary">
-              {{ formatCOP(proPlan.price_annual) }}
-              <span class="text-sm font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
-            </p>
-            <ul class="mt-4 space-y-2">
-              <li
-                v-for="quota in quotaRowsForPlan(proPlan)"
-                :key="quota.key"
-                class="flex items-start gap-2 text-sm text-text-secondary"
-              >
-                <span class="text-status-success-text">✓</span>
-                <span>{{ quota.label }}: <strong class="text-text-primary">{{ quota.value }}</strong></span>
-              </li>
-            </ul>
+
+          <!-- Quota rows -->
+          <div
+            v-for="(row, idx) in compareQuotaRows"
+            :key="row.key"
+            :class="[
+              'grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2.5 rounded-lg items-center',
+              idx % 2 === 0 ? 'bg-surface-secondary/40' : '',
+            ]"
+          >
+            <span class="text-sm text-text-secondary">{{ row.label }}</span>
+            <span
+              :class="['text-sm text-center', row.starter.muted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']"
+            >
+              {{ row.starter.text }}
+            </span>
+            <span
+              :class="['text-sm text-center', row.pro.muted ? 'text-text-secondary italic' : 'font-semibold text-primary']"
+            >
+              {{ row.pro.text }}
+            </span>
+          </div>
+
+          <!-- Scans row (plan-level limit, not a quotas key) -->
+          <div
+            :class="[
+              'grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2.5 rounded-lg items-center',
+              compareQuotaRows.length % 2 === 0 ? 'bg-surface-secondary/40' : '',
+            ]"
+          >
+            <span class="text-sm text-text-secondary">{{ t('billing.scansPerMonth') }}</span>
+            <span class="text-sm text-center font-semibold text-text-primary">
+              {{ starterPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }}
+            </span>
+            <span class="text-sm text-center font-semibold text-primary">
+              {{ proPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }}
+            </span>
+          </div>
+
+          <!-- Single primary CTA, Pro column -->
+          <div class="grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 pt-4">
+            <span />
+            <span />
             <button
               type="button"
-              class="mt-5 w-full min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
+              class="w-full min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all"
               @click="openModal"
             >
               {{ t('billing.upgradeToPro') }}
