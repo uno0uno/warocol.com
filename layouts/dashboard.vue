@@ -87,8 +87,9 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
+import { PUBLIC_OFFER } from '~/utils/publicCta'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Notifications SSE is owned by plugins/notifications.client.ts.
 const { unreadCount: notificationsUnreadCount } = useNotifications()
@@ -119,10 +120,16 @@ const subscriptionBannerMessage = computed(() => {
   const status = accessStatus.value
   const level = subscriptionBannerLevel.value
   if (!status || !level) return ''
+  // Prefer localized conversion copy for Starter; API starter message is operational, not CTA.
+  if (level === 'starter') {
+    const priceAnchor = String(locale.value || '').startsWith('en')
+      ? 'under COP 8,000/month'
+      : PUBLIC_OFFER.monthlyEquivalent
+    return t('shell.subscriptionTrial', { priceAnchor })
+  }
   if (status.message) return status.message
   if (level === 'read_only') return t('shell.subscriptionReadOnly')
-  if (level === 'full_with_warning') return t('shell.subscriptionExpiring')
-  return t('shell.subscriptionTrial')
+  return t('shell.subscriptionExpiring')
 })
 
 // Get route-based configuration

@@ -46,7 +46,7 @@
     "financiero": "Finance",
     "subscriptionReadOnly": "Your subscription has expired. Access is read-only.",
     "subscriptionExpiring": "Your subscription expires soon.",
-    "subscriptionTrial": "Your Starter trial is active. Activate a full plan from the most accessible tier — POS, menu, and costs in one place. Plans from under COP 8,000/month.",
+    "subscriptionTrial": "Your Starter trial is active. Activate a full plan from the most accessible tier — POS, menu, and costs in one place. Plans from {priceAnchor}.",
     "subscriptionTrialCta": "View plans",
     "subscriptionRenewCta": "Renew plan",
     "subscriptionGraceDay": "{n} day remaining",
