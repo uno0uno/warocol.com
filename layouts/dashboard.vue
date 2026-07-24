@@ -21,12 +21,12 @@
         @navigate-pos="navigateToPOS"
       />
 
-      <!-- Subscription Banner -->
+      <!-- Subscription Banner: warning/read_only take priority over starter via access level -->
       <SubscriptionBanner
-        v-if="accessStatus && (accessStatus.level === 'full_with_warning' || accessStatus.level === 'read_only')"
-        :level="accessStatus.level"
-        :message="accessStatus.message || (accessStatus.level === 'read_only' ? t('shell.subscriptionReadOnly') : t('shell.subscriptionExpiring'))"
-        :grace-days-remaining="accessStatus.grace_days_remaining"
+        v-if="showSubscriptionBanner && subscriptionBannerLevel"
+        :level="subscriptionBannerLevel"
+        :message="subscriptionBannerMessage"
+        :grace-days-remaining="accessStatus?.grace_days_remaining"
       />
 
       <!-- Content Area with Overflow -->
@@ -87,8 +87,9 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
+import { PUBLIC_OFFER } from '~/utils/publicCta'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Notifications SSE is owned by plugins/notifications.client.ts.
 const { unreadCount: notificationsUnreadCount } = useNotifications()
@@ -102,6 +103,34 @@ const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
 const isBillingBlocked = computed(() =>
   accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
 )
+
+type SubscriptionBannerLevel = 'starter' | 'full_with_warning' | 'read_only'
+
+const subscriptionBannerLevel = computed<SubscriptionBannerLevel | null>(() => {
+  const level = accessStatus.value?.level
+  if (level === 'full_with_warning' || level === 'read_only' || level === 'starter') {
+    return level
+  }
+  return null
+})
+
+const showSubscriptionBanner = computed(() => subscriptionBannerLevel.value != null)
+
+const subscriptionBannerMessage = computed(() => {
+  const status = accessStatus.value
+  const level = subscriptionBannerLevel.value
+  if (!status || !level) return ''
+  // Prefer localized conversion copy for Starter; API starter message is operational, not CTA.
+  if (level === 'starter') {
+    const priceAnchor = String(locale.value || '').startsWith('en')
+      ? 'under COP 8,000/month'
+      : PUBLIC_OFFER.monthlyEquivalent
+    return t('shell.subscriptionTrial', { priceAnchor })
+  }
+  if (status.message) return status.message
+  if (level === 'read_only') return t('shell.subscriptionReadOnly')
+  return t('shell.subscriptionExpiring')
+})
 
 // Get route-based configuration
 const route = useRoute()
