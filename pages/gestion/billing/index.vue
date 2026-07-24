@@ -629,7 +629,7 @@ watch(() => currentTenant.value?.id, async () => {
     <!-- Error -->
     <CommonsTheErrorState v-else-if="error" />
 
-    <div v-else class="billing-neutral-tables flex flex-col gap-3 md:gap-4">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- ── Plan card ──────────────────────────────────────────── -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
@@ -752,12 +752,12 @@ watch(() => currentTenant.value?.id, async () => {
         v-if="isStarterTenant && starterPlan && proPlan"
         class="bg-surface border border-border rounded-xl overflow-hidden"
       >
-        <div class="px-6 py-5 border-b border-border bg-[hsl(var(--titan-150))]">
+        <div class="px-6 py-5 border-b border-border bg-surface-secondary">
           <h2 class="text-base font-semibold text-text-primary">{{ t('billing.comparePlans') }}</h2>
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
 
-        <!-- Quota matrix as ventas-style grid -->
+        <!-- Quota matrix as ventas-style grid (theme lavender header tokens) -->
         <div class="p-4 sm:p-6">
           <UiResponsiveDataView
             row-size="sm"
@@ -834,11 +834,10 @@ watch(() => currentTenant.value?.id, async () => {
         </div>
       </div>
 
-      <!-- Historial de pagos agrupado por mes -->
-      <!-- Historial de pagos -->
+      <!-- Historial de pagos (neutral gray header; compare matrix keeps theme lavender) -->
+      <div v-if="eventsTotal > 0" class="billing-neutral-tables">
       <UiResponsiveDataView
         row-size="sm"
-        v-if="eventsTotal > 0"
         :columns="columns"
         :data="events"
         :empty-message="t('billing.emptyPayments')"
@@ -883,6 +882,7 @@ watch(() => currentTenant.value?.id, async () => {
           <span class="text-xs font-mono text-text-secondary">{{ eventReference({ metadata: value }) }}</span>
         </template>
       </UiResponsiveDataView>
+      </div>
 
       <!-- Pagination — solo si hay más de una página -->
       <div v-if="eventsTotal > PAGE_SIZE" class="flex items-center justify-end px-1 py-2">
@@ -1345,8 +1345,8 @@ watch(() => currentTenant.value?.id, async () => {
   }
 }
 
-/* Neutral gray table headers on this page: the theme lavender
-   (surface-secondary → titan-200) reads too saturated for data tables here. */
+/* Neutral gray table headers for payment history only.
+   Compare matrix keeps the theme lavender (--data-table-header-bg → surface-secondary). */
 .billing-neutral-tables {
   --data-table-header-bg: var(--titan-150);
 }
