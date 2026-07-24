@@ -461,6 +461,7 @@ const {
 type State = 'idle' | 'success'
 const state = ref<State>('idle')
 const successMessage = ref('')
+let openGeneration = 0
 
 const purchaseUnitOptions = computed(() =>
   form.ingredientId ? purchaseUnitsApi.options(form.ingredientId) : [],
@@ -532,12 +533,18 @@ const onIngredientSelect = async (ingredient: { id: string; name: string; unit: 
 }
 
 watch(() => props.modelValue, async (open) => {
-  if (!open) return
+  if (!open) {
+    openGeneration += 1
+    return
+  }
+  const generation = ++openGeneration
   state.value = 'idle'
   successMessage.value = ''
   reset()
-  if (props.preselect?.id) {
-    await onIngredientSelect(props.preselect)
+  if (!props.preselect?.id) return
+  await onIngredientSelect(props.preselect)
+  if (generation !== openGeneration) {
+    reset()
   }
 })
 

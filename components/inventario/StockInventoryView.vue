@@ -153,6 +153,7 @@
               <button
                 type="button"
                 :title="t('abastecimiento.stock.adjustAction')"
+                :aria-label="t('abastecimiento.stock.adjustAction')"
                 class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
                 @click.stop="emitAdjust(item)"
               >
@@ -258,7 +259,7 @@
               type="button"
               :title="t('abastecimiento.stock.viewMovements')"
               :aria-label="t('abastecimiento.stock.viewMovements')"
-              class="text-text-secondary hover:text-primary transition-colors"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
               @click="navigateTo(`${movementsPath}?ingredient_id=${row.ingredient_id}`)"
             >
               <ClipboardDocumentListIcon class="h-4 w-4" />
@@ -267,7 +268,7 @@
               type="button"
               :title="t('abastecimiento.stock.adjustAction')"
               :aria-label="t('abastecimiento.stock.adjustAction')"
-              class="text-text-secondary hover:text-primary transition-colors"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
               @click="emitAdjust(row)"
             >
               <AdjustmentsHorizontalIcon class="h-4 w-4" />
