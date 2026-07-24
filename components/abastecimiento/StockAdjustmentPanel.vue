@@ -55,9 +55,7 @@
               class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 disabled:opacity-50 transition-colors"
               @click="close"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <XMarkIcon class="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -384,6 +382,7 @@ import {
   ArrowsRightLeftIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import {
   useIngredientPurchaseUnits,
@@ -400,11 +399,23 @@ import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 
-interface Props {
-  modelValue: boolean
+export interface StockAdjustmentPreselect {
+  id: string
+  name: string
+  unit: string
+  minimum_stock?: number | null
+  maximum_stock?: number | null
 }
 
-const props = defineProps<Props>()
+interface Props {
+  modelValue: boolean
+  /** When set, opens with this ingredient already selected (row adjust). */
+  preselect?: StockAdjustmentPreselect | null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  preselect: null,
+})
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'saved'): void
@@ -450,14 +461,7 @@ const {
 type State = 'idle' | 'success'
 const state = ref<State>('idle')
 const successMessage = ref('')
-
-watch(() => props.modelValue, (open) => {
-  if (open) {
-    state.value = 'idle'
-    successMessage.value = ''
-    reset()
-  }
-})
+let openGeneration = 0
 
 const purchaseUnitOptions = computed(() =>
   form.ingredientId ? purchaseUnitsApi.options(form.ingredientId) : [],
@@ -527,6 +531,22 @@ const onIngredientSelect = async (ingredient: { id: string; name: string; unit: 
   const def = purchaseUnitsApi.defaultFor(ingredient.id)
   form.unit = def ? def.value : ingredient.unit
 }
+
+watch(() => props.modelValue, async (open) => {
+  if (!open) {
+    openGeneration += 1
+    return
+  }
+  const generation = ++openGeneration
+  state.value = 'idle'
+  successMessage.value = ''
+  reset()
+  if (!props.preselect?.id) return
+  await onIngredientSelect(props.preselect)
+  if (generation !== openGeneration) {
+    reset()
+  }
+})
 
 const retryStockFetch = async () => {
   if (!form.ingredientId) return

@@ -153,12 +153,11 @@
               <button
                 type="button"
                 :title="t('abastecimiento.stock.adjustAction')"
+                :aria-label="t('abastecimiento.stock.adjustAction')"
                 class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-                @click.stop="navigateToAdjustment(item.ingredient_id)"
+                @click.stop="emitAdjust(item)"
               >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
+                <AdjustmentsHorizontalIcon class="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -254,29 +253,25 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center gap-1">
+          <div class="flex justify-center space-x-2">
             <button
               v-if="movementsPath"
               type="button"
               :title="t('abastecimiento.stock.viewMovements')"
               :aria-label="t('abastecimiento.stock.viewMovements')"
-              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
               @click="navigateTo(`${movementsPath}?ingredient_id=${row.ingredient_id}`)"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
+              <ClipboardDocumentListIcon class="h-4 w-4" />
             </button>
             <button
               type="button"
               :title="t('abastecimiento.stock.adjustAction')"
               :aria-label="t('abastecimiento.stock.adjustAction')"
-              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-primary"
-              @click="navigateToAdjustment(row.ingredient_id)"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors"
+              @click="emitAdjust(row)"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
+              <AdjustmentsHorizontalIcon class="h-4 w-4" />
             </button>
           </div>
         </template>
@@ -297,7 +292,7 @@
           :aria-label="t('ventas.common.primeraPagina')"
           @click="$emit('go-to-page', 1)"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          <ChevronDoubleLeftIcon class="h-4 w-4" />
         </button>
         <button
           type="button"
@@ -306,7 +301,7 @@
           :aria-label="t('ventas.common.paginaAnterior')"
           @click="$emit('previous-page')"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          <ChevronLeftIcon class="h-4 w-4" />
         </button>
         <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
         <button
@@ -316,7 +311,7 @@
           :aria-label="t('ventas.common.paginaSiguiente')"
           @click="$emit('next-page')"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          <ChevronRightIcon class="h-4 w-4" />
         </button>
         <button
           type="button"
@@ -325,7 +320,7 @@
           :aria-label="t('ventas.common.ultimaPagina')"
           @click="$emit('go-to-page', totalPages)"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          <ChevronDoubleRightIcon class="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -333,6 +328,14 @@
 </template>
 
 <script setup lang="ts">
+import {
+  AdjustmentsHorizontalIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+} from '@heroicons/vue/24/outline'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
@@ -394,7 +397,6 @@ const props = withDefaults(defineProps<{
   unitFilter: string
   sortField: string
   sortDirection: 'asc' | 'desc'
-  adjustmentPath: string
   movementsPath?: string
   copy: StockCopy
   statusOptions: StockStatusOption[]
@@ -417,6 +419,7 @@ const emit = defineEmits<{
   'previous-page': []
   'next-page': []
   'go-to-page': [page: number]
+  adjust: [item: StockItem]
 }>()
 
 const filterSelectClass = 'h-10 min-h-[44px] px-3 rounded-lg border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0'
@@ -562,8 +565,8 @@ const mobileSubtitle = (item: StockItem) => {
   return `${item.unit} · ${t('abastecimiento.stock.minShort')} ${formatNumber(item.minimum_stock)}${maxLabel}`
 }
 
-const navigateToAdjustment = (ingredientId: string) => {
-  navigateTo(`${props.adjustmentPath}?ingredientId=${ingredientId}`)
+const emitAdjust = (item: StockItem) => {
+  emit('adjust', item)
 }
 
 const formatNumber = (value: number) => {
