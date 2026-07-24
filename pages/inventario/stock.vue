@@ -25,7 +25,6 @@
       :units="units"
       :sort-field="sortField"
       :sort-direction="sortDirection"
-      adjustment-path="/inventario/ajustes/crear"
       :copy="stockCopy"
       :status-options="stockStatusOptions"
       show-mobile-stock-limits
@@ -36,12 +35,20 @@
       @previous-page="previousPage"
       @next-page="nextPage"
       @go-to-page="goToPage"
+      @adjust="openAdjustment"
+    />
+
+    <AbastecimientoStockAdjustmentPanel
+      v-model="adjustmentOpen"
+      :preselect="adjustmentPreselect"
+      @saved="refetch"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import type { StockAdjustmentPreselect } from '@/components/abastecimiento/StockAdjustmentPanel.vue'
 
 const { t } = useI18n()
 useHead({ title: () => t('abastecimiento.head.stock') })
@@ -55,6 +62,26 @@ const statusFilter = ref('all')
 const unitFilter = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(50)
+
+const adjustmentOpen = ref(false)
+const adjustmentPreselect = ref<StockAdjustmentPreselect | null>(null)
+
+const openAdjustment = (item: {
+  ingredient_id: string
+  ingredient_name: string
+  unit: string
+  minimum_stock: number
+  maximum_stock?: number | null
+}) => {
+  adjustmentPreselect.value = {
+    id: item.ingredient_id,
+    name: item.ingredient_name,
+    unit: item.unit,
+    minimum_stock: item.minimum_stock,
+    maximum_stock: item.maximum_stock ?? null,
+  }
+  adjustmentOpen.value = true
+}
 
 const currentOffset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
