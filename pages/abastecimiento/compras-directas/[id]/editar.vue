@@ -794,7 +794,7 @@ import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
 const {
   formatCurrency,
-  formatDate: _fmtDate,
+  formatDate,
   currencyCode,
   uiLocale,
 } = useFormatters()
@@ -995,8 +995,6 @@ function roundDecimal(value: number, precision: number) {
   const factor = 10 ** precision
   return Math.round((value + Number.EPSILON) * factor) / factor
 }
-
-const formatDate = (date: string) => _fmtDate(date)
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'
