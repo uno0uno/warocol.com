@@ -45,8 +45,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
+  // selectedTenant is set by watch(tenantData) — wait for flush after fetch
   const { currentTenant } = useTenantReactive()
-  const tenantId = currentTenant.value?.id
+  if (!currentTenant.value?.id && tenantsStore.hasTenants) {
+    await nextTick()
+    const started = Date.now()
+    while (!currentTenant.value?.id && Date.now() - started < 1000) {
+      await new Promise((r) => setTimeout(r, 25))
+    }
+  }
+
+  const tenantId = currentTenant.value?.id ?? tenantsStore.tenants[0]?.id
   if (!tenantId) {
     return navigateTo('/equipo/miembros', { replace: true })
   }
