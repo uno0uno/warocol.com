@@ -183,6 +183,7 @@ const {
   categoriesCreateBlockedMessage,
   showCategoriesCreateBlocked,
   ensureBillingOverview,
+  fetchQuotaBlocked,
 } = useMenuCatalogQuotaGate()
 
 definePageMeta({
@@ -285,8 +286,9 @@ onUnmounted(() => {
 const panelOpen = ref(false)
 const panelCategory = ref<Category | null>(null)
 
-const openCreatePanel = () => {
-  if (isCategoriesCreateBlocked.value) {
+const openCreatePanel = async () => {
+  // Fresh check: billing cache may be empty without mi_plan / overview.
+  if (isCategoriesCreateBlocked.value || await fetchQuotaBlocked('menu_categories')) {
     showCategoriesCreateBlocked()
     return
   }

@@ -711,6 +711,16 @@
       @saved="onCategoryCreated"
     />
 
+    <UiConfirmActionModal
+      v-model="categoriesLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="categoriesLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromCategoriesLimitModal"
+      @cancel="closeCategoriesLimitModal"
+    />
+
     <CocinaStationPanel
       v-model="showNewStationModal"
       @saved="onStationCreated"
@@ -760,7 +770,7 @@ const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 const { showUpgradeCta, upgradeMessage, handleQuotaError, clearQuotaError } = useQuotaExceeded()
-const { redirectIfProductsCreateBlocked } = useMenuCatalogQuotaGate()
+const { redirectIfProductsCreateBlocked, handleInlineCategoryCreate, categoriesLimitModalOpen, categoriesLimitModalMessage, closeCategoriesLimitModal, goToBillingFromCategoriesLimitModal } = useMenuCatalogQuotaGate()
 
 onMounted(async () => {
   await redirectIfProductsCreateBlocked('/menu/productos')
@@ -1195,8 +1205,10 @@ function onCategorySelected(cat: { id: string; name: string }) {
 }
 
 function onCategoryCreateRequested(typedName: string) {
-  newCategoryName.value = typedName
-  showNewCategoryModal.value = true
+  void handleInlineCategoryCreate(typedName, (name) => {
+    newCategoryName.value = name
+    showNewCategoryModal.value = true
+  })
 }
 
 function onCategoryCreated(cat: { id: string; name: string }) {

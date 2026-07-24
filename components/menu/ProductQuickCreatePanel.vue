@@ -179,6 +179,16 @@
       :initial-name="newCategoryName"
       @saved="onCategoryCreated"
     />
+
+    <UiConfirmActionModal
+      v-model="categoriesLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="categoriesLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromCategoriesLimitModal"
+      @cancel="closeCategoriesLimitModal"
+    />
   </Teleport>
 </template>
 
@@ -214,8 +224,16 @@ const emit = defineEmits<Emits>()
 
 const cache = useQueryCache()
 const toast = useToast()
+const { t } = useI18n({ useScope: 'global' })
 const { currentTenant } = useTenantReactive()
 const { currencyCode, currencyMinorUnits } = useFormatters()
+const {
+  handleInlineCategoryCreate,
+  categoriesLimitModalOpen,
+  categoriesLimitModalMessage,
+  closeCategoriesLimitModal,
+  goToBillingFromCategoriesLimitModal,
+} = useMenuCatalogQuotaGate()
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
@@ -272,8 +290,10 @@ function onCategorySelected(cat: { id: string; name: string }) {
 }
 
 function onCategoryCreateRequested(typedName: string) {
-  newCategoryName.value = typedName
-  showNewCategoryModal.value = true
+  void handleInlineCategoryCreate(typedName, (name) => {
+    newCategoryName.value = name
+    showNewCategoryModal.value = true
+  })
 }
 
 function onCategoryCreated(cat: { id: string; name: string }) {

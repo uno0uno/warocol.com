@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1806
+title: "fix(menu): category create UX when menu_categories quota exhausted"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1806-category-quota-ux
+
+paths:
+  - composables/useMenuCatalogQuotaGate.ts
+  - pages/menu/categorias/index.vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - components/menu/ProductQuickCreatePanel.vue
+  - .wr/1806.yaml
+
+ac:
+  - Inline create stays clickable; when blocked opens limit modal (not CategoriaPanel) with Mi Plan CTA
+  - /menu/categorias Nuevo disabled when blocked; openCreatePanel awaits fresh remaining-usage check
+  - Gate refresh works without mi_plan billing overview cache
+  - No API changes
+
+out_of_scope:
+  - Warehouse categories
+  - Disabling inline Crear option itself
+  - API quota changes
+
+hints:
+  entry: "useMenuCatalogQuotaGate + categorias openCreatePanel + product onCategoryCreateRequested"
+  pattern: "fetchQuotaBlocked / UiConfirmActionModal; remaining-usage fail-open was enabling Nuevo"
+  tests: "none targeted; node compile sanity optional"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
