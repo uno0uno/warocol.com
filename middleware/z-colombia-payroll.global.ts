@@ -55,7 +55,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  const tenantId = currentTenant.value?.id ?? tenantsStore.tenants[0]?.id
+  // Fail closed if selectedTenant never resolved — do not guess tenants[0]
+  // (multi-tenant accounts can evaluate the wrong financial profile).
+  const tenantId = currentTenant.value?.id
   if (!tenantId) {
     return navigateTo('/equipo/miembros', { replace: true })
   }
