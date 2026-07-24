@@ -23,6 +23,7 @@ const { formatDate } = useFormatters()
 const cache = useQueryCache()
 const {
   isFiscalIntegrated,
+  isMatiasDian,
   isWaroCommercial,
   isLoading: isFinancialProfileLoading,
 } = useTenantFinancialProfile()
@@ -431,7 +432,7 @@ const taxLevels = [
   <div v-else class="space-y-6">
 
     <section
-      v-if="isWaroCommercial"
+      v-if="!isMatiasDian || isWaroCommercial"
       class="rounded-xl border-2 border-state-info-border bg-state-info-bg p-4 sm:p-6"
       role="status"
       aria-live="polite"
