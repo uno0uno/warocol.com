@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1802
+title: "feat(billing): persistent trial/Starter conversion banner in dashboard shell"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1802-starter-conversion-banner
+
+paths:
+  - components/SubscriptionBanner.vue
+  - layouts/dashboard.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .wr/1802.yaml
+
+ac:
+  - Show SubscriptionBanner when accessStatus.level === starter
+  - Banner is informational + CTA only; does not block navigation/POS
+  - CTA links to /gestion/billing with action label (Ver planes / View plans)
+  - Copy uses accessible-plan price anchor; inviting style distinct from yellow/orange warnings
+  - ES + EN i18n for message + CTA; no hardcoded user-facing Spanish
+  - full without warning does not show banner; warning/read_only keep priority via level
+
+out_of_scope:
+  - Plan price changes
+  - Payment gateway / Mercado Pago
+  - Quota enforcement
+  - A/B framework
+  - Unverified cheapest-in-market claims
+  - Blocking modules for trial users
+
+hints:
+  entry: "layouts/dashboard.vue SubscriptionBanner slot; components/SubscriptionBanner.vue"
+  pattern: "components/SubscriptionBanner.vue: existing full_with_warning/read_only variants"
+  tests: "none (manual shell check); no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
