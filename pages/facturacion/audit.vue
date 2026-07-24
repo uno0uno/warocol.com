@@ -18,6 +18,7 @@ const route = useRoute()
 const { formatDate } = useFormatters()
 const {
   isFiscalIntegrated,
+  isMatiasDian,
   isLoading: isFinancialProfileLoading,
 } = useTenantFinancialProfile()
 
@@ -120,7 +121,7 @@ const reasonClass = (reason: string) => {
   </div>
 
   <section
-    v-else-if="!isFiscalIntegrated"
+    v-else-if="!isMatiasDian || !isFiscalIntegrated"
     class="rounded-xl border-2 border-state-info-border bg-state-info-bg p-5"
     role="status"
   >

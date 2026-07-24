@@ -145,6 +145,9 @@ export const useTenantFinancialProfile = () => {
   const isColombiaPuc = computed(() =>
     isColombiaPucProfile(response.value, currentTenant.value?.id),
   )
+  const isMatiasDian = computed(() =>
+    Boolean(response.value?.capabilities.matias_dian),
+  )
   const isColombiaPayroll = computed(() =>
     Boolean(response.value?.capabilities.colombia_payroll),
   )
@@ -191,6 +194,7 @@ export const useTenantFinancialProfile = () => {
     profile,
     isFiscalIntegrated,
     isColombiaPuc,
+    isMatiasDian,
     isColombiaPayroll,
     isWaroCommercial,
     currencyMinorUnits,
