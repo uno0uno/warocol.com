@@ -1,0 +1,44 @@
+issue: 1800
+title: "Add starter recipe_bases quota and gate Recetas Nuevo"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1800-recipe-bases-quota
+
+paths:
+  - composables/useBilling.ts
+  - composables/useMenuCatalogQuotaGate.ts
+  - pages/menu/recetas/index.vue
+  - pages/menu/recetas/crear.vue
+  - pages/gestion/billing/index.vue
+  - pages/gestion/billing/uso.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .wr/1800.yaml
+
+ac:
+  - "Billing contract includes recipe_bases"
+  - "Recetas Nuevo and /crear redirect use recipe_bases instead of menu_products"
+  - "Mi Plan and usage screens show recipe_bases for Starter"
+  - "Productos and Modificadores gates stay unchanged"
+
+out_of_scope:
+  - "Categorías gating (separate issue #1798)"
+  - "Change product or modifier quota values"
+
+hints:
+  entry: "useMenuCatalogQuotaGate; pages/menu/recetas"
+  pattern: "Existing menu_products operational quota resolver"
+  tests: "No targeted frontend test exists for this composable/page"
+
+risk:
+  sensitive: false
+  areas:
+    - "API/front quota contract"
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Merge companion API PR first, then apply the SQL seed"

@@ -374,6 +374,7 @@
     "unitCategories": "categorías",
     "unitIngredients": "ingredientes",
     "unitModifierGroups": "grupos",
+    "unitRecipeBases": "recetas",
     "unitRecipeLines": "líneas",
     "unitModifierOptions": "opciones",
     "quota": {
@@ -381,6 +382,7 @@
       "menu_categories": "Categorías del menú",
       "tenant_ingredients": "Ingredientes propios",
       "modifier_groups": "Grupos de modificadores",
+      "recipe_bases": "Recetas base",
       "recipe_lines_per_product": "Líneas de receta por producto",
       "modifier_options_per_group": "Opciones por modificador"
     },
