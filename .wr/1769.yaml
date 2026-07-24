@@ -1,0 +1,39 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 1769
+title: "Sale detail + POS: resend order email and unify delivery history"
+repo: both
+repo_remote: uno0uno/warocol.com + uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA
+stack: both
+branch: wr-1769-order-email-history
+
+paths:
+  - api_warocol.com/app/services/orders_service.py
+  - api_warocol.com/app/routers/pos_cart.py
+  - api_warocol.com/app/services/pos_cart_service.py
+  - api_warocol.com/tests/test_invoice_send_email.py
+  - api_warocol.com/tests/test_pos_receipt_email_tracking.py
+  - front_nuxt/pages/ventas/[id].vue
+  - front_nuxt/pages/pos/checkout.vue
+  - front_nuxt/components/ventas/InvoiceEmailModal.vue
+
+ac:
+  - Completed /ventas/[id]: Enviar + Ver historial without accepted DIAN invoice (receipt send)
+  - Accepted invoice: keep invoice email + attachments; resend appends history row
+  - POS /receipt-email with order_id → invoice_email_deliveries (+ pixel) like send_invoice_email
+  - Complete-order fire-and-forget with receipt_email + _order_id also tracks (fail-open)
+  - Historial shows POS + ventas deliveries; empty only if never tracked
+  - Tests: invoice send/history still pass; receipt-without-invoice + POS delivery when order_id
+
+out_of_scope:
+  - Backfill old untracked POS emails
+  - Inventing DIAN invoices
+  - SES template redesign
+
+hints:
+  entry: "orders_service.send_invoice_email; pos_cart SendReceiptRequest + /receipt-email; pos_cart_service complete receipt; ventas/[id] CTA gate"
+  pattern: "Mirror create_pending_delivery + mark_sent/failed + tracking_pixel_url from send_invoice_email (~4377); POS currently skips this"
+  tests: "./venv/bin/pytest tests/test_invoice_send_email.py tests/test_pos_receipt_email_tracking.py -q"
+
+skip:
+  audits: [ux, color, typography]

@@ -25,7 +25,8 @@ interface Customer {
 interface Props {
   open: boolean
   orderId: string
-  invoiceLabel: string  // e.g. "LZT-5462" for the in-modal copy
+  /** Invoice label (e.g. LZT-5462) or order number fallback (#123) for receipt-only sends. */
+  invoiceLabel: string
   customer: Customer | null
 }
 

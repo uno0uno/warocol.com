@@ -375,6 +375,15 @@ const canEmitInvoiceForOrder = computed(() => Boolean(
     && orderHasInvoiceCustomer.value
     && !isCreditOnlyInvoiceBlocked.value
 ))
+/** Completed sales can resend receipt/invoice email + view delivery history (#1769). */
+const canSendOrderEmail = computed(() => order.value?.status === 'completed')
+const orderEmailLabel = computed(() => {
+  if (invoiceData.value?.prefix && invoiceData.value?.invoice_number != null) {
+    return `${invoiceData.value.prefix}-${invoiceData.value.invoice_number}`
+  }
+  const n = order.value?.order_number
+  return n != null ? `#${n}` : t('ventas.detail.emailInvoiceCta')
+})
 const shouldShowInvoiceSection = computed(() => Boolean(
   invoiceData.value
     || isCreditOnlyInvoiceBlocked.value
@@ -1302,7 +1311,7 @@ onUnmounted(() => {
                   </svg>
                   {{ t('ventas.detail.downloadPdfCta') }}
                 </a>
-                <button v-if="invoiceData.status === 'accepted'"
+                <button v-if="canSendOrderEmail"
                   type="button"
                   @click="showEmailModal = true"
                   class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors">
@@ -1312,7 +1321,7 @@ onUnmounted(() => {
                   </svg>
                   {{ t('ventas.detail.emailInvoiceCta') }}
                 </button>
-                <button v-if="invoiceData.status === 'accepted'"
+                <button v-if="canSendOrderEmail"
                   type="button"
                   @click="showInvoiceEmailHistory = true"
                   class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-semibold border border-border text-text-primary hover:bg-surface-secondary transition-colors">
@@ -1321,9 +1330,6 @@ onUnmounted(() => {
                   </svg>
                   {{ t('ventas.detail.emailHistoryCta') }}
                 </button>
-                <p v-else class="text-xs text-text-tertiary">
-                  {{ t('ventas.detail.invoiceAcceptedOnly') }}
-                </p>
               </div>
             </div>
 
@@ -1543,6 +1549,30 @@ onUnmounted(() => {
         </template>
         </div>
       </Transition>
+
+      <!-- Receipt email for completed sales without an invoice card CTAs (#1769) -->
+      <div
+        v-if="canSendOrderEmail && !invoiceData"
+        class="bg-surface border border-border rounded-2xl p-5 space-y-3"
+      >
+        <h2 class="text-sm font-bold text-text-primary">{{ t('ventas.detail.emailInvoiceCta') }}</h2>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            @click="showEmailModal = true"
+            class="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
+          >
+            {{ t('ventas.detail.emailInvoiceCta') }}
+          </button>
+          <button
+            type="button"
+            @click="showInvoiceEmailHistory = true"
+            class="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-text-primary hover:bg-surface-secondary transition-colors"
+          >
+            {{ t('ventas.detail.emailHistoryCta') }}
+          </button>
+        </div>
+      </div>
 
       <!-- Status Update Panel (mesa and barra orders) -->
       <div v-if="order.source === 'mesa' || order.source === 'barra'"
@@ -2109,12 +2139,12 @@ onUnmounted(() => {
       </Transition>
     </Teleport>
 
-    <!-- warocol.com#603 — send-invoice-by-email modal (WARO-branded via SES) -->
+    <!-- warocol.com#603 / #1769 — send order email (invoice or receipt) -->
     <VentasInvoiceEmailModal
-      v-if="invoiceData"
+      v-if="canSendOrderEmail"
       v-model:open="showEmailModal"
       :order-id="orderId"
-      :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
+      :invoice-label="orderEmailLabel"
       :customer="orderData?.customer ?? null"
       @sent="onInvoiceEmailSent"
     />

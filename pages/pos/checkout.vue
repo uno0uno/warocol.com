@@ -2906,6 +2906,7 @@ const sendReceiptEmail = async () => {
       body: {
         email: receiptEmail.value,
         order_number: orderResult.value.order_number,
+        order_id: orderResult.value.order_id || orderResult.value.order_ids?.[0] || null,
         total_amount: orderResult.value.total_amount,
         payment_method: orderResult.value.payment_method,
         items: itemsForEmail,
