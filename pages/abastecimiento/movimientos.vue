@@ -34,7 +34,7 @@
       <UiResponsiveDataView
         row-size="sm"
         :columns="movementsTableColumns"
-        :data="sortedMovements"
+        :data="movements"
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
@@ -137,12 +137,90 @@
           <span class="text-sm text-text-primary">{{ value || t('abastecimiento.movimientos.system') }}</span>
         </template>
       </UiResponsiveDataView>
+
+      <!-- Pagination (same pattern as abastecimiento/compras-directas) -->
+      <div
+        v-if="movementsTotal > itemsPerPage"
+        class="bg-surface px-4 py-3 flex items-center justify-between border border-border rounded-lg"
+      >
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button
+            type="button"
+            :disabled="!canGoPrevious"
+            :class="[
+              'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+              canGoPrevious
+                ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+            ]"
+            @click="previousPage"
+          >
+            {{ t('abastecimiento.comprasDirectas.previous') }}
+          </button>
+          <button
+            type="button"
+            :disabled="!canGoNext"
+            :class="[
+              'relative inline-flex items-center px-4 py-2 border border-action-outline-border text-sm font-medium rounded-md',
+              canGoNext
+                ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+            ]"
+            @click="nextPage"
+          >
+            {{ t('abastecimiento.comprasDirectas.next') }}
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-text-secondary">
+              {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total: movementsTotal }) }}
+            </p>
+          </div>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button
+                type="button"
+                :disabled="!canGoPrevious"
+                :class="[
+                  'relative inline-flex items-center px-2 py-2 rounded-s-md border border-action-outline-border text-sm font-medium',
+                  canGoPrevious
+                    ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                    : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+                ]"
+                :aria-label="t('abastecimiento.comprasDirectas.previous')"
+                @click="previousPage"
+              >
+                <ChevronLeftIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
+              <span class="relative inline-flex items-center px-4 py-2 border border-action-outline-border bg-action-outline-bg text-sm font-medium text-action-outline-text">
+                {{ currentPage }} / {{ movementsTotalPages }}
+              </span>
+              <button
+                type="button"
+                :disabled="!canGoNext"
+                :class="[
+                  'relative inline-flex items-center px-2 py-2 rounded-e-md border border-action-outline-border text-sm font-medium',
+                  canGoNext
+                    ? 'text-action-outline-text bg-action-outline-bg hover:bg-action-outline-hover-bg'
+                    : 'text-action-outline-disabled-text bg-action-outline-disabled-bg cursor-not-allowed',
+                ]"
+                :aria-label="t('abastecimiento.comprasDirectas.next')"
+                @click="nextPage"
+              >
+                <ChevronRightIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
@@ -158,6 +236,10 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const ingredientFilter = ref('')
 const movementTypeFilter = ref('')
+const itemsPerPage = ref(20)
+const currentPage = ref(1)
+
+const filterSelectClass = 'h-10 min-h-[44px] px-3 rounded-lg border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0'
 
 const movementTypeOptions = computed(() => [
   { value: 'purchase', label: t('abastecimiento.common.compras') },
@@ -176,9 +258,9 @@ const hasActiveFilters = computed(
     || !!movementTypeFilter.value,
 )
 
-const performSearch = () => applySearch()
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
-const sortField = ref('')
+const sortField = ref('created_at')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 const dateParts = computed(() => {
@@ -192,15 +274,25 @@ const { data: movementsData, asyncStatus: queryAsyncStatus, refetch } = useQuery
     ingredient: ingredientFilter.value || null,
     from: dateRange.value.from,
     to: dateRange.value.to,
+    search: appliedSearch.value || null,
+    sort_field: sortField.value,
+    sort_direction: sortDirection.value,
+    page: currentPage.value,
+    limit: itemsPerPage.value,
   }],
-  query: () => $fetch('/api/inventory/movements', {
-    params: {
-      limit: 500,
-      movement_type: movementTypeFilter.value || undefined,
-      ingredient_id: ingredientFilter.value || undefined,
+  query: () => {
+    const params: Record<string, string | number> = {
+      limit: itemsPerPage.value,
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sort_field: sortField.value,
+      sort_direction: sortDirection.value,
       ...dateParts.value,
     }
-  }),
+    if (movementTypeFilter.value) params.movement_type = movementTypeFilter.value
+    if (ingredientFilter.value) params.ingredient_id = ingredientFilter.value
+    if (appliedSearch.value) params.search = appliedSearch.value
+    return $fetch('/api/inventory/movements', { params })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -209,37 +301,30 @@ const isLoading = computed(() => !movementsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && movementsData.value != null)
 
 const movements = computed(() => movementsData.value?.data || [])
+const movementsTotal = computed(() => movementsData.value?.total ?? 0)
+const movementsTotalPages = computed(() =>
+  Math.ceil(movementsTotal.value / itemsPerPage.value),
+)
+const canGoPrevious = computed(() => currentPage.value > 1)
+const canGoNext = computed(() => currentPage.value < movementsTotalPages.value)
+const startItem = computed(() =>
+  movementsTotal.value ? (currentPage.value - 1) * itemsPerPage.value + 1 : 0,
+)
+const endItem = computed(() =>
+  Math.min(currentPage.value * itemsPerPage.value, movementsTotal.value),
+)
 
-const filteredMovements = computed(() => {
-  const q = appliedSearch.value.toLowerCase()
-  if (!q) return movements.value
-  return movements.value.filter((movement) => {
-    return movement.ingredient_name.toLowerCase().includes(q)
-      || (movement.reference_number && movement.reference_number.toLowerCase().includes(q))
-  })
-})
+const previousPage = () => {
+  if (canGoPrevious.value) currentPage.value--
+}
+const nextPage = () => {
+  if (canGoNext.value) currentPage.value++
+}
 
-const sortedMovements = computed(() => {
-  if (!sortField.value) return filteredMovements.value
-
-  const sorted = [...filteredMovements.value].sort((a, b) => {
-    const aValue = a[sortField.value]
-    const bValue = b[sortField.value]
-
-    if (aValue === null || aValue === undefined) return 1
-    if (bValue === null || bValue === undefined) return -1
-
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
-    }
-
-    const strA = String(aValue).toLowerCase()
-    const strB = String(bValue).toLowerCase()
-    return sortDirection.value === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA)
-  })
-
-  return sorted
-})
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch(dateRangeDates, () => { currentPage.value = 1 })
+watch(movementTypeFilter, () => { currentPage.value = 1 })
+watch(ingredientFilter, () => { currentPage.value = 1 })
 
 const handleSort = (field: string) => {
   if (sortField.value === field) {
@@ -248,6 +333,7 @@ const handleSort = (field: string) => {
     sortField.value = field
     sortDirection.value = 'desc'
   }
+  currentPage.value = 1
 }
 
 const clearFilters = () => {
@@ -255,6 +341,7 @@ const clearFilters = () => {
   clearDateRange()
   ingredientFilter.value = ''
   movementTypeFilter.value = ''
+  currentPage.value = 1
 }
 
 const movementsTableColumns = computed(() => [

@@ -74,61 +74,20 @@
         </div>
 
         <!-- ─── Form (idle / sending / error) ─────────────────────────────── -->
-        <div v-else class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <!-- 1. Ingredient picker -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">
-              {{ WAREHOUSE_COPY.warehouseItemColumn }} <span class="text-destructive">*</span>
-            </label>
-            <UiIngredientSearchInput
-              :allow-create="false"
-              :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
-              @select="onIngredientSelect"
-            />
-          </div>
-
-          <!-- 2. Selected ingredient summary (3 cards) — skeleton while loading -->
+        <div v-else class="flex-1 overflow-y-auto px-6 py-5">
+          <!-- Matrix load (same pattern as AsientoDetailPanel / ComandasEstadoPanel) -->
           <div
-            v-if="selectedIngredient"
-            class="rounded-xl border border-border bg-background p-4 grid grid-cols-3 gap-3"
+            v-if="showMatrixLoading"
+            class="flex items-center justify-center py-12"
+            role="status"
+            :aria-label="t('common.loading')"
           >
-            <div>
-              <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">{{ t('abastecimiento.stock.currentStock') }}</p>
-              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-6 w-20 bg-surface-secondary rounded animate-pulse" :aria-label="t('common.loading')" />
-              <template v-else>
-                <p class="text-lg font-bold text-text-primary mt-0.5 leading-tight">
-                  {{ formatNumber(currentStock) }}
-                  <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
-                </p>
-                <p
-                  v-if="currentStockInFormUnit !== null"
-                  class="text-[10px] text-text-secondary leading-snug mt-0.5"
-                >
-                  ≈ {{ formatNumber(currentStockInFormUnit) }} {{ form.unit }}
-                </p>
-              </template>
-            </div>
-            <div>
-              <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">{{ t('abastecimiento.stock.minimum') }}</p>
-              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-5 w-16 bg-surface-secondary rounded animate-pulse" :aria-label="t('common.loading')" />
-              <p v-else class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
-                {{ formatNumber(selectedIngredient.minimum_stock || 0) }}
-                <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
-              </p>
-            </div>
-            <div>
-              <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">{{ t('abastecimiento.stock.maximum') }}</p>
-              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-5 w-12 bg-surface-secondary rounded animate-pulse" :aria-label="t('common.loading')" />
-              <p v-else class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
-                {{ selectedIngredient.maximum_stock ? formatNumber(selectedIngredient.maximum_stock) : '-' }}
-                <span v-if="selectedIngredient.maximum_stock" class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
-              </p>
-            </div>
+            <CommonsTheCustomLoader size="medium" />
           </div>
 
-          <!-- 2b. Stock-load error: refetch action so operator can recover -->
+          <!-- Stock fetch failed -->
           <div
-            v-if="selectedIngredient && !isLoadingStock && !stockLoaded && errorMessage"
+            v-else-if="selectedIngredient && !stockLoaded && errorMessage"
             class="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-destructive"
             role="alert"
           >
@@ -140,193 +99,234 @@
                 class="text-xs font-semibold underline hover:no-underline flex-shrink-0"
                 @click="retryStockFetch"
               >
-              {{ t('common.retry') }}
+                {{ t('common.retry') }}
               </button>
             </div>
           </div>
 
-          <!-- 3. Type cards (only after stock confirmed) -->
-          <div v-if="selectedIngredient && stockLoaded" class="flex flex-col gap-2">
-            <span class="text-sm font-medium text-text-primary">
-              {{ t('abastecimiento.stock.adjustmentType') }} <span class="text-destructive">*</span>
-            </span>
-            <div class="grid grid-cols-3 gap-2">
-              <button
-                v-for="option in TYPE_OPTIONS"
-                :key="option.value"
-                type="button"
-                :aria-pressed="form.adjustmentType === option.value"
-                class="min-h-[44px] flex flex-col items-center justify-center gap-1 p-2 rounded-xl border-2 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                :class="form.adjustmentType === option.value ? option.activeClass : 'border-border bg-background hover:border-primary/30 hover:bg-surface-secondary/60'"
-                @click="form.adjustmentType = option.value"
-              >
-                <component
-                  :is="option.icon"
-                  :class="['w-5 h-5', form.adjustmentType === option.value ? option.iconClass : 'text-text-secondary']"
-                  aria-hidden="true"
-                />
-                <span class="text-xs font-semibold leading-tight" :class="form.adjustmentType === option.value ? option.labelClass : 'text-text-primary'">
-                  {{ option.label }}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <!-- 4. Quantity + unit selector with conversion preview -->
-          <div v-if="selectedIngredient && form.adjustmentType" class="grid grid-cols-2 gap-3">
-            <div class="flex flex-col gap-1.5">
-              <label :for="qtyId" class="text-sm font-medium text-text-primary">
-                {{ form.adjustmentType === 'set' ? t('abastecimiento.stock.newStock') : t('abastecimiento.stock.quantity') }}
-                <span class="text-destructive">*</span>
-              </label>
-              <UiDecimalInput
-                :id="qtyId"
-                v-model="form.quantity"
-                :min="0"
-                :precision="INVENTORY_QUANTITY_PRECISION"
-                class="w-full px-3 py-2 min-h-[44px]"
-                :placeholder="form.adjustmentType === 'set' ? t('abastecimiento.stock.targetStock') : t('abastecimiento.stock.quantityPlaceholder')"
-              />
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label :for="unitId" class="text-sm font-medium text-text-primary">
-                {{ t('abastecimiento.common.unidad') }} <span class="text-destructive">*</span>
-              </label>
-              <div class="relative">
-                <select
-                  :id="unitId"
-                  v-model="form.unit"
-                  :disabled="purchaseUnitOptions.length === 0 || purchaseUnitsApi.isLoading(form.ingredientId)"
-                  class="input-base w-full px-3 py-2 min-h-[44px] disabled:bg-surface-secondary disabled:cursor-not-allowed"
-                >
-                  <!-- Always offer the base unit -->
-                  <option :value="selectedIngredient.unit">
-                    {{ selectedIngredient.unit }} ({{ t('abastecimiento.stock.baseUnit') }})
-                  </option>
-                  <option
-                    v-for="u in purchaseUnitOptions"
-                    :key="u.value + '-' + u.conversion_factor"
-                    :value="u.value"
+          <!-- Full form only after stock is ready (row open locks the article — no Cambiar) -->
+          <div v-else-if="selectedIngredient && stockLoaded" class="space-y-5">
+            <!-- Artículo + stock en una sola franja (aprovecha ancho del panel) -->
+            <div class="rounded-xl border border-border bg-surface-secondary/30 px-3 py-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-text-primary leading-snug truncate" :title="selectedIngredient.name">
+                    {{ selectedIngredient.name }}
+                  </p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ selectedIngredient.unit }}</p>
+                </div>
+                <div class="shrink-0 text-end max-w-[55%]">
+                  <p class="text-[11px] font-medium text-text-secondary leading-none">
+                    {{ t('abastecimiento.stock.currentStock') }}
+                  </p>
+                  <p class="mt-1 text-lg font-bold tabular-nums text-text-primary leading-tight tracking-tight">
+                    {{ formatNumber(currentStock) }}
+                    <span class="text-xs font-medium text-text-secondary">{{ selectedIngredient.unit }}</span>
+                  </p>
+                  <p
+                    v-if="currentStockInFormUnit !== null"
+                    class="text-[11px] text-text-secondary leading-snug mt-0.5"
                   >
-                    {{ u.label }}<template v-if="u.conversion_factor !== 1"> · 1 = {{ formatNumber(u.conversion_factor) }} {{ selectedIngredient.unit }}</template>
-                  </option>
-                </select>
-                <span
-                  v-if="purchaseUnitsApi.isLoading(form.ingredientId)"
-                  class="absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary"
-                  aria-hidden="true"
-                >
-                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                </span>
+                    ≈ {{ formatNumber(currentStockInFormUnit) }} {{ form.unit }}
+                  </p>
+                </div>
               </div>
-              <p
-                v-if="hasValidQuantity && form.unit !== selectedIngredient.unit"
-                class="text-[11px] text-text-secondary leading-snug"
-              >
-                = {{ formatNumber(convertedQuantity) }} {{ selectedIngredient.unit }}
+              <div class="mt-2.5 pt-2.5 border-t border-border/70 flex items-baseline justify-between gap-3 text-xs">
+                <p class="min-w-0">
+                  <span class="text-text-secondary">{{ t('abastecimiento.stock.minimum') }}</span>
+                  <span class="ms-1.5 font-semibold tabular-nums text-text-primary">
+                    {{ formatNumber(selectedIngredient.minimum_stock || 0) }}
+                    <span class="font-normal text-text-secondary">{{ selectedIngredient.unit }}</span>
+                  </span>
+                </p>
+                <p class="shrink-0 text-end">
+                  <span class="text-text-secondary">{{ t('abastecimiento.stock.maximum') }}</span>
+                  <span class="ms-1.5 font-semibold tabular-nums text-text-primary">
+                    <template v-if="selectedIngredient.maximum_stock">
+                      {{ formatNumber(selectedIngredient.maximum_stock) }}
+                      <span class="font-normal text-text-secondary">{{ selectedIngredient.unit }}</span>
+                    </template>
+                    <span v-else class="text-text-tertiary font-medium">{{ t('abastecimiento.stock.sinMax') }}</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <span class="text-sm font-medium text-text-primary">
+                {{ t('abastecimiento.stock.adjustmentType') }} <span class="text-destructive">*</span>
+              </span>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="option in TYPE_OPTIONS"
+                  :key="option.value"
+                  type="button"
+                  :aria-pressed="form.adjustmentType === option.value"
+                  class="min-h-[52px] flex flex-col items-center justify-center gap-1 p-2 rounded-xl border text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  :class="form.adjustmentType === option.value
+                    ? option.activeClass + ' border-2'
+                    : 'border border-border bg-surface hover:border-primary/40 hover:bg-surface-secondary/50'"
+                  @click="form.adjustmentType = option.value"
+                >
+                  <component
+                    :is="option.icon"
+                    :class="['w-5 h-5', form.adjustmentType === option.value ? option.iconClass : 'text-text-tertiary']"
+                    aria-hidden="true"
+                  />
+                  <span
+                    class="text-[11px] font-semibold leading-tight"
+                    :class="form.adjustmentType === option.value ? option.labelClass : 'text-text-secondary'"
+                  >
+                    {{ option.label }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="form.adjustmentType" class="grid grid-cols-2 gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label :for="qtyId" class="text-sm font-medium text-text-primary">
+                  {{ form.adjustmentType === 'set' ? t('abastecimiento.stock.newStock') : t('abastecimiento.stock.quantity') }}
+                  <span class="text-destructive">*</span>
+                </label>
+                <UiDecimalInput
+                  :id="qtyId"
+                  v-model="form.quantity"
+                  :min="0"
+                  :precision="INVENTORY_QUANTITY_PRECISION"
+                  class="w-full px-3 py-2 min-h-[44px]"
+                  :placeholder="form.adjustmentType === 'set' ? t('abastecimiento.stock.targetStock') : t('abastecimiento.stock.quantityPlaceholder')"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label :for="unitId" class="text-sm font-medium text-text-primary">
+                  {{ t('abastecimiento.common.unidad') }} <span class="text-destructive">*</span>
+                </label>
+                <div class="relative">
+                  <select
+                    :id="unitId"
+                    v-model="form.unit"
+                    :disabled="purchaseUnitOptions.length === 0 || purchaseUnitsApi.isLoading(form.ingredientId)"
+                    class="input-base w-full px-3 py-2 min-h-[44px] disabled:bg-surface-secondary disabled:cursor-not-allowed"
+                  >
+                    <option :value="selectedIngredient.unit">
+                      {{ selectedIngredient.unit }} ({{ t('abastecimiento.stock.baseUnit') }})
+                    </option>
+                    <option
+                      v-for="u in purchaseUnitOptions"
+                      :key="u.value + '-' + u.conversion_factor"
+                      :value="u.value"
+                    >
+                      {{ u.label }}<template v-if="u.conversion_factor !== 1"> · 1 = {{ formatNumber(u.conversion_factor) }} {{ selectedIngredient.unit }}</template>
+                    </option>
+                  </select>
+                  <span
+                    v-if="purchaseUnitsApi.isLoading(form.ingredientId)"
+                    class="absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary"
+                    aria-hidden="true"
+                  >
+                    <ArrowPathIcon class="w-4 h-4 animate-spin" />
+                  </span>
+                </div>
+                <p
+                  v-if="hasValidQuantity && form.unit !== selectedIngredient.unit"
+                  class="text-[11px] text-text-secondary leading-snug"
+                >
+                  = {{ formatNumber(convertedQuantity) }} {{ selectedIngredient.unit }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="!purchaseUnitsApi.isLoading(form.ingredientId) && purchaseUnitOptions.length === 0"
+              class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
+            >
+              <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p class="text-xs text-state-warning-text leading-snug">
+                {{ t('abastecimiento.stock.noPurchaseUnits', { unit: selectedIngredient.unit }).replace(` ${t('abastecimiento.stock.configureUnits')}.`, '') }}
+                <a :href="`/abastecimiento/ingredientes-propios?highlight=${selectedIngredient.id}`" class="underline font-medium">{{ t('abastecimiento.stock.configureUnits') }}</a>.
               </p>
             </div>
-          </div>
 
-          <!-- 4b. Amber empty-state for ingredients without purchase units -->
-          <div
-            v-if="selectedIngredient && !purchaseUnitsApi.isLoading(form.ingredientId) && purchaseUnitOptions.length === 0"
-            class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
-          >
-            <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-xs text-state-warning-text leading-snug">
-              {{ t('abastecimiento.stock.noPurchaseUnits', { unit: selectedIngredient.unit }).replace(` ${t('abastecimiento.stock.configureUnits')}.`, '') }}
-              <a :href="`/abastecimiento/ingredientes-propios?highlight=${selectedIngredient.id}`" class="underline font-medium">{{ t('abastecimiento.stock.configureUnits') }}</a>.
-            </p>
-          </div>
+            <div v-if="form.adjustmentType === 'increment'" class="flex flex-col gap-1.5">
+              <label :for="costId" class="text-sm font-medium text-text-primary">
+                {{ t('abastecimiento.stock.costPerUnit', { unit: form.unit || t('abastecimiento.common.unidad') }) }}
+                <span class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.optional') }})</span>
+              </label>
+              <div class="relative">
+                <span class="absolute start-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
+                <UiDecimalInput
+                  :id="costId"
+                  v-model="form.cost_per_unit"
+                  :min="0"
+                  :precision="TECHNICAL_UNIT_COST_PRECISION"
+                  class="w-full ps-12 pe-3 py-2 min-h-[44px]"
+                  placeholder="0"
+                />
+              </div>
+              <p class="text-[11px] text-text-secondary leading-snug">
+                {{ WAREHOUSE_COPY.stockAdjustmentWeightedCostHint }}
+              </p>
+            </div>
 
-          <!-- 5. Cost per unit (increment only) -->
-          <div v-if="selectedIngredient && form.adjustmentType === 'increment'" class="flex flex-col gap-1.5">
-            <label :for="costId" class="text-sm font-medium text-text-primary">
-              {{ t('abastecimiento.stock.costPerUnit', { unit: form.unit || t('abastecimiento.common.unidad') }) }}
-              <span class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.optional') }})</span>
-            </label>
-            <div class="relative">
-              <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
-              <UiDecimalInput
-                :id="costId"
-                v-model="form.cost_per_unit"
-                :min="0"
-                :precision="TECHNICAL_UNIT_COST_PRECISION"
-                class="w-full ps-7 pe-3 py-2 min-h-[44px]"
-                placeholder="0"
+            <div
+              v-if="form.adjustmentType && hasValidQuantity"
+              class="rounded-xl border border-primary/20 bg-primary/5 p-3"
+            >
+              <p class="text-xs text-text-secondary leading-snug">{{ t('abastecimiento.stock.result') }}</p>
+              <p class="text-sm font-semibold text-text-primary mt-0.5">
+                Stock {{ resultVerb }}
+                <span class="text-text-primary tabular-nums">{{ formatNumber(newStockInBase) }} {{ selectedIngredient.unit }}</span>
+              </p>
+            </div>
+
+            <div v-if="form.adjustmentType" class="flex flex-col gap-1.5">
+              <label :for="reasonId" class="text-sm font-medium text-text-primary">
+                {{ t('abastecimiento.stock.reason') }} <span class="text-destructive">*</span>
+              </label>
+              <select
+                :id="reasonId"
+                v-model="form.reason"
+                class="input-base w-full px-3 py-2 min-h-[44px]"
+              >
+                <option value="">{{ t('abastecimiento.stock.selectReason') }}</option>
+                <option v-for="r in REASONS" :key="r.value" :value="r.value">{{ r.label }}</option>
+              </select>
+            </div>
+
+            <div v-if="form.reason" class="flex flex-col gap-1.5">
+              <label :for="notesId" class="text-sm font-medium text-text-primary">
+                {{ t('abastecimiento.stock.notes') }}
+                <span v-if="form.reason === 'other'" class="text-destructive">*</span>
+                <span v-else class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.notesOptional') }})</span>
+              </label>
+              <textarea
+                :id="notesId"
+                v-model="form.notes"
+                rows="3"
+                class="input-base w-full px-3 py-2 resize-none"
+                :placeholder="t('abastecimiento.stock.notesPlaceholder')"
               />
             </div>
-            <p class="text-[11px] text-text-secondary leading-snug">
-              {{ WAREHOUSE_COPY.stockAdjustmentWeightedCostHint }}
-            </p>
-          </div>
 
-          <!-- 6. Result preview -->
-          <div
-            v-if="selectedIngredient && form.adjustmentType && hasValidQuantity"
-            class="rounded-xl border border-primary/20 bg-primary/5 p-3"
-          >
-            <p class="text-xs text-text-secondary leading-snug">{{ t('abastecimiento.stock.result') }}</p>
-            <p class="text-sm font-semibold text-text-primary mt-0.5">
-              Stock {{ resultVerb }}
-              <span class="text-text-primary">{{ formatNumber(newStockInBase) }} {{ selectedIngredient.unit }}</span>
-            </p>
-          </div>
-
-          <!-- 7. Reason -->
-          <div v-if="selectedIngredient && form.adjustmentType" class="flex flex-col gap-1.5">
-            <label :for="reasonId" class="text-sm font-medium text-text-primary">
-              {{ t('abastecimiento.stock.reason') }} <span class="text-destructive">*</span>
-            </label>
-            <select
-              :id="reasonId"
-              v-model="form.reason"
-              class="input-base w-full px-3 py-2 min-h-[44px]"
+            <div
+              v-if="showLargeWarning"
+              class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
             >
-              <option value="">{{ t('abastecimiento.stock.selectReason') }}</option>
-              <option v-for="r in REASONS" :key="r.value" :value="r.value">{{ r.label }}</option>
-            </select>
-          </div>
+              <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p class="text-xs text-state-warning-text leading-snug">
+                <strong>{{ t('abastecimiento.stock.warning') }}</strong> {{ t('abastecimiento.stock.largeAdjustmentWarning') }}
+              </p>
+            </div>
 
-          <!-- 8. Notes -->
-          <div v-if="form.reason" class="flex flex-col gap-1.5">
-            <label :for="notesId" class="text-sm font-medium text-text-primary">
-              {{ t('abastecimiento.stock.notes') }}
-              <span v-if="form.reason === 'other'" class="text-destructive">*</span>
-              <span v-else class="text-xs text-text-secondary font-normal">({{ t('abastecimiento.stock.notesOptional') }})</span>
-            </label>
-            <textarea
-              :id="notesId"
-              v-model="form.notes"
-              rows="3"
-              class="input-base w-full px-3 py-2 resize-none"
-              :placeholder="t('abastecimiento.stock.notesPlaceholder')"
-            />
-          </div>
-
-          <!-- 9. Large adjustment warning -->
-          <div
-            v-if="showLargeWarning"
-            class="flex items-start gap-2 rounded-xl border border-state-warning-border bg-state-warning-bg p-3"
-          >
-            <ExclamationTriangleIcon class="w-4 h-4 text-state-warning-icon flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-xs text-state-warning-text leading-snug">
-              <strong>{{ t('abastecimiento.stock.warning') }}</strong> {{ t('abastecimiento.stock.largeAdjustmentWarning') }}
-            </p>
-          </div>
-
-          <!-- Error banner -->
-          <div
-            v-if="errorMessage"
-            class="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-destructive"
-            role="alert"
-          >
-            <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-xs leading-snug break-words">{{ errorMessage }}</p>
+            <div
+              v-if="errorMessage"
+              class="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-destructive"
+              role="alert"
+            >
+              <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p class="text-xs leading-snug break-words">{{ errorMessage }}</p>
+            </div>
           </div>
         </div>
 
@@ -378,6 +378,7 @@ import { computed, ref, watch } from 'vue'
 import {
   AdjustmentsHorizontalIcon,
   ArrowDownCircleIcon,
+  ArrowPathIcon,
   ArrowUpCircleIcon,
   ArrowsRightLeftIcon,
   CheckCircleIcon,
@@ -392,12 +393,12 @@ import {
   ADJUSTMENT_REASONS,
   INVENTORY_QUANTITY_PRECISION,
   TECHNICAL_UNIT_COST_PRECISION,
-  type SelectedIngredient,
 } from '~/composables/useInventoryAdjustment'
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
+const { currencyCode } = useFormatters()
 
 export interface StockAdjustmentPreselect {
   id: string
@@ -463,6 +464,14 @@ const state = ref<State>('idle')
 const successMessage = ref('')
 let openGeneration = 0
 
+/** Gate body like AsientoDetailPanel / ComandasEstadoPanel until stock is ready. */
+const showMatrixLoading = computed(() => {
+  if (!selectedIngredient.value) {
+    return Boolean(props.preselect?.id)
+  }
+  return isLoadingStock.value || (!stockLoaded.value && !errorMessage.value)
+})
+
 const purchaseUnitOptions = computed(() =>
   form.ingredientId ? purchaseUnitsApi.options(form.ingredientId) : [],
 )
@@ -504,7 +513,7 @@ const resultVerb = computed(() => {
   }
 })
 
-const onIngredientSelect = async (ingredient: { id: string; name: string; unit: string; minimum_stock?: number | null; maximum_stock?: number | null }) => {
+const applyIngredient = async (ingredient: StockAdjustmentPreselect) => {
   selectedIngredient.value = {
     id: ingredient.id,
     name: ingredient.name,
@@ -541,8 +550,9 @@ watch(() => props.modelValue, async (open) => {
   state.value = 'idle'
   successMessage.value = ''
   reset()
+  // Row-open only: ingredient is fixed from the stock row (no Cambiar / search).
   if (!props.preselect?.id) return
-  await onIngredientSelect(props.preselect)
+  await applyIngredient(props.preselect)
   if (generation !== openGeneration) {
     reset()
   }
@@ -576,9 +586,7 @@ const onSubmit = async () => {
 }
 
 const resetForAnother = async () => {
-  // Preserve the selected ingredient so the operator can chain another
-  // adjustment without re-typing the search. Refetch its stock so the
-  // "Stock Actual" reflects what the previous submit just changed.
+  // Keep the same locked ingredient; refetch stock so Stock Actual matches the last submit.
   const keepId = form.ingredientId
   const keepIngredient = selectedIngredient.value
   state.value = 'idle'
@@ -589,7 +597,7 @@ const resetForAnother = async () => {
     form.ingredientId = keepId
     await Promise.allSettled([
       purchaseUnitsApi.fetch(keepId),
-      loadCurrentStock(keepId),  // ← refetch fresh stock for the new attempt
+      loadCurrentStock(keepId),
     ])
     const def = purchaseUnitsApi.defaultFor(keepId)
     form.unit = def ? def.value : keepIngredient.unit

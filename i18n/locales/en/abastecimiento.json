@@ -154,6 +154,7 @@
       "unitCostSummary": "Unit cost: ${value} per {unit}",
       "notSelected": "Not selected",
       "closePanel": "Close panel",
+      "changeArticle": "Change",
       "adjustmentRecorded": "Adjustment recorded",
       "currentStock": "Current stock",
       "minimum": "Minimum",
