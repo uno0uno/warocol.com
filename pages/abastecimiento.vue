@@ -35,7 +35,6 @@ const navigationItems = computed(() => [
   { to: '/abastecimiento/compras-directas', label: t('abastecimiento.nav.compraDirecta'), matchPath: '/abastecimiento/compras-directas' },
   { to: '/abastecimiento/stock', label: t('abastecimiento.nav.stock') },
   { to: '/abastecimiento/movimientos', label: t('abastecimiento.nav.movimientos') },
-  { to: '/abastecimiento/ajustes', label: t('abastecimiento.nav.historialAjustes'), matchPath: '/abastecimiento/ajustes' },
   { to: '/abastecimiento/ingredientes-propios', label: t('abastecimiento.nav.catalogo') },
   { to: '/abastecimiento/calidad-datos', label: t('abastecimiento.nav.calidadDatos') },
 ])

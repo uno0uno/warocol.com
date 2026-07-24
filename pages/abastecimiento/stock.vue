@@ -226,7 +226,7 @@ useMenuReturnRefresh(
   '/abastecimiento/stock',
   refetch,
   'abastecimiento-last-path',
-  ['/abastecimiento/stock/', '/abastecimiento/ajustes/', '/abastecimiento/movimientos']
+  ['/abastecimiento/stock/', '/abastecimiento/movimientos']
 )
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {

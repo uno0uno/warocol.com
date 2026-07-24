@@ -118,10 +118,11 @@ export const useDashboardPageConfig = () => {
         backButton: { label: 'Volver' }
       }
     } else if (path === '/abastecimiento/ajustes' || path.startsWith('/abastecimiento/ajustes/')) {
+      // Legacy routes redirect to Movimientos (#1794); keep config aligned during redirect.
       return {
-        pageTitle: path.includes('/crear') ? 'Ajustar stock' : 'Historial de ajustes',
+        pageTitle: 'Movimientos',
         pageSubtitle: undefined,
-        searchPlaceholder: undefined,
+        searchPlaceholder: 'Buscar movimientos...',
         activePage: 'abastecimiento' as const,
         showBreadcrumb: false,
         breadcrumbPage: undefined,
