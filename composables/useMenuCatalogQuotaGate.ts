@@ -1,7 +1,7 @@
 /**
  * Menú catalog create gating (warocol.com#1796).
- * Productos/Modificadores use their growth quotas; Recetas/Categorías share
- * the menu_products exhausted signal (no separate count quota in DB).
+ * Productos, Categorías, and Modificadores use their growth quotas.
+ * Recetas share the menu_products exhausted signal (no count quota in DB).
  */
 import type { BillingRemainingUsage, OperationalQuotaKey } from '~/composables/useBilling'
 import {
@@ -15,6 +15,7 @@ export function useMenuCatalogQuotaGate() {
   const { getOperationalQuota, fetchBillingOverview } = useBilling()
 
   const menuProductsQuota = computed(() => getOperationalQuota('menu_products'))
+  const menuCategoriesQuota = computed(() => getOperationalQuota('menu_categories'))
   const modifierGroupsQuota = computed(() => getOperationalQuota('modifier_groups'))
 
   const isProductsCreateBlocked = computed(() => menuProductsQuota.value.blocked)
@@ -22,7 +23,8 @@ export function useMenuCatalogQuotaGate() {
   const isModifiersCreateBlocked = computed(
     () => menuProductsQuota.value.blocked || modifierGroupsQuota.value.blocked,
   )
-  /** Recetas + Categorías: gate on menu catalog product cap. */
+  const isCategoriesCreateBlocked = computed(() => menuCategoriesQuota.value.blocked)
+  /** Recetas: gate on menu catalog product cap. */
   const isSharedCatalogCreateBlocked = computed(() => menuProductsQuota.value.blocked)
 
   const formatBlockedMessage = (resource: OperationalQuotaKey) => {
@@ -33,6 +35,7 @@ export function useMenuCatalogQuotaGate() {
   }
 
   const productsCreateBlockedMessage = computed(() => formatBlockedMessage('menu_products'))
+  const categoriesCreateBlockedMessage = computed(() => formatBlockedMessage('menu_categories'))
   const modifiersCreateBlockedMessage = computed(() => {
     if (menuProductsQuota.value.blocked) return formatBlockedMessage('menu_products')
     return formatBlockedMessage('modifier_groups')
@@ -46,6 +49,7 @@ export function useMenuCatalogQuotaGate() {
   }
 
   const showProductsCreateBlocked = () => showBlockedToast(productsCreateBlockedMessage.value)
+  const showCategoriesCreateBlocked = () => showBlockedToast(categoriesCreateBlockedMessage.value)
   const showModifiersCreateBlocked = () => showBlockedToast(modifiersCreateBlockedMessage.value)
   const showSharedCatalogCreateBlocked = () => showBlockedToast(sharedCatalogCreateBlockedMessage.value)
 
@@ -96,14 +100,18 @@ export function useMenuCatalogQuotaGate() {
 
   return {
     menuProductsQuota,
+    menuCategoriesQuota,
     modifierGroupsQuota,
     isProductsCreateBlocked,
+    isCategoriesCreateBlocked,
     isModifiersCreateBlocked,
     isSharedCatalogCreateBlocked,
     productsCreateBlockedMessage,
+    categoriesCreateBlockedMessage,
     modifiersCreateBlockedMessage,
     sharedCatalogCreateBlockedMessage,
     showProductsCreateBlocked,
+    showCategoriesCreateBlocked,
     showModifiersCreateBlocked,
     showSharedCatalogCreateBlocked,
     ensureBillingOverview,

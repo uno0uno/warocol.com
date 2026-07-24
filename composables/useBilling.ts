@@ -21,6 +21,7 @@ export type BillingQuotaKey =
   | 'completed_online_orders_per_month'
   | 'electronic_invoices_per_period'
   | 'menu_products'
+  | 'menu_categories'
   | 'tenant_ingredients'
   | 'modifier_groups'
   | 'recipe_lines_per_product'
@@ -135,6 +136,7 @@ export type OperationalQuotaKey =
   | 'active_qr_tables'
   | 'completed_online_orders_per_month'
   | 'menu_products'
+  | 'menu_categories'
   | 'modifier_groups'
 
 export type OperationalQuotaStatus = 'allowed' | 'blocked' | 'unlimited' | 'loading' | 'error' | 'unknown'
@@ -228,6 +230,14 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de productos del menú de tu plan.',
     unlimitedMessage: 'Puedes crear productos sin límite por override.',
   },
+  menu_categories: {
+    key: 'menu_categories',
+    label: 'Categorías del menú',
+    description: 'Categorías propias del catálogo',
+    unit: 'categorías',
+    blockedMessage: 'Alcanzaste el límite de categorías del menú de tu plan.',
+    unlimitedMessage: 'Puedes crear categorías sin límite por override.',
+  },
   tenant_ingredients: {
     key: 'tenant_ingredients',
     label: 'Ingredientes propios',
@@ -264,6 +274,7 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
 
 export const STARTER_DISPLAY_QUOTA_KEYS: BillingQuotaKey[] = [
   'menu_products',
+  'menu_categories',
   'tenant_ingredients',
   'modifier_groups',
   'completed_online_orders_per_month',
@@ -277,6 +288,7 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'active_qr_tables',
   'completed_online_orders_per_month',
   'menu_products',
+  'menu_categories',
   'modifier_groups',
 ]
 
