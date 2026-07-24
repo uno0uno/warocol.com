@@ -34,7 +34,9 @@
           <template #trailing>
             <button
               type="button"
-              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+              :disabled="isSharedCatalogCreateBlocked"
+              :title="isSharedCatalogCreateBlocked ? sharedCatalogCreateBlockedMessage : t('menu.categorias.newCategory')"
+              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
               @click="openCreatePanel"
             >
               <span class="hidden sm:inline">{{ t('menu.categorias.newCategory') }}</span>
@@ -176,6 +178,12 @@
 <script setup lang="ts">
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 const { t } = useI18n({ useScope: 'global' })
+const {
+  isSharedCatalogCreateBlocked,
+  sharedCatalogCreateBlockedMessage,
+  showSharedCatalogCreateBlocked,
+  ensureBillingOverview,
+} = useMenuCatalogQuotaGate()
 
 definePageMeta({
   // layout: 'dashboard' — inherited from parent menu.vue
@@ -267,6 +275,7 @@ const refreshHandler = async () => {
 onMounted(() => {
   setRefreshHandler(refreshHandler)
   registerProgressiveLoading(isRefreshing)
+  ensureBillingOverview()
 })
 onUnmounted(() => {
   clearRefreshHandler(refreshHandler)
@@ -277,6 +286,10 @@ const panelOpen = ref(false)
 const panelCategory = ref<Category | null>(null)
 
 const openCreatePanel = () => {
+  if (isSharedCatalogCreateBlocked.value) {
+    showSharedCatalogCreateBlocked()
+    return
+  }
   panelCategory.value = null
   panelOpen.value = true
 }

@@ -1,0 +1,49 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1796
+title: "fix(menu): block Nuevo CTAs and redirect create routes when catalog quotas are exhausted"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1796-menu-catalog-quota-gate
+
+paths:
+  - app/services/billing_service.py
+  - tests/test_billing_remaining_usage.py
+  - tests/test_billing_plan_quotas.py
+  - composables/useBilling.ts
+  - composables/useMenuCatalogQuotaGate.ts
+  - pages/menu/productos/index.vue
+  - pages/menu/productos/crear.vue
+  - pages/menu/modificadores/index.vue
+  - pages/menu/modificadores/crear.vue
+  - pages/menu/recetas/index.vue
+  - pages/menu/recetas/crear.vue
+  - pages/menu/categorias/index.vue
+
+ac:
+  - remaining-usage works for Starter without subscription and exposes menu_products + modifier_groups
+  - Nuevo CTAs disabled in Recetas/Productos/Modificadores/Categorías when catalog create exhausted
+  - create routes redirect to list when quota exhausted
+  - paid plans unaffected; list/edit remain available
+  - API CREATE 429 remains as backstop
+
+out_of_scope:
+  - new DB quotas for Recetas/Categorías counts
+  - blocking Menú sub-nav tabs
+  - deleting over-quota rows
+
+hints:
+  entry: "get_remaining_billing_usage + useMenuCatalogQuotaGate"
+  pattern: "pages/equipo/miembros/index.vue disabled invite CTA"
+  tests: "pytest tests/test_billing_remaining_usage.py tests/test_billing_plan_quotas.py"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge API first, then front; restart uvicorn"

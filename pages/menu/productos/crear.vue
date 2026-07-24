@@ -727,7 +727,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
@@ -760,6 +760,11 @@ const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 const { showUpgradeCta, upgradeMessage, handleQuotaError, clearQuotaError } = useQuotaExceeded()
+const { redirectIfProductsCreateBlocked } = useMenuCatalogQuotaGate()
+
+onMounted(async () => {
+  await redirectIfProductsCreateBlocked('/menu/productos')
+})
 
 const { data: taxConfigData } = useQuery({
   key: () => ['tenant', 'tax-config', currentTenant.value?.id],

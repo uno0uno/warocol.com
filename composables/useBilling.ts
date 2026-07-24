@@ -134,6 +134,8 @@ export type OperationalQuotaKey =
   | 'active_tables_including_bar'
   | 'active_qr_tables'
   | 'completed_online_orders_per_month'
+  | 'menu_products'
+  | 'modifier_groups'
 
 export type OperationalQuotaStatus = 'allowed' | 'blocked' | 'unlimited' | 'loading' | 'error' | 'unknown'
 
@@ -274,7 +276,12 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'active_tables_including_bar',
   'active_qr_tables',
   'completed_online_orders_per_month',
+  'menu_products',
+  'modifier_groups',
 ]
+
+/** Catalog create growth keys used to gate Menú "Nuevo" CTAs (warocol.com#1796). */
+export const CATALOG_CREATE_QUOTA_KEYS = ['menu_products', 'modifier_groups'] as const satisfies readonly OperationalQuotaKey[]
 
 const operationalQuotaFallbackMessage = 'No pudimos verificar esta cuota ahora. El sistema validará la acción al guardar.'
 
