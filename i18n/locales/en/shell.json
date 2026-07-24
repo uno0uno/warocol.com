@@ -371,6 +371,7 @@
     "starterOnlineQuotaPublicBadge": "Online order quota reached",
     "starterUsageValidatedOnSave": "Usage is validated when you save changes.",
     "unitProducts": "products",
+    "unitCategories": "categories",
     "unitIngredients": "ingredients",
     "unitModifierGroups": "groups",
     "unitRecipeBases": "recipes",
@@ -378,6 +379,7 @@
     "unitModifierOptions": "options",
     "quota": {
       "menu_products": "Menu products",
+      "menu_categories": "Menu categories",
       "tenant_ingredients": "Tenant ingredients",
       "modifier_groups": "Modifier groups",
       "recipe_bases": "Recipe bases",

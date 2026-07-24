@@ -135,6 +135,7 @@ const usageLabels = computed<Record<string, { resource: string; description: str
   completed_online_orders_per_month: { resource: t('billing.quotaOnlineOrders'), description: t('billing.quotaOnlineOrdersDescription'), unit: t('billing.unitOnlineOrders') },
   electronic_invoices_per_period: { resource: t('billing.quotaInvoices'), description: t('billing.quotaInvoicesDescription'), unit: t('billing.unitInvoices'), notIncluded: t('billing.notIncluded') },
   menu_products: { resource: t('billing.quota.menu_products'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitProducts') },
+  menu_categories: { resource: t('billing.quota.menu_categories'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitCategories') },
   tenant_ingredients: { resource: t('billing.quota.tenant_ingredients'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitIngredients') },
   modifier_groups: { resource: t('billing.quota.modifier_groups'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitModifierGroups') },
   recipe_bases: { resource: t('billing.quota.recipe_bases'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitRecipeBases') },

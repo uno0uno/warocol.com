@@ -371,6 +371,7 @@
     "starterOnlineQuotaPublicBadge": "Cupos en línea agotados",
     "starterUsageValidatedOnSave": "El uso se valida al guardar cambios.",
     "unitProducts": "productos",
+    "unitCategories": "categorías",
     "unitIngredients": "ingredientes",
     "unitModifierGroups": "grupos",
     "unitRecipeBases": "recetas",
@@ -378,6 +379,7 @@
     "unitModifierOptions": "opciones",
     "quota": {
       "menu_products": "Productos del menú",
+      "menu_categories": "Categorías del menú",
       "tenant_ingredients": "Ingredientes propios",
       "modifier_groups": "Grupos de modificadores",
       "recipe_bases": "Recetas base",

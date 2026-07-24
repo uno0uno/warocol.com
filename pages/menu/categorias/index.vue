@@ -34,8 +34,8 @@
           <template #trailing>
             <button
               type="button"
-              :disabled="isSharedCatalogCreateBlocked"
-              :title="isSharedCatalogCreateBlocked ? sharedCatalogCreateBlockedMessage : t('menu.categorias.newCategory')"
+              :disabled="isCategoriesCreateBlocked"
+              :title="isCategoriesCreateBlocked ? categoriesCreateBlockedMessage : t('menu.categorias.newCategory')"
               class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
               @click="openCreatePanel"
             >
@@ -179,9 +179,9 @@
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 const { t } = useI18n({ useScope: 'global' })
 const {
-  isSharedCatalogCreateBlocked,
-  sharedCatalogCreateBlockedMessage,
-  showSharedCatalogCreateBlocked,
+  isCategoriesCreateBlocked,
+  categoriesCreateBlockedMessage,
+  showCategoriesCreateBlocked,
   ensureBillingOverview,
 } = useMenuCatalogQuotaGate()
 
@@ -286,8 +286,8 @@ const panelOpen = ref(false)
 const panelCategory = ref<Category | null>(null)
 
 const openCreatePanel = () => {
-  if (isSharedCatalogCreateBlocked.value) {
-    showSharedCatalogCreateBlocked()
+  if (isCategoriesCreateBlocked.value) {
+    showCategoriesCreateBlocked()
     return
   }
   panelCategory.value = null
