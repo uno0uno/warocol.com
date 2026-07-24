@@ -278,7 +278,7 @@
 <script setup lang="ts">
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -293,6 +293,11 @@ useHead({ title: t('menu.recetas.form.createTitle') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
+const { redirectIfSharedCatalogCreateBlocked } = useMenuCatalogQuotaGate()
+
+onMounted(async () => {
+  await redirectIfSharedCatalogCreateBlocked('/menu/recetas')
+})
 
 const isSubmitting = ref(false)
 const nameError = ref('')

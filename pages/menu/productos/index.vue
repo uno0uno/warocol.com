@@ -64,14 +64,17 @@
                 <span class="hidden sm:inline">{{ editMode ? t('menu.productos.viewCatalog') : t('menu.productos.editMode') }}</span>
                 <span class="sm:hidden">{{ editMode ? t('menu.productos.viewShort') : t('menu.productos.editShort') }}</span>
               </button>
-              <NuxtLink
-                to="/menu/productos/crear"
-                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+              <button
+                type="button"
+                :disabled="isProductsCreateBlocked"
+                :title="isProductsCreateBlocked ? productsCreateBlockedMessage : t('menu.productos.newProduct')"
+                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="onNewProduct"
               >
                 <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
                 <span class="hidden sm:inline">{{ t('menu.productos.newProduct') }}</span>
                 <span class="sm:hidden">{{ t('menu.productos.newShort') }}</span>
-              </NuxtLink>
+              </button>
             </div>
           </template>
         </MenuCatalogFiltersBar>
@@ -895,6 +898,20 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const {
+  isProductsCreateBlocked,
+  productsCreateBlockedMessage,
+  showProductsCreateBlocked,
+  ensureBillingOverview,
+} = useMenuCatalogQuotaGate()
+
+const onNewProduct = () => {
+  if (isProductsCreateBlocked.value) {
+    showProductsCreateBlocked()
+    return
+  }
+  router.push('/menu/productos/crear')
+}
 
 const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
   menu: 'menu',
@@ -1563,6 +1580,7 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
   setRefreshHandler(refetch)
+  ensureBillingOverview()
 })
 useMenuReturnRefresh('/menu/productos', refetch)
 registerProgressiveLoading(isRefreshing)

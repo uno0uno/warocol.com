@@ -263,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import {
   createEmptyModifier,
@@ -287,6 +287,11 @@ useHead({ title: () => t('menu.head.modificadores') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
+const { redirectIfModifiersCreateBlocked } = useMenuCatalogQuotaGate()
+
+onMounted(async () => {
+  await redirectIfModifiersCreateBlocked('/menu/modificadores')
+})
 
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)

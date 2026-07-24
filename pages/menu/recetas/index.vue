@@ -22,6 +22,7 @@
         >
           <template #trailing>
             <NuxtLink
+              v-if="!isSharedCatalogCreateBlocked"
               to="/menu/recetas/crear"
               class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
             >
@@ -29,6 +30,18 @@
               <span class="hidden sm:inline">{{ t('menu.recetas.newRecipe') }}</span>
               <span class="sm:hidden">{{ t('menu.recetas.newShort') }}</span>
             </NuxtLink>
+            <button
+              v-else
+              type="button"
+              disabled
+              :title="sharedCatalogCreateBlockedMessage"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap opacity-50 cursor-not-allowed"
+              @click="showSharedCatalogCreateBlocked"
+            >
+              <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
+              <span class="hidden sm:inline">{{ t('menu.recetas.newRecipe') }}</span>
+              <span class="sm:hidden">{{ t('menu.recetas.newShort') }}</span>
+            </button>
           </template>
         </UiAdvancedFiltersBar>
 
@@ -264,6 +277,12 @@ import { recipeIngredientLineCost } from '~/utils/recipeIngredientLineCost'
 const { t } = useI18n()
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { formatCurrency } = useFormatters()
+const {
+  isSharedCatalogCreateBlocked,
+  sharedCatalogCreateBlockedMessage,
+  showSharedCatalogCreateBlocked,
+  ensureBillingOverview,
+} = useMenuCatalogQuotaGate()
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -462,6 +481,7 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 
 onMounted(() => {
   setRefreshHandler(refetch)
+  ensureBillingOverview()
 })
 useMenuReturnRefresh('/menu/recetas', refetch)
 registerProgressiveLoading(isRefreshing)
