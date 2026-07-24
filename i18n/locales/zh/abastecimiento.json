@@ -201,7 +201,11 @@
         "transfer": "内部调拨",
         "supplier_return": "退回供应商",
         "other": "其他"
-      }
+      },
+      "sinMax": "无上限",
+      "sinPct": "无百分比",
+      "sinCosto": "无成本",
+      "sinCategoria": "无类别"
     },
     "movimientos": {
       "empty": "没有记录的变动",

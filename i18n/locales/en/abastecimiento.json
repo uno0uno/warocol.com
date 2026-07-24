@@ -201,7 +201,11 @@
         "transfer": "Internal transfer",
         "supplier_return": "Return to supplier",
         "other": "Other"
-      }
+      },
+      "sinMax": "No max",
+      "sinPct": "No %",
+      "sinCosto": "No cost",
+      "sinCategoria": "No category"
     },
     "movimientos": {
       "empty": "No movements recorded",

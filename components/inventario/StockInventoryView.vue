@@ -173,7 +173,14 @@
         </template>
 
         <template #cell-category="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || '-' }}</span>
+          <span v-if="value" class="text-sm text-text-secondary">{{ value }}</span>
+          <UiStatusBadge
+            v-else
+            :value="t('abastecimiento.stock.sinCategoria')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-current_stock="{ value }">
@@ -190,7 +197,14 @@
         </template>
 
         <template #cell-maximum_stock="{ value }">
-          <span class="text-sm text-text-primary">{{ value ? formatNumber(value) : '-' }}</span>
+          <span v-if="value != null && value !== ''" class="text-sm text-text-primary">{{ formatNumber(value) }}</span>
+          <UiStatusBadge
+            v-else
+            :value="t('abastecimiento.stock.sinMax')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-stock_percentage="{ row }">
@@ -206,11 +220,24 @@
               :style="{ width: `${Math.min(getStockPercentage(row.current_stock, row.maximum_stock), 100)}%` }"
             />
           </div>
-          <span v-else class="text-xs text-text-secondary">-</span>
+          <UiStatusBadge
+            v-else
+            :value="t('abastecimiento.stock.sinPct')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-unit_cost="{ value }">
-          <span class="text-sm font-bold text-primary">{{ value ? formatCurrency(value) : '-' }}</span>
+          <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+          <UiStatusBadge
+            v-else
+            :value="t('abastecimiento.stock.sinCosto')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-total_value="{ value }">
