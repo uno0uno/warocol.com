@@ -1,4 +1,4 @@
 <script setup lang="ts">
-// Standalone adjust path disabled — use row action slide-over on stock list (#1792).
-await navigateTo('/abastecimiento/stock', { replace: true })
+// Standalone adjust + legacy ajustes paths redirect to unified Movimientos (#1794).
+await navigateTo('/abastecimiento/movimientos', { replace: true })
 </script>
