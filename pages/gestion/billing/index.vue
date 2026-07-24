@@ -155,7 +155,7 @@ const displayPlanName = computed(() => {
   return t('billing.noPlan')
 })
 // Quota-first compare matrix (#1804): same rows for both plans.
-// Display rule: key absent in a plan's quotas JSON → no cap for that plan.
+// Display rule: key absent OR limit >= BILLING_UNLIMITED_SENTINEL → no cap for that plan.
 const COMPARE_QUOTA_KEYS: BillingQuotaKey[] = [
   'menu_products',
   'menu_categories',
