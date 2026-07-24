@@ -145,9 +145,9 @@
                 </span>
                 <UiStatusBadge
                   :value="getStatusLabel(item.status)"
+                  format="text"
                   :variant="getStockVariant(item.status)"
                   size="sm"
-                  format="text"
                 />
               </div>
               <button
@@ -200,7 +200,8 @@
               :class="{
                 'bg-destructive': getStockVariant(row.status) === 'destructive',
                 'bg-warning': getStockVariant(row.status) === 'warning',
-                'bg-success': getStockVariant(row.status) === 'success'
+                'bg-success': getStockVariant(row.status) === 'success',
+                'bg-secondary': getStockVariant(row.status) === 'secondary',
               }"
               :style="{ width: `${Math.min(getStockPercentage(row.current_stock, row.maximum_stock), 100)}%` }"
             />
@@ -219,9 +220,9 @@
         <template #cell-status="{ value }">
           <UiStatusBadge
             :value="getStatusLabel(value)"
+            format="text"
             :variant="getStockVariant(value)"
             size="sm"
-            format="text"
           />
         </template>
 
@@ -460,7 +461,7 @@ const stockTableColumns = computed(() => [
     key: 'status',
     title: t('abastecimiento.common.estado'),
     sortable: true,
-    format: 'badge',
+    format: 'custom',
     align: 'center',
   },
   {
@@ -477,14 +478,25 @@ const getStockPercentage = (current: number, max: number) => {
   return Math.round((current / max) * 100)
 }
 
-const getStatusOption = (status: string) =>
-  props.statusOptions.find(option => option.value === status)
+const normalizeStatus = (status: string | null | undefined) => {
+  if (!status) return 'ok'
+  // Inventario historically used "critical"; API returns "negative"
+  if (status === 'critical') return 'negative'
+  return status
+}
 
-const getStockVariant = (status: string) =>
-  getStatusOption(status)?.variant || 'default'
+const getStatusOption = (status: string | null | undefined) =>
+  props.statusOptions.find(option => option.value === normalizeStatus(status))
 
-const getStatusLabel = (status: string) =>
-  getStatusOption(status)?.label || status
+const getStockVariant = (status: string | null | undefined) =>
+  (getStatusOption(status)?.variant as 'success' | 'destructive' | 'warning' | 'secondary' | 'info' | 'primary' | undefined)
+  || 'secondary'
+
+const getStatusLabel = (status: string | null | undefined) =>
+  getStatusOption(status)?.label
+  || (normalizeStatus(status) === 'zero'
+    ? t('abastecimiento.common.sinStock')
+    : t('abastecimiento.common.normal'))
 
 const mobileSubtitle = (item: StockItem) => {
   if (!props.showMobileStockLimits) return item.unit

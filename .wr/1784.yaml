@@ -1,0 +1,38 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1784
+title: "Stock UX: remove global Ajustar stock CTA; Estado badges like Órdenes"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1784-stock-cta-badges
+
+paths:
+  - pages/abastecimiento/stock.vue
+  - components/inventario/StockInventoryView.vue
+
+ac:
+  - Remove filter-bar Ajustar stock button and unused global panel wiring
+  - Adjust only via list Acciones (desktop + mobile); movements unchanged
+  - Estado uses UiStatusBadge format=text like Órdenes; never empty dash
+  - Shared inventario/stock inherits badge fix via StockInventoryView
+
+out_of_scope:
+  - API / backfill
+  - Badges for empty Stock Máx / % Stock numerics
+  - Redesign adjust form
+
+hints:
+  entry: "pages/abastecimiento/stock.vue filter-actions; StockInventoryView cell-status"
+  pattern: "pages/ventas/ordenes.vue:803-809 UiStatusBadge"
+  tests: "no targeted front unit test for this view; validate via code review + manual smoke"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "smoke /abastecimiento/stock after restart Nuxt"

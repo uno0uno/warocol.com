@@ -37,33 +37,12 @@
       @sort="handleSort"
       @previous-page="previousPage"
       @next-page="nextPage"
-    >
-      <template #filter-actions>
-        <button
-          type="button"
-          :title="t('abastecimiento.stock.adjustStock')"
-          class="min-h-[44px] h-10 px-3 inline-flex items-center gap-1.5 rounded-lg bg-action-primary-bg text-action-primary-text text-sm font-semibold hover:bg-action-primary-hover-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors flex-shrink-0"
-          @click="showAdjustmentPanel = true"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-          <span class="hidden sm:inline">{{ t('abastecimiento.stock.adjustStock') }}</span>
-        </button>
-      </template>
-    </InventarioStockInventoryView>
-
-    <!-- warocol.com#608 — Stock adjustment slide-over -->
-    <AbastecimientoStockAdjustmentPanel
-      v-model="showAdjustmentPanel"
-      @saved="onAdjustmentSaved"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useQueryCache } from '@pinia/colada'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
 const { t } = useI18n()
@@ -95,19 +74,8 @@ const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
-// warocol.com#608 — stock adjustment slide-over
-const showAdjustmentPanel = ref(false)
-const toast = useToast()
-const cache = useQueryCache()
-const onAdjustmentSaved = () => {
-  // Invalidate the inventory query so the table reflects the new stock.
-  cache.invalidateQueries({ key: ['inventory'] })
-  toast.success(t('abastecimiento.stock.ajustadoOk'), { title: t('abastecimiento.stock.stockUpdated') })
-}
-
 const sortField = ref('current_stock')
 const sortDirection = ref<'asc' | 'desc'>('desc')
-
 const stockCopy = computed(() => ({
   statsTotal: WAREHOUSE_COPY.stockStatsTotal,
   searchPlaceholder: WAREHOUSE_COPY.stockSearchPlaceholder,
