@@ -313,8 +313,10 @@
 
 <script setup lang="ts">
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
+import { useFormatters } from '~/composables/useFormatters'
 
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
+const { formatCurrency } = useFormatters()
 
 interface StockStats {
   total_ingredients: number
@@ -536,14 +538,6 @@ const mobileSubtitle = (item: StockItem) => {
 
 const navigateToAdjustment = (ingredientId: string) => {
   navigateTo(`${props.adjustmentPath}?ingredientId=${ingredientId}`)
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
 }
 
 const formatNumber = (value: number) => {

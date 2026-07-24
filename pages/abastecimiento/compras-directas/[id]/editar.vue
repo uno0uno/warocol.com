@@ -294,7 +294,7 @@
                       Total
                     </label>
                     <div class="px-4 py-2 bg-surface-secondary rounded-lg font-semibold text-text-primary border border-border">
-                      ${{ formatPrice(item.total_cost) }}
+                      {{ formatPrice(item.total_cost) }}
                     </div>
                   </div>
 
@@ -631,11 +631,11 @@
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Precio Unit.</p>
-                    <p class="font-semibold">${{ formatUnitCost(item.unit_cost) }}</p>
+                    <p class="font-semibold">{{ formatUnitCost(item.unit_cost) }}</p>
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Total</p>
-                    <p class="font-bold text-primary">${{ formatPrice(item.total_cost) }}</p>
+                    <p class="font-bold text-primary">{{ formatPrice(item.total_cost) }}</p>
                   </div>
                 </div>
               </div>
@@ -665,17 +665,17 @@
                     {{ item.purchase_quantity }} {{ item.purchase_unit }}
                   </td>
                   <td class="text-end py-4 text-text-primary">
-                    ${{ formatUnitCost(item.unit_cost) }}
+                    {{ formatUnitCost(item.unit_cost) }}
                   </td>
                   <td class="text-end py-4 font-bold text-primary">
-                    ${{ formatPrice(item.total_cost) }}
+                    {{ formatPrice(item.total_cost) }}
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="bg-primary/5">
                   <td colspan="3" class="py-4 text-end font-bold text-text-primary">Total:</td>
-                  <td class="py-4 text-end text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</td>
+                  <td class="py-4 text-end text-xl font-bold text-primary">{{ formatPrice(totalAmount) }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -684,7 +684,7 @@
             <div class="md:hidden mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
               <div class="flex justify-between items-center">
                 <span class="font-bold text-text-primary">Total:</span>
-                <span class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</span>
+                <span class="text-xl font-bold text-primary">{{ formatPrice(totalAmount) }}</span>
               </div>
             </div>
           </div>
@@ -781,6 +781,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
@@ -791,6 +792,12 @@ import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 
 const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+const {
+  formatCurrency,
+  formatDate,
+  currencyCode,
+  uiLocale,
+} = useFormatters()
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 const tenantNowISO = () => combineDateAndTimeISO(todayISO(), timeHHMMFromISO(new Date().toISOString())) ?? new Date().toISOString()
@@ -964,10 +971,7 @@ const isStepValid = computed(() => {
 })
 
 // Methods
-const formatPrice = (price: number) => {
-  if (!price) return '0'
-  return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
-}
+const formatPrice = (price: number) => formatCurrency(price)
 
 const MONEY_PRECISION = 0
 const UNIT_COST_PRECISION = 6
@@ -977,11 +981,13 @@ const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
 const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
 
 const formatUnitCost = (price: number) => {
-  if (!price) return '0'
-  return price.toLocaleString('es-CO', {
+  const numeric = Number.isFinite(price) ? price : 0
+  return new Intl.NumberFormat(localeToNumberFormatTag(uiLocale.value), {
+    style: 'currency',
+    currency: normalizeCurrencyCode(currencyCode.value),
     minimumFractionDigits: 0,
     maximumFractionDigits: UNIT_COST_PRECISION,
-  })
+  }).format(numeric)
 }
 
 function roundDecimal(value: number, precision: number) {
@@ -989,9 +995,6 @@ function roundDecimal(value: number, precision: number) {
   const factor = 10 ** precision
   return Math.round((value + Number.EPSILON) * factor) / factor
 }
-
-const { formatDate: _fmtDate } = useFormatters()
-const formatDate = (date: string) => _fmtDate(date)
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'

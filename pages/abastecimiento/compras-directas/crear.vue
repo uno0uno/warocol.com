@@ -597,11 +597,11 @@
                 <div class="p-4 bg-primary/5">
                   <div class="flex justify-between items-center mb-1.5">
                     <p class="text-xs text-text-secondary">Subtotal ({{ form.items.length }} ítems)</p>
-                    <p class="text-sm text-text-primary">${{ formatPrice(totalAmount) }}</p>
+                    <p class="text-sm text-text-primary">{{ formatPrice(totalAmount) }}</p>
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t border-primary/20">
                     <p class="text-sm font-bold text-text-primary">Total</p>
-                    <p class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</p>
+                    <p class="text-xl font-bold text-primary">{{ formatPrice(totalAmount) }}</p>
                   </div>
                 </div>
 
@@ -718,8 +718,16 @@ import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
+import { useFormatters } from '~/composables/useFormatters'
+import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 
 const { todayISO, dateAtNoon } = useTenantTimezone()
+const {
+  formatCurrency,
+  currencyCode,
+  uiLocale,
+  formatNumber,
+} = useFormatters()
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 const localDateAtNoon = (iso: string) => {
@@ -948,10 +956,7 @@ function validateForm(): boolean {
 }
 
 // Methods
-const formatPrice = (price: number) => {
-  if (!price) return '0'
-  return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
-}
+const formatPrice = (price: number) => formatCurrency(price)
 
 const MONEY_PRECISION = 0
 const UNIT_COST_PRECISION = 6
@@ -962,11 +967,13 @@ const roundMoney = (value: number) => roundDecimal(value, MONEY_PRECISION)
 const roundUnitCost = (value: number) => roundDecimal(value, UNIT_COST_PRECISION)
 
 const formatUnitCost = (price: number) => {
-  if (!price) return '0'
-  return price.toLocaleString('es-CO', {
+  const numeric = Number.isFinite(price) ? price : 0
+  return new Intl.NumberFormat(localeToNumberFormatTag(uiLocale.value), {
+    style: 'currency',
+    currency: normalizeCurrencyCode(currencyCode.value),
     minimumFractionDigits: 0,
     maximumFractionDigits: UNIT_COST_PRECISION,
-  })
+  }).format(numeric)
 }
 
 function roundDecimal(value: number, precision: number) {
@@ -977,10 +984,10 @@ function roundDecimal(value: number, precision: number) {
 
 function formatQuantity(value: number) {
   if (!Number.isFinite(value)) return '0'
-  return value.toLocaleString('es-CO', {
+  return formatNumber(value, {
     minimumFractionDigits: 0,
     maximumFractionDigits: CONVERTED_QUANTITY_PRECISION,
-  })
+  }) || '0'
 }
 
 const formatFileSize = (bytes: number): string => {
