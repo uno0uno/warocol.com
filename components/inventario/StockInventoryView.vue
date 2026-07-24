@@ -130,7 +130,7 @@
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
             <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
+              <span class="text-sm font-bold text-text-primary truncate block" :title="item.ingredient_name">{{ item.ingredient_name }}</span>
               <p class="text-xs text-text-secondary mt-0.5">
                 {{ mobileSubtitle(item) }}
               </p>
@@ -165,7 +165,7 @@
         </template>
 
         <template #cell-ingredient_name="{ value }">
-          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
+          <span class="text-sm font-bold text-text-primary truncate block max-w-[16rem]" :title="value">{{ value }}</span>
         </template>
 
         <template #cell-unit="{ value }">
@@ -230,7 +230,7 @@
         </template>
 
         <template #cell-unit_cost="{ value }">
-          <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+          <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary tabular-nums">{{ formatUnitCost(value) }}</span>
           <UiStatusBadge
             v-else
             :value="t('abastecimiento.stock.sinCosto')"
@@ -283,28 +283,49 @@
     </UiResponsiveDataView>
 
     <div
-      v-if="total > itemsPerPage"
-      class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
+      v-if="totalPages > 1"
+      class="mt-4 flex items-center justify-between gap-3 px-1 py-2"
     >
-      <p class="text-sm text-titan-700">
+      <p class="text-sm text-text-secondary">
         {{ t('common.pagination.showingRange', { start: startItem, end: endItem, total }) }}
       </p>
-      <div class="flex gap-2">
+      <div class="flex items-center gap-1">
         <button
           type="button"
           :disabled="!canGoPrevious"
-          class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
+          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          :aria-label="t('ventas.common.primeraPagina')"
+          @click="$emit('go-to-page', 1)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+        </button>
+        <button
+          type="button"
+          :disabled="!canGoPrevious"
+          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          :aria-label="t('ventas.common.paginaAnterior')"
           @click="$emit('previous-page')"
         >
-          {{ t('common.previous') }}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+        <button
+          type="button"
+          :disabled="!canGoNext"
+          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          :aria-label="t('ventas.common.paginaSiguiente')"
+          @click="$emit('next-page')"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
         </button>
         <button
           type="button"
           :disabled="!canGoNext"
-          class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
-          @click="$emit('next-page')"
+          class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          :aria-label="t('ventas.common.ultimaPagina')"
+          @click="$emit('go-to-page', totalPages)"
         >
-          {{ t('common.next') }}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
         </button>
       </div>
     </div>
@@ -314,9 +335,12 @@
 <script setup lang="ts">
 import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 import { useFormatters } from '~/composables/useFormatters'
+import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 
 const { t } = useI18n({ useScope: 'global' })
-const { formatCurrency } = useFormatters()
+const { formatCurrency, currencyCode, uiLocale } = useFormatters()
+
+const UNIT_COST_PRECISION = 6
 
 interface StockStats {
   total_ingredients: number
@@ -355,7 +379,8 @@ const props = withDefaults(defineProps<{
   stats: StockStats
   inventory: StockItem[]
   total: number
-  itemsPerPage: number
+  currentPage: number
+  totalPages: number
   startItem: number
   endItem: number
   canGoPrevious: boolean
@@ -391,6 +416,7 @@ const emit = defineEmits<{
   sort: [field: string]
   'previous-page': []
   'next-page': []
+  'go-to-page': [page: number]
 }>()
 
 const filterSelectClass = 'h-10 min-h-[44px] px-3 rounded-lg border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 flex-shrink-0'
@@ -542,5 +568,15 @@ const navigateToAdjustment = (ingredientId: string) => {
 
 const formatNumber = (value: number) => {
   return formatDomainQuantity(value)
+}
+
+const formatUnitCost = (price: number) => {
+  const numeric = Number.isFinite(Number(price)) ? Number(price) : 0
+  return new Intl.NumberFormat(localeToNumberFormatTag(uiLocale.value), {
+    style: 'currency',
+    currency: normalizeCurrencyCode(currencyCode.value),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: UNIT_COST_PRECISION,
+  }).format(numeric)
 }
 </script>

@@ -14,7 +14,8 @@
       :stats="stats"
       :inventory="displayInventory"
       :total="inventoryData?.total ?? 0"
-      :items-per-page="itemsPerPage"
+      :current-page="currentPage"
+      :total-pages="totalPages"
       :start-item="startItem"
       :end-item="endItem"
       :can-go-previous="canGoPrevious"
@@ -34,6 +35,7 @@
       @sort="handleSort"
       @previous-page="previousPage"
       @next-page="nextPage"
+      @go-to-page="goToPage"
     />
   </div>
 </template>
@@ -169,6 +171,9 @@ const previousPage = () => {
 }
 const nextPage = () => {
   if (canGoNext.value) currentPage.value++
+}
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, totalPages.value || 1))
 }
 
 const updateStatusFilter = (value: string) => {
