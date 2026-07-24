@@ -21,12 +21,12 @@
         @navigate-pos="navigateToPOS"
       />
 
-      <!-- Subscription Banner -->
+      <!-- Subscription Banner: warning/read_only take priority over starter via access level -->
       <SubscriptionBanner
-        v-if="accessStatus && (accessStatus.level === 'full_with_warning' || accessStatus.level === 'read_only')"
-        :level="accessStatus.level"
-        :message="accessStatus.message || (accessStatus.level === 'read_only' ? t('shell.subscriptionReadOnly') : t('shell.subscriptionExpiring'))"
-        :grace-days-remaining="accessStatus.grace_days_remaining"
+        v-if="showSubscriptionBanner && subscriptionBannerLevel"
+        :level="subscriptionBannerLevel"
+        :message="subscriptionBannerMessage"
+        :grace-days-remaining="accessStatus?.grace_days_remaining"
       />
 
       <!-- Content Area with Overflow -->
@@ -102,6 +102,28 @@ const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
 const isBillingBlocked = computed(() =>
   accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
 )
+
+type SubscriptionBannerLevel = 'starter' | 'full_with_warning' | 'read_only'
+
+const subscriptionBannerLevel = computed<SubscriptionBannerLevel | null>(() => {
+  const level = accessStatus.value?.level
+  if (level === 'full_with_warning' || level === 'read_only' || level === 'starter') {
+    return level
+  }
+  return null
+})
+
+const showSubscriptionBanner = computed(() => subscriptionBannerLevel.value != null)
+
+const subscriptionBannerMessage = computed(() => {
+  const status = accessStatus.value
+  const level = subscriptionBannerLevel.value
+  if (!status || !level) return ''
+  if (status.message) return status.message
+  if (level === 'read_only') return t('shell.subscriptionReadOnly')
+  if (level === 'full_with_warning') return t('shell.subscriptionExpiring')
+  return t('shell.subscriptionTrial')
+})
 
 // Get route-based configuration
 const route = useRoute()
