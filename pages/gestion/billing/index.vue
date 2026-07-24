@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
+import { useBilling, type BillingPlan, type BillingQuotaKey, BILLING_UNLIMITED_SENTINEL, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
@@ -171,21 +171,22 @@ const COMPARE_QUOTA_KEYS: BillingQuotaKey[] = [
 
 const planQuotaCell = (plan: BillingPlan, key: BillingQuotaKey) => {
   const raw = plan.quotas?.[key]
-  if (raw === null || raw === undefined) return { text: t('billing.noLimit'), muted: false }
-  const limit = Number(raw)
-  if (!Number.isFinite(limit)) return { text: t('billing.noLimit'), muted: false }
+  const limit = raw === null || raw === undefined ? Number.POSITIVE_INFINITY : Number(raw)
+  // Absent key or the API CATALOG_UNLIMITED sentinel both mean "no cap".
+  if (!Number.isFinite(limit) || limit >= BILLING_UNLIMITED_SENTINEL) {
+    return { text: t('billing.noLimit'), muted: false, limit: Number.POSITIVE_INFINITY }
+  }
   if (limit <= 0) {
-    return { text: quotaLabels.value[key]?.zeroLabel ?? t('billing.notIncluded'), muted: true }
+    return { text: quotaLabels.value[key]?.zeroLabel ?? t('billing.notIncluded'), muted: true, limit }
   }
   const unit = quotaLabels.value[key]?.unit ?? ''
-  return { text: `${limit.toLocaleString(toNumberLocaleTag(locale.value))} ${unit}`.trim(), muted: false }
+  return { text: `${limit.toLocaleString(toNumberLocaleTag(locale.value))} ${unit}`.trim(), muted: false, limit }
 }
 
 const compareQuotaRows = computed(() => {
   const starter = starterPlan.value
   const pro = proPlan.value
   if (!starter || !pro) return []
-  const notIncluded = t('billing.notIncluded')
   return COMPARE_QUOTA_KEYS
     .map((key) => ({
       key,
@@ -194,7 +195,7 @@ const compareQuotaRows = computed(() => {
       pro: planQuotaCell(pro, key),
     }))
     // Rows excluded in both plans add no comparison value.
-    .filter((row) => !(row.starter.text === notIncluded && row.pro.text === notIncluded))
+    .filter((row) => !(row.starter.limit <= 0 && row.pro.limit <= 0))
 })
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
