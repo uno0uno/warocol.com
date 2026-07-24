@@ -58,6 +58,7 @@ const quotaDisplayConfig: QuotaDisplayConfig[] = [
   { key: 'menu_products', label: '', unit: '' },
   { key: 'tenant_ingredients', label: '', unit: '' },
   { key: 'modifier_groups', label: '', unit: '' },
+  { key: 'recipe_bases', label: '', unit: '' },
   { key: 'recipe_lines_per_product', label: '', unit: '' },
   { key: 'modifier_options_per_group', label: '', unit: '' },
 ]
@@ -73,6 +74,7 @@ const quotaLabels = computed<Record<string, { label: string; unit: string; zeroL
   menu_products: { label: t('billing.quota.menu_products'), unit: t('billing.unitProducts') },
   tenant_ingredients: { label: t('billing.quota.tenant_ingredients'), unit: t('billing.unitIngredients') },
   modifier_groups: { label: t('billing.quota.modifier_groups'), unit: t('billing.unitModifierGroups') },
+  recipe_bases: { label: t('billing.quota.recipe_bases'), unit: t('billing.unitRecipeBases') },
   recipe_lines_per_product: { label: t('billing.quota.recipe_lines_per_product'), unit: t('billing.unitRecipeLines') },
   modifier_options_per_group: { label: t('billing.quota.modifier_options_per_group'), unit: t('billing.unitModifierOptions') },
 }))

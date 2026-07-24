@@ -373,12 +373,14 @@
     "unitProducts": "products",
     "unitIngredients": "ingredients",
     "unitModifierGroups": "groups",
+    "unitRecipeBases": "recipes",
     "unitRecipeLines": "lines",
     "unitModifierOptions": "options",
     "quota": {
       "menu_products": "Menu products",
       "tenant_ingredients": "Tenant ingredients",
       "modifier_groups": "Modifier groups",
+      "recipe_bases": "Recipe bases",
       "recipe_lines_per_product": "Recipe lines per product",
       "modifier_options_per_group": "Options per modifier group"
     },

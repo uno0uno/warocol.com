@@ -293,10 +293,10 @@ useHead({ title: t('menu.recetas.form.createTitle') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
-const { redirectIfSharedCatalogCreateBlocked } = useMenuCatalogQuotaGate()
+const { redirectIfRecipesCreateBlocked } = useMenuCatalogQuotaGate()
 
 onMounted(async () => {
-  await redirectIfSharedCatalogCreateBlocked('/menu/recetas')
+  await redirectIfRecipesCreateBlocked('/menu/recetas')
 })
 
 const isSubmitting = ref(false)

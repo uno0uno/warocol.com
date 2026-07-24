@@ -23,6 +23,7 @@ export type BillingQuotaKey =
   | 'menu_products'
   | 'tenant_ingredients'
   | 'modifier_groups'
+  | 'recipe_bases'
   | 'recipe_lines_per_product'
   | 'modifier_options_per_group'
 
@@ -136,6 +137,7 @@ export type OperationalQuotaKey =
   | 'completed_online_orders_per_month'
   | 'menu_products'
   | 'modifier_groups'
+  | 'recipe_bases'
 
 export type OperationalQuotaStatus = 'allowed' | 'blocked' | 'unlimited' | 'loading' | 'error' | 'unknown'
 
@@ -244,6 +246,14 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de grupos de modificadores de tu plan.',
     unlimitedMessage: 'Puedes crear grupos de modificadores sin límite por override.',
   },
+  recipe_bases: {
+    key: 'recipe_bases',
+    label: 'Recetas base',
+    description: 'Recetas base del catálogo',
+    unit: 'recetas',
+    blockedMessage: 'Alcanzaste el límite de recetas base de tu plan.',
+    unlimitedMessage: 'Puedes crear recetas base sin límite por override.',
+  },
   recipe_lines_per_product: {
     key: 'recipe_lines_per_product',
     label: 'Líneas de receta por producto',
@@ -266,6 +276,7 @@ export const STARTER_DISPLAY_QUOTA_KEYS: BillingQuotaKey[] = [
   'menu_products',
   'tenant_ingredients',
   'modifier_groups',
+  'recipe_bases',
   'completed_online_orders_per_month',
   'admin_users',
 ]
@@ -278,6 +289,7 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'completed_online_orders_per_month',
   'menu_products',
   'modifier_groups',
+  'recipe_bases',
 ]
 
 const operationalQuotaFallbackMessage = 'No pudimos verificar esta cuota ahora. El sistema validará la acción al guardar.'
