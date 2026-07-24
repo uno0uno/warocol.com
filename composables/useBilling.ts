@@ -280,9 +280,6 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'modifier_groups',
 ]
 
-/** Catalog create growth keys used to gate Menú "Nuevo" CTAs (warocol.com#1796). */
-export const CATALOG_CREATE_QUOTA_KEYS = ['menu_products', 'modifier_groups'] as const satisfies readonly OperationalQuotaKey[]
-
 const operationalQuotaFallbackMessage = 'No pudimos verificar esta cuota ahora. El sistema validará la acción al guardar.'
 
 export const resolveOperationalQuota = (

@@ -18,7 +18,10 @@ export function useMenuCatalogQuotaGate() {
   const modifierGroupsQuota = computed(() => getOperationalQuota('modifier_groups'))
 
   const isProductsCreateBlocked = computed(() => menuProductsQuota.value.blocked)
-  const isModifiersCreateBlocked = computed(() => modifierGroupsQuota.value.blocked)
+  /** Modificadores: own group cap OR shared catalog product cap exhausted. */
+  const isModifiersCreateBlocked = computed(
+    () => menuProductsQuota.value.blocked || modifierGroupsQuota.value.blocked,
+  )
   /** Recetas + Categorías: gate on menu catalog product cap. */
   const isSharedCatalogCreateBlocked = computed(() => menuProductsQuota.value.blocked)
 
@@ -30,7 +33,10 @@ export function useMenuCatalogQuotaGate() {
   }
 
   const productsCreateBlockedMessage = computed(() => formatBlockedMessage('menu_products'))
-  const modifiersCreateBlockedMessage = computed(() => formatBlockedMessage('modifier_groups'))
+  const modifiersCreateBlockedMessage = computed(() => {
+    if (menuProductsQuota.value.blocked) return formatBlockedMessage('menu_products')
+    return formatBlockedMessage('modifier_groups')
+  })
   const sharedCatalogCreateBlockedMessage = computed(() => productsCreateBlockedMessage.value)
 
   const showBlockedToast = (message: string) => {
@@ -69,7 +75,9 @@ export function useMenuCatalogQuotaGate() {
   }
 
   const redirectIfModifiersCreateBlocked = async (listPath = '/menu/modificadores') => {
-    if (await fetchQuotaBlocked('modifier_groups')) {
+    const productsBlocked = await fetchQuotaBlocked('menu_products')
+    const groupsBlocked = productsBlocked ? true : await fetchQuotaBlocked('modifier_groups')
+    if (productsBlocked || groupsBlocked) {
       showModifiersCreateBlocked()
       await navigateTo(listPath)
       return true
