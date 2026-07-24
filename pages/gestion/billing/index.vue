@@ -197,6 +197,36 @@ const compareQuotaRows = computed(() => {
     // Rows excluded in both plans add no comparison value.
     .filter((row) => !(row.starter.limit <= 0 && row.pro.limit <= 0))
 })
+
+// Grid rows (ventas-style UiResponsiveDataView): quota rows + plan-level scans row.
+const compareColumns = computed<Column[]>(() => [
+  { key: 'resource', title: t('billing.compareResource'), align: 'left' },
+  { key: 'starter', title: starterPlan.value?.name ?? t('billing.starterPlanName'), align: 'center' },
+  { key: 'pro', title: proPlan.value?.name ?? 'Pro', align: 'center' },
+])
+
+const compareTableRows = computed(() => {
+  const starter = starterPlan.value
+  const pro = proPlan.value
+  if (!starter || !pro) return []
+  const rows = compareQuotaRows.value.map((row) => ({
+    id: row.key,
+    resource: row.label,
+    starterText: row.starter.text,
+    starterMuted: row.starter.muted,
+    proText: row.pro.text,
+    proMuted: row.pro.muted,
+  }))
+  rows.push({
+    id: 'scans',
+    resource: t('billing.scansPerMonth'),
+    starterText: starter.scan_limit.toLocaleString(toNumberLocaleTag(locale.value)),
+    starterMuted: false,
+    proText: pro.scan_limit.toLocaleString(toNumberLocaleTag(locale.value)),
+    proMuted: false,
+  })
+  return rows
+})
 const currentTenantId = computed(() => currentTenant.value?.id ?? '')
 const billingIntentKey = computed(() =>
   currentTenantId.value ? `waro:billing-terms-intent:${currentTenantId.value}` : ''
@@ -727,78 +757,80 @@ watch(() => currentTenant.value?.id, async () => {
           <p class="text-sm text-text-secondary mt-1">{{ t('billing.starterUpgradeHint') }}</p>
         </div>
 
-        <!-- Quota matrix: resource | Starter | Pro -->
-        <div class="px-2 sm:px-6 py-4">
-          <!-- Column headers -->
-          <div class="grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2">
-            <span class="text-xs font-semibold uppercase tracking-widest text-text-secondary self-end">
-              {{ t('billing.compareResource') }}
-            </span>
-            <div class="text-center">
-              <p class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</p>
-              <span class="inline-block mt-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
-                {{ t('billing.yourPlan') }}
+        <!-- Quota matrix as ventas-style grid -->
+        <div class="p-4 sm:p-6">
+          <UiResponsiveDataView
+            row-size="sm"
+            variant="default"
+            :columns="compareColumns"
+            :data="compareTableRows"
+            item-key="id"
+          >
+            <!-- Column headers: Starter (Tu plan) + Pro (precio) -->
+            <template #header-starter>
+              <div class="flex flex-col items-center gap-1 py-1">
+                <span class="text-xs font-semibold uppercase tracking-widest text-text-secondary">{{ starterPlan.name }}</span>
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
+                  {{ t('billing.yourPlan') }}
+                </span>
+              </div>
+            </template>
+            <template #header-pro>
+              <div class="flex flex-col items-center gap-0.5 py-1">
+                <span class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</span>
+                <span class="text-sm font-bold text-text-primary leading-tight">
+                  {{ formatCOP(proPlan.price_annual) }}
+                  <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
+                </span>
+              </div>
+            </template>
+
+            <!-- Desktop cells -->
+            <template #cell-resource="{ row }">
+              <span class="text-sm text-text-secondary">{{ row.resource }}</span>
+            </template>
+            <template #cell-starter="{ row }">
+              <span
+                :class="['block text-sm text-center', row.starterMuted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']"
+              >
+                {{ row.starterText }}
               </span>
-            </div>
-            <div class="text-center">
-              <p class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</p>
-              <p class="mt-1 text-sm font-bold text-text-primary leading-tight">
-                {{ formatCOP(proPlan.price_annual) }}
-                <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
-              </p>
-            </div>
-          </div>
+            </template>
+            <template #cell-pro="{ row }">
+              <span
+                :class="['block text-sm text-center', row.proMuted ? 'text-text-secondary italic' : 'font-semibold text-primary']"
+              >
+                {{ row.proText }}
+              </span>
+            </template>
 
-          <!-- Quota rows -->
-          <div
-            v-for="(row, idx) in compareQuotaRows"
-            :key="row.key"
-            :class="[
-              'grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2.5 rounded-lg items-center',
-              idx % 2 === 0 ? 'bg-surface-secondary/40' : '',
-            ]"
+            <!-- Mobile card -->
+            <template #card="{ item, index }">
+              <div
+                class="flex items-center gap-3 py-3 px-3 border-b border-border"
+                :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              >
+                <span class="flex-1 min-w-0 text-sm text-text-secondary">{{ item.resource }}</span>
+                <span class="flex flex-col items-end gap-0.5 flex-shrink-0 text-right">
+                  <span :class="['text-xs', item.starterMuted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']">
+                    {{ starterPlan.name }}: {{ item.starterText }}
+                  </span>
+                  <span :class="['text-xs', item.proMuted ? 'text-text-secondary italic' : 'font-semibold text-primary']">
+                    {{ proPlan.name }}: {{ item.proText }}
+                  </span>
+                </span>
+              </div>
+            </template>
+          </UiResponsiveDataView>
+
+          <!-- Single primary CTA -->
+          <button
+            type="button"
+            class="mt-5 w-full sm:w-auto sm:ms-auto sm:flex min-h-[44px] px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all items-center justify-center"
+            @click="openModal"
           >
-            <span class="text-sm text-text-secondary">{{ row.label }}</span>
-            <span
-              :class="['text-sm text-center', row.starter.muted ? 'text-text-secondary italic' : 'font-semibold text-text-primary']"
-            >
-              {{ row.starter.text }}
-            </span>
-            <span
-              :class="['text-sm text-center', row.pro.muted ? 'text-text-secondary italic' : 'font-semibold text-primary']"
-            >
-              {{ row.pro.text }}
-            </span>
-          </div>
-
-          <!-- Scans row (plan-level limit, not a quotas key) -->
-          <div
-            :class="[
-              'grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 py-2.5 rounded-lg items-center',
-              compareQuotaRows.length % 2 === 0 ? 'bg-surface-secondary/40' : '',
-            ]"
-          >
-            <span class="text-sm text-text-secondary">{{ t('billing.scansPerMonth') }}</span>
-            <span class="text-sm text-center font-semibold text-text-primary">
-              {{ starterPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }}
-            </span>
-            <span class="text-sm text-center font-semibold text-primary">
-              {{ proPlan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }}
-            </span>
-          </div>
-
-          <!-- Single primary CTA, Pro column -->
-          <div class="grid grid-cols-[1.4fr_1fr_1fr] gap-2 px-3 pt-4">
-            <span />
-            <span />
-            <button
-              type="button"
-              class="w-full min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all"
-              @click="openModal"
-            >
-              {{ t('billing.upgradeToPro') }}
-            </button>
-          </div>
+            {{ t('billing.upgradeToPro') }}
+          </button>
         </div>
       </div>
 
