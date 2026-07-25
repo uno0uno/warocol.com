@@ -34,9 +34,8 @@
           <template #trailing>
             <button
               type="button"
-              :disabled="isCategoriesCreateBlocked"
-              :title="isCategoriesCreateBlocked ? categoriesCreateBlockedMessage : t('menu.categorias.newCategory')"
-              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              :title="t('menu.categorias.newCategory')"
+              class="inline-flex min-h-[44px] items-center rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
               @click="openCreatePanel"
             >
               <span class="hidden sm:inline">{{ t('menu.categorias.newCategory') }}</span>
@@ -172,6 +171,16 @@
       :message="errorModal.message"
       :dependents="errorModal.dependents"
     />
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -179,11 +188,12 @@
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 const { t } = useI18n({ useScope: 'global' })
 const {
-  isCategoriesCreateBlocked,
-  categoriesCreateBlockedMessage,
-  showCategoriesCreateBlocked,
+  handleCategoriesCreateClick,
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
   ensureBillingOverview,
-  fetchQuotaBlocked,
 } = useMenuCatalogQuotaGate()
 
 definePageMeta({
@@ -287,13 +297,10 @@ const panelOpen = ref(false)
 const panelCategory = ref<Category | null>(null)
 
 const openCreatePanel = async () => {
-  // Fresh check: billing cache may be empty without mi_plan / overview.
-  if (isCategoriesCreateBlocked.value || await fetchQuotaBlocked('menu_categories')) {
-    showCategoriesCreateBlocked()
-    return
-  }
-  panelCategory.value = null
-  panelOpen.value = true
+  await handleCategoriesCreateClick(() => {
+    panelCategory.value = null
+    panelOpen.value = true
+  })
 }
 
 const openEditPanel = (cat: Record<string, any>) => {

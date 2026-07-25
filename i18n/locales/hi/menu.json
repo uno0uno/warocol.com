@@ -303,6 +303,7 @@
       "type": "प्रकार",
       "all": "सभी",
       "moreProducts": "+{count} और",
+      "moreOptions": "+{count} और",
       "noProducts": "कोई उत्पाद नहीं",
       "noOptions": "कोई विकल्प नहीं",
       "required": "अनिवार्य",

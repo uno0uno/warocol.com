@@ -303,6 +303,7 @@
       "type": "النوع",
       "all": "الكل",
       "moreProducts": "+{count} المزيد",
+      "moreOptions": "+{count} المزيد",
       "noProducts": "لا توجد منتجات",
       "noOptions": "لا توجد خيارات",
       "required": "مطلوب",
