@@ -20,9 +20,11 @@ withDefaults(defineProps<{
   gradientClass: string
   embedded?: boolean
   compact?: boolean
+  stacked?: boolean
 }>(), {
   embedded: false,
   compact: false,
+  stacked: false,
 })
 
 const formatDate = (dateString: string) => {
@@ -49,13 +51,17 @@ const getReadingTime = (description: string) => {
     </div>
 
     <article
-      class="group relative bg-surface rounded-2xl overflow-hidden border border-border hover:border-badge-primary-border transition-colors duration-300 grid"
-      :class="compact ? 'lg:grid-cols-[1.15fr_1fr]' : 'lg:grid-cols-[1.1fr_1fr]'"
+      class="group relative bg-surface rounded-2xl overflow-hidden border border-border hover:border-badge-primary-border transition-colors duration-300"
+      :class="stacked ? 'flex flex-col' : ['grid', compact ? 'lg:grid-cols-[1.15fr_1fr]' : 'lg:grid-cols-[1.1fr_1fr]']"
     >
       <NuxtLink
         :to="`/blog/${article.slug}`"
-        class="relative overflow-hidden"
-        :class="compact ? 'min-h-[12rem] sm:min-h-[14rem] lg:min-h-[16rem]' : 'min-h-[13rem] sm:min-h-[18rem] lg:min-h-[26rem]'"
+        class="relative overflow-hidden block"
+        :class="stacked
+          ? 'aspect-[16/10] sm:aspect-[16/9] shrink-0'
+          : compact
+            ? 'min-h-[12rem] sm:min-h-[14rem] lg:min-h-[16rem]'
+            : 'min-h-[13rem] sm:min-h-[18rem] lg:min-h-[20rem]'"
       >
         <img
           v-if="article.cover"
@@ -67,7 +73,14 @@ const getReadingTime = (description: string) => {
         <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/10"></div>
       </NuxtLink>
 
-      <div class="p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-center">
+      <div
+        class="flex flex-col justify-center"
+        :class="stacked
+          ? 'p-4 sm:p-5 lg:p-6'
+          : compact
+            ? 'p-5 sm:p-6 lg:p-8'
+            : 'p-5 sm:p-8 lg:p-12 xl:p-14'"
+      >
         <div class="flex items-center gap-2 mb-3 sm:mb-5 text-xs text-text-tertiary font-medium">
           <svg class="w-3.5 h-3.5 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -76,18 +89,29 @@ const getReadingTime = (description: string) => {
         </div>
 
         <NuxtLink :to="`/blog/${article.slug}`">
-          <h2 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-3 sm:mb-5 text-text-primary leading-tight group-hover:text-badge-primary-text transition-colors duration-300">
+          <h2
+            class="font-bold text-text-primary leading-tight group-hover:text-badge-primary-text transition-colors duration-300"
+            :class="stacked
+              ? 'text-lg sm:text-xl mb-2 sm:mb-3 line-clamp-2'
+              : compact
+                ? 'text-xl sm:text-2xl lg:text-2xl mb-3 sm:mb-4 line-clamp-3'
+                : 'text-xl sm:text-2xl lg:text-3xl xl:text-4xl mb-3 sm:mb-5'"
+          >
             {{ article.title }}
           </h2>
         </NuxtLink>
 
-        <p class="text-text-secondary text-sm sm:text-base lg:text-lg leading-relaxed mb-5 sm:mb-8 line-clamp-2 sm:line-clamp-3">
+        <p
+          class="text-text-secondary leading-relaxed line-clamp-2 sm:line-clamp-3"
+          :class="stacked || compact ? 'text-sm sm:text-base mb-4 sm:mb-5' : 'text-sm sm:text-base lg:text-lg mb-5 sm:mb-8'"
+        >
           {{ article.description }}
         </p>
 
         <NuxtLink
           :to="`/blog/${article.slug}`"
-          class="inline-flex items-center gap-2 self-start px-5 py-2.5 bg-action-primary-bg hover:bg-action-primary-hover-bg text-action-primary-text text-sm font-semibold rounded-full transition-all duration-200 hover:gap-3 mb-4 sm:mb-8"
+          class="inline-flex items-center gap-2 self-start px-5 py-2.5 bg-action-primary-bg hover:bg-action-primary-hover-bg text-action-primary-text text-sm font-semibold rounded-full transition-all duration-200 hover:gap-3"
+          :class="stacked || compact ? 'mb-4' : 'mb-4 sm:mb-8'"
         >
           Leer artículo
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +119,7 @@ const getReadingTime = (description: string) => {
           </svg>
         </NuxtLink>
 
-        <div class="flex items-center gap-3 pt-6 border-t border-border">
+        <div class="flex items-center gap-3 border-t border-border" :class="stacked ? 'pt-4 mt-auto' : 'pt-6'">
           <img
             v-if="article.author_avatar"
             :src="article.author_avatar"
