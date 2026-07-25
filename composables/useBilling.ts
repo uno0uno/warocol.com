@@ -143,6 +143,8 @@ export type OperationalQuotaKey =
   | 'menu_categories'
   | 'modifier_groups'
   | 'recipe_bases'
+  | 'recipe_lines_per_product'
+  | 'modifier_options_per_group'
 
 export type OperationalQuotaStatus = 'allowed' | 'blocked' | 'unlimited' | 'loading' | 'error' | 'unknown'
 
@@ -305,6 +307,8 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'menu_categories',
   'modifier_groups',
   'recipe_bases',
+  'recipe_lines_per_product',
+  'modifier_options_per_group',
 ]
 
 const operationalQuotaFallbackMessage = 'No pudimos verificar esta cuota ahora. El sistema validará la acción al guardar.'

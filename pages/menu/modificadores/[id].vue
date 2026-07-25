@@ -246,6 +246,16 @@
       :on-ingredient-saved="onCustomIngredientCreated"
       :on-product-saved="onInlineProductCreated"
     />
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -282,6 +292,13 @@ const route = useRoute()
 const toast = useToast()
 const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
+const {
+  handleAddModifierOption,
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+} = useMenuCatalogQuotaGate()
 
 const isSubmitting = ref(false)
 const submitError = ref('')
@@ -591,7 +608,9 @@ function getSelectedProductsText() {
 }
 
 function addModifier() {
-  form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
+  void handleAddModifierOption(form.value.modifiers.length, () => {
+    form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
+  })
 }
 
 const warehouseCategorySelectorRef = ref<{ dismissPreparedIngredient: (id: string) => void } | null>(null)

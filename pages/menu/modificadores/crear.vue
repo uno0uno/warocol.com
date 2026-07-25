@@ -259,6 +259,16 @@
       :on-ingredient-saved="onCustomIngredientCreated"
       :on-product-saved="onInlineProductCreated"
     />
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -287,7 +297,14 @@ useHead({ title: () => t('menu.head.modificadores') })
 
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
-const { redirectIfModifiersCreateBlocked } = useMenuCatalogQuotaGate()
+const {
+  redirectIfModifiersCreateBlocked,
+  handleAddModifierOption,
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+} = useMenuCatalogQuotaGate()
 
 onMounted(async () => {
   await redirectIfModifiersCreateBlocked('/menu/modificadores')
@@ -325,7 +342,9 @@ watch(selectedProducts, (list) => {
 }, { deep: true })
 
 function addModifier() {
-  form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
+  void handleAddModifierOption(form.value.modifiers.length, () => {
+    form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
+  })
 }
 
 const ingredientCache = ref<Record<string, any>>({})

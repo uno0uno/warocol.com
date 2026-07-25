@@ -929,6 +929,7 @@ const WAREHOUSE_COPY = useWarehouseCopy()
 const { currentTenant, businessProfile } = useTenantReactive()
 const {
   handleInlineCategoryCreate,
+  handleAddProductRecipeLine,
   categoriesLimitModalOpen,
   categoriesLimitModalMessage,
   closeCategoriesLimitModal,
@@ -1534,13 +1535,15 @@ const onRecipeBaseChange = () => {
 }
 
 const addIngredient = () => {
-  // Adding an ingredient implies the product tracks inventory.
-  tracksInventory.value = true
-  form.value.ingredients.push({
-    ingredient_id: '',
-    ingredient_name: '',
-    quantity: 0,
-    unit: 'g'
+  void handleAddProductRecipeLine(form.value.ingredients.length, () => {
+    // Adding an ingredient implies the product tracks inventory.
+    tracksInventory.value = true
+    form.value.ingredients.push({
+      ingredient_id: '',
+      ingredient_name: '',
+      quantity: 0,
+      unit: 'g'
+    })
   })
 }
 
