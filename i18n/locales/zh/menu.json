@@ -303,6 +303,7 @@
       "type": "类型",
       "all": "全部",
       "moreProducts": "+{count} 更多",
+      "moreOptions": "+{count} 更多",
       "noProducts": "无产品",
       "noOptions": "无选项",
       "required": "必填",

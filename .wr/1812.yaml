@@ -1,0 +1,34 @@
+issue: 1812
+title: "fix(menu): unify quota create modal (Mi Plan) and cap modifier list chips"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1812-quota-modal-modifier-chips
+
+paths:
+  - composables/useMenuCatalogQuotaGate.ts
+  - pages/menu/productos/index.vue
+  - pages/menu/categorias/index.vue
+  - pages/menu/recetas/index.vue
+  - pages/menu/modificadores/index.vue
+  - i18n/locales/*/menu.json
+
+ac:
+  - "List Nuevo/Crear on Productos, Categorías, Recetas, Modificadores opens UiConfirmActionModal with Mi Plan + Cerrar when quota exhausted (not toast-only)"
+  - "Modal message shows usage; confirm navigates to /gestion/billing"
+  - "Shared handle*CreateClick helpers via useMenuCatalogQuotaGate"
+  - "Modificadores Opciones column: max 3 chips + +N more, left-aligned like Productos"
+
+out_of_scope:
+  - starter quota number changes
+  - API enforcement
+  - modifier create/edit form fields beyond list chips / list CTA gating
+
+hints:
+  entry: "useMenuCatalogQuotaGate.handleQuotaCreateClick — shared list create gate"
+  pattern: "modificadores/index.vue UiConfirmActionModal Mi Plan — mirror on other lists"
+  tests: "manual — quota-exhausted Nuevo on four list pages; opciones chips >3"
+
+skip:
+  audits: [ux, color, typography]

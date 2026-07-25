@@ -203,13 +203,16 @@ export function useMenuCatalogQuotaGate() {
     return true
   }
 
-  /** Modificadores list Nuevo: stay clickable; open limit modal when groups cap reached. */
-  const handleModifiersCreateClick = async (navigate: () => void) => {
-    const result = await fetchQuotaStatus('modifier_groups')
+  /** List Nuevo/Crear: stay clickable; open Mi Plan modal when quota exhausted. */
+  const handleQuotaCreateClick = async (
+    resource: OperationalQuotaKey,
+    navigate: () => void,
+  ) => {
+    const result = await fetchQuotaStatus(resource)
     if (result.blocked) {
       openQuotaLimitModalWithMessage(
         result.message
-          || BILLING_QUOTA_RESOURCE_CONFIG.modifier_groups?.blockedMessage
+          || BILLING_QUOTA_RESOURCE_CONFIG[resource]?.blockedMessage
           || t('menu.common.quotaBlocked', 'Cupo del plan alcanzado'),
       )
       return false
@@ -217,6 +220,19 @@ export function useMenuCatalogQuotaGate() {
     navigate()
     return true
   }
+
+  const handleProductsCreateClick = (navigate: () => void) =>
+    handleQuotaCreateClick('menu_products', navigate)
+
+  const handleCategoriesCreateClick = (navigate: () => void) =>
+    handleQuotaCreateClick('menu_categories', navigate)
+
+  const handleRecipesCreateClick = (navigate: () => void) =>
+    handleQuotaCreateClick('recipe_bases', navigate)
+
+  /** Modificadores list Nuevo: stay clickable; open limit modal when groups cap reached. */
+  const handleModifiersCreateClick = (navigate: () => void) =>
+    handleQuotaCreateClick('modifier_groups', navigate)
 
   /**
    * Product recipe editor: stay clickable when at recipe_lines_per_product;
@@ -310,6 +326,9 @@ export function useMenuCatalogQuotaGate() {
     refreshCategoriesCreateGate,
     fetchQuotaBlocked,
     handleInlineCategoryCreate,
+    handleProductsCreateClick,
+    handleCategoriesCreateClick,
+    handleRecipesCreateClick,
     handleModifiersCreateClick,
     handleAddProductRecipeLine,
     handleAddModifierOption,

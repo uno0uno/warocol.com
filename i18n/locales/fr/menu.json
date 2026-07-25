@@ -303,6 +303,7 @@
       "type": "Type",
       "all": "Tous",
       "moreProducts": "+{count} de plus",
+      "moreOptions": "+{count} de plus",
       "noProducts": "Aucun produit",
       "noOptions": "Aucune option",
       "required": "Obligatoire",

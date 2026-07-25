@@ -80,16 +80,26 @@
       </template>
 
       <template #cell-opciones="{ row }">
-        <div class="flex flex-wrap justify-center gap-1.5 max-w-[260px] mx-auto">
+        <div
+          v-for="chipState in [getGroupOptionChipState(row.id)]"
+          :key="row.id"
+          class="flex flex-wrap gap-1.5 max-w-[260px]"
+        >
           <span
-            v-for="option in getGroupOptionLabels(row.id)"
+            v-for="option in chipState.visible"
             :key="option"
             class="inline-flex max-w-full items-center rounded-full border border-badge-primary-border bg-badge-primary-bg px-2 py-0.5 text-[11px] font-medium leading-4 text-badge-primary-text"
             :title="option"
           >
             <span class="whitespace-normal break-words">{{ option }}</span>
           </span>
-          <span v-if="!getGroupOptionLabels(row.id).length" class="text-xs text-text-secondary">
+          <span
+            v-if="chipState.moreCount > 0"
+            class="text-xs text-text-secondary"
+          >
+            {{ t('menu.modificadores.moreOptions', { count: chipState.moreCount }) }}
+          </span>
+          <span v-if="chipState.empty" class="text-xs text-text-secondary">
             {{ t('menu.modificadores.noOptions') }}
           </span>
         </div>
@@ -499,6 +509,15 @@ function getGroupOptionLabels(grupoId: string) {
     if (type === 'PRODUCT') return m.linked_product?.name || m.name
     return m.name
   }).filter(Boolean)
+}
+
+function getGroupOptionChipState(grupoId: string) {
+  const labels = getGroupOptionLabels(grupoId)
+  return {
+    visible: labels.slice(0, 3),
+    moreCount: Math.max(labels.length - 3, 0),
+    empty: labels.length === 0,
+  }
 }
 
 const goToCreateGroup = () => {

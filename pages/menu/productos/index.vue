@@ -66,9 +66,8 @@
               </button>
               <button
                 type="button"
-                :disabled="isProductsCreateBlocked"
-                :title="isProductsCreateBlocked ? productsCreateBlockedMessage : t('menu.productos.newProduct')"
-                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                :title="t('menu.productos.newProduct')"
+                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
                 @click="onNewProduct"
               >
                 <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
@@ -874,6 +873,16 @@
         </div>
       </div>
     </UiModal>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -899,18 +908,18 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const {
-  isProductsCreateBlocked,
-  productsCreateBlockedMessage,
-  showProductsCreateBlocked,
+  handleProductsCreateClick,
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
   ensureBillingOverview,
 } = useMenuCatalogQuotaGate()
 
 const onNewProduct = () => {
-  if (isProductsCreateBlocked.value) {
-    showProductsCreateBlocked()
-    return
-  }
-  router.push('/menu/productos/crear')
+  void handleProductsCreateClick(() => {
+    router.push('/menu/productos/crear')
+  })
 }
 
 const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
