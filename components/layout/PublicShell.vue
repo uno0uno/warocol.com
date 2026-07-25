@@ -7,6 +7,7 @@
     </main>
     <LayoutFooter v-if="showFooter" :class="footerClass" />
     <LayoutBottomNav v-if="showBottomNav" />
+    <ModalsLeadModal />
   </div>
 </template>
 

@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
+const leadModal = useLeadModal()
 
-const router = useRouter()
-const heroCta = getPublicCta('management', 'hero')
-const startRegistration = () => router.push(activatePublicCta(
-  heroCta,
-  { source: 'home_hero', content: 'primary' },
-  undefined,
-  import.meta.client ? window.sessionStorage : null,
-))
+const openLeadModal = () => leadModal.open('habla_con_nosotros')
 </script>
 
 <template>
@@ -21,13 +14,14 @@ const startRegistration = () => router.push(activatePublicCta(
 
     <div class="cta-buttons">
       <button
-        class="btn btn-secondary"
+        class="btn btn-primary"
         type="button"
-        @click="startRegistration"
+        aria-haspopup="dialog"
+        @click="openLeadModal"
       >
-        {{ heroCta.button }}
+        HABLA CON NOSOTROS
       </button>
-      <p class="cta-microcopy">{{ heroCta.microcopy }}</p>
+      <p class="cta-microcopy">2 minutos. Sin tarjeta. Un asesor te contacta.</p>
     </div>
   </section>
 </template>
@@ -100,15 +94,15 @@ h1 {
   min-width: 160px;
 }
 
-.btn-secondary {
-  background: transparent;
-  color: hsl(262, 83%, 58%);
+.btn-primary {
+  background: hsl(262, 83%, 58%);
+  color: white;
   border: 2px solid hsl(262, 83%, 58%);
 }
 
-.btn-secondary:hover {
-  background: hsl(262, 83%, 58%);
-  color: white;
+.btn-primary:hover {
+  background: hsl(262, 83%, 52%);
+  border-color: hsl(262, 83%, 52%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px hsl(var(--action-primary-bg) / 0.2);
 }
@@ -125,6 +119,8 @@ h1 {
   .btn {
     padding: 12px 24px;
     min-width: 140px;
+    width: 100%;
+    max-width: 280px;
   }
 }
 </style>

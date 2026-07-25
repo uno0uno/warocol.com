@@ -1,14 +1,14 @@
 import {
-  getBlogPublicCta,
-  type PublicCta,
-  type PublicCtaPlacement,
-} from '~/utils/publicCta'
+  getBlogLeadCta,
+  type BlogLeadCtaContent,
+  type BlogLeadCtaPlacement,
+} from '~/utils/blogLeadCta'
 
-export type BlogCtaContent = PublicCta
+export type BlogCtaContent = BlogLeadCtaContent
 
 export function useBlogCta(
   slug: string,
-  placement: Extract<PublicCtaPlacement, 'benefit' | 'price' | 'final'> = 'final',
+  placement: BlogLeadCtaPlacement = 'final',
 ): BlogCtaContent {
-  return getBlogPublicCta(slug, placement)
+  return getBlogLeadCta(slug, placement)
 }

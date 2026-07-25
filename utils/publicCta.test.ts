@@ -6,7 +6,6 @@ import {
   PUBLIC_CTA_COMPARISON,
   activatePublicCta,
   buildPublicCtaRegistrationRoute,
-  getBlogPublicCta,
   getPublicCta,
   readPublicCtaAttribution,
   resolveBlogCtaIntent,
@@ -21,21 +20,13 @@ test('maps blog slugs to the five commercial intents', () => {
   assert.equal(resolveBlogCtaIntent('liquidacion-de-nomina'), 'team')
 })
 
-test('keeps offer and article progression centralized and honest', () => {
-  const benefit = getBlogPublicCta('inventario-restaurante', 'benefit')
-  const price = getBlogPublicCta('inventario-restaurante', 'price')
-  const final = getBlogPublicCta('inventario-restaurante', 'final')
-  assert.equal(benefit.variant, 'costs_benefit_v1')
-  assert.match(price.headline, /COP 95\.900\/año/)
-  assert.match(price.microcopy, /activa después del pago/)
-  assert.equal(final.button, 'Crear cuenta y elegir plan')
-  assert.equal(JSON.stringify([benefit, price, final]).toLocaleLowerCase().includes('demostración'), false)
-  assert.equal(PUBLIC_CTA_COMPARISON, null)
-
+test('keeps self-service registration copy centralized', () => {
   const posFinal = getPublicCta('pos', 'final')
   assert.match(`${posFinal.eyebrow} ${posFinal.headline}`, /POS/)
   assert.match(posFinal.body, /COP 95\.900\/año/)
   assert.match(posFinal.microcopy, /activa después del pago/)
+  assert.equal(posFinal.button, 'Crear cuenta y elegir plan')
+  assert.equal(PUBLIC_CTA_COMPARISON, null)
 })
 
 test('builds a complete allow-listed registration route from arbitrary content', () => {

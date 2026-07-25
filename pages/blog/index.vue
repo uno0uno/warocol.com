@@ -60,7 +60,7 @@ const isFilteredMode = computed(() => activePillar.value !== null)
 
 const currentPage = ref(1)
 const articlesPerPage = 9
-const magazineLimit = 60
+const magazineLimit = 50
 
 watch(() => route.query.pillar, () => {
   currentPage.value = 1

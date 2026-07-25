@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
-import { activatePublicCta, type PublicCta } from '~/utils/publicCta'
+import { blogLeadSource } from '~/utils/blogLeadCta'
+import type { BlogLeadCtaContent } from '~/utils/blogLeadCta'
 
 interface Props {
   content: string
@@ -14,27 +15,20 @@ const props = withDefaults(defineProps<Props>(), {
   slug: '',
 })
 
-// Markdown renderer
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true })
 const renderedContent = computed(() => md.render(props.content))
 
-// Barra de progreso de lectura
 const readingProgress = ref(0)
-
 const articleRef = ref<HTMLElement | null>(null)
-const router = useRouter()
+const leadModal = useLeadModal()
 const insertedCtas: HTMLElement[] = []
 
-function buildMidCta(cta: PublicCta, index: number): HTMLElement {
+function buildMidCta(cta: BlogLeadCtaContent, index: number, source: string): HTMLElement {
   const wrap = document.createElement('div')
   wrap.setAttribute('data-mid-cta', '')
 
   const content = document.createElement('div')
   content.setAttribute('data-mid-cta-content', '')
-
-  const eyebrow = document.createElement('span')
-  eyebrow.setAttribute('data-mid-cta-eyebrow', '')
-  eyebrow.textContent = cta.eyebrow
 
   const headline = document.createElement('p')
   headline.setAttribute('data-mid-cta-headline', '')
@@ -51,31 +45,13 @@ function buildMidCta(cta: PublicCta, index: number): HTMLElement {
   const btn = document.createElement('button')
   btn.setAttribute('data-blog-cta-btn', '')
   btn.textContent = cta.button
-
   btn.type = 'button'
-  btn.addEventListener('click', () => router.push(activatePublicCta(
-    cta,
-    { source: 'blog_article', content: `${props.slug}_${cta.placement}` },
-    undefined,
-    window.sessionStorage,
-  )))
+  btn.setAttribute('aria-haspopup', 'dialog')
+  btn.addEventListener('click', () => leadModal.open(source))
 
-  content.appendChild(eyebrow)
   content.appendChild(headline)
   content.appendChild(text)
   content.appendChild(microcopy)
-  if (cta.comparison) {
-    const disclosure = document.createElement('p')
-    disclosure.setAttribute('data-mid-cta-disclosure', '')
-    disclosure.append(document.createTextNode(`${cta.comparison.scope} ${cta.comparison.disclosure} `))
-    const source = document.createElement('a')
-    source.href = cta.comparison.url
-    source.target = '_blank'
-    source.rel = 'noopener noreferrer'
-    source.textContent = `${cta.comparison.source} · ${cta.comparison.asOf}`
-    disclosure.appendChild(source)
-    content.appendChild(disclosure)
-  }
   wrap.appendChild(content)
   wrap.appendChild(btn)
   wrap.setAttribute('data-mid-cta-position', String(index + 1))
@@ -114,9 +90,10 @@ onMounted(() => {
 
     // Inject contextual CTA banners at natural reading breaks.
     if (props.slug) {
+      const source = blogLeadSource(props.slug)
       getMidCtaTargets(articleRef.value).forEach((h2, index) => {
         const cta = useBlogCta(props.slug, index === 0 ? 'benefit' : 'price')
-        const banner = buildMidCta(cta, index)
+        const banner = buildMidCta(cta, index, source)
         h2.parentNode!.insertBefore(banner, h2)
         insertedCtas.push(banner)
       })
