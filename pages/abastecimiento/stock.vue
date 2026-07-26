@@ -46,17 +46,38 @@
       :preselect="adjustmentPreselect"
       @saved="refetch"
     />
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import type { StockAdjustmentPreselect } from '@/components/abastecimiento/StockAdjustmentPanel.vue'
 
 const { t } = useI18n()
 const WAREHOUSE_COPY = useWarehouseCopy()
 useHead({ title: () => t('abastecimiento.head.stock') })
+
+// Plan quota gate: Ajustar stays clickable; Mi Plan modal at stock_adjustments_per_period cap (#1819)
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+  ensureBillingOverview,
+} = useOperationalQuotaGate('stock_adjustments_per_period')
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -78,14 +99,16 @@ const openAdjustment = (item: {
   minimum_stock: number
   maximum_stock?: number | null
 }) => {
-  adjustmentPreselect.value = {
-    id: item.ingredient_id,
-    name: item.ingredient_name,
-    unit: item.unit,
-    minimum_stock: item.minimum_stock,
-    maximum_stock: item.maximum_stock ?? null,
-  }
-  adjustmentOpen.value = true
+  void handleCreateClick(() => {
+    adjustmentPreselect.value = {
+      id: item.ingredient_id,
+      name: item.ingredient_name,
+      unit: item.unit,
+      minimum_stock: item.minimum_stock,
+      maximum_stock: item.maximum_stock ?? null,
+    }
+    adjustmentOpen.value = true
+  })
 }
 
 const currentOffset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
@@ -218,6 +241,7 @@ const clearFilters = () => {
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refetch)
+  ensureBillingOverview()
 })
 useMenuReturnRefresh(
   '/abastecimiento/stock',
