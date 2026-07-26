@@ -1,0 +1,34 @@
+issue: 1825
+title: "fix(abastecimiento): stock table no line wraps except long category"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1825-stock-nowrap-except-category
+
+paths:
+  - components/inventario/StockInventoryView.vue
+
+ac:
+  - "Desktop non-category cells use whitespace-nowrap (and truncate for ingredient)"
+  - "Category may wrap via break-words; sin categoría badge unchanged"
+  - "Mobile card layout unchanged"
+
+out_of_scope:
+  - other abastecimiento tables
+  - API / column set changes
+
+hints:
+  entry: "StockInventoryView.vue cell-* templates"
+  pattern: "ingredient already truncate+title; add nowrap elsewhere; category break-words"
+  tests: "node -e static class assert on StockInventoryView.vue"
+
+risk:
+  sensitive: false
+  areas: [stock table CSS only]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Closes #1825"
