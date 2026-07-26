@@ -70,6 +70,7 @@
               v-if="option.kind === 'presentation'"
               role="presentation"
               aria-hidden="true"
+              :title="option.label"
               class="min-w-0 px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-nowrap truncate"
             >
               <slot name="presentation" :option="option">
