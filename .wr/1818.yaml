@@ -1,0 +1,58 @@
+issue: 1818
+title: "fix(abastecimiento): Mi Plan quota gates for proveedores and compra directa"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1818-abastecimiento-quota-gates
+base_branch: main  # PREREQUISITE: merge #1815 (issue #1814) first, then pull main
+epic: 1816
+
+paths:
+  - composables/useBilling.ts
+  - composables/useOperationalQuotaGate.ts        # new — generic sibling of useWarehouseCatalogQuotaGate
+  - composables/useBillingOperationalQuota.test.ts
+  - pages/abastecimiento/proveedores.vue
+  - pages/abastecimiento/compras-directas/index.vue
+
+ac:
+  - "tenant_suppliers + direct_purchases_per_period added to BillingQuotaKey (:15), OperationalQuotaKey (:136), BILLING_QUOTA_RESOURCE_CONFIG (after :249), OPERATIONAL_QUOTA_KEYS (:301)"
+  - "Proveedores Nuevo stays clickable; at tenant_suppliers cap opens UiConfirmActionModal (Mi Plan -> /gestion/billing, Cerrar) with usage message"
+  - "Compra Directa Nuevo same UX for direct_purchases_per_period"
+  - "Below cap both CTAs navigate to their crear route exactly as today"
+  - "Edit existing suppliers/purchases unaffected; no changes to Movimientos / Calidad / Stock"
+  - "Gate fails open when remaining-usage lacks the key (API batch 1 not deployed yet)"
+
+out_of_scope:
+  - stock adjustment gate (batch 3, #1819)
+  - API key definition / enforcement (batch 1, api-warolabs#723)
+  - migrating menu + warehouse gates onto the generic helper (follow-up)
+  - adding the two keys to STARTER_DISPLAY_QUOTA_KEYS (:291)
+  - inventing additional quota keys
+
+hints:
+  entry: "proveedores.vue:47-51 and compras-directas/index.vue:56-60 are <NuxtLink to=...> — swap to <button @click> + gate, same swap as recetas in #1812"
+  pattern: "composables/useWarehouseCatalogQuotaGate.ts — copy with resource as a param; only :18 (const resource) is resource-specific"
+  callback: "handleCreateClick(open) — here open = () => navigateTo(route), not openPanel"
+  modal: "pages/abastecimiento/ingredientes-propios.vue:471-479 — exact UiConfirmActionModal props/events to mirror"
+  period_copy: "direct_purchases_per_period is a period quota: unit 'compras en el periodo', blockedMessage should say it resets with the billing period"
+  tests: "node --test --experimental-strip-types composables/useBillingOperationalQuota.test.ts"
+
+risk:
+  sensitive: false
+  areas: [billing quota unions, abastecimiento create navigation]
+  blockers:
+    - "api-warolabs#723 (batch 1) still OPEN — remaining-usage has no tenant_suppliers / direct_purchases_per_period yet, so the at-cap path cannot be verified end-to-end until it merges + deploys. Gate fails open meanwhile (allowed by AC)."
+  prerequisite:
+    - "Merge #1815 (issue #1814) to main BEFORE starting #1818, then git pull origin main. #1815 adds useWarehouseCatalogQuotaGate.ts and tenant_ingredients to the same four useBilling.ts unions; starting before it merges guarantees conflicts."
+
+validation:
+  - "node --test --experimental-strip-types composables/useBillingOperationalQuota.test.ts"
+  - "manual: both Nuevo CTAs navigate normally below cap (fail-open today)"
+  - "no build / no lint without explicit approval (front_nuxt cursor rule)"
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "single front PR — Closes #1818, Refs #1816. Stack on #1815; rebase to main once #1815 merges."

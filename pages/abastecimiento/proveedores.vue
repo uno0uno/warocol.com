@@ -44,11 +44,14 @@
         </template>
 
         <template #trailing>
-          <NuxtLink to="/abastecimiento/proveedor/crear"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+          <button
+            type="button"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            @click="handleNewSupplierClick"
+          >
             <span class="hidden sm:inline">{{ t('abastecimiento.proveedores.newSupplier') }}</span>
             <span class="sm:hidden">{{ t('abastecimiento.proveedores.newShort') }}</span>
-          </NuxtLink>
+          </button>
         </template>
       </UiAdvancedFiltersBar>
 
@@ -199,6 +202,16 @@
       </div>
 
     </div>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -217,9 +230,24 @@ import {
 import { ref, computed, watch, inject, onMounted } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useSupplierTaxIdLabel } from '~/composables/useSupplierTaxIdLabel'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 const { t } = useI18n({ useScope: 'global' })
 const { taxIdLabel } = useSupplierTaxIdLabel()
+
+// Plan quota gate: Nuevo stays clickable; Mi Plan modal at tenant_suppliers cap (#1818)
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+  ensureBillingOverview,
+} = useOperationalQuotaGate('tenant_suppliers')
+
+const handleNewSupplierClick = () => {
+  void handleCreateClick(() => navigateTo('/abastecimiento/proveedor/crear'))
+}
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -352,6 +380,7 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 
 onMounted(() => {
   setRefreshHandler(refetch)
+  ensureBillingOverview()
 })
 useMenuReturnRefresh(
   '/abastecimiento/proveedores',

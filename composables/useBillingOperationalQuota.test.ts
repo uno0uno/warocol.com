@@ -74,6 +74,33 @@ describe('resolveOperationalQuota', () => {
     assert.equal(result.blocked, false)
   })
 
+  it('gates tenant_suppliers like other growth quotas (#1818)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('tenant_suppliers'))
+
+    const allowed = resolveOperationalQuota('tenant_suppliers', metric({ used: 2, limit: 3, remaining: 1 }))
+    const blocked = resolveOperationalQuota('tenant_suppliers', metric({ used: 3, limit: 3, remaining: 0 }))
+    const missing = resolveOperationalQuota('tenant_suppliers')
+
+    assert.equal(allowed.blocked, false)
+    assert.equal(blocked.blocked, true)
+    assert.equal(blocked.message, BILLING_QUOTA_RESOURCE_CONFIG.tenant_suppliers.blockedMessage)
+    // Fail open until the API metric ships (batch 1)
+    assert.equal(missing.blocked, false)
+  })
+
+  it('gates direct_purchases_per_period as a period quota (#1818)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('direct_purchases_per_period'))
+
+    const allowed = resolveOperationalQuota('direct_purchases_per_period', metric({ used: 14, limit: 15, remaining: 1 }))
+    const blocked = resolveOperationalQuota('direct_purchases_per_period', metric({ used: 15, limit: 15, remaining: 0 }))
+    const missing = resolveOperationalQuota('direct_purchases_per_period')
+
+    assert.equal(allowed.blocked, false)
+    assert.equal(blocked.blocked, true)
+    assert.match(blocked.message, /periodo/)
+    assert.equal(missing.blocked, false)
+  })
+
   it('defines reusable messages for every operational resource', () => {
     for (const resource of OPERATIONAL_QUOTA_KEYS) {
       const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]
