@@ -42,7 +42,7 @@
         :aria-label="listboxLabel"
         :aria-busy="loading"
         :style="panelStyle"
-        class="bg-surface border border-border rounded-lg shadow-lg overflow-x-hidden overflow-y-auto"
+        class="bg-surface border border-border rounded-lg shadow-lg overflow-x-auto overflow-y-auto"
       >
         <li
           v-if="loading"
@@ -71,7 +71,7 @@
               role="presentation"
               aria-hidden="true"
               :title="option.label"
-              class="min-w-0 px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-nowrap truncate"
+              class="px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-nowrap"
             >
               <slot name="presentation" :option="option">
                 {{ option.label }}
@@ -84,7 +84,7 @@
               :aria-selected="activeKey === option.id"
               :title="option.label"
               :class="[
-                'min-w-0 px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px] flex items-center whitespace-nowrap',
+                'px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px] flex items-center whitespace-nowrap',
                 activeKey === option.id ? 'bg-surface-secondary' : 'hover:bg-surface-secondary',
                 option.class,
               ]"
@@ -93,7 +93,7 @@
               @click="chooseOption(option)"
             >
               <slot name="option" :option="option" :active="activeKey === option.id">
-                <span class="min-w-0 truncate whitespace-nowrap">
+                <span class="whitespace-nowrap">
                   {{ option.label }}
                 </span>
               </slot>
@@ -124,7 +124,7 @@
             <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="min-w-0 flex-1 truncate whitespace-nowrap" :title="resolvedCreateLabel">
+            <span class="whitespace-nowrap" :title="resolvedCreateLabel">
               {{ resolvedCreateLabel }}
             </span>
           </li>
@@ -231,11 +231,21 @@ const activeDescendant = computed(
 )
 
 const preferredPlacement = computed(() => props.placement)
-const { panelStyle } = useCatalogSearchDropdownPlacement(
+const { panelStyle, updatePlacement } = useCatalogSearchDropdownPlacement(
   anchorRef,
   panelRef,
   dropdownOpen,
   preferredPlacement,
+)
+
+watch(
+  () => props.options,
+  async () => {
+    if (!dropdownOpen.value) return
+    await nextTick()
+    updatePlacement()
+  },
+  { deep: true },
 )
 
 function optionKey(option: CatalogSearchOption) {

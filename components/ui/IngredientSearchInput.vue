@@ -20,11 +20,8 @@
       {{ option.label }}
     </template>
     <template #option="{ option }">
-      <span class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
-        <span
-          class="min-w-0 flex-1 truncate whitespace-nowrap"
-          :title="`${option.label} (${option.raw.unit})`"
-        >
+      <span class="flex items-center gap-1.5 whitespace-nowrap">
+        <span class="whitespace-nowrap" :title="`${option.label} (${option.raw.unit})`">
           {{ option.label }}
           <span class="text-text-secondary">({{ option.raw.unit }})</span>
         </span>
