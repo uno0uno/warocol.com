@@ -716,7 +716,7 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
-import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
+import { filterPurchasePaymentGroups, mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
@@ -818,7 +818,9 @@ const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('
   { server: false },
 )
 const paymentGroups = computed(() =>
-  mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? []),
+  filterPurchasePaymentGroups(
+    mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? []),
+  ),
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)

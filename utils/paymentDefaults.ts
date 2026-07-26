@@ -44,6 +44,9 @@ export const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
 /** Synthetic POS groups kept client-side (not stored in payment_method_groups). */
 export const SYNTHETIC_POS_PAYMENT_SLUGS = [WALLET_PAYMENT_SLUG] as const
 
+/** POS-only tenders that must not appear on supplier purchase payment pickers (#1823). */
+export const PURCHASE_EXCLUDED_PAYMENT_SLUGS = ['credit', WALLET_PAYMENT_SLUG] as const
+
 /**
  * Merge tenant API payment groups with synthetic defaults (e.g. customer_wallet).
  * The wallet tender is handled in checkout logic but is not a DB-configured group.
@@ -67,6 +70,14 @@ export function mergePosPaymentGroupsFromApi(
     }
   }
   return merged
+}
+
+/** Drop wallet + credit groups from Compra Directa / supplier purchase UIs. POS unchanged. */
+export function filterPurchasePaymentGroups(
+  groups: PosPaymentGroup[],
+): PosPaymentGroup[] {
+  const excluded = new Set<string>(PURCHASE_EXCLUDED_PAYMENT_SLUGS)
+  return groups.filter(g => !excluded.has(g.slug))
 }
 
 /** Map a payment group slug to a Heroicon component. Falls back to CurrencyDollarIcon. */
