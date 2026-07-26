@@ -878,7 +878,7 @@
       v-model="quotaLimitModalOpen"
       :title="t('billing.upgrade.quotaBlocked')"
       :message="quotaLimitModalMessage"
-      :confirm-label="t('shell.miPlan')"
+      :confirm-label="t('nav.miPlan')"
       :cancel-label="t('billing.close')"
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
