@@ -1,0 +1,35 @@
+issue: 1828
+title: "fix(abastecimiento): refetch stock cache on adjust panel cancel/close"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1828-stock-panel-close-refetch
+
+paths:
+  - components/abastecimiento/StockAdjustmentPanel.vue
+  - pages/abastecimiento/stock.vue
+
+ac:
+  - "Cancelar / X / backdrop / Esc close emits closed → inventory refetch"
+  - "saved still refetches; close after save skips one refetch to avoid double-fetch"
+  - "Quota modal / filters unchanged"
+
+out_of_scope:
+  - adjustment API
+  - other panels
+
+hints:
+  entry: "StockAdjustmentPanel.close — emit closed; stock.vue onAdjustmentClosed"
+  pattern: "existing @saved=refetch"
+  tests: "node static assert emit closed + parent handlers"
+
+risk:
+  sensitive: false
+  areas: [stock list cache]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Closes #1828"

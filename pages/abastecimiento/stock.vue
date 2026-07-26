@@ -44,7 +44,8 @@
     <AbastecimientoStockAdjustmentPanel
       v-model="adjustmentOpen"
       :preselect="adjustmentPreselect"
-      @saved="refetch"
+      @saved="onAdjustmentSaved"
+      @closed="onAdjustmentClosed"
     />
 
     <UiConfirmActionModal
@@ -91,6 +92,21 @@ const itemsPerPage = ref(20)
 
 const adjustmentOpen = ref(false)
 const adjustmentPreselect = ref<StockAdjustmentPreselect | null>(null)
+/** After a successful save, list already refetched — skip one close refetch (#1828). */
+const skipCloseRefetch = ref(false)
+
+const onAdjustmentSaved = () => {
+  skipCloseRefetch.value = true
+  void refetch()
+}
+
+const onAdjustmentClosed = () => {
+  if (skipCloseRefetch.value) {
+    skipCloseRefetch.value = false
+    return
+  }
+  void refetch()
+}
 
 const openAdjustment = (item: {
   ingredient_id: string
@@ -100,6 +116,7 @@ const openAdjustment = (item: {
   maximum_stock?: number | null
 }) => {
   void handleCreateClick(() => {
+    skipCloseRefetch.value = false
     adjustmentPreselect.value = {
       id: item.ingredient_id,
       name: item.ingredient_name,

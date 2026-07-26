@@ -420,6 +420,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'saved'): void
+  (e: 'closed'): void
 }>()
 
 const uid = useId()
@@ -607,6 +608,7 @@ const resetForAnother = async () => {
 const close = () => {
   if (isSubmitting.value) return
   emit('update:modelValue', false)
+  emit('closed')
 }
 
 const formatNumber = (value: number | null | undefined) => {
