@@ -26,6 +26,26 @@ export function resolveCatalogSearchOpenUpward({
   return spaceBelow < dropdownHeight && spaceAbove > spaceBelow
 }
 
+/** Grow listbox with single-line labels; never narrower than the input (#1832). */
+export function resolveCatalogSearchPanelWidth({
+  inputWidth,
+  viewportWidth,
+  left,
+  edgePad = 8,
+}: {
+  inputWidth: number
+  viewportWidth: number
+  left: number
+  edgePad?: number
+}) {
+  const maxWidth = Math.max(inputWidth, viewportWidth - left - edgePad)
+  return {
+    minWidth: `${inputWidth}px`,
+    width: 'max-content',
+    maxWidth: `${maxWidth}px`,
+  }
+}
+
 export function useCatalogSearchDropdownPlacement(
   anchorRef: Ref<HTMLElement | null>,
   panelRef: Ref<HTMLElement | null>,
@@ -62,10 +82,16 @@ export function useCatalogSearchDropdownPlacement(
       Math.max(MIN_DROPDOWN_PX, openUpward.value ? spaceAbove : spaceBelow),
     )
 
+    const widthStyle = resolveCatalogSearchPanelWidth({
+      inputWidth: rect.width,
+      viewportWidth: window.innerWidth,
+      left: rect.left,
+    })
+
     panelStyle.value = {
       position: 'fixed',
       left: `${rect.left}px`,
-      width: `${rect.width}px`,
+      ...widthStyle,
       maxHeight: `${maxH}px`,
       zIndex: '9999',
       ...(openUpward.value

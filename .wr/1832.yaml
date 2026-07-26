@@ -1,0 +1,36 @@
+issue: 1832
+title: "fix(ui): catalog search dropdown grow to full single-line labels"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1832-search-dropdown-grow
+
+paths:
+  - composables/useCatalogSearchDropdownPlacement.ts
+  - components/ui/CatalogSearchCombobox.vue
+  - components/ui/IngredientSearchInput.vue
+  - components/ui/CatalogSearchCombobox.test.ts
+
+ac:
+  - "nowrap rows without truncate; full labels visible"
+  - "panel minWidth=input, width=max-content, maxWidth=viewport"
+  - "vertical scroll preserved; shared consumers benefit"
+
+out_of_scope:
+  - multi-line wraps
+  - search API
+
+hints:
+  entry: "resolveCatalogSearchPanelWidth + remove truncate"
+  tests: "npx vitest run components/ui/CatalogSearchCombobox.test.ts"
+
+risk:
+  sensitive: false
+  areas: [shared search dropdown]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Closes #1832"

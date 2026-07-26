@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CatalogSearchCombobox from './CatalogSearchCombobox.vue'
-import { resolveCatalogSearchOpenUpward } from '~/composables/useCatalogSearchDropdownPlacement'
+import { resolveCatalogSearchOpenUpward, resolveCatalogSearchPanelWidth } from '~/composables/useCatalogSearchDropdownPlacement'
 
 const options = [
   { id: 'one', label: 'Primera' },
@@ -53,6 +53,23 @@ describe('CatalogSearchCombobox', () => {
       spaceBelow: 240,
       dropdownHeight: 192,
     })).toBe(false)
+  })
+
+  it('grows panel width with content while keeping input minWidth (#1832)', () => {
+    expect(resolveCatalogSearchPanelWidth({
+      inputWidth: 280,
+      viewportWidth: 1200,
+      left: 100,
+    })).toEqual({
+      minWidth: '280px',
+      width: 'max-content',
+      maxWidth: `${1200 - 100 - 8}px`,
+    })
+    expect(resolveCatalogSearchPanelWidth({
+      inputWidth: 400,
+      viewportWidth: 420,
+      left: 40,
+    }).minWidth).toBe('400px')
   })
 
   it('creates unique combobox/listbox relationships per instance', async () => {
@@ -173,7 +190,7 @@ describe('CatalogSearchCombobox', () => {
     expect(wrapper.text()).toContain('Create "cate"')
   })
 
-  it('keeps long values available and wraps long result labels', async () => {
+  it('keeps long values available on a single nowrap line (#1832)', async () => {
     const longLabel = 'Taste Of The Wild Prey Angus Beef Feline 15 Lb Alimento Para Gatos Premium A Base De Res Angus Lenteja Y Grasa De Pollo'
     const wrapper = mountCombobox({
       modelValue: longLabel,
@@ -187,6 +204,8 @@ describe('CatalogSearchCombobox', () => {
     const option = wrapper.get('[role="option"]')
     expect(option.attributes('title')).toBe(longLabel)
     expect(option.text()).toBe(longLabel)
-    expect(option.get('span').classes()).toContain('[overflow-wrap:anywhere]')
+    expect(option.classes()).toContain('whitespace-nowrap')
+    expect(option.get('span').classes()).toContain('whitespace-nowrap')
+    expect(option.get('span').classes()).not.toContain('truncate')
   })
 })
