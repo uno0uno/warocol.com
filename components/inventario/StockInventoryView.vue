@@ -164,15 +164,19 @@
         </template>
 
         <template #cell-ingredient_name="{ value }">
-          <span class="text-sm font-bold text-text-primary truncate block max-w-[16rem]" :title="value">{{ value }}</span>
+          <span class="text-sm font-bold text-text-primary truncate block max-w-[16rem] whitespace-nowrap" :title="value">{{ value }}</span>
         </template>
 
         <template #cell-unit="{ value }">
-          <span class="text-sm text-text-secondary">{{ value }}</span>
+          <span class="text-sm text-text-secondary whitespace-nowrap">{{ value }}</span>
         </template>
 
         <template #cell-category="{ value }">
-          <span v-if="value" class="text-sm text-text-secondary">{{ value }}</span>
+          <span
+            v-if="value"
+            class="text-sm text-text-secondary break-words max-w-[12rem] inline-block"
+            :title="value"
+          >{{ value }}</span>
           <UiStatusBadge
             v-else
             :value="t('abastecimiento.stock.sinCategoria')"
@@ -184,7 +188,7 @@
 
         <template #cell-current_stock="{ value }">
           <span
-            class="text-sm font-bold tabular-nums"
+            class="text-sm font-bold tabular-nums whitespace-nowrap"
             :class="highlightNegativeStock && value < 0 ? 'text-destructive' : 'text-text-primary'"
           >
             {{ formatNumber(value) }}
@@ -192,11 +196,11 @@
         </template>
 
         <template #cell-minimum_stock="{ value }">
-          <span class="text-sm text-text-primary">{{ formatNumber(value) }}</span>
+          <span class="text-sm text-text-primary tabular-nums whitespace-nowrap">{{ formatNumber(value) }}</span>
         </template>
 
         <template #cell-maximum_stock="{ value }">
-          <span v-if="value != null && value !== ''" class="text-sm text-text-primary">{{ formatNumber(value) }}</span>
+          <span v-if="value != null && value !== ''" class="text-sm text-text-primary tabular-nums whitespace-nowrap">{{ formatNumber(value) }}</span>
           <UiStatusBadge
             v-else
             :value="t('abastecimiento.stock.sinMax')"
@@ -207,7 +211,7 @@
         </template>
 
         <template #cell-stock_percentage="{ row }">
-          <div v-if="row.maximum_stock" class="w-full bg-surface-secondary rounded-full h-1.5">
+          <div v-if="row.maximum_stock" class="w-full min-w-[4rem] bg-surface-secondary rounded-full h-1.5 whitespace-nowrap">
             <div
               class="h-1.5 rounded-full transition-all"
               :class="{
@@ -229,7 +233,7 @@
         </template>
 
         <template #cell-unit_cost="{ value }">
-          <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary tabular-nums">{{ formatUnitCost(value) }}</span>
+          <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary tabular-nums whitespace-nowrap">{{ formatUnitCost(value) }}</span>
           <UiStatusBadge
             v-else
             :value="t('abastecimiento.stock.sinCosto')"
@@ -240,20 +244,22 @@
         </template>
 
         <template #cell-total_value="{ value }">
-          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary tabular-nums whitespace-nowrap">{{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-status="{ value }">
-          <UiStatusBadge
-            :value="getStatusLabel(value)"
-            format="text"
-            :variant="getStockVariant(value)"
-            size="sm"
-          />
+          <span class="inline-flex whitespace-nowrap">
+            <UiStatusBadge
+              :value="getStatusLabel(value)"
+              format="text"
+              :variant="getStockVariant(value)"
+              size="sm"
+            />
+          </span>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center space-x-2">
+          <div class="flex justify-center space-x-2 whitespace-nowrap">
             <button
               v-if="movementsPath"
               type="button"
