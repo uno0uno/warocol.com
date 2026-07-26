@@ -1,0 +1,42 @@
+issue: 1814
+title: "fix(abastecimiento): warehouse catalog create quota modal (Mi Plan) like menu"
+repo: both
+repo_remote: uno0uno/warocol.com  # + uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1814-warehouse-catalog-quota-modal
+
+paths:
+  - composables/useBilling.ts
+  - composables/useWarehouseCatalogQuotaGate.ts
+  - pages/abastecimiento/ingredientes-propios.vue
+  - api_warocol.com/app/services/billing_service.py
+  - api_warocol.com/tests/test_billing_remaining_usage.py
+
+ac:
+  - "tenant_ingredients added to front OperationalQuotaKey + OPERATIONAL_QUOTA_KEYS"
+  - "remaining-usage payload now emits tenant_ingredients metric (API) so pre-click gate works"
+  - "Catálogo de bodega Nuevo stays clickable; quota exhausted opens UiConfirmActionModal (Mi Plan + Cerrar), navigates /gestion/billing"
+  - "Below cap Nuevo opens create panel as before; edit/archive/restore unaffected"
+  - "Panel post-save useQuotaExceeded kept as API 429 fallback"
+
+out_of_scope:
+  - new quota keys for suppliers/purchases/stock/movements/data-quality
+  - changing starter limit numbers
+  - OCR scan quota UX
+  - menu catalog changes
+
+hints:
+  entry: "useWarehouseCatalogQuotaGate.handleWarehouseCreateClick — mirrors useMenuCatalogQuotaGate"
+  pattern: "pages/menu/*/index.vue UiConfirmActionModal Mi Plan — mirror on abastecimiento"
+  tests: "pytest tests/test_billing_remaining_usage.py -q ; node --test --experimental-strip-types composables/useBillingOperationalQuota.test.ts"
+
+risk:
+  sensitive: false
+  areas: [billing remaining-usage payload]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "dual PR — front (warocol.com) + api (api-warolabs)"
