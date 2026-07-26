@@ -23,6 +23,8 @@ export type BillingQuotaKey =
   | 'menu_products'
   | 'menu_categories'
   | 'tenant_ingredients'
+  | 'tenant_suppliers'
+  | 'direct_purchases_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -142,6 +144,8 @@ export type OperationalQuotaKey =
   | 'menu_products'
   | 'menu_categories'
   | 'tenant_ingredients'
+  | 'tenant_suppliers'
+  | 'direct_purchases_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -254,6 +258,22 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de ingredientes de tu plan.',
     unlimitedMessage: 'Puedes crear ingredientes sin límite por override.',
   },
+  tenant_suppliers: {
+    key: 'tenant_suppliers',
+    label: 'Proveedores',
+    description: 'Proveedores activos del establecimiento',
+    unit: 'proveedores',
+    blockedMessage: 'Alcanzaste el límite de proveedores de tu plan.',
+    unlimitedMessage: 'Puedes crear proveedores sin límite por override.',
+  },
+  direct_purchases_per_period: {
+    key: 'direct_purchases_per_period',
+    label: 'Compras directas por periodo',
+    description: 'Compras directas registradas en el periodo de facturación',
+    unit: 'compras en el periodo',
+    blockedMessage: 'Alcanzaste el límite de compras directas de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes registrar compras directas sin límite por override.',
+  },
   modifier_groups: {
     key: 'modifier_groups',
     label: 'Grupos de modificadores',
@@ -307,6 +327,8 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'menu_products',
   'menu_categories',
   'tenant_ingredients',
+  'tenant_suppliers',
+  'direct_purchases_per_period',
   'modifier_groups',
   'recipe_bases',
   'recipe_lines_per_product',

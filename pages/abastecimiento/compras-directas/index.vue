@@ -53,11 +53,14 @@
         </template>
 
         <template #trailing>
-          <NuxtLink to="/abastecimiento/compras-directas/crear"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+          <button
+            type="button"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            @click="handleNewPurchaseClick"
+          >
             <span class="hidden sm:inline">{{ t('abastecimiento.comprasDirectas.newPurchase') }}</span>
             <span class="sm:hidden">{{ t('abastecimiento.comprasDirectas.newShort') }}</span>
-          </NuxtLink>
+          </button>
         </template>
       </UiAdvancedFiltersBar>
 
@@ -253,6 +256,16 @@
         </div>
       </div>
     </div>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -262,6 +275,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 const { t } = useI18n({ useScope: 'global' })
 
 useHead({
@@ -270,6 +284,20 @@ useHead({
 
 // Scan quota
 const { quota, warningLevel, scansRemaining } = useScanQuotaQuery()
+
+// Plan quota gate: Nuevo stays clickable; Mi Plan modal at direct_purchases_per_period cap (#1818)
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+  ensureBillingOverview,
+} = useOperationalQuotaGate('direct_purchases_per_period')
+
+const handleNewPurchaseClick = () => {
+  void handleCreateClick(() => navigateTo('/abastecimiento/compras-directas/crear'))
+}
 
 // State
 const currentPage = ref(1)
@@ -484,6 +512,7 @@ const handleRefresh = async () => {
 
 onMounted(() => {
   setRefreshHandler(handleRefresh)
+  ensureBillingOverview()
 })
 useMenuReturnRefresh(
   '/abastecimiento/compras-directas',
