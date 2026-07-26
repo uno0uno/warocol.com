@@ -1,0 +1,38 @@
+issue: 1823
+title: "fix(abastecimiento): hide wallet and credit from compra directa payment methods"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1823-hide-purchase-wallet-credit
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+  - utils/paymentDefaults.ts
+  - utils/paymentDefaults.purchaseFilter.test.ts
+
+ac:
+  - "Método de pago on crear hides credit + customer_wallet"
+  - "Other catalog methods still listed; Sin pago aun + payment_type Contado/Crédito unchanged"
+  - "POS mergePosPaymentGroupsFromApi / checkout defaults unchanged"
+
+out_of_scope:
+  - edit page
+  - removing payment_type credito option
+  - API payment catalog
+  - POS wallet/credit behavior
+
+hints:
+  entry: "crear.vue paymentGroups computed — wrap mergePosPaymentGroupsFromApi with filterPurchasePaymentGroups"
+  pattern: "utils/paymentDefaults.ts WALLET_PAYMENT_SLUG + credit slug"
+  tests: "node --test --experimental-strip-types utils/paymentDefaults.purchaseFilter.test.ts"
+
+risk:
+  sensitive: false
+  areas: [purchase payment method picker only]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "single front PR — Closes #1823"
