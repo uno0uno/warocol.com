@@ -25,6 +25,7 @@ export type BillingQuotaKey =
   | 'tenant_ingredients'
   | 'tenant_suppliers'
   | 'direct_purchases_per_period'
+  | 'stock_adjustments_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -146,6 +147,7 @@ export type OperationalQuotaKey =
   | 'tenant_ingredients'
   | 'tenant_suppliers'
   | 'direct_purchases_per_period'
+  | 'stock_adjustments_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -274,6 +276,14 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de compras directas de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
     unlimitedMessage: 'Puedes registrar compras directas sin límite por override.',
   },
+  stock_adjustments_per_period: {
+    key: 'stock_adjustments_per_period',
+    label: 'Ajustes de stock por periodo',
+    description: 'Ajustes de inventario registrados en el periodo de facturación',
+    unit: 'ajustes en el periodo',
+    blockedMessage: 'Alcanzaste el límite de ajustes de stock de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes registrar ajustes de stock sin límite por override.',
+  },
   modifier_groups: {
     key: 'modifier_groups',
     label: 'Grupos de modificadores',
@@ -329,6 +339,7 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'tenant_ingredients',
   'tenant_suppliers',
   'direct_purchases_per_period',
+  'stock_adjustments_per_period',
   'modifier_groups',
   'recipe_bases',
   'recipe_lines_per_product',

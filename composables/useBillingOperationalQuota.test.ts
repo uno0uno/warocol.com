@@ -101,6 +101,21 @@ describe('resolveOperationalQuota', () => {
     assert.equal(missing.blocked, false)
   })
 
+  it('gates stock_adjustments_per_period as a period quota (#1819)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('stock_adjustments_per_period'))
+
+    const allowed = resolveOperationalQuota('stock_adjustments_per_period', metric({ used: 19, limit: 20, remaining: 1 }))
+    const blocked = resolveOperationalQuota('stock_adjustments_per_period', metric({ used: 20, limit: 20, remaining: 0 }))
+    const missing = resolveOperationalQuota('stock_adjustments_per_period')
+
+    assert.equal(allowed.blocked, false)
+    assert.equal(blocked.blocked, true)
+    assert.match(blocked.message, /periodo/)
+    assert.equal(BILLING_QUOTA_RESOURCE_CONFIG.stock_adjustments_per_period.unit, 'ajustes en el periodo')
+    // Fail open until the API metric ships (batch 1)
+    assert.equal(missing.blocked, false)
+  })
+
   it('defines reusable messages for every operational resource', () => {
     for (const resource of OPERATIONAL_QUOTA_KEYS) {
       const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]

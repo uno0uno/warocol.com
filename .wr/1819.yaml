@@ -1,0 +1,58 @@
+issue: 1819
+title: "fix(abastecimiento): Mi Plan quota gate for stock adjustments"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1819-stock-adjustment-quota-gate
+base_branch: main  # PREREQUISITE: merge #1820 (issue #1818) first, then pull main
+epic: 1816
+
+paths:
+  - composables/useBilling.ts
+  - composables/useBillingOperationalQuota.test.ts
+  - pages/abastecimiento/stock.vue
+  # reuse only (must already be on main after #1820):
+  # composables/useOperationalQuotaGate.ts
+
+ac:
+  - "stock_adjustments_per_period added to BillingQuotaKey, OperationalQuotaKey, BILLING_QUOTA_RESOURCE_CONFIG, OPERATIONAL_QUOTA_KEYS (period copy: resets with billing period)"
+  - "Per-row Ajustar / openAdjustment at period cap opens UiConfirmActionModal (Mi Plan -> /gestion/billing, Cerrar) with usage message"
+  - "Below cap AbastecimientoStockAdjustmentPanel opens as today"
+  - "Viewing stock and movimientos-path link unchanged; no Movimientos / Calidad / Proveedores / Compra Directa edits"
+  - "Does not invent a stock catalog-create quota (tenant_ingredients stays warehouse catalog)"
+  - "Gate fails open when remaining-usage lacks the key (API batch 1 not deployed yet)"
+
+out_of_scope:
+  - API keys / enforce (batch 1, api-warolabs#723)
+  - proveedores / compra directa gates (batch 2, #1818)
+  - cloning a new gate composable (reuse useOperationalQuotaGate)
+  - migrating menu/warehouse gates onto the generic helper
+  - adding the key to STARTER_DISPLAY_QUOTA_KEYS
+
+hints:
+  entry: "pages/abastecimiento/stock.vue:74-89 openAdjustment — wrap panel-open body in handleCreateClick(() => { set preselect; adjustmentOpen = true })"
+  event: "stock.vue:41 @adjust from InventarioStockInventoryView — keep wiring; gate inside openAdjustment only"
+  pattern: "useOperationalQuotaGate('stock_adjustments_per_period') from #1818; modal props mirror ingredientes-propios / proveedores"
+  billing: "add only stock_adjustments_per_period to the four useBilling unions/config; unit 'ajustes en el periodo'"
+  mount: "ensureBillingOverview() in existing onMounted (stock.vue:219)"
+  tests: "node --test --experimental-strip-types composables/useBillingOperationalQuota.test.ts"
+
+risk:
+  sensitive: false
+  areas: [billing quota unions, stock adjustment panel open]
+  prerequisite:
+    - "Merge warocol.com#1820 (issue #1818) BEFORE starting — delivers useOperationalQuotaGate.ts + sibling billing keys. Branching off main without it means re-implementing the helper or stacking on wr-1818-*."
+  blockers:
+    - "api-warolabs#723 still OPEN — remaining-usage has no stock_adjustments_per_period yet; at-cap path unverifiable E2E until merge+deploy. Fail open allowed by AC."
+
+validation:
+  - "node --test --experimental-strip-types composables/useBillingOperationalQuota.test.ts"
+  - "manual: Ajustar opens panel below cap (fail-open today)"
+  - "no build / no lint without explicit approval"
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "single front PR — Closes #1819, Refs #1816. After #1820 on main."
