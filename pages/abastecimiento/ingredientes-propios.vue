@@ -66,7 +66,7 @@
                 : t('abastecimiento.glossary.catalogEditMode') }}
             </button>
             <button
-              @click="openPanel(null)"
+              @click="openCreatePanel"
               class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap"
             >
               {{ nuevoButtonLabel }}
@@ -467,6 +467,16 @@
         </div>
       </Transition>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('shell.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -475,6 +485,14 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 const toast = useToast()
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleWarehouseCreateClick,
+  ensureBillingOverview,
+} = useWarehouseCatalogQuotaGate()
 
 useHead({ title: () => WAREHOUSE_COPY.warehouseCatalog })
 
@@ -739,6 +757,10 @@ const openPanel = (ingredient: any) => {
   showPanel.value = true
 }
 
+const openCreatePanel = () => {
+  void handleWarehouseCreateClick(() => openPanel(null))
+}
+
 const onSaved = () => {
   refetch()
 }
@@ -814,7 +836,10 @@ const tableColumns = computed(() => [
 
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-onMounted(() => setRefreshHandler(refetch))
+onMounted(() => {
+  setRefreshHandler(refetch)
+  ensureBillingOverview()
+})
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(refetch))
 </script>

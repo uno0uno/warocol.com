@@ -141,6 +141,7 @@ export type OperationalQuotaKey =
   | 'completed_online_orders_per_month'
   | 'menu_products'
   | 'menu_categories'
+  | 'tenant_ingredients'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -305,6 +306,7 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'completed_online_orders_per_month',
   'menu_products',
   'menu_categories',
+  'tenant_ingredients',
   'modifier_groups',
   'recipe_bases',
   'recipe_lines_per_product',
