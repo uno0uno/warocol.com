@@ -1,0 +1,35 @@
+issue: 1830
+title: "fix(ui): single-line rows in ingredient catalog search results"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1830-search-results-nowrap
+
+paths:
+  - components/ui/CatalogSearchCombobox.vue
+  - components/ui/IngredientSearchInput.vue
+
+ac:
+  - "Option rows single-line truncate + nowrap; title tooltip"
+  - "Badges same row; Compra Directa + other IngredientSearchInput consumers denser"
+  - "Create option / headers compact; no per-page forks"
+
+out_of_scope:
+  - search API
+  - stock table
+
+hints:
+  entry: "IngredientSearchInput #option slot + CatalogSearchCombobox option li classes"
+  pattern: "replace whitespace-normal/break-words with truncate whitespace-nowrap items-center"
+  tests: "node static assert no break-words on option rows"
+
+risk:
+  sensitive: false
+  areas: [shared search UI]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Closes #1830"
