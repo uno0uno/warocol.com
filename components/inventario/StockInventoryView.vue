@@ -201,17 +201,18 @@
 
         <template #cell-maximum_stock="{ value }">
           <span v-if="value != null && value !== ''" class="text-sm text-text-primary tabular-nums whitespace-nowrap">{{ formatNumber(value) }}</span>
-          <UiStatusBadge
-            v-else
-            :value="t('abastecimiento.stock.sinMax')"
-            format="text"
-            variant="secondary"
-            size="sm"
-          />
+          <span v-else class="inline-flex whitespace-nowrap">
+            <UiStatusBadge
+              :value="t('abastecimiento.stock.sinMax')"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </span>
         </template>
 
         <template #cell-stock_percentage="{ row }">
-          <div v-if="row.maximum_stock" class="w-full min-w-[4rem] bg-surface-secondary rounded-full h-1.5 whitespace-nowrap">
+          <div v-if="row.maximum_stock" class="w-full min-w-[4rem] bg-surface-secondary rounded-full h-1.5">
             <div
               class="h-1.5 rounded-full transition-all"
               :class="{
@@ -223,24 +224,26 @@
               :style="{ width: `${Math.min(getStockPercentage(row.current_stock, row.maximum_stock), 100)}%` }"
             />
           </div>
-          <UiStatusBadge
-            v-else
-            :value="t('abastecimiento.stock.sinPct')"
-            format="text"
-            variant="secondary"
-            size="sm"
-          />
+          <span v-else class="inline-flex whitespace-nowrap">
+            <UiStatusBadge
+              :value="t('abastecimiento.stock.sinPct')"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </span>
         </template>
 
         <template #cell-unit_cost="{ value }">
           <span v-if="value != null && value !== ''" class="text-sm font-bold text-primary tabular-nums whitespace-nowrap">{{ formatUnitCost(value) }}</span>
-          <UiStatusBadge
-            v-else
-            :value="t('abastecimiento.stock.sinCosto')"
-            format="text"
-            variant="secondary"
-            size="sm"
-          />
+          <span v-else class="inline-flex whitespace-nowrap">
+            <UiStatusBadge
+              :value="t('abastecimiento.stock.sinCosto')"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </span>
         </template>
 
         <template #cell-total_value="{ value }">
