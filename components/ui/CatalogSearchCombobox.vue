@@ -70,7 +70,7 @@
               v-if="option.kind === 'presentation'"
               role="presentation"
               aria-hidden="true"
-              class="min-w-0 px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-normal break-words [overflow-wrap:anywhere] leading-snug"
+              class="min-w-0 px-3 py-1 text-xs font-semibold text-text-secondary uppercase tracking-wide bg-surface-secondary/40 select-none whitespace-nowrap truncate"
             >
               <slot name="presentation" :option="option">
                 {{ option.label }}
@@ -83,7 +83,7 @@
               :aria-selected="activeKey === option.id"
               :title="option.label"
               :class="[
-                'min-w-0 px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px] whitespace-normal',
+                'min-w-0 px-3 py-2 text-sm text-text-primary cursor-pointer min-h-[40px] flex items-center whitespace-nowrap',
                 activeKey === option.id ? 'bg-surface-secondary' : 'hover:bg-surface-secondary',
                 option.class,
               ]"
@@ -92,7 +92,7 @@
               @click="chooseOption(option)"
             >
               <slot name="option" :option="option" :active="activeKey === option.id">
-                <span class="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">
+                <span class="min-w-0 truncate whitespace-nowrap">
                   {{ option.label }}
                 </span>
               </slot>
@@ -113,17 +113,17 @@
             role="option"
             :aria-selected="activeKey === CREATE_KEY"
             :class="[
-              'px-3 py-2 text-sm text-primary border-t border-border cursor-pointer flex items-start gap-1.5 min-h-[40px]',
+              'px-3 py-2 text-sm text-primary border-t border-border cursor-pointer flex items-center gap-1.5 min-h-[40px] whitespace-nowrap',
               activeKey === CREATE_KEY ? 'bg-surface-secondary' : 'hover:bg-surface-secondary',
             ]"
             @mouseenter="activeKey = CREATE_KEY"
             @mousedown.prevent
             @click="chooseCreate"
           >
-            <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="min-w-0 flex-1 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">
+            <span class="min-w-0 flex-1 truncate whitespace-nowrap" :title="resolvedCreateLabel">
               {{ resolvedCreateLabel }}
             </span>
           </li>
