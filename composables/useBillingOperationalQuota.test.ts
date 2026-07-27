@@ -167,6 +167,32 @@ describe('resolveOperationalQuota', () => {
     assert.match(BILLING_QUOTA_RESOURCE_CONFIG.payment_methods.blockedMessage, /métodos/)
   })
 
+  it('gates Finanzas asientos/cierre quotas (#1838)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('manual_journal_entries_per_period'))
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('accounting_period_closes_per_period'))
+
+    const jeBlocked = resolveOperationalQuota(
+      'manual_journal_entries_per_period',
+      metric({ used: 30, limit: 30, remaining: 0 }),
+    )
+    const closeBlocked = resolveOperationalQuota(
+      'accounting_period_closes_per_period',
+      metric({ used: 3, limit: 3, remaining: 0 }),
+    )
+    const jeAllowed = resolveOperationalQuota(
+      'manual_journal_entries_per_period',
+      metric({ used: 1, limit: 30, remaining: 29 }),
+    )
+    const jeMissing = resolveOperationalQuota('manual_journal_entries_per_period')
+
+    assert.equal(jeBlocked.blocked, true)
+    assert.equal(closeBlocked.blocked, true)
+    assert.equal(jeAllowed.blocked, false)
+    assert.equal(jeMissing.blocked, false)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.manual_journal_entries_per_period.blockedMessage, /asientos/)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.accounting_period_closes_per_period.blockedMessage, /cierres/)
+  })
+
   it('defines reusable messages for every operational resource', () => {
     for (const resource of OPERATIONAL_QUOTA_KEYS) {
       const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]

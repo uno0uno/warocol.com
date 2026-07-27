@@ -3,9 +3,22 @@ const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.head.asientos') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('manual_journal_entries_per_period')
+
+const onNewEntryClick = () => {
+  void handleCreateClick(() => { void navigateTo('/finanzas/contabilidad/asientos/crear') })
+}
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -294,16 +307,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </select>
         </template>
         <template #trailing>
-          <NuxtLink
-            to="/finanzas/contabilidad/asientos/crear"
+          <button
+            type="button"
             class="h-10 px-3 flex items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
             :aria-label="t('finanzas.contabilidad.createEntry')"
+            @click="onNewEntryClick"
           >
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             <span class="hidden sm:inline">{{ t('finanzas.contabilidad.newEntry') }}</span>
-          </NuxtLink>
+          </button>
         </template>
       </UiAdvancedFiltersBar>
 
@@ -528,6 +542,16 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </div>
       </div>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 

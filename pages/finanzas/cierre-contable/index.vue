@@ -56,7 +56,7 @@
               />
               <button
                 v-if="!item.isFuture && item.status === 'open'"
-                @click="openModal(item)"
+                @click="onOpenCloseClick(item)"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
                 :title="t('finanzas.cierreContable.closePeriod')"
                 :aria-label="t('finanzas.cierreContable.closePeriod')"
@@ -93,7 +93,7 @@
           <div class="flex justify-center">
             <button
               v-if="!row.isFuture && row.status === 'open'"
-              @click="openModal(row)"
+              @click="onOpenCloseClick(row)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
               :title="t('finanzas.cierreContable.closePeriod')"
               :aria-label="t('finanzas.cierreContable.closePeriod')"
@@ -137,7 +137,7 @@
                 {{ t('finanzas.common.cancel') }}
               </button>
               <button
-                @click="handleClose"
+                @click="onConfirmCloseClick"
                 :disabled="closing"
                 class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
               >
@@ -149,6 +149,15 @@
       </div>
     </Teleport>
 
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -156,9 +165,20 @@
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.head.cierre') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('accounting_period_closes_per_period')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 const { formatDateTime } = useFormatters()
 const { todayISO } = useTenantTimezone()
@@ -239,6 +259,10 @@ const openModal = (m: { number: number; name: string }) => {
   showModal.value = true
 }
 
+const onOpenCloseClick = (m: { number: number; name: string }) => {
+  void handleCreateClick(() => { openModal(m) })
+}
+
 const closeModal = () => {
   if (closing.value) return
   showModal.value = false
@@ -255,9 +279,18 @@ const handleClose = async () => {
     showModal.value = false
     selectedMonth.value = null
   } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'accounting_period_closes_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'accounting_period_closes_per_period')
+      quotaLimitModalOpen.value = true
+      return
+    }
     alert(err?.data?.detail ?? err?.data?.message ?? t('finanzas.cierreContable.closeError'))
   } finally {
     closing.value = false
   }
+}
+
+const onConfirmCloseClick = () => {
+  void handleCreateClick(() => { void handleClose() })
 }
 </script>

@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.contabilidad.createEntryHead') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('manual_journal_entries_per_period')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
@@ -121,6 +132,12 @@ const handleSaveDraft = async () => {
     await $fetch('/api/accounting/journal-entries', { method: 'POST', body: buildPayload() })
     router.push('/finanzas/contabilidad/asientos')
   } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'manual_journal_entries_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'manual_journal_entries_per_period')
+      quotaLimitModalOpen.value = true
+      submitError.value = null
+      return
+    }
     submitError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.saveEntryError')
   } finally {
     saving.value = false
@@ -138,10 +155,24 @@ const handlePost = async () => {
     await $fetch(`/api/accounting/journal-entries/${res.data.id}/post`, { method: 'POST' })
     router.push('/finanzas/contabilidad/asientos')
   } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'manual_journal_entries_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'manual_journal_entries_per_period')
+      quotaLimitModalOpen.value = true
+      submitError.value = null
+      return
+    }
     submitError.value = err?.data?.detail || err?.data?.message || t('finanzas.contabilidad.postEntryError')
   } finally {
     posting.value = false
   }
+}
+
+const onSaveDraftClick = () => {
+  void handleCreateClick(() => { void handleSaveDraft() })
+}
+
+const onPostClick = () => {
+  void handleCreateClick(() => { void handlePost() })
 }
 
 // ── Mutual exclusion: debit clears credit and vice versa ──────────────────────
@@ -388,7 +419,7 @@ const onCreditInput = (line: EntryLine) => {
           :disabled="saving || posting"
           class="min-h-[44px] px-5 rounded-lg border-2 border-border text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           :aria-label="saving ? t('finanzas.contabilidad.savingDraft') : t('finanzas.contabilidad.saveDraft')"
-          @click="handleSaveDraft"
+          @click="onSaveDraftClick"
         >
           <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -401,7 +432,7 @@ const onCreditInput = (line: EntryLine) => {
           :disabled="saving || posting"
           class="min-h-[44px] px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           :aria-label="posting ? t('finanzas.contabilidad.posting') : t('finanzas.contabilidad.createAndPost')"
-          @click="handlePost"
+          @click="onPostClick"
         >
           <svg v-if="posting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -412,5 +443,15 @@ const onCreditInput = (line: EntryLine) => {
       </div>
 
     </div>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
