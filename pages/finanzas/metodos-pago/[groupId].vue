@@ -554,7 +554,10 @@ const toggleActive = async (method: PaymentMethod) => {
       quotaLimitModalOpen.value = true
       return
     }
-    panelError.value = err?.data?.detail || err?.data?.message || err?.message || t('finanzas.metodosPago.savingError')
+    useToast().error(
+      err?.data?.detail || err?.data?.message || err?.message || t('finanzas.metodosPago.savingError'),
+      { title: t('finanzas.common.error') },
+    )
   } finally {
     savingId.value = null
   }
