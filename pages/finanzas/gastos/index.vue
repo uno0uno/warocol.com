@@ -6,10 +6,23 @@ import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import MetricCard from '~/components/shared/MetricCard.vue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 useHead({ title: () => t('finanzas.gastos.title') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('expenses_per_period')
+
+const onNewExpenseClick = () => {
+  void handleCreateClick(() => { void navigateTo('/finanzas/gastos/crear') })
+}
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -201,13 +214,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </select>
         </template>
         <template #trailing>
-          <NuxtLink
-            to="/finanzas/gastos/crear"
+          <button
+            type="button"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            @click="onNewExpenseClick"
           >
             <span class="hidden sm:inline">{{ t('finanzas.gastos.save') }}</span>
             <span class="sm:hidden">{{ t('finanzas.gastos.new') }}</span>
-          </NuxtLink>
+          </button>
         </template>
       </UiAdvancedFiltersBar>
 
@@ -330,5 +344,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
       </UiResponsiveDataView>
     </div>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>

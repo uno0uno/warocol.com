@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const route = useRoute()
 const router = useRouter()
 const expenseId = route.params.id as string
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('expenses_per_period')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
+const { t } = useI18n({ useScope: 'global' })
 
 useHead({ title: 'Nueva Instancia de Pago' })
 
@@ -112,11 +124,21 @@ const createInstance = async () => {
     // Navigate back to expense detail
     router.push(`/finanzas/gastos/${expenseId}`)
   } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'expenses_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'expenses_per_period')
+      quotaLimitModalOpen.value = true
+      error.value = null
+      return
+    }
     console.error('Error creating instance:', err)
     error.value = err?.data?.detail || 'Error al crear la instancia'
   } finally {
     isSubmitting.value = false
   }
+}
+
+const onCreateInstanceClick = () => {
+  void handleCreateClick(() => { void createInstance() })
 }
 
 // Helper functions
@@ -206,7 +228,7 @@ watch(expenseData, (data) => {
       </div>
 
       <!-- Form Content -->
-      <form @submit.prevent="createInstance">
+      <form @submit.prevent="onCreateInstanceClick">
         <div class="bg-surface border-border border-2 rounded-lg">
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Detalles de la Instancia</h3>
@@ -375,5 +397,15 @@ watch(expenseData, (data) => {
         </div>
       </form>
     </template>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>

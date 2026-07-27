@@ -1,6 +1,6 @@
 <template>
   <form
-    @submit.prevent="handleSubmit"
+    @submit.prevent="onSubmitClick"
     :class="compact ? 'flex min-h-0 flex-1 flex-col' : 'grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8'"
   >
     <div
@@ -185,6 +185,16 @@
     </div>
     </template>
   </form>
+
+  <UiConfirmActionModal
+    v-model="quotaLimitModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="quotaLimitModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromQuotaLimitModal"
+    @cancel="closeQuotaLimitModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -192,6 +202,8 @@ const { t } = useI18n()
 import { ref, computed, onMounted } from 'vue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 const props = defineProps<{
   purchases: any[]
@@ -202,6 +214,15 @@ const emit = defineEmits<{
   cancel: []
   paid: []
 }>()
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('supplier_payments_per_period')
+const { handleQuotaError, getQuotaMessage, isQuotaExceededError } = useQuotaExceeded()
 
 const loading = ref(false)
 const formData = ref({
@@ -311,6 +332,7 @@ const handleSubmit = async () => {
       const purchaseIds = props.purchases.map(p => p.id)
       let successCount = 0
       let errorCount = 0
+      let stoppedByQuota = false
 
       // Read files into memory once to reuse them
       const fileData: { name: string; blob: Blob; type: string }[] = []
@@ -358,8 +380,26 @@ const handleSubmit = async () => {
           }
         } catch (error) {
           console.error(`Error paying purchase ${purchaseId}:`, error)
+          if (isQuotaExceededError(error)) {
+            stoppedByQuota = true
+            quotaLimitModalMessage.value = getQuotaMessage(error, 'supplier_payments_per_period')
+            quotaLimitModalOpen.value = true
+            handleQuotaError(error, { resource: 'supplier_payments_per_period', showInline: false })
+            break
+          }
           errorCount++
         }
+      }
+
+      if (stoppedByQuota) {
+        if (successCount > 0) {
+          emit('paid')
+          useToast().warning(
+            `${successCount} pagos registrados; el resto no se intentó por cupo del plan.`,
+            { title: t('finanzas.paymentForm.partialTitle') },
+          )
+        }
+        return
       }
 
       if (successCount > 0) {
@@ -404,11 +444,20 @@ const handleSubmit = async () => {
       }
     }
   } catch (error: any) {
+    if (handleQuotaError(error, { resource: 'supplier_payments_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(error, 'supplier_payments_per_period')
+      quotaLimitModalOpen.value = true
+      return
+    }
     console.error('Error paying purchase:', error)
     useToast().error(error.data?.detail || t('finanzas.paymentForm.fail'), { title: t('finanzas.common.error') })
   } finally {
     loading.value = false
   }
+}
+
+const onSubmitClick = () => {
+  void handleCreateClick(() => { void handleSubmit() })
 }
 </script>
 
