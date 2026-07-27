@@ -116,6 +116,26 @@ describe('resolveOperationalQuota', () => {
     assert.equal(missing.blocked, false)
   })
 
+  it('gates Finanzas arqueo quotas (#1836)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('cash_closes_per_period'))
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('active_open_cash_shifts'))
+
+    const closeBlocked = resolveOperationalQuota(
+      'cash_closes_per_period',
+      metric({ used: 30, limit: 30, remaining: 0 }),
+    )
+    const shiftBlocked = resolveOperationalQuota(
+      'active_open_cash_shifts',
+      metric({ used: 1, limit: 1, remaining: 0 }),
+    )
+    const closeMissing = resolveOperationalQuota('cash_closes_per_period')
+
+    assert.equal(closeBlocked.blocked, true)
+    assert.equal(shiftBlocked.blocked, true)
+    assert.equal(closeMissing.blocked, false)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.cash_closes_per_period.blockedMessage, /cierres/)
+  })
+
   it('defines reusable messages for every operational resource', () => {
     for (const resource of OPERATIONAL_QUOTA_KEYS) {
       const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]

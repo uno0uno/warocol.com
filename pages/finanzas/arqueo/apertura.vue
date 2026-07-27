@@ -265,7 +265,7 @@
                 type="button"
                 class="min-h-[44px] flex-1 px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
                 :disabled="isSubmitting || !canSubmitOpening"
-                @click="submitOpening"
+                @click="onSubmitOpeningClick"
               >
                 {{ t('finanzas.arqueo.openShift') }}
               </button>
@@ -274,6 +274,16 @@
         </div>
       </div>
   </div>
+
+  <UiConfirmActionModal
+    v-model="quotaLimitModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="quotaLimitModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromQuotaLimitModal"
+    @cancel="closeQuotaLimitModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -282,11 +292,21 @@ import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.apertura') })
 
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('active_open_cash_shifts')
+const { handleQuotaError } = useQuotaExceeded()
 type AperturaMode = 'template' | 'day' | 'custom'
 
 const DAY_SHIFT_KEY = '__day__'
@@ -561,9 +581,20 @@ const submitOpening = async () => {
     cache.invalidateQueries({ key: ['cierre', 'preview'] })
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    submitError.value = err?.data?.detail ?? err?.data?.message ?? t('finanzas.arqueo.openFailed')
+    if (handleQuotaError(err, { resource: 'active_open_cash_shifts' })) {
+      submitError.value = null
+      return
+    }
+    const detail = err?.data?.detail
+    submitError.value = (typeof detail === 'string' ? detail : null)
+      ?? err?.data?.message
+      ?? t('finanzas.arqueo.openFailed')
   } finally {
     isSubmitting.value = false
   }
+}
+
+const onSubmitOpeningClick = () => {
+  void handleCreateClick(() => { void submitOpening() })
 }
 </script>
