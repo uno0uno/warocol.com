@@ -1380,7 +1380,9 @@ const submitCierre = async () => {
     clearStorage()
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    if (handleQuotaError(err, { resource: 'cash_closes_per_period' })) {
+    if (handleQuotaError(err, { resource: 'cash_closes_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'cash_closes_per_period')
+      quotaLimitModalOpen.value = true
       submitError.value = null
       confirmArmed.value = false
       return
