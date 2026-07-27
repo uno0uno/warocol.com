@@ -7,7 +7,7 @@
       <button
         v-if="group && !isCashGroup(group)"
         class="flex items-center gap-1.5 min-h-[32px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
-        @click="openCreate"
+        @click="onOpenCreateClick"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -262,7 +262,7 @@
               type="text"
               :placeholder="t('finanzas.metodosPago.methodPlaceholder')"
               class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
-              @keydown.enter="savePanel"
+              @keydown.enter="onSavePanelClick"
               @keydown.escape="closePanel"
             />
           </div>
@@ -332,7 +332,7 @@
           <button
             :disabled="saving || !panelName.trim()"
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            @click="savePanel"
+            @click="onSavePanelClick"
           >
             <UiLoadingDots v-if="saving" size="8px" color="currentColor" />
             <template v-else>{{ panelMode === 'create' ? t('finanzas.metodosPago.add') : t('common.save') }}</template>
@@ -347,11 +347,23 @@
       </div>
     </Transition>
   </Teleport>
+
+  <UiConfirmActionModal
+    v-model="quotaLimitModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="quotaLimitModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromQuotaLimitModal"
+    @cancel="closeQuotaLimitModal"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -360,6 +372,15 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const route = useRoute()
 const groupId = route.params.groupId as string
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('payment_methods')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 interface PaymentGroup {
   id: string
@@ -516,6 +537,10 @@ const savingId = ref<string | null>(null)
 
 const toggleActive = async (method: PaymentMethod) => {
   if (savingId.value) return
+  if (!method.isActive) {
+    const allowed = await handleCreateClick(() => {})
+    if (!allowed) return
+  }
   savingId.value = method.id
   try {
     await $fetch(`/api/finanzas/metodos-pago/${method.id}`, {
@@ -523,6 +548,13 @@ const toggleActive = async (method: PaymentMethod) => {
       body: { isActive: !method.isActive },
     })
     await refetchMethods()
+  } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'payment_methods', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'payment_methods')
+      quotaLimitModalOpen.value = true
+      return
+    }
+    panelError.value = err?.data?.detail || err?.data?.message || err?.message || t('finanzas.metodosPago.savingError')
   } finally {
     savingId.value = null
   }
@@ -602,6 +634,10 @@ const openCreate = async () => {
   showPanel.value = true
   await nextTick()
   panelInput.value?.focus()
+}
+
+const onOpenCreateClick = () => {
+  void handleCreateClick(() => { void openCreate() })
 }
 
 const openEdit = async (method: PaymentMethod) => {
@@ -693,10 +729,24 @@ const savePanel = async () => {
     closePanel()
     await Promise.all([refetchMethods(), refetchAccounts()])
   } catch (err: any) {
+    if (handleQuotaError(err, { resource: 'payment_methods', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'payment_methods')
+      quotaLimitModalOpen.value = true
+      panelError.value = ''
+      return
+    }
     panelError.value = err?.data?.detail || err?.data?.message || err?.message || t('finanzas.metodosPago.savingError')
   } finally {
     saving.value = false
   }
+}
+
+const onSavePanelClick = () => {
+  if (panelMode.value === 'create') {
+    void handleCreateClick(() => { void savePanel() })
+    return
+  }
+  void savePanel()
 }
 </script>
 

@@ -12,7 +12,7 @@
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+    <form v-else @submit.prevent="onSubmitClick" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <div class="xl:col-span-2 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
           <UiFormSection :title="t('finanzas.gastos.infoTitle')">
@@ -275,9 +275,10 @@
 
           <div class="mt-6 space-y-3">
             <button
-              type="submit"
+              type="button"
               :disabled="isSubmitting || !isFormValid"
               class="btn-primary w-full min-h-[44px] px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="onSubmitClick"
             >
               {{ isSubmitting ? t('finanzas.gastos.saving') : t('finanzas.gastos.save') }}
             </button>
@@ -291,6 +292,16 @@
         </div>
       </aside>
     </form>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -299,10 +310,21 @@ const { t } = useI18n({ useScope: 'global' })
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 useHead({ title: () => t('finanzas.gastos.createTitle') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('expenses_per_period')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 const { currentTenant } = useTenantReactive()
 const { todayISO } = useTenantTimezone()
@@ -496,10 +518,20 @@ const handleSubmit = async () => {
     cache.invalidateQueries({ key: ['finance', 'expenses'] })
     await navigateTo('/finanzas/gastos')
   } catch (error: any) {
+    if (handleQuotaError(error, { resource: 'expenses_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(error, 'expenses_per_period')
+      quotaLimitModalOpen.value = true
+      submitError.value = null
+      return
+    }
     console.error('Error creating expense:', error)
     submitError.value = extractErrorMessage(error)
   } finally {
     isSubmitting.value = false
   }
+}
+
+const onSubmitClick = () => {
+  void handleCreateClick(() => { void handleSubmit() })
 }
 </script>
