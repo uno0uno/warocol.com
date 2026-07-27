@@ -280,6 +280,8 @@ const handleClose = async () => {
     selectedMonth.value = null
   } catch (err: any) {
     if (handleQuotaError(err, { resource: 'accounting_period_closes_per_period', showInline: false })) {
+      showModal.value = false
+      selectedMonth.value = null
       quotaLimitModalMessage.value = getQuotaMessage(err, 'accounting_period_closes_per_period')
       quotaLimitModalOpen.value = true
       return
