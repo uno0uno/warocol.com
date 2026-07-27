@@ -1071,7 +1071,7 @@ const {
   goToBillingFromQuotaLimitModal,
   handleCreateClick,
 } = useOperationalQuotaGate('cash_closes_per_period')
-const { handleQuotaError } = useQuotaExceeded()
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()

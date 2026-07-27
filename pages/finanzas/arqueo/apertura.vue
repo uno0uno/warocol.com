@@ -54,13 +54,14 @@
                 >
                   {{ t('finanzas.arqueo.backToArqueo') }}
                 </NuxtLink>
-                <NuxtLink
+                <button
                   v-if="closeLink"
-                  :to="closeLink"
+                  type="button"
                   class="min-h-[44px] flex-1 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  @click="onGoToCloseClick"
                 >
                   {{ closeLinkLabel }}
-                </NuxtLink>
+                </button>
               </div>
             </div>
           </Transition>
@@ -284,6 +285,15 @@
     @confirm="goToBillingFromQuotaLimitModal"
     @cancel="closeQuotaLimitModal"
   />
+  <UiConfirmActionModal
+    v-model="cashCloseQuotaModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="cashCloseQuotaModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromCashCloseQuota"
+    @cancel="closeCashCloseQuotaModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -306,7 +316,16 @@ const {
   goToBillingFromQuotaLimitModal,
   handleCreateClick,
 } = useOperationalQuotaGate('active_open_cash_shifts')
-const { handleQuotaError } = useQuotaExceeded()
+
+const {
+  quotaLimitModalOpen: cashCloseQuotaModalOpen,
+  quotaLimitModalMessage: cashCloseQuotaModalMessage,
+  closeQuotaLimitModal: closeCashCloseQuotaModal,
+  goToBillingFromQuotaLimitModal: goToBillingFromCashCloseQuota,
+  handleCreateClick: handleCashCloseClick,
+} = useOperationalQuotaGate('cash_closes_per_period')
+
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 type AperturaMode = 'template' | 'day' | 'custom'
 
 const DAY_SHIFT_KEY = '__day__'
@@ -581,7 +600,9 @@ const submitOpening = async () => {
     cache.invalidateQueries({ key: ['cierre', 'preview'] })
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    if (handleQuotaError(err, { resource: 'active_open_cash_shifts' })) {
+    if (handleQuotaError(err, { resource: 'active_open_cash_shifts', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'active_open_cash_shifts')
+      quotaLimitModalOpen.value = true
       submitError.value = null
       return
     }
@@ -596,5 +617,10 @@ const submitOpening = async () => {
 
 const onSubmitOpeningClick = () => {
   void handleCreateClick(() => { void submitOpening() })
+}
+
+const onGoToCloseClick = () => {
+  if (!closeLink.value) return
+  void handleCashCloseClick(() => { void navigateTo(closeLink.value!) })
 }
 </script>
