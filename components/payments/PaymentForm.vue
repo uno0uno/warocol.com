@@ -332,6 +332,7 @@ const handleSubmit = async () => {
       const purchaseIds = props.purchases.map(p => p.id)
       let successCount = 0
       let errorCount = 0
+      let stoppedByQuota = false
 
       // Read files into memory once to reuse them
       const fileData: { name: string; blob: Blob; type: string }[] = []
@@ -380,6 +381,7 @@ const handleSubmit = async () => {
         } catch (error) {
           console.error(`Error paying purchase ${purchaseId}:`, error)
           if (isQuotaExceededError(error)) {
+            stoppedByQuota = true
             quotaLimitModalMessage.value = getQuotaMessage(error, 'supplier_payments_per_period')
             quotaLimitModalOpen.value = true
             handleQuotaError(error, { resource: 'supplier_payments_per_period', showInline: false })
@@ -389,9 +391,17 @@ const handleSubmit = async () => {
         }
       }
 
-      if (quotaLimitModalOpen.value && successCount === 0) {
+      if (stoppedByQuota) {
+        if (successCount > 0) {
+          emit('paid')
+          useToast().warning(
+            `${successCount} pagos registrados; el resto no se intentó por cupo del plan.`,
+            { title: t('finanzas.paymentForm.partialTitle') },
+          )
+        }
         return
       }
+
       if (successCount > 0) {
         emit('paid')
         if (errorCount > 0) {
