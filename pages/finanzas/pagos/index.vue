@@ -49,7 +49,7 @@
               {{ t('finanzas.pagos.selectedOrders', { count: selectedPurchases.length }) }}
             </p>
           </div>
-          <button v-if="selectedPurchases.length > 0" @click="navigateToPayment(selectedPurchases)"
+          <button v-if="selectedPurchases.length > 0" @click="onNavigateToPayment(selectedPurchases)"
             class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -68,7 +68,7 @@
           <div v-else class="grid grid-cols-1 gap-3">
             <PaymentsPendingPaymentCard v-for="payment in filteredPendingTableData" :key="payment.purchaseData.id"
               :payment="payment" :is-selected="isSelected(payment.purchaseData.id)" @toggle-selection="toggleSelection"
-              @pay="navigateToPayment([payment.purchaseData])" />
+              @pay="onNavigateToPayment([payment.purchaseData])" />
           </div>
         </div>
 
@@ -121,7 +121,7 @@
             </template>
 
             <template #cell-acciones="{ row }">
-              <button @click="navigateToPayment([row.purchaseData])" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              <button @click="onNavigateToPayment([row.purchaseData])" class="btn-secondary px-4 py-2 rounded-lg text-sm">
                 {{ t('finanzas.pagos.individual') }}
               </button>
             </template>
@@ -206,6 +206,15 @@
       </div>
     </div>
 
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -214,6 +223,7 @@ const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, inject, onMounted } from 'vue'
 import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useFormatters } from '~/composables/useFormatters'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({
   layout: 'dashboard',
@@ -565,6 +575,18 @@ function isSelected(purchaseId: string): boolean {
 function navigateToPayment(purchases: any[]) {
   const ids = purchases.map(p => p.id).join(',')
   navigateTo(`/finanzas/pagos/registrar?ids=${ids}`)
+}
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('supplier_payments_per_period')
+
+function onNavigateToPayment(purchases: any[]) {
+  void handleCreateClick(() => { void navigateToPayment(purchases) })
 }
 
 // Handle sort

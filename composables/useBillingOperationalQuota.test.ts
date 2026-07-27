@@ -136,6 +136,37 @@ describe('resolveOperationalQuota', () => {
     assert.match(BILLING_QUOTA_RESOURCE_CONFIG.cash_closes_per_period.blockedMessage, /cierres/)
   })
 
+  it('gates Finanzas gastos/pagos/métodos quotas (#1837)', () => {
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('expenses_per_period'))
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('supplier_payments_per_period'))
+    assert.ok(OPERATIONAL_QUOTA_KEYS.includes('payment_methods'))
+
+    const expensesBlocked = resolveOperationalQuota(
+      'expenses_per_period',
+      metric({ used: 30, limit: 30, remaining: 0 }),
+    )
+    const paymentsBlocked = resolveOperationalQuota(
+      'supplier_payments_per_period',
+      metric({ used: 30, limit: 30, remaining: 0 }),
+    )
+    const methodsBlocked = resolveOperationalQuota(
+      'payment_methods',
+      metric({ used: 5, limit: 5, remaining: 0 }),
+    )
+    const expensesAllowed = resolveOperationalQuota(
+      'expenses_per_period',
+      metric({ used: 1, limit: 30, remaining: 29 }),
+    )
+
+    assert.equal(expensesBlocked.blocked, true)
+    assert.equal(paymentsBlocked.blocked, true)
+    assert.equal(methodsBlocked.blocked, true)
+    assert.equal(expensesAllowed.blocked, false)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.expenses_per_period.blockedMessage, /gastos/)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.supplier_payments_per_period.blockedMessage, /pagos/)
+    assert.match(BILLING_QUOTA_RESOURCE_CONFIG.payment_methods.blockedMessage, /métodos/)
+  })
+
   it('defines reusable messages for every operational resource', () => {
     for (const resource of OPERATIONAL_QUOTA_KEYS) {
       const config = BILLING_QUOTA_RESOURCE_CONFIG[resource]

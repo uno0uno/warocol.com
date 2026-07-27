@@ -574,12 +574,13 @@
       <div v-if="expense?.isRecurring" class="bg-surface border-2 border-border rounded-lg p-4 md:p-6 mt-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-text-primary">{{ t('finanzas.gastos.paymentInstances') }}</h3>
-          <NuxtLink
-            :to="`/finanzas/gastos/${expenseId}/instancia`"
+          <button
+            type="button"
             class="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
+            @click="onNewInstanceClick"
           >
             {{ t('finanzas.gastos.newInstance') }}
-          </NuxtLink>
+          </button>
         </div>
 
         <!-- Loading State -->
@@ -668,6 +669,16 @@
       </div>
 
     </div>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -677,12 +688,25 @@ import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { useFormatters } from '~/composables/useFormatters'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const { t, locale } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const expenseId = route.params.id as string
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('expenses_per_period')
+
+const onNewInstanceClick = () => {
+  void handleCreateClick(() => { void navigateTo(`/finanzas/gastos/${expenseId}/instancia`) })
+}
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
