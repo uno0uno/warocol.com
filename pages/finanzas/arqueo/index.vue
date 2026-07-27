@@ -84,12 +84,13 @@
             {{ t('finanzas.common.currentMonth') }}
           </button>
 
-          <NuxtLink
-            to="/finanzas/arqueo/apertura"
+          <button
+            type="button"
             class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center flex-shrink-0"
+            @click="onOpenShiftClick('/finanzas/arqueo/apertura')"
           >
             {{ t('finanzas.arqueo.openShift') }}
-          </NuxtLink>
+          </button>
 
           <NuxtLink
             :to="`/finanzas/arqueo/x?start=${periodStart}&end=${periodEnd}`"
@@ -114,9 +115,10 @@
           <div class="px-4 pb-4 pt-1">
             <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.otherPeriodHint') }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NuxtLink
-                :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
-                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
+              <button
+                type="button"
+                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px] text-start"
+                @click="onOpenShiftClick(`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`)"
               >
                 <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,10 +129,11 @@
                   <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
                   <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayMode') }}</p>
                 </div>
-              </NuxtLink>
-              <NuxtLink
-                :to="`/finanzas/arqueo/z?mode=template&start=${today}`"
-                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
+              </button>
+              <button
+                type="button"
+                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px] text-start"
+                @click="onCashCloseClick(`/finanzas/arqueo/z?mode=template&start=${today}`)"
               >
                 <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,14 +144,15 @@
                   <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
                   <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfigured') }}</p>
                 </div>
-              </NuxtLink>
+              </button>
             </div>
           </div>
         </details>
         <div v-if="!hasOpenShift" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <NuxtLink
-            :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
-            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
+          <button
+            type="button"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px] text-start"
+            @click="onOpenShiftClick(`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`)"
           >
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,10 +163,11 @@
               <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
               <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayModeLong') }}</p>
             </div>
-          </NuxtLink>
-          <NuxtLink
-            :to="`/finanzas/arqueo/z?mode=template&start=${today}`"
-            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
+          </button>
+          <button
+            type="button"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px] text-start"
+            @click="onCashCloseClick(`/finanzas/arqueo/z?mode=template&start=${today}`)"
           >
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +178,7 @@
               <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
               <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfiguredLong') }}</p>
             </div>
-          </NuxtLink>
+          </button>
         </div>
       </div>
 
@@ -391,6 +396,25 @@
     </div>
   </Teleport>
 
+  <UiConfirmActionModal
+    v-model="openShiftQuotaModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="openShiftQuotaModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromOpenShiftQuota"
+    @cancel="closeOpenShiftQuotaModal"
+  />
+  <UiConfirmActionModal
+    v-model="cashCloseQuotaModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="cashCloseQuotaModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromCashCloseQuota"
+    @cancel="closeCashCloseQuotaModal"
+  />
+
   </div>
 </template>
 
@@ -400,11 +424,36 @@ import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { buildCierreCloseRoute, isCierreOpen } from '~/composables/useCierreShiftWindow'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.arqueo') })
 
+const {
+  quotaLimitModalOpen: openShiftQuotaModalOpen,
+  quotaLimitModalMessage: openShiftQuotaModalMessage,
+  closeQuotaLimitModal: closeOpenShiftQuotaModal,
+  goToBillingFromQuotaLimitModal: goToBillingFromOpenShiftQuota,
+  handleCreateClick: handleOpenShiftClick,
+  ensureBillingOverview: ensureOpenShiftBilling,
+} = useOperationalQuotaGate('active_open_cash_shifts')
+
+const {
+  quotaLimitModalOpen: cashCloseQuotaModalOpen,
+  quotaLimitModalMessage: cashCloseQuotaModalMessage,
+  closeQuotaLimitModal: closeCashCloseQuotaModal,
+  goToBillingFromQuotaLimitModal: goToBillingFromCashCloseQuota,
+  handleCreateClick: handleCashCloseClick,
+  ensureBillingOverview: ensureCashCloseBilling,
+} = useOperationalQuotaGate('cash_closes_per_period')
+
+const onOpenShiftClick = (to: string) => {
+  void handleOpenShiftClick(() => { void navigateTo(to) })
+}
+const onCashCloseClick = (to: string) => {
+  void handleCashCloseClick(() => { void navigateTo(to) })
+}
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const { todayISO, addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone } = useTenantTimezone()
@@ -533,7 +582,9 @@ const selectedCierreId = ref<string | null>(null)
 
 const onRowClick = (item: any) => {
   if (isCierreOpen(item)) {
-    navigateTo(buildCierreCloseRoute(item, timezone.value))
+    void handleCashCloseClick(() => {
+      void navigateTo(buildCierreCloseRoute(item, timezone.value))
+    })
     return
   }
   openPanel(item.id)
@@ -592,7 +643,11 @@ const handleDelete = async () => {
 }
 
 registerProgressiveLoading(isRefreshing)
-onMounted(() => { setRefreshHandler(refetch) })
+onMounted(() => {
+  setRefreshHandler(refetch)
+  void ensureOpenShiftBilling()
+  void ensureCashCloseBilling()
+})
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
 </script>

@@ -26,6 +26,13 @@ export type BillingQuotaKey =
   | 'tenant_suppliers'
   | 'direct_purchases_per_period'
   | 'stock_adjustments_per_period'
+  | 'cash_closes_per_period'
+  | 'active_open_cash_shifts'
+  | 'expenses_per_period'
+  | 'supplier_payments_per_period'
+  | 'payment_methods'
+  | 'accounting_period_closes_per_period'
+  | 'manual_journal_entries_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -148,6 +155,13 @@ export type OperationalQuotaKey =
   | 'tenant_suppliers'
   | 'direct_purchases_per_period'
   | 'stock_adjustments_per_period'
+  | 'cash_closes_per_period'
+  | 'active_open_cash_shifts'
+  | 'expenses_per_period'
+  | 'supplier_payments_per_period'
+  | 'payment_methods'
+  | 'accounting_period_closes_per_period'
+  | 'manual_journal_entries_per_period'
   | 'modifier_groups'
   | 'recipe_bases'
   | 'recipe_lines_per_product'
@@ -284,6 +298,62 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de ajustes de stock de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
     unlimitedMessage: 'Puedes registrar ajustes de stock sin límite por override.',
   },
+  cash_closes_per_period: {
+    key: 'cash_closes_per_period',
+    label: 'Cierres de caja por periodo',
+    description: 'Arqueos / cierres Z registrados en el periodo de facturación',
+    unit: 'cierres en el periodo',
+    blockedMessage: 'Alcanzaste el límite de cierres de caja de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes registrar cierres de caja sin límite por override.',
+  },
+  active_open_cash_shifts: {
+    key: 'active_open_cash_shifts',
+    label: 'Turnos de caja abiertos',
+    description: 'Turnos de caja abiertos al mismo tiempo',
+    unit: 'turnos abiertos',
+    blockedMessage: 'Alcanzaste el límite de turnos de caja abiertos de tu plan.',
+    unlimitedMessage: 'Puedes abrir turnos de caja sin límite por override.',
+  },
+  expenses_per_period: {
+    key: 'expenses_per_period',
+    label: 'Gastos por periodo',
+    description: 'Gastos e instancias registrados en el periodo de facturación',
+    unit: 'gastos en el periodo',
+    blockedMessage: 'Alcanzaste el límite de gastos de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes registrar gastos sin límite por override.',
+  },
+  supplier_payments_per_period: {
+    key: 'supplier_payments_per_period',
+    label: 'Pagos a proveedores por periodo',
+    description: 'Pagos de compras registrados en el periodo de facturación',
+    unit: 'pagos en el periodo',
+    blockedMessage: 'Alcanzaste el límite de pagos a proveedores de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes registrar pagos a proveedores sin límite por override.',
+  },
+  payment_methods: {
+    key: 'payment_methods',
+    label: 'Métodos de pago',
+    description: 'Métodos de pago activos del establecimiento',
+    unit: 'métodos',
+    blockedMessage: 'Alcanzaste el límite de métodos de pago de tu plan.',
+    unlimitedMessage: 'Puedes crear métodos de pago sin límite por override.',
+  },
+  accounting_period_closes_per_period: {
+    key: 'accounting_period_closes_per_period',
+    label: 'Cierres contables mensuales por periodo',
+    description: 'Cierres de mes contable en el periodo de facturación',
+    unit: 'cierres mensuales',
+    blockedMessage: 'Alcanzaste el límite de cierres contables mensuales de tu plan para este periodo.',
+    unlimitedMessage: 'Puedes cerrar periodos contables sin límite por override.',
+  },
+  manual_journal_entries_per_period: {
+    key: 'manual_journal_entries_per_period',
+    label: 'Asientos manuales por periodo',
+    description: 'Asientos de diario creados manualmente en el periodo',
+    unit: 'asientos manuales',
+    blockedMessage: 'Alcanzaste el límite de asientos manuales de tu plan para este periodo. El cupo se reinicia con tu periodo de facturación.',
+    unlimitedMessage: 'Puedes crear asientos manuales sin límite por override.',
+  },
   modifier_groups: {
     key: 'modifier_groups',
     label: 'Grupos de modificadores',
@@ -340,6 +410,13 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'tenant_suppliers',
   'direct_purchases_per_period',
   'stock_adjustments_per_period',
+  'cash_closes_per_period',
+  'active_open_cash_shifts',
+  'expenses_per_period',
+  'supplier_payments_per_period',
+  'payment_methods',
+  'accounting_period_closes_per_period',
+  'manual_journal_entries_per_period',
   'modifier_groups',
   'recipe_bases',
   'recipe_lines_per_product',

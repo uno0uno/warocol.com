@@ -904,6 +904,16 @@
     </template>
 
   </div>
+
+  <UiConfirmActionModal
+    v-model="quotaLimitModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="quotaLimitModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromQuotaLimitModal"
+    @cancel="closeQuotaLimitModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -911,10 +921,21 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('finanzas.head.z') })
+
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('cash_closes_per_period')
+const { handleQuotaError, getQuotaMessage } = useQuotaExceeded()
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -1337,7 +1358,7 @@ const handleConfirmButton = async () => {
     armTimeout = setTimeout(() => { confirmArmed.value = true }, 500)
     return
   }
-  await submitCierre()
+  void handleCreateClick(() => { void submitCierre() })
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────
@@ -1359,10 +1380,21 @@ const submitCierre = async () => {
     clearStorage()
     cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? t('finanzas.arqueo.registerError')
-    submitError.value = msg.includes('superpone')
+    if (handleQuotaError(err, { resource: 'cash_closes_per_period', showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(err, 'cash_closes_per_period')
+      quotaLimitModalOpen.value = true
+      submitError.value = null
+      confirmArmed.value = false
+      return
+    }
+    const detail = err?.data?.detail
+    const msg = err?.data?.message
+      ?? (typeof detail === 'string' ? detail : null)
+      ?? err?.message
+      ?? t('finanzas.arqueo.registerError')
+    submitError.value = String(msg).includes('superpone')
       ? 'Ya existe un arqueo para este período.'
-      : msg
+      : String(msg)
     confirmArmed.value = false
   } finally {
     isSubmitting.value = false
