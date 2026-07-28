@@ -9,8 +9,10 @@ import {
   combineDateAndTimeISO,
   dateAtNoon,
   DEFAULT_TENANT_TIMEZONE,
+  defaultTimezoneForCountry,
   isoFromDate,
   normalizeTimezone,
+  resolveTimezonePrefill,
   todayBogotaISO,
   todayISO,
 } from './bogotaDate.ts'
@@ -21,6 +23,29 @@ describe('tenant date helpers', () => {
     assert.equal(normalizeTimezone(''), DEFAULT_TENANT_TIMEZONE)
     assert.equal(normalizeTimezone('Nope/Nowhere'), DEFAULT_TENANT_TIMEZONE)
     assert.equal(normalizeTimezone('America/Mexico_City'), 'America/Mexico_City')
+  })
+
+  it('maps catalog countries to primary IANA defaults', () => {
+    assert.equal(defaultTimezoneForCountry('CO'), 'America/Bogota')
+    assert.equal(defaultTimezoneForCountry('pa'), 'America/Panama')
+    assert.equal(defaultTimezoneForCountry('US'), 'America/New_York')
+    assert.equal(defaultTimezoneForCountry('CA'), 'America/Toronto')
+    assert.equal(defaultTimezoneForCountry('xx'), DEFAULT_TENANT_TIMEZONE)
+  })
+
+  it('prefills timezone from country only when still on the global default', () => {
+    assert.equal(resolveTimezonePrefill({
+      storedTimezone: null,
+      countryCode: 'PA',
+    }), 'America/Panama')
+    assert.equal(resolveTimezonePrefill({
+      storedTimezone: DEFAULT_TENANT_TIMEZONE,
+      countryCode: 'US',
+    }), 'America/New_York')
+    assert.equal(resolveTimezonePrefill({
+      storedTimezone: 'America/Mexico_City',
+      countryCode: 'US',
+    }), 'America/Mexico_City')
   })
 
   it('uses the requested timezone calendar day instead of UTC', () => {

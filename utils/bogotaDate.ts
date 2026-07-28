@@ -3,6 +3,41 @@
 export const DEFAULT_TENANT_TIMEZONE = 'America/Bogota'
 export const BOGOTA_TZ = DEFAULT_TENANT_TIMEZONE
 
+/** Mirror api_warocol.com/app/core/timezones.py COUNTRY_DEFAULT_TIMEZONES — warocol.com#1854/#1855. */
+export const COUNTRY_DEFAULT_TIMEZONES: Record<string, string> = {
+  CO: 'America/Bogota',
+  PA: 'America/Panama',
+  CL: 'America/Santiago',
+  US: 'America/New_York',
+  CA: 'America/Toronto',
+  DO: 'America/Santo_Domingo',
+  UY: 'America/Montevideo',
+  AU: 'Australia/Sydney',
+  NZ: 'Pacific/Auckland',
+  SG: 'Asia/Singapore',
+  AE: 'Asia/Dubai',
+}
+
+export function defaultTimezoneForCountry(countryCode?: string | null): string {
+  const code = String(countryCode || '').trim().toUpperCase()
+  return COUNTRY_DEFAULT_TIMEZONES[code] || DEFAULT_TENANT_TIMEZONE
+}
+
+/**
+ * Prefill Negocio timezone from country only when unset or still on the legacy
+ * global default (so intentional overrides are kept).
+ */
+export function resolveTimezonePrefill(options: {
+  storedTimezone?: string | null
+  countryCode?: string | null
+}): string {
+  const stored = typeof options.storedTimezone === 'string' ? options.storedTimezone.trim() : ''
+  if (stored && stored !== DEFAULT_TENANT_TIMEZONE) {
+    return normalizeTimezone(stored)
+  }
+  return defaultTimezoneForCountry(options.countryCode)
+}
+
 export type DateParts = {
   year: string
   month: string

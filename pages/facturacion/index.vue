@@ -234,6 +234,8 @@ const {
   primaryTaxLine,
   wave1PresetForCountry,
   countryNeedsJurisdiction,
+  shouldShowWave1CountryPicker,
+  shouldShowJurisdictionPicker,
   normalizeJurisdictionOptions,
 } = useTenantTaxProfile()
 
@@ -241,11 +243,39 @@ const showCommercialTaxUi = computed(() => isWaroCommercial.value)
 const profileCountryCode = computed(
   () => financialProfile.value?.country_code?.toUpperCase() || '',
 )
-const showJurisdictionPicker = computed(() =>
+const storedJurisdictionCode = computed(() => {
+  const raw = taxConfig.value?.tax_jurisdiction_code
+  return raw ? String(raw).toUpperCase() : ''
+})
+const needsJurisdictionCountry = computed(() =>
   showCommercialTaxUi.value && countryNeedsJurisdiction(profileCountryCode.value),
 )
-const showWave1Preset = computed(() =>
-  showCommercialTaxUi.value && !showJurisdictionPicker.value,
+/** Ask for state/province only when missing (post-#1854 capture). */
+const showJurisdictionPicker = computed(() =>
+  shouldShowJurisdictionPicker({
+    isCommercial: showCommercialTaxUi.value,
+    profileCountryCode: profileCountryCode.value,
+    taxJurisdictionCode: storedJurisdictionCode.value,
+  }),
+)
+const showJurisdictionSummary = computed(() =>
+  needsJurisdictionCountry.value && Boolean(storedJurisdictionCode.value),
+)
+/** Wave-1 commercial panel (rate fields) — not US/CA. */
+const showWave1Commercial = computed(() =>
+  showCommercialTaxUi.value && !needsJurisdictionCountry.value,
+)
+/** Second country dropdown only when profile country is unknown. */
+const showWave1CountryPicker = computed(() =>
+  shouldShowWave1CountryPicker({
+    isCommercial: showCommercialTaxUi.value,
+    profileCountryCode: profileCountryCode.value,
+  }),
+)
+const showWave1CountryLocked = computed(() =>
+  showWave1Commercial.value
+  && Boolean(profileCountryCode.value)
+  && WAVE1_COUNTRY_CODES.includes(profileCountryCode.value),
 )
 
 const commercialPresetCountry = ref('')
@@ -361,15 +391,20 @@ watch(
   async (code) => {
     if (!showCommercialTaxUi.value || !code) return
     await loadJurisdictionOptions(code)
-    if (showJurisdictionPicker.value) {
-      if (commercialJurisdictionCode.value) {
-        applyJurisdictionOption(commercialJurisdictionCode.value)
+    if (needsJurisdictionCountry.value) {
+      const stored = storedJurisdictionCode.value || commercialJurisdictionCode.value
+      if (stored) {
+        commercialJurisdictionCode.value = stored
+        // Do not clobber a saved rate override; only seed empty commercial line.
+        if (!commercialLine.label) applyJurisdictionOption(stored)
       }
       return
     }
-    if (commercialLine.label) return
     if (WAVE1_COUNTRY_CODES.includes(code)) {
-      applyWave1Preset(code)
+      // Prefer profile country pack; keep rate if user already edited label/rate
+      // unless commercial line is empty (new tenant).
+      if (!commercialLine.label) applyWave1Preset(code)
+      else commercialPresetCountry.value = code
     }
   },
   { immediate: true },
@@ -387,7 +422,7 @@ const saveTaxConfig = async () => {
         !commercialLine.label.trim()
         || Number.isNaN(ratePct)
         || ratePct < 0
-        || (ratePct === 0 && !showJurisdictionPicker.value)
+        || (ratePct === 0 && !needsJurisdictionCountry.value)
       ) {
         toast.error(t('facturacion.tax.commercialSaveInvalid'), { title: t('facturacion.common.error') })
         return
@@ -420,7 +455,7 @@ const saveTaxConfig = async () => {
           liquor_tax_applicable: false,
           tax_lines,
           category_map,
-          ...(showJurisdictionPicker.value
+          ...(showJurisdictionPicker.value && commercialJurisdictionCode.value
             ? { tax_jurisdiction_code: commercialJurisdictionCode.value }
             : {}),
         },
@@ -1280,7 +1315,23 @@ const taxLevels = [
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.jurisdictionHint') }}</p>
         </div>
 
-        <div v-else-if="showWave1Preset" class="space-y-2">
+        <div
+          v-else-if="showJurisdictionSummary"
+          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
+          role="status"
+        >
+          <p class="text-xs text-text-secondary">
+            {{ profileCountryCode === 'CA'
+              ? t('facturacion.tax.provinceLabel')
+              : t('facturacion.tax.stateLabel') }}
+          </p>
+          <p class="text-sm font-semibold text-text-primary">
+            {{ storedJurisdictionCode }}
+          </p>
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.jurisdictionFromSetupHint') }}</p>
+        </div>
+
+        <div v-else-if="showWave1CountryPicker" class="space-y-2">
           <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
             {{ t('facturacion.tax.wave1Preset') }}
           </label>
@@ -1296,6 +1347,21 @@ const taxLevels = [
             </option>
           </select>
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
+        </div>
+
+        <div
+          v-else-if="showWave1CountryLocked"
+          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
+          role="status"
+        >
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
+          <p class="text-sm font-semibold text-text-primary">
+            {{ profileCountryCode }}
+            <span v-if="wave1PresetForCountry(profileCountryCode)?.lines[0]?.label">
+              — {{ wave1PresetForCountry(profileCountryCode)?.lines[0]?.label }}
+            </span>
+          </p>
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.countryFromSetupHint') }}</p>
         </div>
 
         <div class="space-y-2">
