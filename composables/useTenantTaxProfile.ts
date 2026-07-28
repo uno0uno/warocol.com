@@ -140,6 +140,27 @@ export function wave1PresetForCountry(countryCode: string): Wave1TaxPreset | nul
   return WAVE1_TAX_PRESETS[code] ?? null
 }
 
+/** Hide Facturación wave-1 country dropdown when profile country is already known. */
+export function shouldShowWave1CountryPicker(options: {
+  isCommercial: boolean
+  profileCountryCode?: string | null
+}): boolean {
+  if (!options.isCommercial) return false
+  if (countryNeedsJurisdiction(options.profileCountryCode)) return false
+  return !String(options.profileCountryCode || '').trim()
+}
+
+/** Show US/CA jurisdiction select only when tax_jurisdiction_code is still empty. */
+export function shouldShowJurisdictionPicker(options: {
+  isCommercial: boolean
+  profileCountryCode?: string | null
+  taxJurisdictionCode?: string | null
+}): boolean {
+  if (!options.isCommercial) return false
+  if (!countryNeedsJurisdiction(options.profileCountryCode)) return false
+  return !String(options.taxJurisdictionCode || '').trim()
+}
+
 export function normalizeJurisdictionOptions(raw: unknown): TaxJurisdictionOption[] {
   if (!Array.isArray(raw)) return []
   const out: TaxJurisdictionOption[] = []
@@ -166,6 +187,8 @@ export function useTenantTaxProfile() {
     WAVE1_TAX_PRESETS,
     JURISDICTION_COUNTRY_CODES,
     countryNeedsJurisdiction,
+    shouldShowWave1CountryPicker,
+    shouldShowJurisdictionPicker,
     normalizeTaxLines,
     normalizeCategoryMap,
     normalizeJurisdictionOptions,

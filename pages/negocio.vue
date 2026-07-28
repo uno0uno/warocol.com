@@ -550,6 +550,7 @@
             </select>
             <p class="text-[10px] text-text-tertiary mt-1">
               {{ t('negocio.timezoneHelp') }}
+              <span class="block mt-0.5">{{ t('negocio.timezoneFromCountryHelp') }}</span>
             </p>
           </div>
           <div class="space-y-1">
@@ -777,6 +778,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
+import { resolveTimezonePrefill } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -786,6 +788,7 @@ const { isOpenNow, currentTenant } = useTenantReactive()
 const accessStore = useAccessStore()
 const isStarterPlan = computed(() => accessStore.planSlug === 'starter')
 const tenantsStore = useTenantsStore()
+const { profile: financialProfile } = useTenantFinancialProfile()
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -1001,10 +1004,17 @@ const TIMEZONE_OPTIONS = [
   { value: 'America/Mexico_City', key: 'mexicoCity' },
   { value: 'America/Caracas', key: 'caracas' },
   { value: 'America/Santiago', key: 'santiago' },
+  { value: 'America/Toronto', key: 'toronto' },
   { value: 'America/New_York', key: 'newYork' },
+  { value: 'America/Santo_Domingo', key: 'santoDomingo' },
+  { value: 'America/Montevideo', key: 'montevideo' },
   { value: 'Europe/Madrid', key: 'madrid' },
+  { value: 'Asia/Singapore', key: 'singapore' },
+  { value: 'Asia/Dubai', key: 'dubai' },
   { value: 'Asia/Kathmandu', key: 'kathmandu' },
+  { value: 'Australia/Sydney', key: 'sydney' },
   { value: 'Australia/Adelaide', key: 'adelaide' },
+  { value: 'Pacific/Auckland', key: 'auckland' },
   { value: 'Pacific/Apia', key: 'apia' },
   { value: 'Pacific/Kiritimati', key: 'kiritimati' },
   { value: 'Pacific/Pago_Pago', key: 'pagoPago' },
@@ -1096,7 +1106,10 @@ const enterEditMode = () => {
   editForm.city = bp?.city || ''
   editForm.city_slug = bp?.city_slug || ''
   editForm.neighborhood = bp?.neighborhood || ''
-  editForm.timezone = normalizeTimezone(bp?.timezone)
+  editForm.timezone = resolveTimezonePrefill({
+    storedTimezone: bp?.timezone,
+    countryCode: financialProfile.value?.country_code,
+  })
   editForm.accepts_online_orders = bp?.accepts_online_orders ?? false
   editForm.min_order_amount = Number(bp?.min_order_amount) || 0
   editForm.online_order_max_amount = bp?.online_order_max_amount === null || bp?.online_order_max_amount === undefined

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   countryNeedsJurisdiction,
   primaryTaxLine,
+  shouldShowJurisdictionPicker,
+  shouldShowWave1CountryPicker,
   taxCategoryOptions,
   taxConfigHasTaxes,
   wave1PresetForCountry,
@@ -54,5 +56,30 @@ describe('useTenantTaxProfile', () => {
     expect(countryNeedsJurisdiction('US')).toBe(true)
     expect(countryNeedsJurisdiction('ca')).toBe(true)
     expect(countryNeedsJurisdiction('PA')).toBe(false)
+  })
+
+  it('hides wave-1 country re-picker when profile country is set', () => {
+    expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: 'PA' })).toBe(false)
+    expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: '' })).toBe(true)
+    expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: 'US' })).toBe(false)
+    expect(shouldShowWave1CountryPicker({ isCommercial: false, profileCountryCode: '' })).toBe(false)
+  })
+
+  it('shows jurisdiction picker only when US/CA and code missing', () => {
+    expect(shouldShowJurisdictionPicker({
+      isCommercial: true,
+      profileCountryCode: 'US',
+      taxJurisdictionCode: null,
+    })).toBe(true)
+    expect(shouldShowJurisdictionPicker({
+      isCommercial: true,
+      profileCountryCode: 'US',
+      taxJurisdictionCode: 'TX',
+    })).toBe(false)
+    expect(shouldShowJurisdictionPicker({
+      isCommercial: true,
+      profileCountryCode: 'PA',
+      taxJurisdictionCode: null,
+    })).toBe(false)
   })
 })

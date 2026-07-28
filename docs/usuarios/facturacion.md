@@ -80,9 +80,9 @@ Si el negocio es responsable de IVA o sus ventas deben liquidar Impoconsumo, no 
 
 ### Negocios fuera de Colombia (modo comercial)
 
-Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, EE. UU., Canadá, etc.), WARO aplica un **impuesto estándar de referencia** según el país (o, en EE. UU./Canadá, según el estado o provincia que elijas). En **Facturación → Impuestos aplicados a ventas** puedes **ajustar el porcentaje** cuando tu contador lo indique; el preset es solo el punto de partida.
+Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, EE. UU., Canadá, etc.), el **país queda definido en el registro / perfil financiero** y no se vuelve a elegir en Facturación. WARO aplica un **impuesto estándar de referencia** según ese país (o, en EE. UU./Canadá, según el estado o provincia capturado al configurar el negocio). En **Facturación → Impuestos aplicados a ventas** puedes **ajustar el porcentaje** cuando tu contador lo indique; el preset es solo el punto de partida.
 
-Para **EE. UU. y Canadá**, v1 usa tasas de referencia a **nivel estado/provincia**. Los impuestos locales de ciudad o condado (meal tax, etc.) **no** están en esta versión: documenta el ajuste manual con tu contador si aplica.
+Para **EE. UU. y Canadá**, si el estado o provincia ya está guardado, Facturación lo muestra como referencia y no te lo vuelve a pedir en cada visita. Los impuestos locales de ciudad o condado (meal tax, etc.) **no** están en esta versión: documenta el ajuste manual con tu contador si aplica.
 
 Esto no reemplaza la facturación electrónica local (DIAN, CFDI, etc.) cuando aplique en tu jurisdicción.
 
