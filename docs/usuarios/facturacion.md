@@ -78,6 +78,14 @@ En ese caso WARO no agrega impuesto estándar al POS ni fuerza IVA 19% para habi
 
 Si el negocio es responsable de IVA o sus ventas deben liquidar Impoconsumo, no uses el modo sin impuesto: activa el impuesto correspondiente antes de vender y valida el modo **Incluido** o **Sumado** con tu contador.
 
+### Negocios fuera de Colombia (modo comercial)
+
+Si tu negocio opera en otro país del catálogo WARO, WARO aplica un **impuesto estándar de referencia** según el país (o, en EE. UU./Canadá, según el estado o provincia que elijas). En **Facturación → Impuestos aplicados a ventas** puedes **ajustar el porcentaje** cuando tu contador lo indique; el preset es solo el punto de partida.
+
+Para **EE. UU. y Canadá**, v1 usa tasas de referencia a **nivel estado/provincia**. Los impuestos locales de ciudad o condado (meal tax, etc.) **no** están en esta versión: documenta el ajuste manual con tu contador si aplica.
+
+Esto no reemplaza la facturación electrónica local (DIAN, CFDI, etc.) cuando aplique en tu jurisdicción.
+
 ---
 
 ## Proveedor de facturación electrónica
