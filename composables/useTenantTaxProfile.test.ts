@@ -29,6 +29,28 @@ describe('useTenantTaxProfile', () => {
     })).toBe(true)
   })
 
+  it('respects commercial_tax_applicable flag for tax_lines path', () => {
+    const lines = [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }]
+    expect(taxConfigHasTaxes({ tax_lines: lines })).toBe(true)
+    expect(taxConfigHasTaxes({ tax_lines: lines, commercial_tax_applicable: true })).toBe(true)
+    expect(taxConfigHasTaxes({ tax_lines: lines, commercial_tax_applicable: false })).toBe(false)
+  })
+
+  it('CO applicable flags ignore commercial_tax_applicable false', () => {
+    expect(taxConfigHasTaxes({
+      iva_applicable: true,
+      commercial_tax_applicable: false,
+    })).toBe(true)
+  })
+
+  it('hides category options when commercial tax disabled', () => {
+    expect(taxCategoryOptions({
+      tax_lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+      commercial_tax_applicable: false,
+    })).toEqual([])
+  })
+
   it('returns wave-1 PA preset', () => {
     const preset = wave1PresetForCountry('pa')
     expect(preset?.lines[0]?.rate).toBe(0.07)

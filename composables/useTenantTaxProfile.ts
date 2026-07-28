@@ -169,7 +169,11 @@ export function normalizeCategoryMap(raw: unknown): Record<string, string | null
 export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefined): boolean {
   if (!cfg) return false
   if (cfg.inc_applicable || cfg.iva_applicable || cfg.liquor_tax_applicable) return true
-  return normalizeTaxLines(cfg.tax_lines).some(line => line.rate > 0)
+  const lines = normalizeTaxLines(cfg.tax_lines)
+  if (!lines.length) return false
+  // Commercial path: require enable flag when present (missing → true until API #1868 lands).
+  if (cfg.commercial_tax_applicable === false) return false
+  return lines.some(line => line.rate > 0)
 }
 
 export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {

@@ -281,6 +281,8 @@ const showWave1CountryLocked = computed(() =>
 
 const commercialPresetCountry = ref('')
 const commercialJurisdictionCode = ref('')
+/** Missing API field → treat as enabled until #1868 lands. */
+const commercialTaxApplicable = ref(true)
 const jurisdictionOptions = ref<ReturnType<typeof normalizeJurisdictionOptions>>([])
 const commercialLine = reactive({
   key: 'standard',
@@ -393,6 +395,7 @@ watch(taxConfig, (cfg) => {
   taxForm.iva_applicable = cfg.iva_applicable
   taxForm.iva_included_in_price = cfg.iva_included_in_price
   taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
+  commercialTaxApplicable.value = cfg.commercial_tax_applicable !== false
   syncCommercialFromConfig(cfg)
 }, { immediate: true })
 
@@ -427,33 +430,44 @@ const saveTaxConfig = async () => {
   isSavingTax.value = true
   try {
     if (showCommercialTaxUi.value) {
-      const ratePct = Number(commercialLine.ratePct)
-      if (
-        !commercialLine.label.trim()
-        || Number.isNaN(ratePct)
-        || ratePct < 0
-        || (ratePct === 0 && !needsJurisdictionCountry.value)
-      ) {
-        toast.error(t('facturacion.tax.commercialSaveInvalid'), { title: t('facturacion.common.error') })
-        return
+      const enabled = commercialTaxApplicable.value
+      let tax_lines: unknown
+      let category_map: unknown
+
+      if (enabled) {
+        const ratePct = Number(commercialLine.ratePct)
+        if (
+          !commercialLine.label.trim()
+          || Number.isNaN(ratePct)
+          || ratePct < 0
+          || (ratePct === 0 && !needsJurisdictionCountry.value)
+        ) {
+          toast.error(t('facturacion.tax.commercialSaveInvalid'), { title: t('facturacion.common.error') })
+          return
+        }
+        if (showJurisdictionPicker.value && !commercialJurisdictionCode.value) {
+          toast.error(t('facturacion.tax.jurisdictionRequired'), { title: t('facturacion.common.error') })
+          return
+        }
+        const rate = Math.max(0, ratePct) / 100
+        const label = commercialLine.label.trim()
+        ;({ tax_lines, category_map } = buildCommercialTaxSavePayload({
+          primary: {
+            key: commercialLine.key || 'standard',
+            label,
+            rate,
+            included_in_price: commercialLine.included_in_price,
+            gl_role: commercialLine.gl_role || 'iva',
+          },
+          existingCfg: taxConfig.value,
+          countryCode: profileCountryCode.value || commercialPresetCountry.value,
+        }))
+      } else {
+        // Keep saved rates for re-enable; do not require rate fields when off.
+        tax_lines = taxConfig.value?.tax_lines ?? []
+        category_map = taxConfig.value?.category_map ?? { standard: null, liquor: null, exempt: null }
       }
-      if (showJurisdictionPicker.value && !commercialJurisdictionCode.value) {
-        toast.error(t('facturacion.tax.jurisdictionRequired'), { title: t('facturacion.common.error') })
-        return
-      }
-      const rate = Math.max(0, ratePct) / 100
-      const label = commercialLine.label.trim()
-      const { tax_lines, category_map } = buildCommercialTaxSavePayload({
-        primary: {
-          key: commercialLine.key || 'standard',
-          label,
-          rate,
-          included_in_price: commercialLine.included_in_price,
-          gl_role: commercialLine.gl_role || 'iva',
-        },
-        existingCfg: taxConfig.value,
-        countryCode: profileCountryCode.value || commercialPresetCountry.value,
-      })
+
       await $fetch('/api/api/tenant/tax-config', {
         method: 'PUT',
         body: {
@@ -462,9 +476,10 @@ const saveTaxConfig = async () => {
           iva_applicable: false,
           iva_included_in_price: false,
           liquor_tax_applicable: false,
+          commercial_tax_applicable: enabled,
           tax_lines,
           category_map,
-          ...(showJurisdictionPicker.value && commercialJurisdictionCode.value
+          ...(enabled && showJurisdictionPicker.value && commercialJurisdictionCode.value
             ? { tax_jurisdiction_code: commercialJurisdictionCode.value }
             : {}),
         },
@@ -1298,30 +1313,40 @@ const taxLevels = [
         {{ showCommercialTaxUi ? t('facturacion.tax.commercialBody') : t('facturacion.tax.body') }}
       </p>
 
-      <!-- Commercial / non-DIAN: tax_lines preset + rate override -->
+      <!-- Commercial / non-DIAN: enable toggle + tax_lines preset + rate override -->
       <div v-if="showCommercialTaxUi" class="space-y-5">
-        <div v-if="showJurisdictionPicker" class="space-y-2">
-          <label for="tax-jurisdiction" class="text-sm font-medium text-text-primary">
-            {{ profileCountryCode === 'CA'
-              ? t('facturacion.tax.provinceLabel')
-              : t('facturacion.tax.stateLabel') }}
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.commercialEnableTitle') }}</p>
+            <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.commercialEnableBody') }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
+            <input v-model="commercialTaxApplicable" type="checkbox" class="sr-only peer" />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
-          <select
-            id="tax-jurisdiction"
-            v-model="commercialJurisdictionCode"
-            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-            @change="onJurisdictionChange"
+        </div>
+
+        <div
+          v-if="showWave1CountryLocked"
+          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
+          role="status"
+        >
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
+          <p
+            :class="commercialTaxApplicable
+              ? 'text-sm font-semibold text-text-primary'
+              : 'text-sm text-text-secondary'"
           >
-            <option value="">{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
-            <option
-              v-for="option in jurisdictionOptions"
-              :key="option.code"
-              :value="option.code"
-            >
-              {{ option.code }} — {{ option.label }} ({{ Math.round(option.rate * 10000) / 100 }}%)
-            </option>
-          </select>
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.jurisdictionHint') }}</p>
+            {{ profileCountryCode }}
+            <span v-if="commercialTaxApplicable && commercialPresetPrimaryLabel(profileCountryCode)">
+              — {{ commercialPresetPrimaryLabel(profileCountryCode) }}
+            </span>
+          </p>
+          <p class="text-xs text-text-secondary">
+            {{ commercialTaxApplicable
+              ? t('facturacion.tax.countryFromSetupHint')
+              : t('facturacion.tax.commercialDisabledHint') }}
+          </p>
         </div>
 
         <div
@@ -1334,100 +1359,119 @@ const taxLevels = [
               ? t('facturacion.tax.provinceLabel')
               : t('facturacion.tax.stateLabel') }}
           </p>
-          <p class="text-sm font-semibold text-text-primary">
+          <p
+            :class="commercialTaxApplicable
+              ? 'text-sm font-semibold text-text-primary'
+              : 'text-sm text-text-secondary'"
+          >
             {{ storedJurisdictionCode }}
           </p>
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.jurisdictionFromSetupHint') }}</p>
-        </div>
-
-        <div v-else-if="showWave1CountryPicker" class="space-y-2">
-          <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
-            {{ t('facturacion.tax.wave1Preset') }}
-          </label>
-          <select
-            id="wave1-tax-preset"
-            v-model="commercialPresetCountry"
-            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-            @change="onCommercialPresetChange"
-          >
-            <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
-            <option v-for="code in COMMERCIAL_COUNTRY_CODES" :key="code" :value="code">
-              {{ code }} — {{ commercialPresetPrimaryLabel(code) }}
-            </option>
-          </select>
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
-        </div>
-
-        <div
-          v-else-if="showWave1CountryLocked"
-          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
-          role="status"
-        >
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
-          <p class="text-sm font-semibold text-text-primary">
-            {{ profileCountryCode }}
-            <span v-if="commercialPresetPrimaryLabel(profileCountryCode)">
-              — {{ commercialPresetPrimaryLabel(profileCountryCode) }}
-            </span>
+          <p class="text-xs text-text-secondary">
+            {{ commercialTaxApplicable
+              ? t('facturacion.tax.jurisdictionFromSetupHint')
+              : t('facturacion.tax.commercialDisabledHint') }}
           </p>
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.countryFromSetupHint') }}</p>
         </div>
 
-        <div class="space-y-2">
-          <label for="commercial-tax-label" class="text-sm font-medium text-text-primary">
-            {{ t('facturacion.tax.lineLabel') }}
-          </label>
-          <input
-            id="commercial-tax-label"
-            v-model="commercialLine.label"
-            type="text"
-            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-          >
-        </div>
+        <template v-if="commercialTaxApplicable">
+          <div v-if="showJurisdictionPicker" class="space-y-2">
+            <label for="tax-jurisdiction" class="text-sm font-medium text-text-primary">
+              {{ profileCountryCode === 'CA'
+                ? t('facturacion.tax.provinceLabel')
+                : t('facturacion.tax.stateLabel') }}
+            </label>
+            <select
+              id="tax-jurisdiction"
+              v-model="commercialJurisdictionCode"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+              @change="onJurisdictionChange"
+            >
+              <option value="">{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
+              <option
+                v-for="option in jurisdictionOptions"
+                :key="option.code"
+                :value="option.code"
+              >
+                {{ option.code }} — {{ option.label }} ({{ Math.round(option.rate * 10000) / 100 }}%)
+              </option>
+            </select>
+            <p class="text-xs text-text-secondary">{{ t('facturacion.tax.jurisdictionHint') }}</p>
+          </div>
 
-        <div class="space-y-2">
-          <label for="commercial-tax-rate" class="text-sm font-medium text-text-primary">
-            {{ t('facturacion.tax.ratePercent') }}
-          </label>
-          <input
-            id="commercial-tax-rate"
-            v-model.number="commercialLine.ratePct"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
-          >
-        </div>
+          <div v-else-if="showWave1CountryPicker" class="space-y-2">
+            <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
+              {{ t('facturacion.tax.wave1Preset') }}
+            </label>
+            <select
+              id="wave1-tax-preset"
+              v-model="commercialPresetCountry"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+              @change="onCommercialPresetChange"
+            >
+              <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
+              <option v-for="code in COMMERCIAL_COUNTRY_CODES" :key="code" :value="code">
+                {{ code }} — {{ commercialPresetPrimaryLabel(code) }}
+              </option>
+            </select>
+            <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
+          </div>
 
-        <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
-          <button
-            type="button"
-            @click="commercialLine.included_in_price = true"
-            :class="[
-              'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-              commercialLine.included_in_price
-                ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-            ]"
-          >
-            <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-            <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
-          </button>
-          <button
-            type="button"
-            @click="commercialLine.included_in_price = false"
-            :class="[
-              'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-              !commercialLine.included_in_price
-                ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-            ]"
-          >
-            <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-            <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
-          </button>
-        </div>
+          <div class="space-y-2">
+            <label for="commercial-tax-label" class="text-sm font-medium text-text-primary">
+              {{ t('facturacion.tax.lineLabel') }}
+            </label>
+            <input
+              id="commercial-tax-label"
+              v-model="commercialLine.label"
+              type="text"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+            >
+          </div>
+
+          <div class="space-y-2">
+            <label for="commercial-tax-rate" class="text-sm font-medium text-text-primary">
+              {{ t('facturacion.tax.ratePercent') }}
+            </label>
+            <input
+              id="commercial-tax-rate"
+              v-model.number="commercialLine.ratePct"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+            >
+          </div>
+
+          <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
+            <button
+              type="button"
+              @click="commercialLine.included_in_price = true"
+              :class="[
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                commercialLine.included_in_price
+                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+              ]"
+            >
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
+              <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
+            </button>
+            <button
+              type="button"
+              @click="commercialLine.included_in_price = false"
+              :class="[
+                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                !commercialLine.included_in_price
+                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+              ]"
+            >
+              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
+              <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
+            </button>
+          </div>
+        </template>
       </div>
 
       <!-- CO fiscal-integrated: INC / IVA / liquor -->
