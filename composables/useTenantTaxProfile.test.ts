@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  commercialPresetForCountry,
   countryNeedsJurisdiction,
   primaryTaxLine,
   shouldShowJurisdictionPicker,
@@ -33,6 +34,31 @@ describe('useTenantTaxProfile', () => {
     expect(preset?.category_map.exempt).toBeNull()
   })
 
+  it('returns wave-2 MX and PE commercial presets', () => {
+    const mx = commercialPresetForCountry('mx')
+    expect(mx?.lines[0]?.key).toBe('iva')
+    expect(mx?.lines[0]?.rate).toBe(0.16)
+    const pe = commercialPresetForCountry('PE')
+    expect(pe?.lines[0]?.key).toBe('igv')
+    expect(pe?.lines[0]?.rate).toBe(0.18)
+  })
+
+  it('returns DE multi-rate commercial preset with standard → reduced', () => {
+    const de = commercialPresetForCountry('DE')
+    expect(de?.category_map.standard).toBe('mwst_reduced')
+    expect(de?.category_map.liquor).toBe('mwst_standard')
+    expect(de?.lines).toHaveLength(2)
+  })
+
+  it('primary line from seeded MX config matches preset', () => {
+    const line = primaryTaxLine({
+      tax_lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+    })
+    expect(line?.label).toBe('IVA 16%')
+    expect(line?.rate).toBe(0.16)
+  })
+
   it('category options from category_map', () => {
     const opts = taxCategoryOptions({
       tax_lines: [{ key: 'iva', label: 'IVA 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' }],
@@ -58,8 +84,9 @@ describe('useTenantTaxProfile', () => {
     expect(countryNeedsJurisdiction('PA')).toBe(false)
   })
 
-  it('hides wave-1 country re-picker when profile country is set', () => {
+  it('hides country re-picker when profile country is set (wave-1 or wave-2)', () => {
     expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: 'PA' })).toBe(false)
+    expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: 'MX' })).toBe(false)
     expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: '' })).toBe(true)
     expect(shouldShowWave1CountryPicker({ isCommercial: true, profileCountryCode: 'US' })).toBe(false)
     expect(shouldShowWave1CountryPicker({ isCommercial: false, profileCountryCode: '' })).toBe(false)

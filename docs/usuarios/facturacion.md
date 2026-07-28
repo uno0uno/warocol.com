@@ -80,7 +80,9 @@ Si el negocio es responsable de IVA o sus ventas deben liquidar Impoconsumo, no 
 
 ### Negocios fuera de Colombia (modo comercial)
 
-Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, EE. UU., Canadá, etc.), el **país queda definido en el registro / perfil financiero** y no se vuelve a elegir en Facturación. WARO aplica un **impuesto estándar de referencia** según ese país (o, en EE. UU./Canadá, según el estado o provincia capturado al configurar el negocio). En **Facturación → Impuestos aplicados a ventas** puedes **ajustar el porcentaje** cuando tu contador lo indique; el preset es solo el punto de partida.
+Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, Perú, México, Costa Rica, Argentina, España, Francia, Alemania, Países Bajos, Reino Unido, China, EE. UU., Canadá, etc.), el **país queda definido en el registro / perfil financiero** y no se vuelve a elegir en Facturación. WARO aplica un **impuesto estándar de referencia** según ese país (o, en EE. UU./Canadá, según el estado o provincia capturado al configurar el negocio). En países con auto-seed comercial (olas 1 y 2), las líneas de impuesto se crean al registrar o al leer la configuración fiscal cuando aún no hay `tax_lines`. En **Facturación → Impuestos aplicados a ventas** puedes **ajustar el porcentaje** cuando tu contador lo indique; el preset es solo el punto de partida.
+
+Para **Alemania y Países Bajos**, WARO usa dos tasas de referencia (reducida para comida / estándar para bebidas alcohólicas) vía la categoría fiscal del producto en el menú; en Facturación editas la tasa primaria (reducida).
 
 Para **EE. UU. y Canadá**, si el estado o provincia ya está guardado, Facturación lo muestra como referencia y no te lo vuelve a pedir en cada visita. Los impuestos locales de ciudad o condado (meal tax, etc.) **no** están en esta versión: documenta el ajuste manual con tu contador si aplica.
 

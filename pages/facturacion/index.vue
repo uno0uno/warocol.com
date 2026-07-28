@@ -230,9 +230,9 @@ const taxForm = reactive({
 const isSavingTax = ref(false)
 
 const {
-  WAVE1_COUNTRY_CODES,
+  COMMERCIAL_COUNTRY_CODES,
   primaryTaxLine,
-  wave1PresetForCountry,
+  commercialPresetForCountry,
   countryNeedsJurisdiction,
   shouldShowWave1CountryPicker,
   shouldShowJurisdictionPicker,
@@ -261,7 +261,7 @@ const showJurisdictionPicker = computed(() =>
 const showJurisdictionSummary = computed(() =>
   needsJurisdictionCountry.value && Boolean(storedJurisdictionCode.value),
 )
-/** Wave-1 commercial panel (rate fields) — not US/CA. */
+/** Commercial panel (rate fields) — not US/CA. */
 const showWave1Commercial = computed(() =>
   showCommercialTaxUi.value && !needsJurisdictionCountry.value,
 )
@@ -275,7 +275,7 @@ const showWave1CountryPicker = computed(() =>
 const showWave1CountryLocked = computed(() =>
   showWave1Commercial.value
   && Boolean(profileCountryCode.value)
-  && WAVE1_COUNTRY_CODES.includes(profileCountryCode.value),
+  && COMMERCIAL_COUNTRY_CODES.includes(profileCountryCode.value),
 )
 
 const commercialPresetCountry = ref('')
@@ -310,26 +310,28 @@ const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
   }
 
   const profileCountry = profileCountryCode.value
-  if (profileCountry && WAVE1_COUNTRY_CODES.includes(profileCountry)) {
-    const preset = wave1PresetForCountry(profileCountry)
-    if (preset?.lines[0]?.key === line?.key) {
+  if (profileCountry && COMMERCIAL_COUNTRY_CODES.includes(profileCountry)) {
+    const preset = commercialPresetForCountry(profileCountry)
+    const primary = preset?.lines.find(l => l.key === preset.category_map.standard) ?? preset?.lines[0]
+    if (primary?.key === line?.key) {
       commercialPresetCountry.value = profileCountry
       return
     }
   }
-  const matched = WAVE1_COUNTRY_CODES.find((code) => {
-    const preset = wave1PresetForCountry(code)
-    return preset?.lines[0]?.key === line?.key
-      && Math.abs((preset?.lines[0]?.rate || 0) - (line?.rate || 0)) < 1e-9
+  const matched = COMMERCIAL_COUNTRY_CODES.find((code) => {
+    const preset = commercialPresetForCountry(code)
+    const primary = preset?.lines.find(l => l.key === preset.category_map.standard) ?? preset?.lines[0]
+    return primary?.key === line?.key
+      && Math.abs((primary?.rate || 0) - (line?.rate || 0)) < 1e-9
   })
   if (matched) commercialPresetCountry.value = matched
 }
 
-const applyWave1Preset = (countryCode: string) => {
-  const preset = wave1PresetForCountry(countryCode)
+const applyCommercialPreset = (countryCode: string) => {
+  const preset = commercialPresetForCountry(countryCode)
   if (!preset) return
   commercialPresetCountry.value = countryCode.toUpperCase()
-  const line = preset.lines[0]
+  const line = preset.lines.find(l => l.key === preset.category_map.standard) ?? preset.lines[0]
   commercialLine.key = line.key
   commercialLine.label = line.label
   commercialLine.ratePct = Math.round(line.rate * 10000) / 100
@@ -337,8 +339,15 @@ const applyWave1Preset = (countryCode: string) => {
   commercialLine.gl_role = line.gl_role
 }
 
+const commercialPresetPrimaryLabel = (countryCode: string) => {
+  const preset = commercialPresetForCountry(countryCode)
+  if (!preset) return ''
+  const line = preset.lines.find(l => l.key === preset.category_map.standard) ?? preset.lines[0]
+  return line?.label || ''
+}
+
 const onCommercialPresetChange = () => {
-  if (commercialPresetCountry.value) applyWave1Preset(commercialPresetCountry.value)
+  if (commercialPresetCountry.value) applyCommercialPreset(commercialPresetCountry.value)
 }
 
 const applyJurisdictionOption = (code: string) => {
@@ -400,10 +409,10 @@ watch(
       }
       return
     }
-    if (WAVE1_COUNTRY_CODES.includes(code)) {
+    if (COMMERCIAL_COUNTRY_CODES.includes(code)) {
       // Prefer profile country pack; keep rate if user already edited label/rate
       // unless commercial line is empty (new tenant).
-      if (!commercialLine.label) applyWave1Preset(code)
+      if (!commercialLine.label) applyCommercialPreset(code)
       else commercialPresetCountry.value = code
     }
   },
@@ -1342,8 +1351,8 @@ const taxLevels = [
             @change="onCommercialPresetChange"
           >
             <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
-            <option v-for="code in WAVE1_COUNTRY_CODES" :key="code" :value="code">
-              {{ code }} — {{ wave1PresetForCountry(code)?.lines[0]?.label }}
+            <option v-for="code in COMMERCIAL_COUNTRY_CODES" :key="code" :value="code">
+              {{ code }} — {{ commercialPresetPrimaryLabel(code) }}
             </option>
           </select>
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
@@ -1357,8 +1366,8 @@ const taxLevels = [
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
           <p class="text-sm font-semibold text-text-primary">
             {{ profileCountryCode }}
-            <span v-if="wave1PresetForCountry(profileCountryCode)?.lines[0]?.label">
-              — {{ wave1PresetForCountry(profileCountryCode)?.lines[0]?.label }}
+            <span v-if="commercialPresetPrimaryLabel(profileCountryCode)">
+              — {{ commercialPresetPrimaryLabel(profileCountryCode) }}
             </span>
           </p>
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.countryFromSetupHint') }}</p>

@@ -174,7 +174,7 @@
       "ivaAddedHint": "The 19% is added on top. Example: $10,000 base → $11,900 charged",
       "save": "Save configuration",
       "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you adjust the reference rate.",
-      "wave1Preset": "Country preset (wave 1)",
+      "wave1Preset": "Country preset",
       "wave1PresetPlaceholder": "Choose a country…",
       "wave1PresetHint": "Selecting a country loads rate and label. Save to apply to POS and menu.",
       "countryFromSetupHint": "Country is already set in registration / financial profile. Here you only adjust the reference rate.",

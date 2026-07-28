@@ -174,7 +174,7 @@
       "ivaAddedHint": "El 19% se agrega encima. Ej: $10.000 base → cobro $11.900",
       "save": "Guardar configuración",
       "commercialBody": "Configura el impuesto de ventas según el país de tu negocio (modo comercial WARO). El país viene del registro / perfil financiero; aquí ajustas la tasa de referencia.",
-      "wave1Preset": "Preset por país (ola 1)",
+      "wave1Preset": "Preset por país",
       "wave1PresetPlaceholder": "Elegir país…",
       "wave1PresetHint": "Al elegir un país se cargan tasa y etiqueta. Guarda para aplicarlas a POS y menú.",
       "countryFromSetupHint": "El país ya está definido en el registro / perfil financiero. Aquí solo ajustas la tasa de referencia.",

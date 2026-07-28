@@ -1,8 +1,8 @@
 /**
- * Tenant tax profile helpers — warocol.com#1846 / #1847 / #1848.
+ * Tenant tax profile helpers — warocol.com#1846 / #1847 / #1848 / #1864.
  * Consumes GET /tenant/tax-config tax_lines + category_map (#1845).
- * Server wave-1 packs (#1847) and US/CA jurisdictions (#1848) are SoT;
- * WAVE1_TAX_PRESETS remain a client fallback for wave-1 countries.
+ * Server packs (wave-1 #1847, wave-2 #1862/#1863, US/CA #1848) are SoT;
+ * COMMERCIAL_TAX_PRESETS are a client fallback / UX mirror.
  */
 
 export type TaxLineDraft = {
@@ -15,10 +15,13 @@ export type TaxLineDraft = {
 
 export type TaxCategoryKey = 'standard' | 'liquor' | 'exempt'
 
-export type Wave1TaxPreset = {
+export type CommercialTaxPreset = {
   lines: TaxLineDraft[]
   category_map: Record<string, string | null>
 }
+
+/** @deprecated Prefer CommercialTaxPreset */
+export type Wave1TaxPreset = CommercialTaxPreset
 
 export type TaxJurisdictionOption = {
   code: string
@@ -33,7 +36,7 @@ export type TaxJurisdictionOption = {
 export const JURISDICTION_COUNTRY_CODES = ['US', 'CA'] as const
 
 /** Epic #1843 wave-1 shortlist — one primary rate + exempt. */
-export const WAVE1_TAX_PRESETS: Record<string, Wave1TaxPreset> = {
+export const WAVE1_TAX_PRESETS: Record<string, CommercialTaxPreset> = {
   PA: {
     lines: [{ key: 'itbms', label: 'ITBMS 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' }],
     category_map: { standard: 'itbms', liquor: 'itbms', exempt: null },
@@ -69,6 +72,66 @@ export const WAVE1_TAX_PRESETS: Record<string, Wave1TaxPreset> = {
 }
 
 export const WAVE1_COUNTRY_CODES = Object.keys(WAVE1_TAX_PRESETS)
+
+/** Epic #1860 wave-2 — mirror API hospitality_tax_packs WAVE2_* (#1862/#1863). */
+export const WAVE2_TAX_PRESETS: Record<string, CommercialTaxPreset> = {
+  PE: {
+    lines: [{ key: 'igv', label: 'IGV 18%', rate: 0.18, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'igv', liquor: 'igv', exempt: null },
+  },
+  MX: {
+    lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+  },
+  CR: {
+    lines: [{ key: 'iva', label: 'IVA 13%', rate: 0.13, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+  },
+  AR: {
+    lines: [{ key: 'iva', label: 'IVA 21%', rate: 0.21, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+  },
+  ES: {
+    lines: [{ key: 'iva', label: 'IVA 10%', rate: 0.10, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+  },
+  FR: {
+    lines: [{ key: 'tva', label: 'TVA 10%', rate: 0.10, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'tva', liquor: 'tva', exempt: null },
+  },
+  GB: {
+    lines: [{ key: 'vat', label: 'VAT 20%', rate: 0.20, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'vat', liquor: 'vat', exempt: null },
+  },
+  CN: {
+    lines: [{ key: 'vat', label: 'VAT 6%', rate: 0.06, included_in_price: false, gl_role: 'iva' }],
+    category_map: { standard: 'vat', liquor: 'vat', exempt: null },
+  },
+  DE: {
+    lines: [
+      { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+      { key: 'mwst_standard', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+    ],
+    category_map: { standard: 'mwst_reduced', liquor: 'mwst_standard', exempt: null },
+  },
+  NL: {
+    lines: [
+      { key: 'btw_reduced', label: 'BTW 9%', rate: 0.09, included_in_price: false, gl_role: 'iva' },
+      { key: 'btw_standard', label: 'BTW 21%', rate: 0.21, included_in_price: false, gl_role: 'iva' },
+    ],
+    category_map: { standard: 'btw_reduced', liquor: 'btw_standard', exempt: null },
+  },
+}
+
+export const WAVE2_COUNTRY_CODES = Object.keys(WAVE2_TAX_PRESETS)
+
+/** Wave-1 + wave-2 client fallback map (server seed remains SoT). */
+export const COMMERCIAL_TAX_PRESETS: Record<string, CommercialTaxPreset> = {
+  ...WAVE1_TAX_PRESETS,
+  ...WAVE2_TAX_PRESETS,
+}
+
+export const COMMERCIAL_COUNTRY_CODES = Object.keys(COMMERCIAL_TAX_PRESETS)
 
 export function countryNeedsJurisdiction(countryCode: string | null | undefined): boolean {
   const code = String(countryCode || '').toUpperCase()
@@ -135,12 +198,17 @@ export function taxCategoryOptions(cfg: Record<string, unknown> | null | undefin
   return ['standard', 'liquor', 'exempt']
 }
 
-export function wave1PresetForCountry(countryCode: string): Wave1TaxPreset | null {
+export function wave1PresetForCountry(countryCode: string): CommercialTaxPreset | null {
   const code = String(countryCode || '').toUpperCase()
   return WAVE1_TAX_PRESETS[code] ?? null
 }
 
-/** Hide Facturación wave-1 country dropdown when profile country is already known. */
+export function commercialPresetForCountry(countryCode: string): CommercialTaxPreset | null {
+  const code = String(countryCode || '').toUpperCase()
+  return COMMERCIAL_TAX_PRESETS[code] ?? null
+}
+
+/** Hide Facturación commercial country dropdown when profile country is already known. */
 export function shouldShowWave1CountryPicker(options: {
   isCommercial: boolean
   profileCountryCode?: string | null
@@ -185,6 +253,10 @@ export function useTenantTaxProfile() {
   return {
     WAVE1_COUNTRY_CODES,
     WAVE1_TAX_PRESETS,
+    WAVE2_COUNTRY_CODES,
+    WAVE2_TAX_PRESETS,
+    COMMERCIAL_COUNTRY_CODES,
+    COMMERCIAL_TAX_PRESETS,
     JURISDICTION_COUNTRY_CODES,
     countryNeedsJurisdiction,
     shouldShowWave1CountryPicker,
@@ -196,5 +268,6 @@ export function useTenantTaxProfile() {
     primaryTaxLine,
     taxCategoryOptions,
     wave1PresetForCountry,
+    commercialPresetForCountry,
   }
 }
