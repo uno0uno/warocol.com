@@ -1144,9 +1144,10 @@ watch(
   () => financialProfile.value?.country_code,
   (countryCode) => {
     if (!isEditMode.value || !countryCode) return
-    const bp = businessProfile.value
+    // Only catch late-arriving profile while form still on legacy default.
+    if (editForm.timezone !== DEFAULT_TENANT_TIMEZONE) return
     editForm.timezone = resolveTimezonePrefill({
-      storedTimezone: bp?.timezone ?? editForm.timezone,
+      storedTimezone: businessProfile.value?.timezone,
       countryCode,
     })
   },
