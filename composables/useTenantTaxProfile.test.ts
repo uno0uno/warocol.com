@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  countryNeedsJurisdiction,
   primaryTaxLine,
   taxCategoryOptions,
   taxConfigHasTaxes,
@@ -47,5 +48,11 @@ describe('useTenantTaxProfile', () => {
       category_map: { standard: 'iva', exempt: null },
     })
     expect(line?.key).toBe('iva')
+  })
+
+  it('detects US/CA jurisdiction countries', () => {
+    expect(countryNeedsJurisdiction('US')).toBe(true)
+    expect(countryNeedsJurisdiction('ca')).toBe(true)
+    expect(countryNeedsJurisdiction('PA')).toBe(false)
   })
 })

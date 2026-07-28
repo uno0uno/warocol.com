@@ -176,13 +176,18 @@
       "commercialBody": "Configura el impuesto de ventas del país (modo comercial WARO). Puedes cargar un preset de la ola 1 y ajustar el porcentaje.",
       "wave1Preset": "Preset por país (ola 1)",
       "wave1PresetPlaceholder": "Elegir país…",
-      "wave1PresetHint": "Al elegir un país se cargan tasa y etiqueta. Guarda para aplicarlas a POS y menú. Los packs de servidor llegan en una entrega posterior.",
+      "wave1PresetHint": "Al elegir un país se cargan tasa y etiqueta. Guarda para aplicarlas a POS y menú.",
+      "stateLabel": "Estado (EE. UU.)",
+      "provinceLabel": "Provincia / territorio (Canadá)",
+      "jurisdictionPlaceholder": "Elegir jurisdicción…",
+      "jurisdictionHint": "WARO usa una tasa de referencia a nivel estado/provincia. Impuestos locales de ciudad no están en v1; confirma el porcentaje con tu contador.",
+      "jurisdictionRequired": "Elige un estado o provincia antes de guardar.",
       "lineLabel": "Nombre del impuesto",
       "ratePercent": "Tasa (%)",
       "howCommercial": "Cómo aplicar el impuesto",
       "commercialIncludedHint": "La tasa ya está dentro del precio de venta.",
       "commercialAddedHint": "La tasa se suma al precio base.",
-      "commercialSaveInvalid": "Elige un preset o ingresa un nombre y una tasa mayor que 0 antes de guardar."
+      "commercialSaveInvalid": "Elige un preset/jurisdicción o ingresa un nombre y una tasa válida antes de guardar."
     },
     "provider": {
       "title": "Proveedor de facturación electrónica",

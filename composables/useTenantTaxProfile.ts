@@ -1,7 +1,8 @@
 /**
- * Tenant tax profile helpers — warocol.com#1846.
+ * Tenant tax profile helpers — warocol.com#1846 / #1847 / #1848.
  * Consumes GET /tenant/tax-config tax_lines + category_map (#1845).
- * Wave-1 presets are transitional until #1847 server packs.
+ * Server wave-1 packs (#1847) and US/CA jurisdictions (#1848) are SoT;
+ * WAVE1_TAX_PRESETS remain a client fallback for wave-1 countries.
  */
 
 export type TaxLineDraft = {
@@ -18,6 +19,18 @@ export type Wave1TaxPreset = {
   lines: TaxLineDraft[]
   category_map: Record<string, string | null>
 }
+
+export type TaxJurisdictionOption = {
+  code: string
+  label: string
+  regime: string
+  rate: number
+  lines: TaxLineDraft[]
+  components?: TaxLineDraft[]
+}
+
+/** Countries that require state/province jurisdiction for tax rates. */
+export const JURISDICTION_COUNTRY_CODES = ['US', 'CA'] as const
 
 /** Epic #1843 wave-1 shortlist — one primary rate + exempt. */
 export const WAVE1_TAX_PRESETS: Record<string, Wave1TaxPreset> = {
@@ -56,6 +69,11 @@ export const WAVE1_TAX_PRESETS: Record<string, Wave1TaxPreset> = {
 }
 
 export const WAVE1_COUNTRY_CODES = Object.keys(WAVE1_TAX_PRESETS)
+
+export function countryNeedsJurisdiction(countryCode: string | null | undefined): boolean {
+  const code = String(countryCode || '').toUpperCase()
+  return (JURISDICTION_COUNTRY_CODES as readonly string[]).includes(code)
+}
 
 export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
   if (!Array.isArray(raw)) return []
@@ -112,10 +130,8 @@ export function taxCategoryOptions(cfg: Record<string, unknown> | null | undefin
     if ('standard' in map) opts.push('standard')
     if ('liquor' in map && map.liquor) opts.push('liquor')
     if ('exempt' in map || opts.length) opts.push('exempt')
-    // de-dupe while preserving order
     return [...new Set(opts)]
   }
-  // CO column path: always offer the three legacy categories
   return ['standard', 'liquor', 'exempt']
 }
 
@@ -124,12 +140,35 @@ export function wave1PresetForCountry(countryCode: string): Wave1TaxPreset | nul
   return WAVE1_TAX_PRESETS[code] ?? null
 }
 
+export function normalizeJurisdictionOptions(raw: unknown): TaxJurisdictionOption[] {
+  if (!Array.isArray(raw)) return []
+  const out: TaxJurisdictionOption[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const code = String(row.code || '').trim().toUpperCase()
+    if (!code) continue
+    out.push({
+      code,
+      label: String(row.label || code),
+      regime: String(row.regime || ''),
+      rate: Number(row.rate) || 0,
+      lines: normalizeTaxLines(row.lines),
+      components: normalizeTaxLines(row.components),
+    })
+  }
+  return out
+}
+
 export function useTenantTaxProfile() {
   return {
     WAVE1_COUNTRY_CODES,
     WAVE1_TAX_PRESETS,
+    JURISDICTION_COUNTRY_CODES,
+    countryNeedsJurisdiction,
     normalizeTaxLines,
     normalizeCategoryMap,
+    normalizeJurisdictionOptions,
     taxConfigHasTaxes,
     primaryTaxLine,
     taxCategoryOptions,
