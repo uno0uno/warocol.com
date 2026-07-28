@@ -47,6 +47,7 @@ export interface TenantFinancialProfileResponse {
 export interface FinancialProfileDraft {
   country_code: string
   base_currency_code: string
+  tax_jurisdiction_code?: string
 }
 
 export const financialProfileQueryKey = (tenantId?: string | null) =>
@@ -75,9 +76,13 @@ export const isColombiaPucProfile = (
 
 export const createFinancialProfileDraft = (
   profile?: TenantFinancialProfile | null,
+  jurisdictionCode?: string | null,
 ): FinancialProfileDraft => ({
   country_code: profile?.country_code ?? '',
   base_currency_code: profile?.base_currency_code ?? '',
+  tax_jurisdiction_code: jurisdictionCode
+    ? String(jurisdictionCode).trim().toUpperCase()
+    : '',
 })
 
 export const getCompatibleCurrencyCodes = (
@@ -104,11 +109,19 @@ export const hasFinancialProfileChanges = (
 
 export const canSubmitFinancialProfile = (
   response: TenantFinancialProfileResponse | null,
-  _draft: FinancialProfileDraft,
+  draft: FinancialProfileDraft,
 ): boolean => {
-  // Country/currency are immutable once a profile exists (hard lock).
-  void _draft
-  return false
+  if (!response?.profile) return false
+  // Country/currency stay immutable; allow US/CA jurisdiction completion only.
+  if (
+    response.profile.country_code !== draft.country_code
+    || response.profile.base_currency_code !== draft.base_currency_code
+  ) {
+    return false
+  }
+  const country = draft.country_code?.toUpperCase()
+  if (country !== 'US' && country !== 'CA') return false
+  return Boolean(draft.tax_jurisdiction_code?.trim())
 }
 
 export const useTenantFinancialProfile = () => {
@@ -168,6 +181,9 @@ export const useTenantFinancialProfile = () => {
         body: {
           country_code: draft.country_code,
           base_currency_code: draft.base_currency_code,
+          ...(draft.tax_jurisdiction_code
+            ? { tax_jurisdiction_code: draft.tax_jurisdiction_code }
+            : {}),
         },
       })
     },

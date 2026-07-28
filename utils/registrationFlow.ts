@@ -18,6 +18,7 @@ export interface RegistrationDraft {
   businessName: string
   businessCountryCode: string
   baseCurrencyCode: string
+  taxJurisdictionCode: string
   consent: boolean
   attribution: RegistrationAttribution
   phase: RegistrationPhase
@@ -73,6 +74,7 @@ export const createRegistrationDraft = (
   businessName: normalizeRegistrationBusinessName(values.businessName),
   businessCountryCode: normalizeCatalogCode(values.businessCountryCode, 2),
   baseCurrencyCode: normalizeCatalogCode(values.baseCurrencyCode, 3),
+  taxJurisdictionCode: normalizeCatalogCode(values.taxJurisdictionCode, 10),
   consent: values.consent === true,
   attribution: sanitizeRegistrationAttribution(values.attribution ?? {}),
   phase: values.phase === 'code' ? 'code' : 'form',
@@ -134,13 +136,19 @@ export const getRegistrationCooldownSeconds = (sentAt: number | null, now = Date
   return Math.max(0, Math.ceil((sentAt + REGISTRATION_RESEND_COOLDOWN_MS - now) / 1000))
 }
 
-export const buildRegistrationPayload = (draft: RegistrationDraft) => ({
-  email: normalizeRegistrationEmail(draft.email),
-  phone_country_code: Number(normalizeRegistrationPhone(draft.phoneCountryCode)),
-  phone_number: normalizeRegistrationPhone(draft.phoneNumber),
-  business_name: normalizeRegistrationBusinessName(draft.businessName),
-  country_code: normalizeCatalogCode(draft.businessCountryCode, 2),
-  base_currency_code: normalizeCatalogCode(draft.baseCurrencyCode, 3),
-  consent: draft.consent as true,
-  ...sanitizeRegistrationAttribution(draft.attribution),
-})
+export const buildRegistrationPayload = (draft: RegistrationDraft) => {
+  const country_code = normalizeCatalogCode(draft.businessCountryCode, 2)
+  const payload: Record<string, unknown> = {
+    email: normalizeRegistrationEmail(draft.email),
+    phone_country_code: Number(normalizeRegistrationPhone(draft.phoneCountryCode)),
+    phone_number: normalizeRegistrationPhone(draft.phoneNumber),
+    business_name: normalizeRegistrationBusinessName(draft.businessName),
+    country_code,
+    base_currency_code: normalizeCatalogCode(draft.baseCurrencyCode, 3),
+    consent: draft.consent as true,
+    ...sanitizeRegistrationAttribution(draft.attribution),
+  }
+  const jurisdiction = normalizeCatalogCode(draft.taxJurisdictionCode, 10)
+  if (jurisdiction) payload.tax_jurisdiction_code = jurisdiction
+  return payload
+}

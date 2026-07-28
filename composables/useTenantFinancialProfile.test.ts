@@ -53,6 +53,7 @@ describe('tenant financial-profile helpers', () => {
     assert.deepEqual(createFinancialProfileDraft(response.profile), {
       country_code: 'CO',
       base_currency_code: 'COP',
+      tax_jurisdiction_code: '',
     })
     assert.deepEqual(getCompatibleCurrencyCodes(response.catalog, 'PA'), ['USD', 'PAB'])
     assert.deepEqual(getCompatibleCurrencyCodes(response.catalog, 'XX'), [])
@@ -71,6 +72,35 @@ describe('tenant financial-profile helpers', () => {
       ...response,
       eligibility: { eligible: false, lock_type: 'permanent', reason_codes: ['permanent_orders'] },
     }, panama), false)
+  })
+
+  it('allows US/CA jurisdiction completion without changing country', () => {
+    const usResponse = {
+      ...response,
+      profile: {
+        ...response.profile,
+        country_code: 'US',
+        base_currency_code: 'USD',
+        accounting_localization: 'WARO_HOSPITALITY_GLOBAL_V1',
+        document_mode: 'waro_commercial',
+        fiscal_provider: null,
+      },
+      capabilities: {
+        ...response.capabilities,
+        colombia_puc: false,
+        matias_dian: false,
+      },
+    }
+    assert.equal(canSubmitFinancialProfile(usResponse, {
+      country_code: 'US',
+      base_currency_code: 'USD',
+      tax_jurisdiction_code: 'TX',
+    }), true)
+    assert.equal(canSubmitFinancialProfile(usResponse, {
+      country_code: 'US',
+      base_currency_code: 'USD',
+      tax_jurisdiction_code: '',
+    }), false)
   })
 
   it('uses server minor units with a safe fallback', () => {
