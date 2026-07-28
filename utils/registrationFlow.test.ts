@@ -45,8 +45,8 @@ test('round-trips a normalized draft and removes it after its TTL', () => {
     phoneCountryCode: '+57',
     phoneNumber: '300 123 4567',
     businessName: '  Panaderia   Central  ',
-    businessCountryCode: 'co',
-    baseCurrencyCode: 'cop',
+    businessCountryCode: 'CO',
+    baseCurrencyCode: 'COP',
     consent: true,
     attribution: { source: 'home', variant: 'a' },
     phase: 'code',
@@ -62,6 +62,7 @@ test('round-trips a normalized draft and removes it after its TTL', () => {
     businessName: 'Panaderia Central',
     businessCountryCode: 'CO',
     baseCurrencyCode: 'COP',
+    taxJurisdictionCode: '',
     consent: true,
     attribution: { source: 'home', variant: 'a' },
     phase: 'code',
@@ -113,4 +114,29 @@ test('builds the exact API payload and computes resend cooldown', () => {
   })
   assert.equal(getRegistrationCooldownSeconds(10_000, 10_001), 30)
   assert.equal(getRegistrationCooldownSeconds(10_000, 40_000), 0)
+})
+
+test('includes tax_jurisdiction_code for US drafts', () => {
+  const draft = createRegistrationDraft({
+    email: 'owner@example.com',
+    phoneCountryCode: '1',
+    phoneNumber: '4155551234',
+    businessName: 'Cafe Mission',
+    businessCountryCode: 'US',
+    baseCurrencyCode: 'USD',
+    taxJurisdictionCode: 'ca',
+    consent: true,
+  }, 10_000)
+
+  assert.equal(draft.taxJurisdictionCode, 'CA')
+  assert.deepEqual(buildRegistrationPayload(draft), {
+    email: 'owner@example.com',
+    phone_country_code: 1,
+    phone_number: '4155551234',
+    business_name: 'Cafe Mission',
+    country_code: 'US',
+    base_currency_code: 'USD',
+    tax_jurisdiction_code: 'CA',
+    consent: true,
+  })
 })

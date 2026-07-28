@@ -6,6 +6,11 @@ import {
   getCompatibleCurrencyCodes,
   type FinancialProfileDraft,
 } from '~/composables/useTenantFinancialProfile'
+import {
+  countryNeedsJurisdiction,
+  normalizeJurisdictionOptions,
+  type TaxJurisdictionOption,
+} from '~/composables/useTenantTaxProfile'
 
 const { t, locale } = useI18n({ useScope: 'global' })
 const toast = useToast()
@@ -22,9 +27,11 @@ const {
 
 const draft = ref<FinancialProfileDraft>(createFinancialProfileDraft())
 const showConfirmation = ref(false)
+const jurisdictionOptions = ref<TaxJurisdictionOption[]>([])
+const jurisdictionsLoading = ref(false)
 
 watch(profile, (nextProfile) => {
-  if (nextProfile) draft.value = createFinancialProfileDraft(nextProfile)
+  if (nextProfile) draft.value = createFinancialProfileDraft(nextProfile, draft.value.tax_jurisdiction_code)
 }, { immediate: true })
 
 const compatibleCurrencyCodes = computed(() => getCompatibleCurrencyCodes(
@@ -36,11 +43,40 @@ watch(() => draft.value.country_code, () => {
   if (!compatibleCurrencyCodes.value.includes(draft.value.base_currency_code)) {
     draft.value.base_currency_code = compatibleCurrencyCodes.value[0] ?? ''
   }
+  if (!countryNeedsJurisdiction(draft.value.country_code)) {
+    draft.value.tax_jurisdiction_code = ''
+  }
 })
 
+const needsJurisdiction = computed(() => countryNeedsJurisdiction(draft.value.country_code))
 const canSubmit = computed(() => canSubmitFinancialProfile(response.value, draft.value))
 // Hard lock: country/currency read-only after first configure (profile exists).
 const isLocked = computed(() => !!response.value?.profile)
+
+const loadJurisdictionOptions = async (country: string) => {
+  if (!countryNeedsJurisdiction(country)) {
+    jurisdictionOptions.value = []
+    return
+  }
+  jurisdictionsLoading.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: unknown }>(
+      '/api/api/tenant/tax-jurisdictions',
+      { query: { country } },
+    )
+    jurisdictionOptions.value = normalizeJurisdictionOptions(res?.data)
+  } catch {
+    jurisdictionOptions.value = []
+  } finally {
+    jurisdictionsLoading.value = false
+  }
+}
+
+watch(
+  () => draft.value.country_code,
+  (code) => { void loadJurisdictionOptions(code) },
+  { immediate: true },
+)
 
 const makeDisplayNames = (type: 'region' | 'currency') => {
   try {
@@ -66,6 +102,9 @@ const queryErrorMessage = computed(() => {
 
 const confirmationMessage = computed(() => {
   if (!profile.value) return ''
+  if (needsJurisdiction.value && draft.value.tax_jurisdiction_code) {
+    return `${countryLabel(draft.value.country_code)} · ${draft.value.tax_jurisdiction_code}`
+  }
   return t('operaciones.personalizar.financial.confirmMessage', {
     currentCountry: countryLabel(profile.value.country_code),
     currentCurrency: currencyLabel(profile.value.base_currency_code),
@@ -213,9 +252,41 @@ const confirmSave = async () => {
         </div>
       </fieldset>
 
-      <div v-if="!isLocked" class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        v-if="needsJurisdiction"
+        class="mt-4 flex flex-col gap-1"
+      >
+        <label for="financial-tax-jurisdiction" class="text-sm font-medium text-text-primary">
+          {{ draft.country_code === 'CA'
+            ? t('facturacion.tax.provinceLabel')
+            : t('facturacion.tax.stateLabel') }}
+        </label>
+        <select
+          id="financial-tax-jurisdiction"
+          v-model="draft.tax_jurisdiction_code"
+          :disabled="isSaving || jurisdictionsLoading"
+          class="min-h-11 rounded-lg border-2 border-form-control-border bg-form-control-bg px-3 py-2 text-sm text-form-control-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <option value="">{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
+          <option
+            v-for="option in jurisdictionOptions"
+            :key="option.code"
+            :value="option.code"
+          >
+            {{ option.label }} ({{ option.code }})
+          </option>
+        </select>
+        <p class="text-xs leading-snug text-form-control-help">
+          {{ t('facturacion.tax.jurisdictionHint') }}
+        </p>
+      </div>
+
+      <div
+        v-if="needsJurisdiction"
+        class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      >
         <p class="max-w-2xl text-xs leading-snug text-text-secondary">
-          {{ t('operaciones.personalizar.financial.irreversibleHelp') }}
+          {{ t('facturacion.tax.jurisdictionRequired') }}
         </p>
         <button
           type="button"

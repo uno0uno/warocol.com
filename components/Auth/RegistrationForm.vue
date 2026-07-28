@@ -166,6 +166,36 @@
             </div>
           </div>
 
+          <div v-if="needsJurisdiction">
+            <label for="registration-tax-jurisdiction" class="mb-1.5 block text-sm font-semibold text-text-primary">
+              {{ businessCountryCode === 'CA' ? t('facturacion.tax.provinceLabel') : t('facturacion.tax.stateLabel') }}
+            </label>
+            <select
+              id="registration-tax-jurisdiction"
+              v-model="taxJurisdictionCode"
+              required
+              :disabled="sending || optionsLoading"
+              :aria-invalid="Boolean(fieldErrors.taxJurisdictionCode)"
+              :aria-describedby="fieldErrors.taxJurisdictionCode ? 'registration-jurisdiction-error' : 'registration-jurisdiction-hint'"
+              class="form-input"
+            >
+              <option value="" disabled>{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
+              <option
+                v-for="option in jurisdictionOptions"
+                :key="option.code"
+                :value="option.code"
+              >
+                {{ option.label }} ({{ option.code }})
+              </option>
+            </select>
+            <p id="registration-jurisdiction-hint" class="mt-1 text-xs text-form-control-help">
+              {{ t('facturacion.tax.jurisdictionHint') }}
+            </p>
+            <p v-if="fieldErrors.taxJurisdictionCode" id="registration-jurisdiction-error" class="field-error" role="alert">
+              {{ fieldErrors.taxJurisdictionCode }}
+            </p>
+          </div>
+
           <div>
             <label class="flex cursor-pointer items-start gap-3 text-sm text-text-secondary">
               <input
@@ -293,6 +323,11 @@ import {
   writeVerifiedPublicCtaAttribution,
 } from '~/utils/publicCta'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
+import {
+  countryNeedsJurisdiction,
+  normalizeJurisdictionOptions,
+  type TaxJurisdictionOption,
+} from '~/composables/useTenantTaxProfile'
 
 interface RegistrationCatalogOption {
   country_code: string
@@ -323,8 +358,10 @@ const phoneNumber = ref('')
 const businessName = ref('')
 const businessCountryCode = ref('')
 const baseCurrencyCode = ref('')
+const taxJurisdictionCode = ref('')
 const consent = ref(false)
 const registrationCatalog = ref<RegistrationCatalogOption[]>([])
+const taxJurisdictionsByCountry = ref<Record<string, TaxJurisdictionOption[]>>({})
 const phoneCountries = ref<PhoneCountryOption[]>([])
 const optionsLoading = ref(true)
 const attribution = ref<RegistrationAttribution>({})
@@ -342,6 +379,7 @@ const fieldErrors = reactive({
   businessName: '',
   businessCountryCode: '',
   baseCurrencyCode: '',
+  taxJurisdictionCode: '',
   consent: '',
 })
 
@@ -360,6 +398,12 @@ const updateVerificationCode = (event: Event) => { verificationCode.value = norm
 
 const compatibleCurrencies = computed(() =>
   registrationCatalog.value.find(option => option.country_code === businessCountryCode.value)?.currency_codes ?? [],
+)
+
+const needsJurisdiction = computed(() => countryNeedsJurisdiction(businessCountryCode.value))
+
+const jurisdictionOptions = computed(() =>
+  taxJurisdictionsByCountry.value[businessCountryCode.value.toUpperCase()] ?? [],
 )
 
 const countryLabel = (code: string) => {
@@ -394,6 +438,11 @@ const handleBusinessCountryChange = () => {
   if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
     baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
   }
+  if (!needsJurisdiction.value) {
+    taxJurisdictionCode.value = ''
+  } else if (!jurisdictionOptions.value.some(option => option.code === taxJurisdictionCode.value)) {
+    taxJurisdictionCode.value = ''
+  }
 }
 
 const currentDraft = () => createRegistrationDraft({
@@ -404,6 +453,7 @@ const currentDraft = () => createRegistrationDraft({
   businessName: businessName.value,
   businessCountryCode: businessCountryCode.value,
   baseCurrencyCode: baseCurrencyCode.value,
+  taxJurisdictionCode: taxJurisdictionCode.value,
   consent: consent.value,
   attribution: attribution.value,
   phase: phase.value,
@@ -441,6 +491,9 @@ const validateForm = () => {
   fieldErrors.baseCurrencyCode = compatibleCurrencies.value.includes(baseCurrencyCode.value)
     ? ''
     : t('onboarding.selectCurrency')
+  fieldErrors.taxJurisdictionCode = !needsJurisdiction.value || jurisdictionOptions.value.some(option => option.code === taxJurisdictionCode.value)
+    ? ''
+    : t('facturacion.tax.jurisdictionRequired')
   fieldErrors.consent = consent.value ? '' : t('auth.consentRequired')
 
   const firstInvalid = fieldErrors.email ? 'registration-email'
@@ -449,8 +502,9 @@ const validateForm = () => {
         : fieldErrors.businessName ? 'registration-business-name'
           : fieldErrors.businessCountryCode ? 'registration-business-country'
             : fieldErrors.baseCurrencyCode ? 'registration-base-currency'
-              : fieldErrors.consent ? 'registration-consent'
-                : null
+              : fieldErrors.taxJurisdictionCode ? 'registration-tax-jurisdiction'
+                : fieldErrors.consent ? 'registration-consent'
+                  : null
   if (firstInvalid) nextTick(() => focusInput(firstInvalid))
   return !firstInvalid
 }
@@ -575,6 +629,7 @@ watch(phoneNumber, (value) => {
 watch(businessName, () => { fieldErrors.businessName = ''; if (phase.value === 'form') persistDraft() })
 watch(businessCountryCode, () => { fieldErrors.businessCountryCode = ''; if (phase.value === 'form') persistDraft() })
 watch(baseCurrencyCode, () => { fieldErrors.baseCurrencyCode = ''; if (phase.value === 'form') persistDraft() })
+watch(taxJurisdictionCode, () => { fieldErrors.taxJurisdictionCode = ''; if (phase.value === 'form') persistDraft() })
 watch(consent, () => { fieldErrors.consent = ''; if (phase.value === 'form') persistDraft() })
 watch(verificationCode, (value) => { verificationCode.value = normalizeRegistrationPhone(value).slice(0, 6); error.value = '' })
 
@@ -589,6 +644,7 @@ onMounted(async () => {
     businessName.value = stored.businessName
     businessCountryCode.value = stored.businessCountryCode
     baseCurrencyCode.value = stored.baseCurrencyCode
+    taxJurisdictionCode.value = stored.taxJurisdictionCode || ''
     consent.value = stored.consent
     phase.value = stored.phase
     sentAt.value = stored.sentAt
@@ -601,11 +657,17 @@ onMounted(async () => {
     const response = await $fetch<{
       catalog: RegistrationCatalogOption[]
       phone_countries: PhoneCountryOption[]
+      tax_jurisdictions?: Record<string, unknown>
     }>('/api/auth/registration/options', {
       credentials: 'include',
     })
     registrationCatalog.value = response.catalog
     phoneCountries.value = response.phone_countries
+    const mapped: Record<string, TaxJurisdictionOption[]> = {}
+    for (const [country, rows] of Object.entries(response.tax_jurisdictions || {})) {
+      mapped[country.toUpperCase()] = normalizeJurisdictionOptions(rows)
+    }
+    taxJurisdictionsByCountry.value = mapped
     const storedPhoneCountry = phoneCountries.value.find(option =>
       option.country_code === phoneCountryIso.value
       && String(option.calling_code) === phoneCountryCode.value,
@@ -619,8 +681,13 @@ onMounted(async () => {
     if (!registrationCatalog.value.some(option => option.country_code === businessCountryCode.value)) {
       businessCountryCode.value = ''
       baseCurrencyCode.value = ''
+      taxJurisdictionCode.value = ''
     } else if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
       baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
+    }
+    if (!needsJurisdiction.value
+      || !jurisdictionOptions.value.some(option => option.code === taxJurisdictionCode.value)) {
+      if (!needsJurisdiction.value) taxJurisdictionCode.value = ''
     }
   } catch {
     error.value = t('auth.registrationSendError')
