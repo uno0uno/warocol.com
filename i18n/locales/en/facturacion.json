@@ -172,7 +172,16 @@
       "incAddedHint": "The 8% is added on top. Example: $10,000 base → $10,800 charged",
       "ivaIncludedHint": "The 19% is already included in the price. Example: $11,900 → $10,000 base + $1,900 VAT",
       "ivaAddedHint": "The 19% is added on top. Example: $10,000 base → $11,900 charged",
-      "save": "Save configuration"
+      "save": "Save configuration",
+      "commercialBody": "Configure sales tax for your country (WARO commercial mode). Load a wave-1 country preset and optionally override the rate.",
+      "wave1Preset": "Country preset (wave 1)",
+      "wave1PresetPlaceholder": "Choose a country…",
+      "wave1PresetHint": "Selecting a country loads rate and label. Save to apply to POS and menu. Server packs arrive in a later delivery.",
+      "lineLabel": "Tax name",
+      "ratePercent": "Rate (%)",
+      "howCommercial": "How to apply the tax",
+      "commercialIncludedHint": "The rate is already included in the sale price.",
+      "commercialAddedHint": "The rate is added on top of the base price."
     },
     "provider": {
       "title": "Electronic invoicing provider",

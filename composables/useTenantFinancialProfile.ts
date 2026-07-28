@@ -176,6 +176,7 @@ export const useTenantFinancialProfile = () => {
         cache.invalidateQueries({ key: ['tenant', 'financial-profile'] }),
         cache.invalidateQueries({ key: ['tenant', 'business-profile'] }),
         cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] }),
+        cache.invalidateQueries({ key: ['tenant', 'tax-config'] }),
       ])
     },
   })

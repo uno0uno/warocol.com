@@ -25,6 +25,7 @@ const {
   isFiscalIntegrated,
   isMatiasDian,
   isWaroCommercial,
+  profile: financialProfile,
   isLoading: isFinancialProfileLoading,
 } = useTenantFinancialProfile()
 
@@ -228,6 +229,56 @@ const taxForm = reactive({
 })
 const isSavingTax = ref(false)
 
+const {
+  WAVE1_COUNTRY_CODES,
+  primaryTaxLine,
+  wave1PresetForCountry,
+} = useTenantTaxProfile()
+
+const showCommercialTaxUi = computed(() => isWaroCommercial.value)
+
+const commercialPresetCountry = ref('')
+const commercialLine = reactive({
+  key: 'standard',
+  label: '',
+  ratePct: 0,
+  included_in_price: false,
+  gl_role: 'iva',
+})
+
+const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
+  const line = primaryTaxLine(cfg)
+  if (!line) {
+    commercialLine.key = 'standard'
+    commercialLine.label = ''
+    commercialLine.ratePct = 0
+    commercialLine.included_in_price = false
+    commercialLine.gl_role = 'iva'
+    return
+  }
+  commercialLine.key = line.key
+  commercialLine.label = line.label
+  commercialLine.ratePct = Math.round(line.rate * 10000) / 100
+  commercialLine.included_in_price = line.included_in_price
+  commercialLine.gl_role = line.gl_role || 'iva'
+}
+
+const applyWave1Preset = (countryCode: string) => {
+  const preset = wave1PresetForCountry(countryCode)
+  if (!preset) return
+  commercialPresetCountry.value = countryCode.toUpperCase()
+  const line = preset.lines[0]
+  commercialLine.key = line.key
+  commercialLine.label = line.label
+  commercialLine.ratePct = Math.round(line.rate * 10000) / 100
+  commercialLine.included_in_price = line.included_in_price
+  commercialLine.gl_role = line.gl_role
+}
+
+const onCommercialPresetChange = () => {
+  if (commercialPresetCountry.value) applyWave1Preset(commercialPresetCountry.value)
+}
+
 watch(taxConfig, (cfg) => {
   if (!cfg) return
   taxForm.inc_applicable = cfg.inc_applicable
@@ -235,7 +286,20 @@ watch(taxConfig, (cfg) => {
   taxForm.iva_applicable = cfg.iva_applicable
   taxForm.iva_included_in_price = cfg.iva_included_in_price
   taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
+  syncCommercialFromConfig(cfg)
 }, { immediate: true })
+
+watch(
+  () => financialProfile.value?.country_code,
+  (code) => {
+    if (!showCommercialTaxUi.value || !code) return
+    if (commercialLine.label) return
+    if (WAVE1_COUNTRY_CODES.includes(code.toUpperCase())) {
+      applyWave1Preset(code)
+    }
+  },
+  { immediate: true },
+)
 
 watch(() => taxForm.inc_applicable, (val) => { if (val) taxForm.iva_applicable = false })
 watch(() => taxForm.iva_applicable, (val) => { if (val) taxForm.inc_applicable = false })
@@ -243,8 +307,38 @@ watch(() => taxForm.iva_applicable, (val) => { if (val) taxForm.inc_applicable =
 const saveTaxConfig = async () => {
   isSavingTax.value = true
   try {
-    applySalesTaxProfile()
-    await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
+    if (showCommercialTaxUi.value) {
+      const rate = Math.max(0, Number(commercialLine.ratePct) || 0) / 100
+      const label = commercialLine.label.trim()
+        || `${commercialLine.key.toUpperCase()} ${commercialLine.ratePct}%`
+      const tax_lines = [{
+        key: commercialLine.key || 'standard',
+        label,
+        rate,
+        included_in_price: commercialLine.included_in_price,
+        gl_role: commercialLine.gl_role || 'iva',
+      }]
+      const category_map = {
+        standard: tax_lines[0].key,
+        liquor: tax_lines[0].key,
+        exempt: null,
+      }
+      await $fetch('/api/api/tenant/tax-config', {
+        method: 'PUT',
+        body: {
+          inc_applicable: false,
+          inc_included_in_price: true,
+          iva_applicable: false,
+          iva_included_in_price: false,
+          liquor_tax_applicable: false,
+          tax_lines,
+          category_map,
+        },
+      })
+    } else {
+      applySalesTaxProfile()
+      await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
+    }
     await refreshTaxConfig()
     invalidateReadiness()
     toast.success(t('facturacion.toasts.taxSaved'), { title: t('facturacion.common.saved') })
@@ -1067,10 +1161,88 @@ const taxLevels = [
         {{ t('facturacion.tax.title') }}
       </h3>
       <p class="text-xs text-text-secondary mb-4">
-        {{ t('facturacion.tax.body') }}
+        {{ showCommercialTaxUi ? t('facturacion.tax.commercialBody') : t('facturacion.tax.body') }}
       </p>
 
-      <div class="space-y-5">
+      <!-- Commercial / non-DIAN: tax_lines preset + rate override -->
+      <div v-if="showCommercialTaxUi" class="space-y-5">
+        <div class="space-y-2">
+          <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
+            {{ t('facturacion.tax.wave1Preset') }}
+          </label>
+          <select
+            id="wave1-tax-preset"
+            v-model="commercialPresetCountry"
+            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+            @change="onCommercialPresetChange"
+          >
+            <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
+            <option v-for="code in WAVE1_COUNTRY_CODES" :key="code" :value="code">
+              {{ code }} — {{ wave1PresetForCountry(code)?.lines[0]?.label }}
+            </option>
+          </select>
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
+        </div>
+
+        <div class="space-y-2">
+          <label for="commercial-tax-label" class="text-sm font-medium text-text-primary">
+            {{ t('facturacion.tax.lineLabel') }}
+          </label>
+          <input
+            id="commercial-tax-label"
+            v-model="commercialLine.label"
+            type="text"
+            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+          >
+        </div>
+
+        <div class="space-y-2">
+          <label for="commercial-tax-rate" class="text-sm font-medium text-text-primary">
+            {{ t('facturacion.tax.ratePercent') }}
+          </label>
+          <input
+            id="commercial-tax-rate"
+            v-model.number="commercialLine.ratePct"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+          >
+        </div>
+
+        <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
+          <button
+            type="button"
+            @click="commercialLine.included_in_price = true"
+            :class="[
+              'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+              commercialLine.included_in_price
+                ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+            ]"
+          >
+            <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
+            <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
+          </button>
+          <button
+            type="button"
+            @click="commercialLine.included_in_price = false"
+            :class="[
+              'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+              !commercialLine.included_in_price
+                ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+            ]"
+          >
+            <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
+            <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CO fiscal-integrated: INC / IVA / liquor -->
+      <div v-else class="space-y-5">
 
         <!-- INC -->
         <!-- tax toggles (i18n chrome) -->

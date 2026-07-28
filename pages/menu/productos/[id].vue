@@ -284,6 +284,7 @@
           <UiFormSection v-if="hasTaxes" :title="t('menu.productos.taxCategory')">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" :aria-label="t('menu.productos.taxCategory')">
               <button
+                v-if="taxCategories.includes('standard')"
                 type="button"
                 @click="form.tax_category = 'standard'"
                 :class="[
@@ -294,9 +295,10 @@
                 ]"
               >
                 <span class="text-sm font-semibold">{{ t('menu.productos.foodBeverage') }}</span>
-                <span class="text-xs leading-snug">{{ t('menu.productos.incVatRates') }}</span>
+                <span class="text-xs leading-snug">{{ standardTaxHint }}</span>
               </button>
               <button
+                v-if="taxCategories.includes('liquor')"
                 type="button"
                 @click="form.tax_category = 'liquor'"
                 :class="[
@@ -307,9 +309,10 @@
                 ]"
               >
                 <span class="text-sm font-semibold">{{ t('menu.productos.takeawayLiquor') }}</span>
-                <span class="text-xs leading-snug">{{ t('menu.productos.liquorVat') }}</span>
+                <span class="text-xs leading-snug">{{ liquorTaxHint }}</span>
               </button>
               <button
+                v-if="taxCategories.includes('exempt')"
                 type="button"
                 @click="form.tax_category = 'exempt'"
                 :class="[
@@ -944,9 +947,22 @@ const { data: taxConfigData } = useQuery({
   staleTime: 30_000,
 })
 const taxConfig = computed(() => taxConfigData.value?.data ?? null)
-const hasTaxes = computed(() =>
-  !!(taxConfig.value?.inc_applicable || taxConfig.value?.iva_applicable || taxConfig.value?.liquor_tax_applicable)
-)
+const { taxConfigHasTaxes, taxCategoryOptions, primaryTaxLine } = useTenantTaxProfile()
+const hasTaxes = computed(() => taxConfigHasTaxes(taxConfig.value))
+const taxCategories = computed(() => taxCategoryOptions(taxConfig.value))
+const standardTaxHint = computed(() => {
+  const line = primaryTaxLine(taxConfig.value)
+  if (line?.label) return line.label
+  return t('menu.productos.incVatRates')
+})
+const liquorTaxHint = computed(() => {
+  const map = taxConfig.value?.category_map
+  const liquorKey = map?.liquor
+  const lines = Array.isArray(taxConfig.value?.tax_lines) ? taxConfig.value.tax_lines : []
+  const line = liquorKey ? lines.find((l: any) => l.key === liquorKey) : null
+  if (line?.label) return line.label
+  return t('menu.productos.liquorVat')
+})
 
 // Get product ID from route
 const productId = route.params.id as string
