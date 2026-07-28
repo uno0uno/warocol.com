@@ -393,7 +393,11 @@ watch(
     await loadJurisdictionOptions(code)
     if (needsJurisdictionCountry.value) {
       const stored = storedJurisdictionCode.value || commercialJurisdictionCode.value
-      if (stored) applyJurisdictionOption(stored)
+      if (stored) {
+        commercialJurisdictionCode.value = stored
+        // Do not clobber a saved rate override; only seed empty commercial line.
+        if (!commercialLine.label) applyJurisdictionOption(stored)
+      }
       return
     }
     if (WAVE1_COUNTRY_CODES.includes(code)) {

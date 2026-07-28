@@ -778,7 +778,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { resolveTimezonePrefill } from '~/utils/bogotaDate'
+import { DEFAULT_TENANT_TIMEZONE, resolveTimezonePrefill } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -1139,6 +1139,18 @@ const enterEditMode = () => {
   syncCitySearchTerm()
   isEditMode.value = true
 }
+
+watch(
+  () => financialProfile.value?.country_code,
+  (countryCode) => {
+    if (!isEditMode.value || !countryCode) return
+    const bp = businessProfile.value
+    editForm.timezone = resolveTimezonePrefill({
+      storedTimezone: bp?.timezone ?? editForm.timezone,
+      countryCode,
+    })
+  },
+)
 
 const cancelEdit = () => {
   isEditMode.value = false
