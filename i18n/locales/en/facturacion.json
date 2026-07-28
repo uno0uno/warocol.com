@@ -181,7 +181,8 @@
       "ratePercent": "Rate (%)",
       "howCommercial": "How to apply the tax",
       "commercialIncludedHint": "The rate is already included in the sale price.",
-      "commercialAddedHint": "The rate is added on top of the base price."
+      "commercialAddedHint": "The rate is added on top of the base price.",
+      "commercialSaveInvalid": "Choose a preset or enter a name and a rate greater than 0 before saving."
     },
     "provider": {
       "title": "Electronic invoicing provider",

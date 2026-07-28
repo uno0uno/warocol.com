@@ -261,6 +261,20 @@ const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
   commercialLine.ratePct = Math.round(line.rate * 10000) / 100
   commercialLine.included_in_price = line.included_in_price
   commercialLine.gl_role = line.gl_role || 'iva'
+  const profileCountry = financialProfile.value?.country_code?.toUpperCase() || ''
+  if (profileCountry && WAVE1_COUNTRY_CODES.includes(profileCountry)) {
+    const preset = wave1PresetForCountry(profileCountry)
+    if (preset?.lines[0]?.key === line.key) {
+      commercialPresetCountry.value = profileCountry
+      return
+    }
+  }
+  const matched = WAVE1_COUNTRY_CODES.find((code) => {
+    const preset = wave1PresetForCountry(code)
+    return preset?.lines[0]?.key === line.key
+      && Math.abs((preset?.lines[0]?.rate || 0) - line.rate) < 1e-9
+  })
+  if (matched) commercialPresetCountry.value = matched
 }
 
 const applyWave1Preset = (countryCode: string) => {
@@ -308,9 +322,13 @@ const saveTaxConfig = async () => {
   isSavingTax.value = true
   try {
     if (showCommercialTaxUi.value) {
-      const rate = Math.max(0, Number(commercialLine.ratePct) || 0) / 100
+      const ratePct = Number(commercialLine.ratePct) || 0
+      if (ratePct <= 0 || !commercialLine.label.trim()) {
+        toast.error(t('facturacion.tax.commercialSaveInvalid'), { title: t('facturacion.common.error') })
+        return
+      }
+      const rate = Math.max(0, ratePct) / 100
       const label = commercialLine.label.trim()
-        || `${commercialLine.key.toUpperCase()} ${commercialLine.ratePct}%`
       const tax_lines = [{
         key: commercialLine.key || 'standard',
         label,

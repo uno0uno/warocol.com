@@ -181,7 +181,8 @@
       "ratePercent": "Tasa (%)",
       "howCommercial": "Cómo aplicar el impuesto",
       "commercialIncludedHint": "La tasa ya está dentro del precio de venta.",
-      "commercialAddedHint": "La tasa se suma al precio base."
+      "commercialAddedHint": "La tasa se suma al precio base.",
+      "commercialSaveInvalid": "Elige un preset o ingresa un nombre y una tasa mayor que 0 antes de guardar."
     },
     "provider": {
       "title": "Proveedor de facturación electrónica",

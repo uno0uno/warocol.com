@@ -12,6 +12,12 @@ describe('useTenantTaxProfile', () => {
     expect(taxConfigHasTaxes({ iva_applicable: false, liquor_tax_applicable: false })).toBe(false)
   })
 
+  it('ignores zero-rate tax_lines for hasTaxes', () => {
+    expect(taxConfigHasTaxes({
+      tax_lines: [{ key: 'standard', label: '', rate: 0, included_in_price: false, gl_role: 'iva' }],
+    })).toBe(false)
+  })
+
   it('detects commercial tax_lines', () => {
     expect(taxConfigHasTaxes({
       tax_lines: [{ key: 'gst', label: 'GST 10%', rate: 0.1, included_in_price: true, gl_role: 'iva' }],

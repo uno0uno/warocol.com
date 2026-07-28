@@ -88,7 +88,7 @@ export function normalizeCategoryMap(raw: unknown): Record<string, string | null
 export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefined): boolean {
   if (!cfg) return false
   if (cfg.inc_applicable || cfg.iva_applicable || cfg.liquor_tax_applicable) return true
-  return normalizeTaxLines(cfg.tax_lines).length > 0
+  return normalizeTaxLines(cfg.tax_lines).some(line => line.rate > 0)
 }
 
 export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {
