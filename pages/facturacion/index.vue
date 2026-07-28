@@ -233,6 +233,7 @@ const {
   COMMERCIAL_COUNTRY_CODES,
   primaryTaxLine,
   commercialPresetForCountry,
+  buildCommercialTaxSavePayload,
   countryNeedsJurisdiction,
   shouldShowWave1CountryPicker,
   shouldShowJurisdictionPicker,
@@ -442,18 +443,17 @@ const saveTaxConfig = async () => {
       }
       const rate = Math.max(0, ratePct) / 100
       const label = commercialLine.label.trim()
-      const tax_lines = [{
-        key: commercialLine.key || 'standard',
-        label,
-        rate,
-        included_in_price: commercialLine.included_in_price,
-        gl_role: commercialLine.gl_role || 'iva',
-      }]
-      const category_map = {
-        standard: tax_lines[0].key,
-        liquor: tax_lines[0].key,
-        exempt: null,
-      }
+      const { tax_lines, category_map } = buildCommercialTaxSavePayload({
+        primary: {
+          key: commercialLine.key || 'standard',
+          label,
+          rate,
+          included_in_price: commercialLine.included_in_price,
+          gl_role: commercialLine.gl_role || 'iva',
+        },
+        existingCfg: taxConfig.value,
+        countryCode: profileCountryCode.value || commercialPresetCountry.value,
+      })
       await $fetch('/api/api/tenant/tax-config', {
         method: 'PUT',
         body: {

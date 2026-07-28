@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCommercialTaxSavePayload,
   commercialPresetForCountry,
   countryNeedsJurisdiction,
   primaryTaxLine,
@@ -108,5 +109,46 @@ describe('useTenantTaxProfile', () => {
       profileCountryCode: 'PA',
       taxJurisdictionCode: null,
     })).toBe(false)
+  })
+
+  it('commercial save keeps DE multi-rate liquor line when primary rate changes', () => {
+    const payload = buildCommercialTaxSavePayload({
+      primary: {
+        key: 'mwst_reduced',
+        label: 'MwSt 7%',
+        rate: 0.08,
+        included_in_price: false,
+        gl_role: 'iva',
+      },
+      existingCfg: {
+        tax_lines: [
+          { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+          { key: 'mwst_standard', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+        ],
+        category_map: { standard: 'mwst_reduced', liquor: 'mwst_standard', exempt: null },
+      },
+      countryCode: 'DE',
+    })
+    expect(payload.tax_lines).toHaveLength(2)
+    expect(payload.tax_lines.find(l => l.key === 'mwst_reduced')?.rate).toBe(0.08)
+    expect(payload.tax_lines.find(l => l.key === 'mwst_standard')?.rate).toBe(0.19)
+    expect(payload.category_map.liquor).toBe('mwst_standard')
+    expect(payload.category_map.standard).toBe('mwst_reduced')
+  })
+
+  it('commercial save for MX stays single-rate', () => {
+    const payload = buildCommercialTaxSavePayload({
+      primary: {
+        key: 'iva',
+        label: 'IVA 16%',
+        rate: 0.16,
+        included_in_price: false,
+        gl_role: 'iva',
+      },
+      existingCfg: null,
+      countryCode: 'MX',
+    })
+    expect(payload.tax_lines).toHaveLength(1)
+    expect(payload.category_map.liquor).toBe('iva')
   })
 })

@@ -208,6 +208,63 @@ export function commercialPresetForCountry(countryCode: string): CommercialTaxPr
   return COMMERCIAL_TAX_PRESETS[code] ?? null
 }
 
+/**
+ * Build tax_lines + category_map for Facturación commercial save.
+ * Upserts the edited primary line; preserves DE/NL sibling lines + liquor map.
+ */
+export function buildCommercialTaxSavePayload(options: {
+  primary: TaxLineDraft
+  existingCfg?: Record<string, unknown> | null
+  countryCode?: string | null
+}): { tax_lines: TaxLineDraft[]; category_map: Record<string, string | null> } {
+  const primaryKey = options.primary.key || 'standard'
+  const primaryLine: TaxLineDraft = {
+    key: primaryKey,
+    label: options.primary.label,
+    rate: options.primary.rate,
+    included_in_price: options.primary.included_in_price,
+    gl_role: options.primary.gl_role || 'iva',
+  }
+
+  const existingLines = normalizeTaxLines(options.existingCfg?.tax_lines)
+  const existingMap = normalizeCategoryMap(options.existingCfg?.category_map)
+  const preset = commercialPresetForCountry(options.countryCode || '')
+  const isMultiRate = existingLines.length > 1
+    || Boolean(existingMap?.liquor && existingMap.liquor !== existingMap.standard)
+    || Boolean(preset && preset.lines.length > 1)
+
+  if (!isMultiRate) {
+    return {
+      tax_lines: [primaryLine],
+      category_map: {
+        standard: primaryKey,
+        liquor: primaryKey,
+        exempt: null,
+      },
+    }
+  }
+
+  const baseLines = existingLines.length > 1 ? existingLines : (preset?.lines ?? [primaryLine])
+  let found = false
+  const tax_lines = baseLines.map((line) => {
+    if (line.key === primaryKey) {
+      found = true
+      return { ...primaryLine }
+    }
+    return { ...line }
+  })
+  if (!found) tax_lines.unshift(primaryLine)
+
+  return {
+    tax_lines,
+    category_map: {
+      standard: existingMap?.standard || preset?.category_map.standard || primaryKey,
+      liquor: existingMap?.liquor || preset?.category_map.liquor || primaryKey,
+      exempt: existingMap?.exempt ?? preset?.category_map.exempt ?? null,
+    },
+  }
+}
+
 /** Hide Facturación commercial country dropdown when profile country is already known. */
 export function shouldShowWave1CountryPicker(options: {
   isCommercial: boolean
@@ -269,5 +326,6 @@ export function useTenantTaxProfile() {
     taxCategoryOptions,
     wave1PresetForCountry,
     commercialPresetForCountry,
+    buildCommercialTaxSavePayload,
   }
 }
