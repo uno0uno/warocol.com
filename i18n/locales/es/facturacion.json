@@ -172,7 +172,17 @@
       "incAddedHint": "El 8% se agrega encima. Ej: $10.000 base → cobro $10.800",
       "ivaIncludedHint": "El 19% ya está dentro del precio. Ej: $11.900 → base $10.000 + IVA $1.900",
       "ivaAddedHint": "El 19% se agrega encima. Ej: $10.000 base → cobro $11.900",
-      "save": "Guardar configuración"
+      "save": "Guardar configuración",
+      "commercialBody": "Configura el impuesto de ventas del país (modo comercial WARO). Puedes cargar un preset de la ola 1 y ajustar el porcentaje.",
+      "wave1Preset": "Preset por país (ola 1)",
+      "wave1PresetPlaceholder": "Elegir país…",
+      "wave1PresetHint": "Al elegir un país se cargan tasa y etiqueta. Guarda para aplicarlas a POS y menú. Los packs de servidor llegan en una entrega posterior.",
+      "lineLabel": "Nombre del impuesto",
+      "ratePercent": "Tasa (%)",
+      "howCommercial": "Cómo aplicar el impuesto",
+      "commercialIncludedHint": "La tasa ya está dentro del precio de venta.",
+      "commercialAddedHint": "La tasa se suma al precio base.",
+      "commercialSaveInvalid": "Elige un preset o ingresa un nombre y una tasa mayor que 0 antes de guardar."
     },
     "provider": {
       "title": "Proveedor de facturación electrónica",
