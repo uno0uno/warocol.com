@@ -687,7 +687,7 @@ onMounted(async () => {
     }
     if (!needsJurisdiction.value
       || !jurisdictionOptions.value.some(option => option.code === taxJurisdictionCode.value)) {
-      if (!needsJurisdiction.value) taxJurisdictionCode.value = ''
+      taxJurisdictionCode.value = ''
     }
   } catch {
     error.value = t('auth.registrationSendError')
