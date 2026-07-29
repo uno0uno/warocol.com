@@ -22,6 +22,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   updated: [table: Record<string, unknown>]
+  'quota-blocked': []
 }>()
 
 const toast = useToast()
@@ -57,7 +58,13 @@ const qrErrorMessage = (err: any, fallback: string) => {
 }
 
 const showQuotaBlocked = () => {
-  toast.warning(quotaMessage.value, { title: 'Cupo de QR agotado' })
+  emit('quota-blocked')
+}
+
+const onActivationToggleClick = (e: Event) => {
+  if (!isActivationBlocked.value) return
+  e.preventDefault()
+  showQuotaBlocked()
 }
 
 const toggleQr = async () => {
@@ -81,6 +88,10 @@ const toggleQr = async () => {
       { title: newEnabled ? 'Activado' : 'Desactivado' },
     )
   } catch (err: any) {
+    if (isQuotaExceededError(err)) {
+      showQuotaBlocked()
+      return
+    }
     toast.error(qrErrorMessage(err, 'Error al cambiar el QR'), { title: 'Error' })
   } finally {
     isToggling.value = false
@@ -125,15 +136,15 @@ const regenerateToken = async () => {
       </div>
       <label
         class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-        :class="(isToggling || isActivationBlocked) ? 'opacity-50' : ''"
+        :class="isToggling ? 'opacity-50' : ''"
         :title="isActivationBlocked ? quotaMessage : undefined"
-        @click="isActivationBlocked && showQuotaBlocked()"
+        @click="onActivationToggleClick"
       >
         <input
           type="checkbox"
           class="sr-only peer"
           :checked="!!table.qr_enabled"
-          :disabled="isToggling || isActivationBlocked"
+          :disabled="isToggling"
           @change="toggleQr"
         >
         <div
@@ -144,7 +155,11 @@ const regenerateToken = async () => {
 
     <p
       v-if="isActivationBlocked"
-      class="text-xs text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2"
+      class="text-xs text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2 cursor-pointer"
+      role="button"
+      tabindex="0"
+      @click="showQuotaBlocked"
+      @keydown.enter.prevent="showQuotaBlocked"
     >
       {{ quotaMessage }}
     </p>
@@ -217,15 +232,15 @@ const regenerateToken = async () => {
   <div v-else class="flex flex-wrap items-center gap-1.5">
     <label
       class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-      :class="(isToggling || isActivationBlocked) ? 'opacity-50' : ''"
+      :class="isToggling ? 'opacity-50' : ''"
       :title="isActivationBlocked ? quotaMessage : (table.qr_enabled ? 'Desactivar QR' : 'Activar QR')"
-      @click="isActivationBlocked && showQuotaBlocked()"
+      @click="onActivationToggleClick"
     >
       <input
         type="checkbox"
         class="sr-only peer"
         :checked="!!table.qr_enabled"
-        :disabled="isToggling || isActivationBlocked"
+        :disabled="isToggling"
         @change="toggleQr"
       >
       <div

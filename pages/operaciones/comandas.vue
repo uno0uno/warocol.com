@@ -147,21 +147,13 @@
         <button
           type="button"
           @click="openCreateStation"
-          :disabled="isActiveKitchenQuotaBlocked"
-          :title="isActiveKitchenQuotaBlocked ? activeKitchenQuotaMessage : t('operaciones.comandas.createStation')"
+          :title="t('operaciones.comandas.createStation')"
           class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors min-h-[36px]"
-          :class="isActiveKitchenQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-action-primary-bg' : ''"
         >
           <PlusIcon class="w-3.5 h-3.5" />
           {{ t('operaciones.comandas.newStation') }}
         </button>
       </div>
-      <p
-        v-if="isActiveKitchenQuotaBlocked"
-        class="mb-4 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
-      >
-        {{ activeKitchenQuotaMessage }}
-      </p>
 
       <UiResponsiveDataView
         :data="stations"
@@ -518,6 +510,16 @@
       @submit="handleSaveStation"
     />
   </div>
+
+  <UiConfirmActionModal
+    v-model="quotaLimitModalOpen"
+    :title="t('billing.upgrade.quotaBlocked')"
+    :message="quotaLimitModalMessage"
+    :confirm-label="t('nav.miPlan')"
+    :cancel-label="t('billing.close')"
+    @confirm="goToBillingFromQuotaLimitModal"
+    @cancel="closeQuotaLimitModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -535,6 +537,7 @@ import {
   PencilSquareIcon,
 } from '@heroicons/vue/24/outline'
 import QRCode from 'qrcode'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 useHead({ title: () => t('operaciones.head.comandas') })
@@ -542,6 +545,14 @@ useHead({ title: () => t('operaciones.head.comandas') })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const { operationalQuotas, fetchBillingOverview } = useBilling()
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  openQuotaLimitModalWithMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('active_kitchens')
 
 // ─── Business profile (operaciones audience aggregator — gated under OPERACIONES) ───
 const cache = useQueryCache()
@@ -628,7 +639,6 @@ const { data: stationsData, asyncStatus: stationsAsyncStatus, refetch: refetchSt
 })
 const stations = computed(() => stationsData.value?.data ?? [])
 const activeKitchenQuota = computed(() => operationalQuotas.value.active_kitchens)
-const isActiveKitchenQuotaBlocked = computed(() => activeKitchenQuota.value.blocked)
 const activeKitchenQuotaMessage = computed(() => {
   const quota = activeKitchenQuota.value
   const metric = quota.metric
@@ -921,18 +931,11 @@ const isConfirmingDeactivate = ref(false)
 
 const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
 
-const showActiveKitchenQuotaBlocked = () => {
-  toast.warning(activeKitchenQuotaMessage.value, { title: t('operaciones.comandas.quotaTitle') })
-}
-
 const openCreateStation = () => {
-  if (isActiveKitchenQuotaBlocked.value) {
-    showActiveKitchenQuotaBlocked()
-    return
-  }
-
-  editingStation.value = null
-  stationModalOpen.value = true
+  void handleCreateClick(() => {
+    editingStation.value = null
+    stationModalOpen.value = true
+  })
 }
 
 const isQuotaExceededError = (err: any) => {
@@ -967,9 +970,9 @@ const stationErrorMessage = (err: any, fallback: string) => {
 }
 
 const handleSaveStation = async (formData: any) => {
-  if (!editingStation.value && isActiveKitchenQuotaBlocked.value) {
-    showActiveKitchenQuotaBlocked()
-    return
+  if (!editingStation.value) {
+    const allowed = await handleCreateClick(() => {})
+    if (!allowed) return
   }
 
   isSavingStation.value = true
@@ -988,6 +991,10 @@ const handleSaveStation = async (formData: any) => {
       await refreshStationsAndBilling()
     }
   } catch (e: any) {
+    if (isQuotaExceededError(e)) {
+      openQuotaLimitModalWithMessage(quotaExceededMessageFromError(e))
+      return
+    }
     toast.error(stationErrorMessage(e, t('operaciones.comandas.stationSaveError')), { title: t('operaciones.comandas.error') })
   } finally {
     isSavingStation.value = false
@@ -997,10 +1004,8 @@ const handleSaveStation = async (formData: any) => {
 const handleToggleStation = async (station: any) => {
   if (togglingStationId.value === station.id) return
   if (!station.is_active) {
-    if (isActiveKitchenQuotaBlocked.value) {
-      showActiveKitchenQuotaBlocked()
-      return
-    }
+    const allowed = await handleCreateClick(() => {})
+    if (!allowed) return
 
     togglingStationId.value = station.id
     try {
@@ -1008,6 +1013,10 @@ const handleToggleStation = async (station: any) => {
       toast.success(t('operaciones.comandas.active'))
       await refreshStationsAndBilling()
     } catch (e: any) {
+      if (isQuotaExceededError(e)) {
+        openQuotaLimitModalWithMessage(quotaExceededMessageFromError(e))
+        return
+      }
       toast.error(stationErrorMessage(e, t('operaciones.comandas.stationActivateError')), { title: t('operaciones.comandas.error') })
     } finally {
       togglingStationId.value = null

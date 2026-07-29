@@ -7,6 +7,7 @@ import {
   areTableOrdersEqual,
   getTableOrderIds,
 } from '~/composables/useTableOrderDraft'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 
@@ -21,6 +22,21 @@ const {
   getOperationalQuota,
   fetchBillingOverview,
 } = useBilling()
+const {
+  quotaLimitModalOpen: tableQuotaModalOpen,
+  quotaLimitModalMessage: tableQuotaModalMessage,
+  openQuotaLimitModalWithMessage: openTableQuotaModal,
+  closeQuotaLimitModal: closeTableQuotaModal,
+  goToBillingFromQuotaLimitModal: goToBillingFromTableQuota,
+  handleCreateClick: handleTableCreateClick,
+} = useOperationalQuotaGate('active_tables_including_bar')
+const {
+  quotaLimitModalOpen: qrQuotaModalOpen,
+  quotaLimitModalMessage: qrQuotaModalMessage,
+  openQuotaLimitModalWithMessage: openQrQuotaModal,
+  closeQuotaLimitModal: closeQrQuotaModal,
+  goToBillingFromQuotaLimitModal: goToBillingFromQrQuota,
+} = useOperationalQuotaGate('active_qr_tables')
 
 // ── Data ───────────────────────────────────────────────────────────────────
 const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, error: tablesError, refetch } = useQuery({
@@ -128,8 +144,11 @@ const showPanel = ref(false)
 const panelTable = ref<any>(null)
 
 const openPanel = (table: any = null) => {
-  if (!table && isActiveTableQuotaBlocked.value) {
-    showActiveTableQuotaBlocked()
+  if (!table) {
+    void handleTableCreateClick(() => {
+      panelTable.value = null
+      showPanel.value = true
+    })
     return
   }
 
@@ -256,10 +275,9 @@ const activatingId = ref<string | null>(null)
 
 const activateTable = async (id: string) => {
   if (activatingId.value) return
-  if (isActiveTableQuotaBlocked.value) {
-    showActiveTableQuotaBlocked()
-    return
-  }
+
+  const allowed = await handleTableCreateClick(() => {})
+  if (!allowed) return
 
   activatingId.value = id
   try {
@@ -267,6 +285,10 @@ const activateTable = async (id: string) => {
     await refreshTablesAndBilling()
     toast.success(`${singular.value} activada`, { title: 'Activado' })
   } catch (err: any) {
+    if (isQuotaExceededError(err)) {
+      openTableQuotaModal(quotaExceededMessageFromError(err))
+      return
+    }
     toast.error(tableErrorMessage(err, `Error al activar la ${singularLower.value}`), { title: 'Error' })
   } finally {
     activatingId.value = null
@@ -335,10 +357,6 @@ const activeTableQuotaMessage = computed(() => {
   })
 })
 
-const showActiveTableQuotaBlocked = () => {
-  toast.warning(activeTableQuotaMessage.value, { title: t('operaciones.mesas.quotaFull') })
-}
-
 const activeQrQuota = computed(() => getOperationalQuota('active_qr_tables'))
 const isActiveQrQuotaBlocked = computed(() => activeQrQuota.value.blocked)
 const activeQrQuotaMessage = computed(() => {
@@ -354,6 +372,14 @@ const activeQrQuotaMessage = computed(() => {
     limit: metric.limit.toLocaleString(numberLocale),
   })
 })
+
+const onQrQuotaBlocked = (message?: string) => {
+  openQrQuotaModal(message || activeQrQuotaMessage.value)
+}
+
+const onCreateQuotaBlocked = (message?: string) => {
+  openTableQuotaModal(message || activeTableQuotaMessage.value)
+}
 
 const isQuotaExceededError = (err: any) => {
   const detail = err?.data?.detail
@@ -607,10 +633,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <template #trailing>
           <button
             type="button"
-            :disabled="isActiveTableQuotaBlocked"
-            :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : t('operaciones.mesas.newTable', { table: singularLower })"
+            :title="t('operaciones.mesas.newTable', { table: singularLower })"
             class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
-            :class="isActiveTableQuotaBlocked ? 'opacity-50 cursor-not-allowed hover:bg-primary' : ''"
             @click="openPanel(null)"
           >
             <span class="hidden sm:inline">{{ t('operaciones.mesas.newTable', { table: singularLower }) }}</span>
@@ -618,16 +642,6 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           </button>
         </template>
       </UiAdvancedFiltersBar>
-
-      <div
-        v-if="isActiveTableQuotaBlocked"
-        class="flex min-w-0 items-center gap-3 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2 text-xs text-state-warning-text"
-      >
-        <p class="min-w-0 flex-1 truncate" :title="activeTableQuotaMessage">{{ activeTableQuotaMessage }}</p>
-        <NuxtLink to="/gestion/billing/uso" class="inline-flex flex-shrink-0 font-semibold underline underline-offset-2">
-          {{ t('operaciones.mesas.viewPlan') }}
-        </NuxtLink>
-      </div>
 
       <section
         class="rounded-xl border border-data-table-border bg-data-table-container-bg shadow-sm overflow-hidden"
@@ -733,6 +747,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                     :qr-quota-blocked="isActiveQrQuotaBlocked"
                     :qr-quota-message="activeQrQuotaMessage"
                     @updated="onTableQrUpdated"
+                    @quota-blocked="onQrQuotaBlocked"
                   />
                 </div>
               </div>
@@ -767,6 +782,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                   :qr-quota-blocked="isActiveQrQuotaBlocked"
                   :qr-quota-message="activeQrQuotaMessage"
                   @updated="onTableQrUpdated"
+                  @quota-blocked="onQrQuotaBlocked"
                 />
               </div>
 
@@ -841,6 +857,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 :qr-quota-blocked="isActiveQrQuotaBlocked"
                 :qr-quota-message="activeQrQuotaMessage"
                 @updated="onTableQrUpdated"
+                @quota-blocked="onQrQuotaBlocked"
               />
             </div>
             <div class="flex items-center justify-end gap-1">
@@ -881,8 +898,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 <span class="text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-full bg-status-chip-bg text-status-chip-text border border-status-chip-border">Inactiva</span>
                 <button
                   :aria-label="`Activar ${item.name}`"
-                  :disabled="activatingId === item.id || isActiveTableQuotaBlocked"
-                  :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Activar ${item.name}`"
+                  :disabled="activatingId === item.id"
+                  :title="`Activar ${item.name}`"
                   class="flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors disabled:opacity-50"
                   @click="activateTable(item.id)"
                 >
@@ -919,8 +936,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <div class="flex items-center justify-end gap-2">
               <button
                 :aria-label="`Activar ${row.name}`"
-                :disabled="activatingId === row.id || isActiveTableQuotaBlocked"
-                :title="isActiveTableQuotaBlocked ? activeTableQuotaMessage : `Activar ${row.name}`"
+                :disabled="activatingId === row.id"
+                :title="`Activar ${row.name}`"
                 class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-state-success-text border border-state-success-border hover:bg-state-success-bg transition-colors focus:outline-none focus:ring-2 focus:ring-state-success-border disabled:opacity-50"
                 @click="activateTable(row.id)"
               >
@@ -950,6 +967,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       :qr-quota-message="activeQrQuotaMessage"
       @saved="onSaved"
       @qr-updated="onTableQrUpdated"
+      @quota-blocked="onCreateQuotaBlocked"
+      @qr-quota-blocked="onQrQuotaBlocked"
     />
 
     <!-- ══════ DEACTIVATE MODAL ══════ -->
@@ -1143,5 +1162,24 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         </div>
       </Transition>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="tableQuotaModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="tableQuotaModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromTableQuota"
+      @cancel="closeTableQuotaModal"
+    />
+    <UiConfirmActionModal
+      v-model="qrQuotaModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="qrQuotaModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQrQuota"
+      @cancel="closeQrQuotaModal"
+    />
   </div>
 </template>
