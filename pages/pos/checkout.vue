@@ -218,6 +218,8 @@ const splitPaymentsSnapshot = ref<ReceiptPaymentLine[]>([])
 // which is included in /api/pos/restaurant-context.
 const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
 const isReadinessLoading = computed(() => !settingsData.value)
+// DIAN chrome (CTA copy / print disclaimers) — capability gate, not invoicing_ready.
+const { isMatiasDian } = useTenantFinancialProfile()
 
 // Invoice state
 const invoiceLoading = ref(false)
@@ -4930,7 +4932,11 @@ onUnmounted(() => {
                 <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
-	                {{ (orderResult?.order_ids?.length ?? 0) > 1 ? t('pos.checkout.invoice.generateMultiple', { count: orderResult?.order_ids?.length }) : t('pos.checkout.invoice.generateDian') }}
+	                {{ (orderResult?.order_ids?.length ?? 0) > 1
+                  ? t('pos.checkout.invoice.generateMultiple', { count: orderResult?.order_ids?.length })
+                  : (isMatiasDian
+                    ? t('pos.checkout.invoice.generateDian')
+                    : t('pos.checkout.invoice.generateElectronic')) }}
               </button>
             </template>
             <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2 text-xs font-medium leading-snug text-state-warning-text">
@@ -5146,6 +5152,7 @@ onUnmounted(() => {
       v-if="orderResult"
       :fiscal-data="fiscalData"
       :platform-legal="platformLegal"
+      :matias-dian="isMatiasDian"
       :display-name="posCheckoutBusiness.display_name"
       :address="posCheckoutBusiness.address"
       :city="posCheckoutBusiness.city"
@@ -5340,9 +5347,17 @@ onUnmounted(() => {
     <div class="receipt-divider">================================</div>
     <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
     <div class="receipt-footer receipt-small" style="font-weight:bold;">{{ t('pos.receipt.prefacturaBanner') }}</div>
-    <div class="receipt-footer receipt-small">{{ t('pos.receipt.prefacturaNotFiscal') }}</div>
+    <div class="receipt-footer receipt-small">
+      {{ isMatiasDian
+        ? t('pos.receipt.prefacturaNotFiscal')
+        : t('pos.receipt.prefacturaNotFiscalNeutral') }}
+    </div>
     <!-- WARO = software/tecnología; emisor/vendedor = establecimiento (tenant) -->
-    <PosReceiptPlatformFooter document-kind="prefactura" :platform-legal="platformLegal" />
+    <PosReceiptPlatformFooter
+      document-kind="prefactura"
+      :platform-legal="platformLegal"
+      :matias-dian="isMatiasDian"
+    />
   </div>
 
   <!-- Hidden receipt for printing — only visible via @media print -->
@@ -5524,16 +5539,24 @@ onUnmounted(() => {
       >
 	      <div v-if="invoiceResult.cufe" class="receipt-row receipt-small">{{ t('pos.receipt.verifyDian') }}</div>
       <div class="receipt-divider">================================</div>
-      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" />
+      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" :matias-dian="true" />
     </template>
     <template v-else>
       <div class="receipt-divider receipt-small">--------------------------------</div>
 	      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleReceipt') }}</div>
-	      <div class="receipt-row receipt-small">{{ t('pos.receipt.notDianInvoice') }}</div>
+	      <div class="receipt-row receipt-small">
+        {{ isMatiasDian
+          ? t('pos.receipt.notDianInvoice')
+          : t('pos.receipt.notElectronicInvoice') }}
+      </div>
       <div v-if="receiptIssuerLabel" class="receipt-row receipt-small">
 	        {{ t('pos.receipt.seller', { label: receiptIssuerLabel }) }}
       </div>
-      <PosReceiptPlatformFooter document-kind="sale" :platform-legal="platformLegal" />
+      <PosReceiptPlatformFooter
+        document-kind="sale"
+        :platform-legal="platformLegal"
+        :matias-dian="isMatiasDian"
+      />
     </template>
   </div>
 

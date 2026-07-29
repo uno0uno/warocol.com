@@ -13,9 +13,12 @@ import {
 const props = withDefaults(defineProps<{
   documentKind?: 'prefactura' | 'sale' | 'fe'
   platformLegal?: PlatformLegalPrint | null
+  /** When true, show DIAN-specific footers (CO FE tenants). */
+  matiasDian?: boolean
 }>(), {
   documentKind: 'sale',
   platformLegal: null,
+  matiasDian: false,
 })
 
 const legal = computed(() => props.platformLegal ?? EMPTY_PLATFORM_LEGAL)
@@ -115,7 +118,9 @@ const facturadorNotIssuer = computed(() => {
       v-if="documentKind === 'prefactura'"
       class="receipt-row receipt-small"
     >
-      {{ t('pos.receipt.prefacturaEstablishment') }}
+      {{ matiasDian
+        ? t('pos.receipt.prefacturaEstablishment')
+        : t('pos.receipt.prefacturaEstablishmentNeutral') }}
     </div>
     <div
       v-else-if="documentKind === 'sale'"

@@ -24,6 +24,7 @@ const {
   receiptLogoUrl,
   settingsData,
 } = useReceiptPrintSettings()
+const { isMatiasDian } = useTenantFinancialProfile()
 const queryCache = useQueryCache()
 
 // Payment groups for label resolution and method buttons
@@ -1229,7 +1230,7 @@ onUnmounted(() => {
               </span>
               <div class="min-w-0">
                 <h2 class="text-sm font-bold text-text-primary truncate">{{ t('ventas.detail.electronicInvoice') }}</h2>
-                <p class="text-xs text-text-tertiary mt-0.5">{{ t('ventas.detail.dian') }}</p>
+                <p v-if="isMatiasDian" class="text-xs text-text-tertiary mt-0.5">{{ t('ventas.detail.dian') }}</p>
               </div>
             </div>
 
@@ -1261,7 +1262,9 @@ onUnmounted(() => {
             class="border-b border-border bg-surface-secondary/40 px-5 py-4"
           >
             <p class="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
-              {{ t('ventas.detail.fiscalAcquirerDian') }}
+              {{ isMatiasDian
+                ? t('ventas.detail.fiscalAcquirerDian')
+                : t('ventas.detail.fiscalAcquirer') }}
             </p>
             <p v-if="saleCustomerIdentity.acquirer.name" class="mt-1 text-base font-bold text-text-primary">
               {{ saleCustomerIdentity.acquirer.name }}
@@ -1455,7 +1458,11 @@ onUnmounted(() => {
               </span>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-text-primary leading-tight">{{ t('ventas.detail.noInvoiceTitle') }}</p>
-                <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.noInvoiceBody') }}</p>
+                <p class="text-xs text-text-secondary leading-snug">
+                  {{ isMatiasDian
+                    ? t('ventas.detail.noInvoiceBody')
+                    : t('ventas.detail.noInvoiceBodyNeutral') }}
+                </p>
               </div>
               <button @click="emitInvoice" :disabled="isEmittingInvoice"
                 class="ml-auto flex-shrink-0 min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
@@ -2164,6 +2171,7 @@ onUnmounted(() => {
       v-if="order"
       :fiscal-data="fiscalData"
       :platform-legal="platformLegal"
+      :matias-dian="isMatiasDian"
       :display-name="businessProfile?.display_name"
       :address="businessProfile?.address"
       :city="businessProfile?.city"
