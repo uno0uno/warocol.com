@@ -12,6 +12,7 @@ import {
   shouldShowWave1CountryPicker,
   taxCategoryOptions,
   taxConfigHasTaxes,
+  taxLineForCategory,
   validateCommercialMatrix,
   wave1PresetForCountry,
 } from './useTenantTaxProfile'
@@ -116,6 +117,28 @@ describe('useTenantTaxProfile', () => {
       category_map: { standard: 'iva', exempt: null },
     })
     expect(line?.key).toBe('iva')
+  })
+
+  it('taxLineForCategory resolves liquor from multi-line map (DE-style)', () => {
+    const cfg = {
+      tax_lines: [
+        { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+        { key: 'mwst_standard', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+      ],
+      category_map: { standard: 'mwst_reduced', liquor: 'mwst_standard', exempt: null },
+    }
+    expect(taxLineForCategory(cfg, 'standard')?.label).toBe('MwSt 7%')
+    expect(taxLineForCategory(cfg, 'liquor')?.label).toBe('MwSt 19%')
+    expect(taxLineForCategory(cfg, 'exempt')).toBeNull()
+  })
+
+  it('taxLineForCategory parses jsonb string lines + map for liquor hints', () => {
+    const cfg = {
+      tax_lines: '[{"key":"iva","label":"IVA 16%","rate":0.16,"included_in_price":false,"gl_role":"iva"},{"key":"liquor","label":"Liquor 8%","rate":0.08,"included_in_price":false,"gl_role":"iva"}]',
+      category_map: '{"standard":"iva","liquor":"liquor","exempt":null}',
+    }
+    expect(taxLineForCategory(cfg, 'liquor')?.label).toBe('Liquor 8%')
+    expect(primaryTaxLine(cfg)?.label).toBe('IVA 16%')
   })
 
   it('detects US/CA jurisdiction countries', () => {

@@ -58,17 +58,21 @@ Presiona **Guardar datos fiscales** para aplicar los cambios. Si cambias tipo de
 
 ## Impuestos aplicados a ventas
 
-Toggles por impuesto. Cada uno afecta el cálculo y desglose de impuestos en POS y facturas. No cambian por sí solos tu tipo de organización, tu régimen tributario ni tu obligación de facturar electrónicamente.
+En **Facturación → Impuestos aplicados a ventas** defines las **líneas de impuesto** (nombre, porcentaje y modo incluido/sumado) y qué **categoría de producto** usa cada línea. El Menú y el POS aplican automáticamente la línea mapeada según la categoría del producto (`Alimento/Bebida`, `Licor`, `Exento`).
+
+### Colombia
+
+Vista en forma de matriz fija ligada a columnas fiscales (INC, IVA, IVA licores): activas o no cada impuesto, eliges **Incluido** o **Sumado**, y puedes **editar la tasa** cuando tu contador lo indique. No migra a líneas comerciales genéricas: el motor CO sigue usando esas columnas.
 
 | Impuesto | Aplica a | Modo |
 |----------|----------|------|
-| **INC 8%** | Ventas que deben liquidar Impoconsumo | Incluido / Sumado |
-| **IVA 19%** | Ventas de negocios responsables de IVA | Incluido / Sumado |
-| **IVA Licores 5%** | Botellas de licor para llevar cuando corresponda | Siempre se suma |
+| **INC** (tasa editable) | Ventas que deben liquidar Impoconsumo | Incluido / Sumado |
+| **IVA** (tasa editable) | Ventas de negocios responsables de IVA | Incluido / Sumado |
+| **IVA Licores** (tasa editable) | Botellas de licor para llevar cuando corresponda | Siempre se suma |
 
 Presiona **Guardar configuración** después de cualquier cambio.
 
-> Cambiar de "incluido" a "sumado" (o viceversa), o activar un impuesto, afecta cómo se calcula y desglosa el precio final en el checkout y en la factura. Coordina con tu contador antes de modificarlo.
+> Cambiar de "incluido" a "sumado" (o viceversa), activar un impuesto o cambiar una tasa afecta cómo se calcula y desglosa el precio final en el checkout y en la factura. Coordina con tu contador antes de modificarlo.
 
 ### Cuándo dejar ventas sin IVA ni INC
 
@@ -80,11 +84,16 @@ Si el negocio es responsable de IVA o sus ventas deben liquidar Impoconsumo, no 
 
 ### Negocios fuera de Colombia (modo comercial)
 
-Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, Perú, México, Costa Rica, Argentina, España, Francia, Alemania, Países Bajos, Reino Unido, China, EE. UU., Canadá, etc.), el **país queda definido en el registro / perfil financiero** y no se vuelve a elegir en Facturación. En países con auto-seed comercial (olas 1 y 2), las líneas de impuesto se crean al registrar o al leer la configuración fiscal cuando aún no hay `tax_lines`.
+Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República Dominicana, Perú, México, Costa Rica, Argentina, España, Francia, Alemania, Países Bajos, Reino Unido, China, EE. UU., Canadá, etc.), el **país queda definido en el registro / perfil financiero** y no se vuelve a elegir en Facturación. En países con auto-seed comercial (olas 1 y 2), las líneas de impuesto se crean al registrar o al leer la configuración fiscal cuando aún no hay configuración guardada; el preset del país es solo el punto de partida y **no sobrescribe** ediciones del negocio.
 
-En **Facturación → Impuestos aplicados a ventas** puedes **activar o desactivar** el impuesto comercial. Apagarlo deja de aplicar impuesto en POS y menú, pero **conserva las tasas guardadas** para reactivarlas después. El preset del país es solo referencia: si el impuesto está desactivado, el banner del país **no** significa que la tasa esté activa. Con el impuesto activado puedes **ajustar el porcentaje** cuando tu contador lo indique.
+Con el impuesto comercial **activado** puedes:
 
-Para **Alemania y Países Bajos**, WARO usa dos tasas de referencia (reducida para comida / estándar para bebidas alcohólicas) vía la categoría fiscal del producto en el menú; en Facturación editas la tasa primaria (reducida).
+1. **Agregar, editar o quitar líneas** (nombre, % y modo incluido/sumado), dentro de los límites de la pantalla.
+2. **Mapear categorías de producto** — `standard` (alimento/bebida), `liquor` y `exento` — a una línea existente o a ninguna (exento).
+3. En el **Menú**, al crear o editar un producto, eliges la categoría; la etiqueta bajo cada opción muestra la línea mapeada (por ejemplo `MwSt 7%` / `MwSt 19%` en Alemania).
+4. En el **POS**, la venta aplica automáticamente la tasa y el modo de esa línea.
+
+Apagar el impuesto comercial deja de aplicarlo en POS y menú, pero **conserva las líneas guardadas** para reactivarlas después. El banner del país **no** significa que la tasa esté activa si el interruptor está apagado.
 
 Para **EE. UU. y Canadá**, si el estado o provincia ya está guardado, Facturación lo muestra como referencia y no te lo vuelve a pedir en cada visita (solo cuando el impuesto está activo). Los impuestos locales de ciudad o condado (meal tax, etc.) **no** están en esta versión: documenta el ajuste manual con tu contador si aplica.
 
