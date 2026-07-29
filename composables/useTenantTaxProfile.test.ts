@@ -21,6 +21,7 @@ import {
   taxLineForCategory,
   validateCommercialMatrix,
   wave1PresetForCountry,
+  additiveOrderTaxTotal,
 } from './useTenantTaxProfile'
 
 describe('useTenantTaxProfile', () => {
@@ -375,5 +376,33 @@ describe('useTenantTaxProfile', () => {
     expect(legacyTaxCategoryFromResolution(cfg, {
       tax_resolution: 'exempt',
     })).toBe('exempt')
+  })
+
+  it('additiveOrderTaxTotal includes exclusive MX IVA and skips included CO INC', () => {
+    const mx = {
+      tax_lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+    }
+    expect(additiveOrderTaxTotal(0, 371, mx)).toBe(371)
+    expect(additiveOrderTaxTotal(371, 0, mx)).toBe(371)
+
+    expect(additiveOrderTaxTotal(800, 0, {
+      inc_applicable: true,
+      inc_included_in_price: true,
+    })).toBe(0)
+    expect(additiveOrderTaxTotal(800, 1000, {
+      inc_applicable: true,
+      inc_included_in_price: true,
+      liquor_tax_applicable: true,
+    })).toBe(1000)
+  })
+
+  it('additiveOrderTaxTotal falls back to preview sum when tax_lines missing from context', () => {
+    // POS restaurant-context used to omit commercial tax_lines (MX trial).
+    expect(additiveOrderTaxTotal(0, 186, {
+      inc_applicable: false,
+      iva_applicable: false,
+      liquor_tax_applicable: false,
+    })).toBe(186)
   })
 })

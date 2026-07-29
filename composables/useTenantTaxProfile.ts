@@ -381,6 +381,45 @@ export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined):
   return taxLineForCategory(cfg, 'standard')
 }
 
+/**
+ * Tax dollars charged on top of product prices (mirrors API additive_order_tax_total).
+ * Included-in-price standard tax is extractive — omitted from amount due.
+ */
+export function additiveOrderTaxTotal(
+  standardTax: number,
+  liquorTax: number,
+  cfg: Record<string, unknown> | null | undefined,
+): number {
+  const std = Number(standardTax) || 0
+  const liq = Number(liquorTax) || 0
+  const stdLine = taxLineForCategory(cfg, 'standard')
+  const liqLine = taxLineForCategory(cfg, 'liquor')
+
+  let stdAdditive = false
+  if (stdLine) {
+    stdAdditive = !stdLine.included_in_price
+  } else if (cfg?.inc_applicable) {
+    stdAdditive = !Boolean(cfg.inc_included_in_price ?? true)
+  } else if (cfg?.iva_applicable) {
+    stdAdditive = !Boolean(cfg.iva_included_in_price ?? false)
+  }
+
+  let liqAdditive = false
+  if (liqLine) {
+    liqAdditive = !liqLine.included_in_price
+  } else if (cfg?.liquor_tax_applicable) {
+    liqAdditive = true
+  }
+
+  // restaurant-context historically omitted tax_lines; if we cannot classify but
+  // the preview already computed taxes, treat them as additive (MX / commercial).
+  if (!stdLine && !liqLine && !cfg?.inc_applicable && !cfg?.iva_applicable && !cfg?.liquor_tax_applicable) {
+    return std + liq
+  }
+
+  return (stdAdditive ? std : 0) + (liqAdditive ? liq : 0)
+}
+
 /** Product tax_category keys to show in Menú (shared POS + venta directa). */
 export function taxCategoryOptions(cfg: Record<string, unknown> | null | undefined): TaxCategoryKey[] {
   if (!taxConfigHasTaxes(cfg)) return []

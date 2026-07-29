@@ -163,6 +163,7 @@ const orderResult = ref<{
   standard_tax?: number
   liquor_tax?: number
   standard_tax_label?: string
+  liquor_tax_label?: string
   order_id?: string
   order_ids?: string[]
   order_numbers?: number[]
@@ -302,6 +303,7 @@ type TaxPreview = {
   standard_tax: number
   liquor_tax: number
   standard_tax_label: string
+  liquor_tax_label?: string
 }
 
 type PromoPreviewLine = {
@@ -316,6 +318,10 @@ type PromoPreviewLine = {
   promoType?: string | null
   locked_promo_type?: string | null
   subtotal_after_promo?: number
+  tax_amount?: number
+  tax_label?: string | null
+  tax_rate?: number | null
+  included_in_price?: boolean | null
 }
 
 type CheckoutPromoPreview = {
@@ -763,9 +769,11 @@ const discountedTotal = computed(() =>
 )
 // warocol.com#639 — final amount charged to the customer when tipping is enabled.
 // total_amount on orders never includes tip (tax-base invariant from migration 079);
-// charged_amount = total_amount + tip_amount lives at the payment layer only.
+// charged_amount = total_amount + additive tax + tip (see additiveTaxTotal after taxPreview).
 const finalChargedAmount = computed(() =>
-  discountedTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
+  discountedTotal.value
+  + additiveTaxTotal.value
+  + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
 )
 
 // ── Parallel-loading queries (replaces manual refreshTaxPreview + #656 rehydration $fetch).
@@ -799,6 +807,7 @@ const { data: posTaxPreviewData } = useQuery({
       standard_tax: number
       liquor_tax: number
       standard_tax_label: string
+      liquor_tax_label?: string
       subtotal?: number
       promo_savings?: number
       subtotal_after_promos?: number
@@ -822,6 +831,7 @@ const taxPreview = computed<TaxPreview | null>(() => {
       standard_tax: Number(session.standard_tax) || 0,
       liquor_tax: Number(session.liquor_tax) || 0,
       standard_tax_label: localizedInternalTaxLabel(session.standard_tax_label),
+      liquor_tax_label: localizedInternalTaxLabel(session.liquor_tax_label),
     }
   }
   const data = posTaxPreviewData.value
@@ -830,8 +840,18 @@ const taxPreview = computed<TaxPreview | null>(() => {
     standard_tax: Number(data.standard_tax) || 0,
     liquor_tax: Number(data.liquor_tax) || 0,
     standard_tax_label: localizedInternalTaxLabel(data.standard_tax_label),
+    liquor_tax_label: localizedInternalTaxLabel(data.liquor_tax_label),
   }
 })
+
+/** Exclusive tax added on top of product prices (MX IVA); omitted when included_in_price (CO INC). */
+const additiveTaxTotal = computed(() =>
+  additiveOrderTaxTotal(
+    taxPreview.value?.standard_tax ?? 0,
+    taxPreview.value?.liquor_tax ?? 0,
+    tenantTaxConfig.value as Record<string, unknown> | null,
+  ),
+)
 
 // Tax preview is auto-recomputed via useQuery (mesaCurrentData / posTaxPreviewData)
 // — discount/cart changes invalidate the query keys, no manual debounce needed.
@@ -935,7 +955,9 @@ const voidPaymentTarget = ref<{ id: string; amount: number; payment_method: stri
 const voidPaymentReason = ref('')
 const voidPaymentError = ref('')
 const splitAmountDue = computed(() =>
-  discountedTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
+  discountedTotal.value
+  + additiveTaxTotal.value
+  + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
 )
 const splitRemaining = computed(() => Math.max(0, splitAmountDue.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
@@ -1021,6 +1043,7 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
     standard_tax: Number(completeData.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
     liquor_tax: Number(completeData.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
     standard_tax_label: localizedInternalTaxLabel(completeData.standard_tax_label ?? taxPreview.value?.standard_tax_label),
+    liquor_tax_label: localizedInternalTaxLabel(completeData.liquor_tax_label ?? taxPreview.value?.liquor_tax_label),
     ...(tipAmount.value > 0
       ? {
           tip_amount: Number(completeData.tip_amount ?? tipAmount.value),
@@ -1669,6 +1692,25 @@ const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
   return key ? promoLineById.value.get(key) : undefined
 }
 
+const getLineTaxInfo = (item: any): { amount: number; label: string; includedInPrice: boolean } | null => {
+  const preview = getLinePromoPreview(item)
+  const amount = Number(preview?.tax_amount) || 0
+  if (amount <= 0) return null
+  return {
+    amount,
+    label: localizedInternalTaxLabel(preview?.tax_label),
+    includedInPrice: preview?.included_in_price === true,
+  }
+}
+
+const formatLineTaxDisplay = (info: { amount: number; label: string; includedInPrice: boolean }): string => {
+  const amount = formatCurrency(info.amount)
+  if (info.includedInPrice) {
+    return t('pos.cartItem.taxIncluded', { label: info.label, amount })
+  }
+  return t('pos.cartItem.taxLine', { label: info.label, amount })
+}
+
 const getLinePromoSavings = (item: any): number => {
   if (isLinePromoOptedOut(item)) return 0
   const preview = getLinePromoPreview(item)
@@ -1879,6 +1921,7 @@ const processOrder = async () => {
           standard_tax: taxPreview.value?.standard_tax ?? 0,
           liquor_tax: taxPreview.value?.liquor_tax ?? 0,
           standard_tax_label: localizedInternalTaxLabel(taxPreview.value?.standard_tax_label),
+          liquor_tax_label: localizedInternalTaxLabel(taxPreview.value?.liquor_tax_label),
         }
         wasMesaMode.value = false
         cartItemsSnapshot.value = [...cartItems.value]
@@ -1968,6 +2011,7 @@ const processOrder = async () => {
         standard_tax: Number(closeData.standard_tax) || 0,
         liquor_tax: Number(closeData.liquor_tax) || 0,
         standard_tax_label: localizedInternalTaxLabel(closeData.standard_tax_label),
+        liquor_tax_label: localizedInternalTaxLabel(closeData.liquor_tax_label),
         ...promoFieldsFromCloseResponse(closeData, _subtotal),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
@@ -2082,6 +2126,7 @@ const processOrder = async () => {
         standard_tax?: number
         liquor_tax?: number
         standard_tax_label?: string
+        liquor_tax_label?: string
         next_table_session_id?: string | null
         subtotal?: number
         promo_savings?: number
@@ -2106,6 +2151,7 @@ const processOrder = async () => {
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
         standard_tax_label: localizedInternalTaxLabel(response.data.standard_tax_label),
+        liquor_tax_label: localizedInternalTaxLabel(response.data.liquor_tax_label),
         ...promoFieldsFromCloseResponse(response.data, _subtotalPos),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
@@ -2540,12 +2586,10 @@ const receiptDocumentLabel = computed(() => {
   return label
 })
 
-const prefacturaTaxTotal = computed(() => {
-  if (!taxPreview.value) return 0
-  return (taxPreview.value.standard_tax || 0) + (taxPreview.value.liquor_tax || 0)
-})
+const prefacturaTaxTotal = computed(() => additiveTaxTotal.value)
 
 // Mesa runningTotal already includes session taxes; counter cartTotal is pre-tax.
+// Counter amount due adds only additive (exclusive) tax — included-in-price tax stays in prices.
 const prefacturaOrderTotal = computed(() => {
   if (isKitchenServiceMode.value) return discountedTotal.value
   return discountedTotal.value + prefacturaTaxTotal.value
@@ -2684,8 +2728,7 @@ const receiptInvoiceTaxLines = computed(() => {
       amount: Number(result.standard_tax) || 0,
     },
     {
-      label: t('pos.checkout.liquorVat'),
-      rate: 5,
+      label: localizedInternalTaxLabel(result.liquor_tax_label) || t('pos.receipt.liquorVat'),
       amount: Number(result.liquor_tax) || 0,
     },
   ].filter(line => Number(line.amount) > 0)
@@ -2948,6 +2991,7 @@ const sendReceiptEmail = async () => {
         standard_tax: orderResult.value.standard_tax ?? 0,
         liquor_tax: orderResult.value.liquor_tax ?? 0,
         standard_tax_label: localizedInternalTaxLabel(orderResult.value.standard_tax_label),
+        liquor_tax_label: localizedInternalTaxLabel(orderResult.value.liquor_tax_label),
         promo_savings: orderResult.value.promo_savings ?? 0,
         promo_breakdown: orderResult.value.promo_breakdown ?? [],
         waro_redemption_summary: orderResult.value.waro_redemption_summary ?? null,
@@ -3321,6 +3365,13 @@ onUnmounted(() => {
                     + {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity ?? 1 }}</template> · {{ formatCurrency(modifierLineTotal(mod)) }}
                   </p>
                 </div>
+
+                <p
+                  v-if="getLineTaxInfo(item)"
+                  class="text-xs text-text-tertiary mt-0.5"
+                >
+                  {{ formatLineTaxDisplay(getLineTaxInfo(item)!) }}
+                </p>
 
                 <!-- Notes -->
                 <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
@@ -4903,7 +4954,7 @@ onUnmounted(() => {
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
             </div>
             <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-text-secondary">{{ t('pos.receipt.liquorVat') }}</span>
+              <span class="text-sm text-text-secondary">{{ localizedInternalTaxLabel(orderResult.liquor_tax_label) || t('pos.receipt.liquorVat') }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.liquor_tax) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3" :class="(orderResult.discount_amount || orderResult.waro_discount_cop || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-2.5' : ''">
@@ -5213,6 +5264,7 @@ onUnmounted(() => {
       :waro-discount-amount="orderResultWaroDiscountCop"
       :standard-tax-label="orderResult.standard_tax_label"
       :standard-tax="Number(orderResult.standard_tax) || 0"
+      :liquor-tax-label="orderResult.liquor_tax_label"
       :liquor-tax="Number(orderResult.liquor_tax) || 0"
       :order-total="Number(orderResult.total_amount) || 0"
       :tip-label="receiptTipLabel"
@@ -5331,7 +5383,7 @@ onUnmounted(() => {
       <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
-      <span>{{ t('pos.receipt.liquorVat') }}</span>
+      <span>{{ taxPreview.liquor_tax_label || t('pos.receipt.liquorVat') }}</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
@@ -5493,7 +5545,7 @@ onUnmounted(() => {
         <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
       </div>
       <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
-	        <span>{{ t('pos.receipt.liquorVat') }}</span>
+	        <span>{{ localizedInternalTaxLabel(orderResult.liquor_tax_label) || t('pos.receipt.liquorVat') }}</span>
         <span>{{ formatCurrency(orderResult.liquor_tax) }}</span>
       </div>
     </template>

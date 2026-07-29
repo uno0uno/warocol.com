@@ -84,6 +84,7 @@ const props = defineProps<{
   waroDiscountAmount?: number
   standardTaxLabel?: string | null
   standardTax?: number
+  liquorTaxLabel?: string | null
   liquorTax?: number
   orderTotal: number
   tipLabel?: string
@@ -166,6 +167,12 @@ const displayStandardTaxLabel = computed(() =>
   localizedInternalTaxLabel(props.standardTaxLabel),
 )
 
+const displayLiquorTaxLabel = computed(() => {
+  const raw = String(props.liquorTaxLabel ?? '').trim()
+  if (!raw) return t('pos.receipt.liquorVat')
+  return localizedInternalTaxLabel(raw)
+})
+
 const invoiceNumberLabel = computed(() => {
   const invoice = props.invoice
   if (!invoice) return null
@@ -215,7 +222,7 @@ const invoiceTaxLines = computed(() => {
     lines.push({ label: displayStandardTaxLabel.value, amount: props.standardTax })
   }
   if (Number(props.liquorTax) > 0) {
-    lines.push({ label: t('pos.checkout.liquorVat'), rate: 5, amount: props.liquorTax })
+    lines.push({ label: displayLiquorTaxLabel.value, amount: props.liquorTax })
   }
   return lines
 })
@@ -341,7 +348,7 @@ const printableItems = computed(() =>
         <span>{{ money(standardTax) }}</span>
       </div>
       <div v-if="Number(liquorTax) > 0" class="receipt-item receipt-small">
-        <span>{{ t('pos.receipt.liquorVat') }}</span>
+        <span>{{ displayLiquorTaxLabel }}</span>
         <span>{{ money(liquorTax) }}</span>
       </div>
     </template>
