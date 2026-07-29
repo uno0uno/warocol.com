@@ -1,0 +1,52 @@
+# Compact plan — uno0uno/warocol.com#1891 (epic #1890 batch 1). Keep <=80 lines.
+issue: 1891
+title: "Load menu tax maps in POS/orders tax config + hide $0 tax on tickets"
+repo: both
+repo_remote: uno0uno/api-warolabs # + front PR uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+stack: both
+branch: wr-1891-pos-tax-menu-config
+front_branch: wr-1891-hide-zero-tax-summary
+front_cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+closes: "Closes uno0uno/warocol.com#1891"
+
+paths:
+  - app/services/cierre_service.py # WIP: SELECT + decode menu maps
+  - tests/test_menu_category_tax_resolve.py # WIP: loader test
+  - ../front_nuxt/pages/pos/checkout.vue # hide summary tax rows at $0 (~4006, ~4509)
+
+ac:
+  - "_get_tenant_tax_config returns menu_category_line_map + exempt_menu_category_ids (decoded)"
+  - "Exempt menu category (inherit): POS tax-preview + completed order tax amount = 0"
+  - "Checkout Resumen de la Orden: no tax row when (standard_tax+liquor_tax)==0"
+  - "Print tickets/ventas already v-if>0 — no change unless a $0 line remains"
+  - "pytest tests/test_menu_category_tax_resolve.py passes; listed in PR"
+
+out_of_scope:
+  - DIAN/jurisdiction labels (#1892)
+  - FE auto-email (#1893)
+  - Cash keypad (#1894)
+  - Re-plumbing category_id (#1889 merged)
+  - Facturación settings UI
+
+hints:
+  entry: "cierre_service._get_tenant_tax_config → pos_cart/orders/tables tax paths"
+  pattern: "checkout.vue ~4866 / ReceiptPrintTicket.vue ~337 v-if tax > 0"
+  wip: "API diff already on main working tree — branch + commit; do not rewrite"
+  front: "v-if on summary tax divs only; keep label localization unchanged"
+  tests: "cd api_warocol.com && ./venv/bin/pytest tests/test_menu_category_tax_resolve.py -q"
+
+risk:
+  sensitive: false
+  areas: [tax-config-read]
+
+skip:
+  audits: [ux, color, typography, security-full]
+
+steps:
+  - "API: pull main, branch wr-1891-pos-tax-menu-config, commit WIP, push, PR → api-warolabs"
+  - "Front: pull main, branch wr-1891-hide-zero-tax-summary, gate checkout summary tax rows, PR → warocol.com"
+  - "Both PR bodies: Closes uno0uno/warocol.com#1891 (or Closes #1891 on warocol.com PR)"
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#1890"

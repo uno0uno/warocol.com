@@ -4003,10 +4003,13 @@ onUnmounted(() => {
 	                <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
                 <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
               </div>
-              <div class="flex justify-between text-sm text-text-secondary">
-	                <span>{{ taxPreview ? localizedInternalTaxLabel(taxPreview.standard_tax_label) : t('pos.checkout.summary.taxesZero') }}</span>
+              <div
+                v-if="taxPreview && (taxPreview.standard_tax + taxPreview.liquor_tax) > 0"
+                class="flex justify-between text-sm text-text-secondary"
+              >
+	                <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
                 <span class="font-medium text-text-primary">
-                  {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
+                  {{ formatCurrency(taxPreview.standard_tax + taxPreview.liquor_tax) }}
                 </span>
               </div>
               <div
@@ -4505,10 +4508,13 @@ onUnmounted(() => {
 	              <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
               <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
             </div>
-            <div class="flex justify-between text-sm text-text-secondary">
-	              <span>{{ taxPreview ? localizedInternalTaxLabel(taxPreview.standard_tax_label) : t('pos.checkout.summary.taxesZero') }}</span>
+            <div
+              v-if="taxPreview && (taxPreview.standard_tax + taxPreview.liquor_tax) > 0"
+              class="flex justify-between text-sm text-text-secondary"
+            >
+	              <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
               <span class="font-medium text-text-primary">
-                {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
+                {{ formatCurrency(taxPreview.standard_tax + taxPreview.liquor_tax) }}
               </span>
             </div>
             <div
