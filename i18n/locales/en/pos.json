@@ -429,7 +429,12 @@
       "exact": "No change",
       "exactAria": "Pay exact amount, no change",
       "change": "Change",
-      "shortfall": "{amount} still due"
+      "shortfall": "{amount} still due",
+      "keypadAria": "Cash amount numeric keypad",
+      "digitAria": "Digit {digit}",
+      "backspaceAria": "Delete last digit",
+      "clear": "C",
+      "clearAria": "Clear amount"
     },
     "payment": {
       "tableAdvance": "Table advance",

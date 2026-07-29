@@ -1,0 +1,51 @@
+# Compact plan — uno0uno/warocol.com#1894 (epic #1890 batch 4). Keep <=80 lines.
+issue: 1894
+title: "POS Efectivo recibido numeric keypad (1–9 + 0)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1894-cash-numeric-keypad
+closes: "Closes #1894"
+
+paths:
+  - components/checkout/CashTenderPanel.vue # replace COP presets with digit keypad
+  - i18n/locales/es/pos.json # optional backspace/clear aria labels under pos.cash
+  - i18n/locales/en/pos.json # mirror
+
+ac:
+  - "Cashier can enter arbitrary amount with digits 1–9 and 0 (e.g. 145) without denomination presets"
+  - "Sin vuelto still sets cashReceived = amountToCharge; Vuelto/shortfall still correct"
+  - "Display still uses integer-money locale formatting (MXN/COP etc.)"
+  - "Touch-friendly keys (min-h ~56px+); backspace and/or clear present"
+  - "Manual POS cash payment check noted in PR"
+
+out_of_scope:
+  - Tax / DIAN labels / FE email (#1891–#1893)
+  - checkout.vue payment method selection
+  - cash_received API / backend validation
+  - finanzas/arqueo denomination UI
+
+hints:
+  entry: "CashTenderPanel.vue — remove cashPresetsExtra (~25–30, ~87–97)"
+  keep: "Sin vuelto button; vuelto/shortfall; text input optional for hardware kb"
+  model: "append digit to integer string of cashReceived; formatIntegerMoney/parseIntegerMoney"
+  layout: "grid-cols-3: 1-9, then row with ⌫ / 0 / C (or similar)"
+  callers: "checkout.vue CheckoutCashTenderPanel mounts — no API change"
+  tests: "manual POS cash tender; no unit harness required unless extract digit helper"
+
+risk:
+  sensitive: false
+  areas: [pos-cash-ui]
+
+skip:
+  audits: [ux-full, color, typography, security-full]
+
+steps:
+  - "pull main; branch wr-1894-cash-numeric-keypad"
+  - "Replace presets with keypad; keep Sin vuelto + vuelto"
+  - "Add es/en aria for backspace/clear if needed"
+  - "PR closes #1894; note MXN 145 manual check"
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#1890"

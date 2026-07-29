@@ -429,7 +429,12 @@
       "exact": "Sin vuelto",
       "exactAria": "Pagar exacto, sin vuelto",
       "change": "Vuelto",
-      "shortfall": "Falta cobrar {amount}"
+      "shortfall": "Falta cobrar {amount}",
+      "keypadAria": "Teclado numérico de efectivo",
+      "digitAria": "Dígito {digit}",
+      "backspaceAria": "Borrar último dígito",
+      "clear": "C",
+      "clearAria": "Borrar monto"
     },
     "payment": {
       "tableAdvance": "Anticipo mesa",
