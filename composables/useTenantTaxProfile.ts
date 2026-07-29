@@ -395,6 +395,77 @@ export function taxCategoryOptions(cfg: Record<string, unknown> | null | undefin
   return ['standard', 'liquor', 'exempt']
 }
 
+/** Commercial Menú inherit/override UX when tax_lines exist (#1885). CO keeps fiscal chips. */
+export type ProductTaxResolution = 'inherit' | 'exempt' | 'line'
+
+export function taxConfigUsesMenuCategoryTaxUi(
+  cfg: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!taxConfigHasTaxes(cfg)) return false
+  return normalizeTaxLines(cfg?.tax_lines).length > 0
+}
+
+/**
+ * Inherited tax line for a menu category (inherit path only).
+ * Mirrors API resolve_product_tax_line inherit: exempt set → menu map → primary.
+ */
+export function inheritedTaxLineForMenuCategory(
+  cfg: Record<string, unknown> | null | undefined,
+  categoryId: string | null | undefined,
+): TaxLineDraft | null {
+  const lines = normalizeTaxLines(cfg?.tax_lines)
+  if (!lines.length) return null
+  const catId = String(categoryId || '').trim()
+  const exemptIds = new Set(normalizeExemptMenuCategoryIds(cfg?.exempt_menu_category_ids))
+  if (catId && exemptIds.has(catId)) return null
+
+  const menuMap = normalizeMenuCategoryLineMap(cfg?.menu_category_line_map) || {}
+  if (catId && Object.prototype.hasOwnProperty.call(menuMap, catId)) {
+    const key = menuMap[catId]
+    if (!key) return null
+    return lines.find(line => line.key === key) ?? null
+  }
+
+  // Unmapped (or no category yet) → primary line when commercial maps are in play,
+  // and also before maps are configured (dual-read default display).
+  return lines[0] ?? null
+}
+
+export function resolveProductTaxLinePreview(
+  cfg: Record<string, unknown> | null | undefined,
+  options: {
+    categoryId?: string | null
+    tax_resolution?: ProductTaxResolution | string | null
+    tax_line_key?: string | null
+  },
+): TaxLineDraft | null {
+  const lines = normalizeTaxLines(cfg?.tax_lines)
+  if (!lines.length) return null
+  const resolution = String(options.tax_resolution || 'inherit').trim().toLowerCase()
+  if (resolution === 'exempt') return null
+  if (resolution === 'line') {
+    const key = String(options.tax_line_key || '').trim()
+    return key ? (lines.find(line => line.key === key) ?? null) : null
+  }
+  return inheritedTaxLineForMenuCategory(cfg, options.categoryId)
+}
+
+/** Dual-write legacy tax_category from commercial override for CO/engine compat. */
+export function legacyTaxCategoryFromResolution(
+  cfg: Record<string, unknown> | null | undefined,
+  options: {
+    categoryId?: string | null
+    tax_resolution?: ProductTaxResolution | string | null
+    tax_line_key?: string | null
+  },
+): TaxCategoryKey {
+  const line = resolveProductTaxLinePreview(cfg, options)
+  if (!line) return 'exempt'
+  const map = normalizeCategoryMap(cfg?.category_map)
+  if (map?.liquor && line.key === map.liquor) return 'liquor'
+  return 'standard'
+}
+
 export function wave1PresetForCountry(countryCode: string): CommercialTaxPreset | null {
   const code = String(countryCode || '').toUpperCase()
   return WAVE1_TAX_PRESETS[code] ?? null
@@ -525,6 +596,10 @@ export function useTenantTaxProfile() {
     taxLineForCategory,
     primaryTaxLine,
     taxCategoryOptions,
+    taxConfigUsesMenuCategoryTaxUi,
+    inheritedTaxLineForMenuCategory,
+    resolveProductTaxLinePreview,
+    legacyTaxCategoryFromResolution,
     wave1PresetForCountry,
     commercialPresetForCountry,
     buildCommercialTaxSavePayload,

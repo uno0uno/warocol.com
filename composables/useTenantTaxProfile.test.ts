@@ -6,14 +6,18 @@ import {
   canRemoveTaxLine,
   commercialPresetForCountry,
   countryNeedsJurisdiction,
+  inheritedTaxLineForMenuCategory,
+  legacyTaxCategoryFromResolution,
   normalizeExemptMenuCategoryIds,
   normalizeMenuCategoryLineMap,
   normalizeTaxLines,
   primaryTaxLine,
+  resolveProductTaxLinePreview,
   shouldShowJurisdictionPicker,
   shouldShowWave1CountryPicker,
   taxCategoryOptions,
   taxConfigHasTaxes,
+  taxConfigUsesMenuCategoryTaxUi,
   taxLineForCategory,
   validateCommercialMatrix,
   wave1PresetForCountry,
@@ -331,5 +335,45 @@ describe('useTenantTaxProfile', () => {
     expect(body.iva_rate).toBe(0.19)
     expect(body.liquor_tax_rate).toBe(0.05)
     expect(body.iva_applicable).toBe(true)
+  })
+
+  it('uses menu-category tax UI only for commercial tax_lines (#1885)', () => {
+    expect(taxConfigUsesMenuCategoryTaxUi({ inc_applicable: true })).toBe(false)
+    expect(taxConfigUsesMenuCategoryTaxUi({
+      tax_lines: [{ key: 'iva', label: 'IVA', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+    })).toBe(true)
+  })
+
+  it('inherits tax line from menu category map with override precedence (#1885)', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const catB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const cfg = {
+      tax_lines: [
+        { key: 'mwst', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+        { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+      ],
+      category_map: { standard: 'mwst', liquor: 'mwst', exempt: null },
+      menu_category_line_map: { [catA]: 'mwst_reduced' },
+      exempt_menu_category_ids: [catB],
+    }
+    expect(inheritedTaxLineForMenuCategory(cfg, catA)?.key).toBe('mwst_reduced')
+    expect(inheritedTaxLineForMenuCategory(cfg, catB)).toBeNull()
+    expect(inheritedTaxLineForMenuCategory(cfg, 'unknown')?.key).toBe('mwst')
+    expect(resolveProductTaxLinePreview(cfg, {
+      categoryId: catA,
+      tax_resolution: 'exempt',
+    })).toBeNull()
+    expect(resolveProductTaxLinePreview(cfg, {
+      categoryId: catA,
+      tax_resolution: 'line',
+      tax_line_key: 'mwst',
+    })?.key).toBe('mwst')
+    expect(legacyTaxCategoryFromResolution(cfg, {
+      categoryId: catA,
+      tax_resolution: 'inherit',
+    })).toBe('standard')
+    expect(legacyTaxCategoryFromResolution(cfg, {
+      tax_resolution: 'exempt',
+    })).toBe('exempt')
   })
 })

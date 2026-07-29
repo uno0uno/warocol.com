@@ -293,11 +293,84 @@
               </div>
             </UiFormSection>
 
+
             <UiFormSection
               v-if="hasTaxes"
-              :title="t('menu.productos.taxCategory')"
+              :title="usesMenuCategoryTaxUi ? t('menu.productos.taxResolution') : t('menu.productos.taxCategory')"
             >
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" :aria-label="t('menu.productos.taxCategory')">
+              <template v-if="usesMenuCategoryTaxUi">
+                <p
+                  v-if="form.tax_resolution === 'inherit'"
+                  class="mb-3 text-sm text-text-secondary"
+                >
+                  {{ inheritedTaxSummary }}
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" :aria-label="t('menu.productos.taxResolution')">
+                  <button
+                    type="button"
+                    @click="setProductTaxResolution('inherit')"
+                    :class="[
+                      'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                      form.tax_resolution === 'inherit'
+                        ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                        : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    <span class="text-sm font-semibold">{{ t('menu.productos.taxInherit') }}</span>
+                    <span class="text-xs leading-snug">{{ t('menu.productos.taxInheritHint') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="setProductTaxResolution('exempt')"
+                    :class="[
+                      'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                      form.tax_resolution === 'exempt'
+                        ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                        : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    <span class="text-sm font-semibold">{{ t('menu.productos.exempt') }}</span>
+                    <span class="text-xs leading-snug">{{ t('menu.productos.noTax') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="setProductTaxResolution('line')"
+                    :class="[
+                      'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                      form.tax_resolution === 'line'
+                        ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                        : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    <span class="text-sm font-semibold">{{ t('menu.productos.taxOverrideLine') }}</span>
+                    <span class="text-xs leading-snug">{{ t('menu.productos.taxOverrideLineHint') }}</span>
+                  </button>
+                </div>
+                <div v-if="form.tax_resolution === 'line'" class="mt-3">
+                  <label class="block text-sm font-medium text-text-secondary mb-1.5" for="product-tax-line">
+                    {{ t('menu.productos.taxSelectLine') }}
+                  </label>
+                  <select
+                    id="product-tax-line"
+                    v-model="form.tax_line_key"
+                    class="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
+                    <option
+                      v-for="line in commercialTaxLines"
+                      :key="line.key"
+                      :value="line.key"
+                    >
+                      {{ line.label }}
+                    </option>
+                  </select>
+                </div>
+              </template>
+              <div
+                v-else
+                class="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                role="group"
+                :aria-label="t('menu.productos.taxCategory')"
+              >
                 <button
                   v-if="taxCategories.includes('standard')"
                   type="button"
@@ -786,9 +859,19 @@ const { data: taxConfigData } = useQuery({
   staleTime: 30_000,
 })
 const taxConfig = computed(() => taxConfigData.value?.data ?? null)
-const { taxConfigHasTaxes, taxCategoryOptions, taxLineForCategory } = useTenantTaxProfile()
+const {
+  taxConfigHasTaxes,
+  taxCategoryOptions,
+  taxLineForCategory,
+  taxConfigUsesMenuCategoryTaxUi,
+  inheritedTaxLineForMenuCategory,
+  legacyTaxCategoryFromResolution,
+  normalizeTaxLines,
+} = useTenantTaxProfile()
 const hasTaxes = computed(() => taxConfigHasTaxes(taxConfig.value))
+const usesMenuCategoryTaxUi = computed(() => taxConfigUsesMenuCategoryTaxUi(taxConfig.value))
 const taxCategories = computed(() => taxCategoryOptions(taxConfig.value))
+const commercialTaxLines = computed(() => normalizeTaxLines(taxConfig.value?.tax_lines))
 const standardTaxHint = computed(() => {
   const line = taxLineForCategory(taxConfig.value, 'standard')
   if (line?.label) return line.label
@@ -799,6 +882,44 @@ const liquorTaxHint = computed(() => {
   if (line?.label) return line.label
   return t('menu.productos.liquorVat')
 })
+const inheritedTaxSummary = computed(() => {
+  if (!form.value.category_id) return t('menu.productos.taxNoCategory')
+  const line = inheritedTaxLineForMenuCategory(taxConfig.value, form.value.category_id)
+  if (!line) return t('menu.productos.taxInheritedExempt')
+  return t('menu.productos.taxInheritedLabel', { label: line.label })
+})
+
+function setProductTaxResolution(mode: 'inherit' | 'exempt' | 'line') {
+  form.value.tax_resolution = mode
+  if (mode === 'line') {
+    if (!form.value.tax_line_key) {
+      form.value.tax_line_key = commercialTaxLines.value[0]?.key || null
+    }
+  } else {
+    form.value.tax_line_key = null
+  }
+}
+
+function taxFieldsForPayload() {
+  if (!usesMenuCategoryTaxUi.value) {
+    return {
+      tax_category: form.value.tax_category,
+      tax_resolution: 'inherit' as const,
+      tax_line_key: null as string | null,
+    }
+  }
+  const tax_resolution = form.value.tax_resolution
+  const tax_line_key = tax_resolution === 'line' ? form.value.tax_line_key : null
+  return {
+    tax_resolution,
+    tax_line_key,
+    tax_category: legacyTaxCategoryFromResolution(taxConfig.value, {
+      categoryId: form.value.category_id,
+      tax_resolution,
+      tax_line_key,
+    }),
+  }
+}
 
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
@@ -847,6 +968,8 @@ const form = ref({
   is_combo: false,
   allow_modifiers: true,
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
+  tax_resolution: 'inherit' as 'inherit' | 'exempt' | 'line',
+  tax_line_key: null as string | null,
   ingredients: [] as Array<{
     ingredient_id: string
     ingredient_name?: string
@@ -1362,7 +1485,7 @@ async function submitProduct() {
         is_available_online: form.value.is_available_online,
         is_available_table_qr: form.value.is_available_table_qr,
         allow_modifiers: false,
-        tax_category: form.value.tax_category,
+        ...taxFieldsForPayload(),
         costo_percibido: form.value.costo_percibido ?? null,
         tenant_id: form.value.tenant_id,
         is_resale: true,
@@ -1397,6 +1520,7 @@ async function submitProduct() {
     }))
     const cleanedForm = {
       ...form.value,
+      ...taxFieldsForPayload(),
       recipe_bases: cleanedRecipeBases,
       recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
       ingredients: combinedIngredients.value,
