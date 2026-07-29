@@ -6,6 +6,8 @@ import {
   canRemoveTaxLine,
   commercialPresetForCountry,
   countryNeedsJurisdiction,
+  normalizeExemptMenuCategoryIds,
+  normalizeMenuCategoryLineMap,
   normalizeTaxLines,
   primaryTaxLine,
   shouldShowJurisdictionPicker,
@@ -258,6 +260,27 @@ describe('useTenantTaxProfile', () => {
     })
   })
 
+  it('matrix save includes menu category map + exempt ids (#1884)', () => {
+    const catA = '11111111-1111-1111-1111-111111111111'
+    const catB = '22222222-2222-2222-2222-222222222222'
+    const payload = buildCommercialMatrixSavePayload({
+      lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+      menu_category_line_map: { [catA]: 'iva', [catB]: null },
+      exempt_menu_category_ids: [catB, catA, catB],
+    })
+    expect(payload.menu_category_line_map).toEqual({ [catA]: 'iva', [catB]: null })
+    // Category on a line wins over exempt set.
+    expect(payload.exempt_menu_category_ids).toEqual([catB])
+  })
+
+  it('normalizes menu category line map and exempt ids from jsonb strings', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    expect(normalizeMenuCategoryLineMap(`{"${catA}":"gst"}`)).toEqual({ [catA]: 'gst' })
+    expect(normalizeExemptMenuCategoryIds(`["${catA}","${catA}"]`)).toEqual([catA])
+    expect(normalizeExemptMenuCategoryIds([catA, null, ''])).toEqual([catA])
+  })
+
   it('blocks removing a line still referenced by category_map', () => {
     expect(canRemoveTaxLine('iva', { standard: 'iva', liquor: 'iva', exempt: null })).toBe(false)
     expect(canRemoveTaxLine('mwst_standard', {
@@ -268,10 +291,25 @@ describe('useTenantTaxProfile', () => {
     expect(canRemoveTaxLine('unused', { standard: 'iva', liquor: 'iva', exempt: null })).toBe(true)
   })
 
+  it('blocks removing a line referenced by menu_category_line_map', () => {
+    const catA = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    expect(canRemoveTaxLine('iva', { standard: null, liquor: null, exempt: null }, {
+      [catA]: 'iva',
+    })).toBe(false)
+    expect(canRemoveTaxLine('gst', { standard: 'iva', liquor: 'iva', exempt: null }, {
+      [catA]: 'iva',
+    })).toBe(true)
+  })
+
   it('validates matrix map keys and positive rate', () => {
     expect(validateCommercialMatrix({
       lines: [{ key: 'iva', label: 'IVA', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
       category_map: { standard: 'missing', liquor: null, exempt: null },
+    })).toBe('bad_map')
+    expect(validateCommercialMatrix({
+      lines: [{ key: 'iva', label: 'IVA', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: null, exempt: null },
+      menu_category_line_map: { 'cccccccc-cccc-cccc-cccc-cccccccccccc': 'missing' },
     })).toBe('bad_map')
     expect(validateCommercialMatrix({
       lines: [{ key: 'iva', label: 'IVA', rate: 0, included_in_price: false, gl_role: 'iva' }],

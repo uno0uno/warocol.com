@@ -253,6 +253,8 @@ const {
   suggestTaxLineKey,
   normalizeTaxLines,
   normalizeCategoryMap,
+  normalizeMenuCategoryLineMap,
+  normalizeExemptMenuCategoryIds,
   resolveCategoryMapValue,
   countryNeedsJurisdiction,
   shouldShowWave1CountryPicker,
@@ -311,6 +313,7 @@ const commercialJurisdictionCode = ref('')
 const commercialTaxApplicable = ref(true)
 const jurisdictionOptions = ref<ReturnType<typeof normalizeJurisdictionOptions>>([])
 const commercialLines = ref<MatrixLineUi[]>([])
+/** Legacy fiscal-tag map (standard/liquor) — dual-read seed only; not primary UX (#1884). */
 const commercialCategoryMap = reactive<{
   standard: string | null
   liquor: string | null
@@ -321,49 +324,128 @@ const commercialCategoryMap = reactive<{
   exempt: null,
 })
 
-type AssignableTaxCategory = 'standard' | 'liquor'
+/** Menu category UUID → tax line key. */
+const menuCategoryLineMap = ref<Record<string, string>>({})
+const exemptMenuCategoryIds = ref<string[]>([])
 
 const categorySearchByLine = ref<Record<string, string>>({})
 const categorySearchOpenKey = ref<string | null>(null)
+const exemptSearch = ref('')
+const exemptSearchOpen = ref(false)
 
-const taxCategoryChoices = computed(() => [
-  { value: 'standard' as AssignableTaxCategory, label: t('facturacion.tax.mapStandard') },
-  { value: 'liquor' as AssignableTaxCategory, label: t('facturacion.tax.mapLiquor') },
-])
+type MenuCategoryOption = { id: string; name: string }
 
-const taxCategoryLabel = (cat: AssignableTaxCategory) =>
-  taxCategoryChoices.value.find(c => c.value === cat)?.label || cat
+const menuCategorySearchResults = ref<MenuCategoryOption[]>([])
+let menuCategorySearchSeq = 0
 
-const categoriesMappedToLine = (lineKey: string): AssignableTaxCategory[] => {
-  const out: AssignableTaxCategory[] = []
-  if (commercialCategoryMap.standard === lineKey) out.push('standard')
-  if (commercialCategoryMap.liquor === lineKey) out.push('liquor')
-  return out
+const { data: menuCategoriesData } = useQuery({
+  key: () => ['menu', 'categories', 'tax-map', currentTenant.value?.id],
+  query: () => $fetch<{ data?: MenuCategoryOption[] }>('/api/menu/categories', {
+    query: { limit: 50 },
+  }),
+  enabled: () => !!currentTenant.value && showCommercialTaxUi.value,
+  staleTime: 60_000,
+})
+
+const searchMenuCategories = async (q: string) => {
+  const seq = ++menuCategorySearchSeq
+  try {
+    const res = await $fetch<{ data?: MenuCategoryOption[] }>('/api/menu/categories', {
+      query: q.trim()
+        ? { search: q.trim(), limit: 50 }
+        : { limit: 50 },
+    })
+    if (seq !== menuCategorySearchSeq) return
+    menuCategorySearchResults.value = (res?.data ?? [])
+      .map(row => ({ id: String(row.id || '').trim(), name: String(row.name || '').trim() }))
+      .filter(row => row.id)
+  } catch {
+    if (seq !== menuCategorySearchSeq) return
+    menuCategorySearchResults.value = []
+  }
 }
 
+const menuCategoryOptions = computed<MenuCategoryOption[]>(() => {
+  const byId = new Map<string, MenuCategoryOption>()
+  for (const row of menuCategoriesData.value?.data ?? []) {
+    const id = String(row.id || '').trim()
+    if (!id) continue
+    byId.set(id, { id, name: String(row.name || '').trim() })
+  }
+  for (const row of menuCategorySearchResults.value) {
+    byId.set(row.id, row)
+  }
+  // Keep labels for already-mapped / exempt chips even if outside current page.
+  for (const id of [
+    ...Object.keys(menuCategoryLineMap.value),
+    ...exemptMenuCategoryIds.value,
+  ]) {
+    if (!byId.has(id)) byId.set(id, { id, name: id.slice(0, 8) })
+  }
+  return [...byId.values()]
+})
+
+const menuCategoryLabel = (catId: string) => {
+  const found = menuCategoryOptions.value.find(c => c.id === catId)
+  if (found?.name) return found.name
+  return catId.slice(0, 8)
+}
+
+const categoriesMappedToLine = (lineKey: string): string[] =>
+  Object.entries(menuCategoryLineMap.value)
+    .filter(([, mapped]) => mapped === lineKey)
+    .map(([catId]) => catId)
+
 const filteredCategoriesForLine = (lineKey: string) => {
-  const q = String(categorySearchByLine.value[lineKey] || '').trim().toLowerCase()
+  const q = String(categorySearchByLine.value[lineKey] || '').trim()
   const onThisLine = new Set(categoriesMappedToLine(lineKey))
-  return taxCategoryChoices.value.filter((choice) => {
-    if (onThisLine.has(choice.value)) return false
-    if (!q) return true
-    return choice.label.toLowerCase().includes(q)
+  const exempt = new Set(exemptMenuCategoryIds.value)
+  const pool = q ? menuCategorySearchResults.value : menuCategoryOptions.value
+  return pool.filter((choice) => {
+    if (onThisLine.has(choice.id)) return false
+    if (q) return true // server already filtered by search=
+    // Idle list: hide pure-exempt (use exempt picker); keep other-line for reassignment.
+    if (exempt.has(choice.id) && !menuCategoryLineMap.value[choice.id]) return false
+    return true
   })
 }
 
-const assignCategoryToLine = (cat: AssignableTaxCategory, lineKey: string) => {
-  commercialCategoryMap[cat] = lineKey
-  commercialCategoryMap.exempt = null
+const filteredExemptCategories = computed(() => {
+  const q = exemptSearch.value.trim()
+  const exempt = new Set(exemptMenuCategoryIds.value)
+  const pool = q ? menuCategorySearchResults.value : menuCategoryOptions.value
+  return pool.filter(choice => !exempt.has(choice.id))
+})
+
+const assignCategoryToLine = (catId: string, lineKey: string) => {
+  menuCategoryLineMap.value = { ...menuCategoryLineMap.value, [catId]: lineKey }
+  exemptMenuCategoryIds.value = exemptMenuCategoryIds.value.filter(id => id !== catId)
   categorySearchByLine.value = { ...categorySearchByLine.value, [lineKey]: '' }
   categorySearchOpenKey.value = null
 }
 
-const unassignCategory = (cat: AssignableTaxCategory) => {
-  commercialCategoryMap[cat] = null
+const unassignCategory = (catId: string) => {
+  const next = { ...menuCategoryLineMap.value }
+  delete next[catId]
+  menuCategoryLineMap.value = next
+}
+
+const assignExemptCategory = (catId: string) => {
+  unassignCategory(catId)
+  if (!exemptMenuCategoryIds.value.includes(catId)) {
+    exemptMenuCategoryIds.value = [...exemptMenuCategoryIds.value, catId]
+  }
+  exemptSearch.value = ''
+  exemptSearchOpen.value = false
+}
+
+const unassignExemptCategory = (catId: string) => {
+  exemptMenuCategoryIds.value = exemptMenuCategoryIds.value.filter(id => id !== catId)
 }
 
 const openCategorySearch = (lineKey: string) => {
   categorySearchOpenKey.value = lineKey
+  void searchMenuCategories(categorySearchByLine.value[lineKey] || '')
 }
 
 const closeCategorySearchSoon = (lineKey: string) => {
@@ -376,6 +458,22 @@ const onCategorySearchInput = (lineKey: string, event: Event) => {
   const value = (event.target as HTMLInputElement).value
   categorySearchByLine.value = { ...categorySearchByLine.value, [lineKey]: value }
   openCategorySearch(lineKey)
+}
+
+const openExemptSearch = () => {
+  exemptSearchOpen.value = true
+  void searchMenuCategories(exemptSearch.value)
+}
+
+const closeExemptSearchSoon = () => {
+  window.setTimeout(() => {
+    exemptSearchOpen.value = false
+  }, 150)
+}
+
+const onExemptSearchInput = (event: Event) => {
+  exemptSearch.value = (event.target as HTMLInputElement).value
+  openExemptSearch()
 }
 
 const linesToUi = (lines: { key: string; label: string; rate: number; included_in_price: boolean; gl_role: string }[]): MatrixLineUi[] =>
@@ -404,6 +502,17 @@ const setCategoryMapFrom = (map: Record<string, string | null> | null | undefine
   commercialCategoryMap.exempt = null
 }
 
+const setMenuCategoryMapsFrom = (cfg: Record<string, any> | null | undefined) => {
+  const rawMap = normalizeMenuCategoryLineMap(cfg?.menu_category_line_map) || {}
+  const next: Record<string, string> = {}
+  for (const [catId, lineKey] of Object.entries(rawMap)) {
+    if (lineKey) next[catId] = lineKey
+  }
+  menuCategoryLineMap.value = next
+  exemptMenuCategoryIds.value = normalizeExemptMenuCategoryIds(cfg?.exempt_menu_category_ids)
+    .filter(id => !next[id])
+}
+
 const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
   const lines = normalizeTaxLines(cfg?.tax_lines)
   const map = normalizeCategoryMap(cfg?.category_map)
@@ -414,6 +523,7 @@ const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
     commercialLines.value = []
     setCategoryMapFrom(null, null)
   }
+  setMenuCategoryMapsFrom(cfg)
 
   if (cfg?.tax_jurisdiction_code) {
     commercialJurisdictionCode.value = String(cfg.tax_jurisdiction_code).toUpperCase()
@@ -503,11 +613,18 @@ const removeCommercialLine = (key: string) => {
     toast.error(t('facturacion.tax.matrixNeedOne'), { title: t('facturacion.common.error') })
     return
   }
-  if (!canRemoveTaxLine(key, commercialCategoryMap)) {
+  // Gate on menu-category chips only — legacy standard/liquor map is hidden (#1884).
+  if (!canRemoveTaxLine(key, null, menuCategoryLineMap.value)) {
     toast.error(t('facturacion.tax.matrixLineInUse'), { title: t('facturacion.common.error') })
     return
   }
-  commercialLines.value = commercialLines.value.filter(line => line.key !== key)
+  const remaining = commercialLines.value.filter(line => line.key !== key)
+  commercialLines.value = remaining
+  const fallback = remaining[0]?.key || null
+  if (commercialCategoryMap.standard === key) commercialCategoryMap.standard = fallback
+  if (commercialCategoryMap.liquor === key) {
+    commercialCategoryMap.liquor = commercialCategoryMap.standard || fallback
+  }
 }
 
 const matrixValidationMessage = (code: string | null) => {
@@ -579,6 +696,8 @@ const saveTaxConfig = async () => {
       const enabled = commercialTaxApplicable.value
       let tax_lines: unknown
       let category_map: unknown
+      let menu_category_line_map: unknown
+      let exempt_menu_category_ids: unknown
 
       if (enabled) {
         if (showJurisdictionPicker.value && !commercialJurisdictionCode.value) {
@@ -592,6 +711,8 @@ const saveTaxConfig = async () => {
             liquor: commercialCategoryMap.liquor,
             exempt: null,
           },
+          menu_category_line_map: { ...menuCategoryLineMap.value },
+          exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
         }
         const requirePositive = !needsJurisdictionCountry.value
         const error = validateCommercialMatrix({
@@ -602,11 +723,18 @@ const saveTaxConfig = async () => {
           toast.error(matrixValidationMessage(error), { title: t('facturacion.common.error') })
           return
         }
-        ;({ tax_lines, category_map } = buildCommercialMatrixSavePayload(draft))
+        ;({
+          tax_lines,
+          category_map,
+          menu_category_line_map,
+          exempt_menu_category_ids,
+        } = buildCommercialMatrixSavePayload(draft))
       } else {
         // Keep saved rates for re-enable; do not require rate fields when off.
         tax_lines = taxConfig.value?.tax_lines ?? []
         category_map = taxConfig.value?.category_map ?? { standard: null, liquor: null, exempt: null }
+        menu_category_line_map = taxConfig.value?.menu_category_line_map ?? {}
+        exempt_menu_category_ids = taxConfig.value?.exempt_menu_category_ids ?? []
       }
 
       await $fetch('/api/api/tenant/tax-config', {
@@ -620,6 +748,8 @@ const saveTaxConfig = async () => {
           commercial_tax_applicable: enabled,
           tax_lines,
           category_map,
+          menu_category_line_map,
+          exempt_menu_category_ids,
           ...(enabled && showJurisdictionPicker.value && commercialJurisdictionCode.value
             ? { tax_jurisdiction_code: commercialJurisdictionCode.value }
             : {}),
@@ -1694,18 +1824,24 @@ const taxLevels = [
                     class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
                     role="listbox"
                   >
-                    <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`${line.key}-${choice.value}`">
+                    <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`${line.key}-${choice.id}`">
                       <button
                         type="button"
                         class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
-                        @mousedown.prevent="assignCategoryToLine(choice.value, line.key)"
+                        @mousedown.prevent="assignCategoryToLine(choice.id, line.key)"
                       >
-                        {{ choice.label }}
+                        {{ choice.name }}
                         <span
-                          v-if="commercialCategoryMap[choice.value] && commercialCategoryMap[choice.value] !== line.key"
+                          v-if="menuCategoryLineMap[choice.id] && menuCategoryLineMap[choice.id] !== line.key"
                           class="ms-1 text-xs text-text-tertiary"
                         >
                           · {{ t('facturacion.tax.categoryReassignHint') }}
+                        </span>
+                        <span
+                          v-else-if="exemptMenuCategoryIds.includes(choice.id)"
+                          class="ms-1 text-xs text-text-tertiary"
+                        >
+                          · {{ t('facturacion.tax.mapExempt') }}
                         </span>
                       </button>
                     </li>
@@ -1714,16 +1850,16 @@ const taxLevels = [
 
                 <ul v-if="categoriesMappedToLine(line.key).length" class="flex flex-wrap gap-2" role="list">
                   <li
-                    v-for="cat in categoriesMappedToLine(line.key)"
-                    :key="`${line.key}-chip-${cat}`"
+                    v-for="catId in categoriesMappedToLine(line.key)"
+                    :key="`${line.key}-chip-${catId}`"
                     class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
                   >
-                    <span>{{ taxCategoryLabel(cat) }}</span>
+                    <span>{{ menuCategoryLabel(catId) }}</span>
                     <button
                       type="button"
                       class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
-                      :aria-label="t('facturacion.tax.removeCategory', { name: taxCategoryLabel(cat) })"
-                      @click="unassignCategory(cat)"
+                      :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                      @click="unassignCategory(catId)"
                     >
                       ×
                     </button>
@@ -1734,7 +1870,65 @@ const taxLevels = [
             </div>
           </div>
 
-          <p class="text-xs text-text-tertiary leading-relaxed">{{ t('facturacion.tax.exemptNote') }}</p>
+          <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4">
+            <div>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.exemptTitle') }}</p>
+              <p class="text-xs text-text-tertiary mt-0.5 leading-relaxed">{{ t('facturacion.tax.exemptHint') }}</p>
+            </div>
+            <div class="relative">
+              <input
+                id="tax-exempt-cat-search"
+                type="search"
+                autocomplete="off"
+                :value="exemptSearch"
+                :placeholder="t('facturacion.tax.searchExemptCategory')"
+                class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                @focus="openExemptSearch"
+                @blur="closeExemptSearchSoon"
+                @input="onExemptSearchInput"
+              >
+              <ul
+                v-if="exemptSearchOpen && filteredExemptCategories.length"
+                class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                role="listbox"
+              >
+                <li v-for="choice in filteredExemptCategories" :key="`exempt-${choice.id}`">
+                  <button
+                    type="button"
+                    class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                    @mousedown.prevent="assignExemptCategory(choice.id)"
+                  >
+                    {{ choice.name }}
+                    <span
+                      v-if="menuCategoryLineMap[choice.id]"
+                      class="ms-1 text-xs text-text-tertiary"
+                    >
+                      · {{ t('facturacion.tax.categoryReassignHint') }}
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <ul v-if="exemptMenuCategoryIds.length" class="flex flex-wrap gap-2" role="list">
+              <li
+                v-for="catId in exemptMenuCategoryIds"
+                :key="`exempt-chip-${catId}`"
+                class="text-xs bg-surface-secondary text-text-secondary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-border"
+              >
+                <span>{{ menuCategoryLabel(catId) }}</span>
+                <button
+                  type="button"
+                  class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                  :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                  @click="unassignExemptCategory(catId)"
+                >
+                  ×
+                </button>
+              </li>
+            </ul>
+            <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noExemptYet') }}</p>
+            <p class="text-xs text-text-tertiary leading-relaxed">{{ t('facturacion.tax.exemptNote') }}</p>
+          </div>
         </template>
       </div>
 
