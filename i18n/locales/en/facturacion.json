@@ -194,12 +194,12 @@
       "commercialAddedHint": "The rate is added on top of the base price.",
       "commercialSaveInvalid": "Choose a preset/jurisdiction or enter a name and a valid rate before saving.",
       "matrixTitle": "Tax lines",
-      "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+      "matrixBody": "Add up to five lines. Assign product categories (standard or liquor) to each line with the searcher. You cannot remove a line while categories still use it.",
       "addLine": "Add line",
       "removeLine": "Remove",
       "newLineLabel": "New tax",
       "categoryMapTitle": "Product category mapping",
-      "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+      "categoryMapBody": "Assign Standard and Liquor to each tax line with the searcher.",
       "mapStandard": "Standard",
       "mapLiquor": "Liquor",
       "mapExempt": "Exempt",
@@ -215,7 +215,14 @@
         "duplicate_key": "Tax line keys must be unique.",
         "bad_map": "Category mapping must point to an existing tax line.",
         "too_many": "Too many tax lines."
-      }
+      },
+      "lineCategories": "Product categories",
+      "lineCategoriesHint": "Search and add Standard or Liquor. Selected ones show as chips.",
+      "searchCategory": "Search category…",
+      "noCategoriesYet": "No categories assigned",
+      "removeCategory": "Remove {name}",
+      "categoryReassignHint": "move here",
+      "exemptNote": "The Exempt category is not linked to any line: those products stay tax-free."
     },
     "provider": {
       "title": "Electronic invoicing provider",

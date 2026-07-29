@@ -175,12 +175,12 @@
       "save": "Einstellungen speichern",
       "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
       "matrixTitle": "Tax lines",
-      "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+      "matrixBody": "Bis zu fünf Zeilen. Kategorien (Standard/Spirituosen) je Zeile per Suche zuweisen. Zeile nicht löschen, solange Kategorien zugewiesen sind.",
       "addLine": "Add line",
       "removeLine": "Remove",
       "newLineLabel": "New tax",
       "categoryMapTitle": "Product category mapping",
-      "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+      "categoryMapBody": "Standard und Spirituosen je Steuerzeile per Suche zuweisen.",
       "mapStandard": "Standard",
       "mapLiquor": "Liquor",
       "mapExempt": "Exempt",
@@ -196,7 +196,14 @@
         "duplicate_key": "Tax line keys must be unique.",
         "bad_map": "Category mapping must point to an existing tax line.",
         "too_many": "Too many tax lines."
-      }
+      },
+      "lineCategories": "Produktkategorien",
+      "lineCategoriesHint": "Standard oder Spirituosen suchen und hinzufügen. Auswahl als Chips.",
+      "searchCategory": "Kategorie suchen…",
+      "noCategoriesYet": "Keine Kategorien zugewiesen",
+      "removeCategory": "{name} entfernen",
+      "categoryReassignHint": "hierher verschieben",
+      "exemptNote": "Befreit wird keiner Zeile zugeordnet: diese Produkte bleiben steuerfrei."
     },
     "provider": {
       "title": "Anbieter für elektronische Rechnungsstellung",

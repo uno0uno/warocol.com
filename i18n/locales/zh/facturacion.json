@@ -175,12 +175,12 @@
       "save": "保存配置",
       "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
       "matrixTitle": "Tax lines",
-      "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+      "matrixBody": "最多五条税行。用搜索为每条分配产品类别（标准/酒类）。仍有类别占用时不可删除。",
       "addLine": "Add line",
       "removeLine": "Remove",
       "newLineLabel": "New tax",
       "categoryMapTitle": "Product category mapping",
-      "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+      "categoryMapBody": "用搜索将标准与酒类分配到各税行。",
       "mapStandard": "Standard",
       "mapLiquor": "Liquor",
       "mapExempt": "Exempt",
@@ -196,7 +196,14 @@
         "duplicate_key": "Tax line keys must be unique.",
         "bad_map": "Category mapping must point to an existing tax line.",
         "too_many": "Too many tax lines."
-      }
+      },
+      "lineCategories": "产品类别",
+      "lineCategoriesHint": "搜索并添加标准或酒类，以标签显示。",
+      "searchCategory": "搜索类别…",
+      "noCategoriesYet": "尚未分配类别",
+      "removeCategory": "移除 {name}",
+      "categoryReassignHint": "移到此处",
+      "exemptNote": "免税类别不关联任何税行：这些产品不加税。"
     },
     "provider": {
       "title": "电子发票提供商",

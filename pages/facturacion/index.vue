@@ -317,8 +317,65 @@ const commercialCategoryMap = reactive<{
 }>({
   standard: null,
   liquor: null,
-  exempt: '',
+  exempt: null,
 })
+
+type AssignableTaxCategory = 'standard' | 'liquor'
+
+const categorySearchByLine = ref<Record<string, string>>({})
+const categorySearchOpenKey = ref<string | null>(null)
+
+const taxCategoryChoices = computed(() => [
+  { value: 'standard' as AssignableTaxCategory, label: t('facturacion.tax.mapStandard') },
+  { value: 'liquor' as AssignableTaxCategory, label: t('facturacion.tax.mapLiquor') },
+])
+
+const taxCategoryLabel = (cat: AssignableTaxCategory) =>
+  taxCategoryChoices.value.find(c => c.value === cat)?.label || cat
+
+const categoriesMappedToLine = (lineKey: string): AssignableTaxCategory[] => {
+  const out: AssignableTaxCategory[] = []
+  if (commercialCategoryMap.standard === lineKey) out.push('standard')
+  if (commercialCategoryMap.liquor === lineKey) out.push('liquor')
+  return out
+}
+
+const filteredCategoriesForLine = (lineKey: string) => {
+  const q = String(categorySearchByLine.value[lineKey] || '').trim().toLowerCase()
+  const onThisLine = new Set(categoriesMappedToLine(lineKey))
+  return taxCategoryChoices.value.filter((choice) => {
+    if (onThisLine.has(choice.value)) return false
+    if (!q) return true
+    return choice.label.toLowerCase().includes(q)
+  })
+}
+
+const assignCategoryToLine = (cat: AssignableTaxCategory, lineKey: string) => {
+  commercialCategoryMap[cat] = lineKey
+  commercialCategoryMap.exempt = null
+  categorySearchByLine.value = { ...categorySearchByLine.value, [lineKey]: '' }
+  categorySearchOpenKey.value = null
+}
+
+const unassignCategory = (cat: AssignableTaxCategory) => {
+  commercialCategoryMap[cat] = null
+}
+
+const openCategorySearch = (lineKey: string) => {
+  categorySearchOpenKey.value = lineKey
+}
+
+const closeCategorySearchSoon = (lineKey: string) => {
+  window.setTimeout(() => {
+    if (categorySearchOpenKey.value === lineKey) categorySearchOpenKey.value = null
+  }, 150)
+}
+
+const onCategorySearchInput = (lineKey: string, event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  categorySearchByLine.value = { ...categorySearchByLine.value, [lineKey]: value }
+  openCategorySearch(lineKey)
+}
 
 const linesToUi = (lines: { key: string; label: string; rate: number; included_in_price: boolean; gl_role: string }[]): MatrixLineUi[] =>
   lines.map(line => ({
@@ -341,7 +398,8 @@ const setCategoryMapFrom = (map: Record<string, string | null> | null | undefine
   const primary = fallbackKey || map?.standard || commercialLines.value[0]?.key || null
   commercialCategoryMap.standard = map?.standard ?? primary
   commercialCategoryMap.liquor = map?.liquor ?? primary
-  commercialCategoryMap.exempt = map?.exempt ?? ''
+  // Exempt products never map to a tax line.
+  commercialCategoryMap.exempt = null
 }
 
 const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
@@ -530,7 +588,7 @@ const saveTaxConfig = async () => {
           category_map: {
             standard: commercialCategoryMap.standard,
             liquor: commercialCategoryMap.liquor,
-            exempt: commercialCategoryMap.exempt || null,
+            exempt: null,
           },
         }
         const requirePositive = !needsJurisdictionCountry.value
@@ -1611,65 +1669,70 @@ const taxLevels = [
                   </button>
                 </div>
               </div>
+              <div class="space-y-2">
+                <div>
+                  <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.lineCategories') }}</p>
+                  <p class="text-[11px] text-text-tertiary mt-0.5 leading-snug">{{ t('facturacion.tax.lineCategoriesHint') }}</p>
+                </div>
+
+                <div class="relative">
+                  <input
+                    :id="`tax-line-cat-search-${line.key}`"
+                    type="search"
+                    autocomplete="off"
+                    :value="categorySearchByLine[line.key] || ''"
+                    :placeholder="t('facturacion.tax.searchCategory')"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    @focus="openCategorySearch(line.key)"
+                    @blur="closeCategorySearchSoon(line.key)"
+                    @input="onCategorySearchInput(line.key, $event)"
+                  >
+                  <ul
+                    v-if="categorySearchOpenKey === line.key && filteredCategoriesForLine(line.key).length"
+                    class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                    role="listbox"
+                  >
+                    <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`${line.key}-${choice.value}`">
+                      <button
+                        type="button"
+                        class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                        @mousedown.prevent="assignCategoryToLine(choice.value, line.key)"
+                      >
+                        {{ choice.label }}
+                        <span
+                          v-if="commercialCategoryMap[choice.value] && commercialCategoryMap[choice.value] !== line.key"
+                          class="ms-1 text-xs text-text-tertiary"
+                        >
+                          · {{ t('facturacion.tax.categoryReassignHint') }}
+                        </span>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <ul v-if="categoriesMappedToLine(line.key).length" class="flex flex-wrap gap-2" role="list">
+                  <li
+                    v-for="cat in categoriesMappedToLine(line.key)"
+                    :key="`${line.key}-chip-${cat}`"
+                    class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
+                  >
+                    <span>{{ taxCategoryLabel(cat) }}</span>
+                    <button
+                      type="button"
+                      class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                      :aria-label="t('facturacion.tax.removeCategory', { name: taxCategoryLabel(cat) })"
+                      @click="unassignCategory(cat)"
+                    >
+                      ×
+                    </button>
+                  </li>
+                </ul>
+                <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noCategoriesYet') }}</p>
+              </div>
             </div>
           </div>
 
-          <div class="space-y-3 rounded-xl border border-border bg-surface-secondary/40 p-3">
-            <div>
-              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.categoryMapTitle') }}</p>
-              <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.categoryMapBody') }}</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="flex flex-col gap-1">
-                <label for="map-standard" class="text-xs font-medium text-text-secondary">
-                  {{ t('facturacion.tax.mapStandard') }}
-                </label>
-                <select
-                  id="map-standard"
-                  v-model="commercialCategoryMap.standard"
-                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-                >
-                  <option
-                    v-for="line in commercialLines"
-                    :key="`std-${line.key}`"
-                    :value="line.key"
-                  >
-                    {{ line.label || line.key }}
-                  </option>
-                </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="map-liquor" class="text-xs font-medium text-text-secondary">
-                  {{ t('facturacion.tax.mapLiquor') }}
-                </label>
-                <select
-                  id="map-liquor"
-                  v-model="commercialCategoryMap.liquor"
-                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-                >
-                  <option
-                    v-for="line in commercialLines"
-                    :key="`liq-${line.key}`"
-                    :value="line.key"
-                  >
-                    {{ line.label || line.key }}
-                  </option>
-                </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="map-exempt" class="text-xs font-medium text-text-secondary">
-                  {{ t('facturacion.tax.mapExempt') }}
-                </label>
-                <select
-                  id="map-exempt"
-                  v-model="commercialCategoryMap.exempt"
-                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-                >
-                  <option value="">{{ t('facturacion.tax.mapNone') }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <p class="text-xs text-text-tertiary leading-relaxed">{{ t('facturacion.tax.exemptNote') }}</p>
         </template>
       </div>
 

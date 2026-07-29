@@ -175,12 +175,12 @@
       "save": "حفظ الإعدادات",
       "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
       "matrixTitle": "Tax lines",
-      "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+      "matrixBody": "أضف حتى خمس بنود. عيّن الفئات (قياسي/مشروبات) لكل بند عبر البحث. لا تحذف بندًا ما زال مستخدمًا.",
       "addLine": "Add line",
       "removeLine": "Remove",
       "newLineLabel": "New tax",
       "categoryMapTitle": "Product category mapping",
-      "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+      "categoryMapBody": "عيّن القياسي والمشروبات لكل بند عبر البحث.",
       "mapStandard": "Standard",
       "mapLiquor": "Liquor",
       "mapExempt": "Exempt",
@@ -196,7 +196,14 @@
         "duplicate_key": "Tax line keys must be unique.",
         "bad_map": "Category mapping must point to an existing tax line.",
         "too_many": "Too many tax lines."
-      }
+      },
+      "lineCategories": "فئات المنتج",
+      "lineCategoriesHint": "ابحث وأضف قياسي أو مشروبات. تظهر كشرائح.",
+      "searchCategory": "ابحث عن فئة…",
+      "noCategoriesYet": "لا فئات معيّنة",
+      "removeCategory": "إزالة {name}",
+      "categoryReassignHint": "نقل هنا",
+      "exemptNote": "فئة معفى لا ترتبط بأي بند: تبقى تلك المنتجات بلا ضريبة."
     },
     "provider": {
       "title": "مزوّد الفواتير الإلكترونية",
