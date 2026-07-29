@@ -35,10 +35,9 @@
         <template #trailing>
           <button
             v-if="canManageTeam"
-            :disabled="isAdminUsersQuotaBlocked"
-            :title="isAdminUsersQuotaBlocked ? adminUsersQuotaMessage : t('equipo.miembros.invite')"
+            :title="t('equipo.miembros.invite')"
             @click="openInviteModal"
-            class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -47,18 +46,6 @@
           </button>
         </template>
       </UiAdvancedFiltersBar>
-
-      <div
-        v-if="isAdminUsersQuotaBlocked"
-        class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-      >
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p>{{ adminUsersQuotaMessage }}</p>
-          <NuxtLink to="/gestion/billing/uso" class="font-semibold text-amber-950 underline underline-offset-2">
-            {{ t('equipo.miembros.viewPlan') }}
-          </NuxtLink>
-        </div>
-      </div>
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
@@ -427,7 +414,7 @@
               </button>
               <button
                 type="submit"
-                :disabled="inviteSending || isAdminUsersQuotaBlocked"
+                :disabled="inviteSending"
                 class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
               >
                 {{ inviteSending ? t('equipo.miembros.sending') : t('equipo.miembros.sendInvite') }}
@@ -639,6 +626,16 @@
         </div>
       </div>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -646,6 +643,7 @@
 const { t } = useI18n()
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 const { formatDate: _fmtDate } = useFormatters()
 
 definePageMeta({ layout: 'dashboard', module: 'equipo' })
@@ -656,7 +654,15 @@ useHead({ title: () => t('equipo.head.miembros') })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const authStore = useAuthStore()
-const { operationalQuotas, fetchBillingOverview } = useBilling()
+const { fetchBillingOverview } = useBilling()
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  openQuotaLimitModalWithMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('admin_users')
 const { can } = useModuleAccess()
 const canManageTeam = can('equipo')
 
@@ -906,25 +912,6 @@ const inviteForm = reactive({
   role: 'admin'
 })
 
-const adminUsersQuota = computed(() => operationalQuotas.value.admin_users)
-const isAdminUsersQuotaBlocked = computed(() => adminUsersQuota.value.blocked)
-const adminUsersQuotaMessage = computed(() => {
-  const quota = adminUsersQuota.value
-  const metric = quota.metric
-
-  if (!metric || metric.limit === null) return quota.message
-
-  const used = metric.used.toLocaleString('es-CO')
-  const limit = metric.limit.toLocaleString('es-CO')
-  return `${quota.message} Uso actual: ${used} de ${limit} ${quota.unit}. Revisa Mi Plan para ampliar tu cupo.`
-})
-
-const showAdminUsersQuotaBlocked = () => {
-  const message = adminUsersQuotaMessage.value
-  inviteError.value = message
-  toast.warning(message, { title: t('equipo.miembros.quotaBlocked') })
-}
-
 const quotaExceededMessageFromError = (err: any) => {
   const detail = err?.data?.detail ?? err?.data ?? {}
   const used = typeof detail.used === 'number' ? detail.used : null
@@ -934,7 +921,9 @@ const quotaExceededMessageFromError = (err: any) => {
     return `Alcanzaste el límite de usuarios administrativos de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} usuarios administrativos. Revisa Mi Plan para ampliar tu cupo.`
   }
 
-  return adminUsersQuotaMessage.value
+  return typeof detail === 'string'
+    ? detail
+    : (detail?.message || t('equipo.miembros.quotaBlocked'))
 }
 
 const isQuotaExceededError = (err: any) => {
@@ -952,14 +941,7 @@ const showDeleteModal = ref(false)
 const memberToDelete = ref(null)
 const deleting = ref(false)
 
-const openInviteModal = () => {
-  if (!canManageTeam.value) return
-
-  if (isAdminUsersQuotaBlocked.value) {
-    showAdminUsersQuotaBlocked()
-    return
-  }
-
+const openInvitePanel = () => {
   inviteForm.name = ''
   inviteForm.email = ''
   inviteForm.phone = ''
@@ -968,17 +950,17 @@ const openInviteModal = () => {
   showInviteModal.value = true
 }
 
+const openInviteModal = () => {
+  if (!canManageTeam.value) return
+  void handleCreateClick(() => openInvitePanel())
+}
+
 const closeInviteModal = () => {
   showInviteModal.value = false
 }
 
 const sendInvitation = async () => {
   if (!canManageTeam.value) return
-
-  if (isAdminUsersQuotaBlocked.value) {
-    showAdminUsersQuotaBlocked()
-    return
-  }
 
   inviteSending.value = true
   inviteError.value = ''
@@ -1005,9 +987,12 @@ const sendInvitation = async () => {
     }
   } catch (err) {
     console.error('Error sending invitation:', err)
-    inviteError.value = isQuotaExceededError(err)
-      ? quotaExceededMessageFromError(err)
-      : err?.data?.message || err?.message || t('equipo.miembros.inviteError')
+    if (isQuotaExceededError(err)) {
+      closeInviteModal()
+      openQuotaLimitModalWithMessage(quotaExceededMessageFromError(err))
+      return
+    }
+    inviteError.value = err?.data?.message || err?.message || t('equipo.miembros.inviteError')
   } finally {
     inviteSending.value = false
   }
