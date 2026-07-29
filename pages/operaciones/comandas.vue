@@ -639,7 +639,6 @@ const { data: stationsData, asyncStatus: stationsAsyncStatus, refetch: refetchSt
 })
 const stations = computed(() => stationsData.value?.data ?? [])
 const activeKitchenQuota = computed(() => operationalQuotas.value.active_kitchens)
-const isActiveKitchenQuotaBlocked = computed(() => activeKitchenQuota.value.blocked)
 const activeKitchenQuotaMessage = computed(() => {
   const quota = activeKitchenQuota.value
   const metric = quota.metric
@@ -931,10 +930,6 @@ const isLoadingDeactivateInfo = ref(false)
 const isConfirmingDeactivate = ref(false)
 
 const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
-
-const showActiveKitchenQuotaBlocked = () => {
-  openQuotaLimitModalWithMessage(activeKitchenQuotaMessage.value)
-}
 
 const openCreateStation = () => {
   void handleCreateClick(() => {
