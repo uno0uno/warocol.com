@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
-import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant } from '~/utils/accountingDisplay'
+import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant, localizeSystemAccountName } from '~/utils/accountingDisplay'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -93,6 +93,11 @@ const { data: accountsData, refetch: refetchAccounts } = useQuery({
 const account = computed<TenantAccount | null>(() =>
   accountsData.value?.data?.find(a => a.id === accountId.value) ?? null
 )
+const displayAccountName = (acct: { code: string; name: string }) =>
+  localizeSystemAccountName(acct, key => t(key))
+const accountDisplayName = computed(() =>
+  account.value ? displayAccountName(account.value) : '',
+)
 const accountClassLabel = computed(() =>
   account.value ? (CLASS_SHORT[account.value.accountClass] || account.value.accountClass) : ''
 )
@@ -111,7 +116,7 @@ const subAccounts = computed<TenantAccount[]>(() =>
 )
 
 useHead(() => ({
-  title: account.value ? `${account.value.code} · ${account.value.name}` : t('finanzas.contabilidad.accountTitle'),
+  title: account.value ? `${account.value.code} · ${accountDisplayName.value}` : t('finanzas.contabilidad.accountTitle'),
 }))
 
 // ── Toggle active ──────────────────────────────────────────────────────────
@@ -438,7 +443,7 @@ const openEntryDetail = (entry: { id: string }) => {
               <div class="flex items-start gap-2 min-w-0">
                 <h2
                   class="text-[22px] sm:text-[24px] leading-[29px] sm:leading-[32px] font-extrabold text-[#211d35] break-words">
-                  {{ account.name }}
+                  {{ accountDisplayName }}
                 </h2>
                 <svg v-if="account.isSystem" class="mt-1.5 h-4 w-4 flex-shrink-0 text-[#3e4451]/70" fill="none"
                   stroke="currentColor" viewBox="0 0 24 24" :aria-label="t('finanzas.contabilidad.systemAccount')">
@@ -483,7 +488,7 @@ const openEntryDetail = (entry: { id: string }) => {
             <button type="button"
               v-if="account.isDetail && account.accountClass === '1' && account.normalBalance === 'debit' && account.isActive"
               class="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#7c3bed] px-3.5 text-sm font-semibold leading-5 text-[#7c3bed] transition-colors hover:bg-[rgba(124,59,237,0.08)] focus:outline-none focus:ring-2 focus:ring-[#7c3bed]/25 active:scale-[0.98]"
-              :aria-label="t('finanzas.contabilidad.updateRealBalanceOf', { name: account.name })" @click="showAdjustPanel = true">
+              :aria-label="t('finanzas.contabilidad.updateRealBalanceOf', { name: accountDisplayName })" @click="showAdjustPanel = true">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -734,7 +739,7 @@ const openEntryDetail = (entry: { id: string }) => {
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('finanzas.contabilidad.createSubaccount') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 font-mono">
-                  {{ account?.code }} · {{ account?.name }}
+                  {{ account?.code }} · {{ accountDisplayName }}
                 </p>
               </div>
             </div>

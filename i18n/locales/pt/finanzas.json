@@ -755,6 +755,20 @@
         "income": "Receitas",
         "expenses": "Despesas",
         "costs": "Custos"
+      },
+      "systemAccounts": {
+        "cash": "Caixa",
+        "bank": "Banco",
+        "accountsReceivable": "Contas a receber",
+        "inventory": "Estoque",
+        "accountsPayable": "Contas a pagar",
+        "taxPayable": "Impostos a pagar",
+        "customerAdvances": "Adiantamentos de clientes",
+        "salesRevenue": "Receita de vendas",
+        "otherIncome": "Outras receitas",
+        "payrollExpense": "Despesa com folha",
+        "bankFeesExpense": "Tarifas bancárias",
+        "costOfGoodsSold": "Custo das mercadorias vendidas"
       }
     },
     "conciliacion": {

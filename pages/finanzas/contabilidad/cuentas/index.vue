@@ -2,7 +2,10 @@
 const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
-import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant } from '~/utils/accountingDisplay'
+import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant, localizeSystemAccountName } from '~/utils/accountingDisplay'
+
+const displayAccountName = (account: { code: string; name: string }) =>
+  localizeSystemAccountName(account, key => t(key))
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.contabilidad.accountsTitle') })
@@ -368,7 +371,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-1.5">
                         <span class="text-xs font-mono text-text-secondary flex-shrink-0">{{ item.code }}</span>
-                        <span class="text-sm font-medium text-text-primary truncate">{{ item.name }}</span>
+                        <span class="text-sm font-medium text-text-primary truncate">{{ displayAccountName(item) }}</span>
                       </div>
                       <div class="flex items-center gap-1.5 mt-0.5">
                         <UiStatusBadge v-if="showAll" :value="accountLevelDisplay(item).label" format="text" :variant="accountLevelDisplay(item).variant" size="sm" />
@@ -423,7 +426,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                     class="text-sm text-text-primary"
                     :class="row.isDetail ? 'font-medium' : 'font-normal text-text-secondary italic'"
                   >
-                    {{ row.name }}
+                    {{ displayAccountName(row) }}
                   </span>
                 </template>
 
