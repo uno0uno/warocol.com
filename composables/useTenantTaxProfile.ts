@@ -248,7 +248,17 @@ export function validateCommercialMatrix(options: {
 /**
  * Full-matrix commercial PUT body (#1874).
  * Prefer this over primary-only buildCommercialTaxSavePayload.
+ * Explicit null/empty category mappings must persist (do not ?? to primary).
  */
+export function resolveCategoryMapValue(
+  value: string | null | undefined,
+  fallback: string | null,
+): string | null {
+  if (value === undefined) return fallback
+  if (value == null || value === '') return null
+  return String(value)
+}
+
 export function buildCommercialMatrixSavePayload(options: {
   lines: TaxLineDraft[]
   category_map: Record<string, string | null>
@@ -260,10 +270,12 @@ export function buildCommercialMatrixSavePayload(options: {
     included_in_price: Boolean(line.included_in_price),
     gl_role: String(line.gl_role || 'iva'),
   }))
+  const primaryKey = tax_lines[0]?.key || null
+  const standard = resolveCategoryMapValue(options.category_map?.standard, primaryKey)
   const category_map: Record<string, string | null> = {
-    standard: options.category_map?.standard ?? (tax_lines[0]?.key || null),
-    liquor: options.category_map?.liquor ?? options.category_map?.standard ?? (tax_lines[0]?.key || null),
-    exempt: options.category_map?.exempt ?? null,
+    standard,
+    liquor: resolveCategoryMapValue(options.category_map?.liquor, standard),
+    exempt: resolveCategoryMapValue(options.category_map?.exempt, null),
   }
   return { tax_lines, category_map }
 }
@@ -476,5 +488,6 @@ export function useTenantTaxProfile() {
     validateCommercialMatrix,
     canRemoveTaxLine,
     suggestTaxLineKey,
+    resolveCategoryMapValue,
   }
 }
