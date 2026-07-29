@@ -253,6 +253,7 @@ const {
   suggestTaxLineKey,
   normalizeTaxLines,
   normalizeCategoryMap,
+  resolveCategoryMapValue,
   countryNeedsJurisdiction,
   shouldShowWave1CountryPicker,
   shouldShowJurisdictionPicker,
@@ -396,8 +397,9 @@ const uiLinesToDraft = () => commercialLines.value.map(line => ({
 
 const setCategoryMapFrom = (map: Record<string, string | null> | null | undefined, fallbackKey?: string | null) => {
   const primary = fallbackKey || map?.standard || commercialLines.value[0]?.key || null
-  commercialCategoryMap.standard = map?.standard ?? primary
-  commercialCategoryMap.liquor = map?.liquor ?? primary
+  // Explicit null must stick after unassign; only undefined falls back to primary.
+  commercialCategoryMap.standard = resolveCategoryMapValue(map?.standard, primary)
+  commercialCategoryMap.liquor = resolveCategoryMapValue(map?.liquor, primary)
   // Exempt products never map to a tax line.
   commercialCategoryMap.exempt = null
 }

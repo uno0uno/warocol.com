@@ -246,6 +246,18 @@ describe('useTenantTaxProfile', () => {
     })).toBeNull()
   })
 
+  it('matrix save preserves explicit null category map (no primary fallback)', () => {
+    const payload = buildCommercialMatrixSavePayload({
+      lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: null, liquor: null, exempt: null },
+    })
+    expect(payload.category_map).toEqual({
+      standard: null,
+      liquor: null,
+      exempt: null,
+    })
+  })
+
   it('blocks removing a line still referenced by category_map', () => {
     expect(canRemoveTaxLine('iva', { standard: 'iva', liquor: 'iva', exempt: null })).toBe(false)
     expect(canRemoveTaxLine('mwst_standard', {
