@@ -335,20 +335,54 @@ const exemptSearchOpen = ref(false)
 
 type MenuCategoryOption = { id: string; name: string }
 
+const menuCategorySearchResults = ref<MenuCategoryOption[]>([])
+let menuCategorySearchSeq = 0
+
 const { data: menuCategoriesData } = useQuery({
   key: () => ['menu', 'categories', 'tax-map', currentTenant.value?.id],
   query: () => $fetch<{ data?: MenuCategoryOption[] }>('/api/menu/categories', {
-    query: { limit: 200 },
+    query: { limit: 50 },
   }),
   enabled: () => !!currentTenant.value && showCommercialTaxUi.value,
   staleTime: 60_000,
 })
 
+const searchMenuCategories = async (q: string) => {
+  const seq = ++menuCategorySearchSeq
+  try {
+    const res = await $fetch<{ data?: MenuCategoryOption[] }>('/api/menu/categories', {
+      query: q.trim()
+        ? { search: q.trim(), limit: 50 }
+        : { limit: 50 },
+    })
+    if (seq !== menuCategorySearchSeq) return
+    menuCategorySearchResults.value = (res?.data ?? [])
+      .map(row => ({ id: String(row.id || '').trim(), name: String(row.name || '').trim() }))
+      .filter(row => row.id)
+  } catch {
+    if (seq !== menuCategorySearchSeq) return
+    menuCategorySearchResults.value = []
+  }
+}
+
 const menuCategoryOptions = computed<MenuCategoryOption[]>(() => {
-  const rows = menuCategoriesData.value?.data ?? []
-  return rows
-    .map(row => ({ id: String(row.id || '').trim(), name: String(row.name || '').trim() }))
-    .filter(row => row.id)
+  const byId = new Map<string, MenuCategoryOption>()
+  for (const row of menuCategoriesData.value?.data ?? []) {
+    const id = String(row.id || '').trim()
+    if (!id) continue
+    byId.set(id, { id, name: String(row.name || '').trim() })
+  }
+  for (const row of menuCategorySearchResults.value) {
+    byId.set(row.id, row)
+  }
+  // Keep labels for already-mapped / exempt chips even if outside current page.
+  for (const id of [
+    ...Object.keys(menuCategoryLineMap.value),
+    ...exemptMenuCategoryIds.value,
+  ]) {
+    if (!byId.has(id)) byId.set(id, { id, name: id.slice(0, 8) })
+  }
+  return [...byId.values()]
 })
 
 const menuCategoryLabel = (catId: string) => {
@@ -363,12 +397,13 @@ const categoriesMappedToLine = (lineKey: string): string[] =>
     .map(([catId]) => catId)
 
 const filteredCategoriesForLine = (lineKey: string) => {
-  const q = String(categorySearchByLine.value[lineKey] || '').trim().toLowerCase()
+  const q = String(categorySearchByLine.value[lineKey] || '').trim()
   const onThisLine = new Set(categoriesMappedToLine(lineKey))
   const exempt = new Set(exemptMenuCategoryIds.value)
-  return menuCategoryOptions.value.filter((choice) => {
+  const pool = q ? menuCategorySearchResults.value : menuCategoryOptions.value
+  return pool.filter((choice) => {
     if (onThisLine.has(choice.id)) return false
-    if (q) return choice.name.toLowerCase().includes(q)
+    if (q) return true // server already filtered by search=
     // Idle list: hide pure-exempt (use exempt picker); keep other-line for reassignment.
     if (exempt.has(choice.id) && !menuCategoryLineMap.value[choice.id]) return false
     return true
@@ -376,13 +411,10 @@ const filteredCategoriesForLine = (lineKey: string) => {
 }
 
 const filteredExemptCategories = computed(() => {
-  const q = exemptSearch.value.trim().toLowerCase()
+  const q = exemptSearch.value.trim()
   const exempt = new Set(exemptMenuCategoryIds.value)
-  return menuCategoryOptions.value.filter((choice) => {
-    if (exempt.has(choice.id)) return false
-    if (!q) return true
-    return choice.name.toLowerCase().includes(q)
-  })
+  const pool = q ? menuCategorySearchResults.value : menuCategoryOptions.value
+  return pool.filter(choice => !exempt.has(choice.id))
 })
 
 const assignCategoryToLine = (catId: string, lineKey: string) => {
@@ -413,6 +445,7 @@ const unassignExemptCategory = (catId: string) => {
 
 const openCategorySearch = (lineKey: string) => {
   categorySearchOpenKey.value = lineKey
+  void searchMenuCategories(categorySearchByLine.value[lineKey] || '')
 }
 
 const closeCategorySearchSoon = (lineKey: string) => {
@@ -429,6 +462,7 @@ const onCategorySearchInput = (lineKey: string, event: Event) => {
 
 const openExemptSearch = () => {
   exemptSearchOpen.value = true
+  void searchMenuCategories(exemptSearch.value)
 }
 
 const closeExemptSearchSoon = () => {
@@ -579,11 +613,18 @@ const removeCommercialLine = (key: string) => {
     toast.error(t('facturacion.tax.matrixNeedOne'), { title: t('facturacion.common.error') })
     return
   }
-  if (!canRemoveTaxLine(key, commercialCategoryMap, menuCategoryLineMap.value)) {
+  // Gate on menu-category chips only — legacy standard/liquor map is hidden (#1884).
+  if (!canRemoveTaxLine(key, null, menuCategoryLineMap.value)) {
     toast.error(t('facturacion.tax.matrixLineInUse'), { title: t('facturacion.common.error') })
     return
   }
-  commercialLines.value = commercialLines.value.filter(line => line.key !== key)
+  const remaining = commercialLines.value.filter(line => line.key !== key)
+  commercialLines.value = remaining
+  const fallback = remaining[0]?.key || null
+  if (commercialCategoryMap.standard === key) commercialCategoryMap.standard = fallback
+  if (commercialCategoryMap.liquor === key) {
+    commercialCategoryMap.liquor = commercialCategoryMap.standard || fallback
+  }
 }
 
 const matrixValidationMessage = (code: string | null) => {
