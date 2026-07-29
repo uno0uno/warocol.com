@@ -193,6 +193,7 @@
         "generateDian": "Generar factura electrónica DIAN",
         "generateElectronic": "Generar factura electrónica",
         "creditOnlyShort": "Crédito puro: sin factura DIAN desde POS.",
+        "creditOnlyShortNeutral": "Crédito puro: sin factura electrónica desde POS.",
         "dataTitle": "Datos para la factura",
         "dataHint": "Pídele al cliente su tipo y número de documento.",
         "identityWarningTitle": "Verifica el adquirente antes de emitir",

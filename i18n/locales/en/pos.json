@@ -193,6 +193,7 @@
         "generateDian": "Generate DIAN electronic invoice",
         "generateElectronic": "Generate electronic invoice",
         "creditOnlyShort": "Credit only: no DIAN invoice from POS.",
+        "creditOnlyShortNeutral": "Credit only: no electronic invoice from POS.",
         "dataTitle": "Invoice details",
         "dataHint": "Ask the customer for document type and number.",
         "identityWarningTitle": "Verify the buyer before issuing",

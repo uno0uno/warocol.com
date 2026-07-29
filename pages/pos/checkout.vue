@@ -4939,8 +4939,13 @@ onUnmounted(() => {
                     : t('pos.checkout.invoice.generateElectronic')) }}
               </button>
             </template>
-            <div v-else-if="isCreditOnlyInvoiceBlocked" class="rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2 text-xs font-medium leading-snug text-state-warning-text">
-	              {{ t('pos.checkout.invoice.creditOnlyShort') }}
+            <div
+              v-else-if="isInvoicingReady && isCreditOnlyInvoiceBlocked"
+              class="rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2 text-xs font-medium leading-snug text-state-warning-text"
+            >
+	              {{ isMatiasDian
+                ? t('pos.checkout.invoice.creditOnlyShort')
+                : t('pos.checkout.invoice.creditOnlyShortNeutral') }}
             </div>
 
             <!-- Inline fiscal-data wizard -->
