@@ -22,12 +22,7 @@ const uiLocale = computed<UiLocale>(() =>
   normalizeUiLocale(locale.value),
 )
 
-const cashPresetsExtra = [
-  { label: '+ $1.000', offset: 1000 },
-  { label: '+ $5.000', offset: 5000 },
-  { label: '+ $10.000', offset: 10000 },
-  { label: '+ $20.000', offset: 20000 },
-] as const
+const keypadDigits = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 
 const { formatCurrency } = useFormatters()
 
@@ -48,6 +43,24 @@ const onCashReceivedInput = (e: Event) => {
   input.value = formatIntegerMoney(raw, uiLocale.value)
 }
 
+const appendDigit = (digit: string) => {
+  const current = Math.max(0, Math.floor(Number(cashReceived.value) || 0))
+  const next = `${current === 0 ? '' : String(current)}${digit}`
+  // Cap length to avoid absurd POS amounts from repeated taps
+  if (next.length > 12) return
+  cashReceived.value = Number(next)
+}
+
+const backspaceDigit = () => {
+  const current = Math.max(0, Math.floor(Number(cashReceived.value) || 0))
+  const next = String(current).slice(0, -1)
+  cashReceived.value = next ? Number(next) : 0
+}
+
+const clearAmount = () => {
+  cashReceived.value = 0
+}
+
 const showVuelto = computed(() => {
   if (props.requireInputForFeedback && cashReceived.value <= 0) return false
   return cashShortfall.value <= 0.01
@@ -56,6 +69,9 @@ const showShortfall = computed(() => {
   if (props.requireInputForFeedback && cashReceived.value <= 0) return false
   return cashShortfall.value > 0.01
 })
+
+const keyBtnClass =
+  'min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-xl font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary active:scale-95'
 </script>
 
 <template>
@@ -84,15 +100,44 @@ const showShortfall = computed(() => {
     >
       {{ t('pos.cash.exact') }}
     </button>
-    <div class="grid grid-cols-2 gap-3">
+    <div
+      class="grid grid-cols-3 gap-3"
+      role="group"
+      :aria-label="t('pos.cash.keypadAria')"
+    >
       <button
-        v-for="preset in cashPresetsExtra"
-        :key="preset.label"
+        v-for="digit in keypadDigits"
+        :key="digit"
         type="button"
-        class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-        @click="cashReceived = (cashReceived || 0) + preset.offset"
+        :class="keyBtnClass"
+        :aria-label="t('pos.cash.digitAria', { digit })"
+        @click="appendDigit(digit)"
       >
-        {{ preset.label }}
+        {{ digit }}
+      </button>
+      <button
+        type="button"
+        :class="keyBtnClass"
+        :aria-label="t('pos.cash.backspaceAria')"
+        @click="backspaceDigit"
+      >
+        ⌫
+      </button>
+      <button
+        type="button"
+        :class="keyBtnClass"
+        :aria-label="t('pos.cash.digitAria', { digit: '0' })"
+        @click="appendDigit('0')"
+      >
+        0
+      </button>
+      <button
+        type="button"
+        :class="keyBtnClass"
+        :aria-label="t('pos.cash.clearAria')"
+        @click="clearAmount"
+      >
+        {{ t('pos.cash.clear') }}
       </button>
     </div>
     <div
