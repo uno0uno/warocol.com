@@ -33,9 +33,9 @@ const {
 const {
   quotaLimitModalOpen: qrQuotaModalOpen,
   quotaLimitModalMessage: qrQuotaModalMessage,
+  openQuotaLimitModalWithMessage: openQrQuotaModal,
   closeQuotaLimitModal: closeQrQuotaModal,
   goToBillingFromQuotaLimitModal: goToBillingFromQrQuota,
-  handleCreateClick: handleQrCreateClick,
 } = useOperationalQuotaGate('active_qr_tables')
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -373,8 +373,8 @@ const activeQrQuotaMessage = computed(() => {
   })
 })
 
-const onQrQuotaBlocked = () => {
-  void handleQrCreateClick(() => {})
+const onQrQuotaBlocked = (message?: string) => {
+  openQrQuotaModal(message || activeQrQuotaMessage.value)
 }
 
 const onCreateQuotaBlocked = (message?: string) => {
