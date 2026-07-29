@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCoTaxSavePayload,
+  buildCommercialMatrixSavePayload,
   buildCommercialTaxSavePayload,
+  canRemoveTaxLine,
   commercialPresetForCountry,
   countryNeedsJurisdiction,
+  normalizeTaxLines,
   primaryTaxLine,
   shouldShowJurisdictionPicker,
   shouldShowWave1CountryPicker,
   taxCategoryOptions,
   taxConfigHasTaxes,
+  taxLineForCategory,
+  validateCommercialMatrix,
   wave1PresetForCountry,
 } from './useTenantTaxProfile'
 
@@ -27,6 +33,18 @@ describe('useTenantTaxProfile', () => {
     expect(taxConfigHasTaxes({
       tax_lines: [{ key: 'gst', label: 'GST 10%', rate: 0.1, included_in_price: true, gl_role: 'iva' }],
     })).toBe(true)
+  })
+
+  it('parses jsonb string tax_lines from API (asyncpg)', () => {
+    const cfg = {
+      commercial_tax_applicable: true,
+      tax_lines: '[{"key":"iva","rate":0.16,"label":"IVA 16%","gl_role":"iva","included_in_price":false}]',
+      category_map: '{"exempt":null,"liquor":"iva","standard":"iva"}',
+    }
+    expect(taxConfigHasTaxes(cfg)).toBe(true)
+    expect(taxCategoryOptions(cfg)).toEqual(['standard', 'liquor', 'exempt'])
+    expect(primaryTaxLine(cfg)?.label).toBe('IVA 16%')
+    expect(normalizeTaxLines(cfg.tax_lines)).toHaveLength(1)
   })
 
   it('respects commercial_tax_applicable flag for tax_lines path', () => {
@@ -101,6 +119,28 @@ describe('useTenantTaxProfile', () => {
     expect(line?.key).toBe('iva')
   })
 
+  it('taxLineForCategory resolves liquor from multi-line map (DE-style)', () => {
+    const cfg = {
+      tax_lines: [
+        { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+        { key: 'mwst_standard', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+      ],
+      category_map: { standard: 'mwst_reduced', liquor: 'mwst_standard', exempt: null },
+    }
+    expect(taxLineForCategory(cfg, 'standard')?.label).toBe('MwSt 7%')
+    expect(taxLineForCategory(cfg, 'liquor')?.label).toBe('MwSt 19%')
+    expect(taxLineForCategory(cfg, 'exempt')).toBeNull()
+  })
+
+  it('taxLineForCategory parses jsonb string lines + map for liquor hints', () => {
+    const cfg = {
+      tax_lines: '[{"key":"iva","label":"IVA 16%","rate":0.16,"included_in_price":false,"gl_role":"iva"},{"key":"liquor","label":"Liquor 8%","rate":0.08,"included_in_price":false,"gl_role":"iva"}]',
+      category_map: '{"standard":"iva","liquor":"liquor","exempt":null}',
+    }
+    expect(taxLineForCategory(cfg, 'liquor')?.label).toBe('Liquor 8%')
+    expect(primaryTaxLine(cfg)?.label).toBe('IVA 16%')
+  })
+
   it('detects US/CA jurisdiction countries', () => {
     expect(countryNeedsJurisdiction('US')).toBe(true)
     expect(countryNeedsJurisdiction('ca')).toBe(true)
@@ -172,5 +212,74 @@ describe('useTenantTaxProfile', () => {
     })
     expect(payload.tax_lines).toHaveLength(1)
     expect(payload.category_map.liquor).toBe('iva')
+  })
+
+  it('matrix save keeps DE both rates and category map', () => {
+    const payload = buildCommercialMatrixSavePayload({
+      lines: [
+        { key: 'mwst_reduced', label: 'MwSt 7%', rate: 0.07, included_in_price: false, gl_role: 'iva' },
+        { key: 'mwst_standard', label: 'MwSt 19%', rate: 0.19, included_in_price: false, gl_role: 'iva' },
+      ],
+      category_map: { standard: 'mwst_reduced', liquor: 'mwst_standard', exempt: null },
+    })
+    expect(payload.tax_lines).toHaveLength(2)
+    expect(payload.category_map).toEqual({
+      standard: 'mwst_reduced',
+      liquor: 'mwst_standard',
+      exempt: null,
+    })
+    expect(validateCommercialMatrix({
+      lines: payload.tax_lines,
+      category_map: payload.category_map,
+    })).toBeNull()
+  })
+
+  it('matrix save for MX stays single-rate with maps', () => {
+    const payload = buildCommercialMatrixSavePayload({
+      lines: [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+    })
+    expect(payload.tax_lines).toHaveLength(1)
+    expect(validateCommercialMatrix({
+      lines: payload.tax_lines,
+      category_map: payload.category_map,
+    })).toBeNull()
+  })
+
+  it('blocks removing a line still referenced by category_map', () => {
+    expect(canRemoveTaxLine('iva', { standard: 'iva', liquor: 'iva', exempt: null })).toBe(false)
+    expect(canRemoveTaxLine('mwst_standard', {
+      standard: 'mwst_reduced',
+      liquor: 'mwst_standard',
+      exempt: null,
+    })).toBe(false)
+    expect(canRemoveTaxLine('unused', { standard: 'iva', liquor: 'iva', exempt: null })).toBe(true)
+  })
+
+  it('validates matrix map keys and positive rate', () => {
+    expect(validateCommercialMatrix({
+      lines: [{ key: 'iva', label: 'IVA', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'missing', liquor: null, exempt: null },
+    })).toBe('bad_map')
+    expect(validateCommercialMatrix({
+      lines: [{ key: 'iva', label: 'IVA', rate: 0, included_in_price: false, gl_role: 'iva' }],
+      category_map: { standard: 'iva', liquor: 'iva', exempt: null },
+    })).toBe('no_positive_rate')
+  })
+
+  it('builds CO tax save payload with rate fractions', () => {
+    const body = buildCoTaxSavePayload({
+      inc_applicable: false,
+      inc_included_in_price: true,
+      iva_applicable: true,
+      iva_included_in_price: false,
+      liquor_tax_applicable: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+    })
+    expect(body.iva_rate).toBe(0.19)
+    expect(body.liquor_tax_rate).toBe(0.05)
+    expect(body.iva_applicable).toBe(true)
   })
 })

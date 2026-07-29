@@ -138,10 +138,35 @@ export function countryNeedsJurisdiction(countryCode: string | null | undefined)
   return (JURISDICTION_COUNTRY_CODES as readonly string[]).includes(code)
 }
 
+/** Soft cap for custom commercial tax lines in Facturación matrix (#1874). */
+export const MAX_COMMERCIAL_TAX_LINES = 5
+
+export type CommercialMatrixValidationError =
+  | 'empty_lines'
+  | 'missing_label'
+  | 'invalid_rate'
+  | 'no_positive_rate'
+  | 'duplicate_key'
+  | 'bad_map'
+  | 'too_many'
+
+/** asyncpg often returns jsonb as a JSON string — accept both shapes. */
+function parseJsonField(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw
+  const trimmed = raw.trim()
+  if (!trimmed) return raw
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    return raw
+  }
+}
+
 export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
-  if (!Array.isArray(raw)) return []
+  const parsed = parseJsonField(raw)
+  if (!Array.isArray(parsed)) return []
   const lines: TaxLineDraft[] = []
-  for (const item of raw) {
+  for (const item of parsed) {
     if (!item || typeof item !== 'object') continue
     const row = item as Record<string, unknown>
     const key = String(row.key || '').trim()
@@ -158,12 +183,112 @@ export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
 }
 
 export function normalizeCategoryMap(raw: unknown): Record<string, string | null> | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const parsed = parseJsonField(raw)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
   const out: Record<string, string | null> = {}
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
     out[key] = value == null || value === '' ? null : String(value)
   }
   return out
+}
+
+/** Stable key from label; avoids colliding with existing keys. */
+export function suggestTaxLineKey(label: string, existingKeys: string[]): string {
+  const base = String(label || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 32) || 'tax'
+  const used = new Set(existingKeys.map(k => k.toLowerCase()))
+  if (!used.has(base)) return base
+  let i = 2
+  while (used.has(`${base}_${i}`)) i += 1
+  return `${base}_${i}`
+}
+
+export function canRemoveTaxLine(
+  key: string,
+  categoryMap: Record<string, string | null> | null | undefined,
+): boolean {
+  if (!key) return false
+  if (!categoryMap) return true
+  return !Object.values(categoryMap).some(v => v === key)
+}
+
+export function validateCommercialMatrix(options: {
+  lines: TaxLineDraft[]
+  category_map: Record<string, string | null>
+  requirePositiveRate?: boolean
+}): CommercialMatrixValidationError | null {
+  const lines = options.lines || []
+  if (!lines.length) return 'empty_lines'
+  if (lines.length > MAX_COMMERCIAL_TAX_LINES) return 'too_many'
+  const keys = new Set<string>()
+  for (const line of lines) {
+    const key = String(line.key || '').trim()
+    if (!key) return 'duplicate_key'
+    if (keys.has(key)) return 'duplicate_key'
+    keys.add(key)
+    if (!String(line.label || '').trim()) return 'missing_label'
+    if (!Number.isFinite(line.rate) || line.rate < 0) return 'invalid_rate'
+  }
+  if (options.requirePositiveRate !== false && !lines.some(l => l.rate > 0)) {
+    return 'no_positive_rate'
+  }
+  for (const value of Object.values(options.category_map || {})) {
+    if (value == null || value === '') continue
+    if (!keys.has(value)) return 'bad_map'
+  }
+  return null
+}
+
+/**
+ * Full-matrix commercial PUT body (#1874).
+ * Prefer this over primary-only buildCommercialTaxSavePayload.
+ */
+export function buildCommercialMatrixSavePayload(options: {
+  lines: TaxLineDraft[]
+  category_map: Record<string, string | null>
+}): { tax_lines: TaxLineDraft[]; category_map: Record<string, string | null> } {
+  const tax_lines = options.lines.map(line => ({
+    key: String(line.key || '').trim(),
+    label: String(line.label || '').trim(),
+    rate: Math.max(0, Number(line.rate) || 0),
+    included_in_price: Boolean(line.included_in_price),
+    gl_role: String(line.gl_role || 'iva'),
+  }))
+  const category_map: Record<string, string | null> = {
+    standard: options.category_map?.standard ?? (tax_lines[0]?.key || null),
+    liquor: options.category_map?.liquor ?? options.category_map?.standard ?? (tax_lines[0]?.key || null),
+    exempt: options.category_map?.exempt ?? null,
+  }
+  return { tax_lines, category_map }
+}
+
+/** CO column bridge PUT fields (#1873 / #1874) — rates as fractions. */
+export function buildCoTaxSavePayload(options: {
+  inc_applicable: boolean
+  inc_included_in_price: boolean
+  iva_applicable: boolean
+  iva_included_in_price: boolean
+  liquor_tax_applicable: boolean
+  iva_rate: number
+  inc_rate: number
+  liquor_tax_rate: number
+}): Record<string, boolean | number> {
+  return {
+    inc_applicable: Boolean(options.inc_applicable),
+    inc_included_in_price: Boolean(options.inc_included_in_price),
+    iva_applicable: Boolean(options.iva_applicable),
+    iva_included_in_price: Boolean(options.iva_included_in_price),
+    liquor_tax_applicable: Boolean(options.liquor_tax_applicable),
+    iva_rate: Math.max(0, Number(options.iva_rate) || 0),
+    inc_rate: Math.max(0, Number(options.inc_rate) || 0),
+    liquor_tax_rate: Math.max(0, Number(options.liquor_tax_rate) || 0),
+  }
 }
 
 export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefined): boolean {
@@ -176,16 +301,29 @@ export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefine
   return lines.some(line => line.rate > 0)
 }
 
-export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {
+/**
+ * Resolve the tax line mapped to a product category (standard / liquor).
+ * Always normalizes jsonb strings so Menú hints match Facturación matrix.
+ */
+export function taxLineForCategory(
+  cfg: Record<string, unknown> | null | undefined,
+  category: TaxCategoryKey,
+): TaxLineDraft | null {
+  if (category === 'exempt') return null
   const lines = normalizeTaxLines(cfg?.tax_lines)
   if (!lines.length) return null
   const map = normalizeCategoryMap(cfg?.category_map)
-  const standardKey = map?.standard
-  if (standardKey) {
-    const match = lines.find(line => line.key === standardKey)
+  const mappedKey = map?.[category]
+  if (mappedKey) {
+    const match = lines.find(line => line.key === mappedKey)
     if (match) return match
   }
-  return lines[0] ?? null
+  if (category === 'standard') return lines[0] ?? null
+  return null
+}
+
+export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {
+  return taxLineForCategory(cfg, 'standard')
 }
 
 /** Product tax_category keys to show in Menú (shared POS + venta directa). */
@@ -319,6 +457,7 @@ export function useTenantTaxProfile() {
     COMMERCIAL_COUNTRY_CODES,
     COMMERCIAL_TAX_PRESETS,
     JURISDICTION_COUNTRY_CODES,
+    MAX_COMMERCIAL_TAX_LINES,
     countryNeedsJurisdiction,
     shouldShowWave1CountryPicker,
     shouldShowJurisdictionPicker,
@@ -326,10 +465,16 @@ export function useTenantTaxProfile() {
     normalizeCategoryMap,
     normalizeJurisdictionOptions,
     taxConfigHasTaxes,
+    taxLineForCategory,
     primaryTaxLine,
     taxCategoryOptions,
     wave1PresetForCountry,
     commercialPresetForCountry,
     buildCommercialTaxSavePayload,
+    buildCommercialMatrixSavePayload,
+    buildCoTaxSavePayload,
+    validateCommercialMatrix,
+    canRemoveTaxLine,
+    suggestTaxLineKey,
   }
 }

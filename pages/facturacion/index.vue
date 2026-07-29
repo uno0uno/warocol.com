@@ -226,19 +226,42 @@ const taxForm = reactive({
   iva_applicable: false,
   iva_included_in_price: false,
   liquor_tax_applicable: false,
+  iva_rate_pct: 19,
+  inc_rate_pct: 8,
+  liquor_tax_rate_pct: 5,
 })
 const isSavingTax = ref(false)
 
+type MatrixLineUi = {
+  key: string
+  label: string
+  ratePct: number
+  included_in_price: boolean
+  gl_role: string
+}
+
 const {
   COMMERCIAL_COUNTRY_CODES,
-  primaryTaxLine,
+  MAX_COMMERCIAL_TAX_LINES,
   commercialPresetForCountry,
-  buildCommercialTaxSavePayload,
+  buildCommercialMatrixSavePayload,
+  buildCoTaxSavePayload,
+  validateCommercialMatrix,
+  canRemoveTaxLine,
+  suggestTaxLineKey,
+  normalizeTaxLines,
+  normalizeCategoryMap,
   countryNeedsJurisdiction,
   shouldShowWave1CountryPicker,
   shouldShowJurisdictionPicker,
   normalizeJurisdictionOptions,
 } = useTenantTaxProfile()
+
+const rateToPct = (rate: unknown, fallback: number) => {
+  const n = Number(rate)
+  if (!Number.isFinite(n)) return fallback
+  return Math.round(n * 10000) / 100
+}
 
 const showCommercialTaxUi = computed(() => isWaroCommercial.value)
 const profileCountryCode = computed(
@@ -284,28 +307,50 @@ const commercialJurisdictionCode = ref('')
 /** Missing API field → treat as enabled until #1868 lands. */
 const commercialTaxApplicable = ref(true)
 const jurisdictionOptions = ref<ReturnType<typeof normalizeJurisdictionOptions>>([])
-const commercialLine = reactive({
-  key: 'standard',
-  label: '',
-  ratePct: 0,
-  included_in_price: false,
-  gl_role: 'iva',
+const commercialLines = ref<MatrixLineUi[]>([])
+const commercialCategoryMap = reactive<{
+  standard: string | null
+  liquor: string | null
+  exempt: string | null
+}>({
+  standard: null,
+  liquor: null,
+  exempt: '',
 })
 
+const linesToUi = (lines: { key: string; label: string; rate: number; included_in_price: boolean; gl_role: string }[]): MatrixLineUi[] =>
+  lines.map(line => ({
+    key: line.key,
+    label: line.label,
+    ratePct: Math.round(line.rate * 10000) / 100,
+    included_in_price: line.included_in_price,
+    gl_role: line.gl_role || 'iva',
+  }))
+
+const uiLinesToDraft = () => commercialLines.value.map(line => ({
+  key: line.key,
+  label: line.label.trim(),
+  rate: Math.max(0, Number(line.ratePct) || 0) / 100,
+  included_in_price: Boolean(line.included_in_price),
+  gl_role: line.gl_role || 'iva',
+}))
+
+const setCategoryMapFrom = (map: Record<string, string | null> | null | undefined, fallbackKey?: string | null) => {
+  const primary = fallbackKey || map?.standard || commercialLines.value[0]?.key || null
+  commercialCategoryMap.standard = map?.standard ?? primary
+  commercialCategoryMap.liquor = map?.liquor ?? primary
+  commercialCategoryMap.exempt = map?.exempt ?? ''
+}
+
 const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
-  const line = primaryTaxLine(cfg)
-  if (!line) {
-    commercialLine.key = 'standard'
-    commercialLine.label = ''
-    commercialLine.ratePct = 0
-    commercialLine.included_in_price = false
-    commercialLine.gl_role = 'iva'
+  const lines = normalizeTaxLines(cfg?.tax_lines)
+  const map = normalizeCategoryMap(cfg?.category_map)
+  if (lines.length) {
+    commercialLines.value = linesToUi(lines)
+    setCategoryMapFrom(map, lines[0]?.key)
   } else {
-    commercialLine.key = line.key
-    commercialLine.label = line.label
-    commercialLine.ratePct = Math.round(line.rate * 10000) / 100
-    commercialLine.included_in_price = line.included_in_price
-    commercialLine.gl_role = line.gl_role || 'iva'
+    commercialLines.value = []
+    setCategoryMapFrom(null, null)
   }
 
   if (cfg?.tax_jurisdiction_code) {
@@ -313,19 +358,19 @@ const syncCommercialFromConfig = (cfg: Record<string, any> | null) => {
   }
 
   const profileCountry = profileCountryCode.value
+  const primaryKey = map?.standard || lines[0]?.key
   if (profileCountry && COMMERCIAL_COUNTRY_CODES.includes(profileCountry)) {
     const preset = commercialPresetForCountry(profileCountry)
-    const primary = preset?.lines.find(l => l.key === preset.category_map.standard) ?? preset?.lines[0]
-    if (primary?.key === line?.key) {
+    const presetPrimary = preset?.category_map.standard || preset?.lines[0]?.key
+    if (presetPrimary && presetPrimary === primaryKey) {
       commercialPresetCountry.value = profileCountry
       return
     }
   }
   const matched = COMMERCIAL_COUNTRY_CODES.find((code) => {
     const preset = commercialPresetForCountry(code)
-    const primary = preset?.lines.find(l => l.key === preset.category_map.standard) ?? preset?.lines[0]
-    return primary?.key === line?.key
-      && Math.abs((primary?.rate || 0) - (line?.rate || 0)) < 1e-9
+    return preset?.category_map.standard === primaryKey
+      || preset?.lines[0]?.key === primaryKey
   })
   if (matched) commercialPresetCountry.value = matched
 }
@@ -334,12 +379,8 @@ const applyCommercialPreset = (countryCode: string) => {
   const preset = commercialPresetForCountry(countryCode)
   if (!preset) return
   commercialPresetCountry.value = countryCode.toUpperCase()
-  const line = preset.lines.find(l => l.key === preset.category_map.standard) ?? preset.lines[0]
-  commercialLine.key = line.key
-  commercialLine.label = line.label
-  commercialLine.ratePct = Math.round(line.rate * 10000) / 100
-  commercialLine.included_in_price = line.included_in_price
-  commercialLine.gl_role = line.gl_role
+  commercialLines.value = linesToUi(preset.lines)
+  setCategoryMapFrom(preset.category_map, preset.lines[0]?.key)
 }
 
 const commercialPresetPrimaryLabel = (countryCode: string) => {
@@ -357,19 +398,61 @@ const applyJurisdictionOption = (code: string) => {
   const option = jurisdictionOptions.value.find(item => item.code === code)
   if (!option) return
   commercialJurisdictionCode.value = code
-  const line = option.lines[0]
-  if (!line) return
-  commercialLine.key = line.key
-  commercialLine.label = line.label
-  commercialLine.ratePct = Math.round(line.rate * 10000) / 100
-  commercialLine.included_in_price = line.included_in_price
-  commercialLine.gl_role = line.gl_role || 'iva'
+  const lines = option.lines.length ? option.lines : []
+  if (!lines.length) return
+  commercialLines.value = linesToUi(lines)
+  setCategoryMapFrom({
+    standard: lines[0]?.key || null,
+    liquor: lines[0]?.key || null,
+    exempt: null,
+  }, lines[0]?.key)
 }
 
 const onJurisdictionChange = () => {
   if (commercialJurisdictionCode.value) {
     applyJurisdictionOption(commercialJurisdictionCode.value)
   }
+}
+
+const addCommercialLine = () => {
+  if (commercialLines.value.length >= MAX_COMMERCIAL_TAX_LINES) {
+    toast.error(t('facturacion.tax.matrixTooMany', { max: MAX_COMMERCIAL_TAX_LINES }), {
+      title: t('facturacion.common.error'),
+    })
+    return
+  }
+  const key = suggestTaxLineKey(
+    t('facturacion.tax.newLineLabel'),
+    commercialLines.value.map(l => l.key),
+  )
+  commercialLines.value.push({
+    key,
+    label: '',
+    ratePct: 0,
+    included_in_price: false,
+    gl_role: 'iva',
+  })
+  if (!commercialCategoryMap.standard) commercialCategoryMap.standard = key
+  if (!commercialCategoryMap.liquor) commercialCategoryMap.liquor = key
+}
+
+const removeCommercialLine = (key: string) => {
+  if (commercialLines.value.length <= 1) {
+    toast.error(t('facturacion.tax.matrixNeedOne'), { title: t('facturacion.common.error') })
+    return
+  }
+  if (!canRemoveTaxLine(key, commercialCategoryMap)) {
+    toast.error(t('facturacion.tax.matrixLineInUse'), { title: t('facturacion.common.error') })
+    return
+  }
+  commercialLines.value = commercialLines.value.filter(line => line.key !== key)
+}
+
+const matrixValidationMessage = (code: string | null) => {
+  if (!code) return ''
+  const key = `facturacion.tax.matrixError.${code}`
+  const translated = t(key)
+  return translated === key ? t('facturacion.tax.commercialSaveInvalid') : translated
 }
 
 const loadJurisdictionOptions = async (country: string) => {
@@ -395,6 +478,9 @@ watch(taxConfig, (cfg) => {
   taxForm.iva_applicable = cfg.iva_applicable
   taxForm.iva_included_in_price = cfg.iva_included_in_price
   taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
+  taxForm.iva_rate_pct = rateToPct(cfg.iva_rate, 19)
+  taxForm.inc_rate_pct = rateToPct(cfg.inc_rate, 8)
+  taxForm.liquor_tax_rate_pct = rateToPct(cfg.liquor_tax_rate, 5)
   commercialTaxApplicable.value = cfg.commercial_tax_applicable !== false
   syncCommercialFromConfig(cfg)
 }, { immediate: true })
@@ -408,15 +494,13 @@ watch(
       const stored = storedJurisdictionCode.value || commercialJurisdictionCode.value
       if (stored) {
         commercialJurisdictionCode.value = stored
-        // Do not clobber a saved rate override; only seed empty commercial line.
-        if (!commercialLine.label) applyJurisdictionOption(stored)
+        // Do not clobber a saved matrix; only seed when empty.
+        if (!commercialLines.value.length) applyJurisdictionOption(stored)
       }
       return
     }
     if (COMMERCIAL_COUNTRY_CODES.includes(code)) {
-      // Prefer profile country pack; keep rate if user already edited label/rate
-      // unless commercial line is empty (new tenant).
-      if (!commercialLine.label) applyCommercialPreset(code)
+      if (!commercialLines.value.length) applyCommercialPreset(code)
       else commercialPresetCountry.value = code
     }
   },
@@ -435,33 +519,28 @@ const saveTaxConfig = async () => {
       let category_map: unknown
 
       if (enabled) {
-        const ratePct = Number(commercialLine.ratePct)
-        if (
-          !commercialLine.label.trim()
-          || Number.isNaN(ratePct)
-          || ratePct < 0
-          || (ratePct === 0 && !needsJurisdictionCountry.value)
-        ) {
-          toast.error(t('facturacion.tax.commercialSaveInvalid'), { title: t('facturacion.common.error') })
-          return
-        }
         if (showJurisdictionPicker.value && !commercialJurisdictionCode.value) {
           toast.error(t('facturacion.tax.jurisdictionRequired'), { title: t('facturacion.common.error') })
           return
         }
-        const rate = Math.max(0, ratePct) / 100
-        const label = commercialLine.label.trim()
-        ;({ tax_lines, category_map } = buildCommercialTaxSavePayload({
-          primary: {
-            key: commercialLine.key || 'standard',
-            label,
-            rate,
-            included_in_price: commercialLine.included_in_price,
-            gl_role: commercialLine.gl_role || 'iva',
+        const draft = {
+          lines: uiLinesToDraft(),
+          category_map: {
+            standard: commercialCategoryMap.standard,
+            liquor: commercialCategoryMap.liquor,
+            exempt: commercialCategoryMap.exempt || null,
           },
-          existingCfg: taxConfig.value,
-          countryCode: profileCountryCode.value || commercialPresetCountry.value,
-        }))
+        }
+        const requirePositive = !needsJurisdictionCountry.value
+        const error = validateCommercialMatrix({
+          ...draft,
+          requirePositiveRate: requirePositive,
+        })
+        if (error) {
+          toast.error(matrixValidationMessage(error), { title: t('facturacion.common.error') })
+          return
+        }
+        ;({ tax_lines, category_map } = buildCommercialMatrixSavePayload(draft))
       } else {
         // Keep saved rates for re-enable; do not require rate fields when off.
         tax_lines = taxConfig.value?.tax_lines ?? []
@@ -486,7 +565,19 @@ const saveTaxConfig = async () => {
       })
     } else {
       applySalesTaxProfile()
-      await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
+      await $fetch('/api/api/tenant/tax-config', {
+        method: 'PUT',
+        body: buildCoTaxSavePayload({
+          inc_applicable: taxForm.inc_applicable,
+          inc_included_in_price: taxForm.inc_included_in_price,
+          iva_applicable: taxForm.iva_applicable,
+          iva_included_in_price: taxForm.iva_included_in_price,
+          liquor_tax_applicable: taxForm.liquor_tax_applicable,
+          iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
+          inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
+          liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+        }),
+      })
     }
     await refreshTaxConfig()
     invalidateReadiness()
@@ -1313,7 +1404,7 @@ const taxLevels = [
         {{ showCommercialTaxUi ? t('facturacion.tax.commercialBody') : t('facturacion.tax.body') }}
       </p>
 
-      <!-- Commercial / non-DIAN: enable toggle + tax_lines preset + rate override -->
+      <!-- Commercial / non-DIAN: enable toggle + tax lines matrix + category map -->
       <div v-if="showCommercialTaxUi" class="space-y-5">
         <div class="flex items-center justify-between py-1">
           <div>
@@ -1416,69 +1507,160 @@ const taxLevels = [
             <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1PresetHint') }}</p>
           </div>
 
-          <div class="space-y-2">
-            <label for="commercial-tax-label" class="text-sm font-medium text-text-primary">
-              {{ t('facturacion.tax.lineLabel') }}
-            </label>
-            <input
-              id="commercial-tax-label"
-              v-model="commercialLine.label"
-              type="text"
-              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.matrixTitle') }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.matrixBody') }}</p>
+              </div>
+              <button
+                type="button"
+                class="min-h-[44px] px-3 py-2 text-sm font-semibold rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50"
+                :disabled="commercialLines.length >= MAX_COMMERCIAL_TAX_LINES"
+                @click="addCommercialLine"
+              >
+                {{ t('facturacion.tax.addLine') }}
+              </button>
+            </div>
+
+            <div
+              v-for="line in commercialLines"
+              :key="line.key"
+              class="rounded-xl border border-border bg-background p-3 space-y-3"
             >
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1">
+                  <label :for="`tax-line-label-${line.key}`" class="text-xs font-medium text-text-secondary">
+                    {{ t('facturacion.tax.lineLabel') }}
+                  </label>
+                  <input
+                    :id="`tax-line-label-${line.key}`"
+                    v-model="line.label"
+                    type="text"
+                    class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+                  >
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label :for="`tax-line-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
+                    {{ t('facturacion.tax.ratePercent') }}
+                  </label>
+                  <input
+                    :id="`tax-line-rate-${line.key}`"
+                    v-model.number="line.ratePct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+                  >
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
+                <button
+                  type="button"
+                  @click="line.included_in_price = true"
+                  :class="[
+                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                    line.included_in_price
+                      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                  ]"
+                >
+                  <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
+                  <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
+                </button>
+                <button
+                  type="button"
+                  @click="line.included_in_price = false"
+                  :class="[
+                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                    !line.included_in_price
+                      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                  ]"
+                >
+                  <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
+                  <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
+                </button>
+              </div>
+
+              <div class="flex justify-end">
+                <button
+                  type="button"
+                  class="min-h-[44px] px-3 text-sm font-medium text-state-danger-text hover:underline disabled:opacity-40 disabled:no-underline"
+                  :disabled="commercialLines.length <= 1"
+                  @click="removeCommercialLine(line.key)"
+                >
+                  {{ t('facturacion.tax.removeLine') }}
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="space-y-2">
-            <label for="commercial-tax-rate" class="text-sm font-medium text-text-primary">
-              {{ t('facturacion.tax.ratePercent') }}
-            </label>
-            <input
-              id="commercial-tax-rate"
-              v-model.number="commercialLine.ratePct"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
-            >
-          </div>
-
-          <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
-            <button
-              type="button"
-              @click="commercialLine.included_in_price = true"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                commercialLine.included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-              <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
-            </button>
-            <button
-              type="button"
-              @click="commercialLine.included_in_price = false"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                !commercialLine.included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-              <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
-            </button>
+          <div class="space-y-3 rounded-xl border border-border bg-surface-secondary/40 p-3">
+            <div>
+              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.categoryMapTitle') }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.categoryMapBody') }}</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="flex flex-col gap-1">
+                <label for="map-standard" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.mapStandard') }}
+                </label>
+                <select
+                  id="map-standard"
+                  v-model="commercialCategoryMap.standard"
+                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+                >
+                  <option
+                    v-for="line in commercialLines"
+                    :key="`std-${line.key}`"
+                    :value="line.key"
+                  >
+                    {{ line.label || line.key }}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="map-liquor" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.mapLiquor') }}
+                </label>
+                <select
+                  id="map-liquor"
+                  v-model="commercialCategoryMap.liquor"
+                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+                >
+                  <option
+                    v-for="line in commercialLines"
+                    :key="`liq-${line.key}`"
+                    :value="line.key"
+                  >
+                    {{ line.label || line.key }}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="map-exempt" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.mapExempt') }}
+                </label>
+                <select
+                  id="map-exempt"
+                  v-model="commercialCategoryMap.exempt"
+                  class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+                >
+                  <option value="">{{ t('facturacion.tax.mapNone') }}</option>
+                </select>
+              </div>
+            </div>
           </div>
         </template>
       </div>
 
-      <!-- CO fiscal-integrated: INC / IVA / liquor -->
+      <!-- CO fiscal-integrated: INC / IVA / liquor matrix-shaped column bridge -->
       <div v-else class="space-y-5">
 
         <!-- INC -->
-        <!-- tax toggles (i18n chrome) -->
         <div class="space-y-3">
           <div class="flex items-center justify-between py-1">
             <div>
@@ -1490,40 +1672,54 @@ const taxLevels = [
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
-          <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howInc')">
-            <button
-              type="button"
-              @click="taxForm.inc_included_in_price = true"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                taxForm.inc_included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
-              </svg>
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-              <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incIncludedHint') }}</span>
-            </button>
-            <button
-              type="button"
-              @click="taxForm.inc_included_in_price = false"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                !taxForm.inc_included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-              <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incAddedHint') }}</span>
-            </button>
+          <div v-if="taxForm.inc_applicable" class="space-y-3">
+            <div class="flex flex-col gap-1 max-w-xs">
+              <label for="co-inc-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+              <input
+                id="co-inc-rate"
+                v-model.number="taxForm.inc_rate_pct"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+              >
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howInc')">
+              <button
+                type="button"
+                @click="taxForm.inc_included_in_price = true"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  taxForm.inc_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
+                <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incIncludedHint') }}</span>
+              </button>
+              <button
+                type="button"
+                @click="taxForm.inc_included_in_price = false"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  !taxForm.inc_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
+                <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incAddedHint') }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1541,55 +1737,83 @@ const taxLevels = [
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
-          <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howIva')">
-            <button
-              type="button"
-              @click="taxForm.iva_included_in_price = true"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                taxForm.iva_included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
-              </svg>
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-              <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaIncludedHint') }}</span>
-            </button>
-            <button
-              type="button"
-              @click="taxForm.iva_included_in_price = false"
-              :class="[
-                'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                !taxForm.iva_included_in_price
-                  ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                  : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-              <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaAddedHint') }}</span>
-            </button>
+          <div v-if="taxForm.iva_applicable" class="space-y-3">
+            <div class="flex flex-col gap-1 max-w-xs">
+              <label for="co-iva-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+              <input
+                id="co-iva-rate"
+                v-model.number="taxForm.iva_rate_pct"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+              >
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howIva')">
+              <button
+                type="button"
+                @click="taxForm.iva_included_in_price = true"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  taxForm.iva_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
+                <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaIncludedHint') }}</span>
+              </button>
+              <button
+                type="button"
+                @click="taxForm.iva_included_in_price = false"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  !taxForm.iva_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
+                <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaAddedHint') }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="border-t border-border/40" />
 
         <!-- IVA Licores -->
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="text-sm font-medium text-text-primary" v-text="t('facturacion.tax.liquorTitle')"></p>
-            <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.liquorBody')"></p>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <p class="text-sm font-medium text-text-primary" v-text="t('facturacion.tax.liquorTitle')"></p>
+              <p class="text-xs text-text-secondary mt-0.5" v-text="t('facturacion.tax.liquorBody')"></p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
+              <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
+              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
-            <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-          </label>
+          <div v-if="taxForm.liquor_tax_applicable" class="flex flex-col gap-1 max-w-xs">
+            <label for="co-liquor-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+            <input
+              id="co-liquor-rate"
+              v-model.number="taxForm.liquor_tax_rate_pct"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+            >
+          </div>
         </div>
 
       </div>
