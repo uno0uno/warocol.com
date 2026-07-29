@@ -43,6 +43,8 @@
       "delivered": "Livré",
       "firedAt": "Envoyé à :",
       "perUnit": "l'unité",
+      "taxLine": "{label} · {amount}",
+      "taxIncluded": "Inclut {label} · {amount}",
       "note": "Note :",
       "decreaseQtyAria": "Diminuer la quantité",
       "increaseQtyAria": "Augmenter la quantité",

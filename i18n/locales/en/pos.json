@@ -43,6 +43,8 @@
       "delivered": "Delivered",
       "firedAt": "Fired:",
       "perUnit": "ea",
+      "taxLine": "{label} · {amount}",
+      "taxIncluded": "Includes {label} · {amount}",
       "note": "Note:",
       "decreaseQtyAria": "Decrease quantity",
       "increaseQtyAria": "Increase quantity",

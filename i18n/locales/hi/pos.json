@@ -43,6 +43,8 @@
       "delivered": "डिलीवर किया गया",
       "firedAt": "भेजा गया:",
       "perUnit": "प्रत्येक",
+      "taxLine": "{label} · {amount}",
+      "taxIncluded": "शामिल {label} · {amount}",
       "note": "नोट:",
       "decreaseQtyAria": "मात्रा घटाएँ",
       "increaseQtyAria": "मात्रा बढ़ाएँ",

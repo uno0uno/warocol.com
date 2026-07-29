@@ -43,6 +43,8 @@
       "delivered": "تم التسليم",
       "firedAt": "بدء التحضير:",
       "perUnit": "لكل وحدة",
+      "taxLine": "{label} · {amount}",
+      "taxIncluded": "يشمل {label} · {amount}",
       "note": "ملاحظة:",
       "decreaseQtyAria": "تقليل الكمية",
       "increaseQtyAria": "زيادة الكمية",

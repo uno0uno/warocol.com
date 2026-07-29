@@ -43,6 +43,8 @@
       "delivered": "已送达",
       "firedAt": "下单时间:",
       "perUnit": "每件",
+      "taxLine": "{label} · {amount}",
+      "taxIncluded": "含 {label} · {amount}",
       "note": "备注:",
       "decreaseQtyAria": "减少数量",
       "increaseQtyAria": "增加数量",

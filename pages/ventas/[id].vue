@@ -720,8 +720,7 @@ const saleReceiptInvoiceTaxLines = computed(() => {
       amount: Number(o.standard_tax) || 0,
     },
     {
-      label: t('ventas.detail.liquorVat'),
-      rate: 5,
+      label: o.liquor_tax_label || t('ventas.detail.liquorVat'),
       amount: Number(o.liquor_tax) || 0,
     },
   ].filter(line => Number(line.amount) > 0)
@@ -1974,7 +1973,7 @@ onUnmounted(() => {
                 <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.standard_tax) }}</span>
               </div>
               <div v-if="order.liquor_tax > 0" class="flex items-center justify-between gap-10">
-                <span class="text-sm text-text-secondary">{{ t('ventas.detail.liquorVat') }}</span>
+                <span class="text-sm text-text-secondary">{{ order.liquor_tax_label || t('ventas.detail.liquorVat') }}</span>
                 <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.liquor_tax) }}</span>
               </div>
               <div
@@ -2224,6 +2223,7 @@ onUnmounted(() => {
       :waro-discount-amount="effectiveWaroDiscountCop"
       :standard-tax-label="order.standard_tax_label"
       :standard-tax="Number(order.standard_tax) || 0"
+      :liquor-tax-label="order.liquor_tax_label"
       :liquor-tax="Number(order.liquor_tax) || 0"
       :order-total="Number(order.total_amount) || 0"
       :tip-label="receiptTipLabel"
