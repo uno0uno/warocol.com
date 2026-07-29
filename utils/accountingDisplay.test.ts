@@ -4,6 +4,7 @@ import {
   getAccountIndentClass,
   getAccountLevel,
   getAccountLevelKey,
+  localizeSystemAccountName,
 } from './accountingDisplay.ts'
 
 describe('accounting display metadata', () => {
@@ -17,5 +18,29 @@ describe('accounting display metadata', () => {
   it('falls back to detail metadata without inspecting a code', () => {
     assert.equal(getAccountLevel({ isDetail: true }), 4)
     assert.equal(getAccountLevelKey({ isDetail: true }), 'subaccount')
+  })
+})
+
+describe('localizeSystemAccountName', () => {
+  const t = (key: string) => {
+    if (key === 'finanzas.contabilidad.systemAccounts.cash') return 'Efectivo'
+    if (key === 'finanzas.contabilidad.systemAccounts.taxPayable') return 'Impuestos por pagar'
+    return key
+  }
+
+  it('maps known global managerial codes via i18n', () => {
+    assert.equal(localizeSystemAccountName({ code: '1000', name: 'Cash' }, t), 'Efectivo')
+    assert.equal(localizeSystemAccountName({ code: '2100', name: 'Tax payable' }, t), 'Impuestos por pagar')
+  })
+
+  it('keeps CO PUC / custom stored names when code is not in the global map', () => {
+    assert.equal(
+      localizeSystemAccountName({ code: '1105', name: 'Caja general' }, t),
+      'Caja general',
+    )
+    assert.equal(
+      localizeSystemAccountName({ code: '100005', name: 'Caja secundaria' }, t),
+      'Caja secundaria',
+    )
   })
 })

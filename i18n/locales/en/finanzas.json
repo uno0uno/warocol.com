@@ -734,6 +734,20 @@
         "income": "Income",
         "expenses": "Expenses",
         "costs": "Costs"
+      },
+      "systemAccounts": {
+        "cash": "Cash",
+        "bank": "Bank",
+        "accountsReceivable": "Accounts receivable",
+        "inventory": "Inventory",
+        "accountsPayable": "Accounts payable",
+        "taxPayable": "Tax payable",
+        "customerAdvances": "Customer advances",
+        "salesRevenue": "Sales revenue",
+        "otherIncome": "Other income",
+        "payrollExpense": "Payroll expense",
+        "bankFeesExpense": "Bank fees expense",
+        "costOfGoodsSold": "Cost of goods sold"
       }
     },
     "conciliacion": {

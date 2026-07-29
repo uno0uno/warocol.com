@@ -755,6 +755,20 @@
         "income": "收入",
         "expenses": "费用",
         "costs": "成本"
+      },
+      "systemAccounts": {
+        "cash": "现金",
+        "bank": "银行",
+        "accountsReceivable": "应收账款",
+        "inventory": "存货",
+        "accountsPayable": "应付账款",
+        "taxPayable": "应交税费",
+        "customerAdvances": "客户预收款",
+        "salesRevenue": "销售收入",
+        "otherIncome": "其他收入",
+        "payrollExpense": "工资费用",
+        "bankFeesExpense": "银行手续费",
+        "costOfGoodsSold": "销货成本"
       }
     },
     "conciliacion": {

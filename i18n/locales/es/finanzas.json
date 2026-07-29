@@ -734,6 +734,20 @@
         "income": "Ingresos",
         "expenses": "Gastos",
         "costs": "Costos"
+      },
+      "systemAccounts": {
+        "cash": "Efectivo",
+        "bank": "Banco",
+        "accountsReceivable": "Cuentas por cobrar",
+        "inventory": "Inventario",
+        "accountsPayable": "Cuentas por pagar",
+        "taxPayable": "Impuestos por pagar",
+        "customerAdvances": "Anticipos de clientes",
+        "salesRevenue": "Ingresos por ventas",
+        "otherIncome": "Otros ingresos",
+        "payrollExpense": "Gasto de nómina",
+        "bankFeesExpense": "Comisiones bancarias",
+        "costOfGoodsSold": "Costo de ventas"
       }
     },
     "conciliacion": {

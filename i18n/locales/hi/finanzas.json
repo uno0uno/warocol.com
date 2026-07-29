@@ -755,6 +755,20 @@
         "income": "आय",
         "expenses": "व्यय",
         "costs": "लागत"
+      },
+      "systemAccounts": {
+        "cash": "नकद",
+        "bank": "बैंक",
+        "accountsReceivable": "प्राप्य खाते",
+        "inventory": "इन्वेंटरी",
+        "accountsPayable": "देय खाते",
+        "taxPayable": "देय कर",
+        "customerAdvances": "ग्राहक अग्रिम",
+        "salesRevenue": "बिक्री राजस्व",
+        "otherIncome": "अन्य आय",
+        "payrollExpense": "पेरोल व्यय",
+        "bankFeesExpense": "बैंक शुल्क",
+        "costOfGoodsSold": "बेची गई वस्तु की लागत"
       }
     },
     "conciliacion": {

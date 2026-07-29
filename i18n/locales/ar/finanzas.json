@@ -755,6 +755,20 @@
         "income": "الإيرادات",
         "expenses": "المصروفات",
         "costs": "التكاليف"
+      },
+      "systemAccounts": {
+        "cash": "نقد",
+        "bank": "بنك",
+        "accountsReceivable": "ذمم مدينة",
+        "inventory": "مخزون",
+        "accountsPayable": "ذمم دائنة",
+        "taxPayable": "الضرائب المستحقة",
+        "customerAdvances": "سلف العملاء",
+        "salesRevenue": "إيرادات المبيعات",
+        "otherIncome": "إيرادات أخرى",
+        "payrollExpense": "مصروف الرواتب",
+        "bankFeesExpense": "رسوم بنكية",
+        "costOfGoodsSold": "تكلفة البضاعة المباعة"
       }
     },
     "conciliacion": {

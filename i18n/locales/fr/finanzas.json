@@ -755,6 +755,20 @@
         "income": "Produits",
         "expenses": "Charges",
         "costs": "Coûts"
+      },
+      "systemAccounts": {
+        "cash": "Caisse",
+        "bank": "Banque",
+        "accountsReceivable": "Comptes clients",
+        "inventory": "Stocks",
+        "accountsPayable": "Comptes fournisseurs",
+        "taxPayable": "Taxes à payer",
+        "customerAdvances": "Avances clients",
+        "salesRevenue": "Produits des ventes",
+        "otherIncome": "Autres produits",
+        "payrollExpense": "Charges de personnel",
+        "bankFeesExpense": "Frais bancaires",
+        "costOfGoodsSold": "Coût des marchandises vendues"
       }
     },
     "conciliacion": {

@@ -755,6 +755,20 @@
         "income": "Einnahmen",
         "expenses": "Ausgaben",
         "costs": "Kosten"
+      },
+      "systemAccounts": {
+        "cash": "Kasse",
+        "bank": "Bank",
+        "accountsReceivable": "Forderungen",
+        "inventory": "Vorräte",
+        "accountsPayable": "Verbindlichkeiten",
+        "taxPayable": "Steuerverbindlichkeiten",
+        "customerAdvances": "Kundenanzahlungen",
+        "salesRevenue": "Umsatzerlöse",
+        "otherIncome": "Sonstige Erträge",
+        "payrollExpense": "Personalaufwand",
+        "bankFeesExpense": "Bankgebühren",
+        "costOfGoodsSold": "Wareneinsatz"
       }
     },
     "conciliacion": {
