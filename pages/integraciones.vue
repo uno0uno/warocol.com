@@ -282,11 +282,22 @@
         </div>
       </div>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useFormatters } from '~/composables/useFormatters'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 definePageMeta({ layout: 'dashboard', module: 'integraciones' })
 const { t } = useI18n({ useScope: 'global' })
@@ -294,6 +305,14 @@ useHead({ title: () => t('integraciones.pageTitle') })
 
 const toast = useToast()
 const { currentTenant } = useTenantReactive()
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  openQuotaLimitModalWithMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('api_tokens')
 
 // Table columns configuration
 const tableColumns = computed(() => [
@@ -351,14 +370,42 @@ const deleting = ref(false)
 const { formatDate: _fmtDate } = useFormatters()
 const formatDate = (dateString) => _fmtDate(dateString)
 
-const openCreateModal = () => {
+const openCreatePanel = () => {
   createForm.name = ''
   createForm.expiresInDays = null
   createError.value = ''
   showCreateModal.value = true
 }
 
+const openCreateModal = () => {
+  void handleCreateClick(() => openCreatePanel())
+}
+
 const closeCreateModal = () => { showCreateModal.value = false }
+
+const isQuotaExceededError = (err: any) => {
+  const detail = err?.data?.detail
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded'
+}
+
+const quotaExceededMessageFromError = (err: any) => {
+  const detail = err?.data?.detail ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de API keys de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} API keys. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return typeof detail === 'string'
+    ? detail
+    : (detail?.message || t('billing.upgrade.quotaBlocked'))
+}
 
 const createToken = async () => {
   creating.value = true
@@ -380,7 +427,12 @@ const createToken = async () => {
     } else {
       createError.value = response.message || t('integraciones.createError')
     }
-  } catch (err) {
+  } catch (err: any) {
+    if (isQuotaExceededError(err)) {
+      closeCreateModal()
+      openQuotaLimitModalWithMessage(quotaExceededMessageFromError(err))
+      return
+    }
     createError.value = err.data?.message || t('integraciones.createTokenError')
   } finally {
     creating.value = false
