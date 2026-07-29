@@ -224,5 +224,31 @@
       "unavailableTitle": "Le journal DIAN est indisponible",
       "unavailableBody": "Cette entreprise utilise des documents WARO non fiscaux et ne consulte ni numérotation ni validation d’une autorité fiscale."
     }
+  },
+  "tax": {
+    "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
+    "matrixTitle": "Tax lines",
+    "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+    "addLine": "Add line",
+    "removeLine": "Remove",
+    "newLineLabel": "New tax",
+    "categoryMapTitle": "Product category mapping",
+    "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+    "mapStandard": "Standard",
+    "mapLiquor": "Liquor",
+    "mapExempt": "Exempt",
+    "mapNone": "No tax",
+    "matrixTooMany": "You can define at most {max} tax lines.",
+    "matrixNeedOne": "Keep at least one tax line while taxes are enabled.",
+    "matrixLineInUse": "Remap categories away from this line before removing it.",
+    "matrixError": {
+      "empty_lines": "Add at least one tax line.",
+      "missing_label": "Every tax line needs a name.",
+      "invalid_rate": "Rates must be zero or greater.",
+      "no_positive_rate": "At least one tax line needs a rate greater than zero.",
+      "duplicate_key": "Tax line keys must be unique.",
+      "bad_map": "Category mapping must point to an existing tax line.",
+      "too_many": "Too many tax lines."
+    }
   }
 }

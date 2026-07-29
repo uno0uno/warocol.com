@@ -244,5 +244,31 @@
       "unavailableTitle": "La bitácora DIAN no está disponible",
       "unavailableBody": "Este negocio usa documentos WARO no fiscales y no consulta numeración ni validaciones de una autoridad fiscal."
     }
+  },
+  "tax": {
+    "commercialBody": "Configura el impuesto de ventas según el país de tu negocio (modo comercial WARO). El país viene del registro / perfil financiero; aquí activas o desactivas el impuesto y gestionas líneas y el mapeo de categorías.",
+    "matrixTitle": "Líneas de impuesto",
+    "matrixBody": "Agrega hasta cinco líneas. Mapea las categorías de producto abajo. No se puede eliminar una línea si una categoría aún la usa.",
+    "addLine": "Agregar línea",
+    "removeLine": "Eliminar",
+    "newLineLabel": "Nuevo impuesto",
+    "categoryMapTitle": "Mapeo de categorías de producto",
+    "categoryMapBody": "Elige qué línea de impuesto aplica a productos estándar, licores y exentos.",
+    "mapStandard": "Estándar",
+    "mapLiquor": "Licores",
+    "mapExempt": "Exento",
+    "mapNone": "Sin impuesto",
+    "matrixTooMany": "Puedes definir como máximo {max} líneas de impuesto.",
+    "matrixNeedOne": "Mantén al menos una línea de impuesto mientras estén activos.",
+    "matrixLineInUse": "Remapea las categorías de esta línea antes de eliminarla.",
+    "matrixError": {
+      "empty_lines": "Agrega al menos una línea de impuesto.",
+      "missing_label": "Cada línea necesita un nombre.",
+      "invalid_rate": "Las tasas deben ser cero o mayores.",
+      "no_positive_rate": "Al menos una línea debe tener tasa mayor que cero.",
+      "duplicate_key": "Las claves de línea deben ser únicas.",
+      "bad_map": "El mapeo de categorías debe apuntar a una línea existente.",
+      "too_many": "Demasiadas líneas de impuesto."
+    }
   }
 }
