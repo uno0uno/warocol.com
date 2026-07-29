@@ -24,6 +24,7 @@ const {
   receiptLogoUrl,
   settingsData,
 } = useReceiptPrintSettings()
+const { isMatiasDian } = useTenantFinancialProfile()
 const queryCache = useQueryCache()
 
 // Payment groups for label resolution and method buttons
@@ -277,6 +278,35 @@ const emitInvoice = async () => {
       )
       if (result.cufe) {
         invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
+      }
+      // CO FE only: auto-send invoice email when address is known (#1893).
+      if (isMatiasDian.value) {
+        const email = (
+          saleCustomerIdentity.value.acquirer.email
+          || saleCustomerIdentity.value.contact.email
+          || ''
+        ).trim()
+        if (email) {
+          try {
+            await $fetch(`/api/orders/${orderId.value}/invoice/send-email`, {
+              method: 'POST',
+              body: { email },
+            })
+            onInvoiceEmailSent(email)
+          } catch (sendErr: any) {
+            const detail = sendErr?.data?.detail
+            const message = Array.isArray(detail)
+              ? detail[0]?.msg ?? t('ventas.emailModal.sendError')
+              : typeof detail === 'string'
+                ? detail
+                : sendErr?.message || t('ventas.emailModal.sendError')
+            toast.error(message, { title: t('ventas.detail.emailSentTitle') })
+          }
+        } else {
+          toast.info(t('ventas.detail.autoEmailMissing'), {
+            title: t('ventas.detail.emailSentTitle'),
+          })
+        }
       }
     } else {
       emitInvoiceError.value = result?.error_message || t('ventas.detail.rejected')

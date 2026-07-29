@@ -197,6 +197,7 @@
       "invoiceWhenComplete": "Electronic invoice available when the order is completed",
       "emailSent": "Invoice sent to {email}",
       "emailSentTitle": "Sent",
+      "autoEmailMissing": "Invoice issued. Add an email and use Send to email the customer.",
       "creditOnlyNoEmit": "Credit-only sales do not emit an electronic invoice from this flow.",
       "acceptedWithLabel": "Invoice {label} accepted by DIAN",
       "accepted": "Electronic invoice accepted",
