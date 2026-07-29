@@ -279,13 +279,14 @@ const emitInvoice = async () => {
       if (result.cufe) {
         invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(result.cufe)
       }
-      // CO FE only: auto-send invoice email when address is known (#1893).
+      // CO FE only: auto-send invoice email when a usable address is known (#1893).
       if (isMatiasDian.value) {
-        const email = (
-          saleCustomerIdentity.value.acquirer.email
-          || saleCustomerIdentity.value.contact.email
-          || ''
-        ).trim()
+        const contact = saleCustomerIdentity.value.contact
+        const acquirer = saleCustomerIdentity.value.acquirer
+        const phoneIsZero = (contact.phone ?? '') === '0000000000'
+        const rawEmail = (acquirer.email || contact.email || '').trim()
+        const tempEmail = rawEmail.toLowerCase().endsWith('@customer.temp')
+        const email = (!phoneIsZero && !tempEmail && rawEmail) ? rawEmail : ''
         if (email) {
           try {
             await $fetch(`/api/orders/${orderId.value}/invoice/send-email`, {
@@ -300,11 +301,11 @@ const emitInvoice = async () => {
               : typeof detail === 'string'
                 ? detail
                 : sendErr?.message || t('ventas.emailModal.sendError')
-            toast.error(message, { title: t('ventas.detail.emailSentTitle') })
+            toast.error(message, { title: t('ventas.emailModal.title') })
           }
         } else {
           toast.info(t('ventas.detail.autoEmailMissing'), {
-            title: t('ventas.detail.emailSentTitle'),
+            title: t('ventas.emailModal.title'),
           })
         }
       }
