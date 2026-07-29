@@ -218,11 +218,7 @@ const splitPaymentsSnapshot = ref<ReceiptPaymentLine[]>([])
 // which is included in /api/pos/restaurant-context.
 const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
 const isReadinessLoading = computed(() => !settingsData.value)
-<<<<<<< HEAD
-// CO FE capability — auto-email after emit only when true (#1893).
-=======
-// DIAN chrome (CTA copy / print disclaimers) — capability gate, not invoicing_ready.
->>>>>>> origin/main
+// matias_dian: DIAN chrome (#1892) + auto-email after FE emit (#1893). Not invoicing_ready.
 const { isMatiasDian } = useTenantFinancialProfile()
 
 // Invoice state
