@@ -1,0 +1,53 @@
+# Compact plan — uno0uno/warocol.com#1893 (epic #1890 batch 3). Keep <=80 lines.
+issue: 1893
+title: "Auto-send email after CO FE confirm; Enviar for non-FE countries"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1893-co-fe-auto-email
+closes: "Closes #1893"
+
+paths:
+  - pages/pos/checkout.vue # after generateInvoice accepted → auto send if matias_dian + email
+  - pages/ventas/[id].vue # after emitInvoice accepted → same policy
+  - components/ventas/InvoiceEmailModal.vue # reuse send contract only (no UX rewrite)
+  # optional thin helper if needed:
+  # - composables/useInvoiceEmailSend.ts
+
+ac:
+  - "CO FE (matias_dian): on emit status=accepted with customer/receipt email → auto-send once; no extra Enviar click"
+  - "Missing email: no auto-send; toast/prompt; Enviar / InvoiceEmailModal still works"
+  - "Non-FE / !matias_dian: sale complete + print never auto-email; Enviar unchanged"
+  - "Delivery recorded via existing receipt-email / invoice/send-email history paths"
+  - "Manual CO FE + MX checks noted in PR"
+
+out_of_scope:
+  - Server-side auto-send inside emit_invoice (unless front blocked)
+  - Tax maps #1891 / DIAN chrome #1892 / keypad #1894
+  - Changing Matias emit payload
+  - Auto-email for non-FE commercial receipts
+
+hints:
+  entry: "checkout generateInvoice ~2377; sendReceiptEmail → POST /api/pos/cart/receipt-email ~2897"
+  ventas: "emitInvoice ~212; modal POST /api/orders/{id}/invoice/send-email"
+  gate: "isMatiasDian && status==='accepted' && email; never on complete/print alone"
+  fallback: "no email → toast; leave Enviar; do not open blocking modal unless product wants"
+  idempotency: "auto only on this confirm success path; resend via Enviar"
+  tests: "manual only (no unit harness for emit+email); optional vitest helper if extracted"
+
+risk:
+  sensitive: false
+  areas: [email-send, fe-confirm]
+
+skip:
+  audits: [ux-full, color, typography, security-full]
+
+steps:
+  - "pull main; branch wr-1893-co-fe-auto-email"
+  - "POS: after accepted emit, if isMatiasDian && receiptEmail → sendReceiptEmail(); else toast if no email"
+  - "Ventas: after accepted emit, if isMatiasDian && email → send-email fetch; else leave Enviar"
+  - "PR closes #1893; note CO auto + MX no-auto evidence"
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#1890"

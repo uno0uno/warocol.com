@@ -201,6 +201,7 @@
         "generating": "Generando factura DIAN...",
         "generated": "Factura generada",
         "sendByEmail": "Enviar factura por correo",
+        "autoEmailMissing": "Factura emitida. Agrega un correo y usa Enviar para mandarla al cliente.",
         "matiasAuthError": "Error de autenticación con Matias. Corrige el token y pulsa Reintentar.",
         "retrying": "Reintentando...",
         "retry": "Reintentar",

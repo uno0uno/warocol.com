@@ -198,6 +198,7 @@
       "invoiceWhenComplete": "Factura electrónica disponible al completar la orden",
       "emailSent": "Factura enviada a {email}",
       "emailSentTitle": "Enviado",
+      "autoEmailMissing": "Factura emitida. Agrega un correo y usa Enviar para mandarla al cliente.",
       "creditOnlyNoEmit": "Las ventas con pago solo crédito no emiten factura electrónica desde este flujo.",
       "acceptedWithLabel": "Factura {label} aceptada por DIAN",
       "accepted": "Factura electrónica aceptada",

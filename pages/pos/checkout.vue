@@ -218,7 +218,11 @@ const splitPaymentsSnapshot = ref<ReceiptPaymentLine[]>([])
 // which is included in /api/pos/restaurant-context.
 const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
 const isReadinessLoading = computed(() => !settingsData.value)
+<<<<<<< HEAD
+// CO FE capability — auto-email after emit only when true (#1893).
+=======
 // DIAN chrome (CTA copy / print disclaimers) — capability gate, not invoicing_ready.
+>>>>>>> origin/main
 const { isMatiasDian } = useTenantFinancialProfile()
 
 // Invoice state
@@ -2470,6 +2474,11 @@ const generateInvoice = async () => {
       }
     }
     invoiceProgress.value = ''
+    const feAccepted = invoiceResult.value?.status === 'accepted'
+      || invoiceResults.value.some(r => r.status === 'accepted')
+    if (feAccepted) {
+      await maybeAutoSendInvoiceEmailAfterFe()
+    }
   } catch (e: any) {
     invoiceError.value = extractInvoiceFetchError(e)
   } finally {
@@ -2892,6 +2901,28 @@ const submitFiscalAndInvoice = async () => {
 // Printing is always manual via the print-receipt action.
 const generateInvoiceAndPrint = async () => {
   await generateInvoice()
+}
+
+/** CO FE only: after accepted emit, send invoice email if address is known (#1893). */
+const maybeAutoSendInvoiceEmailAfterFe = async () => {
+  if (!isMatiasDian.value) return
+  if (invoiceResult.value?.status !== 'accepted' && !invoiceResults.value.some(r => r.status === 'accepted')) {
+    return
+  }
+  const email = (receiptEmail.value || '').trim()
+  if (!email) {
+    toast.info(t('pos.checkout.invoice.autoEmailMissing'), {
+      title: t('pos.checkout.invoice.sendByEmail'),
+    })
+    return
+  }
+  const alreadySent = emailSent.value
+  await sendReceiptEmail()
+  if (!alreadySent && emailSent.value) {
+    toast.success(t('pos.checkout.receiptEmail.sentTo', { email }), {
+      title: t('pos.checkout.invoice.sendByEmail'),
+    })
+  }
 }
 
 const sendReceiptEmail = async () => {
