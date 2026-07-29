@@ -192,6 +192,26 @@ export function normalizeCategoryMap(raw: unknown): Record<string, string | null
   return out
 }
 
+/** Menu category UUID → tax line key (#1884). */
+export function normalizeMenuCategoryLineMap(raw: unknown): Record<string, string | null> | null {
+  return normalizeCategoryMap(raw)
+}
+
+export function normalizeExemptMenuCategoryIds(raw: unknown): string[] {
+  const parsed = parseJsonField(raw)
+  const list = Array.isArray(parsed) ? parsed : (Array.isArray(raw) ? raw : null)
+  if (!list) return []
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const item of list) {
+    const id = String(item ?? '').trim()
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+  }
+  return out
+}
+
 /** Stable key from label; avoids colliding with existing keys. */
 export function suggestTaxLineKey(label: string, existingKeys: string[]): string {
   const base = String(label || '')
@@ -212,15 +232,18 @@ export function suggestTaxLineKey(label: string, existingKeys: string[]): string
 export function canRemoveTaxLine(
   key: string,
   categoryMap: Record<string, string | null> | null | undefined,
+  menuCategoryLineMap?: Record<string, string | null> | null,
 ): boolean {
   if (!key) return false
-  if (!categoryMap) return true
-  return !Object.values(categoryMap).some(v => v === key)
+  if (categoryMap && Object.values(categoryMap).some(v => v === key)) return false
+  if (menuCategoryLineMap && Object.values(menuCategoryLineMap).some(v => v === key)) return false
+  return true
 }
 
 export function validateCommercialMatrix(options: {
   lines: TaxLineDraft[]
   category_map: Record<string, string | null>
+  menu_category_line_map?: Record<string, string | null> | null
   requirePositiveRate?: boolean
 }): CommercialMatrixValidationError | null {
   const lines = options.lines || []
@@ -239,6 +262,10 @@ export function validateCommercialMatrix(options: {
     return 'no_positive_rate'
   }
   for (const value of Object.values(options.category_map || {})) {
+    if (value == null || value === '') continue
+    if (!keys.has(value)) return 'bad_map'
+  }
+  for (const value of Object.values(options.menu_category_line_map || {})) {
     if (value == null || value === '') continue
     if (!keys.has(value)) return 'bad_map'
   }
@@ -262,7 +289,14 @@ export function resolveCategoryMapValue(
 export function buildCommercialMatrixSavePayload(options: {
   lines: TaxLineDraft[]
   category_map: Record<string, string | null>
-}): { tax_lines: TaxLineDraft[]; category_map: Record<string, string | null> } {
+  menu_category_line_map?: Record<string, string | null> | null
+  exempt_menu_category_ids?: string[] | null
+}): {
+  tax_lines: TaxLineDraft[]
+  category_map: Record<string, string | null>
+  menu_category_line_map: Record<string, string | null>
+  exempt_menu_category_ids: string[]
+} {
   const tax_lines = options.lines.map(line => ({
     key: String(line.key || '').trim(),
     label: String(line.label || '').trim(),
@@ -277,7 +311,16 @@ export function buildCommercialMatrixSavePayload(options: {
     liquor: resolveCategoryMapValue(options.category_map?.liquor, standard),
     exempt: resolveCategoryMapValue(options.category_map?.exempt, null),
   }
-  return { tax_lines, category_map }
+  const menu_category_line_map: Record<string, string | null> = {}
+  for (const [catId, lineKey] of Object.entries(options.menu_category_line_map || {})) {
+    const id = String(catId || '').trim()
+    if (!id) continue
+    menu_category_line_map[id] = lineKey == null || lineKey === '' ? null : String(lineKey)
+  }
+  const exempt_menu_category_ids = normalizeExemptMenuCategoryIds(
+    options.exempt_menu_category_ids ?? [],
+  ).filter(id => !menu_category_line_map[id])
+  return { tax_lines, category_map, menu_category_line_map, exempt_menu_category_ids }
 }
 
 /** CO column bridge PUT fields (#1873 / #1874) — rates as fractions. */
@@ -475,6 +518,8 @@ export function useTenantTaxProfile() {
     shouldShowJurisdictionPicker,
     normalizeTaxLines,
     normalizeCategoryMap,
+    normalizeMenuCategoryLineMap,
+    normalizeExemptMenuCategoryIds,
     normalizeJurisdictionOptions,
     taxConfigHasTaxes,
     taxLineForCategory,
