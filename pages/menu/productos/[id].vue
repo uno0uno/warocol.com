@@ -947,7 +947,7 @@ const { data: taxConfigData } = useQuery({
   staleTime: 30_000,
 })
 const taxConfig = computed(() => taxConfigData.value?.data ?? null)
-const { taxConfigHasTaxes, taxCategoryOptions, primaryTaxLine } = useTenantTaxProfile()
+const { taxConfigHasTaxes, taxCategoryOptions, primaryTaxLine, normalizeTaxLines, normalizeCategoryMap } = useTenantTaxProfile()
 const hasTaxes = computed(() => taxConfigHasTaxes(taxConfig.value))
 const taxCategories = computed(() => taxCategoryOptions(taxConfig.value))
 const standardTaxHint = computed(() => {
@@ -956,10 +956,10 @@ const standardTaxHint = computed(() => {
   return t('menu.productos.incVatRates')
 })
 const liquorTaxHint = computed(() => {
-  const map = taxConfig.value?.category_map
+  const map = normalizeCategoryMap(taxConfig.value?.category_map)
   const liquorKey = map?.liquor
-  const lines = Array.isArray(taxConfig.value?.tax_lines) ? taxConfig.value.tax_lines : []
-  const line = liquorKey ? lines.find((l: any) => l.key === liquorKey) : null
+  const lines = normalizeTaxLines(taxConfig.value?.tax_lines)
+  const line = liquorKey ? lines.find(l => l.key === liquorKey) : null
   if (line?.label) return line.label
   return t('menu.productos.liquorVat')
 })

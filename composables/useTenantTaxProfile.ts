@@ -138,10 +138,23 @@ export function countryNeedsJurisdiction(countryCode: string | null | undefined)
   return (JURISDICTION_COUNTRY_CODES as readonly string[]).includes(code)
 }
 
+/** asyncpg often returns jsonb as a JSON string — accept both shapes. */
+function parseJsonField(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw
+  const trimmed = raw.trim()
+  if (!trimmed) return raw
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    return raw
+  }
+}
+
 export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
-  if (!Array.isArray(raw)) return []
+  const parsed = parseJsonField(raw)
+  if (!Array.isArray(parsed)) return []
   const lines: TaxLineDraft[] = []
-  for (const item of raw) {
+  for (const item of parsed) {
     if (!item || typeof item !== 'object') continue
     const row = item as Record<string, unknown>
     const key = String(row.key || '').trim()
@@ -158,9 +171,10 @@ export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
 }
 
 export function normalizeCategoryMap(raw: unknown): Record<string, string | null> | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const parsed = parseJsonField(raw)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
   const out: Record<string, string | null> = {}
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
     out[key] = value == null || value === '' ? null : String(value)
   }
   return out

@@ -29,6 +29,17 @@ describe('useTenantTaxProfile', () => {
     })).toBe(true)
   })
 
+  it('parses jsonb string tax_lines from API (asyncpg)', () => {
+    const cfg = {
+      commercial_tax_applicable: true,
+      tax_lines: '[{"key":"iva","rate":0.16,"label":"IVA 16%","gl_role":"iva","included_in_price":false}]',
+      category_map: '{"exempt":null,"liquor":"iva","standard":"iva"}',
+    }
+    expect(taxConfigHasTaxes(cfg)).toBe(true)
+    expect(taxCategoryOptions(cfg)).toEqual(['standard', 'liquor', 'exempt'])
+    expect(primaryTaxLine(cfg)?.label).toBe('IVA 16%')
+  })
+
   it('respects commercial_tax_applicable flag for tax_lines path', () => {
     const lines = [{ key: 'iva', label: 'IVA 16%', rate: 0.16, included_in_price: false, gl_role: 'iva' }]
     expect(taxConfigHasTaxes({ tax_lines: lines })).toBe(true)
