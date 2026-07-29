@@ -124,6 +124,7 @@ const quotaDisplayConfig = [
   BILLING_QUOTA_RESOURCE_CONFIG.active_qr_tables,
   BILLING_QUOTA_RESOURCE_CONFIG.completed_online_orders_per_month,
   BILLING_QUOTA_RESOURCE_CONFIG.electronic_invoices_per_period,
+  BILLING_QUOTA_RESOURCE_CONFIG.api_tokens,
 ]
 
 const usageLabels = computed<Record<string, { resource: string; description: string; unit: string; notIncluded?: string }>>(() => ({
@@ -134,6 +135,7 @@ const usageLabels = computed<Record<string, { resource: string; description: str
   active_qr_tables: { resource: t('billing.quotaQrTables'), description: t('billing.quotaQrTablesDescription'), unit: t('billing.unitQrTables') },
   completed_online_orders_per_month: { resource: t('billing.quotaOnlineOrders'), description: t('billing.quotaOnlineOrdersDescription'), unit: t('billing.unitOnlineOrders') },
   electronic_invoices_per_period: { resource: t('billing.quotaInvoices'), description: t('billing.quotaInvoicesDescription'), unit: t('billing.unitInvoices'), notIncluded: t('billing.notIncluded') },
+  api_tokens: { resource: t('billing.quotaApiTokens', 'API keys'), description: t('billing.quotaApiTokensDescription', 'Claves de API activas para integraciones'), unit: t('billing.unitApiTokens', 'API keys') },
   menu_products: { resource: t('billing.quota.menu_products'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitProducts') },
   menu_categories: { resource: t('billing.quota.menu_categories'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitCategories') },
   tenant_ingredients: { resource: t('billing.quota.tenant_ingredients'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitIngredients') },
@@ -180,7 +182,8 @@ const starterFallbackRows = computed(() => {
       const rawLimit = starterPlan.value?.quotas?.[key]
       if (rawLimit === null || rawLimit === undefined) return null
       const limit = Number(rawLimit)
-      if (!Number.isFinite(limit) || limit <= 0) return null
+      // Include limit === 0 (e.g. api_tokens on Starter) as display-only policy lock (#1909).
+      if (!Number.isFinite(limit) || limit < 0) return null
       const config = BILLING_QUOTA_RESOURCE_CONFIG[key]
       return {
         resourceKey: key,
@@ -191,7 +194,7 @@ const starterFallbackRows = computed(() => {
         remaining: null,
         percentage: null,
         unit: usageLabels.value[key]?.unit ?? config.unit,
-        emptyMessage: null,
+        emptyMessage: limit === 0 ? t('billing.zeroAvailable') : null,
         limitsOnly: true,
       }
     })

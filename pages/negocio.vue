@@ -303,6 +303,10 @@
         </div>
       </div>
 
+      <!--
+        Policy (#1909 / epic #1906): Starter online-orders banner is informational only.
+        Do not gate Mi Negocio save/edit on plan quotas — Despacho and Mi Negocio stay ungated.
+      -->
       <div
         v-if="isStarterPlan && businessProfile?.accepts_online_orders && !isEditMode"
         class="rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20"
