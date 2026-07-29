@@ -172,7 +172,31 @@
       "incAddedHint": "8% ऊपर से जोड़ा जाता है। उदा: $10.000 मूल → $10.800 शुल्क",
       "ivaIncludedHint": "19% पहले से ही मूल्य में शामिल है। उदा: $11.900 → मूल $10.000 + IVA $1.900",
       "ivaAddedHint": "19% ऊपर से जोड़ा जाता है। उदा: $10.000 मूल → $11.900 शुल्क",
-      "save": "सेटिंग्स सहेजें"
+      "save": "सेटिंग्स सहेजें",
+      "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
+      "matrixTitle": "Tax lines",
+      "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
+      "addLine": "Add line",
+      "removeLine": "Remove",
+      "newLineLabel": "New tax",
+      "categoryMapTitle": "Product category mapping",
+      "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
+      "mapStandard": "Standard",
+      "mapLiquor": "Liquor",
+      "mapExempt": "Exempt",
+      "mapNone": "No tax",
+      "matrixTooMany": "You can define at most {max} tax lines.",
+      "matrixNeedOne": "Keep at least one tax line while taxes are enabled.",
+      "matrixLineInUse": "Remap categories away from this line before removing it.",
+      "matrixError": {
+        "empty_lines": "Add at least one tax line.",
+        "missing_label": "Every tax line needs a name.",
+        "invalid_rate": "Rates must be zero or greater.",
+        "no_positive_rate": "At least one tax line needs a rate greater than zero.",
+        "duplicate_key": "Tax line keys must be unique.",
+        "bad_map": "Category mapping must point to an existing tax line.",
+        "too_many": "Too many tax lines."
+      }
     },
     "provider": {
       "title": "इलेक्ट्रॉनिक बिलिंग प्रदाता",
@@ -223,32 +247,6 @@
       "pageOf": "पृष्ठ {page}, कुल {total}",
       "unavailableTitle": "DIAN लॉग उपलब्ध नहीं है",
       "unavailableBody": "यह व्यवसाय गैर-राजकोषीय WARO दस्तावेज़ों का उपयोग करता है और कर प्राधिकरण की संख्या या सत्यापन नहीं पूछता।"
-    }
-  },
-  "tax": {
-    "commercialBody": "Configure sales tax for your business country (WARO commercial mode). Country comes from registration / financial profile; here you enable or disable tax and manage tax lines and category mapping.",
-    "matrixTitle": "Tax lines",
-    "matrixBody": "Add up to five lines. Map product categories to a line below. Remove is blocked while a category still uses that line.",
-    "addLine": "Add line",
-    "removeLine": "Remove",
-    "newLineLabel": "New tax",
-    "categoryMapTitle": "Product category mapping",
-    "categoryMapBody": "Choose which tax line applies to standard, liquor, and exempt products.",
-    "mapStandard": "Standard",
-    "mapLiquor": "Liquor",
-    "mapExempt": "Exempt",
-    "mapNone": "No tax",
-    "matrixTooMany": "You can define at most {max} tax lines.",
-    "matrixNeedOne": "Keep at least one tax line while taxes are enabled.",
-    "matrixLineInUse": "Remap categories away from this line before removing it.",
-    "matrixError": {
-      "empty_lines": "Add at least one tax line.",
-      "missing_label": "Every tax line needs a name.",
-      "invalid_rate": "Rates must be zero or greater.",
-      "no_positive_rate": "At least one tax line needs a rate greater than zero.",
-      "duplicate_key": "Tax line keys must be unique.",
-      "bad_map": "Category mapping must point to an existing tax line.",
-      "too_many": "Too many tax lines."
     }
   }
 }
