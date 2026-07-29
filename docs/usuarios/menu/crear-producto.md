@@ -32,6 +32,12 @@ Ve a **Menú → Productos → Nuevo producto**.
 
 El asistente tiene **4 pasos** si eliges **Con receta**, o **3 pasos** si eliges **Venta directa** (sin paso de receta).
 
+### Impuesto del producto
+
+Si tu negocio usa **impuestos comerciales** (líneas en Facturación), el producto **hereda** el impuesto de su **categoría de menú**. Puedes dejarlo así, marcarlo **exento** o elegir **otra línea**. Ese override gana sobre el mapa de la categoría.
+
+En Colombia con matriz fiscal por columnas, sigues eligiendo Alimento/Bebida, Licor o Exento.
+
 ### Paso 1 — Tipo de producto
 
 Elige cómo se prepara o vende:

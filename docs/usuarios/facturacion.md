@@ -58,7 +58,11 @@ Presiona **Guardar datos fiscales** para aplicar los cambios. Si cambias tipo de
 
 ## Impuestos aplicados a ventas
 
-En **Facturación → Impuestos aplicados a ventas** defines las **líneas de impuesto** (nombre, porcentaje y modo incluido/sumado) y qué **categoría de producto** usa cada línea. El Menú y el POS aplican automáticamente la línea mapeada según la categoría del producto (`Alimento/Bebida`, `Licor`, `Exento`).
+En **Facturación → Impuestos aplicados a ventas** defines las **líneas de impuesto** (nombre, porcentaje y modo incluido/sumado) y, en países comerciales, qué **categorías del menú** usa cada línea (buscador + chips). También puedes marcar categorías como **exentas**.
+
+En el **Menú**, cada producto **hereda** el impuesto de su categoría de menú. Si el operador declara un impuesto en el producto (otra línea o exento), esa declaración **tiene prioridad** sobre el mapa de la categoría. El POS aplica la resolución del servidor (override → categoría exenta → mapa de categoría → línea principal).
+
+En **Colombia** (matriz por columnas), los productos siguen usando las etiquetas fiscales `Alimento/Bebida`, `Licor` y `Exento` mientras no haya líneas comerciales genéricas.
 
 ### Colombia
 
@@ -89,9 +93,9 @@ Si tu negocio opera en otro país del catálogo WARO (Panamá, Chile, República
 Con el impuesto comercial **activado** puedes:
 
 1. **Agregar, editar o quitar líneas** (nombre, % y modo incluido/sumado), dentro de los límites de la pantalla.
-2. **Mapear categorías de producto** — `standard` (alimento/bebida), `liquor` y `exento` — a una línea existente o a ninguna (exento).
-3. En el **Menú**, al crear o editar un producto, eliges la categoría; la etiqueta bajo cada opción muestra la línea mapeada (por ejemplo `MwSt 7%` / `MwSt 19%` en Alemania).
-4. En el **POS**, la venta aplica automáticamente la tasa y el modo de esa línea.
+2. **Mapear categorías del menú** a cada línea (buscador + chips) y marcar categorías **exentas**.
+3. En el **Menú**, el producto **hereda** el impuesto de su categoría; puedes dejarlo así, marcarlo exento o elegir otra línea (override).
+4. En el **POS**, la venta aplica la resolución del servidor (override → categoría exenta → mapa → línea principal).
 
 Apagar el impuesto comercial deja de aplicarlo en POS y menú, pero **conserva las líneas guardadas** para reactivarlas después. El banner del país **no** significa que la tasa esté activa si el interruptor está apagado.
 
