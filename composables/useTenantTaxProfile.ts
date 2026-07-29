@@ -301,16 +301,29 @@ export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefine
   return lines.some(line => line.rate > 0)
 }
 
-export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {
+/**
+ * Resolve the tax line mapped to a product category (standard / liquor).
+ * Always normalizes jsonb strings so Menú hints match Facturación matrix.
+ */
+export function taxLineForCategory(
+  cfg: Record<string, unknown> | null | undefined,
+  category: TaxCategoryKey,
+): TaxLineDraft | null {
+  if (category === 'exempt') return null
   const lines = normalizeTaxLines(cfg?.tax_lines)
   if (!lines.length) return null
   const map = normalizeCategoryMap(cfg?.category_map)
-  const standardKey = map?.standard
-  if (standardKey) {
-    const match = lines.find(line => line.key === standardKey)
+  const mappedKey = map?.[category]
+  if (mappedKey) {
+    const match = lines.find(line => line.key === mappedKey)
     if (match) return match
   }
-  return lines[0] ?? null
+  if (category === 'standard') return lines[0] ?? null
+  return null
+}
+
+export function primaryTaxLine(cfg: Record<string, unknown> | null | undefined): TaxLineDraft | null {
+  return taxLineForCategory(cfg, 'standard')
 }
 
 /** Product tax_category keys to show in Menú (shared POS + venta directa). */
@@ -452,6 +465,7 @@ export function useTenantTaxProfile() {
     normalizeCategoryMap,
     normalizeJurisdictionOptions,
     taxConfigHasTaxes,
+    taxLineForCategory,
     primaryTaxLine,
     taxCategoryOptions,
     wave1PresetForCountry,
