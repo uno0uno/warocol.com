@@ -126,7 +126,16 @@
       "realMargin": "الهامش الفعلي",
       "operatingMargin": "الهامش التشغيلي"
       ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "فئة الضريبة",
+      "taxCategory": "فئة الضريبة"
+      ,"taxResolution": "ضريبة المنتج"
+      ,"taxInherit": "وراثة من الفئة"
+      ,"taxInheritHint": "يستخدم خريطة الفوترة لفئة القائمة"
+      ,"taxOverrideLine": "سطر آخر"
+      ,"taxOverrideLineHint": "يفرض سطر ضريبة مختلفًا عن الفئة"
+      ,"taxSelectLine": "سطر الضريبة"
+      ,"taxInheritedLabel": "الافتراضي: {label}"
+      ,"taxInheritedExempt": "الافتراضي: معفى (الفئة)"
+      ,"taxNoCategory": "اختر فئة قائمة لعرض الضريبة الموروثة",
       "foodBeverage": "طعام / شراب",
       "incVatRates": "النسبة وفق إعدادات الفوترة",
       "takeawayLiquor": "مشروبات كحولية سفري",

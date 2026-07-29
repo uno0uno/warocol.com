@@ -126,7 +126,16 @@
       "realMargin": "Marge réelle",
       "operatingMargin": "Marge opérationnelle"
       ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "Catégorie de taxe",
+      "taxCategory": "Catégorie de taxe"
+      ,"taxResolution": "Taxe du produit"
+      ,"taxInherit": "Hériter de la catégorie"
+      ,"taxInheritHint": "Utilise le mapping Facturation de la catégorie du menu"
+      ,"taxOverrideLine": "Autre ligne"
+      ,"taxOverrideLineHint": "Force une ligne de taxe différente de la catégorie"
+      ,"taxSelectLine": "Ligne de taxe"
+      ,"taxInheritedLabel": "Par défaut : {label}"
+      ,"taxInheritedExempt": "Par défaut : exonéré (catégorie)"
+      ,"taxNoCategory": "Choisissez une catégorie de menu pour voir la taxe héritée",
       "foodBeverage": "Aliment / Boisson",
       "incVatRates": "Taux selon Facturation",
       "takeawayLiquor": "Liqueur à emporter",

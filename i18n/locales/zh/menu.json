@@ -126,7 +126,16 @@
       "realMargin": "实际利润",
       "operatingMargin": "运营利润"
       ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "税费分类",
+      "taxCategory": "税费分类"
+      ,"taxResolution": "产品税费"
+      ,"taxInherit": "继承分类"
+      ,"taxInheritHint": "使用账单模块中的菜单分类映射"
+      ,"taxOverrideLine": "其他税行"
+      ,"taxOverrideLineHint": "强制使用与分类不同的税行"
+      ,"taxSelectLine": "税行"
+      ,"taxInheritedLabel": "默认：{label}"
+      ,"taxInheritedExempt": "默认：免税（分类）"
+      ,"taxNoCategory": "选择菜单分类以查看继承税费",
       "foodBeverage": "食品 / 饮料",
       "incVatRates": "费率见开票设置",
       "takeawayLiquor": "外带酒水",

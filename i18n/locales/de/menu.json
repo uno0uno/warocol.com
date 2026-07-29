@@ -126,7 +126,16 @@
       "realMargin": "Reale Marge",
       "operatingMargin": "Betriebsmarge"
       ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "Steuerkategorie",
+      "taxCategory": "Steuerkategorie"
+      ,"taxResolution": "Produktsteuer"
+      ,"taxInherit": "Von Kategorie erben"
+      ,"taxInheritHint": "Nutzt die Facturación-Zuordnung der Menükategorie"
+      ,"taxOverrideLine": "Andere Zeile"
+      ,"taxOverrideLineHint": "Erzwingt eine andere Steuerzeile als die Kategorie"
+      ,"taxSelectLine": "Steuerzeile"
+      ,"taxInheritedLabel": "Standard: {label}"
+      ,"taxInheritedExempt": "Standard: befreit (Kategorie)"
+      ,"taxNoCategory": "Wählen Sie eine Menükategorie für die geerbte Steuer",
       "foodBeverage": "Speise / Getränk",
       "incVatRates": "Satz laut Abrechnung",
       "takeawayLiquor": "Spirituosen zum Mitnehmen",
