@@ -60,6 +60,8 @@ const props = defineProps<{
     email?: string | null
   } | null
   platformLegal?: PlatformLegalPrint | null
+  /** When true, DIAN-specific receipt chrome (CO FE). */
+  matiasDian?: boolean
   displayName?: string | null
   address?: string | null
   city?: string | null
@@ -392,7 +394,7 @@ const printableItems = computed(() =>
       </div>
     </template>
 
-    <!-- Venta sin FE: comprobante del establecimiento (no factura DIAN) -->
+    <!-- Venta sin FE: comprobante del establecimiento (DIAN disclaimer only for CO FE tenants) -->
     <template v-if="!invoice">
       <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
       <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
@@ -401,7 +403,9 @@ const printableItems = computed(() =>
         {{ t('pos.receipt.saleReceipt') }}
       </div>
       <div class="receipt-row receipt-small">
-        {{ t('pos.receipt.notDianInvoice') }}
+        {{ matiasDian
+          ? t('pos.receipt.notDianInvoice')
+          : t('pos.receipt.notElectronicInvoice') }}
       </div>
       <div
         v-if="fallbackIssuerLabel"
@@ -409,7 +413,11 @@ const printableItems = computed(() =>
       >
         {{ t('pos.receipt.seller', { label: fallbackIssuerLabel }) }}
       </div>
-      <PosReceiptPlatformFooter document-kind="sale" :platform-legal="platformLegal" />
+      <PosReceiptPlatformFooter
+        document-kind="sale"
+        :platform-legal="platformLegal"
+        :matias-dian="matiasDian"
+      />
     </template>
 
     <template v-else>
@@ -457,7 +465,7 @@ const printableItems = computed(() =>
       <div v-if="invoiceDianUrl" class="receipt-row receipt-small">{{ t('pos.receipt.verifyDian') }}</div>
       <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
       <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
-      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" />
+      <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" :matias-dian="true" />
     </template>
     </div>
   </Teleport>

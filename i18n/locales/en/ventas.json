@@ -193,6 +193,7 @@
       "invoiceUnavailableBody": "Credit-only sales do not emit an electronic invoice from this flow. Use split payment if you need to invoice at sale time.",
       "noInvoiceTitle": "No electronic invoice",
       "noInvoiceBody": "Generate the DIAN invoice when you need it.",
+      "noInvoiceBodyNeutral": "Generate the electronic invoice when you need it.",
       "emitCta": "Issue invoice",
       "invoiceWhenComplete": "Electronic invoice available when the order is completed",
       "emailSent": "Invoice sent to {email}",

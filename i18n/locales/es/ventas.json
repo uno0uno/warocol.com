@@ -193,6 +193,7 @@
       "invoiceUnavailableBody": "Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.",
       "noInvoiceTitle": "Sin factura electrónica",
       "noInvoiceBody": "Genera la factura DIAN cuando lo necesites.",
+      "noInvoiceBodyNeutral": "Genera la factura electrónica cuando lo necesites.",
       "emitCta": "Emitir factura",
       "invoiceWhenComplete": "Factura electrónica disponible al completar la orden",
       "emailSent": "Factura enviada a {email}",

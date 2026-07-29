@@ -1,0 +1,57 @@
+# Compact plan — uno0uno/warocol.com#1892 (epic #1890 batch 2). Keep <=80 lines.
+issue: 1892
+title: "Jurisdiction-aware prefactura/factura/print labels (no DIAN outside CO FE)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1892-jurisdiction-print-labels
+closes: "Closes #1892"
+
+paths:
+  - pages/pos/checkout.vue # CTA generateDian + inline notDianInvoice
+  - pages/ventas/[id].vue # detail.dian / fiscalAcquirerDian labels
+  - components/pos/ReceiptPrintTicket.vue # notDianInvoice, dianIssueDate, verifyDian
+  - components/pos/ReceiptPlatformFooter.vue # prefacturaEstablishment DIAN wording
+  - composables/useTenantFinancialProfile.ts # reuse matias_dian (read-only)
+  - i18n/locales/es/pos.json # neutral keys; keep DIAN keys for CO
+  - i18n/locales/en/pos.json # mirror neutrals
+  - i18n/locales/es/ventas.json # neutral detail strings when needed
+  - i18n/locales/en/ventas.json # mirror
+
+ac:
+  - "MX/non-CO: prefactura + sale print/receipt footers have no DIAN branding"
+  - "MX/non-CO: POS does not present 'factura electrónica DIAN' as default CTA copy"
+  - "CO FE (matias_dian): existing DIAN CTA, FE print, verify/QR labels unchanged"
+  - "FE emit gate stays invoicing_ready; DIAN chrome gate = matias_dian"
+  - "Manual POS + ventas/[id] print check noted in PR"
+
+out_of_scope:
+  - Tax amounts / #1891
+  - FE auto-email / #1893
+  - Cash keypad / #1894
+  - Facturación DIAN resolution UI (middleware already gates)
+  - Rewriting all facturacion.json locales
+
+hints:
+  entry: "matias_dian from useTenantFinancialProfile; invoicing_ready already gates emit"
+  pattern: "ReceiptPrintTicket.vue ~395-405 always notDianInvoice; checkout ~4939 generateDian"
+  approach: "computed isMatiasDianTenant; t(dianKey) vs t(neutralKey); add neutral i18n keys"
+  neutrals: "notElectronicInvoice, prefacturaEstablishmentNeutral, generateElectronic, fiscalAcquirer"
+  tests: "npx vitest run composables/useTenantFinancialProfile.test.ts -q (if touched); else manual only"
+
+risk:
+  sensitive: false
+  areas: [i18n, pos-print]
+
+skip:
+  audits: [ux-full, color, typography, security-full]
+
+steps:
+  - "pull main; branch wr-1892-jurisdiction-print-labels"
+  - "wire isMatiasDian into checkout, ReceiptPrintTicket, ReceiptPlatformFooter, ventas/[id]"
+  - "add es/en neutral keys; branch templates on matias_dian"
+  - "PR closes #1892; note MX vs CO manual print checks"
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#1890"
