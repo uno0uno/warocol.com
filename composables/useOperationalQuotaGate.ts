@@ -84,6 +84,7 @@ export function useOperationalQuotaGate(resource: OperationalQuotaKey) {
   return {
     quotaLimitModalOpen,
     quotaLimitModalMessage,
+    openQuotaLimitModalWithMessage,
     closeQuotaLimitModal,
     goToBillingFromQuotaLimitModal,
     handleCreateClick,

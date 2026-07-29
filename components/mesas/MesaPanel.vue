@@ -146,9 +146,17 @@
             :qr-quota-blocked="qrQuotaBlocked"
             :qr-quota-message="qrQuotaMessage"
             @updated="(data) => emit('qr-updated', data)"
+            @quota-blocked="emit('qr-quota-blocked')"
           />
 
-          <p v-if="createBlocked" class="text-sm text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2">
+          <p
+            v-if="createBlocked"
+            class="text-sm text-state-warning-text bg-state-warning-bg border border-state-warning-border rounded-lg px-3 py-2 cursor-pointer"
+            role="button"
+            tabindex="0"
+            @click="emit('quota-blocked')"
+            @keydown.enter.prevent="emit('quota-blocked')"
+          >
             {{ createQuotaNotice }}
           </p>
 
@@ -169,7 +177,7 @@
           </button>
           <button
             type="button"
-            :disabled="saving || createBlocked"
+            :disabled="saving"
             :title="createBlocked ? createQuotaNotice : undefined"
             class="flex-1 h-11 rounded-lg bg-action-primary-bg text-sm font-semibold text-action-primary-text transition-all hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-action-primary-bg/30"
             @click="submit"
@@ -211,6 +219,8 @@ interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved', table: any): void
   (e: 'qr-updated', table: Record<string, unknown>): void
+  (e: 'quota-blocked'): void
+  (e: 'qr-quota-blocked'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -293,9 +303,7 @@ function validate() {
 
 async function submit() {
   if (createBlocked.value) {
-    errors.value = {
-      general: createQuotaNotice.value,
-    }
+    emit('quota-blocked')
     return
   }
 
@@ -341,7 +349,17 @@ async function submit() {
     close()
   } catch (err: any) {
     const detail = err?.data?.detail ?? err?.message ?? 'Error al guardar'
-    errors.value.general = detail
+    const isQuota = err?.status === 429 ||
+      err?.statusCode === 429 ||
+      err?.data?.code === 'quota_exceeded' ||
+      err?.data?.error === 'quota_exceeded' ||
+      detail?.code === 'quota_exceeded' ||
+      detail?.error === 'quota_exceeded'
+    if (isQuota) {
+      emit('quota-blocked')
+      return
+    }
+    errors.value.general = typeof detail === 'string' ? detail : 'Error al guardar'
   } finally {
     saving.value = false
   }
