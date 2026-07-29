@@ -12,6 +12,8 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   CheckCircleIcon,
+  PlusIcon,
+  TrashIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard', module: 'facturacion' })
@@ -1508,28 +1510,45 @@ const taxLevels = [
           </div>
 
           <div class="space-y-3">
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.matrixTitle') }}</p>
-                <p class="text-xs text-text-secondary mt-0.5">{{ t('facturacion.tax.matrixBody') }}</p>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-text-primary tracking-tight">{{ t('facturacion.tax.matrixTitle') }}</p>
+                <p class="text-xs text-text-secondary mt-1 leading-relaxed">{{ t('facturacion.tax.matrixBody') }}</p>
               </div>
               <button
                 type="button"
-                class="min-h-[44px] px-3 py-2 text-sm font-semibold rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-opacity"
                 :disabled="commercialLines.length >= MAX_COMMERCIAL_TAX_LINES"
                 @click="addCommercialLine"
               >
+                <PlusIcon class="w-4 h-4" aria-hidden="true" />
                 {{ t('facturacion.tax.addLine') }}
               </button>
             </div>
 
             <div
-              v-for="line in commercialLines"
+              v-for="(line, lineIndex) in commercialLines"
               :key="line.key"
-              class="rounded-xl border border-border bg-background p-3 space-y-3"
+              class="rounded-xl border border-border bg-surface p-3 space-y-3"
             >
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                  {{ t('facturacion.tax.lineLabel') }} {{ lineIndex + 1 }}
+                </p>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg text-sm font-medium text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30 disabled:opacity-35 disabled:pointer-events-none transition-colors"
+                  :disabled="commercialLines.length <= 1"
+                  :aria-label="t('facturacion.tax.removeLine')"
+                  @click="removeCommercialLine(line.key)"
+                >
+                  <TrashIcon class="w-4 h-4" aria-hidden="true" />
+                  <span class="hidden sm:inline">{{ t('facturacion.tax.removeLine') }}</span>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-3">
+                <div class="flex flex-col gap-1.5">
                   <label :for="`tax-line-label-${line.key}`" class="text-xs font-medium text-text-secondary">
                     {{ t('facturacion.tax.lineLabel') }}
                   </label>
@@ -1537,10 +1556,10 @@ const taxLevels = [
                     :id="`tax-line-label-${line.key}`"
                     v-model="line.label"
                     type="text"
-                    class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
                 </div>
-                <div class="flex flex-col gap-1">
+                <div class="flex flex-col gap-1.5">
                   <label :for="`tax-line-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
                     {{ t('facturacion.tax.ratePercent') }}
                   </label>
@@ -1551,49 +1570,46 @@ const taxLevels = [
                     min="0"
                     max="100"
                     step="0.01"
-                    class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary tabular-nums focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
-                <button
-                  type="button"
-                  @click="line.included_in_price = true"
-                  :class="[
-                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                    line.included_in_price
-                      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-                  <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialIncludedHint') }}</span>
-                </button>
-                <button
-                  type="button"
-                  @click="line.included_in_price = false"
-                  :class="[
-                    'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
-                    !line.included_in_price
-                      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-                  <span class="text-[10px] leading-snug">{{ t('facturacion.tax.commercialAddedHint') }}</span>
-                </button>
-              </div>
-
-              <div class="flex justify-end">
-                <button
-                  type="button"
-                  class="min-h-[44px] px-3 text-sm font-medium text-state-danger-text hover:underline disabled:opacity-40 disabled:no-underline"
-                  :disabled="commercialLines.length <= 1"
-                  @click="removeCommercialLine(line.key)"
-                >
-                  {{ t('facturacion.tax.removeLine') }}
-                </button>
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howCommercial') }}</p>
+                <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
+                  <button
+                    type="button"
+                    :aria-pressed="line.included_in_price"
+                    @click="line.included_in_price = true"
+                    :class="[
+                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                      line.included_in_price
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
+                    ]"
+                  >
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                    </svg>
+                    <span>{{ t('facturacion.tax.included') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="!line.included_in_price"
+                    @click="line.included_in_price = false"
+                    :class="[
+                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                      !line.included_in_price
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
+                    ]"
+                  >
+                    <PlusIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{{ t('facturacion.tax.added') }}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1688,36 +1704,34 @@ const taxLevels = [
             <div class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howInc')">
               <button
                 type="button"
+                :aria-pressed="taxForm.inc_included_in_price"
                 @click="taxForm.inc_included_in_price = true"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                   taxForm.inc_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
                 ]"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
                 </svg>
-                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-                <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incIncludedHint') }}</span>
+                <span>{{ t('facturacion.tax.included') }}</span>
               </button>
               <button
                 type="button"
+                :aria-pressed="!taxForm.inc_included_in_price"
                 @click="taxForm.inc_included_in_price = false"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                   !taxForm.inc_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
                 ]"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-                <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.incAddedHint') }}</span>
+                <PlusIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{{ t('facturacion.tax.added') }}</span>
               </button>
             </div>
           </div>
@@ -1753,36 +1767,34 @@ const taxLevels = [
             <div class="grid grid-cols-2 gap-2 mt-1" role="group" :aria-label="t('facturacion.tax.howIva')">
               <button
                 type="button"
+                :aria-pressed="taxForm.iva_included_in_price"
                 @click="taxForm.iva_included_in_price = true"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                   taxForm.iva_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
                 ]"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
                 </svg>
-                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.included') }}</span>
-                <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaIncludedHint') }}</span>
+                <span>{{ t('facturacion.tax.included') }}</span>
               </button>
               <button
                 type="button"
+                :aria-pressed="!taxForm.iva_included_in_price"
                 @click="taxForm.iva_included_in_price = false"
                 :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start',
+                  'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                   !taxForm.iva_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
                 ]"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">{{ t('facturacion.tax.added') }}</span>
-                <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">{{ t('facturacion.tax.ivaAddedHint') }}</span>
+                <PlusIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{{ t('facturacion.tax.added') }}</span>
               </button>
             </div>
           </div>
