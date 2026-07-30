@@ -125,6 +125,7 @@ const quotaDisplayConfig = [
   BILLING_QUOTA_RESOURCE_CONFIG.completed_online_orders_per_month,
   BILLING_QUOTA_RESOURCE_CONFIG.electronic_invoices_per_period,
   BILLING_QUOTA_RESOURCE_CONFIG.api_tokens,
+  BILLING_QUOTA_RESOURCE_CONFIG.tenant_promotions,
 ]
 
 const usageLabels = computed<Record<string, { resource: string; description: string; unit: string; notIncluded?: string }>>(() => ({
@@ -136,6 +137,7 @@ const usageLabels = computed<Record<string, { resource: string; description: str
   completed_online_orders_per_month: { resource: t('billing.quotaOnlineOrders'), description: t('billing.quotaOnlineOrdersDescription'), unit: t('billing.unitOnlineOrders') },
   electronic_invoices_per_period: { resource: t('billing.quotaInvoices'), description: t('billing.quotaInvoicesDescription'), unit: t('billing.unitInvoices'), notIncluded: t('billing.notIncluded') },
   api_tokens: { resource: t('billing.quotaApiTokens', 'API keys'), description: t('billing.quotaApiTokensDescription', 'Claves de API activas para integraciones'), unit: t('billing.unitApiTokens', 'API keys') },
+  tenant_promotions: { resource: t('billing.quotaPromotions', 'Promociones'), description: t('billing.quotaPromotionsDescription', 'Promociones configuradas en Operaciones'), unit: t('billing.unitPromotions', 'promociones') },
   menu_products: { resource: t('billing.quota.menu_products'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitProducts') },
   menu_categories: { resource: t('billing.quota.menu_categories'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitCategories') },
   tenant_ingredients: { resource: t('billing.quota.tenant_ingredients'), description: t('billing.starterUsageValidatedOnSave'), unit: t('billing.unitIngredients') },

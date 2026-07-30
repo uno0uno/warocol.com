@@ -410,6 +410,7 @@ interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved'): void
   (e: 'deleted'): void
+  (e: 'quota-blocked', message: string): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -794,12 +795,43 @@ async function onSubmit() {
     close()
     emit('saved')
   } catch (e: any) {
+    if (!isEdit.value && isQuotaExceededError(e)) {
+      emit('quota-blocked', quotaExceededMessageFromError(e))
+      close()
+      return
+    }
     const detail = extractFetchDetail(e)
     validationErrors.value = [detail]
     toast.error(detail, { title: t('operaciones.promociones.saveFailedTitle') })
   } finally {
     isSaving.value = false
   }
+}
+
+function isQuotaExceededError(err: any) {
+  const detail = err?.data?.detail
+  const details = err?.data?.details
+  return err?.status === 429 ||
+    err?.statusCode === 429 ||
+    err?.data?.code === 'quota_exceeded' ||
+    err?.data?.error === 'quota_exceeded' ||
+    detail?.code === 'quota_exceeded' ||
+    detail?.error === 'quota_exceeded' ||
+    details?.code === 'quota_exceeded'
+}
+
+function quotaExceededMessageFromError(err: any) {
+  const detail = err?.data?.detail ?? err?.data?.details ?? err?.data ?? {}
+  const used = typeof detail.used === 'number' ? detail.used : null
+  const limit = typeof detail.limit === 'number' ? detail.limit : null
+
+  if (used !== null && limit !== null) {
+    return `Alcanzaste el límite de promociones de tu plan. Uso actual: ${used.toLocaleString('es-CO')} de ${limit.toLocaleString('es-CO')} promociones. Revisa Mi Plan para ampliar tu cupo.`
+  }
+
+  return typeof detail === 'string'
+    ? detail
+    : (detail?.message || t('billing.upgrade.quotaBlocked'))
 }
 
 function openDeleteConfirm() {

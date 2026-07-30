@@ -1,0 +1,35 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1921
+title: "Starter: growth quota for Operaciones Promociones (tenant_promotions)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1921-promotions-quota
+
+paths:
+  - composables/useBilling.ts
+  - pages/operaciones/promociones/index.vue
+  - components/promociones/PromocionPanel.vue
+  - pages/gestion/billing/uso.vue
+
+ac:
+  - "Create CTA gated via useOperationalQuotaGate(tenant_promotions)"
+  - "Panel POST 429 → quota-blocked → Mi Plan modal"
+  - "Mi Plan uso shows tenant_promotions"
+
+out_of_scope:
+  - API companion PR
+
+hints:
+  entry: "openCreate / PromocionPanel onSubmit"
+  pattern: "pages/integraciones.vue api_tokens gate"
+  tests: "API pytest companion"
+
+risk: low
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "depends on API PR"

@@ -75,7 +75,7 @@
           <button
             type="button"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap min-h-[44px]"
-            @click="openPanel(null)"
+            @click="openCreate"
           >
             {{ t('operaciones.promociones.newPromotion') }}
           </button>
@@ -278,6 +278,7 @@
       :promotion-id="panelPromotionId"
       @saved="onPanelSaved"
       @deleted="onPanelSaved"
+      @quota-blocked="onCreateQuotaBlocked"
     />
 
     <PromocionesPromotionScopePopover
@@ -298,6 +299,16 @@
       @confirm="confirmDeletePromotion"
       @cancel="cancelDeletePromotion"
     />
+
+    <UiConfirmActionModal
+      v-model="quotaLimitModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="quotaLimitModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromQuotaLimitModal"
+      @cancel="closeQuotaLimitModal"
+    />
   </div>
 </template>
 
@@ -307,6 +318,7 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { PencilIcon as PencilOutlineIcon, TrashIcon as TrashOutlineIcon } from '@heroicons/vue/24/outline'
 import { PencilIcon as PencilSolidIcon, TrashIcon as TrashSolidIcon } from '@heroicons/vue/24/solid'
+import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import {
   formatPromoTypeLabel,
   formatPromoValue,
@@ -341,6 +353,14 @@ const router = useRouter()
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const toast = useToast()
+const {
+  quotaLimitModalOpen,
+  quotaLimitModalMessage,
+  openQuotaLimitModalWithMessage,
+  closeQuotaLimitModal,
+  goToBillingFromQuotaLimitModal,
+  handleCreateClick,
+} = useOperationalQuotaGate('tenant_promotions')
 
 const {
   data: opsContextData,
@@ -578,6 +598,16 @@ function openPanel(item: PromotionRow | null) {
   showPanel.value = true
 }
 
+function openCreate() {
+  void handleCreateClick(() => openPanel(null))
+}
+
+function onCreateQuotaBlocked(message: string) {
+  showPanel.value = false
+  panelPromotionId.value = null
+  openQuotaLimitModalWithMessage(message)
+}
+
 function openEdit(item: PromotionRow) {
   openPanel(item)
 }
@@ -632,7 +662,7 @@ async function onPanelSaved() {
 function openFromQuery() {
   if (skipOpenFromQuery.value) return
   if (route.query.nuevo === '1') {
-    openPanel(null)
+    openCreate()
     return
   }
   const id = route.query.id

@@ -32,6 +32,7 @@ export type BillingQuotaKey =
   | 'supplier_payments_per_period'
   | 'payment_methods'
   | 'api_tokens'
+  | 'tenant_promotions'
   | 'accounting_period_closes_per_period'
   | 'manual_journal_entries_per_period'
   | 'modifier_groups'
@@ -162,6 +163,7 @@ export type OperationalQuotaKey =
   | 'supplier_payments_per_period'
   | 'payment_methods'
   | 'api_tokens'
+  | 'tenant_promotions'
   | 'accounting_period_closes_per_period'
   | 'manual_journal_entries_per_period'
   | 'modifier_groups'
@@ -348,6 +350,14 @@ export const BILLING_QUOTA_RESOURCE_CONFIG: Record<BillingQuotaKey, BillingQuota
     blockedMessage: 'Alcanzaste el límite de API keys de tu plan.',
     unlimitedMessage: 'Puedes crear API keys sin límite por override.',
   },
+  tenant_promotions: {
+    key: 'tenant_promotions',
+    label: 'Promociones',
+    description: 'Promociones configuradas en Operaciones',
+    unit: 'promociones',
+    blockedMessage: 'Alcanzaste el límite de promociones de tu plan.',
+    unlimitedMessage: 'Puedes crear promociones sin límite por override.',
+  },
   accounting_period_closes_per_period: {
     key: 'accounting_period_closes_per_period',
     label: 'Cierres contables mensuales por periodo',
@@ -407,6 +417,7 @@ export const STARTER_DISPLAY_QUOTA_KEYS: BillingQuotaKey[] = [
   'completed_online_orders_per_month',
   'admin_users',
   'api_tokens',
+  'tenant_promotions',
 ]
 
 export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
@@ -427,6 +438,7 @@ export const OPERATIONAL_QUOTA_KEYS: OperationalQuotaKey[] = [
   'supplier_payments_per_period',
   'payment_methods',
   'api_tokens',
+  'tenant_promotions',
   'accounting_period_closes_per_period',
   'manual_journal_entries_per_period',
   'modifier_groups',
