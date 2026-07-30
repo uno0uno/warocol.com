@@ -11,7 +11,7 @@
           <img
             :key="route.fullPath"
             :src="logoAnimationSrc"
-            alt="WARO Colombia"
+            alt="WARO"
             class="h-10 w-full object-contain"
           />
         </NuxtLink>
@@ -119,7 +119,7 @@ const dashboardHome = computed(() =>
 )
 
 const logoAnimationSrc = computed(() =>
-  `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
+  `/brand/waro-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
 )
 
 defineProps<{
