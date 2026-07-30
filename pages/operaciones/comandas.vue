@@ -558,15 +558,25 @@ const {
 const isStarterTenant = computed(() => accessStore.planSlug === 'starter')
 
 const isStarterPlanRestrictionError = (err: any) => {
-  const detail = err?.data?.detail
-  const code = (typeof detail === 'object' && detail?.code) || err?.data?.code || err?.data?.error
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  const code =
+    (typeof details === 'object' && details?.code)
+    || (typeof detail === 'object' && detail?.code)
+    || data?.code
+    || (typeof data?.error === 'string' ? data.error : undefined)
   return code === 'starter_plan_restriction'
 }
 
 const starterPlanRestrictionMessage = (err?: any) => {
-  const detail = err?.data?.detail
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  if (typeof details === 'object' && details?.message) return details.message
   if (typeof detail === 'object' && detail?.message) return detail.message
   if (typeof detail === 'string') return detail
+  if (typeof data?.message === 'string') return data.message
   return t(
     'billing.starterFeatureBlocked',
     'Esta función no está disponible en el plan Starter. Revisa Mi Plan para actualizar.',
