@@ -1,0 +1,38 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1922
+title: "Operaciones Propinas: country-aware tax and legal copy"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1922-propinas-country-copy
+
+paths:
+  - pages/operaciones/propinas.vue
+  - composables/useTipTax.ts
+  - composables/useTipTax.test.ts
+  - i18n/locales/*/operaciones.json
+
+ac:
+  - "taxableHelp uses {taxNames}; MX never shows IVA o INC"
+  - "preselectHelp uses {legalNote}; Ley 1935 only for CO"
+  - "EN + other locales updated"
+  - "tip math unchanged"
+
+out_of_scope:
+  - Promotions quotas
+  - Tip tax engine
+  - Shell logo
+
+hints:
+  entry: "tipHelpTaxNames + tipPreselectUsesColombiaLaw"
+  pattern: "commercialPresetForCountry + financialProfile.country_code"
+  tests: "node --experimental-strip-types --test composables/useTipTax.test.ts"
+
+risk: low
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "manual smoke MX /operaciones/propinas"

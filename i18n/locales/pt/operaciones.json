@@ -188,7 +188,7 @@
       "saveChanges": "Salvar alterações",
       "addPercent": "Adicionar porcentagem",
       "enabledHelp": "Quando ativado, os clientes veem sugestões de gorjeta ao finalizar a compra (POS e online). A gorjeta é voluntária e atribuída ao garçom do pedido.",
-      "taxableHelp": "No checkout, o caixa pode alterar por venda. Se estiver ativo, aplica-se IVA ou INC à gorjeta conforme a configuração fiscal.",
+      "taxableHelp": "No checkout, o caixa pode alterar por venda. Se estiver ativo, aplica-se {taxNames} à gorjeta conforme a configuração fiscal.",
       "distributionWarning": "Neste momento, as gorjetas são atribuídas diretamente ao garçom do pedido. A distribuição entre a equipe (cozinha, auxiliares, etc.) é responsabilidade do proprietário.",
       "suggestedHelp": "Até 5 opções, cada uma entre 0 e 100. São exibidas como chips no checkout, calculadas sobre o subtotal (antes dos impostos).",
       "removePreset": "Remover {value}",
@@ -198,7 +198,9 @@
       "preselectTitle": "Pré-selecionar primeiro preset",
       "preselectOff": "desativado",
       "onlineOrders": "pedidos online",
-      "preselectHelp": "Recomendado: {status}. A Lei 1935 estabelece que a gorjeta é voluntária. Aplica-se apenas a {onlineOrders}; no POS, o caixa sempre escolhe a gorjeta de forma explícita.",
+      "preselectHelp": "Recomendado: {status}. {legalNote} Aplica-se apenas a {onlineOrders}; no POS, o caixa sempre escolhe a gorjeta de forma explícita."
+      ,"legalNoteCo": "A Lei 1935 estabelece que a gorjeta é voluntária."
+      ,"legalNoteNeutral": "A gorjeta é voluntária.",
       "saveHelp": "As alterações nos percentuais e na pré-seleção são aplicadas ao salvar.",
       "history": "Ver histórico de gorjetas →",
       "needPreset": "Você precisa de pelo menos um preset."

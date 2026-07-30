@@ -1,6 +1,13 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
+import { commercialPresetForCountry } from '~/composables/useTenantTaxProfile'
+import {
+  tipHelpTaxNames,
+  tipPreselectUsesColombiaLaw,
+  type TipTaxConfig,
+} from '~/composables/useTipTax'
 
 definePageMeta({
   layout: 'dashboard',
@@ -13,6 +20,7 @@ useHead({ title: () => t('operaciones.head.propinas') })
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const toast = useToast()
+const { profile: financialProfile } = useTenantFinancialProfile()
 
 // Aggregator query — shared with /operaciones/* siblings.
 // Returns tip_enabled, tip_default_percentages, tip_preselect_index in
@@ -28,6 +36,23 @@ const businessProfile = computed(() => profileData.value?.data ?? null)
 const isLoading = computed(() => !profileData.value && !fetchError.value)
 const isRefreshing = computed(
   () => profileAsyncStatus.value === 'loading' && profileData.value != null,
+)
+
+const tipTaxNames = computed(() => {
+  const country = financialProfile.value?.country_code
+  const preset = commercialPresetForCountry(country || '')
+  const taxConfig = (businessProfile.value?.tax_config ?? null) as TipTaxConfig | null
+  return tipHelpTaxNames({
+    countryCode: country,
+    taxConfig,
+    primaryTaxLabel: preset?.lines?.[0]?.label ?? null,
+  })
+})
+
+const tipLegalNote = computed(() =>
+  tipPreselectUsesColombiaLaw(financialProfile.value?.country_code)
+    ? t('operaciones.propinas.legalNoteCo')
+    : t('operaciones.propinas.legalNoteNeutral'),
 )
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -238,7 +263,7 @@ const saveConfig = async () => {
               {{ businessProfile.tip_taxable_default ? t('operaciones.propinas.taxedDefault') : t('operaciones.propinas.untaxedDefault') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              {{ t('operaciones.propinas.taxableHelp') }}
+              {{ t('operaciones.propinas.taxableHelp', { taxNames: tipTaxNames }) }}
             </p>
           </div>
           <label
@@ -333,6 +358,7 @@ const saveConfig = async () => {
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
               <i18n-t keypath="operaciones.propinas.preselectHelp" tag="span">
                 <template #status><strong>{{ t('operaciones.propinas.preselectOff') }}</strong></template>
+                <template #legalNote>{{ tipLegalNote }}</template>
                 <template #onlineOrders><strong>{{ t('operaciones.propinas.onlineOrders') }}</strong></template>
               </i18n-t>
             </p>
