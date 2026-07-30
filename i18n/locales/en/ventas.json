@@ -269,12 +269,26 @@
       "emailInvoiceCta": "Send by email",
       "emailHistoryCta": "View history",
       "emailHistory": {
-        "title": "Email delivery history", "description": "Check the status of emails sent for this invoice.", "close": "Close",
-        "unavailableTitle": "History is not available yet", "unavailableBody": "The history service will be available soon. The invoice continues to work normally.",
-        "errorTitle": "Could not load history", "errorBody": "Please try again in a few moments.", "retry": "Try again",
-        "emptyTitle": "No deliveries yet", "emptyBody": "Future emails sent for this invoice will appear here.",
-        "sentAt": "Sent", "failedAt": "Failed", "openSignal": "Open-detection signal", "openCount": "{count} detected opens", "failureCode": "Failure code",
-        "status": { "sent": "Sent", "failed": "Failed", "pending": "Pending" }
+        "title": "Email delivery history",
+        "description": "Check the status of emails sent for this invoice.",
+        "close": "Close",
+        "unavailableTitle": "History is not available yet",
+        "unavailableBody": "The history service will be available soon. The invoice continues to work normally.",
+        "errorTitle": "Could not load history",
+        "errorBody": "Please try again in a few moments.",
+        "retry": "Try again",
+        "emptyTitle": "No deliveries yet",
+        "emptyBody": "Future emails sent for this invoice will appear here.",
+        "sentAt": "Sent",
+        "failedAt": "Failed",
+        "openSignal": "Open-detection signal",
+        "openCount": "{count} detected opens",
+        "failureCode": "Failure code",
+        "status": {
+          "sent": "Sent",
+          "failed": "Failed",
+          "pending": "Pending"
+        }
       },
       "invoiceAcceptedOnly": "Available once the invoice is accepted.",
       "invoiceReconcileSupport": "Contact support to reconcile the document — do not issue it again, that would consume another resolution number without success.",
@@ -312,7 +326,16 @@
       "sentBody": "{label} was sent to {email}. The email includes the e-invoice details (CUFE); XML is attached when available. The Matias graphic PDF is not sent in this environment.",
       "customerEmail": "Customer email",
       "accountingEmail": "Accounting or other email",
-      "recipientEmail": "Recipient email"
+      "recipientEmail": "Recipient email",
+      "receipt": {
+        "title": "Send receipt by email",
+        "sendError": "Could not send the receipt. Please try again.",
+        "documentLabel": "Receipt {label}",
+        "intro": "Send a copy of the sale receipt to the customer or accountant.",
+        "genericCustomer": "Generic customer — no email on file. Enter a recipient to send the receipt.",
+        "sentTitle": "Receipt sent",
+        "sentBody": "{label} was sent to {email}."
+      }
     },
     "productos": {
       "emptyFilter": "No products match the filters",
