@@ -159,9 +159,9 @@ export default defineNuxtConfig({
       // SEO Configuration
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://warocol.com',
       canonicalUrl: process.env.NUXT_PUBLIC_CANONICAL_URL || 'https://warocol.com',
-      siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'Waro Colombia',
+      siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'WARO',
       siteDescription: process.env.NUXT_PUBLIC_SITE_DESCRIPTION || '',
-      siteAuthor: process.env.NUXT_PUBLIC_SITE_AUTHOR || 'Waro Colombia',
+      siteAuthor: process.env.NUXT_PUBLIC_SITE_AUTHOR || 'WARO',
       siteLang: process.env.NUXT_PUBLIC_SITE_LANG || 'es',
       siteLocale: process.env.NUXT_PUBLIC_SITE_LOCALE || 'es_CO',
       seoTitle: process.env.NUXT_PUBLIC_SEO_TITLE || '',
