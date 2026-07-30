@@ -1,0 +1,38 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1917
+title: "Trial banner: country-aware price anchor (MX vs CO COP)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1917-trial-banner-country-anchor
+
+paths:
+  - utils/publicCta.ts
+  - utils/publicCta.test.ts
+  - layouts/dashboard.vue
+
+ac:
+  - "MX/MXN tenant trial banner does not show COP"
+  - "CO/COP tenants keep existing COP monthlyEquivalent"
+  - "EN locale coherent for both"
+  - "Logo WARO Colombia deferred (chrome unchanged)"
+  - "No billing checkout currency change"
+
+out_of_scope:
+  - Full multi-country pricing catalog
+  - Public marketing CTAs (stay COP)
+  - Shell logo rename
+
+hints:
+  entry: "resolveTrialPriceAnchor + dashboard subscriptionBannerMessage"
+  pattern: "useTenantFinancialProfile country_code / base_currency_code"
+  tests: "node --experimental-strip-types --test utils/publicCta.test.ts"
+
+risk: low
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "manual smoke Starter MX tenant banner"
