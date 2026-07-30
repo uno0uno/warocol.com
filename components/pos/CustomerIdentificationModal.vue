@@ -2,12 +2,17 @@
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-overlay-backdrop/50"
+      class="fixed inset-0 z-[60] flex bg-overlay-backdrop/50"
       @click.self="handleClose"
     >
-      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[85vh] md:max-h-[90vh]" @click.stop>
+      <div
+        class="bottom-sheet-panel bg-surface w-full h-full max-h-[100dvh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        @click.stop
+      >
 
-        <!-- Mobile drag handle -->
+        <!-- Mobile drag handle (kept for familiarity; panel is full-viewport) -->
         <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
           <div class="w-10 h-1 rounded-full bg-border"></div>
         </div>
