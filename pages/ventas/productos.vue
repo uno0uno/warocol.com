@@ -19,8 +19,6 @@ const categoryFilter = ref<string | null>(null)
 const sortFilter = ref<'qty_desc' | 'revenue_desc' | 'name_asc'>('qty_desc')
 const channelFilter = ref<'pos' | 'mesa' | 'online' | null>(null)
 
-const performSearch = () => applySearch()
-
 const hasActiveFilters = computed(
   () =>
     !!localSearchTerm.value
@@ -37,6 +35,7 @@ const clearFilters = () => {
   categoryFilter.value = null
   sortFilter.value = 'qty_desc'
   channelFilter.value = null
+  currentPage.value = 1
 }
 
 const emptyMessage = computed(() =>
@@ -61,6 +60,9 @@ type ProductRow = {
   total_revenue: number
 }
 
+const PAGE_SIZE = 25
+const currentPage = ref(1)
+
 const { data: productsData, asyncStatus, error, refetch } = useQuery({
   key: () => ['ventas', 'productos', currentTenant.value?.id, {
     from: dateRange.value.from,
@@ -69,8 +71,16 @@ const { data: productsData, asyncStatus, error, refetch } = useQuery({
     sort: sortFilter.value,
     search: appliedSearch.value || null,
     channel: channelFilter.value,
+    page: currentPage.value,
+    limit: PAGE_SIZE,
   }],
-  query: () => $fetch<{ success: boolean; data: ProductRow[]; totals: { quantity_sold: number; total_revenue: number } }>('/api/orders/products-sold', {
+  query: () => $fetch<{
+    success: boolean
+    data: ProductRow[]
+    totals: { quantity_sold: number; total_revenue: number }
+    pagination?: { total: number; limit: number; offset: number }
+    categories?: Array<{ id: string; name: string }>
+  }>('/api/orders/products-sold', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
@@ -78,6 +88,8 @@ const { data: productsData, asyncStatus, error, refetch } = useQuery({
       sort: sortFilter.value,
       search: appliedSearch.value || undefined,
       channel: channelFilter.value || undefined,
+      limit: PAGE_SIZE,
+      offset: (currentPage.value - 1) * PAGE_SIZE,
     },
   }),
   enabled: () => !!currentTenant.value,
@@ -91,17 +103,26 @@ const isRefreshing = computed(() => hasEverLoaded.value && asyncStatus.value ===
 
 const products = computed(() => productsData.value?.data ?? [])
 const totals = computed(() => productsData.value?.totals ?? { quantity_sold: 0, total_revenue: 0 })
+const productsTotal = computed(() => productsData.value?.pagination?.total ?? products.value.length)
+const productsTotalPages = computed(() => Math.max(1, Math.ceil(productsTotal.value / PAGE_SIZE)))
 
-// Derive category list from unfiltered response (cache when no category filter)
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, productsTotalPages.value))
+}
+
+watch([appliedSearch, dateRangeDates, categoryFilter, sortFilter, channelFilter], () => {
+  currentPage.value = 1
+})
+
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+// Categories from API (full filter set, ignores page / optional category chip)
 const cachedCategories = ref<Array<{ id: string; name: string }>>([])
 watch(productsData, (data) => {
-  if (data && !categoryFilter.value) {
-    const cats = new Map<string, string>()
-    for (const p of data.data) {
-      if (p.category_id && p.category_name) cats.set(p.category_id, p.category_name)
-    }
-    cachedCategories.value = Array.from(cats, ([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+  if (data?.categories?.length) {
+    cachedCategories.value = [...data.categories].sort((a, b) => a.name.localeCompare(b.name))
   }
 })
 
@@ -363,15 +384,54 @@ onUnmounted(() => {
         </template>
       </UiResponsiveDataView>
 
-      <!-- Totals row -->
+      <!-- Totals row (period totals — not page-only) -->
       <div
-        v-if="products.length > 0 && !isRefreshing"
+        v-if="productsTotal > 0 && !isRefreshing"
         class="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl text-sm font-semibold"
       >
-        <span class="text-text-secondary">{{ products.length === 1 ? t('ventas.productos.totalProducts', { count: products.length }) : t('ventas.productos.totalProducts_plural', { count: products.length }) }}</span>
+        <span class="text-text-secondary">{{ productsTotal === 1 ? t('ventas.productos.totalProducts', { count: productsTotal }) : t('ventas.productos.totalProducts_plural', { count: productsTotal }) }}</span>
         <div class="flex items-center gap-6">
           <span class="text-text-primary">{{ totals.quantity_sold }} {{ t('ventas.productos.unitsAbbr') }}</span>
           <span class="text-primary">{{ formatCurrency(totals.total_revenue) }}</span>
+        </div>
+      </div>
+
+      <!-- Pagination (match ventas/ordenes) -->
+      <div v-if="productsTotal > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            :disabled="currentPage >= productsTotalPages"
+            @click="goToPage(currentPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage >= productsTotalPages"
+            @click="goToPage(productsTotalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
         </div>
       </div>
 
