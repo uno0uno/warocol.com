@@ -26,7 +26,7 @@
         <img
           :key="route.fullPath"
           :src="sidebarLogoAnimationSrc"
-          alt="WARO Colombia"
+          alt="WARO"
           class="h-7 w-full object-contain"
         />
       </NuxtLink>
@@ -199,7 +199,7 @@ const router = useRouter()
 const { t } = useI18n()
 
 const sidebarLogoAnimationSrc = computed(() =>
-  `/brand/waro-colombia-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
+  `/brand/waro-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
 )
 
 const { hasCriticalAlerts } = useDataQualityStatus()
