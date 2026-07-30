@@ -28,15 +28,62 @@ interface Props {
   /** Invoice label (e.g. LZT-5462) or order number fallback (#123) for receipt-only sends. */
   invoiceLabel: string
   customer: Customer | null
+  /**
+   * When true (Colombia DIAN + accepted FE), use FE/XML/CUFE copy.
+   * Otherwise use receipt-oriented copy (MX and other non-DIAN tenants).
+   */
+  electronicInvoice?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  electronicInvoice: false,
+})
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'sent', email: string): void
 }>()
 
-const title = computed(() => t('ventas.emailModal.title'))
+const title = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.title')
+    : t('ventas.emailModal.receipt.title'),
+)
+
+const documentLabelText = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.invoiceLabel', { label: props.invoiceLabel })
+    : t('ventas.emailModal.receipt.documentLabel', { label: props.invoiceLabel }),
+)
+
+const introText = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.intro')
+    : t('ventas.emailModal.receipt.intro'),
+)
+
+const genericCustomerText = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.genericCustomer')
+    : t('ventas.emailModal.receipt.genericCustomer'),
+)
+
+const sendErrorFallback = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.sendError')
+    : t('ventas.emailModal.receipt.sendError'),
+)
+
+const sentTitleText = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.sentTitle')
+    : t('ventas.emailModal.receipt.sentTitle'),
+)
+
+const sentBodyText = computed(() =>
+  props.electronicInvoice
+    ? t('ventas.emailModal.sentBody', { label: props.invoiceLabel, email: sentToEmail.value })
+    : t('ventas.emailModal.receipt.sentBody', { label: props.invoiceLabel, email: sentToEmail.value }),
+)
 
 // warocol.com#603 — A profile is "generic" (no useful email to prefill)
 // when either the phone is '0000000000' (per-tenant default Genérico) OR
@@ -109,7 +156,7 @@ const submit = async () => {
     } else if (typeof detail === 'string') {
       errorMessage.value = detail
     } else {
-      errorMessage.value = e?.message || t('ventas.emailModal.sendError')
+      errorMessage.value = e?.message || sendErrorFallback.value
     }
   }
 }
@@ -136,11 +183,11 @@ const contentTemplate = () =>
             [
               h(CheckCircleIcon, { class: 'w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0 mt-0.5', 'aria-hidden': 'true' }),
               h('div', { class: 'min-w-0' }, [
-                h('p', { class: 'text-sm font-semibold text-green-900 dark:text-green-200' }, t('ventas.emailModal.sentTitle')),
+                h('p', { class: 'text-sm font-semibold text-green-900 dark:text-green-200' }, sentTitleText.value),
                 h(
                   'p',
                   { class: 'text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-all' },
-                  t('ventas.emailModal.sentBody', { label: props.invoiceLabel, email: sentToEmail.value }),
+                  sentBodyText.value,
                 ),
               ]),
             ],
@@ -173,11 +220,11 @@ const contentTemplate = () =>
             'div',
             { class: 'rounded-xl border border-border bg-surface-secondary/60 p-3' },
             [
-              h('p', { class: 'text-sm font-semibold text-text-primary' }, t('ventas.emailModal.invoiceLabel', { label: props.invoiceLabel })),
+              h('p', { class: 'text-sm font-semibold text-text-primary' }, documentLabelText.value),
               h(
                 'p',
                 { class: 'text-xs text-text-secondary mt-1 leading-snug' },
-                t('ventas.emailModal.intro'),
+                introText.value,
               ),
             ],
           ),
@@ -192,7 +239,7 @@ const contentTemplate = () =>
                   h(
                     'p',
                     { class: 'text-xs text-amber-800 dark:text-amber-300 leading-snug' },
-                    t('ventas.emailModal.genericCustomer'),
+                    genericCustomerText.value,
                   ),
                 ],
               )

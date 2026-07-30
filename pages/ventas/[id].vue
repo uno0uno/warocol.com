@@ -408,6 +408,10 @@ const canEmitInvoiceForOrder = computed(() => Boolean(
 ))
 /** Completed sales can resend receipt/invoice email + view delivery history (#1769). */
 const canSendOrderEmail = computed(() => order.value?.status === 'completed')
+/** FE email copy only for Colombia DIAN + accepted electronic invoice (#1941). */
+const isElectronicInvoiceEmail = computed(() =>
+  Boolean(isMatiasDian.value && invoiceData.value?.status === 'accepted'),
+)
 const orderEmailLabel = computed(() => {
   if (invoiceData.value?.prefix && invoiceData.value?.invoice_number != null) {
     return `${invoiceData.value.prefix}-${invoiceData.value.invoice_number}`
@@ -2182,6 +2186,7 @@ onUnmounted(() => {
       :order-id="orderId"
       :invoice-label="orderEmailLabel"
       :customer="orderData?.customer ?? null"
+      :electronic-invoice="isElectronicInvoiceEmail"
       @sent="onInvoiceEmailSent"
     />
 

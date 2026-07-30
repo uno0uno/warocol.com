@@ -256,12 +256,26 @@
       "emailInvoiceCta": "Envoyer par e-mail",
       "emailHistoryCta": "Voir l’historique",
       "emailHistory": {
-        "title": "Historique des envois par e-mail", "description": "Consultez le statut des e-mails envoyés pour cette facture.", "close": "Fermer",
-        "unavailableTitle": "Historique pas encore disponible", "unavailableBody": "Le service d’historique sera bientôt disponible. La facture continue de fonctionner normalement.",
-        "errorTitle": "Impossible de charger l’historique", "errorBody": "Réessayez dans quelques instants.", "retry": "Réessayer",
-        "emptyTitle": "Aucun envoi pour le moment", "emptyBody": "Les prochains e-mails envoyés pour cette facture apparaîtront ici.",
-        "sentAt": "Envoyé", "failedAt": "Échec", "openSignal": "Signal d’ouverture", "openCount": "{count} ouvertures détectées", "failureCode": "Code d’échec",
-        "status": { "sent": "Envoyé", "failed": "Échec", "pending": "En attente" }
+        "title": "Historique des envois par e-mail",
+        "description": "Consultez le statut des e-mails envoyés pour cette facture.",
+        "close": "Fermer",
+        "unavailableTitle": "Historique pas encore disponible",
+        "unavailableBody": "Le service d’historique sera bientôt disponible. La facture continue de fonctionner normalement.",
+        "errorTitle": "Impossible de charger l’historique",
+        "errorBody": "Réessayez dans quelques instants.",
+        "retry": "Réessayer",
+        "emptyTitle": "Aucun envoi pour le moment",
+        "emptyBody": "Les prochains e-mails envoyés pour cette facture apparaîtront ici.",
+        "sentAt": "Envoyé",
+        "failedAt": "Échec",
+        "openSignal": "Signal d’ouverture",
+        "openCount": "{count} ouvertures détectées",
+        "failureCode": "Code d’échec",
+        "status": {
+          "sent": "Envoyé",
+          "failed": "Échec",
+          "pending": "En attente"
+        }
       },
       "invoiceAcceptedOnly": "Disponible une fois la facture acceptée.",
       "invoiceReconcileSupport": "Contactez le support pour rapprocher le document — ne le réémettez pas, cela consommerait un autre numéro de résolution sans succès.",
@@ -299,7 +313,16 @@
       "sentBody": "{label} a été envoyé à {email}. L'e-mail inclut les détails de la FE (CUFE) ; le XML est joint s'il est disponible. Le PDF graphique de Matias n'est pas envoyé dans cet environnement.",
       "customerEmail": "E-mail du client",
       "accountingEmail": "E-mail comptable ou autre",
-      "recipientEmail": "E-mail du destinataire"
+      "recipientEmail": "E-mail du destinataire",
+      "receipt": {
+        "title": "Envoyer le reçu par e-mail",
+        "sendError": "Impossible d'envoyer le reçu. Réessayez.",
+        "documentLabel": "Reçu {label}",
+        "intro": "Envoyez une copie du reçu de vente au client ou au comptable.",
+        "genericCustomer": "Client générique — aucun e-mail enregistré. Indiquez un destinataire pour envoyer le reçu.",
+        "sentTitle": "Reçu envoyé",
+        "sentBody": "{label} a été envoyé à {email}."
+      }
     },
     "productos": {
       "emptyFilter": "Aucun produit ne correspond aux filtres",

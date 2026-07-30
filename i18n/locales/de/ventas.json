@@ -256,12 +256,26 @@
       "emailInvoiceCta": "Per E-Mail senden",
       "emailHistoryCta": "Verlauf anzeigen",
       "emailHistory": {
-        "title": "E-Mail-Zustellverlauf", "description": "Prüfen Sie den Status der für diese Rechnung gesendeten E-Mails.", "close": "Schließen",
-        "unavailableTitle": "Verlauf noch nicht verfügbar", "unavailableBody": "Der Verlaufsdienst wird bald verfügbar sein. Die Rechnung funktioniert weiterhin normal.",
-        "errorTitle": "Verlauf konnte nicht geladen werden", "errorBody": "Bitte versuchen Sie es in wenigen Augenblicken erneut.", "retry": "Erneut versuchen",
-        "emptyTitle": "Noch keine Sendungen", "emptyBody": "Künftige E-Mails für diese Rechnung werden hier angezeigt.",
-        "sentAt": "Gesendet", "failedAt": "Fehlgeschlagen", "openSignal": "Öffnungssignal", "openCount": "{count} erkannte Öffnungen", "failureCode": "Fehlercode",
-        "status": { "sent": "Gesendet", "failed": "Fehlgeschlagen", "pending": "Ausstehend" }
+        "title": "E-Mail-Zustellverlauf",
+        "description": "Prüfen Sie den Status der für diese Rechnung gesendeten E-Mails.",
+        "close": "Schließen",
+        "unavailableTitle": "Verlauf noch nicht verfügbar",
+        "unavailableBody": "Der Verlaufsdienst wird bald verfügbar sein. Die Rechnung funktioniert weiterhin normal.",
+        "errorTitle": "Verlauf konnte nicht geladen werden",
+        "errorBody": "Bitte versuchen Sie es in wenigen Augenblicken erneut.",
+        "retry": "Erneut versuchen",
+        "emptyTitle": "Noch keine Sendungen",
+        "emptyBody": "Künftige E-Mails für diese Rechnung werden hier angezeigt.",
+        "sentAt": "Gesendet",
+        "failedAt": "Fehlgeschlagen",
+        "openSignal": "Öffnungssignal",
+        "openCount": "{count} erkannte Öffnungen",
+        "failureCode": "Fehlercode",
+        "status": {
+          "sent": "Gesendet",
+          "failed": "Fehlgeschlagen",
+          "pending": "Ausstehend"
+        }
       },
       "invoiceAcceptedOnly": "Verfügbar, sobald die Rechnung akzeptiert wurde.",
       "invoiceReconcileSupport": "Kontaktieren Sie den Support, um das Dokument abzugleichen – stellen Sie es nicht erneut aus, da dies eine weitere Resolutionsnummer ohne Erfolg verbrauchen würde.",
@@ -299,7 +313,16 @@
       "sentBody": "{label} wurde an {email} gesendet. Die E-Mail enthält die Details der E-Rechnung (CUFE); XML wird angehängt, sofern verfügbar. Das grafische PDF von Matias wird in dieser Umgebung nicht gesendet.",
       "customerEmail": "E-Mail des Kunden",
       "accountingEmail": "E-Mail Buchhaltung oder andere",
-      "recipientEmail": "E-Mail des Empfängers"
+      "recipientEmail": "E-Mail des Empfängers",
+      "receipt": {
+        "title": "Beleg per E-Mail senden",
+        "sendError": "Beleg konnte nicht gesendet werden. Bitte erneut versuchen.",
+        "documentLabel": "Beleg {label}",
+        "intro": "Senden Sie eine Kopie des Verkaufsbelegs an den Kunden oder Buchhalter.",
+        "genericCustomer": "Generischer Kunde — keine E-Mail hinterlegt. Empfänger für den Beleg angeben.",
+        "sentTitle": "Beleg gesendet",
+        "sentBody": "{label} wurde an {email} gesendet."
+      }
     },
     "productos": {
       "emptyFilter": "Keine Produkte stimmen mit den Filtern überein",
