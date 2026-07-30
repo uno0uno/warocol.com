@@ -188,7 +188,7 @@
       "saveChanges": "Enregistrer les modifications",
       "addPercent": "Ajouter un pourcentage",
       "enabledHelp": "Lorsque cette option est activée, les clients voient des suggestions de pourboire au moment du paiement (POS et en ligne). Le pourboire est volontaire et est attribué au serveur de la commande.",
-      "taxableHelp": "Au moment du paiement, le caissier peut modifier cela par vente. Si cette option est activée, la TVA ou la taxe de consommation s'applique au pourboire selon la configuration fiscale.",
+      "taxableHelp": "Au moment du paiement, le caissier peut modifier cela par vente. Si cette option est activée, {taxNames} s'applique au pourboire selon la configuration fiscale.",
       "distributionWarning": "Actuellement, les pourboires sont directement attribués au serveur de la commande. La répartition entre l'équipe (cuisine, assistants, etc.) relève de la responsabilité du propriétaire.",
       "suggestedHelp": "Jusqu'à 5 options, chacune entre 0 et 100. Elles apparaissent sous forme de puces au moment du paiement, calculées sur le sous-total (avant taxes).",
       "removePreset": "Supprimer {value}",
@@ -198,7 +198,9 @@
       "preselectTitle": "Pré-sélectionner le premier préréglage",
       "preselectOff": "désactivé",
       "onlineOrders": "commandes en ligne",
-      "preselectHelp": "Recommandé : {status}. La loi 1935 stipule que le pourboire est volontaire. S'applique uniquement aux {onlineOrders} ; dans le POS, le caissier choisit toujours le pourboire explicitement.",
+      "preselectHelp": "Recommandé : {status}. {legalNote} S'applique uniquement aux {onlineOrders} ; dans le POS, le caissier choisit toujours le pourboire explicitement."
+      ,"legalNoteCo": "La loi 1935 stipule que le pourboire est volontaire."
+      ,"legalNoteNeutral": "Le pourboire est volontaire.",
       "saveHelp": "Les modifications des pourcentages et de la pré-sélection sont appliquées lors de l'enregistrement.",
       "history": "Voir l'historique des pourboires →",
       "needPreset": "Vous avez besoin d'au moins un préréglage."

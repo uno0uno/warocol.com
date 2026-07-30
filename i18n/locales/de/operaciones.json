@@ -188,7 +188,7 @@
       "saveChanges": "Änderungen speichern",
       "addPercent": "Prozentsatz hinzufügen",
       "enabledHelp": "Wenn aktiviert, sehen Kunden Trinkgeldvorschläge beim Bezahlen (POS und online). Das Trinkgeld ist freiwillig und wird dem Kellner der Bestellung zugewiesen.",
-      "taxableHelp": "Beim Bezahlen kann der Kassierer dies pro Verkauf ändern. Wenn aktiv, wird IVA oder INC auf das Trinkgeld gemäß den Steuereinstellungen angewendet.",
+      "taxableHelp": "Beim Bezahlen kann der Kassierer dies pro Verkauf ändern. Wenn aktiv, wird {taxNames} auf das Trinkgeld gemäß den Steuereinstellungen angewendet.",
       "distributionWarning": "Derzeit werden Trinkgelder direkt dem Kellner der Bestellung zugewiesen. Die Verteilung unter dem Team (Küche, Hilfskräfte usw.) liegt in der Verantwortung des Inhabers.",
       "suggestedHelp": "Bis zu 5 Optionen, jede zwischen 0 und 100. Sie werden als Chips beim Bezahlen angezeigt, berechnet auf die Zwischensumme (vor Steuern).",
       "removePreset": "{value} entfernen",
@@ -198,7 +198,9 @@
       "preselectTitle": "Erste Voreinstellung vorwählen",
       "preselectOff": "deaktiviert",
       "onlineOrders": "Online-Bestellungen",
-      "preselectHelp": "Empfohlen: {status}. Gesetz 1935 besagt, dass Trinkgeld freiwillig ist. Gilt nur für {onlineOrders}; im POS wählt der Kassierer das Trinkgeld immer explizit aus.",
+      "preselectHelp": "Empfohlen: {status}. {legalNote} Gilt nur für {onlineOrders}; im POS wählt der Kassierer das Trinkgeld immer explizit aus."
+      ,"legalNoteCo": "Gesetz 1935 besagt, dass Trinkgeld freiwillig ist."
+      ,"legalNoteNeutral": "Trinkgeld ist freiwillig.",
       "saveHelp": "Änderungen an den Prozentsätzen und der Vorauswahl werden beim Speichern angewendet.",
       "history": "Trinkgeldverlauf anzeigen →",
       "needPreset": "Sie benötigen mindestens eine Voreinstellung."

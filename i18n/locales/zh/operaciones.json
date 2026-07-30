@@ -188,7 +188,7 @@
       "saveChanges": "保存更改",
       "addPercent": "添加百分比",
       "enabledHelp": "启用后，顾客在结账时（POS 和在线）会看到小费建议。小费是自愿的，并分配给订单的服务员。",
-      "taxableHelp": "在结账时，收银员可以按销售更改。如果启用，将根据税务设置对小费征收 IVA 或 INC。",
+      "taxableHelp": "在结账时，收银员可以按销售更改。如果启用，将根据税务设置对小费征收 {taxNames}。",
       "distributionWarning": "目前，小费直接分配给订单的服务员。团队（厨房、助理等）之间的小费分配由店主负责。",
       "suggestedHelp": "最多 5 个选项，每个介于 0 到 100 之间。它们在结账时显示为标签，根据小计（税前）计算。",
       "removePreset": "移除 {value}",
@@ -198,7 +198,9 @@
       "preselectTitle": "预选第一个预设",
       "preselectOff": "关闭",
       "onlineOrders": "在线订单",
-      "preselectHelp": "推荐：{status}。根据第1935号法律，小费是自愿的。仅适用于{onlineOrders}；在 POS 中，收银员始终明确选择小费。",
+      "preselectHelp": "推荐：{status}。{legalNote}仅适用于{onlineOrders}；在 POS 中，收银员始终明确选择小费。"
+      ,"legalNoteCo": "根据第1935号法律，小费是自愿的。"
+      ,"legalNoteNeutral": "小费是自愿的。",
       "saveHelp": "百分比和预选的更改将在保存后生效。",
       "history": "查看小费历史 →",
       "needPreset": "您至少需要一个预设。"
