@@ -1,0 +1,34 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1916
+title: "Starter: block creating Operaciones Turnos (shift templates) with Mi Plan modal"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1916-starter-shift-templates
+
+paths:
+  - pages/operaciones/turnos.vue
+
+ac:
+  - "Starter Nuevo turno → Mi Plan modal, no panel"
+  - "Starter reactivate → Mi Plan modal"
+  - "Catch starter_plan_restriction → same modal"
+  - "Edit/deactivate unchanged"
+
+out_of_scope:
+  - API (companion PR on api-warolabs)
+  - Country banner (#1917)
+
+hints:
+  entry: "openCreate / reactivate"
+  pattern: "pages/operaciones/mesas.vue starter modal helpers"
+  tests: "none — page handlers"
+
+risk: low
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "depends on API PR merge for SoT"
