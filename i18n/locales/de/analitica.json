@@ -8,12 +8,12 @@
       "puntos": "WARO-Punkte - Warocol",
       "cocina": "Küchenanalytik | WARO",
       "clientes": "Kunden - Warocol",
-      "ingredientes": "Zutatenanalytik - Warocol"
+      "ingredientes": "Lagerartikel-Analyse - Warocol"
     },
     "tabs": {
       "ventas": "Verkäufe",
       "rentabilidad": "Rentabilität",
-      "ingredientes": "Zutaten",
+      "ingredientes": "Lagerartikel",
       "clientes": "Kunden",
       "puntos": "Punkte"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "Zutatenanalyse",
-      "ingredients": "Zutaten",
-      "search": "Zutat suchen...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "Nach Kategorie filtern",
-      "filterIngredient": "Nach Zutat filtern",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "Nach Einheit filtern",
-      "sort": "Zutaten sortieren",
-      "ingredient": "Zutat",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "Kategorie",
       "unit": "Einheit",
       "consumption": "Verbrauch",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "Höchster Verbrauch",
       "sortLatestCostDesc": "Höchste letzte Kosten",
       "sortAvgCostDesc": "Höchste durchschnittliche Kosten",
-      "sortIngredientAsc": "Zutat A-Z",
-      "empty": "Kein Zutatenverbrauch",
-      "emptySub": "Für den ausgewählten Zeitraum wurden keine Verbrauchs- oder Einkaufsbewegungen gefunden.",
-      "openOf": "Analytik für {name} öffnen",
+      "sortIngredientAsc": "Lagerartikel A-Z",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% mit Bewegungen",
       "movementsCount": "{count} Bewegungen",
       "noCategory": "Ohne Kategorie"

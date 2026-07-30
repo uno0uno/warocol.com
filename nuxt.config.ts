@@ -53,6 +53,8 @@ export default defineNuxtConfig({
     '/analitica/clientes': { redirect: { to: '/crm/clientes', statusCode: 301 } },
     '/analitica/clientes/**': { redirect: { to: '/crm/clientes/**', statusCode: 301 } },
     '/analitica/puntos': { redirect: { to: '/crm/waros', statusCode: 301 } },
+    '/analitica/ingredientes': { redirect: { to: '/analitica/articulos-de-bodega', statusCode: 301 } },
+    '/analitica/ingredientes/**': { redirect: { to: '/analitica/articulos-de-bodega/**', statusCode: 301 } },
     '/analitica/**': { ssr: false },
     '/crm': { ssr: false },
     '/crm/**': { ssr: false },

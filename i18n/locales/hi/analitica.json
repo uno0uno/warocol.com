@@ -8,12 +8,12 @@
       "puntos": "Waros पॉइंट्स - Warocol",
       "cocina": "किचन एनालिटिक्स | WARO",
       "clientes": "ग्राहक - Warocol",
-      "ingredientes": "सामग्री एनालिटिक्स - Warocol"
+      "ingredientes": "वेयरहाउस आइटम विश्लेषण - Warocol"
     },
     "tabs": {
       "ventas": "बिक्री",
       "rentabilidad": "लाभप्रदता",
-      "ingredientes": "सामग्री",
+      "ingredientes": "वेयरहाउस आइटम",
       "clientes": "ग्राहक",
       "puntos": "पॉइंट्स"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "सामग्री विश्लेषण",
-      "ingredients": "सामग्री",
-      "search": "सामग्री खोजें...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "श्रेणी के अनुसार फ़िल्टर करें",
-      "filterIngredient": "सामग्री के अनुसार फ़िल्टर करें",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "इकाई के अनुसार फ़िल्टर करें",
-      "sort": "सामग्री क्रमबद्ध करें",
-      "ingredient": "सामग्री",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "श्रेणी",
       "unit": "इकाई",
       "consumption": "खपत",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "उच्चतम खपत",
       "sortLatestCostDesc": "उच्चतम अंतिम लागत",
       "sortAvgCostDesc": "उच्चतम औसत लागत",
-      "sortIngredientAsc": "सामग्री A-Z",
-      "empty": "सामग्री की कोई खपत नहीं",
-      "emptySub": "चयनित अवधि के लिए कोई खपत या खरीद गतिविधि नहीं मिली",
-      "openOf": "{name} के लिए एनालिटिक्स खोलें",
+      "sortIngredientAsc": "वेयरहाउस आइटम A-Z",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% गतिविधियों के साथ",
       "movementsCount": "{count} गतिविधियां",
       "noCategory": "कोई श्रेणी नहीं"

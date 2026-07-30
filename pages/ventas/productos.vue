@@ -152,7 +152,7 @@ const API_SORT_TO_TABLE: Record<'qty_desc' | 'revenue_desc' | 'name_asc', { fiel
 const tableSortField = computed(() => API_SORT_TO_TABLE[sortFilter.value].field)
 const tableSortDirection = computed(() => API_SORT_TO_TABLE[sortFilter.value].direction)
 const ingredientAnalyticsLink = computed(() => ({
-  path: '/analitica/ingredientes',
+  path: '/analitica/articulos-de-bodega',
   query: dateRange.value.from && dateRange.value.to
     ? { date_from: dateRange.value.from, date_to: dateRange.value.to }
     : {},

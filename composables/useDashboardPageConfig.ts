@@ -321,11 +321,11 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
-    } else if (path.includes('/analitica/ingredientes')) {
+    } else if (path.includes('/analitica/articulos-de-bodega') || path.includes('/analitica/ingredientes')) {
       return {
-        pageTitle: 'Ingredientes',
+        pageTitle: 'Artículos de bodega',
         pageSubtitle: undefined,
-        searchPlaceholder: 'Buscar ingredientes...',
+        searchPlaceholder: 'Buscar artículos de bodega...',
         activePage: 'analytics' as const,
         showBreadcrumb: false,
         breadcrumbPage: undefined,

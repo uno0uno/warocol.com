@@ -8,12 +8,12 @@
       "puntos": "Points Waros - Warocol",
       "cocina": "Analyse de cuisine | WARO",
       "clientes": "Clients - Warocol",
-      "ingredientes": "Analyse des ingrédients - Warocol"
+      "ingredientes": "Analyse des articles de stock - Warocol"
     },
     "tabs": {
       "ventas": "Ventes",
       "rentabilidad": "Rentabilité",
-      "ingredientes": "Ingrédients",
+      "ingredientes": "Articles de stock",
       "clientes": "Clients",
       "puntos": "Points"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "Analyse des ingrédients",
-      "ingredients": "Ingrédients",
-      "search": "Rechercher un ingrédient...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "Filtrer par catégorie",
-      "filterIngredient": "Filtrer par ingrédient",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "Filtrer par unité",
-      "sort": "Trier les ingrédients",
-      "ingredient": "Ingrédient",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "Catégorie",
       "unit": "Unité",
       "consumption": "Consommation",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "Consommation la plus élevée",
       "sortLatestCostDesc": "Dernier coût le plus élevé",
       "sortAvgCostDesc": "Coût moyen le plus élevé",
-      "sortIngredientAsc": "Ingrédient A-Z",
-      "empty": "Aucune consommation d'ingrédients",
-      "emptySub": "Aucun mouvement de consommation ou d'achat trouvé pour la période sélectionnée",
-      "openOf": "Ouvrir l'analyse de {name}",
+      "sortIngredientAsc": "Article de stock A-Z",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% avec mouvements",
       "movementsCount": "{count} mouvements",
       "noCategory": "Sans catégorie"
