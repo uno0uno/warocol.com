@@ -458,11 +458,13 @@ onUnmounted(() => clearRefreshHandler(refreshAll))
 const posStore = usePOSStore()
 const toast = useToast()
 const isTogglingTables = ref(false)
-const toggleTablesEnabled = async () => {
+const toggleTablesEnabled = async (event?: Event) => {
   if (!businessProfile.value || isTogglingTables.value) return
+  const input = event?.target as HTMLInputElement | undefined
   isTogglingTables.value = true
   const newState = !businessProfile.value.tables_enabled
   if (newState && isStarterTenant.value) {
+    if (input) input.checked = false
     openStarterPlanUpgradeModal()
     isTogglingTables.value = false
     return
@@ -479,6 +481,8 @@ const toggleTablesEnabled = async () => {
       { title: newState ? t('operaciones.mesas.moduleOn') : t('operaciones.mesas.moduleOff') }
     )
   } catch (error: any) {
+    // Controlled checkbox: Vue won't revert :checked if the prop stays false.
+    if (input && newState) input.checked = false
     if (newState && isStarterPlanRestrictionError(error)) {
       openStarterPlanUpgradeModal(error)
       return

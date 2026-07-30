@@ -794,6 +794,7 @@ const handleToggleComandas = async (event: Event) => {
   }
   if (isTogglingComandas.value) return
   if (isStarterTenant.value) {
+    ;(event.target as HTMLInputElement).checked = false
     openStarterPlanUpgradeModal()
     return
   }
@@ -803,6 +804,7 @@ const handleToggleComandas = async (event: Event) => {
     await invalidateContextCaches()
     toast.success(t('operaciones.comandas.moduleOn'), { title: t('operaciones.comandas.activatedTitle') })
   } catch (error: any) {
+    ;(event.target as HTMLInputElement).checked = false
     if (isStarterPlanRestrictionError(error)) {
       openStarterPlanUpgradeModal(error)
       return
@@ -830,8 +832,10 @@ const confirmDisableComandas = async () => {
 
 const handleToggleKds = async (event: Event) => {
   if (isTogglingKds.value) return
-  const newState = (event.target as HTMLInputElement).checked
+  const input = event.target as HTMLInputElement
+  const newState = input.checked
   if (newState && isStarterTenant.value) {
+    input.checked = false
     openStarterPlanUpgradeModal()
     return
   }
@@ -844,6 +848,7 @@ const handleToggleKds = async (event: Event) => {
       { title: newState ? t('operaciones.comandas.activatedTitle') : t('operaciones.comandas.deactivatedTitle') }
     )
   } catch (error: any) {
+    if (newState) input.checked = false
     if (newState && isStarterPlanRestrictionError(error)) {
       openStarterPlanUpgradeModal(error)
       return
