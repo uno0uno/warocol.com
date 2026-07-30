@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1915
+title: "Fix: Starter Operaciones toggles show ON after Mi Plan modal (Comandas/Mesas)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1915-starter-toggle-checked-reset
+
+paths:
+  - pages/operaciones/comandas.vue
+  - pages/operaciones/mesas.vue
+
+ac:
+  - "Starter Comandas ON → Mi Plan modal + switch visually OFF"
+  - "Starter KDS ON → same"
+  - "Starter Mesas ON → same"
+  - "Refresh keeps modules disabled if they were off"
+  - "Non-Starter paths unchanged"
+  - "starter_plan_restriction catch also resets checkbox"
+
+out_of_scope:
+  - Promociones / Turnos / Personalizar / Propinas locks
+  - Country-aware banner
+  - Turnos create quota
+
+hints:
+  entry: "handleToggleComandas / handleToggleKds / toggleTablesEnabled"
+  pattern: "Force input.checked=false on starter early-return + catch (Vue controlled checkbox)"
+  tests: "none — page handlers; verify with rg on reset sites"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "manual Starter smoke on Operaciones Comandas/Mesas"
