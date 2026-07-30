@@ -18,6 +18,7 @@ const pluralLower = computed(() => plural.value.toLowerCase())
 useHead({ title: computed(() => `${plural.value} | Operaciones`) })
 
 const { currentTenant } = useTenantReactive()
+const accessStore = useAccessStore()
 const {
   getOperationalQuota,
   fetchBillingOverview,
@@ -37,6 +38,38 @@ const {
   closeQuotaLimitModal: closeQrQuotaModal,
   goToBillingFromQuotaLimitModal: goToBillingFromQrQuota,
 } = useOperationalQuotaGate('active_qr_tables')
+
+const isStarterTenant = computed(() => accessStore.planSlug === 'starter')
+
+const isStarterPlanRestrictionError = (err: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  const code =
+    (typeof details === 'object' && details?.code)
+    || (typeof detail === 'object' && detail?.code)
+    || data?.code
+    || (typeof data?.error === 'string' ? data.error : undefined)
+  return code === 'starter_plan_restriction'
+}
+
+const starterPlanRestrictionMessage = (err?: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  if (typeof details === 'object' && details?.message) return details.message
+  if (typeof detail === 'object' && detail?.message) return detail.message
+  if (typeof detail === 'string') return detail
+  if (typeof data?.message === 'string') return data.message
+  return t(
+    'billing.starterFeatureBlocked',
+    'Esta función no está disponible en el plan Starter. Revisa Mi Plan para actualizar.',
+  )
+}
+
+const openStarterPlanUpgradeModal = (err?: any) => {
+  openTableQuotaModal(starterPlanRestrictionMessage(err))
+}
 
 // ── Data ───────────────────────────────────────────────────────────────────
 const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, error: tablesError, refetch } = useQuery({
@@ -429,6 +462,11 @@ const toggleTablesEnabled = async () => {
   if (!businessProfile.value || isTogglingTables.value) return
   isTogglingTables.value = true
   const newState = !businessProfile.value.tables_enabled
+  if (newState && isStarterTenant.value) {
+    openStarterPlanUpgradeModal()
+    isTogglingTables.value = false
+    return
+  }
   try {
     await $fetch('/api/operaciones/toggles/tables', {
       method: 'PATCH',
@@ -441,6 +479,10 @@ const toggleTablesEnabled = async () => {
       { title: newState ? t('operaciones.mesas.moduleOn') : t('operaciones.mesas.moduleOff') }
     )
   } catch (error: any) {
+    if (newState && isStarterPlanRestrictionError(error)) {
+      openStarterPlanUpgradeModal(error)
+      return
+    }
     toast.error(error.data?.detail || t('operaciones.mesas.moduleToggleError'), { title: 'Error' })
   } finally {
     isTogglingTables.value = false

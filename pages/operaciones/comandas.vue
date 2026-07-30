@@ -544,6 +544,7 @@ useHead({ title: () => t('operaciones.head.comandas') })
 
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
+const accessStore = useAccessStore()
 const { operationalQuotas, fetchBillingOverview } = useBilling()
 const {
   quotaLimitModalOpen,
@@ -553,6 +554,38 @@ const {
   goToBillingFromQuotaLimitModal,
   handleCreateClick,
 } = useOperationalQuotaGate('active_kitchens')
+
+const isStarterTenant = computed(() => accessStore.planSlug === 'starter')
+
+const isStarterPlanRestrictionError = (err: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  const code =
+    (typeof details === 'object' && details?.code)
+    || (typeof detail === 'object' && detail?.code)
+    || data?.code
+    || (typeof data?.error === 'string' ? data.error : undefined)
+  return code === 'starter_plan_restriction'
+}
+
+const starterPlanRestrictionMessage = (err?: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  if (typeof details === 'object' && details?.message) return details.message
+  if (typeof detail === 'object' && detail?.message) return detail.message
+  if (typeof detail === 'string') return detail
+  if (typeof data?.message === 'string') return data.message
+  return t(
+    'billing.starterFeatureBlocked',
+    'Esta función no está disponible en el plan Starter. Revisa Mi Plan para actualizar.',
+  )
+}
+
+const openStarterPlanUpgradeModal = (err?: any) => {
+  openQuotaLimitModalWithMessage(starterPlanRestrictionMessage(err))
+}
 
 // ─── Business profile (operaciones audience aggregator — gated under OPERACIONES) ───
 const cache = useQueryCache()
@@ -760,12 +793,20 @@ const handleToggleComandas = async (event: Event) => {
     return
   }
   if (isTogglingComandas.value) return
+  if (isStarterTenant.value) {
+    openStarterPlanUpgradeModal()
+    return
+  }
   isTogglingComandas.value = true
   try {
     await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
     await invalidateContextCaches()
     toast.success(t('operaciones.comandas.moduleOn'), { title: t('operaciones.comandas.activatedTitle') })
   } catch (error: any) {
+    if (isStarterPlanRestrictionError(error)) {
+      openStarterPlanUpgradeModal(error)
+      return
+    }
     toast.error(error.data?.detail || t('operaciones.comandas.activateError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingComandas.value = false
@@ -790,6 +831,10 @@ const confirmDisableComandas = async () => {
 const handleToggleKds = async (event: Event) => {
   if (isTogglingKds.value) return
   const newState = (event.target as HTMLInputElement).checked
+  if (newState && isStarterTenant.value) {
+    openStarterPlanUpgradeModal()
+    return
+  }
   isTogglingKds.value = true
   try {
     await $fetch('/api/operaciones/toggles/kds', { method: 'PATCH', body: { enabled: newState } })
@@ -799,6 +844,10 @@ const handleToggleKds = async (event: Event) => {
       { title: newState ? t('operaciones.comandas.activatedTitle') : t('operaciones.comandas.deactivatedTitle') }
     )
   } catch (error: any) {
+    if (newState && isStarterPlanRestrictionError(error)) {
+      openStarterPlanUpgradeModal(error)
+      return
+    }
     toast.error(error.data?.detail || t('operaciones.comandas.kdsToggleError'), { title: t('operaciones.comandas.error') })
   } finally {
     isTogglingKds.value = false
