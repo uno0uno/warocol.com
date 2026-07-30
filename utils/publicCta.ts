@@ -43,6 +43,25 @@ export const PUBLIC_OFFER = Object.freeze({
   activation: 'El acceso a los módulos se activa después del pago.',
 })
 
+/** In-app Starter trial banner price slot (warocol.com#1917). Public marketing CTAs stay COP. */
+export function resolveTrialPriceAnchor(options: {
+  locale?: string | null
+  countryCode?: string | null
+  currencyCode?: string | null
+} = {}): string {
+  const isEn = String(options.locale || '').toLowerCase().startsWith('en')
+  const country = String(options.countryCode || '').toUpperCase()
+  const currency = String(options.currencyCode || '').toUpperCase()
+  const isMexico = country === 'MX' || currency === 'MXN'
+
+  if (isMexico) {
+    // No approved MXN list price yet — avoid showing COP to MX tenants.
+    return isEn ? 'Plan Pro' : 'el Plan Pro'
+  }
+
+  return isEn ? 'under COP 8,000/month' : PUBLIC_OFFER.monthlyEquivalent
+}
+
 // Activate only after recording a verifiable source, date, scope and disclosure here.
 export const PUBLIC_CTA_COMPARISON: PublicCtaComparison | null = null
 

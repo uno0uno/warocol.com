@@ -87,7 +87,8 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
-import { PUBLIC_OFFER } from '~/utils/publicCta'
+import { resolveTrialPriceAnchor } from '~/utils/publicCta'
+import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
 
 const { t, locale } = useI18n()
 
@@ -100,6 +101,7 @@ const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
 )
 const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
+const { profile: financialProfile } = useTenantFinancialProfile()
 const isBillingBlocked = computed(() =>
   accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
 )
@@ -122,9 +124,11 @@ const subscriptionBannerMessage = computed(() => {
   if (!status || !level) return ''
   // Prefer localized conversion copy for Starter; API starter message is operational, not CTA.
   if (level === 'starter') {
-    const priceAnchor = String(locale.value || '').startsWith('en')
-      ? 'under COP 8,000/month'
-      : PUBLIC_OFFER.monthlyEquivalent
+    const priceAnchor = resolveTrialPriceAnchor({
+      locale: locale.value,
+      countryCode: financialProfile.value?.country_code,
+      currencyCode: financialProfile.value?.base_currency_code,
+    })
     return t('shell.subscriptionTrial', { priceAnchor })
   }
   if (status.message) return status.message

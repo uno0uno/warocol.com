@@ -4,11 +4,13 @@ import test from 'node:test'
 import {
   PUBLIC_CTA_ATTRIBUTION_KEY,
   PUBLIC_CTA_COMPARISON,
+  PUBLIC_OFFER,
   activatePublicCta,
   buildPublicCtaRegistrationRoute,
   getPublicCta,
   readPublicCtaAttribution,
   resolveBlogCtaIntent,
+  resolveTrialPriceAnchor,
   writeVerifiedPublicCtaAttribution,
 } from './publicCta.ts'
 
@@ -84,4 +86,34 @@ test('restores server-bound attribution in a fresh magic-link tab', () => {
 
   assert.deepEqual(readPublicCtaAttribution(storage), restored)
   assert.equal(values.get(PUBLIC_CTA_ATTRIBUTION_KEY)?.includes('email'), false)
+})
+
+test('trial banner price anchor stays COP for Colombia tenants', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'CO', currencyCode: 'COP' }),
+    PUBLIC_OFFER.monthlyEquivalent,
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'CO', currencyCode: 'COP' }),
+    'under COP 8,000/month',
+  )
+})
+
+test('trial banner price anchor avoids COP for Mexico tenants', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'MX', currencyCode: 'MXN' }),
+    'el Plan Pro',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'MX', currencyCode: 'MXN' }),
+    'Plan Pro',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: null, currencyCode: 'MXN' }),
+    'el Plan Pro',
+  )
+  assert.doesNotMatch(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'MX', currencyCode: 'MXN' }),
+    /COP/i,
+  )
 })
