@@ -87,7 +87,7 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
-import { PUBLIC_OFFER, resolveTrialPriceAnchor } from '~/utils/publicCta'
+import { resolveTrialPriceAnchor } from '~/utils/publicCta'
 import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
 
 const { t, locale } = useI18n()
