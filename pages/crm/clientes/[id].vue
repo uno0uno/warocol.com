@@ -790,7 +790,15 @@ onUnmounted(() => {
           <div class="bg-white border border-border rounded-lg p-4">
             <div class="flex justify-between items-start mb-2">
               <div>
-                <p class="font-medium text-text-primary"># {{ item.order_number }}</p>
+                <NuxtLink
+                  v-if="item.order_id"
+                  :to="`/ventas/${item.order_id}`"
+                  class="font-medium text-primary hover:underline"
+                  :aria-label="`#${item.order_number}`"
+                >
+                  # {{ item.order_number }}
+                </NuxtLink>
+                <p v-else class="font-medium text-text-primary"># {{ item.order_number }}</p>
                 <p class="text-sm text-text-secondary">{{ formatDate(item.date) }}</p>
               </div>
               <span :class="['text-xs px-2 py-1 rounded-full font-medium', statusColors[item.status] || 'bg-gray-100 text-gray-800']">
@@ -805,8 +813,16 @@ onUnmounted(() => {
         </template>
 
         <!-- Desktop Cells -->
-        <template #cell-order_number="{ value }">
-          <span class="text-sm font-medium text-text-primary">#{{ value }}</span>
+        <template #cell-order_number="{ value, row }">
+          <NuxtLink
+            v-if="row.order_id"
+            :to="`/ventas/${row.order_id}`"
+            class="text-sm font-medium text-primary hover:underline"
+            :aria-label="`#${value}`"
+          >
+            #{{ value }}
+          </NuxtLink>
+          <span v-else class="text-sm font-medium text-text-primary">#{{ value }}</span>
         </template>
 
         <template #cell-date="{ value }">
