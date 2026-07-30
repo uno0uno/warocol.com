@@ -24,7 +24,8 @@
       "status": "Estado",
       "all": "Todos",
       "loading": "Cargando...",
-      "actions": "Acciones"
+      "actions": "Acciones",
+      "category": "Categoría"
     },
     "ventas": {
       "grossSales": "Ventas Brutas",
@@ -55,7 +56,8 @@
       "taxGeneric": "Impuesto",
       "marginCta": "Tu plato más vendido puede ser tu peor negocio",
       "viewMargin": "Ver Rentabilidad →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "Filtrar por categoría"
     },
     "rentabilidad": {
       "foodCostReal": "Food Cost Real",
@@ -94,7 +96,8 @@
       "emptyProducts": "No hay productos para analizar",
       "emptyProductsSub": "Los productos aparecerán aquí cuando haya ventas en el período seleccionado",
       "unitsShort": "{count} uds",
-      "revenueTooltip": "Los ingresos reflejan el precio neto después de descuentos aplicados"
+      "revenueTooltip": "Los ingresos reflejan el precio neto después de descuentos aplicados",
+      "filterCategory": "Filtrar por categoría"
     },
     "puntos": {
       "toggleHint": "Activar o desactivar el sistema de puntos Waros",

@@ -24,7 +24,8 @@
       "status": "状态",
       "all": "全部",
       "loading": "加载中...",
-      "actions": "操作"
+      "actions": "操作",
+      "category": "类别"
     },
     "ventas": {
       "grossSales": "销售总额",
@@ -55,7 +56,8 @@
       "taxGeneric": "税费",
       "marginCta": "你最畅销的菜品可能是利润最低的",
       "viewMargin": "查看盈利能力 →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "按类别筛选"
     },
     "rentabilidad": {
       "foodCostReal": "实际食材成本",
@@ -94,7 +96,8 @@
       "emptyProducts": "无产品可分析",
       "emptyProductsSub": "选定期间有销售后，产品将显示在此处",
       "unitsShort": "{count} 件",
-      "revenueTooltip": "收入反映了应用折扣后的净价"
+      "revenueTooltip": "收入反映了应用折扣后的净价",
+      "filterCategory": "按类别筛选"
     },
     "puntos": {
       "toggleHint": "启用或禁用 Waros 积分系统",

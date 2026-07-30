@@ -17,6 +17,7 @@ const currentTime = ref<Date>(new Date());
 
 const paymentMethodFilter = ref<string | null>(null);
 const statusFilter = ref<string | null>(null);
+const categoryFilter = ref<string | null>(null);
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone, todayISO, addDaysISO, monthBounds } = useTenantTimezone()
 
@@ -36,16 +37,28 @@ const paymentGroups = computed(() =>
   (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
 )
 
+const { data: categoriesData } = useQuery({
+  key: () => ['menu', 'categories', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const menuCategories = computed(() =>
+  (categoriesData.value as { data?: { id: string; name: string }[] })?.data ?? []
+)
+
 // Single dashboard call — no date filter needed.
 const { data: dashboardData, status: dashboardStatus, asyncStatus: dashboardAsyncStatus, error: metricsError, refetch: refetchDashboard } = useQuery({
   key: () => ['analytics', 'ventas-dashboard', currentTenant.value?.id, {
     payment_method: paymentMethodFilter.value || null,
     status: statusFilter.value || null,
+    category_id: categoryFilter.value || null,
   }],
   query: () => $fetch('/api/orders/dashboard', {
     params: {
       payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
+      status: statusFilter.value || undefined,
+      category_id: categoryFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -59,13 +72,15 @@ const { data: filteredMetricsData, status: filteredMetricsStatus, asyncStatus: f
     to: dateRange.value.to,
     payment_method: paymentMethodFilter.value || null,
     status: statusFilter.value || null,
+    category_id: categoryFilter.value || null,
   }],
   query: () => $fetch('/api/orders/metrics', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
       payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
+      status: statusFilter.value || undefined,
+      category_id: categoryFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value && !!hasDateFilter.value,
@@ -104,13 +119,15 @@ const { data: salesFlowData, status: salesFlowStatus, asyncStatus: salesFlowAsyn
     to: dateRange.value.to,
     payment_method: paymentMethodFilter.value || null,
     status: statusFilter.value || null,
+    category_id: categoryFilter.value || null,
   }],
   query: () => $fetch('/api/orders/sales-flow', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
       payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
+      status: statusFilter.value || undefined,
+      category_id: categoryFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -248,6 +265,7 @@ onUnmounted(() => {
 const clearFilters = () => {
   paymentMethodFilter.value = null
   statusFilter.value = null
+  categoryFilter.value = null
   dateRangeDates.value = null
   lastUpdate.value = new Date()
 }
@@ -342,13 +360,17 @@ const metrics = computed(() => {
             <option :value="null">{{ t('analitica.ventas.paymentMethod') }}</option>
             <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
           </select>
+          <select v-model="categoryFilter" :aria-label="t('analitica.ventas.filterCategory')" class="h-10 ps-3 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
+            <option :value="null">{{ t('analitica.common.category') }}</option>
+            <option v-for="cat in menuCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
           <select v-model="statusFilter" :aria-label="t('analitica.ventas.filterStatus')" class="h-10 ps-3 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
             <option :value="null">{{ t('analitica.common.status') }}</option>
             <option value="completed">{{ t('analitica.ventas.completed') }}</option>
             <option value="cancelled">{{ t('analitica.ventas.canceled') }}</option>
             <option value="pending">{{ t('analitica.ventas.pending') }}</option>
           </select>
-          <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" :title="t('analitica.common.clearFilters')" :aria-label="t('analitica.common.clearFilters')">
+          <button v-if="dateRangeDates || paymentMethodFilter || statusFilter || categoryFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" :title="t('analitica.common.clearFilters')" :aria-label="t('analitica.common.clearFilters')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
