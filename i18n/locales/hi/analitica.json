@@ -24,7 +24,8 @@
       "status": "स्थिति",
       "all": "सभी",
       "loading": "लोड हो रहा है...",
-      "actions": "कार्यवाहियाँ"
+      "actions": "कार्यवाहियाँ",
+      "category": "श्रेणी"
     },
     "ventas": {
       "grossSales": "सकल बिक्री",
@@ -55,7 +56,8 @@
       "taxGeneric": "कर",
       "marginCta": "आपका सबसे ज़्यादा बिकने वाला व्यंजन आपका सबसे खराब मार्जिन वाला हो सकता है",
       "viewMargin": "लाभप्रदता देखें →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "श्रेणी से फ़िल्टर करें"
     },
     "rentabilidad": {
       "foodCostReal": "वास्तविक फूड कॉस्ट",
@@ -94,7 +96,8 @@
       "emptyProducts": "विश्लेषण करने के लिए कोई उत्पाद नहीं हैं",
       "emptyProductsSub": "चयनित अवधि में बिक्री होने पर उत्पाद यहां दिखाई देंगे",
       "unitsShort": "{count} इकाइयाँ",
-      "revenueTooltip": "राजस्व लागू छूट के बाद शुद्ध मूल्य को दर्शाता है"
+      "revenueTooltip": "राजस्व लागू छूट के बाद शुद्ध मूल्य को दर्शाता है",
+      "filterCategory": "श्रेणी से फ़िल्टर करें"
     },
     "puntos": {
       "toggleHint": "WARO पॉइंट सिस्टम को सक्रिय या निष्क्रिय करें",

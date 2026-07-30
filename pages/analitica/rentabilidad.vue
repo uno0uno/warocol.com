@@ -17,13 +17,34 @@ const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { ad
 
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
 const { timezone } = useTenantTimezone()
+const categoryFilter = ref<string | null>(null)
+
+const { data: categoriesData } = useQuery({
+  key: () => ['menu', 'categories', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const menuCategories = computed(() =>
+  (categoriesData.value as { data?: { id: string; name: string }[] })?.data ?? []
+)
+
+const clearRentabilidadFilters = () => {
+  dateRangeDates.value = null
+  categoryFilter.value = null
+}
 
 const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, error: foodCostError, refetch: refetchFoodCost } = useQuery({
-  key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
+  key: () => ['analytics', 'food-cost', currentTenant.value?.id, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    category_id: categoryFilter.value || null,
+  }],
   query: () => $fetch('/api/analytics/food-cost', {
     params: {
       date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined
+      date_to: dateRange.value.to || undefined,
+      category_id: categoryFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -31,11 +52,16 @@ const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncSt
 })
 
 const { data: menuAnalysisData, status: menuStatus, asyncStatus: menuAsyncStatus, refetch: refetchMenuAnalysis } = useQuery({
-  key: () => ['analytics', 'menu-analysis', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
+  key: () => ['analytics', 'menu-analysis', currentTenant.value?.id, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    category_id: categoryFilter.value || null,
+  }],
   query: () => $fetch('/api/analytics/menu-analysis', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
+      category_id: categoryFilter.value || undefined,
       limit: 200
     }
   }),
@@ -216,12 +242,20 @@ onUnmounted(() => {
               menu-class-name="dp-custom-menu"
               calendar-cell-class-name="dp-custom-cell"
             />
+            <select
+              v-model="categoryFilter"
+              :aria-label="t('analitica.rentabilidad.filterCategory')"
+              class="h-10 ps-3 pe-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0"
+            >
+              <option :value="null">{{ t('analitica.common.category') }}</option>
+              <option v-for="cat in menuCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
             <button
-              v-if="dateRangeDates"
-              @click="dateRangeDates = null"
+              v-if="dateRangeDates || categoryFilter"
+              @click="clearRentabilidadFilters"
               class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
-              :title="t('analitica.rentabilidad.clearFilter')"
-              :aria-label="t('analitica.rentabilidad.clearFilter')"
+              :title="t('analitica.common.clearFilters')"
+              :aria-label="t('analitica.common.clearFilters')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

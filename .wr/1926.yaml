@@ -1,0 +1,53 @@
+# Machine contract — wr-plan #1926 (batch Extends #1928). Keep ≤80 lines.
+issue: 1926
+title: "Batch 1: Analítica filters — category on Ventas and Rentabilidad"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+issue_ref: uno0uno/warocol.com#1926
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1926-analitica-category-filters
+companion_repo: api_warocol.com
+companion_remote: uno0uno/api-warolabs
+companion_cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+companion_branch: wr-1926-analitica-category-filters
+risk: low
+
+paths:
+  - pages/analitica/ventas.vue
+  - pages/analitica/rentabilidad.vue
+  - i18n/locales/*/analitica.json
+  - .wr/1926.yaml
+
+api_paths:
+  - app/routers/orders.py
+  - app/services/orders_service.py
+  - app/routers/analytics.py
+  - app/services/analytics_service.py
+  - tests/test_analytics_dual_cost.py
+  - tests/test_analytics_ingredients.py
+
+ac:
+  - Ventas: category_id scopes dashboard/metrics/sales-flow to item-attributed revenue
+  - Rentabilidad: category_id scopes food-cost KPI + menu-analysis rows
+  - Empty category_id = all; no crash if tenant has zero categories
+  - clearFilters clears category with date/payment/status
+  - API tests for category_id filter (omit vs set)
+  - Tips endpoint left unfiltered this batch
+
+out_of_scope:
+  - Food-cost / combo math (#1927)
+  - /orders/tips category filter
+  - Ingredientes string category changes
+  - Despacho, Clientes, Puntos
+
+hints:
+  entry: "delta #1926 — category_id UUID; item-attributed"
+  pattern: "orders_service products-sold category_id ~4128; ingredientes filter chrome"
+  categories_ui: "$fetch('/api/menu/categories') — same as MenuCatalogFiltersBar"
+  contract: "payment/status order-level AND category item-level"
+  ship: "API PR first (or pair); front Closes #1926; API Closes/Refs #1926"
+  tests: "pytest tests/test_analytics_dual_cost.py -v; add focused category_id cases"
+
+skip:
+  audits: [ux, color, typography]

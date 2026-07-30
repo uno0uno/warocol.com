@@ -24,7 +24,8 @@
       "status": "Status",
       "all": "All",
       "loading": "Loading...",
-      "actions": "Actions"
+      "actions": "Actions",
+      "category": "Category"
     },
     "ventas": {
       "grossSales": "Gross sales",
@@ -55,7 +56,8 @@
       "taxGeneric": "Tax",
       "marginCta": "Your best seller may be your worst margin",
       "viewMargin": "View profitability →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "Filter by category"
     },
     "rentabilidad": {
       "foodCostReal": "Actual food cost",
@@ -94,7 +96,8 @@
       "emptyProducts": "No products to analyze",
       "emptyProductsSub": "Products will appear here once there are sales in the selected period",
       "unitsShort": "{count} units",
-      "revenueTooltip": "Revenue reflects the net price after applied discounts"
+      "revenueTooltip": "Revenue reflects the net price after applied discounts",
+      "filterCategory": "Filter by category"
     },
     "puntos": {
       "toggleHint": "Enable or disable the Waros points system",

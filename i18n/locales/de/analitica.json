@@ -24,7 +24,8 @@
       "status": "Status",
       "all": "Alle",
       "loading": "Wird geladen...",
-      "actions": "Aktionen"
+      "actions": "Aktionen",
+      "category": "Kategorie"
     },
     "ventas": {
       "grossSales": "Bruttoverkäufe",
@@ -55,7 +56,8 @@
       "taxGeneric": "Steuer",
       "marginCta": "Ihr Bestseller könnte Ihr schlechtestes Geschäft sein",
       "viewMargin": "Rentabilität anzeigen →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "Nach Kategorie filtern"
     },
     "rentabilidad": {
       "foodCostReal": "Tatsächliche Food Cost",
@@ -94,7 +96,8 @@
       "emptyProducts": "Keine Produkte zur Analyse vorhanden",
       "emptyProductsSub": "Produkte werden hier angezeigt, sobald im ausgewählten Zeitraum Verkäufe getätigt wurden",
       "unitsShort": "{count} Stk.",
-      "revenueTooltip": "Der Umsatz spiegelt den Nettopreis nach Abzug von Rabatten wider"
+      "revenueTooltip": "Der Umsatz spiegelt den Nettopreis nach Abzug von Rabatten wider",
+      "filterCategory": "Nach Kategorie filtern"
     },
     "puntos": {
       "toggleHint": "WARO-Punktesystem aktivieren oder deaktivieren",

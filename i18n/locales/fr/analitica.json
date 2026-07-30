@@ -24,7 +24,8 @@
       "status": "Statut",
       "all": "Tous",
       "loading": "Chargement...",
-      "actions": "Actions"
+      "actions": "Actions",
+      "category": "Catégorie"
     },
     "ventas": {
       "grossSales": "Ventes brutes",
@@ -55,7 +56,8 @@
       "taxGeneric": "Taxe",
       "marginCta": "Votre plat le plus vendu peut être le moins rentable",
       "viewMargin": "Voir la rentabilité →",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "Filtrer par catégorie"
     },
     "rentabilidad": {
       "foodCostReal": "Coût alimentaire réel",
@@ -94,7 +96,8 @@
       "emptyProducts": "Aucun produit à analyser",
       "emptyProductsSub": "Les produits apparaîtront ici une fois qu'il y aura des ventes durant la période sélectionnée",
       "unitsShort": "{count} unités",
-      "revenueTooltip": "Les revenus reflètent le prix net après application des remises"
+      "revenueTooltip": "Les revenus reflètent le prix net après application des remises",
+      "filterCategory": "Filtrer par catégorie"
     },
     "puntos": {
       "toggleHint": "Activer ou désactiver le système de points WARO",

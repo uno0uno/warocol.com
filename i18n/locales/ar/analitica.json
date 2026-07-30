@@ -24,7 +24,8 @@
       "status": "الحالة",
       "all": "الكل",
       "loading": "جارٍ التحميل...",
-      "actions": "الإجراءات"
+      "actions": "الإجراءات",
+      "category": "الفئة"
     },
     "ventas": {
       "grossSales": "إجمالي المبيعات",
@@ -55,7 +56,8 @@
       "taxGeneric": "الضريبة",
       "marginCta": "قد يكون طبقك الأكثر مبيعًا هو الأقل ربحية",
       "viewMargin": "عرض الربحية ←",
-      "taxFallback": "INC 8%"
+      "taxFallback": "INC 8%",
+      "filterCategory": "تصفية حسب الفئة"
     },
     "rentabilidad": {
       "foodCostReal": "التكلفة الفعلية للطعام",
@@ -94,7 +96,8 @@
       "emptyProducts": "لا توجد منتجات للتحليل",
       "emptyProductsSub": "ستظهر المنتجات هنا بمجرد وجود مبيعات في الفترة المحددة",
       "unitsShort": "{count} وحدة",
-      "revenueTooltip": "تعكس الإيرادات السعر الصافي بعد الخصومات المطبقة"
+      "revenueTooltip": "تعكس الإيرادات السعر الصافي بعد الخصومات المطبقة",
+      "filterCategory": "تصفية حسب الفئة"
     },
     "puntos": {
       "toggleHint": "تفعيل أو تعطيل نظام نقاط Waros",
