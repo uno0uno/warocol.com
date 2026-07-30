@@ -15,6 +15,7 @@ import {
   SparklesIcon,
   TruckIcon,
   UserGroupIcon,
+  UsersIcon,
 } from '@heroicons/vue/24/outline'
 import type { AccessFeature, Module } from '~/stores/access'
 
@@ -23,7 +24,7 @@ export type ActivePage =
   | 'ventas' | 'propinas' | 'pos' | 'despacho' | 'comandas'
   | 'financiero' | 'finanzas' | 'facturacion'
   | 'abastecimiento' | 'inventario' | 'menu' | 'operaciones'
-  | 'analytics' | 'analitica' | 'reportes' | 'pagos'
+  | 'analytics' | 'analitica' | 'crm' | 'reportes' | 'pagos'
   | 'asistente'
   | 'equipo' | 'integraciones'
   | 'negocio' | 'admin' | 'configuracion'
@@ -46,6 +47,7 @@ export const dashboardPrimaryItems: DashboardNavItem[] = [
 ]
 
 export const dashboardSecondaryItems: DashboardNavItem[] = [
+  { to: '/crm/clientes', page: 'crm', labelKey: 'nav.crm', icon: UsersIcon, module: 'crm' },
   { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
   { to: '/asistente', page: 'asistente', labelKey: 'nav.asistente', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/arqueo', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },
@@ -68,6 +70,7 @@ export const dashboardMobileGridItems: DashboardNavItem[] = [
   { to: '/abastecimiento/compras-directas', page: 'abastecimiento', labelKey: 'nav.abastecimiento', icon: DocumentTextIcon, module: 'abastecimiento', showCriticalDot: true },
   { to: '/menu/productos', page: 'menu', labelKey: 'nav.menu', icon: CubeIcon, module: 'menu' },
   { to: '/operaciones/comandas', page: 'operaciones', labelKey: 'nav.operaciones', icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
+  { to: '/crm/clientes', page: 'crm', labelKey: 'nav.crm', icon: UsersIcon, module: 'crm' },
   { to: '/analitica', page: 'analytics', labelKey: 'nav.analitica', icon: ChartBarIcon, module: 'analitica' },
   { to: '/asistente', page: 'asistente', labelKey: 'nav.asistente', icon: SparklesIcon, module: 'analitica', feature: 'kali_enabled' },
   { to: '/finanzas/cartera', page: 'finanzas', labelKey: 'nav.finanzas', icon: BanknotesIcon, module: 'finanzas' },

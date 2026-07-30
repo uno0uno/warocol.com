@@ -49,7 +49,13 @@ export default defineNuxtConfig({
     '/finanzas/pagos/**': { ssr: false },
     '/financiero/**': { ssr: false },
     '/auth/**': { ssr: false },
+    // Legacy CRM bookmarks (Batch 1 #1931) — before /analitica/** SPA rule
+    '/analitica/clientes': { redirect: { to: '/crm/clientes', statusCode: 301 } },
+    '/analitica/clientes/**': { redirect: { to: '/crm/clientes/**', statusCode: 301 } },
+    '/analitica/puntos': { redirect: { to: '/crm/waros', statusCode: 301 } },
     '/analitica/**': { ssr: false },
+    '/crm': { ssr: false },
+    '/crm/**': { ssr: false },
     '/asistente/**': { ssr: false },
     '/gestion/**': { ssr: false },
     '/terminos-y-condiciones': { ssr: false },

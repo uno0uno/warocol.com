@@ -23,6 +23,7 @@ export type Module =
   | 'operaciones'
   | 'abastecimiento'
   | 'analitica'
+  | 'crm'
   | 'finanzas'
   | 'facturacion'
   | 'equipo'

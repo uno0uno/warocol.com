@@ -310,11 +310,11 @@ onUnmounted(() => {
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-            @click="navigateTo(`/analitica/clientes/${item.customer_id}`)"
+            @click="navigateTo(`/crm/clientes/${item.customer_id}`)"
             role="button"
             tabindex="0"
             :aria-label="t('finanzas.cartera.viewCustomerOf', { name: item.name })"
-            @keydown.enter="navigateTo(`/analitica/clientes/${item.customer_id}`)"
+            @keydown.enter="navigateTo(`/crm/clientes/${item.customer_id}`)"
           >
             <div class="flex-1 min-w-0">
               <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
@@ -341,7 +341,7 @@ onUnmounted(() => {
         <!-- Desktop cells -->
         <template #cell-name="{ row }">
           <NuxtLink
-            :to="`/analitica/clientes/${row.customer_id}`"
+            :to="`/crm/clientes/${row.customer_id}`"
             class="text-sm font-bold text-text-primary hover:text-primary transition-colors cursor-pointer"
           >
             {{ row.name }}
@@ -373,7 +373,7 @@ onUnmounted(() => {
 
         <template #cell-actions="{ row }">
           <NuxtLink
-            :to="`/analitica/clientes/${row.customer_id}`"
+            :to="`/crm/clientes/${row.customer_id}`"
             class="text-text-secondary hover:text-primary transition-colors"
             :title="t('finanzas.cartera.viewCustomer')"
             :aria-label="t('finanzas.cartera.viewCustomerOf', { name: row.name })"

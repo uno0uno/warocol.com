@@ -331,6 +331,36 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
+    } else if (path.includes('/crm/clientes')) {
+      return {
+        pageTitle: 'Clientes',
+        pageSubtitle: undefined,
+        searchPlaceholder: 'Buscar clientes...',
+        activePage: 'crm' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined
+      }
+    } else if (path.includes('/crm/waros') || path.includes('/crm/puntos')) {
+      return {
+        pageTitle: 'Waros',
+        pageSubtitle: undefined,
+        searchPlaceholder: undefined,
+        activePage: 'crm' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined
+      }
+    } else if (path.includes('/crm')) {
+      return {
+        pageTitle: 'CRM',
+        pageSubtitle: undefined,
+        searchPlaceholder: undefined,
+        activePage: 'crm' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined
+      }
     } else if (path.includes('/analitica/clientes')) {
       return {
         pageTitle: 'Clientes',

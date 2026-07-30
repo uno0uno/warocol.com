@@ -1,0 +1,14 @@
+{
+    "crm": {
+        "head": {
+            "index": "CRM - Warocol",
+            "description": "\u0917\u094d\u0930\u093e\u0939\u0915 \u0914\u0930 Waros",
+            "waros": "Waros - Warocol",
+            "clientes": "\u0917\u094d\u0930\u093e\u0939\u0915 - Warocol"
+        },
+        "tabs": {
+            "clientes": "\u0917\u094d\u0930\u093e\u0939\u0915",
+            "waros": "Waros"
+        }
+    }
+}

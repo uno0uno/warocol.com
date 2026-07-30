@@ -11,17 +11,16 @@ const { t } = useI18n({ useScope: 'global' })
 
 definePageMeta({
   layout: 'dashboard',
-  module: 'analitica',
+  module: 'crm',
 })
 
 const navigationItems = computed(() => [
-  { to: '/analitica/ventas', label: t('analitica.tabs.ventas') },
-  { to: '/analitica/rentabilidad', label: t('analitica.tabs.rentabilidad') },
-  { to: '/analitica/ingredientes', label: t('analitica.tabs.ingredientes') },
+  { to: '/crm/clientes', label: t('crm.tabs.clientes') },
+  { to: '/crm/waros', label: t('crm.tabs.waros') },
 ])
 
 useHead({
-  title: () => t('analitica.head.index'),
-  meta: [{ name: 'description', content: () => t('analitica.head.description') }]
+  title: () => t('crm.head.index'),
+  meta: [{ name: 'description', content: () => t('crm.head.description') }],
 })
 </script>

@@ -11,6 +11,7 @@ export const LOCALE_MESSAGE_FILES = [
   'menu.json',
   'finanzas.json',
   'analitica.json',
+  'crm.json',
   'equipo.json',
   'perfil.json',
 ] as const
