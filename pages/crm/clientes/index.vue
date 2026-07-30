@@ -8,7 +8,7 @@ import { enUS, es } from 'date-fns/locale';
 import { formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 
-definePageMeta({ layout: 'dashboard', module: 'analitica' })
+definePageMeta({ layout: 'dashboard', module: 'crm' })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 
@@ -160,7 +160,7 @@ const showCreateModal = ref(false)
 // ── Actions ───────────────────────────────────────────────────────────────
 const onCustomerCreated = async (customer: { id: string }) => {
   await refetch()
-  await router.push(`/analitica/clientes/${customer.id}`)
+  await router.push(`/crm/clientes/${customer.id}`)
 }
 
 const previousPage = () => { if (canGoPrevious.value) currentPage.value-- }
@@ -287,7 +287,7 @@ onUnmounted(() => {
         >
           <template #card="{ item, index }">
             <NuxtLink
-              :to="`/analitica/clientes/${item.customer_id}`"
+              :to="`/crm/clientes/${item.customer_id}`"
               class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             >
@@ -367,7 +367,7 @@ onUnmounted(() => {
           <template #cell-actions="{ row }">
             <div class="flex justify-center">
               <NuxtLink
-                :to="`/analitica/clientes/${row.customer_id}`"
+                :to="`/crm/clientes/${row.customer_id}`"
                 class="text-text-secondary hover:text-primary transition-colors"
                 :title="t('analitica.clientes.viewDetail')"
                 :aria-label="t('analitica.clientes.viewCustomer')"

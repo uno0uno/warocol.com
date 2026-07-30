@@ -10,7 +10,7 @@ import {
   type ApiPaymentGroup,
 } from '~/utils/paymentDefaults';
 
-definePageMeta({ layout: 'dashboard', module: 'analitica' })
+definePageMeta({ layout: 'dashboard', module: 'crm' })
 
 const route = useRoute()
 const router = useRouter()
@@ -40,7 +40,7 @@ const carteraPaymentGroups = computed(() =>
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
 
-const goBack = () => router.push('/analitica/clientes')
+const goBack = () => router.push('/crm/clientes')
 
 // ── Filters ───────────────────────────────────────────────────────────────
 const { dateRangeDates, presetDates, maxDate, formatDateRange, dateRange } = useDateRangePresets()
