@@ -595,7 +595,7 @@ const ingredientTableColumns = computed(() => [
 ])
 
 function ingredientReportPath(ingredientId: string): string {
-  const path = `/analitica/ingredientes/${encodeURIComponent(ingredientId)}`
+  const path = `/analitica/articulos-de-bodega/${encodeURIComponent(ingredientId)}`
   const params = new URLSearchParams()
   if (dateRange.value.from && dateRange.value.to) {
     params.set('date_from', dateRange.value.from)

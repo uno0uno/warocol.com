@@ -17,7 +17,7 @@ definePageMeta({
 const navigationItems = computed(() => [
   { to: '/analitica/ventas', label: t('analitica.tabs.ventas') },
   { to: '/analitica/rentabilidad', label: t('analitica.tabs.rentabilidad') },
-  { to: '/analitica/ingredientes', label: t('analitica.tabs.ingredientes') },
+  { to: '/analitica/articulos-de-bodega', label: t('analitica.tabs.ingredientes') },
 ])
 
 useHead({

@@ -8,12 +8,12 @@
       "puntos": "Pontos WARO - Warocol",
       "cocina": "Análise de Cozinha | WARO",
       "clientes": "Clientes - Warocol",
-      "ingredientes": "Análise de Ingredientes - Warocol"
+      "ingredientes": "Análise de artigos de estoque - Warocol"
     },
     "tabs": {
       "ventas": "Vendas",
       "rentabilidad": "Rentabilidade",
-      "ingredientes": "Ingredientes",
+      "ingredientes": "Artigos de estoque",
       "clientes": "Clientes",
       "puntos": "Pontos"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "Análise de Ingredientes",
-      "ingredients": "Ingredientes",
-      "search": "Buscar ingrediente...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "Filtrar por categoria",
-      "filterIngredient": "Filtrar por ingrediente",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "Filtrar por unidade",
-      "sort": "Ordenar ingredientes",
-      "ingredient": "Ingrediente",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "Categoria",
       "unit": "Unidade",
       "consumption": "Consumo",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "Maior consumo",
       "sortLatestCostDesc": "Maior último custo",
       "sortAvgCostDesc": "Maior custo médio",
-      "sortIngredientAsc": "Ingrediente A-Z",
-      "empty": "Nenhum consumo de ingredientes",
-      "emptySub": "Nenhum movimento de consumo ou compra encontrado para o período selecionado",
-      "openOf": "Abrir análise de {name}",
+      "sortIngredientAsc": "Artigo de estoque A-Z",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% com movimentos",
       "movementsCount": "{count} movimentos",
       "noCategory": "Sem categoria"

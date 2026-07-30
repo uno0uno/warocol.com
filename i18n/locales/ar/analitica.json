@@ -8,12 +8,12 @@
       "puntos": "نقاط Waros - Warocol",
       "cocina": "تحليلات المطبخ | WARO",
       "clientes": "العملاء - Warocol",
-      "ingredientes": "تحليلات المكونات - Warocol"
+      "ingredientes": "تحليل أصناف المستودع - Warocol"
     },
     "tabs": {
       "ventas": "المبيعات",
       "rentabilidad": "الربحية",
-      "ingredientes": "المكونات",
+      "ingredientes": "أصناف المستودع",
       "clientes": "العملاء",
       "puntos": "النقاط"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "تحليلات المكونات",
-      "ingredients": "المكونات",
-      "search": "بحث عن مكون...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "تصفية حسب الفئة",
-      "filterIngredient": "تصفية حسب المكون",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "تصفية حسب الوحدة",
-      "sort": "ترتيب المكونات",
-      "ingredient": "المكون",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "الفئة",
       "unit": "الوحدة",
       "consumption": "الاستهلاك",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "أعلى استهلاك",
       "sortLatestCostDesc": "أعلى آخر تكلفة",
       "sortAvgCostDesc": "أعلى متوسط تكلفة",
-      "sortIngredientAsc": "المكون من الألف إلى الياء",
-      "empty": "لا يوجد استهلاك للمكونات",
-      "emptySub": "لم يتم العثور على حركات استهلاك أو مشتريات للفترة المحددة",
-      "openOf": "فتح تحليلات {name}",
+      "sortIngredientAsc": "صنف المستودع أ-ي",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% مع حركات",
       "movementsCount": "{count} حركات",
       "noCategory": "بدون فئة"

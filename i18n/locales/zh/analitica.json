@@ -8,12 +8,12 @@
       "puntos": "Waros 积分 - Warocol",
       "cocina": "厨房分析 | WARO",
       "clientes": "客户 - Warocol",
-      "ingredientes": "食材分析 - Warocol"
+      "ingredientes": "仓库物品分析 - Warocol"
     },
     "tabs": {
       "ventas": "销售",
       "rentabilidad": "盈利能力",
-      "ingredientes": "食材",
+      "ingredientes": "仓库物品",
       "clientes": "客户",
       "puntos": "积分"
     },
@@ -395,14 +395,14 @@
       }
     },
     "ingredientes": {
-      "title": "食材分析",
-      "ingredients": "食材",
-      "search": "搜索食材...",
+      "title": "Warehouse items analytics",
+      "ingredients": "Warehouse items",
+      "search": "Search warehouse item...",
       "filterCategory": "按类别筛选",
-      "filterIngredient": "按食材筛选",
+      "filterIngredient": "Filter by warehouse item",
       "filterUnit": "按单位筛选",
-      "sort": "食材排序",
-      "ingredient": "食材",
+      "sort": "Sort warehouse items",
+      "ingredient": "Warehouse item",
       "category": "类别",
       "unit": "单位",
       "consumption": "消耗量",
@@ -467,10 +467,10 @@
       "sortConsumptionDesc": "消耗量从高到低",
       "sortLatestCostDesc": "最新成本从高到低",
       "sortAvgCostDesc": "最高平均成本",
-      "sortIngredientAsc": "食材名称（A-Z）",
-      "empty": "无食材消耗",
-      "emptySub": "所选期间未找到消耗或采购记录",
-      "openOf": "打开 {name} 的分析报告",
+      "sortIngredientAsc": "仓库物品 A-Z",
+      "empty": "No warehouse item consumption",
+      "emptySub": "No consumption in this period with current filters",
+      "openOf": "Open {name}",
       "coveragePct": "{pct}% 有记录",
       "movementsCount": "{count} 条记录",
       "noCategory": "无类别"
