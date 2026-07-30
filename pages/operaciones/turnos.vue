@@ -150,6 +150,16 @@
       :loading="isDeactivating"
       @confirm="performDeactivate"
     />
+
+    <UiConfirmActionModal
+      v-model="starterPlanModalOpen"
+      :title="t('billing.upgrade.quotaBlocked')"
+      :message="starterPlanModalMessage"
+      :confirm-label="t('nav.miPlan')"
+      :cancel-label="t('billing.close')"
+      @confirm="goToBillingFromStarterModal"
+      @cancel="closeStarterPlanModal"
+    />
   </div>
 </template>
 
@@ -158,6 +168,7 @@ const { t } = useI18n({ useScope: 'global' })
 import { ArrowPathIcon, NoSymbolIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import type { ShiftTemplate } from '~/components/operaciones/ShiftTemplatePanel.vue'
+import { useAccessStore } from '~/stores/access'
 
 definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 useHead({ title: () => t('operaciones.head.turnos') })
@@ -165,7 +176,53 @@ useHead({ title: () => t('operaciones.head.turnos') })
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const toast = useToast()
+const accessStore = useAccessStore()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+
+const isStarterTenant = computed(() => accessStore.planSlug === 'starter')
+
+const isStarterPlanRestrictionError = (err: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  const code =
+    (typeof details === 'object' && details?.code)
+    || (typeof detail === 'object' && detail?.code)
+    || data?.code
+    || (typeof data?.error === 'string' ? data.error : undefined)
+  return code === 'starter_plan_restriction'
+}
+
+const starterPlanRestrictionMessage = (err?: any) => {
+  const data = err?.data
+  const detail = data?.detail
+  const details = data?.details
+  if (typeof details === 'object' && details?.message) return details.message
+  if (typeof detail === 'object' && detail?.message) return detail.message
+  if (typeof detail === 'string') return detail
+  if (typeof data?.message === 'string') return data.message
+  return t(
+    'billing.starterFeatureBlocked',
+    'Esta función no está disponible en el plan Starter. Revisa Mi Plan para actualizar.',
+  )
+}
+
+const starterPlanModalOpen = ref(false)
+const starterPlanModalMessage = ref('')
+
+const openStarterPlanUpgradeModal = (err?: any) => {
+  starterPlanModalMessage.value = starterPlanRestrictionMessage(err)
+  starterPlanModalOpen.value = true
+}
+
+const closeStarterPlanModal = () => {
+  starterPlanModalOpen.value = false
+}
+
+const goToBillingFromStarterModal = async () => {
+  starterPlanModalOpen.value = false
+  await navigateTo('/gestion/billing')
+}
 
 const columns: Column[] = [
   { key: 'name', title: t('operaciones.turnos.name'), sortable: false },
@@ -211,6 +268,10 @@ const panelOpen = ref(false)
 const panelTemplate = ref<ShiftTemplate | null>(null)
 
 const openCreate = () => {
+  if (isStarterTenant.value) {
+    openStarterPlanUpgradeModal()
+    return
+  }
   panelTemplate.value = null
   panelOpen.value = true
 }
@@ -256,6 +317,10 @@ const performDeactivate = async () => {
 }
 
 const reactivate = async (row: ShiftTemplate) => {
+  if (isStarterTenant.value) {
+    openStarterPlanUpgradeModal()
+    return
+  }
   try {
     await $fetch(`/api/operaciones/shifts/${row.id}`, {
       method: 'PATCH',
@@ -264,6 +329,10 @@ const reactivate = async (row: ShiftTemplate) => {
     await cache.invalidateQueries({ key: ['operaciones', 'shifts'] })
     toast.success(t('operaciones.turnos.reactivatedToast', { name: row.name }))
   } catch (err: any) {
+    if (isStarterPlanRestrictionError(err)) {
+      openStarterPlanUpgradeModal(err)
+      return
+    }
     toast.error(err?.data?.detail || t('operaciones.turnos.reactivateError'), { title: 'Error' })
   }
 }
