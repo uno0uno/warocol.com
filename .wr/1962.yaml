@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1962
+title: "Print DIAN QR on thermal ESC/POS tickets"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1962-escpos-dian-qr
+
+paths:
+  - utils/escPosTicket.ts
+  - utils/escPosTicket.test.ts
+
+ac:
+  - Fiscal receipt with CUFE prints scannable DIAN QR via ESC/POS GS ( k
+  - Prefactura / no CUFE stays text-only (no QR block)
+  - window.print fallback unchanged (caja path untouched)
+  - Unit tests: QR marker with CUFE; absent without
+  - Manual: factura on Star shows QR opening DIAN search URL
+
+out_of_scope:
+  - logo
+  - PrintBridge HTML/Chromium
+  - API / PrintBridge app
+  - station comandas
+
+hints:
+  entry: "buildEscPosTicketBytes + extractDianQrPayload"
+  pattern: "CUFE line on #pos-receipt → catalogo-vpfe searchqr URL → GS ( k"
+  tests: "bun test utils/escPosTicket.test.ts composables/useCajaTicketPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual factura térmica QR on STAR"
