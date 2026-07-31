@@ -2,7 +2,7 @@
 import { inject, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Printer } from 'lucide-vue-next'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
-import { printComandaTickets } from '~/composables/useComandaPrint'
+import { useStationTicketPrint } from '~/composables/useStationTicketPrint'
 import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useNotifications } from '~/composables/useNotifications'
@@ -250,10 +250,33 @@ const canPrintComanda = computed(() =>
   !!request.value && comandaPrintPayload.value.some(comanda => comanda.items.length > 0),
 )
 
+const comandaPrintQueueOverride = ref<ComandaPrintPayload[] | null>(null)
+const comandaTicketsForPrint = computed(
+  () => comandaPrintQueueOverride.value ?? comandaPrintPayload.value,
+)
+const { printComandas: printComandasRouted } = useStationTicketPrint()
+
 async function printQrComanda() {
   if (!canPrintComanda.value) return
-  await nextTick()
-  printComandaTickets()
+  const queue = comandaPrintPayload.value
+  document.body.classList.add('printing-comanda')
+  void document.body.offsetHeight
+  const cleanup = () => {
+    document.body.classList.remove('printing-comanda')
+    window.removeEventListener('afterprint', cleanup)
+    comandaPrintQueueOverride.value = null
+  }
+  const mode = await printComandasRouted(queue, {
+    setQueue: (c) => { comandaPrintQueueOverride.value = c },
+    browserPrint: () => {},
+  })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
+  window.addEventListener('afterprint', cleanup, { once: true })
+  setTimeout(cleanup, 4000)
+  window.print()
 }
 </script>
 
@@ -428,7 +451,7 @@ async function printQrComanda() {
     </div>
 
     <PosComandaPrintTickets
-      :comandas="comandaPrintPayload"
+      :comandas="comandaTicketsForPrint"
       :business-name="businessName"
     />
   </div>

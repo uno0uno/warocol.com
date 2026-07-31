@@ -1,5 +1,6 @@
 /**
  * Kitchen comanda ticket printing (#753) — browser print via hidden DOM + body class.
+ * Prefer printComandasViaBridgeOrBrowser (warocol.com#1951) for station routing.
  */
 
 import { DEFAULT_TENANT_TIMEZONE, normalizeTimezone } from '~/utils/bogotaDate'
@@ -36,6 +37,7 @@ export function formatComandaModifierLabel(
 export type ComandaPrintPayload = {
   id?: string
   comanda_number: number | string
+  station_id?: string | null
   station_name?: string | null
   table_display_name?: string | null
   fired_at?: string | null
@@ -91,6 +93,7 @@ export function mapComandasForPrint(rawComandas: unknown[]): ComandaPrintPayload
     .map((c) => ({
     id: c.id != null ? String(c.id) : undefined,
     comanda_number: (c.comanda_number as number | string) ?? '—',
+    station_id: c.station_id != null ? String(c.station_id) : null,
     station_name: (c.station_name as string) ?? null,
     table_display_name: (c.table_display_name as string) ?? null,
     fired_at: c.fired_at != null ? String(c.fired_at) : null,
