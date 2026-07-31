@@ -257,7 +257,9 @@
       "showingRange": "Showing {start} to {end} of {total} customers",
       "prev": "Previous",
       "next": "Next",
-      "noPhone": "No phone"
+      "noPhone": "No phone",
+      "fiscal": "Fiscal",
+      "fiscalDocument": "{type} {id}"
     },
     "customerDetail": {
       "notFound": "Customer not found",
@@ -270,6 +272,10 @@
       "editError": "Error saving changes",
       "firstPurchase": "First purchase",
       "lastPurchase": "Last purchase",
+      "fiscalInfo": "Fiscal information",
+      "fiscalDocument": "Document",
+      "fiscalBusinessName": "Business / legal name",
+      "fiscalEmail": "Fiscal email",
       "totalOrders": "Total orders",
       "orderNumber": "Order #",
       "orderNumberAlt": "Order #",

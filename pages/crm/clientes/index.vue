@@ -154,6 +154,29 @@ const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractio
 const formatOrderCount = (count: number) =>
   t(count === 1 ? 'analitica.clientes.orderCountOne' : 'analitica.clientes.orderCountMany', { count })
 
+const formatFiscalLabel = (row: {
+  fiscal_id_type?: string | null
+  fiscal_id?: string | null
+  fiscal_business_name?: string | null
+  fiscal_email?: string | null
+}) => {
+  if (row.fiscal_id_type && row.fiscal_id) {
+    return t('analitica.clientes.fiscalDocument', { type: row.fiscal_id_type, id: row.fiscal_id })
+  }
+  return row.fiscal_business_name || row.fiscal_email || null
+}
+
+const hasFiscalData = (row: {
+  fiscal_id_type?: string | null
+  fiscal_id?: string | null
+  fiscal_business_name?: string | null
+  fiscal_email?: string | null
+}) => !!(
+  (row.fiscal_id_type && row.fiscal_id)
+  || row.fiscal_business_name
+  || row.fiscal_email
+)
+
 const router = useRouter()
 const showCreateModal = ref(false)
 
@@ -296,6 +319,9 @@ onUnmounted(() => {
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ item.phone || t('analitica.clientes.noPhone') }} · {{ formatOrderCount(item.order_count) }}<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
                 </p>
+                <p v-if="hasFiscalData(item) && formatFiscalLabel(item)" class="text-xs text-text-secondary mt-0.5 truncate">
+                  {{ t('analitica.clientes.fiscal') }}: {{ formatFiscalLabel(item) }}
+                </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
                 <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
@@ -321,7 +347,12 @@ onUnmounted(() => {
           </template>
 
           <template #cell-name="{ row }">
-            <span class="text-sm font-bold text-text-primary">{{ row.name }}</span>
+            <div class="min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ row.name }}</span>
+              <p v-if="hasFiscalData(row) && formatFiscalLabel(row)" class="text-xs text-text-secondary mt-0.5 truncate">
+                {{ formatFiscalLabel(row) }}
+              </p>
+            </div>
           </template>
 
           <template #cell-phone="{ value }">

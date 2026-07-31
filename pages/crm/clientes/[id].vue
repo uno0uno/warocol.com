@@ -75,6 +75,17 @@ const realEmail = computed(() => {
   if (!email || email.endsWith('@customer.temp')) return null
   return email
 })
+const hasFiscalInfo = computed(() => {
+  const c = customer.value
+  if (!c) return false
+  const hasDocument = !!(c.fiscal_id_type && c.fiscal_id)
+  return !!(hasDocument || c.fiscal_business_name || c.fiscal_email)
+})
+const fiscalDocumentLabel = computed(() => {
+  const c = customer.value
+  if (!c?.fiscal_id_type || !c?.fiscal_id) return null
+  return `${c.fiscal_id_type} ${c.fiscal_id}`
+})
 const avgTicket = computed(() => {
   const c = customer.value
   if (!c || !c.total_orders) return 0
@@ -558,6 +569,25 @@ onUnmounted(() => {
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.customerDetail.lastPurchase') }}</p>
             </div>
             <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
+          </div>
+        </div>
+
+        <!-- Fiscal info (only when present) -->
+        <div v-if="hasFiscalInfo" class="border-t border-border px-5 py-4">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-3">{{ t('analitica.customerDetail.fiscalInfo') }}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div v-if="fiscalDocumentLabel">
+              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalDocument') }}</p>
+              <p class="text-sm font-semibold text-text-primary">{{ fiscalDocumentLabel }}</p>
+            </div>
+            <div v-if="customer.fiscal_business_name">
+              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalBusinessName') }}</p>
+              <p class="text-sm font-semibold text-text-primary">{{ customer.fiscal_business_name }}</p>
+            </div>
+            <div v-if="customer.fiscal_email">
+              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalEmail') }}</p>
+              <p class="text-sm font-semibold text-text-primary truncate">{{ customer.fiscal_email }}</p>
+            </div>
           </div>
         </div>
 
