@@ -93,8 +93,8 @@ export function formatMoney(
 
 /**
  * ASCII-safe money for ESC/POS / thermal tickets (#1965).
- * COP uses `$` (ASCII peso) + locale digits — matches Colombian tickets.
- * Other currencies use ISO code (e.g. `USD 12.50`, `EUR 10,00`).
+ * Always: `$ {CODE} {amount}` so Colombia keeps peso sign + ISO for every currency.
+ * Example: "$ COP 1.100", "$ USD 12.50", "$ EUR 10,00"
  */
 export function formatMoneyThermal(
   value: number | string | null | undefined,
@@ -117,8 +117,6 @@ export function formatMoneyThermal(
     .replace(/[\u00a0\u202f\u2007\u2009\u200a\ufeff]/g, ' ')
     .trim()
 
-  // COP → `$` (peso sign is ASCII on thermal); others keep ISO code
-  if (currency === 'COP') return `$ ${asciiAmount}`
-  return `${currency} ${asciiAmount}`
+  return `$ ${currency} ${asciiAmount}`
 }
 import { toNumberLocaleTag } from './appLocales.ts'
