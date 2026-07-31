@@ -86,12 +86,16 @@ export function useCajaTicketPrint() {
 
   async function printElement(
     elementId: string,
-    options?: { browserPrint?: () => void },
+    options?: {
+      browserPrint?: () => void
+      getElementHtml?: (elementId: string) => string | null
+    },
   ): Promise<CajaTicketPrintResult> {
     return printTicketViaCajaOrBrowser(elementId, {
       getCajaPrinterName,
       bridge,
       browserPrint: options?.browserPrint,
+      getElementHtml: options?.getElementHtml,
     })
   }
 

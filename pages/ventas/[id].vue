@@ -11,6 +11,7 @@ import {
   buildCustomerIdentityPresentation,
   formatFiscalIdentityLabel,
 } from '~/utils/customerIdentityPresentation'
+import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -18,6 +19,7 @@ useHead({ title: () => t('ventas.head.detail') })
 
 // Tenant reactivity
 const { currentTenant, businessProfile } = useTenantReactive()
+const { printElement: printTicketElement } = useCajaTicketPrint()
 const { singular: tableSingular } = useTableLabel()
 const {
   receiptPrintSettings,
@@ -823,6 +825,19 @@ const printReceipt = async () => {
   const cleanup = () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
+  }
+  const mode = await printTicketElement('pos-receipt', {
+    browserPrint: () => {},
+    getElementHtml: () => {
+      if (typeof document === 'undefined') return null
+      const el = document.querySelector('.receipt-print-ticket')
+      const html = el?.outerHTML?.trim()
+      return html || null
+    },
+  })
+  if (mode === 'bridge') {
+    cleanup()
+    return
   }
   window.addEventListener('afterprint', cleanup)
   window.print()
