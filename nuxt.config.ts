@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs'
 import { APP_LOCALE_DEFINITIONS, localeMessageFiles } from './utils/appLocales'
 
 export default defineNuxtConfig({
@@ -306,16 +307,27 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       // Pre-bundle on dev startup — avoids 500 on first /pos/checkout visit after QR import.
-      include: ['qrcode'],
+      // print-bridge-sdk: local print agent (replaces qz-tray); keep in sync after dep swaps.
+      include: ['qrcode', 'print-bridge-sdk'],
+      exclude: ['qz-tray'],
     },
     server: {
-      // Node walks up to ~/node_modules (home package.json); vite-node 403s without this in dev
+      // Node walks up to ~/node_modules (home package.json); vite-node 403s without this in dev.
+      // Also allow realpath(cwd): when cwd is a symlink (path without spaces), vite-node still
+      // fetches //@fs via the resolved path — omitting it causes fetch timeouts / 500s.
       fs: {
         allow: [
           process.cwd(),
-          `${process.env.HOME}/node_modules`
-        ]
-      }
+          (() => {
+            try {
+              return realpathSync(process.cwd())
+            } catch {
+              return process.cwd()
+            }
+          })(),
+          `${process.env.HOME}/node_modules`,
+        ],
+      },
     },
     vue: {
       script: {

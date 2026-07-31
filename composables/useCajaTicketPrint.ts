@@ -1,5 +1,5 @@
 /**
- * Prefactura/factura → configured caja printer via QZ HTML (warocol.com#1950).
+ * Prefactura/factura → configured caja printer via PrintBridge HTML (warocol.com#1950).
  * Falls back to window.print when bridge or caja assignment is missing.
  */
 import {
@@ -25,7 +25,7 @@ function defaultGetElementHtml(elementId: string): string | null {
 }
 
 /**
- * Try QZ HTML print to the tenant caja printer; otherwise call browserPrint().
+ * Try PrintBridge HTML print to the tenant caja printer; otherwise call browserPrint().
  * Never throws — browser fallback absorbs bridge errors.
  */
 export async function printTicketViaCajaOrBrowser(

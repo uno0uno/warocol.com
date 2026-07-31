@@ -1,0 +1,51 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1958
+title: "feat(operaciones): PrintBridge download modal when agent not detected"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1958-printbridge-download-modal
+
+paths:
+  - pages/operaciones/impresoras.vue
+  - utils/printBridgeDownloads.ts
+  - utils/printBridgeDownloads.test.ts
+  - composables/useLocalPrintBridge.ts
+  - composables/useLocalPrintBridge.test.ts
+  - composables/useCajaTicketPrint.ts
+  - composables/useStationTicketPrint.ts
+  - pages/dev/print-bridge.vue
+  - package.json
+  - package-lock.json
+  - nuxt.config.ts
+  - docs/engineering/local-print-bridge.md
+  - i18n/locales/es/operaciones.json
+  - i18n/locales/en/operaciones.json
+
+ac:
+  - Detectar failure shows download CTA (banner + header button)
+  - Modal lists Windows / macOS / Linux installers with direct GitHub release URLs
+  - macOS offers Apple Silicon and Intel; preferred OS highlighted
+  - ES/EN copy; whitelist hint in modal
+  - Bridge uses PrintBridge SDK (qz-tray removed)
+
+out_of_scope:
+  - Auto-install / signing
+  - API assignment changes
+  - QZ Tray
+
+hints:
+  entry: "pages/operaciones/impresoras.vue + utils/printBridgeDownloads.ts"
+  pattern: "components/ui/Modal.vue via UiModal"
+  tests: "bun test utils/printBridgeDownloads.test.ts composables/useLocalPrintBridge.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""

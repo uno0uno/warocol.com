@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Dev harness for QZ Tray local print bridge (warocol.com#1948).
+ * Dev harness for PrintBridge local print agent.
  * Open only in development: /dev/print-bridge
  */
 import { ref } from 'vue'
@@ -34,11 +34,11 @@ async function connect() {
   try {
     await bridge.connect()
     status.value = 'Connected'
-    toast.success('QZ Tray connected', { title: 'Print bridge' })
+    toast.success('PrintBridge connected', { title: 'Print bridge' })
   } catch (err) {
     status.value = 'Unavailable'
     lastError.value = err instanceof Error ? err.message : String(err)
-    toast.error(lastError.value, { title: 'QZ Tray unavailable' })
+    toast.error(lastError.value, { title: 'PrintBridge unavailable' })
   } finally {
     busy.value = false
   }
@@ -82,10 +82,10 @@ async function printTest() {
 <template>
   <div class="page-layout mx-auto flex max-w-xl flex-col gap-4 p-4 md:p-6">
     <header class="space-y-1">
-      <h1 class="text-xl font-bold text-text-primary">Local print bridge (QZ)</h1>
+      <h1 class="text-xl font-bold text-text-primary">Local print bridge (PrintBridge)</h1>
       <p class="text-sm text-text-secondary">
-        Dev harness for warocol.com#1948. Install QZ Tray, connect, list printers, send a raw ESC/POS test.
-        See <code class="text-xs">docs/engineering/local-print-bridge-qz.md</code>.
+        Dev harness. Install PrintBridge, whitelist this origin, connect, list printers, send a raw ESC/POS test.
+        See <code class="text-xs">docs/engineering/local-print-bridge.md</code>.
       </p>
       <p class="text-xs text-text-secondary">
         Status: <span class="font-semibold text-text-primary">{{ status }}</span>
