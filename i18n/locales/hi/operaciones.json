@@ -6,7 +6,8 @@
       "bitacora": "गतिविधि लॉग",
       "turnos": "शिफ्ट",
       "personalizar": "कस्टमाइज़ करें",
-      "propinas": "टिप्स"
+      "propinas": "टिप्स",
+      "impresoras": "Printers"
     },
     "head": {
       "module": "ऑपरेशंस | WARO",
@@ -14,7 +15,8 @@
       "turnos": "शिफ्ट | ऑपरेशंस",
       "propinas": "टिप्स | बिक्री",
       "personalizar": "कस्टमाइज़ करें | ऑपरेशंस",
-      "comandas": "किचन टिकट और किचन | ऑपरेशंस"
+      "comandas": "किचन टिकट और किचन | ऑपरेशंस",
+      "impresoras": "Printers | Operations"
     },
     "bitacora": {
       "when": "कब",
@@ -198,9 +200,9 @@
       "preselectTitle": "पहला प्रीसेट पहले से चुनें",
       "preselectOff": "निष्क्रिय",
       "onlineOrders": "ऑनलाइन ऑर्डर",
-      "preselectHelp": "अनुशंसित: {status}. {legalNote} यह केवल {onlineOrders} पर लागू होता है; POS में कैशियर हमेशा स्पष्ट रूप से टिप चुनता है।"
-      ,"legalNoteCo": "कानून 1935 यह स्थापित करता है कि टिप स्वैच्छिक है।"
-      ,"legalNoteNeutral": "टिप स्वैच्छिक है।",
+      "preselectHelp": "अनुशंसित: {status}. {legalNote} यह केवल {onlineOrders} पर लागू होता है; POS में कैशियर हमेशा स्पष्ट रूप से टिप चुनता है।",
+      "legalNoteCo": "कानून 1935 यह स्थापित करता है कि टिप स्वैच्छिक है।",
+      "legalNoteNeutral": "टिप स्वैच्छिक है।",
       "saveHelp": "प्रतिशत और प्री-सेलेक्शन में बदलाव सहेजने पर लागू होते हैं।",
       "history": "टिप इतिहास देखें →",
       "needPreset": "आपको कम से कम एक प्रीसेट चाहिए।"
@@ -255,24 +257,39 @@
       "languageApplying": "इंटरफ़ेस अपडेट किया जा रहा है…",
       "languageSyncing": "रेस्टोरेंट सिंक किया जा रहा है…",
       "financial": {
-        "title": "देश और आधार मुद्रा", "help": "व्यवसाय की वित्तीय पहचान तय करें। संगत विकल्प WARO से आते हैं।",
-        "loading": "वित्तीय सेटिंग लोड हो रही हैं…", "loadError": "वित्तीय सेटिंग लोड नहीं हो सकीं", "retry": "फिर प्रयास करें",
-        "permanentLockTitle": "इन सेटिंग को अब बदला नहीं जा सकता", "temporaryLockTitle": "बदलाव अस्थायी रूप से अवरुद्ध है",
+        "title": "देश और आधार मुद्रा",
+        "help": "व्यवसाय की वित्तीय पहचान तय करें। संगत विकल्प WARO से आते हैं।",
+        "loading": "वित्तीय सेटिंग लोड हो रही हैं…",
+        "loadError": "वित्तीय सेटिंग लोड नहीं हो सकीं",
+        "retry": "फिर प्रयास करें",
+        "permanentLockTitle": "इन सेटिंग को अब बदला नहीं जा सकता",
+        "temporaryLockTitle": "बदलाव अस्थायी रूप से अवरुद्ध है",
         "permanentLockHelp": "व्यवसाय में स्थायी वित्तीय गतिविधि है। देश या मुद्रा बदलने से इतिहास का अर्थ बदल जाएगा।",
         "temporaryLockHelp": "दिखाई गई खुली गतिविधि पूरी या रद्द करें और फिर प्रयास करें।",
         "lockReasons": {
-          "permanentActivity": "ऐसी वित्तीय गतिविधि मौजूद है जिसका देश और मुद्रा सुरक्षित रहना चाहिए।", "permanentOrders": "मौद्रिक इतिहास वाले ऑर्डर मौजूद हैं।", "permanentPayments": "दर्ज भुगतान मौजूद हैं।",
-          "permanentJournals": "पोस्ट की गई लेखा प्रविष्टियाँ मौजूद हैं।", "permanentInvoices": "इलेक्ट्रॉनिक दस्तावेज जारी किए गए हैं।",
-          "permanentWallet": "वॉलेट लेन-देन मौजूद हैं।", "temporaryOrders": "खुले ऑर्डर मौजूद हैं।",
-          "temporaryShifts": "खुली शिफ्ट या कैश रजिस्टर मौजूद हैं।", "temporaryActivity": "परिचालन गतिविधि अधूरी है।",
+          "permanentActivity": "ऐसी वित्तीय गतिविधि मौजूद है जिसका देश और मुद्रा सुरक्षित रहना चाहिए।",
+          "permanentOrders": "मौद्रिक इतिहास वाले ऑर्डर मौजूद हैं।",
+          "permanentPayments": "दर्ज भुगतान मौजूद हैं।",
+          "permanentJournals": "पोस्ट की गई लेखा प्रविष्टियाँ मौजूद हैं।",
+          "permanentInvoices": "इलेक्ट्रॉनिक दस्तावेज जारी किए गए हैं।",
+          "permanentWallet": "वॉलेट लेन-देन मौजूद हैं।",
+          "temporaryOrders": "खुले ऑर्डर मौजूद हैं।",
+          "temporaryShifts": "खुली शिफ्ट या कैश रजिस्टर मौजूद हैं।",
+          "temporaryActivity": "परिचालन गतिविधि अधूरी है।",
           "unknown": "नियम {code} के कारण WARO ने बदलाव रोका।"
         },
-        "fieldsLegend": "देश और आधार मुद्रा सेटिंग", "country": "व्यवसाय का देश", "currency": "आधार मुद्रा",
+        "fieldsLegend": "देश और आधार मुद्रा सेटिंग",
+        "country": "व्यवसाय का देश",
+        "currency": "आधार मुद्रा",
         "currencyHelp": "सभी व्यावसायिक राशियाँ इसी मुद्रा में मानी जाती हैं; कोई FX रूपांतरण नहीं होता।",
         "irreversibleHelp": "सावधानी से पुष्टि करें। वित्तीय गतिविधि होने के बाद यह चुनाव अपरिवर्तनीय होगा।",
-        "saving": "सहेजा जा रहा है…", "reviewChange": "बदलाव की समीक्षा करें", "confirmTitle": "देश और मुद्रा की पुष्टि करें",
+        "saving": "सहेजा जा रहा है…",
+        "reviewChange": "बदलाव की समीक्षा करें",
+        "confirmTitle": "देश और मुद्रा की पुष्टि करें",
         "confirmMessage": "आप {currentCountry} / {currentCurrency} को {nextCountry} / {nextCurrency} में बदलेंगे। वित्तीय गतिविधि दर्ज होने के बाद यह निर्णय वापस नहीं लिया जा सकेगा।",
-        "confirmAction": "हाँ, सेटिंग बदलें", "cancel": "रद्द करें", "saveSuccess": "देश और आधार मुद्रा अपडेट किए गए",
+        "confirmAction": "हाँ, सेटिंग बदलें",
+        "cancel": "रद्द करें",
+        "saveSuccess": "देश और आधार मुद्रा अपडेट किए गए",
         "saveError": "वित्तीय सेटिंग अपडेट नहीं हो सकीं"
       }
     },
@@ -487,6 +504,27 @@
     },
     "mesaAssign": {
       "unassigned": "असाइन नहीं किया गया"
+    },
+    "impresoras": {
+      "title": "Printers",
+      "subtitle": "Assign the register printer (pre-bill and receipt) and optionally one per kitchen station. Stations without a printer fall back to the register. Names come from QZ Tray on this computer.",
+      "discover": "Detect printers",
+      "save": "Save",
+      "saved": "Assignments saved",
+      "savedTitle": "Done",
+      "saveError": "Could not save printer assignments",
+      "error": "Error",
+      "loadError": "Could not load printer assignments",
+      "bridgeOk": "QZ Tray: {n} printer(s) found",
+      "bridgeError": "Print bridge",
+      "cajaLabel": "Register printer",
+      "cajaHelp": "Pre-bill and receipt / invoice ticket",
+      "stationsTitle": "Kitchen printers",
+      "stationsHelp": "Empty = use register printer",
+      "noStations": "No active kitchen stations. Configure them under Tickets & Kitchen.",
+      "none": "Unassigned",
+      "useCaja": "Use register printer",
+      "resolvedAs": "Prints to: {name}"
     }
   }
 }

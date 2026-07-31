@@ -2,6 +2,7 @@
   "operaciones": {
     "nav": {
       "comandasCocina": "Comandas & Cocina",
+      "impresoras": "Impresoras",
       "promociones": "Promociones",
       "bitacora": "Bitácora",
       "turnos": "Turnos",
@@ -14,7 +15,29 @@
       "turnos": "Turnos | Operaciones",
       "propinas": "Propinas | Ventas",
       "personalizar": "Personalizar | Operaciones",
-      "comandas": "Comandas & Cocina | Operaciones"
+      "comandas": "Comandas & Cocina | Operaciones",
+      "impresoras": "Impresoras | Operaciones"
+    },
+    "impresoras": {
+      "title": "Impresoras",
+      "subtitle": "Asigna la impresora de caja (prefactura y factura) y, opcionalmente, una por estación de cocina. Las estaciones sin impresora usan la de caja. Los nombres vienen de QZ Tray en este computador.",
+      "discover": "Detectar impresoras",
+      "save": "Guardar",
+      "saved": "Asignaciones guardadas",
+      "savedTitle": "Listo",
+      "saveError": "No se pudieron guardar las impresoras",
+      "error": "Error",
+      "loadError": "No se pudieron cargar las asignaciones de impresoras",
+      "bridgeOk": "QZ Tray: {n} impresora(s) detectada(s)",
+      "bridgeError": "Puente de impresión",
+      "cajaLabel": "Impresora de caja",
+      "cajaHelp": "Prefactura y factura / comprobante",
+      "stationsTitle": "Impresoras por cocina",
+      "stationsHelp": "Vacío = usar la impresora de caja",
+      "noStations": "No hay estaciones de cocina activas. Configúralas en Comandas & Cocina.",
+      "none": "Sin asignar",
+      "useCaja": "Usar impresora de caja",
+      "resolvedAs": "Imprime en: {name}"
     },
     "bitacora": {
       "when": "Cuándo",

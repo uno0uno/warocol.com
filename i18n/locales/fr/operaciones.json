@@ -6,7 +6,8 @@
       "bitacora": "Journal d'activités",
       "turnos": "Quarts",
       "personalizar": "Personnaliser",
-      "propinas": "Pourboires"
+      "propinas": "Pourboires",
+      "impresoras": "Printers"
     },
     "head": {
       "module": "Opérations | WARO",
@@ -14,7 +15,8 @@
       "turnos": "Quarts | Opérations",
       "propinas": "Pourboires | Ventes",
       "personalizar": "Personnaliser | Opérations",
-      "comandas": "Tickets de cuisine & Cuisine | Opérations"
+      "comandas": "Tickets de cuisine & Cuisine | Opérations",
+      "impresoras": "Printers | Operations"
     },
     "bitacora": {
       "when": "Quand",
@@ -198,9 +200,9 @@
       "preselectTitle": "Pré-sélectionner le premier préréglage",
       "preselectOff": "désactivé",
       "onlineOrders": "commandes en ligne",
-      "preselectHelp": "Recommandé : {status}. {legalNote} S'applique uniquement aux {onlineOrders} ; dans le POS, le caissier choisit toujours le pourboire explicitement."
-      ,"legalNoteCo": "La loi 1935 stipule que le pourboire est volontaire."
-      ,"legalNoteNeutral": "Le pourboire est volontaire.",
+      "preselectHelp": "Recommandé : {status}. {legalNote} S'applique uniquement aux {onlineOrders} ; dans le POS, le caissier choisit toujours le pourboire explicitement.",
+      "legalNoteCo": "La loi 1935 stipule que le pourboire est volontaire.",
+      "legalNoteNeutral": "Le pourboire est volontaire.",
       "saveHelp": "Les modifications des pourcentages et de la pré-sélection sont appliquées lors de l'enregistrement.",
       "history": "Voir l'historique des pourboires →",
       "needPreset": "Vous avez besoin d'au moins un préréglage."
@@ -255,24 +257,39 @@
       "languageApplying": "Mise à jour de l’interface…",
       "languageSyncing": "Synchronisation du restaurant…",
       "financial": {
-        "title": "Pays et devise de base", "help": "Définit l’identité financière de l’entreprise. Les options compatibles proviennent de WARO.",
-        "loading": "Chargement des paramètres financiers…", "loadError": "Impossible de charger les paramètres financiers", "retry": "Réessayer",
-        "permanentLockTitle": "Ces paramètres ne peuvent plus être modifiés", "temporaryLockTitle": "Modification temporairement bloquée",
+        "title": "Pays et devise de base",
+        "help": "Définit l’identité financière de l’entreprise. Les options compatibles proviennent de WARO.",
+        "loading": "Chargement des paramètres financiers…",
+        "loadError": "Impossible de charger les paramètres financiers",
+        "retry": "Réessayer",
+        "permanentLockTitle": "Ces paramètres ne peuvent plus être modifiés",
+        "temporaryLockTitle": "Modification temporairement bloquée",
         "permanentLockHelp": "L’entreprise possède déjà une activité financière permanente. Changer de pays ou de devise réinterpréterait son historique.",
         "temporaryLockHelp": "Terminez ou annulez l’activité ouverte indiquée, puis réessayez.",
         "lockReasons": {
-          "permanentActivity": "Une activité financière existe dont le pays et la devise doivent être conservés.", "permanentOrders": "Des commandes avec un historique monétaire existent.", "permanentPayments": "Des paiements enregistrés existent.",
-          "permanentJournals": "Des écritures comptables validées existent.", "permanentInvoices": "Des documents électroniques ont été émis.",
-          "permanentWallet": "Des mouvements de portefeuille existent.", "temporaryOrders": "Des commandes sont ouvertes.",
-          "temporaryShifts": "Des services ou caisses sont ouverts.", "temporaryActivity": "Une activité opérationnelle n’est pas terminée.",
+          "permanentActivity": "Une activité financière existe dont le pays et la devise doivent être conservés.",
+          "permanentOrders": "Des commandes avec un historique monétaire existent.",
+          "permanentPayments": "Des paiements enregistrés existent.",
+          "permanentJournals": "Des écritures comptables validées existent.",
+          "permanentInvoices": "Des documents électroniques ont été émis.",
+          "permanentWallet": "Des mouvements de portefeuille existent.",
+          "temporaryOrders": "Des commandes sont ouvertes.",
+          "temporaryShifts": "Des services ou caisses sont ouverts.",
+          "temporaryActivity": "Une activité opérationnelle n’est pas terminée.",
           "unknown": "WARO a bloqué la modification en raison de la règle {code}."
         },
-        "fieldsLegend": "Paramètres du pays et de la devise de base", "country": "Pays de l’entreprise", "currency": "Devise de base",
+        "fieldsLegend": "Paramètres du pays et de la devise de base",
+        "country": "Pays de l’entreprise",
+        "currency": "Devise de base",
         "currencyHelp": "Tous les montants sont interprétés dans cette devise ; aucune conversion de change n’est effectuée.",
         "irreversibleHelp": "Confirmez avec soin. Dès qu’une activité financière existe, ce choix devient irréversible.",
-        "saving": "Enregistrement…", "reviewChange": "Vérifier la modification", "confirmTitle": "Confirmer le pays et la devise",
+        "saving": "Enregistrement…",
+        "reviewChange": "Vérifier la modification",
+        "confirmTitle": "Confirmer le pays et la devise",
         "confirmMessage": "Vous allez remplacer {currentCountry} / {currentCurrency} par {nextCountry} / {nextCurrency}. Cette décision sera irréversible après l’enregistrement d’une activité financière.",
-        "confirmAction": "Oui, modifier les paramètres", "cancel": "Annuler", "saveSuccess": "Pays et devise de base mis à jour",
+        "confirmAction": "Oui, modifier les paramètres",
+        "cancel": "Annuler",
+        "saveSuccess": "Pays et devise de base mis à jour",
         "saveError": "Impossible de mettre à jour les paramètres financiers"
       }
     },
@@ -487,6 +504,27 @@
     },
     "mesaAssign": {
       "unassigned": "Non assigné"
+    },
+    "impresoras": {
+      "title": "Printers",
+      "subtitle": "Assign the register printer (pre-bill and receipt) and optionally one per kitchen station. Stations without a printer fall back to the register. Names come from QZ Tray on this computer.",
+      "discover": "Detect printers",
+      "save": "Save",
+      "saved": "Assignments saved",
+      "savedTitle": "Done",
+      "saveError": "Could not save printer assignments",
+      "error": "Error",
+      "loadError": "Could not load printer assignments",
+      "bridgeOk": "QZ Tray: {n} printer(s) found",
+      "bridgeError": "Print bridge",
+      "cajaLabel": "Register printer",
+      "cajaHelp": "Pre-bill and receipt / invoice ticket",
+      "stationsTitle": "Kitchen printers",
+      "stationsHelp": "Empty = use register printer",
+      "noStations": "No active kitchen stations. Configure them under Tickets & Kitchen.",
+      "none": "Unassigned",
+      "useCaja": "Use register printer",
+      "resolvedAs": "Prints to: {name}"
     }
   }
 }

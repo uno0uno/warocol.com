@@ -2,6 +2,7 @@
   "operaciones": {
     "nav": {
       "comandasCocina": "Tickets & Kitchen",
+      "impresoras": "Printers",
       "promociones": "Promotions",
       "bitacora": "Activity log",
       "turnos": "Shifts",
@@ -14,7 +15,29 @@
       "turnos": "Shifts | Operations",
       "propinas": "Tips | Sales",
       "personalizar": "Customize | Operations",
-      "comandas": "Tickets & Kitchen | Operations"
+      "comandas": "Tickets & Kitchen | Operations",
+      "impresoras": "Printers | Operations"
+    },
+    "impresoras": {
+      "title": "Printers",
+      "subtitle": "Assign the register printer (pre-bill and receipt) and optionally one per kitchen station. Stations without a printer fall back to the register. Names come from QZ Tray on this computer.",
+      "discover": "Detect printers",
+      "save": "Save",
+      "saved": "Assignments saved",
+      "savedTitle": "Done",
+      "saveError": "Could not save printer assignments",
+      "error": "Error",
+      "loadError": "Could not load printer assignments",
+      "bridgeOk": "QZ Tray: {n} printer(s) found",
+      "bridgeError": "Print bridge",
+      "cajaLabel": "Register printer",
+      "cajaHelp": "Pre-bill and receipt / invoice ticket",
+      "stationsTitle": "Kitchen printers",
+      "stationsHelp": "Empty = use register printer",
+      "noStations": "No active kitchen stations. Configure them under Tickets & Kitchen.",
+      "none": "Unassigned",
+      "useCaja": "Use register printer",
+      "resolvedAs": "Prints to: {name}"
     },
     "bitacora": {
       "when": "When",
