@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 751
+title: "Show customer fiscal data in CRM Clients when present"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-751-crm-fiscal-clients
+
+paths:
+  - pages/crm/clientes/index.vue
+  - pages/crm/clientes/[id].vue
+  - i18n/locales/es/analitica.json
+  - i18n/locales/en/analitica.json
+  - app/services/orders_service.py
+  - tests/test_customers_list.py
+  - tests/test_customer_detail.py
+
+ac:
+  - CRM detail shows fiscal block only when any fiscal field present
+  - CRM list shows compact fiscal signal when present; no empty noise
+  - Relies on API fiscal_* fields from GET /orders/customers*
+
+out_of_scope:
+  - Editing fiscal from CRM
+  - POS capture flow changes
+  - Matías / electronic invoicing
+
+hints:
+  entry: "pages/crm/clientes/index.vue + [id].vue"
+  pattern: "show fiscal only when hasFiscalData / hasFiscalInfo"
+  tests: "API: ./venv/bin/pytest tests/test_customers_list.py tests/test_customer_detail.py -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "depends on api-warolabs PR exposing fiscal_*"

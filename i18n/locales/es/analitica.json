@@ -257,7 +257,9 @@
       "showingRange": "Mostrando {start} a {end} de {total} clientes",
       "prev": "Anterior",
       "next": "Siguiente",
-      "noPhone": "Sin teléfono"
+      "noPhone": "Sin teléfono",
+      "fiscal": "Fiscal",
+      "fiscalDocument": "{type} {id}"
     },
     "customerDetail": {
       "notFound": "Cliente no encontrado",
@@ -270,6 +272,10 @@
       "editError": "Error al guardar los cambios",
       "firstPurchase": "Primera compra",
       "lastPurchase": "Última compra",
+      "fiscalInfo": "Información fiscal",
+      "fiscalDocument": "Documento",
+      "fiscalBusinessName": "Razón social / nombre",
+      "fiscalEmail": "Correo fiscal",
       "totalOrders": "Total pedidos",
       "orderNumber": "# Pedido",
       "orderNumberAlt": "# Orden",
