@@ -14,8 +14,8 @@ import {
   mapComandasForPrint,
   orderItemIdsFromComandas,
   parseFireTableResponse,
-  printComandaTickets,
 } from '~/composables/useComandaPrint'
+import { useStationTicketPrint } from '~/composables/useStationTicketPrint'
 import { isStarterAccessLevel, isStarterPlanSlug } from '~/composables/useBilling'
 import { promoBadgeForProduct } from '~/utils/promoProductMatch'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
@@ -375,6 +375,7 @@ const selectedComandaIds = ref<string[]>([])
 const lastFiredComandaSessionKey = ref<string | null>(null)
 const persistedComandasLoading = ref(false)
 const showComandasReprintPanel = ref(false)
+const { printComandas: printComandasRouted } = useStationTicketPrint()
 const posBusinessName = computed(
   () => settingsData.value?.data?.business_name
     ?? settingsData.value?.data?.display_name
@@ -565,20 +566,37 @@ async function openComandasReprintPanel() {
   await refreshPersistedComandas(undefined, tableSessionFetchGen, false)
 }
 
+async function runComandaPrint(queue: ComandaPrintPayload[]) {
+  if (!queue.length) return
+  document.body.classList.add('printing-comanda')
+  void document.body.offsetHeight
+  const cleanup = () => {
+    document.body.classList.remove('printing-comanda')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  const mode = await printComandasRouted(queue, {
+    setQueue: (c) => { printQueueComandas.value = c },
+    browserPrint: () => {},
+  })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
+  window.addEventListener('afterprint', cleanup, { once: true })
+  setTimeout(cleanup, 4000)
+  window.print()
+}
+
 async function printLatestComanda() {
   if (!comandaPrintEnabled.value || !canPrintLatestComanda.value) return
   const queue = mapComandasForPrint(lastFiredComandasRaw.value)
   if (!queue.length) return
-  printQueueComandas.value = queue
-  await nextTick()
-  printComandaTickets()
+  await runComandaPrint(queue)
 }
 
 async function printSelectedPersistedComandas() {
   if (!persistedComandasForPrintDisplay.value.length) return
-  printQueueComandas.value = persistedComandasForPrintDisplay.value
-  await nextTick()
-  printComandaTickets()
+  await runComandaPrint(persistedComandasForPrintDisplay.value)
 }
 
 // Issue warocol.com#708 — invalidate in-flight GET /current responses after tab mutations.
