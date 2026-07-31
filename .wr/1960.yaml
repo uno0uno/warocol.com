@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1960
+title: "Print thermal tickets via ESC/POS raw instead of PrintBridge HTML"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1960-escpos-raw-tickets
+
+paths:
+  - utils/escPosTicket.ts
+  - utils/escPosTicket.test.ts
+  - composables/useCajaTicketPrint.ts
+  - composables/useCajaTicketPrint.test.ts
+  - composables/useStationTicketPrint.ts
+  - composables/useStationTicketPrint.test.ts
+
+ac:
+  - Caja tickets print via ESC/POS raw when PrintBridge + caja assigned
+  - Station/comanda tickets use same raw path when station printer assigned
+  - window.print only when no printer or bridge/raw fails
+  - Impresoras ESC/POS test path unchanged
+  - Unit tests cover raw success + browser fallback
+  - Manual: prefactura prints without Chrome
+
+out_of_scope:
+  - PrintBridge app / requiring Chrome
+  - API changes
+  - Full visual parity for QR/logo (best-effort text only)
+
+hints:
+  entry: "useCajaTicketPrint.printTicketViaCajaOrBrowser / useStationTicketPrint.printComandasViaBridgeOrBrowser"
+  pattern: "useLocalPrintBridge.printRawEscPos + Impresoras printEscPosTestTicket"
+  tests: "bun test composables/useCajaTicketPrint.test.ts composables/useStationTicketPrint.test.ts utils/escPosTicket.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual prefactura on STAR without Chrome"

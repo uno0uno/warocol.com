@@ -1,5 +1,5 @@
 /**
- * Station-routed comanda printing via PrintBridge HTML (warocol.com#1951).
+ * Station-routed comanda printing via PrintBridge ESC/POS raw (warocol.com#1960).
  * Groups by resolved station printer (else caja); falls back to window.print.
  */
 import {
@@ -7,6 +7,7 @@ import {
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import { buildEscPosTicketBytes } from '~/utils/escPosTicket'
 import { nextTick } from 'vue'
 
 export type StationTicketPrintResult = 'bridge' | 'browser'
@@ -56,10 +57,12 @@ export function groupComandasByPrinter(
   }))
 }
 
-function defaultGetElementHtml(elementId: string): string | null {
+function defaultGetElementContent(elementId: string): string | null {
   if (typeof document === 'undefined') return null
   const el = document.getElementById(elementId)
   if (!el) return null
+  const text = (el as HTMLElement).innerText?.trim()
+  if (text) return text
   const html = el.outerHTML?.trim()
   return html || null
 }
@@ -86,7 +89,7 @@ export async function printComandasViaBridgeOrBrowser(
     if (typeof window !== 'undefined') window.print()
   })
   const elementId = deps.elementId ?? 'pos-comanda-print'
-  const getHtml = deps.getElementHtml ?? defaultGetElementHtml
+  const getContent = deps.getElementHtml ?? defaultGetElementContent
   const waitForDom = deps.waitForDom ?? (() => nextTick())
 
   if (!comandas.length) {
@@ -125,9 +128,9 @@ export async function printComandasViaBridgeOrBrowser(
     for (const group of withPrinter) {
       deps.setQueue(group.comandas)
       await waitForDom()
-      const html = getHtml(elementId)
-      if (!html) throw new Error('Missing comanda print DOM')
-      await bridge.printHtml(group.printerName!, html)
+      const content = getContent(elementId)
+      if (!content?.trim()) throw new Error('Missing comanda print content')
+      await bridge.printRawEscPos(group.printerName!, buildEscPosTicketBytes(content))
     }
     // Unmapped leftovers (no caja) — leave queue as leftovers so deferred
     // callers' window.print only reprints those, not bridge-printed groups.

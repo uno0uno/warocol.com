@@ -85,8 +85,8 @@ describe('groupComandasByPrinter', () => {
 })
 
 describe('printComandasViaBridgeOrBrowser', () => {
-  it('prints one HTML job per printer via bridge', async () => {
-    const printHtml = mock(() => Promise.resolve())
+  it('prints one ESC/POS raw job per printer via bridge', async () => {
+    const printRawEscPos = mock(() => Promise.resolve())
     const setQueue = mock((_c: ComandaPrintPayload[]) => {})
     const browserPrint = mock(() => {})
 
@@ -98,7 +98,7 @@ describe('printComandasViaBridgeOrBrowser', () => {
           resolved: { [STATION_A]: 'BAR', [STATION_B]: 'COCINA' },
           resolved_caja: 'CAJA',
         }),
-        bridge: fakeBridge({ printHtml }),
+        bridge: fakeBridge({ printRawEscPos }),
         getElementHtml: () => '<div id="pos-comanda-print">ok</div>',
         browserPrint,
         waitForDom: async () => {},
@@ -106,27 +106,27 @@ describe('printComandasViaBridgeOrBrowser', () => {
     )
 
     expect(result).toBe('bridge')
-    expect(printHtml).toHaveBeenCalledTimes(2)
+    expect(printRawEscPos).toHaveBeenCalledTimes(2)
     expect(browserPrint).toHaveBeenCalledTimes(0)
     expect(setQueue.mock.calls.length).toBeGreaterThanOrEqual(2)
   })
 
   it('falls back to browser when no printers resolved', async () => {
-    const printHtml = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve())
     const browserPrint = mock(() => {})
     const setQueue = mock((_c: ComandaPrintPayload[]) => {})
 
     const result = await printComandasViaBridgeOrBrowser([comanda(null, 1)], {
       setQueue,
       getResolveMap: async () => ({ resolved: {}, resolved_caja: null }),
-      bridge: fakeBridge({ printHtml }),
+      bridge: fakeBridge({ printRawEscPos }),
       getElementHtml: () => '<div/>',
       browserPrint,
       waitForDom: async () => {},
     })
 
     expect(result).toBe('browser')
-    expect(printHtml).toHaveBeenCalledTimes(0)
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
@@ -150,7 +150,7 @@ describe('printComandasViaBridgeOrBrowser', () => {
   })
 
   it('leaves queue as leftovers only when some groups lack a printer', async () => {
-    const printHtml = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve())
     const queued: ComandaPrintPayload[][] = []
     const setQueue = mock((c: ComandaPrintPayload[]) => { queued.push(c) })
     const browserPrint = mock(() => {})
@@ -163,7 +163,7 @@ describe('printComandasViaBridgeOrBrowser', () => {
           resolved: { [STATION_A]: 'BAR' },
           resolved_caja: null,
         }),
-        bridge: fakeBridge({ printHtml }),
+        bridge: fakeBridge({ printRawEscPos }),
         getElementHtml: () => '<div id="pos-comanda-print">ok</div>',
         browserPrint,
         waitForDom: async () => {},
@@ -171,7 +171,7 @@ describe('printComandasViaBridgeOrBrowser', () => {
     )
 
     expect(result).toBe('browser')
-    expect(printHtml).toHaveBeenCalledTimes(1)
+    expect(printRawEscPos).toHaveBeenCalledTimes(1)
     const lastQueue = queued[queued.length - 1]!
     expect(lastQueue.map((c) => c.comanda_number)).toEqual([2])
   })
