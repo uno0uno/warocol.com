@@ -70,7 +70,9 @@ export async function printTicketViaCajaOrBrowser(
   let logoRaster: Uint8Array | null = null
   try {
     const logoSrc = deps.getLogoSrc?.(elementId) ?? findReceiptLogoSrc(elementId)
-    if (logoSrc) logoRaster = await loadEscPosLogoRasterFromUrl(logoSrc)
+    if (logoSrc) {
+      logoRaster = await loadEscPosLogoRasterFromUrl(logoSrc, { elementId })
+    }
   } catch {
     logoRaster = null
   }

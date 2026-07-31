@@ -37,6 +37,12 @@ describe('normalizeEscPosAscii', () => {
     expect(normalizeEscPosAscii('$\u202f500')).toBe('$ 500')
     expect(normalizeEscPosAscii('\u2212$100')).toBe('-$100')
   })
+
+  it('maps multiply and middle-dot used on receipts', () => {
+    expect(normalizeEscPosAscii('1 × COP 45.000')).toBe('1 x COP 45.000')
+    expect(normalizeEscPosAscii('FEV-73 · Factura')).toBe('FEV-73 - Factura')
+    expect(normalizeEscPosAscii('Datafono · bold')).toBe('Datafono - bold')
+  })
 })
 
 describe('extractDianQrPayload', () => {

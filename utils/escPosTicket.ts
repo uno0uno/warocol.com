@@ -30,6 +30,20 @@ const ACCENT_MAP: Record<string, string> = {
   '¿': '?',
   '¡': '!',
   '°': 'o',
+  // Receipt punctuation that was printing as "?" on thermal (#1965 follow-up)
+  '×': 'x',
+  '·': '-',
+  '•': '-',
+  '—': '-',
+  '–': '-',
+  '…': '...',
+  '\u2018': "'",
+  '\u2019': "'",
+  '\u201c': '"',
+  '\u201d': '"',
+  '€': 'EUR',
+  '£': 'GBP',
+  '¥': 'Y',
 }
 
 /** Strip tags / entities from ticket HTML (or pass through plain text). */
@@ -243,8 +257,8 @@ export function buildEscPosRasterBytes(imageData: EscPosImageDataLike): Uint8Arr
   ])
 }
 
-/** Find receipt logo URL from print DOM (#pos-* or teleported .receipt-print-ticket). */
-export function findReceiptLogoSrc(elementId?: string | null): string | null {
+/** Find receipt logo <img> from print DOM. */
+export function findReceiptLogoImage(elementId?: string | null): HTMLImageElement | null {
   if (typeof document === 'undefined') return null
   const roots: Element[] = []
   if (elementId) {
@@ -253,23 +267,91 @@ export function findReceiptLogoSrc(elementId?: string | null): string | null {
   }
   const teleported = document.querySelector('.receipt-print-ticket')
   if (teleported) roots.push(teleported)
+  // Prefactura / inline receipt header (not teleported)
+  for (const root of document.querySelectorAll('.receipt-print-header')) {
+    roots.push(root)
+  }
   for (const root of roots) {
     const img = root.querySelector('img.receipt-logo') as HTMLImageElement | null
-    const src = (img?.currentSrc || img?.src || '').trim()
-    if (src) return src
+    if (img?.src) return img
   }
   return null
 }
 
-/** Load logo URL → ESC/POS raster bytes (best-effort; CORS may skip remote logos). */
+/** Find receipt logo URL from print DOM (#pos-* or teleported .receipt-print-ticket). */
+export function findReceiptLogoSrc(elementId?: string | null): string | null {
+  const img = findReceiptLogoImage(elementId)
+  const src = (img?.currentSrc || img?.src || '').trim()
+  return src || null
+}
+
+function rasterFromLoadedImage(
+  img: HTMLImageElement,
+  maxW: number,
+  maxH: number,
+): Uint8Array | null {
+  let w = img.naturalWidth || img.width
+  let h = img.naturalHeight || img.height
+  if (!w || !h) return null
+  const scale = Math.min(maxW / w, maxH / h, 1)
+  w = Math.max(8, Math.floor(w * scale) & ~7)
+  h = Math.max(1, Math.floor(h * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, w, h)
+  ctx.drawImage(img, 0, 0, w, h)
+  try {
+    return buildEscPosRasterBytes(ctx.getImageData(0, 0, w, h))
+  } catch {
+    // Canvas tainted (cross-origin without CORS)
+    return null
+  }
+}
+
+/** Load logo URL / DOM img → ESC/POS raster (best-effort). */
 export async function loadEscPosLogoRasterFromUrl(
   url: string,
-  options?: { maxWidthPx?: number; maxHeightPx?: number },
+  options?: { maxWidthPx?: number; maxHeightPx?: number; elementId?: string | null },
 ): Promise<Uint8Array | null> {
   if (typeof document === 'undefined' || !url?.trim()) return null
   const maxW = options?.maxWidthPx ?? DEFAULT_LOGO_MAX_WIDTH
   const maxH = options?.maxHeightPx ?? DEFAULT_LOGO_MAX_HEIGHT
 
+  // 1) Prefer already-decoded DOM logo (same paint path as browser print)
+  const domImg = findReceiptLogoImage(options?.elementId)
+  if (domImg && (domImg.complete || domImg.naturalWidth > 0)) {
+    const fromDom = rasterFromLoadedImage(domImg, maxW, maxH)
+    if (fromDom?.length) return fromDom
+  }
+
+  // 2) fetch → blob (works when CDN sends Access-Control-Allow-Origin)
+  try {
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'force-cache' })
+    if (res.ok) {
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      try {
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const i = new Image()
+          i.onload = () => resolve(i)
+          i.onerror = () => reject(new Error('blob logo load failed'))
+          i.src = objectUrl
+        })
+        const raster = rasterFromLoadedImage(img, maxW, maxH)
+        if (raster?.length) return raster
+      } finally {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+
+  // 3) Image + crossOrigin anonymous
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image()
@@ -278,21 +360,7 @@ export async function loadEscPosLogoRasterFromUrl(
       i.onerror = () => reject(new Error('logo load failed'))
       i.src = url
     })
-    let w = img.naturalWidth || img.width
-    let h = img.naturalHeight || img.height
-    if (!w || !h) return null
-    const scale = Math.min(maxW / w, maxH / h, 1)
-    w = Math.max(8, Math.floor(w * scale) & ~7)
-    h = Math.max(1, Math.floor(h * scale))
-    const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, w, h)
-    ctx.drawImage(img, 0, 0, w, h)
-    return buildEscPosRasterBytes(ctx.getImageData(0, 0, w, h))
+    return rasterFromLoadedImage(img, maxW, maxH)
   } catch {
     return null
   }
