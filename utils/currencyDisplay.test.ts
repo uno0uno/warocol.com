@@ -5,6 +5,7 @@ import {
   DEFAULT_NUMBER_LOCALE,
   coerceMoneyNumber,
   formatMoney,
+  formatMoneyThermal,
   localeToNumberFormatTag,
   normalizeCurrencyCode,
   normalizeMinorUnits,
@@ -153,5 +154,19 @@ describe('normalizeMinorUnits', () => {
     assert.equal(normalizeMinorUnits(-1, 0), 0)
     assert.equal(normalizeMinorUnits(4, 0), 0)
     assert.equal(normalizeMinorUnits(null, 0), 0)
+  })
+})
+
+describe('formatMoneyThermal', () => {
+  it('formats COP with ISO code and ASCII-only output', () => {
+    const out = formatMoneyThermal(1100, { currency: 'COP', locale: 'es', minorUnits: 0 })
+    assert.equal(out, 'COP 1.100')
+    assert.match(out, /^[\x20-\x7E]+$/)
+  })
+
+  it('formats USD with decimals and ASCII-only output', () => {
+    const out = formatMoneyThermal(12.5, { currency: 'USD', locale: 'en', minorUnits: 2 })
+    assert.equal(out, 'USD 12.50')
+    assert.match(out, /^[\x20-\x7E]+$/)
   })
 })

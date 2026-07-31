@@ -2,9 +2,11 @@ import { describe, expect, it } from 'bun:test'
 import {
   buildDianQrUrl,
   buildEscPosQrCodeBytes,
+  buildEscPosRasterBytes,
   buildEscPosTicketBytes,
   extractDianQrPayload,
   hasEscPosQrMarker,
+  hasEscPosRasterMarker,
   normalizeEscPosAscii,
   ticketHtmlToPlainText,
 } from './escPosTicket'
@@ -103,5 +105,35 @@ describe('buildEscPosTicketBytes', () => {
     expect(hasEscPosQrMarker(withQr)).toBe(true)
     const without = buildEscPosTicketBytes(`CUFE: ${SAMPLE_CUFE}`, { qrPayload: null })
     expect(hasEscPosQrMarker(without)).toBe(false)
+  })
+
+  it('embeds logo raster when provided', () => {
+    // 8x1 black pixels
+    const data = new Uint8ClampedArray(8 * 1 * 4)
+    for (let i = 0; i < 8; i++) {
+      data[i * 4] = 0
+      data[i * 4 + 1] = 0
+      data[i * 4 + 2] = 0
+      data[i * 4 + 3] = 255
+    }
+    const logo = buildEscPosRasterBytes({ width: 8, height: 1, data })
+    expect(hasEscPosRasterMarker(logo)).toBe(true)
+    const bytes = buildEscPosTicketBytes('Ticket', { logoRaster: logo })
+    expect(hasEscPosRasterMarker(bytes)).toBe(true)
+  })
+})
+
+describe('buildEscPosRasterBytes', () => {
+  it('emits GS v 0 header for black pixels', () => {
+    const data = new Uint8ClampedArray(16 * 2 * 4)
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = 0
+      data[i + 1] = 0
+      data[i + 2] = 0
+      data[i + 3] = 255
+    }
+    const bytes = buildEscPosRasterBytes({ width: 16, height: 2, data })
+    expect(hasEscPosRasterMarker(bytes)).toBe(true)
+    expect(bytes.length).toBeGreaterThan(8)
   })
 })

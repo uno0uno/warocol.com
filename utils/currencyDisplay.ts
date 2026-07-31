@@ -90,4 +90,33 @@ export function formatMoney(
     maximumFractionDigits: minorUnits,
   }).format(numericValue)
 }
+
+/**
+ * ASCII-safe money for ESC/POS / thermal tickets (#1965).
+ * Prefers ISO code + locale number punctuation (no currency glyphs / NBSP).
+ * Example: "COP 1.100", "USD 12.50"
+ */
+export function formatMoneyThermal(
+  value: number | string | null | undefined,
+  options?: Omit<FormatMoneyOptions, 'notation'>,
+): string {
+  const currency = normalizeCurrencyCode(options?.currency)
+  const localeTag = localeToNumberFormatTag(options?.locale)
+  const minorUnits = normalizeMinorUnits(options?.minorUnits, 0)
+  const numericValue = coerceMoneyNumber(value) ?? 0
+
+  const amount = new Intl.NumberFormat(localeTag, {
+    style: 'decimal',
+    minimumFractionDigits: minorUnits,
+    maximumFractionDigits: minorUnits,
+    useGrouping: true,
+  }).format(numericValue)
+
+  // Normalize any exotic grouping spaces Intl may still emit
+  const asciiAmount = amount
+    .replace(/[\u00a0\u202f\u2007\u2009\u200a\ufeff]/g, ' ')
+    .trim()
+
+  return `${currency} ${asciiAmount}`
+}
 import { toNumberLocaleTag } from './appLocales.ts'

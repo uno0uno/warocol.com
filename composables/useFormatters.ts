@@ -1,5 +1,10 @@
 import { computed } from 'vue'
-import { formatMoney, normalizeCurrencyCode, type FormatMoneyOptions } from '~/utils/currencyDisplay'
+import {
+  formatMoney,
+  formatMoneyThermal,
+  normalizeCurrencyCode,
+  type FormatMoneyOptions,
+} from '~/utils/currencyDisplay'
 import { toNumberLocaleTag } from '~/utils/appLocales'
 import {
   DEFAULT_UI_LOCALE,
@@ -85,6 +90,17 @@ export const useFormatters = () => {
     })
   }
 
+  /** Thermal / ESC/POS tickets — ISO code + ASCII amount (#1965). */
+  const formatCurrencyThermal = (
+    value: number | string | null | undefined,
+  ): string => {
+    return formatMoneyThermal(value, {
+      currency: currencyCode.value,
+      locale: uiLocale.value,
+      minorUnits: currencyMinorUnits.value,
+    })
+  }
+
   const formatNumber = (
     value: number | null | undefined,
     options?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
@@ -121,6 +137,7 @@ export const useFormatters = () => {
     formatCalendarDate,
     formatDateShort,
     formatCurrency,
+    formatCurrencyThermal,
     formatNumber,
     formatDateTime,
     formatRelativeDate,

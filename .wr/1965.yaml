@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1965
+title: "Thermal-safe international money formatting for POS print tickets"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1965-thermal-money
+
+paths:
+  - utils/currencyDisplay.ts
+  - utils/currencyDisplay.test.ts
+  - composables/useFormatters.ts
+  - utils/escPosTicket.ts
+  - utils/escPosTicket.test.ts
+  - composables/useCajaTicketPrint.ts
+  - pages/pos/checkout.vue
+  - components/pos/ReceiptPrintTicket.vue
+  - components/pos/ComandaPrintTickets.vue
+
+ac:
+  - formatMoneyThermal ASCII ISO amounts (COP + USD)
+  - formatCurrencyThermal on print tickets (prefactura/factura/comandas)
+  - ESC/POS logo raster when img.receipt-logo present
+  - window.print fallback unchanged on bridge miss
+  - unit tests money + raster marker
+
+out_of_scope:
+  - FX / Matias currency
+  - PrintBridge HTML
+  - renaming all UI formatCurrency call sites
+
+hints:
+  entry: "formatMoneyThermal + buildEscPosRasterBytes + useCajaTicketPrint logo"
+  pattern: "ReceiptPrintTicket money() was hardcoded COP; checkout print DOM uses formatCurrencyThermal"
+  tests: "bun test utils/escPosTicket.test.ts composables/useCajaTicketPrint.test.ts && node --test utils/currencyDisplay.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual prefactura money+logo on STAR"

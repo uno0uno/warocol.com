@@ -9,7 +9,7 @@ const props = defineProps<{
   businessName?: string
 }>()
 
-const { formatCurrency, formatDateTime } = useFormatters()
+const { formatCurrencyThermal, formatDateTime } = useFormatters()
 
 function modifierLines(item: ComandaPrintPayload['items'][0]) {
   return item.modifiers_snapshot ?? []
@@ -94,7 +94,7 @@ const printTicket = computed(() => {
               :key="`${section.key}-${i}-${mi}`"
               class="receipt-row receipt-small item-detail"
             >
-              ↳ {{ formatComandaModifierLabel(mod, { includePrice: true, formatPrice: formatCurrency }) }}
+              ↳ {{ formatComandaModifierLabel(mod, { includePrice: true, formatPrice: formatCurrencyThermal }) }}
             </div>
             <div v-if="item.notes" class="receipt-row receipt-small item-detail">
               {{ t('pos.printTicket.specialNotes') }}: {{ item.notes }}
