@@ -3,10 +3,14 @@
  * Operaciones → Impresoras (warocol.com#1949 / #1958).
  * Compact tables + per-row test print + PrintBridge download modal.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { ArrowDownTrayIcon, PrinterIcon, QueueListIcon } from '@heroicons/vue/24/outline'
 import { LocalPrintBridgeError, useLocalPrintBridge } from '~/composables/useLocalPrintBridge'
 import { usePrinterAssignments } from '~/composables/usePrinterAssignments'
+import {
+  getUserPrinterName,
+  setUserPrinterName,
+} from '~/composables/useUserPrinterPreference'
 import {
   PRINTBRIDGE_DOWNLOADS,
   PRINTBRIDGE_RELEASES_PAGE,
@@ -16,6 +20,7 @@ import {
 } from '~/utils/printBridgeDownloads'
 
 const { t } = useI18n({ useScope: 'global' })
+const authStore = useAuthStore()
 
 definePageMeta({
   layout: 'dashboard',
@@ -47,6 +52,29 @@ const showDownloadCta = ref(false)
 const cajaPrinter = ref<string>('')
 /** station_id → printer name (empty = use caja) */
 const stationPrinters = ref<Record<string, string>>({})
+/** One printer per user for mostrador/barra auto-print (#1971) */
+const myPrinter = ref<string>('')
+
+const currentUserId = computed(() =>
+  String(
+    authStore.user?.id
+    || authStore.session?.user?.id
+    || authStore.profile?.id
+    || 'anon',
+  ),
+)
+
+onMounted(() => {
+  myPrinter.value = getUserPrinterName(currentUserId.value) || ''
+})
+
+watch(currentUserId, (id) => {
+  myPrinter.value = getUserPrinterName(id) || ''
+})
+
+watch(myPrinter, (name) => {
+  setUserPrinterName(currentUserId.value, name)
+})
 
 const preferredDownloadId = preferredPrintBridgeDownloadId()
 
@@ -78,6 +106,7 @@ watch(
 const printerOptions = computed(() => {
   const names = new Set<string>(discovered.value)
   if (cajaPrinter.value) names.add(cajaPrinter.value)
+  if (myPrinter.value) names.add(myPrinter.value)
   for (const v of Object.values(stationPrinters.value)) {
     if (v) names.add(v)
   }
@@ -352,6 +381,25 @@ async function onSave() {
             </button>
           </template>
         </UiResponsiveDataView>
+
+        <!-- Mi impresora — 1 por usuario (auto-print mostrador/barra) #1971 -->
+        <div class="mt-5 rounded-xl border border-border bg-background/50 p-4">
+          <p class="text-sm font-semibold text-text-primary">Mi impresora</p>
+          <p class="mt-1 text-xs text-text-secondary">
+            Una sola impresora por usuario. Se usa al enviar a cocina desde mostrador o barra (auto-impresión con PrintBridge).
+          </p>
+          <select
+            v-model="myPrinter"
+            class="input-base mt-3 min-h-[44px] w-full max-w-md rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          >
+            <option value="">
+              {{ t('operaciones.impresoras.none') }}
+            </option>
+            <option v-for="name in printerOptions" :key="`my-${name}`" :value="name">
+              {{ name }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <!-- ══════ ESTACIONES ══════ -->

@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1971
+title: "Auto-print comandas to caja / user printer on add-to-table and counter-bar send"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1971-auto-print-comandas
+
+paths:
+  - composables/useAutoComandaPrint.ts
+  - composables/useAutoComandaPrint.test.ts
+  - composables/useUserPrinterPreference.ts
+  - composables/useNotifications.ts
+  - pages/operaciones/impresoras.vue
+  - app/services/notifications_service.py
+  - app/services/comandas_service.py
+  - tests/test_comanda_fired_notification.py
+
+ac:
+  - Client gate PrintBridge + caja/user printer
+  - Mi impresora (1) on Operaciones → Impresoras
+  - SSE comanda_fired handler without toast noise
+
+out_of_scope:
+  - Multi-station auto routing
+  - Cloud print queue
+
+hints:
+  entry: "useNotifications SSE → autoPrintComandaFired"
+  pattern: "silent skip without bridge"
+  tests: "bunx vitest run composables/useAutoComandaPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "pair with api-warolabs companion PR"

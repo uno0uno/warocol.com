@@ -79,6 +79,39 @@ export const useNotifications = () => {
 
     eventSource.onmessage = async (event) => {
       if (!event.data || event.data.startsWith(':')) return // ignore heartbeat comments
+
+      // warocol.com#1971 — SSE-only comanda_fired (no DB row); auto-print if PrintBridge up
+      try {
+        const payload = JSON.parse(event.data) as Record<string, unknown>
+        if (payload?.type === 'comanda_fired') {
+          const { autoPrintComandaFired } = await import('~/composables/useAutoComandaPrint')
+          const authStore = useAuthStore()
+          const userId = String(
+            authStore.user?.id
+            || authStore.session?.user?.id
+            || authStore.profile?.id
+            || 'anon',
+          )
+          void autoPrintComandaFired(payload as import('~/composables/useAutoComandaPrint').ComandaFiredSsePayload, {
+            getUserId: () => userId,
+            getCajaPrinterName: async () => {
+              try {
+                const res = await $fetch<{ success: boolean; data: { caja_printer_name?: string | null; resolved_caja?: string | null } }>(
+                  '/api/operaciones/printers',
+                )
+                return res.data?.resolved_caja || res.data?.caja_printer_name || null
+              } catch {
+                return null
+              }
+            },
+          })
+          // No notifications row for this type — skip list invalidation churn
+          return
+        }
+      } catch {
+        /* non-JSON heartbeat or unrelated — fall through */
+      }
+
       // Invalidate cache — Pinia Colada refetches automatically
       // Toast + chime are handled by MobileOrderToast.vue via its length watcher
       await _queryCache?.invalidateQueries({ key: ['notifications'] })
