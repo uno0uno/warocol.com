@@ -32,6 +32,10 @@ describe('extractDianQrPayload', () => {
     expect(extractDianQrPayload(`Total\nCUFE: ${SAMPLE_CUFE}\n`)).toBe(buildDianQrUrl(SAMPLE_CUFE))
   })
 
+  it('accepts French-style CUFE with space before colon', () => {
+    expect(extractDianQrPayload(`CUFE : ${SAMPLE_CUFE}`)).toBe(buildDianQrUrl(SAMPLE_CUFE))
+  })
+
   it('extracts from catalogo-vpfe URL', () => {
     const url = buildDianQrUrl(SAMPLE_CUFE)
     expect(extractDianQrPayload(`<div>${url}</div>`)).toBe(url)

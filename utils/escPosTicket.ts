@@ -109,7 +109,7 @@ export function extractDianQrPayload(htmlOrText: string): string | null {
   const keyMatch = raw.match(/documentkey=([A-Za-z0-9]{20,})/i)
   if (keyMatch?.[1]) return buildDianQrUrl(keyMatch[1])
 
-  const cufeMatch = raw.match(/CUFE:\s*([A-Za-z0-9]{20,})/i)
+  const cufeMatch = raw.match(/CUFE\s*:\s*([A-Za-z0-9]{20,})/i)
   if (cufeMatch?.[1]) return buildDianQrUrl(cufeMatch[1])
 
   return null
@@ -196,14 +196,14 @@ export function buildEscPosTicketBytes(
     for (let i = 0; i < line.length; i++) parts.push(line.charCodeAt(i) & 0xff)
     parts.push(0x0a)
   }
-  parts.push(0x0a)
+  parts.push(0x0a, 0x0a)
 
   if (qrUrl) {
     const qr = buildEscPosQrCodeBytes(qrUrl)
     for (let i = 0; i < qr.length; i++) parts.push(qr[i]!)
   }
 
-  parts.push(0x0a, 0x0a)
+  parts.push(0x0a, 0x0a, 0x0a)
   parts.push(0x1d, 0x56, 0x01) // GS V partial cut
   return Uint8Array.from(parts)
 }
