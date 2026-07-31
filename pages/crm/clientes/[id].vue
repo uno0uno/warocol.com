@@ -78,7 +78,8 @@ const realEmail = computed(() => {
 const hasFiscalInfo = computed(() => {
   const c = customer.value
   if (!c) return false
-  return !!(c.fiscal_id_type || c.fiscal_id || c.fiscal_business_name || c.fiscal_email)
+  const hasDocument = !!(c.fiscal_id_type && c.fiscal_id)
+  return !!(hasDocument || c.fiscal_business_name || c.fiscal_email)
 })
 const fiscalDocumentLabel = computed(() => {
   const c = customer.value

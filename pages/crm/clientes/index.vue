@@ -158,11 +158,12 @@ const formatFiscalLabel = (row: {
   fiscal_id_type?: string | null
   fiscal_id?: string | null
   fiscal_business_name?: string | null
+  fiscal_email?: string | null
 }) => {
   if (row.fiscal_id_type && row.fiscal_id) {
     return t('analitica.clientes.fiscalDocument', { type: row.fiscal_id_type, id: row.fiscal_id })
   }
-  return row.fiscal_business_name || null
+  return row.fiscal_business_name || row.fiscal_email || null
 }
 
 const hasFiscalData = (row: {
@@ -170,7 +171,11 @@ const hasFiscalData = (row: {
   fiscal_id?: string | null
   fiscal_business_name?: string | null
   fiscal_email?: string | null
-}) => !!(row.fiscal_id_type || row.fiscal_id || row.fiscal_business_name || row.fiscal_email)
+}) => !!(
+  (row.fiscal_id_type && row.fiscal_id)
+  || row.fiscal_business_name
+  || row.fiscal_email
+)
 
 const router = useRouter()
 const showCreateModal = ref(false)
