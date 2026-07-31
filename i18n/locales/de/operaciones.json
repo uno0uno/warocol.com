@@ -6,7 +6,8 @@
       "bitacora": "Aktivitätsprotokoll",
       "turnos": "Schichten",
       "personalizar": "Anpassen",
-      "propinas": "Trinkgelder"
+      "propinas": "Trinkgelder",
+      "impresoras": "Printers"
     },
     "head": {
       "module": "Operationen | WARO",
@@ -14,7 +15,8 @@
       "turnos": "Schichten | Operationen",
       "propinas": "Trinkgelder | Verkäufe",
       "personalizar": "Anpassen | Operationen",
-      "comandas": "Bestellungen & Küche | Operationen"
+      "comandas": "Bestellungen & Küche | Operationen",
+      "impresoras": "Printers | Operations"
     },
     "bitacora": {
       "when": "Wann",
@@ -198,9 +200,9 @@
       "preselectTitle": "Erste Voreinstellung vorwählen",
       "preselectOff": "deaktiviert",
       "onlineOrders": "Online-Bestellungen",
-      "preselectHelp": "Empfohlen: {status}. {legalNote} Gilt nur für {onlineOrders}; im POS wählt der Kassierer das Trinkgeld immer explizit aus."
-      ,"legalNoteCo": "Gesetz 1935 besagt, dass Trinkgeld freiwillig ist."
-      ,"legalNoteNeutral": "Trinkgeld ist freiwillig.",
+      "preselectHelp": "Empfohlen: {status}. {legalNote} Gilt nur für {onlineOrders}; im POS wählt der Kassierer das Trinkgeld immer explizit aus.",
+      "legalNoteCo": "Gesetz 1935 besagt, dass Trinkgeld freiwillig ist.",
+      "legalNoteNeutral": "Trinkgeld ist freiwillig.",
       "saveHelp": "Änderungen an den Prozentsätzen und der Vorauswahl werden beim Speichern angewendet.",
       "history": "Trinkgeldverlauf anzeigen →",
       "needPreset": "Sie benötigen mindestens eine Voreinstellung."
@@ -255,24 +257,39 @@
       "languageApplying": "Oberfläche wird aktualisiert…",
       "languageSyncing": "Restaurant wird synchronisiert…",
       "financial": {
-        "title": "Land und Basiswährung", "help": "Legt die finanzielle Identität des Betriebs fest. Kompatible Optionen kommen von WARO.",
-        "loading": "Finanzeinstellungen werden geladen…", "loadError": "Finanzeinstellungen konnten nicht geladen werden", "retry": "Erneut versuchen",
-        "permanentLockTitle": "Diese Einstellungen können nicht mehr geändert werden", "temporaryLockTitle": "Änderung vorübergehend gesperrt",
+        "title": "Land und Basiswährung",
+        "help": "Legt die finanzielle Identität des Betriebs fest. Kompatible Optionen kommen von WARO.",
+        "loading": "Finanzeinstellungen werden geladen…",
+        "loadError": "Finanzeinstellungen konnten nicht geladen werden",
+        "retry": "Erneut versuchen",
+        "permanentLockTitle": "Diese Einstellungen können nicht mehr geändert werden",
+        "temporaryLockTitle": "Änderung vorübergehend gesperrt",
         "permanentLockHelp": "Der Betrieb hat bereits dauerhafte Finanzaktivität. Ein Wechsel von Land oder Währung würde den Verlauf neu interpretieren.",
         "temporaryLockHelp": "Schließen oder stornieren Sie die angegebene offene Aktivität und versuchen Sie es erneut.",
         "lockReasons": {
-          "permanentActivity": "Es gibt Finanzaktivität, deren Land und Währung erhalten bleiben müssen.", "permanentOrders": "Bestellungen mit Geldverlauf sind vorhanden.", "permanentPayments": "Erfasste Zahlungen sind vorhanden.",
-          "permanentJournals": "Gebuchte Buchungssätze sind vorhanden.", "permanentInvoices": "Elektronische Dokumente wurden ausgestellt.",
-          "permanentWallet": "Wallet-Bewegungen sind vorhanden.", "temporaryOrders": "Es gibt offene Bestellungen.",
-          "temporaryShifts": "Es gibt offene Schichten oder Kassen.", "temporaryActivity": "Es gibt nicht abgeschlossene Betriebsaktivität.",
+          "permanentActivity": "Es gibt Finanzaktivität, deren Land und Währung erhalten bleiben müssen.",
+          "permanentOrders": "Bestellungen mit Geldverlauf sind vorhanden.",
+          "permanentPayments": "Erfasste Zahlungen sind vorhanden.",
+          "permanentJournals": "Gebuchte Buchungssätze sind vorhanden.",
+          "permanentInvoices": "Elektronische Dokumente wurden ausgestellt.",
+          "permanentWallet": "Wallet-Bewegungen sind vorhanden.",
+          "temporaryOrders": "Es gibt offene Bestellungen.",
+          "temporaryShifts": "Es gibt offene Schichten oder Kassen.",
+          "temporaryActivity": "Es gibt nicht abgeschlossene Betriebsaktivität.",
           "unknown": "WARO hat die Änderung aufgrund der Regel {code} gesperrt."
         },
-        "fieldsLegend": "Einstellungen für Land und Basiswährung", "country": "Land des Betriebs", "currency": "Basiswährung",
+        "fieldsLegend": "Einstellungen für Land und Basiswährung",
+        "country": "Land des Betriebs",
+        "currency": "Basiswährung",
         "currencyHelp": "Alle Beträge werden in dieser Währung interpretiert; es erfolgt keine Währungsumrechnung.",
         "irreversibleHelp": "Bestätigen Sie sorgfältig. Sobald Finanzaktivität besteht, ist diese Auswahl unumkehrbar.",
-        "saving": "Wird gespeichert…", "reviewChange": "Änderung prüfen", "confirmTitle": "Land und Währung bestätigen",
+        "saving": "Wird gespeichert…",
+        "reviewChange": "Änderung prüfen",
+        "confirmTitle": "Land und Währung bestätigen",
         "confirmMessage": "Sie ändern {currentCountry} / {currentCurrency} zu {nextCountry} / {nextCurrency}. Nach erfasster Finanzaktivität kann diese Entscheidung nicht rückgängig gemacht werden.",
-        "confirmAction": "Ja, Einstellungen ändern", "cancel": "Abbrechen", "saveSuccess": "Land und Basiswährung aktualisiert",
+        "confirmAction": "Ja, Einstellungen ändern",
+        "cancel": "Abbrechen",
+        "saveSuccess": "Land und Basiswährung aktualisiert",
         "saveError": "Finanzeinstellungen konnten nicht aktualisiert werden"
       }
     },
@@ -487,6 +504,27 @@
     },
     "mesaAssign": {
       "unassigned": "Nicht zugewiesen"
+    },
+    "impresoras": {
+      "title": "Printers",
+      "subtitle": "Assign the register printer (pre-bill and receipt) and optionally one per kitchen station. Stations without a printer fall back to the register. Names come from QZ Tray on this computer.",
+      "discover": "Detect printers",
+      "save": "Save",
+      "saved": "Assignments saved",
+      "savedTitle": "Done",
+      "saveError": "Could not save printer assignments",
+      "error": "Error",
+      "loadError": "Could not load printer assignments",
+      "bridgeOk": "QZ Tray: {n} printer(s) found",
+      "bridgeError": "Print bridge",
+      "cajaLabel": "Register printer",
+      "cajaHelp": "Pre-bill and receipt / invoice ticket",
+      "stationsTitle": "Kitchen printers",
+      "stationsHelp": "Empty = use register printer",
+      "noStations": "No active kitchen stations. Configure them under Tickets & Kitchen.",
+      "none": "Unassigned",
+      "useCaja": "Use register printer",
+      "resolvedAs": "Prints to: {name}"
     }
   }
 }

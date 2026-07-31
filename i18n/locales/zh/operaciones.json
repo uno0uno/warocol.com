@@ -6,7 +6,8 @@
       "bitacora": "活动日志",
       "turnos": "班次",
       "personalizar": "自定义",
-      "propinas": "小费"
+      "propinas": "小费",
+      "impresoras": "Printers"
     },
     "head": {
       "module": "运营 | WARO",
@@ -14,7 +15,8 @@
       "turnos": "班次 | 运营",
       "propinas": "小费 | 销售",
       "personalizar": "自定义 | 运营",
-      "comandas": "厨房工单与备餐 | 运营"
+      "comandas": "厨房工单与备餐 | 运营",
+      "impresoras": "Printers | Operations"
     },
     "bitacora": {
       "when": "时间",
@@ -198,9 +200,9 @@
       "preselectTitle": "预选第一个预设",
       "preselectOff": "关闭",
       "onlineOrders": "在线订单",
-      "preselectHelp": "推荐：{status}。{legalNote}仅适用于{onlineOrders}；在 POS 中，收银员始终明确选择小费。"
-      ,"legalNoteCo": "根据第1935号法律，小费是自愿的。"
-      ,"legalNoteNeutral": "小费是自愿的。",
+      "preselectHelp": "推荐：{status}。{legalNote}仅适用于{onlineOrders}；在 POS 中，收银员始终明确选择小费。",
+      "legalNoteCo": "根据第1935号法律，小费是自愿的。",
+      "legalNoteNeutral": "小费是自愿的。",
       "saveHelp": "百分比和预选的更改将在保存后生效。",
       "history": "查看小费历史 →",
       "needPreset": "您至少需要一个预设。"
@@ -255,24 +257,39 @@
       "languageApplying": "正在更新界面…",
       "languageSyncing": "正在同步餐厅…",
       "financial": {
-        "title": "国家和基础货币", "help": "定义企业的财务身份。兼容选项由 WARO 提供。",
-        "loading": "正在加载财务设置…", "loadError": "无法加载财务设置", "retry": "重试",
-        "permanentLockTitle": "这些设置已无法更改", "temporaryLockTitle": "更改暂时被阻止",
+        "title": "国家和基础货币",
+        "help": "定义企业的财务身份。兼容选项由 WARO 提供。",
+        "loading": "正在加载财务设置…",
+        "loadError": "无法加载财务设置",
+        "retry": "重试",
+        "permanentLockTitle": "这些设置已无法更改",
+        "temporaryLockTitle": "更改暂时被阻止",
         "permanentLockHelp": "企业已有永久财务活动。更改国家或货币会重新解释历史记录。",
         "temporaryLockHelp": "请完成或取消所列的未结活动，然后重试。",
         "lockReasons": {
-          "permanentActivity": "存在必须保留其国家和货币的财务活动。", "permanentOrders": "存在具有金额历史的订单。", "permanentPayments": "存在已记录的付款。",
-          "permanentJournals": "存在已过账的会计分录。", "permanentInvoices": "已开具电子单据。",
-          "permanentWallet": "存在钱包流水。", "temporaryOrders": "存在未结订单。",
-          "temporaryShifts": "存在未关闭的班次或收银台。", "temporaryActivity": "存在未完成的运营活动。",
+          "permanentActivity": "存在必须保留其国家和货币的财务活动。",
+          "permanentOrders": "存在具有金额历史的订单。",
+          "permanentPayments": "存在已记录的付款。",
+          "permanentJournals": "存在已过账的会计分录。",
+          "permanentInvoices": "已开具电子单据。",
+          "permanentWallet": "存在钱包流水。",
+          "temporaryOrders": "存在未结订单。",
+          "temporaryShifts": "存在未关闭的班次或收银台。",
+          "temporaryActivity": "存在未完成的运营活动。",
           "unknown": "WARO 因规则 {code} 阻止了更改。"
         },
-        "fieldsLegend": "国家和基础货币设置", "country": "企业所在国家", "currency": "基础货币",
+        "fieldsLegend": "国家和基础货币设置",
+        "country": "企业所在国家",
+        "currency": "基础货币",
         "currencyHelp": "企业的所有金额均以此货币解释；不会进行外汇转换。",
         "irreversibleHelp": "请谨慎确认。产生财务活动后，此选择将不可撤销。",
-        "saving": "正在保存…", "reviewChange": "检查更改", "confirmTitle": "确认国家和货币",
+        "saving": "正在保存…",
+        "reviewChange": "检查更改",
+        "confirmTitle": "确认国家和货币",
         "confirmMessage": "您将把 {currentCountry} / {currentCurrency} 更改为 {nextCountry} / {nextCurrency}。记录财务活动后，此决定无法撤销。",
-        "confirmAction": "是，更改设置", "cancel": "取消", "saveSuccess": "国家和基础货币已更新",
+        "confirmAction": "是，更改设置",
+        "cancel": "取消",
+        "saveSuccess": "国家和基础货币已更新",
         "saveError": "无法更新财务设置"
       }
     },
@@ -487,6 +504,27 @@
     },
     "mesaAssign": {
       "unassigned": "未分配"
+    },
+    "impresoras": {
+      "title": "Printers",
+      "subtitle": "Assign the register printer (pre-bill and receipt) and optionally one per kitchen station. Stations without a printer fall back to the register. Names come from QZ Tray on this computer.",
+      "discover": "Detect printers",
+      "save": "Save",
+      "saved": "Assignments saved",
+      "savedTitle": "Done",
+      "saveError": "Could not save printer assignments",
+      "error": "Error",
+      "loadError": "Could not load printer assignments",
+      "bridgeOk": "QZ Tray: {n} printer(s) found",
+      "bridgeError": "Print bridge",
+      "cajaLabel": "Register printer",
+      "cajaHelp": "Pre-bill and receipt / invoice ticket",
+      "stationsTitle": "Kitchen printers",
+      "stationsHelp": "Empty = use register printer",
+      "noStations": "No active kitchen stations. Configure them under Tickets & Kitchen.",
+      "none": "Unassigned",
+      "useCaja": "Use register printer",
+      "resolvedAs": "Prints to: {name}"
     }
   }
 }
