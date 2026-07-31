@@ -1,31 +1,35 @@
 /**
- * Prefactura/factura → configured caja printer via PrintBridge HTML (warocol.com#1950).
+ * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960).
  * Falls back to window.print when bridge or caja assignment is missing.
  */
 import {
   useLocalPrintBridge,
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
+import { buildEscPosTicketBytes } from '~/utils/escPosTicket'
 
 export type CajaTicketPrintResult = 'bridge' | 'browser'
 
 export type CajaTicketPrintDeps = {
   getCajaPrinterName: () => Promise<string | null | undefined>
   bridge?: LocalPrintBridge
+  /** DOM/HTML content for the ticket; converted to ESC/POS text. */
   getElementHtml?: (elementId: string) => string | null
   browserPrint?: () => void
 }
 
-function defaultGetElementHtml(elementId: string): string | null {
+function defaultGetElementContent(elementId: string): string | null {
   if (typeof document === 'undefined') return null
   const el = document.getElementById(elementId)
   if (!el) return null
+  const text = (el as HTMLElement).innerText?.trim()
+  if (text) return text
   const html = el.outerHTML?.trim()
   return html || null
 }
 
 /**
- * Try PrintBridge HTML print to the tenant caja printer; otherwise call browserPrint().
+ * Try PrintBridge raw ESC/POS to the tenant caja printer; otherwise call browserPrint().
  * Never throws — browser fallback absorbs bridge errors.
  */
 export async function printTicketViaCajaOrBrowser(
@@ -35,7 +39,7 @@ export async function printTicketViaCajaOrBrowser(
   const browserPrint = deps.browserPrint ?? (() => {
     if (typeof window !== 'undefined') window.print()
   })
-  const getHtml = deps.getElementHtml ?? defaultGetElementHtml
+  const getContent = deps.getElementHtml ?? defaultGetElementContent
 
   let caja: string | null | undefined
   try {
@@ -51,8 +55,8 @@ export async function printTicketViaCajaOrBrowser(
     return 'browser'
   }
 
-  const html = getHtml(elementId)
-  if (!html) {
+  const content = getContent(elementId)
+  if (!content?.trim()) {
     browserPrint()
     return 'browser'
   }
@@ -60,7 +64,7 @@ export async function printTicketViaCajaOrBrowser(
   const bridge = deps.bridge ?? useLocalPrintBridge()
   try {
     await bridge.connect()
-    await bridge.printHtml(printerName, html)
+    await bridge.printRawEscPos(printerName, buildEscPosTicketBytes(content))
     return 'bridge'
   } catch {
     browserPrint()

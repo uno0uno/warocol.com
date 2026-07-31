@@ -47,7 +47,8 @@ If PrintBridge is stopped: explicit error/toast — POS still falls back to `win
 - `listPrinters()` → `string[]`
 - `printRawEscPos(printerName, bytes | string)`
 - `printEscPosTestTicket(printerName)`
-- `printHtml(printerName, html)` → `raw-html` job (~58mm)
+- `printHtml(printerName, html)` → `raw-html` job (~58mm; needs local Chromium — prefer raw for POS tickets)
+- POS/caja/station tickets use `printRawEscPos` via `utils/escPosTicket` (no Chromium)
 
 Default agent: `ws://127.0.0.1:17890/ws`
 

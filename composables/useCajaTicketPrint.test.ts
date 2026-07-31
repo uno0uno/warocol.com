@@ -15,10 +15,10 @@ function fakeBridge(overrides: Partial<LocalPrintBridge> = {}): LocalPrintBridge
 }
 
 describe('printTicketViaCajaOrBrowser', () => {
-  it('prints HTML via bridge when caja is assigned', async () => {
-    const printHtml = mock(() => Promise.resolve())
+  it('prints ESC/POS raw via bridge when caja is assigned', async () => {
+    const printRawEscPos = mock(() => Promise.resolve())
     const browserPrint = mock(() => {})
-    const bridge = fakeBridge({ printHtml })
+    const bridge = fakeBridge({ printRawEscPos })
 
     const result = await printTicketViaCajaOrBrowser('pos-receipt', {
       getCajaPrinterName: async () => 'STAR_TP586',
@@ -28,15 +28,18 @@ describe('printTicketViaCajaOrBrowser', () => {
     })
 
     expect(result).toBe('bridge')
-    expect(printHtml).toHaveBeenCalledTimes(1)
-    expect(printHtml).toHaveBeenCalledWith('STAR_TP586', '<div id="pos-receipt">OK</div>')
+    expect(printRawEscPos).toHaveBeenCalledTimes(1)
+    const [printer, payload] = printRawEscPos.mock.calls[0]!
+    expect(printer).toBe('STAR_TP586')
+    expect(payload).toBeInstanceOf(Uint8Array)
+    expect((payload as Uint8Array).length).toBeGreaterThan(8)
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
   it('falls back to browser when caja assignment is missing', async () => {
-    const printHtml = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve())
     const browserPrint = mock(() => {})
-    const bridge = fakeBridge({ printHtml })
+    const bridge = fakeBridge({ printRawEscPos })
 
     const result = await printTicketViaCajaOrBrowser('pos-prefactura', {
       getCajaPrinterName: async () => null,
@@ -46,15 +49,15 @@ describe('printTicketViaCajaOrBrowser', () => {
     })
 
     expect(result).toBe('browser')
-    expect(printHtml).toHaveBeenCalledTimes(0)
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to browser when bridge printHtml fails', async () => {
+  it('falls back to browser when bridge raw print fails', async () => {
     const browserPrint = mock(() => {})
     const bridge = fakeBridge({
       connect: mock(() => Promise.resolve()),
-      printHtml: mock(() => Promise.reject(new Error('QZ down'))),
+      printRawEscPos: mock(() => Promise.reject(new Error('bridge down'))),
     })
 
     const result = await printTicketViaCajaOrBrowser('pos-receipt', {
@@ -68,19 +71,19 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to browser when element HTML is missing', async () => {
-    const printHtml = mock(() => Promise.resolve())
+  it('falls back to browser when element content is missing', async () => {
+    const printRawEscPos = mock(() => Promise.resolve())
     const browserPrint = mock(() => {})
 
     const result = await printTicketViaCajaOrBrowser('missing', {
       getCajaPrinterName: async () => 'STAR_TP586',
-      bridge: fakeBridge({ printHtml }),
+      bridge: fakeBridge({ printRawEscPos }),
       getElementHtml: () => null,
       browserPrint,
     })
 
     expect(result).toBe('browser')
-    expect(printHtml).toHaveBeenCalledTimes(0)
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
