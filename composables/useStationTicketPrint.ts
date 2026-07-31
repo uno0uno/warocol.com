@@ -129,13 +129,13 @@ export async function printComandasViaBridgeOrBrowser(
       if (!html) throw new Error('Missing comanda print DOM')
       await bridge.printHtml(group.printerName!, html)
     }
-    // Unmapped leftovers (no caja) — rare; browser once for those.
+    // Unmapped leftovers (no caja) — leave queue as leftovers so deferred
+    // callers' window.print only reprints those, not bridge-printed groups.
     const without = groups.filter((g) => !g.printerName).flatMap((g) => g.comandas)
     if (without.length) {
       deps.setQueue(without)
       await waitForDom()
       browserPrint()
-      deps.setQueue(comandas)
       return 'browser'
     }
     deps.setQueue(comandas)
