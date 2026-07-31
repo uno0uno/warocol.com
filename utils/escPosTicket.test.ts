@@ -25,6 +25,16 @@ describe('normalizeEscPosAscii', () => {
   it('folds Spanish accents', () => {
     expect(normalizeEscPosAscii('Café Niño')).toBe('Cafe Nino')
   })
+
+  it('maps NBSP after peso sign to ASCII space', () => {
+    // es-CO Intl: "$" + U+00A0 + "1.100"
+    expect(normalizeEscPosAscii('$\u00a01.100')).toBe('$ 1.100')
+  })
+
+  it('maps narrow NBSP and unicode minus', () => {
+    expect(normalizeEscPosAscii('$\u202f500')).toBe('$ 500')
+    expect(normalizeEscPosAscii('\u2212$100')).toBe('-$100')
+  })
 })
 
 describe('extractDianQrPayload', () => {

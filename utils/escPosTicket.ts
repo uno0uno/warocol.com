@@ -61,12 +61,27 @@ export function normalizeEscPosAscii(text: string): string {
       continue
     }
     const code = ch.charCodeAt(0)
-    if (code === 9) {
+    // Tab + Unicode spaces (NBSP, narrow NBSP, thin, etc.) → ASCII space
+    // so es-CO "$ 1.100" does not become "$?1.100" on thermal.
+    if (
+      code === 9
+      || code === 0xa0
+      || code === 0x202f
+      || code === 0x2007
+      || code === 0x2009
+      || code === 0x200a
+      || code === 0xfeff
+    ) {
       out += ' '
       continue
     }
     if (code === 10 || code === 13) {
       out += ch === '\r' ? '' : '\n'
+      continue
+    }
+    // Unicode minus / en-dash near amounts → ASCII hyphen
+    if (code === 0x2212 || code === 0x2013) {
+      out += '-'
       continue
     }
     // Printable ASCII only
