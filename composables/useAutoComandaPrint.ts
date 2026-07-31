@@ -23,11 +23,26 @@ export type ComandaFiredSsePayload = {
   comandas?: unknown[]
 }
 
+export type ComandaPrintWithFallback = ComandaPrintPayload & {
+  print_fallback?: boolean
+}
+
 const printedIds = new Set<string>()
 const PRINTED_CAP = 200
 
 export function __resetAutoComandaPrintDedupeForTests(): void {
   printedIds.clear()
+}
+
+/** Station tickets first; print_fallback / null station last (#1973). */
+export function orderComandasForPrint(
+  comandas: ComandaPrintWithFallback[],
+): ComandaPrintWithFallback[] {
+  return [...comandas].sort((a, b) => {
+    const aFb = a.print_fallback || !a.station_id ? 1 : 0
+    const bFb = b.print_fallback || !b.station_id ? 1 : 0
+    return aFb - bFb
+  })
 }
 
 export function resolveAutoPrintPrinterName(opts: {
@@ -87,13 +102,15 @@ export function markComandasPrinted(comandas: ComandaPrintPayload[], orderId?: s
   }
 }
 
-export function buildComandaPlainText(comandas: ComandaPrintPayload[]): string {
+export function buildComandaPlainText(comandas: ComandaPrintWithFallback[]): string {
   const blocks: string[] = []
-  for (const c of comandas) {
+  for (const c of orderComandasForPrint(comandas)) {
+    const stationLabel = c.station_name
+      || (c.print_fallback || !c.station_id ? 'Sin cocina asignada' : '')
     const lines: string[] = [
       `COMANDA #${c.comanda_number}`,
       c.table_display_name ? String(c.table_display_name) : '',
-      c.station_name ? `Estacion: ${c.station_name}` : '',
+      stationLabel ? `Estacion: ${stationLabel}` : '',
       '----------------',
     ]
     for (const item of c.items) {
@@ -126,8 +143,23 @@ export async function autoPrintComandaFired(
 ): Promise<'printed' | 'skipped'> {
   if (payload?.type && payload.type !== 'comanda_fired') return 'skipped'
 
-  const mapped = mapComandasForPrint(payload.comandas || [])
-  const pending = filterUnprintedComandas(mapped, payload.order_id)
+  const rawList = (payload.comandas || []) as Record<string, unknown>[]
+  const mapped: ComandaPrintWithFallback[] = mapComandasForPrint(rawList).map((c) => {
+    const raw = rawList.find((r) => {
+      if (c.id != null && r.id != null) return String(r.id) === c.id
+      return r.id == null
+        && String(r.comanda_number ?? '') === String(c.comanda_number)
+        && String(r.station_name ?? '') === String(c.station_name ?? '')
+    })
+    return {
+      ...c,
+      print_fallback: Boolean(raw?.print_fallback) || !c.station_id,
+    }
+  })
+  const pending = filterUnprintedComandas(
+    orderComandasForPrint(mapped),
+    payload.order_id,
+  )
   if (!pending.length) return 'skipped'
 
   let caja: string | null = null

@@ -1,0 +1,38 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1973
+title: "Always print fallback comanda last when no kitchen stations"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1973-fallback-comanda-print
+
+paths:
+  - composables/useAutoComandaPrint.ts
+  - composables/useAutoComandaPrint.test.ts
+  - app/services/notifications_service.py
+  - tests/test_comanda_fired_notification.py
+  - tests/test_comanda_item_notes.py
+
+ac:
+  - Auto-print accepts station_id null / print_fallback
+  - Fallback ticket text last with Sin cocina asignada label
+
+out_of_scope:
+  - Header logo changes
+  - Station routing redesign
+
+hints:
+  entry: "orderComandasForPrint + autoPrintComandaFired"
+  pattern: "fallback last"
+  tests: "bunx vitest run composables/useAutoComandaPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "depends on api companion for full E2E"
