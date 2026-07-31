@@ -124,7 +124,9 @@ export function createLocalPrintBridge(): LocalPrintBridge {
 
     async listPrinters() {
       const qz = await ensureQz()
-      if (!connected && !qz.websocket.isActive?.()) {
+      if (qz.websocket.isActive?.()) {
+        connected = true
+      } else if (!connected) {
         await this.connect()
       }
       try {
@@ -143,7 +145,9 @@ export function createLocalPrintBridge(): LocalPrintBridge {
         throw new LocalPrintBridgeError('INVALID', 'Printer name is required')
       }
       const qz = await ensureQz()
-      if (!connected && !qz.websocket.isActive?.()) {
+      if (qz.websocket.isActive?.()) {
+        connected = true
+      } else if (!connected) {
         await this.connect()
       }
       const payload =
