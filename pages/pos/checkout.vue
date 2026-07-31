@@ -19,6 +19,7 @@ import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/util
 import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
   buildCustomerIdentityPresentation,
@@ -51,6 +52,7 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
+const { printElement: printTicketElement } = useCajaTicketPrint()
 
 /** POS-scoped tenant display/settings — available to cashier via restaurant-context. */
 const posCheckoutContext = computed(() => settingsData.value?.data ?? null)
@@ -2541,9 +2543,15 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
+  // Defer window.print until after await so body print classes stay until fallback.
+  const mode = await printTicketElement('pos-receipt', { browserPrint: () => {} })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
-  window.print()
   setTimeout(cleanup, 1500)
+  window.print()
 }
 
 // Issue #535 — tenant fiscal data for the prefactura header.
@@ -2871,11 +2879,17 @@ const printPrefactura = async () => {
     document.body.classList.remove('printing-prefactura')
     window.removeEventListener('afterprint', cleanup)
   }
+
+  await nextTick()
+  // Defer window.print until after await so body print classes stay until fallback.
+  const mode = await printTicketElement('pos-prefactura', { browserPrint: () => {} })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
   // Defensive fallback for browsers where afterprint may not fire on cancel.
   setTimeout(cleanup, 2000)
-
-  await nextTick()
   window.print()
 }
 

@@ -128,13 +128,53 @@ describe('createLocalPrintBridge', () => {
     expect(windowPrint).toHaveBeenCalledTimes(0)
   })
 
-  it('useLocalPrintBridge returns singleton', () => {
+  it('prints HTML as pixel/html with ~58mm page width', async () => {
+    const printSpy = mock(() => Promise.resolve(undefined))
+    const create = mock((name: string, options?: Record<string, unknown>) => ({ name, options }))
+
     __setLocalPrintBridgeClientForTests({
-      websocket: { connect: mock(() => Promise.resolve(undefined)), isActive: () => false },
+      websocket: {
+        connect: mock(() => Promise.resolve(undefined)),
+        isActive: () => true,
+      },
+      printers: { find: mock(() => Promise.resolve(['STAR_TP586'])) },
+      configs: { create },
+      print: printSpy,
+    })
+
+    const bridge = createLocalPrintBridge()
+    await bridge.printHtml('STAR_TP586', '<div id="pos-receipt">Ticket</div>')
+
+    expect(create).toHaveBeenCalledTimes(1)
+    const createArgs = create.mock.calls[0] as unknown as [string, Record<string, unknown>]
+    expect(createArgs[0]).toBe('STAR_TP586')
+    expect(createArgs[1]).toMatchObject({
+      size: { width: 2.25 },
+      units: 'in',
+      scaleContent: true,
+      rasterize: true,
+    })
+
+    expect(printSpy).toHaveBeenCalledTimes(1)
+    const call = printSpy.mock.calls[0] as unknown as [unknown, Array<Record<string, unknown>>]
+    expect(call[1]![0]).toMatchObject({
+      type: 'pixel',
+      format: 'html',
+      flavor: 'plain',
+      data: '<div id="pos-receipt">Ticket</div>',
+      options: { pageWidth: 2.25 },
+    })
+  })
+
+  it('printHtml rejects empty printer or html', async () => {
+    __setLocalPrintBridgeClientForTests({
+      websocket: { connect: mock(() => Promise.resolve(undefined)), isActive: () => true },
       printers: { find: mock(() => Promise.resolve([])) },
       configs: { create: mock(() => ({})) },
       print: mock(() => Promise.resolve(undefined)),
     })
-    expect(useLocalPrintBridge()).toBe(useLocalPrintBridge())
+    const bridge = createLocalPrintBridge()
+    await expect(bridge.printHtml('', '<div/>')).rejects.toMatchObject({ code: 'INVALID' })
+    await expect(bridge.printHtml('STAR', '  ')).rejects.toMatchObject({ code: 'INVALID' })
   })
 })
