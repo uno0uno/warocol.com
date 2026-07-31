@@ -106,14 +106,14 @@ async function onSave() {
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <template v-else>
-      <div
-        v-if="fetchError"
-        class="rounded-xl border border-state-danger-border bg-state-danger-bg p-4 text-sm text-state-danger-text"
-      >
-        {{ t('operaciones.impresoras.loadError') }}
-      </div>
+    <div
+      v-else-if="fetchError"
+      class="rounded-xl border border-state-danger-border bg-state-danger-bg p-4 text-sm text-state-danger-text"
+    >
+      {{ t('operaciones.impresoras.loadError') }}
+    </div>
 
+    <template v-else>
       <div class="rounded-xl border-2 border-border bg-surface p-4 sm:p-6">
         <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0 space-y-1">
