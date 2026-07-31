@@ -91,6 +91,7 @@ export type LocalPrintBridge = {
   listPrinters: () => Promise<string[]>
   printRawEscPos: (printerName: string, data: Uint8Array | string) => Promise<void>
   printEscPosTestTicket: (printerName: string, message?: string) => Promise<void>
+  printHtml: (printerName: string, html: string, options?: { pageWidthIn?: number }) => Promise<void>
 }
 
 export function createLocalPrintBridge(): LocalPrintBridge {
@@ -174,6 +175,45 @@ export function createLocalPrintBridge(): LocalPrintBridge {
 
     async printEscPosTestTicket(printerName: string, message?: string) {
       await this.printRawEscPos(printerName, buildEscPosTestTicketBytes(message))
+    },
+
+    async printHtml(printerName: string, html: string, options?: { pageWidthIn?: number }) {
+      const name = printerName?.trim()
+      if (!name) {
+        throw new LocalPrintBridgeError('INVALID', 'Printer name is required')
+      }
+      if (!html?.trim()) {
+        throw new LocalPrintBridgeError('INVALID', 'HTML content is required')
+      }
+      const qz = await ensureQz()
+      if (qz.websocket.isActive?.()) {
+        connected = true
+      } else if (!connected) {
+        await this.connect()
+      }
+      const pageWidthIn = options?.pageWidthIn ?? 2.25 // ~58mm thermal
+      const config = qz.configs.create(name, {
+        size: { width: pageWidthIn },
+        units: 'in',
+        scaleContent: true,
+        rasterize: true,
+      })
+      const printData = [
+        {
+          type: 'pixel',
+          format: 'html',
+          flavor: 'plain',
+          data: html,
+          options: { pageWidth: pageWidthIn },
+        },
+      ]
+      try {
+        await qz.print(config, printData)
+      } catch (err) {
+        if (err instanceof LocalPrintBridgeError) throw err
+        const detail = err instanceof Error ? err.message : String(err)
+        throw new LocalPrintBridgeError('PRINT_FAILED', `HTML print failed: ${detail}`)
+      }
     },
   }
 }
