@@ -43,6 +43,10 @@ describe('normalizeEscPosAscii', () => {
     expect(normalizeEscPosAscii('FEV-73 · Factura')).toBe('FEV-73 - Factura')
     expect(normalizeEscPosAscii('Datafono · bold')).toBe('Datafono - bold')
   })
+
+  it('keeps ASCII peso sign', () => {
+    expect(normalizeEscPosAscii('$ 45.000')).toBe('$ 45.000')
+  })
 })
 
 describe('extractDianQrPayload', () => {

@@ -158,13 +158,13 @@ describe('normalizeMinorUnits', () => {
 })
 
 describe('formatMoneyThermal', () => {
-  it('formats COP with ISO code and ASCII-only output', () => {
+  it('formats COP with ASCII peso sign and digits', () => {
     const out = formatMoneyThermal(1100, { currency: 'COP', locale: 'es', minorUnits: 0 })
-    assert.equal(out, 'COP 1.100')
+    assert.equal(out, '$ 1.100')
     assert.match(out, /^[\x20-\x7E]+$/)
   })
 
-  it('formats USD with decimals and ASCII-only output', () => {
+  it('formats USD with ISO code and ASCII-only output', () => {
     const out = formatMoneyThermal(12.5, { currency: 'USD', locale: 'en', minorUnits: 2 })
     assert.equal(out, 'USD 12.50')
     assert.match(out, /^[\x20-\x7E]+$/)

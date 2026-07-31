@@ -312,6 +312,16 @@ function rasterFromLoadedImage(
   }
 }
 
+/** Same-origin proxy URL so canvas can read CDN logos without CORS. */
+export function thermalLogoProxyUrl(remoteUrl: string): string {
+  const u = remoteUrl.trim()
+  if (!u) return ''
+  if (u.startsWith('data:') || u.startsWith('blob:')) return u
+  // Already proxied
+  if (u.includes('/thermal-logo?')) return u
+  return `/thermal-logo?url=${encodeURIComponent(u)}`
+}
+
 /** Load logo URL / DOM img → ESC/POS raster (best-effort). */
 export async function loadEscPosLogoRasterFromUrl(
   url: string,
@@ -321,18 +331,18 @@ export async function loadEscPosLogoRasterFromUrl(
   const maxW = options?.maxWidthPx ?? DEFAULT_LOGO_MAX_WIDTH
   const maxH = options?.maxHeightPx ?? DEFAULT_LOGO_MAX_HEIGHT
 
-  // 1) Prefer already-decoded DOM logo (same paint path as browser print)
-  const domImg = findReceiptLogoImage(options?.elementId)
-  if (domImg && (domImg.complete || domImg.naturalWidth > 0)) {
-    const fromDom = rasterFromLoadedImage(domImg, maxW, maxH)
-    if (fromDom?.length) return fromDom
-  }
+  // Prefer same-origin proxy (bypasses CDN CORS + display:none unload issues)
+  const candidates = [
+    thermalLogoProxyUrl(url),
+    url,
+  ].filter((u, i, arr) => u && arr.indexOf(u) === i)
 
-  // 2) fetch → blob (works when CDN sends Access-Control-Allow-Origin)
-  try {
-    const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'force-cache' })
-    if (res.ok) {
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate, { credentials: 'same-origin', cache: 'force-cache' })
+      if (!res.ok) continue
       const blob = await res.blob()
+      if (!blob.type.startsWith('image/') && !candidate.startsWith('data:')) continue
       const objectUrl = URL.createObjectURL(blob)
       try {
         const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -346,12 +356,19 @@ export async function loadEscPosLogoRasterFromUrl(
       } finally {
         URL.revokeObjectURL(objectUrl)
       }
+    } catch {
+      /* try next */
     }
-  } catch {
-    /* fall through */
   }
 
-  // 3) Image + crossOrigin anonymous
+  // DOM img (may be tainted / not loaded under display:none)
+  const domImg = findReceiptLogoImage(options?.elementId)
+  if (domImg && (domImg.complete || domImg.naturalWidth > 0)) {
+    const fromDom = rasterFromLoadedImage(domImg, maxW, maxH)
+    if (fromDom?.length) return fromDom
+  }
+
+  // Last resort: Image + crossOrigin anonymous
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image()
