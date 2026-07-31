@@ -296,7 +296,7 @@ const printableItems = computed(() =>
       <div class="receipt-product-line receipt-small">
         <div class="receipt-product-name">{{ item.name }}</div>
         <div class="receipt-product-values">
-          <span>{{ item.quantity }} × {{ money(item.unitPrice) }}</span>
+          <span>{{ item.quantity }} x {{ money(item.unitPrice) }}</span>
           <strong>{{ money(item.total) }}</strong>
         </div>
       </div>
@@ -307,7 +307,7 @@ const printableItems = computed(() =>
       >
         <div class="receipt-product-name">{{ modifierDescription(modifier) }}</div>
         <div class="receipt-product-values">
-          <span>{{ Number(modifier.quantity) || 1 }} × {{ money(modifier.price) }}</span>
+          <span>{{ Number(modifier.quantity) || 1 }} x {{ money(modifier.price) }}</span>
           <span>{{ money(modifierTotal(modifier)) }}</span>
         </div>
       </div>
