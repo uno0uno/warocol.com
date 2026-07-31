@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 
 interface ReceiptItemModifier {
@@ -110,14 +110,9 @@ const props = defineProps<{
   } | null
 }>()
 
-const money = (value: number | string | null | undefined) => {
-  const n = Number(value) || 0
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(n)
-}
+const { formatCurrencyThermal } = useFormatters()
+
+const money = (value: number | string | null | undefined) => formatCurrencyThermal(value)
 
 const modifierTotal = (modifier: ReceiptItemModifier) => {
   const explicitTotal = Number(modifier.total)

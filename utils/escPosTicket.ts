@@ -2,9 +2,12 @@
  * ESC/POS helpers for thermal tickets without PrintBridge HTML/Chromium.
  * Plain text → raw bytes (58mm ≈ 32 cols). Accents folded to ASCII for CP437-less queues.
  * Optional DIAN QR via native GS ( k when CUFE / search URL is present (#1962).
+ * Optional logo via GS v 0 raster (#1965).
  */
 
 const DEFAULT_COLS = 32
+const DEFAULT_LOGO_MAX_WIDTH = 384 // ~58mm @ 203dpi
+const DEFAULT_LOGO_MAX_HEIGHT = 120
 
 export const DIAN_SEARCH_QR_PREFIX =
   'https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey='
@@ -188,10 +191,121 @@ export function hasEscPosQrMarker(bytes: Uint8Array): boolean {
     && bytesIncludeSubsequence(bytes, [0x31, 0x50, 0x30])
 }
 
-/** Build ESC/POS raw ticket: init + left + lines + optional QR + feed + partial cut. */
+/** True when buffer contains GS v 0 raster header. */
+export function hasEscPosRasterMarker(bytes: Uint8Array): boolean {
+  return bytesIncludeSubsequence(bytes, [0x1d, 0x76, 0x30])
+}
+
+export type EscPosImageDataLike = {
+  width: number
+  height: number
+  data: ArrayLike<number>
+}
+
+/**
+ * Pack RGBA image data into ESC/POS GS v 0 raster (1-bit, centered).
+ * Width is floored to a multiple of 8.
+ */
+export function buildEscPosRasterBytes(imageData: EscPosImageDataLike): Uint8Array {
+  const width = Math.floor(imageData.width) & ~7
+  const height = Math.floor(imageData.height)
+  if (width < 8 || height < 1) return new Uint8Array(0)
+
+  const widthBytes = width / 8
+  const raster: number[] = []
+  for (let y = 0; y < height; y++) {
+    for (let xb = 0; xb < widthBytes; xb++) {
+      let byte = 0
+      for (let bit = 0; bit < 8; bit++) {
+        const x = xb * 8 + bit
+        const i = (y * imageData.width + x) * 4
+        const r = Number(imageData.data[i] ?? 255)
+        const g = Number(imageData.data[i + 1] ?? 255)
+        const b = Number(imageData.data[i + 2] ?? 255)
+        const a = Number(imageData.data[i + 3] ?? 255)
+        const lum = (r * 299 + g * 587 + b * 114) / 1000
+        if (a > 64 && lum < 180) byte |= 0x80 >> bit
+      }
+      raster.push(byte)
+    }
+  }
+
+  return Uint8Array.from([
+    0x1b, 0x61, 0x01, // center
+    0x1d, 0x76, 0x30, 0x00,
+    widthBytes & 0xff,
+    (widthBytes >> 8) & 0xff,
+    height & 0xff,
+    (height >> 8) & 0xff,
+    ...raster,
+    0x0a,
+    0x1b, 0x61, 0x00, // left
+  ])
+}
+
+/** Find receipt logo URL from print DOM (#pos-* or teleported .receipt-print-ticket). */
+export function findReceiptLogoSrc(elementId?: string | null): string | null {
+  if (typeof document === 'undefined') return null
+  const roots: Element[] = []
+  if (elementId) {
+    const el = document.getElementById(elementId)
+    if (el) roots.push(el)
+  }
+  const teleported = document.querySelector('.receipt-print-ticket')
+  if (teleported) roots.push(teleported)
+  for (const root of roots) {
+    const img = root.querySelector('img.receipt-logo') as HTMLImageElement | null
+    const src = (img?.currentSrc || img?.src || '').trim()
+    if (src) return src
+  }
+  return null
+}
+
+/** Load logo URL → ESC/POS raster bytes (best-effort; CORS may skip remote logos). */
+export async function loadEscPosLogoRasterFromUrl(
+  url: string,
+  options?: { maxWidthPx?: number; maxHeightPx?: number },
+): Promise<Uint8Array | null> {
+  if (typeof document === 'undefined' || !url?.trim()) return null
+  const maxW = options?.maxWidthPx ?? DEFAULT_LOGO_MAX_WIDTH
+  const maxH = options?.maxHeightPx ?? DEFAULT_LOGO_MAX_HEIGHT
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image()
+      i.crossOrigin = 'anonymous'
+      i.onload = () => resolve(i)
+      i.onerror = () => reject(new Error('logo load failed'))
+      i.src = url
+    })
+    let w = img.naturalWidth || img.width
+    let h = img.naturalHeight || img.height
+    if (!w || !h) return null
+    const scale = Math.min(maxW / w, maxH / h, 1)
+    w = Math.max(8, Math.floor(w * scale) & ~7)
+    h = Math.max(1, Math.floor(h * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(img, 0, 0, w, h)
+    return buildEscPosRasterBytes(ctx.getImageData(0, 0, w, h))
+  } catch {
+    return null
+  }
+}
+
+/** Build ESC/POS raw ticket: init + optional logo + lines + optional QR + feed + partial cut. */
 export function buildEscPosTicketBytes(
   text: string,
-  options?: { cols?: number; qrPayload?: string | null },
+  options?: {
+    cols?: number
+    qrPayload?: string | null
+    logoRaster?: Uint8Array | null
+  },
 ): Uint8Array {
   const cols = options?.cols ?? DEFAULT_COLS
   const plain = ticketHtmlToPlainText(text)
@@ -207,6 +321,13 @@ export function buildEscPosTicketBytes(
     0x1b, 0x40, // ESC @ init
     0x1b, 0x61, 0x00, // left align
   ]
+
+  const logo = options?.logoRaster
+  if (logo?.length) {
+    for (let i = 0; i < logo.length; i++) parts.push(logo[i]!)
+    parts.push(0x0a)
+  }
+
   for (const line of lines) {
     for (let i = 0; i < line.length; i++) parts.push(line.charCodeAt(i) & 0xff)
     parts.push(0x0a)

@@ -1,12 +1,16 @@
 /**
- * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960).
+ * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
  * Falls back to window.print when bridge or caja assignment is missing.
  */
 import {
   useLocalPrintBridge,
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
-import { buildEscPosTicketBytes } from '~/utils/escPosTicket'
+import {
+  buildEscPosTicketBytes,
+  findReceiptLogoSrc,
+  loadEscPosLogoRasterFromUrl,
+} from '~/utils/escPosTicket'
 
 export type CajaTicketPrintResult = 'bridge' | 'browser'
 
@@ -16,6 +20,8 @@ export type CajaTicketPrintDeps = {
   /** DOM/HTML content for the ticket; converted to ESC/POS text. */
   getElementHtml?: (elementId: string) => string | null
   browserPrint?: () => void
+  /** Optional logo URL override; default discovers img.receipt-logo in print DOM. */
+  getLogoSrc?: (elementId: string) => string | null
 }
 
 function defaultGetElementContent(elementId: string): string | null {
@@ -61,10 +67,21 @@ export async function printTicketViaCajaOrBrowser(
     return 'browser'
   }
 
+  let logoRaster: Uint8Array | null = null
+  try {
+    const logoSrc = deps.getLogoSrc?.(elementId) ?? findReceiptLogoSrc(elementId)
+    if (logoSrc) logoRaster = await loadEscPosLogoRasterFromUrl(logoSrc)
+  } catch {
+    logoRaster = null
+  }
+
   const bridge = deps.bridge ?? useLocalPrintBridge()
   try {
     await bridge.connect()
-    await bridge.printRawEscPos(printerName, buildEscPosTicketBytes(content))
+    await bridge.printRawEscPos(
+      printerName,
+      buildEscPosTicketBytes(content, { logoRaster }),
+    )
     return 'bridge'
   } catch {
     browserPrint()
@@ -93,6 +110,7 @@ export function useCajaTicketPrint() {
     options?: {
       browserPrint?: () => void
       getElementHtml?: (elementId: string) => string | null
+      getLogoSrc?: (elementId: string) => string | null
     },
   ): Promise<CajaTicketPrintResult> {
     return printTicketViaCajaOrBrowser(elementId, {
@@ -100,6 +118,7 @@ export function useCajaTicketPrint() {
       bridge,
       browserPrint: options?.browserPrint,
       getElementHtml: options?.getElementHtml,
+      getLogoSrc: options?.getLogoSrc,
     })
   }
 

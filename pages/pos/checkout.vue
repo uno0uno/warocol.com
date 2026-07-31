@@ -1654,7 +1654,7 @@ watch(selectedCustomer, async (customer) => {
 })
 
 // Methods — display currency from tenant prefs (default COP); see display-currency.md
-const { formatCurrency, currencyCode } = useFormatters()
+const { formatCurrency, formatCurrencyThermal, currencyCode } = useFormatters()
 
 const getItemTotal = (item: any) => {
   const basePrice = Number(item.product.price) || 0
@@ -5354,8 +5354,8 @@ onUnmounted(() => {
           {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
         </div>
         <div class="receipt-product-values">
-          <span>{{ item.quantity }} × {{ formatCurrency(getItemUnitPrice(item)) }}</span>
-          <strong>{{ formatCurrency(getItemTotal(item)) }}</strong>
+          <span>{{ item.quantity }} × {{ formatCurrencyThermal(getItemUnitPrice(item)) }}</span>
+          <strong>{{ formatCurrencyThermal(getItemTotal(item)) }}</strong>
         </div>
       </div>
       <div
@@ -5365,8 +5365,8 @@ onUnmounted(() => {
       >
         <div class="receipt-product-name">{{ formatModifierPrintDesc(mod) }}</div>
         <div class="receipt-product-values">
-          <span>{{ (Number(mod.quantity) || 1) > 1 ? `${mod.quantity} × ` : '' }}{{ formatCurrency(Number(mod.price) || 0) }}</span>
-          <span>{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+          <span>{{ (Number(mod.quantity) || 1) > 1 ? `${mod.quantity} × ` : '' }}{{ formatCurrencyThermal(Number(mod.price) || 0) }}</span>
+          <span>{{ formatCurrencyThermal(getModifierLineTotal(mod)) }}</span>
         </div>
       </div>
     </template>
@@ -5374,7 +5374,7 @@ onUnmounted(() => {
 
     <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
       <span>{{ t('pos.receipt.subtotal') }}</span>
-      <span>{{ formatCurrency(prefacturaPrintData.cartSubtotal) }}</span>
+      <span>{{ formatCurrencyThermal(prefacturaPrintData.cartSubtotal) }}</span>
     </div>
     <div
       v-for="promo in prefacturaPrintData.promoBreakdown"
@@ -5382,50 +5382,50 @@ onUnmounted(() => {
       class="receipt-item"
     >
       <span>{{ promo.promotion_name }}</span>
-      <span>-{{ formatCurrency(promo.savings) }}</span>
+      <span>-{{ formatCurrencyThermal(promo.savings) }}</span>
     </div>
     <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
       <span>{{ t('pos.receipt.manualDiscount') }}</span>
-      <span>-{{ formatCurrency(prefacturaPrintData.manualDiscountAmount) }}</span>
+      <span>-{{ formatCurrencyThermal(prefacturaPrintData.manualDiscountAmount) }}</span>
     </div>
     <div v-if="prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
       <span>{{ prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : t('pos.receipt.waroRedeem') }}</span>
-      <span>-{{ formatCurrency(prefacturaPrintData.waroDiscountCop) }}</span>
+      <span>-{{ formatCurrencyThermal(prefacturaPrintData.waroDiscountCop) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
       <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
-      <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
+      <span>{{ formatCurrencyThermal(taxPreview.standard_tax) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
       <span>{{ taxPreview.liquor_tax_label || t('pos.receipt.liquorVat') }}</span>
-      <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
+      <span>{{ formatCurrencyThermal(taxPreview.liquor_tax) }}</span>
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
     <template v-if="prefacturaPrintData.tipAmount > 0 || prefacturaPrintData.advanceApplied > 0">
       <div class="receipt-item">
         <span>{{ t('pos.receipt.orderTotal') }}</span>
-        <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
+        <span>{{ formatCurrencyThermal(prefacturaPrintData.orderTotal) }}</span>
       </div>
       <div class="receipt-item">
         <span>{{ receiptTipLabel }}</span>
-        <span>{{ formatCurrency(prefacturaPrintData.tipAmount) }}</span>
+        <span>{{ formatCurrencyThermal(prefacturaPrintData.tipAmount) }}</span>
       </div>
       <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-item">
         <span>{{ prefacturaPrintData.tipTaxLabel }}</span>
-        <span>{{ formatCurrency(prefacturaPrintData.tipTaxAmount) }}</span>
+        <span>{{ formatCurrencyThermal(prefacturaPrintData.tipTaxAmount) }}</span>
       </div>
       <div v-if="prefacturaPrintData.advanceApplied > 0" class="receipt-item">
         <span>{{ t('pos.receipt.tableAdvance') }}</span>
-        <span>-{{ formatCurrency(prefacturaPrintData.advanceApplied) }}</span>
+        <span>-{{ formatCurrencyThermal(prefacturaPrintData.advanceApplied) }}</span>
       </div>
       <div class="receipt-total">
         <span>{{ t('pos.receipt.totalDue') }}</span>
-        <span>{{ formatCurrency(prefacturaPrintData.amountDue) }}</span>
+        <span>{{ formatCurrencyThermal(prefacturaPrintData.amountDue) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
       <span>{{ t('pos.receipt.totalUpper') }}</span>
-      <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
+      <span>{{ formatCurrencyThermal(prefacturaPrintData.orderTotal) }}</span>
     </div>
     <template v-if="prefacturaPrintData.splitPayments.length > 0">
       <div class="receipt-divider">--------------------------------</div>
@@ -5436,11 +5436,11 @@ onUnmounted(() => {
         class="receipt-item receipt-small"
       >
         <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
-        <span>{{ formatCurrency(p.amount) }}</span>
+        <span>{{ formatCurrencyThermal(p.amount) }}</span>
       </div>
       <div class="receipt-item">
         <span>{{ prefacturaPrintData.splitIsComplete ? t('pos.receipt.paymentComplete') : t('pos.receipt.balancePending') }}</span>
-        <span>{{ formatCurrency(prefacturaPrintData.splitRemaining) }}</span>
+        <span>{{ formatCurrencyThermal(prefacturaPrintData.splitRemaining) }}</span>
       </div>
     </template>
 
@@ -5513,8 +5513,8 @@ onUnmounted(() => {
       <div class="receipt-grid-row receipt-small">
         <span class="receipt-col-desc">{{ item.product?.name || item.name }}</span>
         <span class="receipt-col-qty">{{ item.quantity }}</span>
-        <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
-        <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
+        <span class="receipt-col-price">{{ formatCurrencyThermal(getItemUnitPrice(item)) }}</span>
+        <span class="receipt-col-total">{{ formatCurrencyThermal(getItemTotal(item)) }}</span>
       </div>
       <div
         v-for="mod in (item.modifiers ?? [])"
@@ -5523,8 +5523,8 @@ onUnmounted(() => {
       >
         <span class="receipt-col-desc">{{ formatModifierPrintDesc(mod) }}</span>
         <span class="receipt-col-qty">{{ (Number(mod.quantity) || 1) > 1 ? mod.quantity : '' }}</span>
-        <span class="receipt-col-price">{{ formatCurrency(Number(mod.price) || 0) }}</span>
-        <span class="receipt-col-total">{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+        <span class="receipt-col-price">{{ formatCurrencyThermal(Number(mod.price) || 0) }}</span>
+        <span class="receipt-col-total">{{ formatCurrencyThermal(getModifierLineTotal(mod)) }}</span>
       </div>
     </template>
     <div class="receipt-divider">--------------------------------</div>
@@ -5534,7 +5534,7 @@ onUnmounted(() => {
       class="receipt-item"
     >
       <span>Subtotal</span>
-      <span>{{ formatCurrency(orderResult.subtotal) }}</span>
+      <span>{{ formatCurrencyThermal(orderResult.subtotal) }}</span>
     </div>
     <div
       v-for="promo in receiptPromoBreakdown"
@@ -5542,49 +5542,49 @@ onUnmounted(() => {
       class="receipt-item"
     >
       <span>{{ promo.promotion_name }}</span>
-      <span>-{{ formatCurrency(promo.savings) }}</span>
+      <span>-{{ formatCurrencyThermal(promo.savings) }}</span>
     </div>
     <div v-if="orderResult?.discount_amount" class="receipt-item">
 	      <span>{{ t('pos.receipt.manualDiscount') }}</span>
-      <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
+      <span>-{{ formatCurrencyThermal(orderResult.discount_amount) }}</span>
     </div>
     <div v-if="orderResultWaroDiscountCop > 0" class="receipt-item">
       <span>{{ orderResultWaroLineLabel }}</span>
-      <span>-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
+      <span>-{{ formatCurrencyThermal(orderResultWaroDiscountCop) }}</span>
     </div>
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
 	      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxDetail') }}</div>
       <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-item receipt-small">
         <span>{{ localizedInternalTaxLabel(orderResult.standard_tax_label) }}</span>
-        <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
+        <span>{{ formatCurrencyThermal(orderResult.standard_tax) }}</span>
       </div>
       <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
 	        <span>{{ localizedInternalTaxLabel(orderResult.liquor_tax_label) || t('pos.receipt.liquorVat') }}</span>
-        <span>{{ formatCurrency(orderResult.liquor_tax) }}</span>
+        <span>{{ formatCurrencyThermal(orderResult.liquor_tax) }}</span>
       </div>
     </template>
     <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->
     <template v-if="(orderResult?.tip_amount && orderResult.tip_amount > 0) || (orderResult?.advance_applied && orderResult.advance_applied > 0)">
       <div class="receipt-item">
 	        <span>{{ t('pos.receipt.orderTotal') }}</span>
-        <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
+        <span>{{ formatCurrencyThermal(orderResult?.total_amount ?? 0) }}</span>
       </div>
       <div v-if="orderResult?.tip_amount && orderResult.tip_amount > 0" class="receipt-item">
         <span>{{ receiptTipLabel }}</span>
-        <span>{{ formatCurrency(orderResult.tip_amount) }}</span>
+        <span>{{ formatCurrencyThermal(orderResult.tip_amount) }}</span>
       </div>
       <div v-if="orderResult?.advance_applied && orderResult.advance_applied > 0" class="receipt-item">
 	        <span>{{ t('pos.receipt.tableAdvance') }}</span>
-        <span>-{{ formatCurrency(orderResult.advance_applied) }}</span>
+        <span>-{{ formatCurrencyThermal(orderResult.advance_applied) }}</span>
       </div>
       <div class="receipt-total">
 	        <span>{{ t('pos.receipt.totalChargedUpper') }}</span>
-        <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
+        <span>{{ formatCurrencyThermal(orderResultChargedAmount) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
       <span>TOTAL</span>
-      <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
+      <span>{{ formatCurrencyThermal(orderResult?.total_amount ?? 0) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
 	    <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentDetail') }}</div>
@@ -5592,11 +5592,11 @@ onUnmounted(() => {
       <template v-for="(p, idx) in splitPaymentsSnapshot" :key="p.id">
         <div class="receipt-item receipt-small">
           <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
-          <span>{{ formatCurrency(p.amount) }}</span>
+          <span>{{ formatCurrencyThermal(p.amount) }}</span>
         </div>
         <div v-if="p.change && p.change > 0" class="receipt-item receipt-small">
 	          <span>{{ t('pos.receipt.changeNumber', { number: idx + 1 }) }}</span>
-          <span>{{ formatCurrency(p.change) }}</span>
+          <span>{{ formatCurrencyThermal(p.change) }}</span>
         </div>
       </template>
     </template>
@@ -5609,14 +5609,14 @@ onUnmounted(() => {
                 : getPaymentMethodLabel(orderResult.payment_method))
 	            : t('pos.checkout.summary.pendingPayment')
         }}</span>
-        <span>{{ formatCurrency(orderResultChargedAmount) }}</span>
+        <span>{{ formatCurrencyThermal(orderResultChargedAmount) }}</span>
       </div>
       <div
         v-if="receiptPrintContext?.singlePaymentChange && receiptPrintContext.singlePaymentChange > 0"
         class="receipt-item receipt-small"
       >
 	        <span>{{ t('pos.receipt.change') }}</span>
-        <span>{{ formatCurrency(receiptPrintContext.singlePaymentChange) }}</span>
+        <span>{{ formatCurrencyThermal(receiptPrintContext.singlePaymentChange) }}</span>
       </div>
     </template>
     <div class="receipt-divider">================================</div>
