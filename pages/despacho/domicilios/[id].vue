@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { inject, watch, onMounted, onUnmounted } from 'vue'
 import { Printer } from 'lucide-vue-next'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import { useStationTicketPrint } from '~/composables/useStationTicketPrint'

@@ -148,4 +148,31 @@ describe('printComandasViaBridgeOrBrowser', () => {
     expect(result).toBe('browser')
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
+
+  it('leaves queue as leftovers only when some groups lack a printer', async () => {
+    const printHtml = mock(() => Promise.resolve())
+    const queued: ComandaPrintPayload[][] = []
+    const setQueue = mock((c: ComandaPrintPayload[]) => { queued.push(c) })
+    const browserPrint = mock(() => {})
+
+    const result = await printComandasViaBridgeOrBrowser(
+      [comanda(STATION_A, 1), comanda(null, 2)],
+      {
+        setQueue,
+        getResolveMap: async () => ({
+          resolved: { [STATION_A]: 'BAR' },
+          resolved_caja: null,
+        }),
+        bridge: fakeBridge({ printHtml }),
+        getElementHtml: () => '<div id="pos-comanda-print">ok</div>',
+        browserPrint,
+        waitForDom: async () => {},
+      },
+    )
+
+    expect(result).toBe('browser')
+    expect(printHtml).toHaveBeenCalledTimes(1)
+    const lastQueue = queued[queued.length - 1]!
+    expect(lastQueue.map((c) => c.comanda_number)).toEqual([2])
+  })
 })
