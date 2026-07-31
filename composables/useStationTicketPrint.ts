@@ -1,5 +1,5 @@
 /**
- * Station-routed comanda printing via QZ HTML (warocol.com#1951).
+ * Station-routed comanda printing via PrintBridge HTML (warocol.com#1951).
  * Groups by resolved station printer (else caja); falls back to window.print.
  */
 import {

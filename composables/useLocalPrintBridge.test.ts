@@ -7,13 +7,28 @@ import {
   bytesToBase64,
   createLocalPrintBridge,
   normalizePrinterList,
-  useLocalPrintBridge,
 } from './useLocalPrintBridge'
 
 afterEach(() => {
   __setLocalPrintBridgeClientForTests(null)
   __resetLocalPrintBridgeSingletonForTests()
 })
+
+function mockClient(overrides: Partial<{
+  connect: () => Promise<void>
+  getPrintersList: () => Promise<Array<{ name: string }>>
+  print: (job: Record<string, unknown>) => Promise<unknown>
+}> = {}) {
+  let live = false
+  return {
+    connect: overrides.connect ?? mock(async () => { live = true }),
+    isConnected: () => live,
+    getPrintersList:
+      overrides.getPrintersList
+      ?? mock(() => Promise.resolve([{ name: 'STAR_TP586' }, { name: 'Canon' }])),
+    print: overrides.print ?? mock(() => Promise.resolve({ status: 'queued' })),
+  }
+}
 
 describe('normalizePrinterList', () => {
   it('normalizes array and single string', () => {
@@ -34,33 +49,24 @@ describe('buildEscPosTestTicketBytes', () => {
 })
 
 describe('createLocalPrintBridge', () => {
-  it('lists printers after connect via injected QZ client', async () => {
-    const find = mock(() => Promise.resolve(['STAR_TP586', 'Canon']))
-    const connect = mock(() => Promise.resolve(undefined))
-    const print = mock(() => Promise.resolve(undefined))
-    const create = mock((name: string) => ({ name }))
-
-    __setLocalPrintBridgeClientForTests({
-      websocket: { connect, isActive: () => false },
-      printers: { find },
-      configs: { create },
-      print,
-    })
+  it('lists printers after connect via injected PrintBridge client', async () => {
+    const client = mockClient()
+    __setLocalPrintBridgeClientForTests(client)
 
     const bridge = createLocalPrintBridge()
     await bridge.connect()
-    expect(connect).toHaveBeenCalledTimes(1)
+    expect(client.connect).toHaveBeenCalledTimes(1)
     expect(bridge.isAvailable()).toBe(true)
 
     const printers = await bridge.listPrinters()
     expect(printers).toEqual(['STAR_TP586', 'Canon'])
-    expect(find).toHaveBeenCalled()
+    expect(client.getPrintersList).toHaveBeenCalled()
   })
 
-  it('prints raw ESC/POS as base64 command without touching window.print', async () => {
-    const printSpy = mock(() => Promise.resolve(undefined))
+  it('prints raw ESC/POS as base64 raw job without touching window.print', async () => {
+    const printSpy = mock(() => Promise.resolve({ status: 'queued' }))
     const windowPrint = mock(() => {})
-    const g = globalThis as typeof globalThis & { window?: { print: () => void }; print?: () => void }
+    const g = globalThis as typeof globalThis & { window?: { print: () => void } }
     const hadWindow = typeof g.window !== 'undefined'
     const originalWindowPrint = g.window?.print
     if (!g.window) {
@@ -69,15 +75,7 @@ describe('createLocalPrintBridge', () => {
       g.window.print = windowPrint
     }
 
-    __setLocalPrintBridgeClientForTests({
-      websocket: {
-        connect: mock(() => Promise.resolve(undefined)),
-        isActive: () => true,
-      },
-      printers: { find: mock(() => Promise.resolve(['STAR_TP586'])) },
-      configs: { create: mock((name: string) => ({ name })) },
-      print: printSpy,
-    })
+    __setLocalPrintBridgeClientForTests(mockClient({ print: printSpy }))
 
     const bridge = createLocalPrintBridge()
     const payload = buildEscPosTestTicketBytes('test')
@@ -85,18 +83,17 @@ describe('createLocalPrintBridge', () => {
 
     expect(windowPrint).toHaveBeenCalledTimes(0)
     expect(printSpy).toHaveBeenCalledTimes(1)
-    const call = printSpy.mock.calls[0] as unknown as [unknown, Array<Record<string, string>>]
-    expect(call[1]![0]).toMatchObject({
+    const job = printSpy.mock.calls[0]![0] as Record<string, unknown>
+    expect(job).toMatchObject({
       type: 'raw',
-      format: 'command',
-      flavor: 'base64',
-      data: bytesToBase64(payload),
+      printerName: 'STAR_TP586',
+      dataBase64: bytesToBase64(payload),
     })
 
     if (hadWindow && originalWindowPrint) g.window!.print = originalWindowPrint
   })
 
-  it('throws UNAVAILABLE when QZ connect fails and does not call window.print', async () => {
+  it('throws UNAVAILABLE when PrintBridge connect fails and does not call window.print', async () => {
     const windowPrint = mock(() => {})
     const g = globalThis as typeof globalThis & { window?: { print: () => void } }
     if (!g.window) {
@@ -106,12 +103,9 @@ describe('createLocalPrintBridge', () => {
     }
 
     __setLocalPrintBridgeClientForTests({
-      websocket: {
-        connect: mock(() => Promise.reject(new Error('Connection refused'))),
-        isActive: () => false,
-      },
-      printers: { find: mock(() => Promise.resolve([])) },
-      configs: { create: mock(() => ({})) },
+      connect: mock(() => Promise.reject(new Error('Connection refused'))),
+      isConnected: () => false,
+      getPrintersList: mock(() => Promise.resolve([])),
       print: mock(() => Promise.resolve(undefined)),
     })
 
@@ -128,51 +122,25 @@ describe('createLocalPrintBridge', () => {
     expect(windowPrint).toHaveBeenCalledTimes(0)
   })
 
-  it('prints HTML as pixel/html with ~58mm page width', async () => {
-    const printSpy = mock(() => Promise.resolve(undefined))
-    const create = mock((name: string, options?: Record<string, unknown>) => ({ name, options }))
-
-    __setLocalPrintBridgeClientForTests({
-      websocket: {
-        connect: mock(() => Promise.resolve(undefined)),
-        isActive: () => true,
-      },
-      printers: { find: mock(() => Promise.resolve(['STAR_TP586'])) },
-      configs: { create },
-      print: printSpy,
-    })
+  it('prints HTML as raw-html with ~58mm paper width', async () => {
+    const printSpy = mock(() => Promise.resolve({ status: 'queued' }))
+    __setLocalPrintBridgeClientForTests(mockClient({ print: printSpy }))
 
     const bridge = createLocalPrintBridge()
     await bridge.printHtml('STAR_TP586', '<div id="pos-receipt">Ticket</div>')
 
-    expect(create).toHaveBeenCalledTimes(1)
-    const createArgs = create.mock.calls[0] as unknown as [string, Record<string, unknown>]
-    expect(createArgs[0]).toBe('STAR_TP586')
-    expect(createArgs[1]).toMatchObject({
-      size: { width: 2.25 },
-      units: 'in',
-      scaleContent: true,
-      rasterize: true,
-    })
-
     expect(printSpy).toHaveBeenCalledTimes(1)
-    const call = printSpy.mock.calls[0] as unknown as [unknown, Array<Record<string, unknown>>]
-    expect(call[1]![0]).toMatchObject({
-      type: 'pixel',
-      format: 'html',
-      flavor: 'plain',
-      data: '<div id="pos-receipt">Ticket</div>',
-      options: { pageWidth: 2.25 },
+    const job = printSpy.mock.calls[0]![0] as Record<string, unknown>
+    expect(job).toMatchObject({
+      type: 'raw-html',
+      printerName: 'STAR_TP586',
+      html: '<div id="pos-receipt">Ticket</div>',
+      paper: { widthMm: 57 },
     })
   })
 
   it('printHtml rejects empty printer or html', async () => {
-    __setLocalPrintBridgeClientForTests({
-      websocket: { connect: mock(() => Promise.resolve(undefined)), isActive: () => true },
-      printers: { find: mock(() => Promise.resolve([])) },
-      configs: { create: mock(() => ({})) },
-      print: mock(() => Promise.resolve(undefined)),
-    })
+    __setLocalPrintBridgeClientForTests(mockClient())
     const bridge = createLocalPrintBridge()
     await expect(bridge.printHtml('', '<div/>')).rejects.toMatchObject({ code: 'INVALID' })
     await expect(bridge.printHtml('STAR', '  ')).rejects.toMatchObject({ code: 'INVALID' })

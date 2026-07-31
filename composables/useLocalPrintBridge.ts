@@ -1,7 +1,13 @@
 /**
- * Local thermal print bridge via QZ Tray (warocol.com#1948 / epic #1947).
+ * Local thermal print bridge via PrintBridge agent (replaces QZ Tray).
  * Client-only. Does not call or patch window.print — POS keeps browser print fallback.
+ *
+ * Requires PrintBridge installed and running on the POS machine, with warocol.com
+ * (and localhost for dev) in the agent origin whitelist.
+ * @see https://github.com/vergil-lai/print-bridge
  */
+
+import { PrintBridgeClient, PrintBridgeError } from 'print-bridge-sdk'
 
 export class LocalPrintBridgeError extends Error {
   readonly code: 'UNAVAILABLE' | 'NOT_CONNECTED' | 'PRINT_FAILED' | 'INVALID'
@@ -13,27 +19,20 @@ export class LocalPrintBridgeError extends Error {
   }
 }
 
-/** Minimal QZ Tray surface used by WARO (injectable for tests). */
-export type QzTrayLike = {
-  websocket: {
-    isActive?: () => boolean
-    connect: (options?: Record<string, unknown>) => Promise<unknown>
-    disconnect?: () => Promise<unknown>
-  }
-  printers: {
-    find: (query?: string) => Promise<string | string[]>
-  }
-  configs: {
-    create: (printer: string, options?: Record<string, unknown>) => unknown
-  }
-  print: (config: unknown, data: unknown[]) => Promise<unknown>
+/** Minimal PrintBridge client surface used by WARO (injectable for tests). */
+export type PrintBridgeClientLike = {
+  connect: () => Promise<void>
+  disconnect?: () => void
+  isConnected: () => boolean
+  getPrintersList: () => Promise<Array<{ name: string }>>
+  print: (job: Record<string, unknown>) => Promise<unknown>
 }
 
-let injectedQz: QzTrayLike | null = null
+let injectedClient: PrintBridgeClientLike | null = null
 
-/** Test-only: inject a fake QZ client (null restores dynamic import). */
-export function __setLocalPrintBridgeClientForTests(client: QzTrayLike | null): void {
-  injectedQz = client
+/** Test-only: inject a fake PrintBridge client (null restores real SDK). */
+export function __setLocalPrintBridgeClientForTests(client: PrintBridgeClientLike | null): void {
+  injectedClient = client
 }
 
 export function normalizePrinterList(found: string | string[] | null | undefined): string[] {
@@ -64,23 +63,49 @@ export function buildEscPosTestTicketBytes(message = 'WARO print bridge OK'): Ui
   return Uint8Array.from(parts)
 }
 
-async function loadQzTray(): Promise<QzTrayLike> {
-  if (injectedQz) return injectedQz
+function mapPrintBridgeError(err: unknown, fallbackCode: LocalPrintBridgeError['code'], prefix: string): LocalPrintBridgeError {
+  if (err instanceof LocalPrintBridgeError) return err
+  const detail = err instanceof Error ? err.message : String(err)
+  const code = err instanceof PrintBridgeError ? String(err.code) : ''
+  if (
+    code === 'CONNECTION_FAILED'
+    || code === 'CONNECTION_TIMEOUT'
+    || code === 'ORIGIN_NOT_ALLOWED'
+    || code === 'NOT_CONNECTED'
+  ) {
+    return new LocalPrintBridgeError(
+      'UNAVAILABLE',
+      `${prefix} (${detail}). Is PrintBridge running and is this site in the origin whitelist?`,
+    )
+  }
+  if (code === 'PRINT_FAILED' || code === 'PRINTER_NOT_FOUND' || code === 'PRINTER_NOT_CONFIGURED') {
+    return new LocalPrintBridgeError('PRINT_FAILED', `${prefix}: ${detail}`)
+  }
+  return new LocalPrintBridgeError(fallbackCode, `${prefix}: ${detail}`)
+}
+
+function createDefaultClient(): PrintBridgeClientLike {
+  return new PrintBridgeClient({
+    ip: '127.0.0.1',
+    port: 17890,
+    connectTimeoutMs: 4000,
+    requestTimeoutMs: 15000,
+    autoReconnect: false,
+  })
+}
+
+async function loadClient(): Promise<PrintBridgeClientLike> {
+  if (injectedClient) return injectedClient
   if (import.meta.server) {
-    throw new LocalPrintBridgeError('UNAVAILABLE', 'QZ Tray is only available in the browser')
+    throw new LocalPrintBridgeError('UNAVAILABLE', 'PrintBridge is only available in the browser')
   }
   try {
-    const mod = await import('qz-tray')
-    const qz = (mod as { default?: QzTrayLike }).default ?? (mod as unknown as QzTrayLike)
-    if (!qz?.websocket?.connect || !qz?.printers?.find || !qz?.print) {
-      throw new Error('qz-tray module missing expected API')
-    }
-    return qz
+    return createDefaultClient()
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
     throw new LocalPrintBridgeError(
       'UNAVAILABLE',
-      `QZ Tray client failed to load (${detail}). Install and start QZ Tray on this machine.`,
+      `PrintBridge client failed to load (${detail}). Install and start PrintBridge on this machine.`,
     )
   }
 }
@@ -95,9 +120,29 @@ export type LocalPrintBridge = {
 }
 
 export function createLocalPrintBridge(): LocalPrintBridge {
+  let client: PrintBridgeClientLike | null = null
   let connected = false
 
-  const ensureQz = async () => loadQzTray()
+  const ensureClient = async () => {
+    if (!client) client = await loadClient()
+    return client
+  }
+
+  const ensureConnected = async () => {
+    const c = await ensureClient()
+    if (c.isConnected()) {
+      connected = true
+      return c
+    }
+    try {
+      await c.connect()
+      connected = true
+      return c
+    } catch (err) {
+      connected = false
+      throw mapPrintBridgeError(err, 'UNAVAILABLE', 'Cannot reach PrintBridge')
+    }
+  }
 
   return {
     isAvailable() {
@@ -105,38 +150,17 @@ export function createLocalPrintBridge(): LocalPrintBridge {
     },
 
     async connect() {
-      const qz = await ensureQz()
-      if (qz.websocket.isActive?.()) {
-        connected = true
-        return
-      }
-      try {
-        await qz.websocket.connect()
-        connected = true
-      } catch (err) {
-        connected = false
-        const detail = err instanceof Error ? err.message : String(err)
-        throw new LocalPrintBridgeError(
-          'UNAVAILABLE',
-          `Cannot reach QZ Tray (${detail}). Is QZ Tray running on this computer?`,
-        )
-      }
+      await ensureConnected()
     },
 
     async listPrinters() {
-      const qz = await ensureQz()
-      if (qz.websocket.isActive?.()) {
-        connected = true
-      } else if (!connected) {
-        await this.connect()
-      }
+      const c = await ensureConnected()
       try {
-        const found = await qz.printers.find()
-        return normalizePrinterList(found)
+        const list = await c.getPrintersList()
+        const names = (list || []).map(p => String(p?.name || '').trim()).filter(Boolean)
+        return normalizePrinterList(names)
       } catch (err) {
-        if (err instanceof LocalPrintBridgeError) throw err
-        const detail = err instanceof Error ? err.message : String(err)
-        throw new LocalPrintBridgeError('UNAVAILABLE', `Printer discovery failed: ${detail}`)
+        throw mapPrintBridgeError(err, 'UNAVAILABLE', 'Printer discovery failed')
       }
     },
 
@@ -145,31 +169,19 @@ export function createLocalPrintBridge(): LocalPrintBridge {
       if (!name) {
         throw new LocalPrintBridgeError('INVALID', 'Printer name is required')
       }
-      const qz = await ensureQz()
-      if (qz.websocket.isActive?.()) {
-        connected = true
-      } else if (!connected) {
-        await this.connect()
-      }
-      const payload =
+      const c = await ensureConnected()
+      const dataBase64 =
         typeof data === 'string'
-          ? data
+          ? bytesToBase64(new TextEncoder().encode(data))
           : bytesToBase64(data)
-      const config = qz.configs.create(name)
-      const printData = [
-        {
-          type: 'raw',
-          format: 'command',
-          flavor: typeof data === 'string' ? 'plain' : 'base64',
-          data: payload,
-        },
-      ]
       try {
-        await qz.print(config, printData)
+        await c.print({
+          type: 'raw',
+          printerName: name,
+          dataBase64,
+        })
       } catch (err) {
-        if (err instanceof LocalPrintBridgeError) throw err
-        const detail = err instanceof Error ? err.message : String(err)
-        throw new LocalPrintBridgeError('PRINT_FAILED', `Print failed: ${detail}`)
+        throw mapPrintBridgeError(err, 'PRINT_FAILED', 'Print failed')
       }
     },
 
@@ -185,34 +197,23 @@ export function createLocalPrintBridge(): LocalPrintBridge {
       if (!html?.trim()) {
         throw new LocalPrintBridgeError('INVALID', 'HTML content is required')
       }
-      const qz = await ensureQz()
-      if (qz.websocket.isActive?.()) {
-        connected = true
-      } else if (!connected) {
-        await this.connect()
-      }
+      const c = await ensureConnected()
       const pageWidthIn = options?.pageWidthIn ?? 2.25 // ~58mm thermal
-      const config = qz.configs.create(name, {
-        size: { width: pageWidthIn },
-        units: 'in',
-        scaleContent: true,
-        rasterize: true,
-      })
-      const printData = [
-        {
-          type: 'pixel',
-          format: 'html',
-          flavor: 'plain',
-          data: html,
-          options: { pageWidth: pageWidthIn },
-        },
-      ]
+      const widthMm = Math.round(pageWidthIn * 25.4)
       try {
-        await qz.print(config, printData)
+        await c.print({
+          type: 'raw-html',
+          printerName: name,
+          html,
+          waitMs: 500,
+          copies: 1,
+          paper: {
+            widthMm,
+            heightMm: Math.max(widthMm * 4, 80),
+          },
+        })
       } catch (err) {
-        if (err instanceof LocalPrintBridgeError) throw err
-        const detail = err instanceof Error ? err.message : String(err)
-        throw new LocalPrintBridgeError('PRINT_FAILED', `HTML print failed: ${detail}`)
+        throw mapPrintBridgeError(err, 'PRINT_FAILED', 'HTML print failed')
       }
     },
   }
