@@ -83,4 +83,17 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(printHtml).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
+
+  it('supports deferred browserPrint so callers can arm afterprint first', async () => {
+    const deferred = mock(() => {})
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName: async () => null,
+      bridge: fakeBridge(),
+      getElementHtml: () => '<div/>',
+      browserPrint: () => {},
+    })
+    expect(result).toBe('browser')
+    deferred()
+    expect(deferred).toHaveBeenCalledTimes(1)
+  })
 })

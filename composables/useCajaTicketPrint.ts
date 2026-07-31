@@ -84,10 +84,14 @@ export function useCajaTicketPrint() {
     return name?.trim() || null
   }
 
-  async function printElement(elementId: string): Promise<CajaTicketPrintResult> {
+  async function printElement(
+    elementId: string,
+    options?: { browserPrint?: () => void },
+  ): Promise<CajaTicketPrintResult> {
     return printTicketViaCajaOrBrowser(elementId, {
       getCajaPrinterName,
       bridge,
+      browserPrint: options?.browserPrint,
     })
   }
 

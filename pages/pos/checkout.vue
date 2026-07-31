@@ -2543,10 +2543,15 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Register before printElement — browser fallback calls window.print inside helper.
+  // Defer window.print until after await so body print classes stay until fallback.
+  const mode = await printTicketElement('pos-receipt', { browserPrint: () => {} })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
   setTimeout(cleanup, 1500)
-  await printTicketElement('pos-receipt')
+  window.print()
 }
 
 // Issue #535 — tenant fiscal data for the prefactura header.
@@ -2874,13 +2879,18 @@ const printPrefactura = async () => {
     document.body.classList.remove('printing-prefactura')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Register before printElement — browser fallback calls window.print inside helper.
+
+  await nextTick()
+  // Defer window.print until after await so body print classes stay until fallback.
+  const mode = await printTicketElement('pos-prefactura', { browserPrint: () => {} })
+  if (mode === 'bridge') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
   // Defensive fallback for browsers where afterprint may not fire on cancel.
   setTimeout(cleanup, 2000)
-
-  await nextTick()
-  await printTicketElement('pos-prefactura')
+  window.print()
 }
 
 // Re-emit after a recoverable failure (e.g. Matias 401) — skips fiscal wizard.
