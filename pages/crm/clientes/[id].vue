@@ -663,6 +663,7 @@ onUnmounted(() => {
           </button>
         </div>
         <UiResponsiveDataView
+          v-if="!isLoadingWallet"
           row-size="sm"
           :columns="walletColumns"
           :data="walletMovements"
