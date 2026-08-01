@@ -22,3 +22,16 @@ export function buildReceiptLogoStyle() {
     '--receipt-logo-margin': `${cfg.logoTopOffsetMm}mm auto ${cfg.logoBottomMarginMm}mm`,
   }
 }
+
+/** Normalize tenant logo for window.print / thermal HTML (http(s), data:, or absolute path). */
+export function resolveReceiptLogoUrl(url?: string | null): string | null {
+  if (!url) return null
+  const s = String(url).trim()
+  if (!s) return null
+  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:')) return s
+  if (s.startsWith('/') && typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${s}`
+  }
+  if (s.startsWith('/')) return s
+  return null
+}

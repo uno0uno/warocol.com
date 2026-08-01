@@ -70,6 +70,27 @@ describe('formatReceiptTaxCue', () => {
     expect(formatReceiptTaxCue({ label: 'Exento' })).toBe('Exento')
     expect(formatReceiptTaxCue({ label: '', amountLabel: '$1' })).toBeNull()
   })
+
+  it('accepts pre-localized text from vue-i18n t(key, params)', () => {
+    expect(formatReceiptTaxCue({
+      text: 'Incluye IVA 19% · $2.076,00',
+    })).toBe('Incluye IVA 19% · $2.076,00')
+  })
+
+  it('recovers when i18n emptied template placeholders (Incluye ·)', () => {
+    expect(formatReceiptTaxCue({
+      label: 'IVA 19%',
+      amountLabel: '$2.076,00',
+      includedInPrice: true,
+      includedTemplate: 'Incluye ·',
+    })).toBe('Incluye IVA 19% · $2.076,00')
+    expect(formatReceiptTaxCue({
+      label: 'IVA licores 5%',
+      amountLabel: '$1.500,00',
+      includedInPrice: false,
+      exclusiveTemplate: '·',
+    })).toBe('IVA licores 5% · $1.500,00')
+  })
 })
 
 describe('formatReceiptProductBlock', () => {

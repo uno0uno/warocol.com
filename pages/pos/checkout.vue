@@ -28,6 +28,7 @@ import {
   collectThermalTicketText,
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
+import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
 import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
@@ -1805,13 +1806,17 @@ const lineTaxCueForPrint = (item: any): string | null => {
     ?? item.included_in_price
     ?? item.includedInPrice
     ?? false
-  return formatReceiptTaxCue({
-    label: label || info!.label,
-    amountLabel: amount > 0 ? formatCurrencyThermal(amount) : null,
-    includedInPrice: includedInPrice === true,
-    includedTemplate: t('pos.cartItem.taxIncluded'),
-    exclusiveTemplate: t('pos.cartItem.taxLine'),
-  })
+  const labelFinal = label || info!.label
+  if (amount > 0) {
+    const amountLabel = compactThermalMoneyLabel(formatCurrencyThermal(amount))
+    // Pass interpolated i18n text — never t('taxIncluded') as a .replace template.
+    return formatReceiptTaxCue({
+      text: includedInPrice
+        ? t('pos.cartItem.taxIncluded', { label: labelFinal, amount: amountLabel })
+        : t('pos.cartItem.taxLine', { label: labelFinal, amount: amountLabel }),
+    })
+  }
+  return formatReceiptTaxCue({ label: labelFinal })
 }
 
 /** Freeze per-line tax fields onto the receipt snapshot before cart clear. */
@@ -2744,7 +2749,7 @@ const receiptTipLabel = computed(() => {
 const receiptLogoUrl = computed(() => {
   if (!receiptPrintSettings.value.show_logo) return null
   const url = settingsData.value?.data?.logo_url ?? businessProfile.value?.logo_url ?? null
-  return url && String(url).startsWith('http') ? url : null
+  return resolveReceiptLogoUrl(url)
 })
 
 // warocol.com#939 — pre-bill always reads as prefactura; post-payment uses receiptDocumentLabel.
