@@ -3,6 +3,7 @@ import {
   compactThermalMoneyLabel,
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
   collectThermalTicketText,
@@ -50,6 +51,27 @@ describe('padReceiptLine', () => {
   })
 })
 
+describe('formatReceiptTaxCue', () => {
+  it('formats included and exclusive tax with amount', () => {
+    expect(formatReceiptTaxCue({
+      label: 'IVA 19%',
+      amountLabel: '$ COP 1.900,00',
+      includedInPrice: true,
+      includedTemplate: 'Incluye {label} · {amount}',
+    })).toBe('Incluye IVA 19% · $1.900,00')
+    expect(formatReceiptTaxCue({
+      label: 'IVA 16%',
+      amountLabel: '$160',
+      includedInPrice: false,
+    })).toBe('IVA 16% · $160')
+  })
+
+  it('returns bare label for exempt / zero-amount cues', () => {
+    expect(formatReceiptTaxCue({ label: 'Exento' })).toBe('Exento')
+    expect(formatReceiptTaxCue({ label: '', amountLabel: '$1' })).toBeNull()
+  })
+})
+
 describe('formatReceiptProductBlock', () => {
   it('puts name and values on separate lines without truncating money', () => {
     const block = formatReceiptProductBlock({
@@ -64,6 +86,20 @@ describe('formatReceiptProductBlock', () => {
     expect(block).not.toContain('...')
     expect(block).toContain('$45.000,00')
     expect(block).toContain('$585.000,00')
+  })
+
+  it('appends per-line tax declaration under the qty/total row', () => {
+    const block = formatReceiptProductBlock({
+      name: 'Agua',
+      quantity: 1,
+      unitPriceLabel: '$3.500',
+      lineTotalLabel: '$3.500',
+      taxCue: 'Incluye INC · $280',
+    })
+    const lines = block.split('\n')
+    expect(lines[0]).toBe('Agua')
+    expect(lines[1]).toContain('1 x')
+    expect(lines[2]).toBe('Incluye INC · $280')
   })
 })
 

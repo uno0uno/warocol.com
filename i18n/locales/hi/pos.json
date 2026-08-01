@@ -45,6 +45,7 @@
       "perUnit": "प्रत्येक",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "शामिल {label} · {amount}",
+      "taxExempt": "कर मुक्त",
       "note": "नोट:",
       "decreaseQtyAria": "मात्रा घटाएँ",
       "increaseQtyAria": "मात्रा बढ़ाएँ",

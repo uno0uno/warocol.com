@@ -22,6 +22,7 @@ import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/r
 import {
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
   collectThermalTicketText,
@@ -331,6 +332,8 @@ type PromoPreviewLine = {
   tax_amount?: number
   tax_label?: string | null
   tax_rate?: number | null
+  tax_category?: string | null
+  tax_resolution?: string | null
   included_in_price?: boolean | null
 }
 
@@ -1062,7 +1065,7 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
       : {}),
     ...waroOrderResultFields(completeData.waro_redemption_summary, cartTotal.value),
   }
-  cartItemsSnapshot.value = [...cartItems.value]
+  cartItemsSnapshot.value = snapshotCartItemsForReceipt()
   receiptEmail.value = ''
   emailSent.value = false
   emailFromProfile.value = false
@@ -1705,21 +1708,69 @@ const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
 const getLineTaxInfo = (item: any): { amount: number; label: string; includedInPrice: boolean } | null => {
   const preview = getLinePromoPreview(item)
   const amount = Number(preview?.tax_amount) || 0
-  if (amount <= 0) return null
-  return {
-    amount,
-    label: localizedInternalTaxLabel(preview?.tax_label),
-    includedInPrice: preview?.included_in_price === true,
+  const category = String(
+    preview?.tax_category
+    ?? item.tax_category
+    ?? item.taxCategory
+    ?? item.product?.tax_category
+    ?? '',
+  ).toLowerCase()
+  const resolution = String(preview?.tax_resolution ?? item.tax_resolution ?? '').toLowerCase()
+  const label = localizedInternalTaxLabel(preview?.tax_label)
+  const includedInPrice = preview?.included_in_price === true
+
+  if (amount > 0 && label) {
+    return { amount, label, includedInPrice }
   }
+  if (category === 'exempt' || resolution === 'exempt') {
+    return { amount: 0, label: t('pos.cartItem.taxExempt'), includedInPrice: false }
+  }
+  if (label) {
+    return { amount: 0, label, includedInPrice }
+  }
+  return null
 }
 
 const formatLineTaxDisplay = (info: { amount: number; label: string; includedInPrice: boolean }): string => {
+  if (info.amount <= 0) return info.label
   const amount = formatCurrency(info.amount)
   if (info.includedInPrice) {
     return t('pos.cartItem.taxIncluded', { label: info.label, amount })
   }
   return t('pos.cartItem.taxLine', { label: info.label, amount })
 }
+
+const lineTaxCueForPrint = (item: any): string | null => {
+  const info = getLineTaxInfo(item)
+  if (!info) return null
+  return formatReceiptTaxCue({
+    label: info.label,
+    amountLabel: info.amount > 0 ? formatCurrencyThermal(info.amount) : null,
+    includedInPrice: info.includedInPrice,
+    includedTemplate: t('pos.cartItem.taxIncluded'),
+    exclusiveTemplate: t('pos.cartItem.taxLine'),
+  })
+}
+
+/** Freeze per-line tax fields onto the receipt snapshot before cart clear. */
+const snapshotCartItemsForReceipt = () =>
+  cartItems.value.map((item: any) => {
+    const preview = getLinePromoPreview(item)
+    const info = getLineTaxInfo(item)
+    return {
+      ...item,
+      tax_category: preview?.tax_category
+        ?? item.tax_category
+        ?? item.taxCategory
+        ?? item.product?.tax_category
+        ?? null,
+      tax_label: info?.label ?? preview?.tax_label ?? null,
+      tax_amount: info && info.amount > 0
+        ? info.amount
+        : (Number(preview?.tax_amount) || null),
+      included_in_price: info?.includedInPrice ?? preview?.included_in_price ?? null,
+    }
+  })
 
 const getLinePromoSavings = (item: any): number => {
   if (isLinePromoOptedOut(item)) return 0
@@ -1837,6 +1888,7 @@ const prefacturaProductBlock = (item: any) =>
     quantity: item.quantity,
     unitPriceLabel: formatCurrencyThermal(getItemUnitPrice(item)),
     lineTotalLabel: formatCurrencyThermal(getItemTotal(item)),
+    taxCue: lineTaxCueForPrint(item),
   })
 
 const prefacturaModifierBlock = (mod: PrintModifier) =>
@@ -1856,6 +1908,8 @@ const receiptPrintLineGuards = (item: any) => [
   item.promoType,
   item.applied_promotion_id,
   item.tax_category,
+  item.tax_label,
+  item.included_in_price,
 ]
 
 const checkoutProductKey = (item: any) =>
@@ -1966,7 +2020,7 @@ const processOrder = async () => {
           liquor_tax_label: localizedInternalTaxLabel(taxPreview.value?.liquor_tax_label),
         }
         wasMesaMode.value = false
-        cartItemsSnapshot.value = [...cartItems.value]
+        cartItemsSnapshot.value = snapshotCartItemsForReceipt()
         captureReceiptPrintContext()
         receiptEmail.value = ''
         emailSent.value = false
@@ -2069,7 +2123,7 @@ const processOrder = async () => {
         ...waroOrderResultFields(closeData.waro_redemption_summary, _subtotal),
       }
       wasMesaMode.value = true
-      cartItemsSnapshot.value = [...cartItems.value]
+      cartItemsSnapshot.value = snapshotCartItemsForReceipt()
       captureReceiptPrintContext({
         singleCashReceived: isCashMethod.value && cashReceivedInput.value > 0
           ? Number(cashReceivedInput.value)
@@ -2207,7 +2261,7 @@ const processOrder = async () => {
           Number(response.data.subtotal) || _subtotalPos,
         ),
       }
-      cartItemsSnapshot.value = [...cartItems.value]
+      cartItemsSnapshot.value = snapshotCartItemsForReceipt()
       captureReceiptPrintContext({
         singleCashReceived: isCashMethod.value && cashReceivedInput.value > 0
           ? Number(cashReceivedInput.value)

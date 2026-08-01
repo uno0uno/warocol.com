@@ -45,6 +45,7 @@
       "perUnit": "Stk.",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "Inkl. {label} · {amount}",
+      "taxExempt": "Steuerfrei",
       "note": "Hinweis:",
       "decreaseQtyAria": "Menge reduzieren",
       "increaseQtyAria": "Menge erhöhen",

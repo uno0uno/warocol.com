@@ -45,6 +45,7 @@
       "perUnit": "l'unité",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "Inclut {label} · {amount}",
+      "taxExempt": "Exonéré",
       "note": "Note :",
       "decreaseQtyAria": "Diminuer la quantité",
       "increaseQtyAria": "Augmenter la quantité",

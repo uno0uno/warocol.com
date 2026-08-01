@@ -35,6 +35,9 @@ export type ReceiptTicketItem = {
   discountAllocated?: number | string | null
   netTotal?: number | string | null
   taxCategory?: string | null
+  taxLabel?: string | null
+  taxAmount?: number | string | null
+  includedInPrice?: boolean | null
 }
 
 type ReceiptTicketSourceItem = {
@@ -71,6 +74,12 @@ type ReceiptTicketSourceItem = {
   net_total?: number | string | null
   taxCategory?: string | null
   tax_category?: string | null
+  taxLabel?: string | null
+  tax_label?: string | null
+  taxAmount?: number | string | null
+  tax_amount?: number | string | null
+  includedInPrice?: boolean | null
+  included_in_price?: boolean | null
 }
 
 type ConsolidateOptions<T> = {
@@ -156,6 +165,9 @@ export function buildReceiptTicketItems(
       discountAllocated: item.discountAllocated ?? item.discount_allocated ?? null,
       netTotal: item.netTotal ?? item.net_total ?? null,
       taxCategory: item.taxCategory ?? item.tax_category ?? null,
+      taxLabel: item.taxLabel ?? item.tax_label ?? null,
+      taxAmount: item.taxAmount ?? item.tax_amount ?? null,
+      includedInPrice: item.includedInPrice ?? item.included_in_price ?? null,
     }
   })
 }

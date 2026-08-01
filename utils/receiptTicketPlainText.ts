@@ -107,12 +107,34 @@ export function collectThermalTicketText(root: Element | null | undefined): stri
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()
 }
 
+/**
+ * Compact per-line tax declaration for thermal / window.print.
+ * Amount line when taxed; bare label for exempt / label-only.
+ */
+export function formatReceiptTaxCue(opts: {
+  label?: string | null
+  amountLabel?: string | null
+  includedInPrice?: boolean | null
+  includedTemplate?: string
+  exclusiveTemplate?: string
+}): string | null {
+  const label = String(opts.label ?? '').trim()
+  if (!label) return null
+  const amount = compactThermalMoneyLabel(String(opts.amountLabel ?? '').trim())
+  if (!amount) return label
+  const template = opts.includedInPrice
+    ? (opts.includedTemplate || 'Incluye {label} · {amount}')
+    : (opts.exclusiveTemplate || '{label} · {amount}')
+  return template.replace('{label}', label).replace('{amount}', amount)
+}
+
 /** Product name on its own line; qty x unit … total padded (compact money). */
 export function formatReceiptProductBlock(opts: {
   name: string
   quantity: number | string
   unitPriceLabel: string
   lineTotalLabel: string
+  taxCue?: string | null
   cols?: number
 }): string {
   const cols = opts.cols ?? RECEIPT_THERMAL_COLS
@@ -120,7 +142,9 @@ export function formatReceiptProductBlock(opts: {
   const unit = compactThermalMoneyLabel(opts.unitPriceLabel)
   const total = compactThermalMoneyLabel(opts.lineTotalLabel)
   const left = `${opts.quantity} x ${unit}`
-  return `${name}\n${padReceiptLine(left, total, cols)}`
+  const body = `${name}\n${padReceiptLine(left, total, cols)}`
+  const cue = String(opts.taxCue ?? '').trim()
+  return cue ? `${body}\n${cue}` : body
 }
 
 /** Modifier indented under parent; compact money; no truncation. */

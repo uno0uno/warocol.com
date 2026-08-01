@@ -45,6 +45,7 @@
       "perUnit": "لكل وحدة",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "يشمل {label} · {amount}",
+      "taxExempt": "معفى",
       "note": "ملاحظة:",
       "decreaseQtyAria": "تقليل الكمية",
       "increaseQtyAria": "زيادة الكمية",
