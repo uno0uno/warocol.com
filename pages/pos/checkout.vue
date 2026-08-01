@@ -1742,11 +1742,24 @@ const formatLineTaxDisplay = (info: { amount: number; label: string; includedInP
 
 const lineTaxCueForPrint = (item: any): string | null => {
   const info = getLineTaxInfo(item)
-  if (!info) return null
+  const label = info?.label
+    ?? localizedInternalTaxLabel(item.tax_label ?? item.taxLabel)
+    ?? (String(item.tax_category ?? item.taxCategory ?? '').toLowerCase() === 'exempt'
+      ? t('pos.cartItem.taxExempt')
+      : '')
+  if (!label && !info) return null
+  const mergedAmount = Number(item.tax_amount ?? item.taxAmount)
+  const amount = Number.isFinite(mergedAmount) && mergedAmount > 0
+    ? mergedAmount
+    : (info?.amount ?? 0)
+  const includedInPrice = info?.includedInPrice
+    ?? item.included_in_price
+    ?? item.includedInPrice
+    ?? false
   return formatReceiptTaxCue({
-    label: info.label,
-    amountLabel: info.amount > 0 ? formatCurrencyThermal(info.amount) : null,
-    includedInPrice: info.includedInPrice,
+    label: label || info!.label,
+    amountLabel: amount > 0 ? formatCurrencyThermal(amount) : null,
+    includedInPrice: includedInPrice === true,
     includedTemplate: t('pos.cartItem.taxIncluded'),
     exclusiveTemplate: t('pos.cartItem.taxLine'),
   })
@@ -1928,12 +1941,18 @@ const consolidateCheckoutPrintItems = (items: any[]) =>
     quantity: item => item.quantity,
     unitPrice: item => getItemUnitPrice(item),
     total: item => getItemTotal(item),
+    taxAmount: item => {
+      const fromItem = Number(item.tax_amount ?? item.taxAmount)
+      if (Number.isFinite(fromItem) && fromItem > 0) return fromItem
+      return getLineTaxInfo(item)?.amount ?? 0
+    },
     modifiers: item => item.modifiers ?? [],
     notes: item => item.notes,
     guards: receiptPrintLineGuards,
     merge: (item, aggregate) => ({
       ...item,
       quantity: aggregate.quantity,
+      tax_amount: aggregate.taxAmount > 0 ? aggregate.taxAmount : item.tax_amount,
     }),
   })
 

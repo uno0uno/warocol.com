@@ -279,6 +279,7 @@ const printableItems = computed(() =>
     quantity: item => item.quantity,
     unitPrice: item => item.unitPrice,
     total: item => item.total,
+    taxAmount: item => item.taxAmount,
     modifiers: item => item.modifiers,
     notes: item => item.notes,
     guards: item => [
@@ -296,6 +297,7 @@ const printableItems = computed(() =>
       ...item,
       quantity: aggregate.quantity,
       total: aggregate.total,
+      taxAmount: aggregate.taxAmount > 0 ? aggregate.taxAmount : item.taxAmount,
     }),
   })
 )

@@ -46,6 +46,33 @@ const groupWithPromoGuard = (items: Array<TestLine & { promo?: string | null }>)
   })
 
 describe('consolidateReceiptPrintLines', () => {
+  it('sums taxAmount when consolidating duplicate taxed lines', () => {
+    const lines = consolidateReceiptPrintLines(
+      [
+        { productId: 'a', name: 'Agua', quantity: 1, unitPrice: 3500, total: 3500, taxAmount: 280 },
+        { productId: 'a', name: 'Agua', quantity: 1, unitPrice: 3500, total: 3500, taxAmount: 280 },
+      ],
+      {
+        productKey: item => item.productId,
+        displayName: item => item.name,
+        quantity: item => item.quantity,
+        unitPrice: item => item.unitPrice,
+        total: item => item.total,
+        taxAmount: item => item.taxAmount,
+        merge: (item, aggregate) => ({
+          ...item,
+          quantity: aggregate.quantity,
+          total: aggregate.total,
+          taxAmount: aggregate.taxAmount,
+        }),
+      },
+    )
+    assert.equal(lines.length, 1)
+    assert.equal(lines[0].quantity, 2)
+    assert.equal(lines[0].total, 7000)
+    assert.equal(lines[0].taxAmount, 560)
+  })
+
   it('groups plain duplicate products for receipt printing', () => {
     const lines = group([
       { productId: 'burger', name: 'Burger', quantity: 1, unitPrice: 12000, total: 12000 },
