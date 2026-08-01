@@ -35,6 +35,9 @@ export type ReceiptTicketItem = {
   discountAllocated?: number | string | null
   netTotal?: number | string | null
   taxCategory?: string | null
+  taxLabel?: string | null
+  taxAmount?: number | string | null
+  includedInPrice?: boolean | null
 }
 
 type ReceiptTicketSourceItem = {
@@ -71,6 +74,12 @@ type ReceiptTicketSourceItem = {
   net_total?: number | string | null
   taxCategory?: string | null
   tax_category?: string | null
+  taxLabel?: string | null
+  tax_label?: string | null
+  taxAmount?: number | string | null
+  tax_amount?: number | string | null
+  includedInPrice?: boolean | null
+  included_in_price?: boolean | null
 }
 
 type ConsolidateOptions<T> = {
@@ -79,10 +88,11 @@ type ConsolidateOptions<T> = {
   quantity: (item: T) => number | string | null | undefined
   unitPrice: (item: T) => number | string | null | undefined
   total: (item: T) => number | string | null | undefined
+  taxAmount?: (item: T) => number | string | null | undefined
   modifiers?: (item: T) => ReceiptPrintLineModifier[] | null | undefined
   notes?: (item: T) => string | null | undefined
   guards?: (item: T) => Array<string | number | boolean | null | undefined>
-  merge: (base: T, aggregate: { quantity: number; total: number }) => T
+  merge: (base: T, aggregate: { quantity: number; total: number; taxAmount: number }) => T
 }
 
 const numericKey = (value: number | string | null | undefined) => {
@@ -156,6 +166,9 @@ export function buildReceiptTicketItems(
       discountAllocated: item.discountAllocated ?? item.discount_allocated ?? null,
       netTotal: item.netTotal ?? item.net_total ?? null,
       taxCategory: item.taxCategory ?? item.tax_category ?? null,
+      taxLabel: item.taxLabel ?? item.tax_label ?? null,
+      taxAmount: item.taxAmount ?? item.tax_amount ?? null,
+      includedInPrice: item.includedInPrice ?? item.included_in_price ?? null,
     }
   })
 }
@@ -185,7 +198,7 @@ export function consolidateReceiptPrintLines<T>(
   items: readonly T[],
   options: ConsolidateOptions<T>,
 ): T[] {
-  const grouped = new Map<string, { item: T; quantity: number; total: number }>()
+  const grouped = new Map<string, { item: T; quantity: number; total: number; taxAmount: number }>()
 
   for (const item of items) {
     const key = JSON.stringify({
@@ -199,13 +212,15 @@ export function consolidateReceiptPrintLines<T>(
 
     const quantity = Number(options.quantity(item)) || 0
     const total = Number(options.total(item)) || 0
+    const taxAmount = Number(options.taxAmount?.(item)) || 0
     const existing = grouped.get(key)
 
     if (existing) {
       existing.quantity += quantity
       existing.total += total
+      existing.taxAmount += taxAmount
     } else {
-      grouped.set(key, { item, quantity, total })
+      grouped.set(key, { item, quantity, total, taxAmount })
     }
   }
 
@@ -213,6 +228,7 @@ export function consolidateReceiptPrintLines<T>(
     options.merge(group.item, {
       quantity: group.quantity,
       total: group.total,
+      taxAmount: group.taxAmount,
     })
   )
 }

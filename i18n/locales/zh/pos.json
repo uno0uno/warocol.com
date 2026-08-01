@@ -45,6 +45,7 @@
       "perUnit": "每件",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "含 {label} · {amount}",
+      "taxExempt": "免税",
       "note": "备注:",
       "decreaseQtyAria": "减少数量",
       "increaseQtyAria": "增加数量",

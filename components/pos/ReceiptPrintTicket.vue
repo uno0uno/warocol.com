@@ -4,6 +4,7 @@ import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 import {
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
   compactThermalMoneyLabel,
@@ -33,6 +34,9 @@ interface ReceiptItem {
   discountAllocated?: number | string | null
   netTotal?: number | string | null
   taxCategory?: string | null
+  taxLabel?: string | null
+  taxAmount?: number | string | null
+  includedInPrice?: boolean | null
 }
 
 interface ReceiptPaymentLine {
@@ -132,12 +136,27 @@ const modifierDescription = (modifier: ReceiptItemModifier) => {
   return qty > 1 ? `+ ${modifier.name} x${qty}` : `+ ${modifier.name}`
 }
 
-const productBlock = (item: { name: string; quantity: number | string; unitPrice: number; total: number }) =>
+const productTaxCue = (item: ReceiptItem) => {
+  const amount = Number(item.taxAmount)
+  const hasAmount = Number.isFinite(amount) && amount > 0
+  const label = String(item.taxLabel ?? '').trim()
+    || (String(item.taxCategory ?? '').toLowerCase() === 'exempt' ? t('pos.cartItem.taxExempt') : '')
+  return formatReceiptTaxCue({
+    label,
+    amountLabel: hasAmount ? money(amount) : null,
+    includedInPrice: item.includedInPrice === true,
+    includedTemplate: t('pos.cartItem.taxIncluded'),
+    exclusiveTemplate: t('pos.cartItem.taxLine'),
+  })
+}
+
+const productBlock = (item: ReceiptItem) =>
   formatReceiptProductBlock({
     name: item.name,
     quantity: item.quantity,
     unitPriceLabel: money(item.unitPrice),
     lineTotalLabel: money(item.total),
+    taxCue: productTaxCue(item),
   })
 
 const modifierBlock = (modifier: ReceiptItemModifier) =>
@@ -260,6 +279,7 @@ const printableItems = computed(() =>
     quantity: item => item.quantity,
     unitPrice: item => item.unitPrice,
     total: item => item.total,
+    taxAmount: item => item.taxAmount,
     modifiers: item => item.modifiers,
     notes: item => item.notes,
     guards: item => [
@@ -270,11 +290,14 @@ const printableItems = computed(() =>
       item.discountAllocated,
       item.netTotal,
       item.taxCategory,
+      item.taxLabel,
+      item.includedInPrice,
     ],
     merge: (item, aggregate) => ({
       ...item,
       quantity: aggregate.quantity,
       total: aggregate.total,
+      taxAmount: aggregate.taxAmount > 0 ? aggregate.taxAmount : item.taxAmount,
     }),
   })
 )

@@ -45,6 +45,7 @@
       "perUnit": "ea",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "Includes {label} · {amount}",
+      "taxExempt": "Exempt",
       "note": "Note:",
       "decreaseQtyAria": "Decrease quantity",
       "increaseQtyAria": "Increase quantity",

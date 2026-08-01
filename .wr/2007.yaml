@@ -1,0 +1,37 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2007
+title: "feat(pos): per-product tax declaration on CO checkout lines and prefactura"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2007-pos-line-tax-cue
+risk: low
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - utils/receiptPrintLines.ts
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+  - i18n/locales/*/pos.json
+
+ac:
+  - Checkout order list shows per-line tax cue (IVA/INC/liquor/exempt)
+  - Prefactura product block includes same cue
+  - Thermal + window.print ReceiptPrintTicket shows same cue
+  - Footer tax totals unchanged; no double-counting
+  - bun test utils/receiptTicketPlainText.test.ts
+
+out_of_scope:
+  - Tax calculation / DIAN payloads
+  - Kitchen comandas
+  - Success slideover UX (#2008)
+
+hints:
+  entry: "getLineTaxInfo + formatReceiptProductBlock taxCue"
+  pattern: "annotate_line_tax_amounts on tax-preview lines; taxCategory was unused on print"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+skip:
+  audits: [ux, color, typography]

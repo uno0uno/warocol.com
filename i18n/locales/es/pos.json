@@ -45,6 +45,7 @@
       "perUnit": "c/u",
       "taxLine": "{label} · {amount}",
       "taxIncluded": "Incluye {label} · {amount}",
+      "taxExempt": "Exento",
       "note": "Nota:",
       "decreaseQtyAria": "Reducir cantidad",
       "increaseQtyAria": "Aumentar cantidad",
