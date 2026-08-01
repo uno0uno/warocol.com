@@ -110,22 +110,37 @@ export function collectThermalTicketText(root: Element | null | undefined): stri
 /**
  * Compact per-line tax declaration for thermal / window.print.
  * Amount line when taxed; bare label for exempt / label-only.
+ *
+ * Prefer passing `text` from `t('…', { label, amount })` — vue-i18n already
+ * interpolates placeholders, so do NOT pass `t('taxIncluded')` as a template
+ * (that yields "Incluye ·" with empty slots).
  */
 export function formatReceiptTaxCue(opts: {
   label?: string | null
   amountLabel?: string | null
   includedInPrice?: boolean | null
+  /** Pre-localized full cue (preferred). */
+  text?: string | null
   includedTemplate?: string
   exclusiveTemplate?: string
 }): string | null {
+  const preformatted = String(opts.text ?? '').trim()
+  if (preformatted) return preformatted
+
   const label = String(opts.label ?? '').trim()
   if (!label) return null
   const amount = compactThermalMoneyLabel(String(opts.amountLabel ?? '').trim())
   if (!amount) return label
-  const template = opts.includedInPrice
+
+  // Templates must still contain `{label}` / `{amount}`. If vue-i18n already
+  // emptied them ("Incluye ·"), rebuild from safe defaults.
+  let template = opts.includedInPrice
     ? (opts.includedTemplate || 'Incluye {label} · {amount}')
     : (opts.exclusiveTemplate || '{label} · {amount}')
-  return template.replace('{label}', label).replace('{amount}', amount)
+  if (!template.includes('{label}') || !template.includes('{amount}')) {
+    template = opts.includedInPrice ? 'Incluye {label} · {amount}' : '{label} · {amount}'
+  }
+  return template.replaceAll('{label}', label).replaceAll('{amount}', amount)
 }
 
 /** Product name on its own line; qty x unit … total padded (compact money). */

@@ -53,7 +53,6 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
       :src="logoUrl"
       alt=""
       class="receipt-logo"
-      crossorigin="anonymous"
       :style="logoStyle"
     >
     <div class="receipt-header">{{ headerName }}</div>

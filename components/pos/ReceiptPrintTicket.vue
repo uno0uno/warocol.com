@@ -141,13 +141,16 @@ const productTaxCue = (item: ReceiptItem) => {
   const hasAmount = Number.isFinite(amount) && amount > 0
   const label = String(item.taxLabel ?? '').trim()
     || (String(item.taxCategory ?? '').toLowerCase() === 'exempt' ? t('pos.cartItem.taxExempt') : '')
-  return formatReceiptTaxCue({
-    label,
-    amountLabel: hasAmount ? money(amount) : null,
-    includedInPrice: item.includedInPrice === true,
-    includedTemplate: t('pos.cartItem.taxIncluded'),
-    exclusiveTemplate: t('pos.cartItem.taxLine'),
-  })
+  if (!label) return null
+  if (hasAmount) {
+    const amountLabel = compactThermalMoneyLabel(money(amount))
+    return formatReceiptTaxCue({
+      text: item.includedInPrice === true
+        ? t('pos.cartItem.taxIncluded', { label, amount: amountLabel })
+        : t('pos.cartItem.taxLine', { label, amount: amountLabel }),
+    })
+  }
+  return formatReceiptTaxCue({ label })
 }
 
 const productBlock = (item: ReceiptItem) =>

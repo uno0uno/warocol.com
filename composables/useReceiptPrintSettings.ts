@@ -2,6 +2,8 @@
  * POS receipt print settings from restaurant-context (warocol.com#930).
  * Used by receipt print components starting batch #931.
  */
+import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
+
 export function useReceiptPrintSettings() {
   const { currentTenant } = useTenantReactive()
   const { businessProfile } = useTenantReactive()
@@ -20,7 +22,7 @@ export function useReceiptPrintSettings() {
   const receiptLogoUrl = computed(() => {
     if (!receiptPrintSettings.value.show_logo) return null
     const url = settingsData.value?.data?.logo_url ?? businessProfile.value?.logo_url ?? null
-    return url && String(url).startsWith('http') ? url : null
+    return resolveReceiptLogoUrl(url)
   })
 
   return { receiptPrintSettings, receiptLogoUrl, settingsData }
