@@ -1,0 +1,31 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2004
+title: "fix(pos): Teleport customer search slideover to body (full viewport)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2004-customer-modal-teleport
+risk: low
+
+paths:
+  - components/pos/CustomerIdentificationModal.vue
+  - components/pos/CustomerIdentificationModal.test.ts
+
+ac:
+  - Overlay covers full viewport on /ventas/{id} (sidebar+header)
+  - Teleport to body on CustomerIdentificationModal
+  - Search/select still works; backdrop dismiss kept
+  - bunx vitest run components/pos/CustomerIdentificationModal.test.ts
+
+out_of_scope:
+  - Success slideover dismiss (#2000)
+  - Receipt tax lines (#2001)
+
+hints:
+  entry: "CustomerIdentificationModal.vue template — wrap Transition in Teleport to=body"
+  pattern: "ReceiptPrintTicket / other POS Teleports"
+  tests: "bunx vitest run components/pos/CustomerIdentificationModal.test.ts"
+
+skip:
+  audits: [ux, color, typography]

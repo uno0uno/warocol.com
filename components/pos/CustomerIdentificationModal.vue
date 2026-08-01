@@ -1,8 +1,10 @@
 <template>
+  <!-- Teleport to body so fixed overlay covers full viewport (not dashboard content pane) #2004 -->
+  <Teleport to="body">
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[60] flex items-end md:items-stretch md:justify-end bg-overlay-backdrop/50"
+      class="fixed inset-0 z-[80] flex items-end md:items-stretch md:justify-end bg-overlay-backdrop/50"
       @click.self="handleClose"
     >
       <div
@@ -467,6 +469,7 @@
       </div>
     </div>
   </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
