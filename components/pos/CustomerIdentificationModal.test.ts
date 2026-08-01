@@ -70,6 +70,18 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+describe('CustomerIdentificationModal shell', () => {
+  it('docks as a right slideover on desktop (md:max-w-md)', () => {
+    const wrapper = mountModal()
+    const panel = wrapper.find('[role="dialog"]')
+    const classes = panel.classes()
+    expect(classes).toContain('md:max-w-md')
+    expect(classes).toContain('md:h-full')
+    expect(classes).not.toContain('h-full')
+    wrapper.unmount()
+  })
+})
+
 describe('CustomerIdentificationModal customer identities', () => {
   it('shows contact and a distinct fiscal acquirer in a compact result', async () => {
     const wrapper = mountModal()
