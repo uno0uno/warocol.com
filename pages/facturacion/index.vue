@@ -947,6 +947,12 @@ const taxLevels = [
   { value: 4, label: t('facturacion.taxLevels.simple') },
   { value: 5, label: t('facturacion.taxLevels.na') },
 ]
+
+/** Read-only Matias regime label derived from sales_tax_profile (#1988). */
+const matiasRegimeLabel = computed(() => {
+  const match = taxRegimes.find(opt => opt.value === fiscalForm.tax_regime_id)
+  return match?.label || ''
+})
 </script>
 
 <template>
@@ -1343,63 +1349,76 @@ const taxLevels = [
       </UiResponsiveDataView>
     </div>
 
-    <!-- ══════ DATOS FISCALES ══════ -->
-    <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
-        <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
-        {{ t('facturacion.fiscal.sectionTitle') }}
-      </h3>
-      <p class="text-xs text-text-secondary mb-4">
-        {{ t('facturacion.fiscal.body') }}
-      </p>
+    <!-- ══════ DATOS FISCALES (CO hierarchy #1988) ══════ -->
+    <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 space-y-6">
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
+          <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
+          {{ t('facturacion.fiscal.sectionTitle') }}
+        </h3>
+        <p class="text-xs text-text-secondary">
+          {{ t('facturacion.fiscal.body') }}
+        </p>
+      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- NIT -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.nit') }} <span class="text-form-control-error">*</span></label>
-          <input
-            id="fiscal-nit"
-            v-model="fiscalForm.nit"
-            type="text"
-            placeholder="901.234.567-8"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
+      <!-- 1) Identity -->
+      <section class="space-y-3" aria-labelledby="fiscal-identity-heading">
+        <div>
+          <h4 id="fiscal-identity-heading" class="text-sm font-semibold text-text-primary">
+            {{ t('facturacion.fiscal.identityTitle') }}
+          </h4>
+          <p class="text-[11px] text-text-tertiary leading-snug mt-0.5">
+            {{ t('facturacion.fiscal.identityHint') }}
+          </p>
         </div>
-
-        <!-- Razón social -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-name" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.businessName') }} <span class="text-form-control-error">*</span></label>
-          <input
-            id="fiscal-name"
-            v-model="fiscalForm.business_name"
-            type="text"
-            :placeholder="t('facturacion.fiscal.businessNamePlaceholder')"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-nit" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.nit') }} <span class="text-form-control-error">*</span></label>
+            <input
+              id="fiscal-nit"
+              v-model="fiscalForm.nit"
+              type="text"
+              placeholder="901.234.567-8"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-name" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.businessName') }} <span class="text-form-control-error">*</span></label>
+            <input
+              id="fiscal-name"
+              v-model="fiscalForm.business_name"
+              type="text"
+              :placeholder="t('facturacion.fiscal.businessNamePlaceholder')"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1 sm:col-span-2 sm:max-w-md">
+            <label for="fiscal-org" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.orgType') }}</label>
+            <select
+              id="fiscal-org"
+              v-model="fiscalForm.type_organization_id"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            >
+              <option v-for="opt in orgTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.orgHint') }}</p>
+          </div>
         </div>
+      </section>
 
-        <!-- Tipo organización -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-org" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.orgType') }}</label>
-          <select
-            id="fiscal-org"
-            v-model="fiscalForm.type_organization_id"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-          >
-            <option v-for="opt in orgTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.orgHint') }}</p>
-        </div>
-
-        <!-- Régimen tributario -->
-        <fieldset class="flex flex-col gap-2 sm:col-span-2">
-          <legend class="text-sm font-medium text-text-primary">
+      <!-- 2) Sales tax profile (calc + Matias driver) -->
+      <section class="space-y-3 border-t border-border/40 pt-5" aria-labelledby="fiscal-profile-heading">
+        <div>
+          <h4 id="fiscal-profile-heading" class="text-sm font-semibold text-text-primary">
             {{ t('facturacion.salesTaxProfiles.title') }}
             <span class="text-form-control-error">*</span>
-          </legend>
-          <p class="text-[11px] text-text-tertiary leading-snug">
+          </h4>
+          <p class="text-[11px] text-text-tertiary leading-snug mt-0.5">
             {{ t('facturacion.salesTaxProfiles.hint') }}
           </p>
+        </div>
+        <fieldset class="flex flex-col gap-2">
+          <legend class="sr-only">{{ t('facturacion.salesTaxProfiles.title') }}</legend>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               v-for="profile in salesTaxProfiles"
@@ -1425,23 +1444,28 @@ const taxLevels = [
             {{ t('facturacion.salesTaxProfiles.required') }}
           </p>
         </fieldset>
+        <p
+          v-if="fiscalForm.sales_tax_profile !== 'unconfigured' && matiasRegimeLabel"
+          class="text-xs text-text-secondary rounded-lg border border-border/60 bg-surface-secondary px-3 py-2"
+          role="status"
+        >
+          <span class="font-medium text-text-primary">{{ t('facturacion.fiscal.taxRegime') }}:</span>
+          {{ matiasRegimeLabel }}
+          <span class="block mt-0.5 text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.taxRegimeHint') }}</span>
+        </p>
+      </section>
 
-        <!-- Régimen Matias derivado del perfil -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.taxRegime') }}</label>
-          <select
-            id="fiscal-regime"
-            v-model="fiscalForm.tax_regime_id"
-            disabled
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-secondary bg-surface-secondary cursor-not-allowed"
-          >
-            <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.taxRegimeHint') }}</p>
+      <!-- 3) Optional Matias extras -->
+      <section class="space-y-3 border-t border-border/40 pt-5" aria-labelledby="fiscal-extras-heading">
+        <div>
+          <h4 id="fiscal-extras-heading" class="text-sm font-semibold text-text-primary">
+            {{ t('facturacion.fiscal.extrasTitle') }}
+          </h4>
+          <p class="text-[11px] text-text-tertiary leading-snug mt-0.5">
+            {{ t('facturacion.fiscal.extrasHint') }}
+          </p>
         </div>
-
-        <!-- Nivel de responsabilidad -->
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 sm:max-w-md">
           <label for="fiscal-level" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.taxLevel') }}</label>
           <select
             id="fiscal-level"
@@ -1452,58 +1476,63 @@ const taxLevels = [
           </select>
           <p class="text-[11px] text-text-tertiary leading-snug">{{ t('facturacion.fiscal.taxLevelHint') }}</p>
         </div>
+      </section>
 
-        <!-- Dirección fiscal -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-address" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.address') }}</label>
-          <input
-            id="fiscal-address"
-            v-model="fiscalForm.fiscal_address"
-            type="text"
-            placeholder="Cra 7 #45-12"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
+      <!-- 4) Contact -->
+      <section class="space-y-3 border-t border-border/40 pt-5" aria-labelledby="fiscal-contact-heading">
+        <div>
+          <h4 id="fiscal-contact-heading" class="text-sm font-semibold text-text-primary">
+            {{ t('facturacion.fiscal.contactTitle') }}
+          </h4>
+          <p class="text-[11px] text-text-tertiary leading-snug mt-0.5">
+            {{ t('facturacion.fiscal.contactHint') }}
+          </p>
         </div>
-
-        <!-- Ciudad -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-city" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.city') }}</label>
-          <input
-            id="fiscal-city"
-            v-model="fiscalForm.city"
-            type="text"
-            placeholder="Bogotá"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-address" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.address') }}</label>
+            <input
+              id="fiscal-address"
+              v-model="fiscalForm.fiscal_address"
+              type="text"
+              placeholder="Cra 7 #45-12"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-city" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.city') }}</label>
+            <input
+              id="fiscal-city"
+              v-model="fiscalForm.city"
+              type="text"
+              placeholder="Bogotá"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-phone" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.phone') }}</label>
+            <input
+              id="fiscal-phone"
+              v-model="fiscalForm.phone"
+              type="tel"
+              placeholder="3001234567"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="fiscal-email" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.email') }}</label>
+            <input
+              id="fiscal-email"
+              v-model="fiscalForm.email"
+              type="email"
+              :placeholder="t('facturacion.fiscal.emailPlaceholder')"
+              class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
         </div>
+      </section>
 
-        <!-- Teléfono -->
-        <div class="flex flex-col gap-1">
-          <label for="fiscal-phone" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.phone') }}</label>
-          <input
-            id="fiscal-phone"
-            v-model="fiscalForm.phone"
-            type="tel"
-            placeholder="3001234567"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
-
-        <!-- Email facturación -->
-        <div class="flex flex-col gap-1 sm:col-span-2">
-          <label for="fiscal-email" class="text-sm font-medium text-text-primary">{{ t('facturacion.fiscal.email') }}</label>
-          <input
-            id="fiscal-email"
-            v-model="fiscalForm.email"
-            type="email"
-            :placeholder="t('facturacion.fiscal.emailPlaceholder')"
-            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
-      </div>
-
-      <!-- Save button -->
-      <div class="mt-5 flex justify-end">
+      <div class="flex justify-end pt-1">
         <button
           @click="saveFiscalData"
           :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name || fiscalForm.sales_tax_profile === 'unconfigured'"
