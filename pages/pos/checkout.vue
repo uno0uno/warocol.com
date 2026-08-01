@@ -4935,49 +4935,92 @@ onUnmounted(() => {
     </Teleport>
 
     <Teleport to="body">
-      <div
-        v-if="showSuccessModal"
-        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
       >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-overlay-backdrop/50"></div>
+        <div
+          v-if="showSuccessModal"
+          class="fixed inset-0 z-50 bg-overlay-backdrop/40"
+          aria-hidden="true"
+          @click="closeSuccessModal"
+        />
+      </Transition>
 
-        <!-- Modal -->
-        <div class="relative my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface p-5 shadow-xl">
-          <!-- Icon -->
-          <div class="flex justify-center mb-3">
-            <div class="w-14 h-14 rounded-full flex items-center justify-center bg-state-success-bg ">
-              <svg
-                class="w-7 h-7 text-state-success-text "
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
+      <Transition name="checkout-success-panel">
+        <div
+          v-if="showSuccessModal"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="orderResult?.status === 'pending'
+            ? t('pos.checkout.success.pendingTitle')
+            : orderResult?.payment_method === 'credit'
+              ? t('pos.checkout.success.creditTitle')
+              : t('pos.checkout.success.completedTitle')"
+          class="fixed z-[51] flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto
+                 md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full
+                 md:border-s md:border-border"
+          @click.stop
+        >
+          <!-- Mobile drag handle -->
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0" aria-hidden="true">
+            <div class="w-10 h-1 rounded-full bg-border" />
           </div>
 
-          <!-- Title -->
-          <h3 class="text-xl font-bold leading-tight text-text-primary text-center mb-1.5">
-            {{
-              orderResult?.status === 'pending'
-                ? t('pos.checkout.success.pendingTitle')
-                : orderResult?.payment_method === 'credit'
-                  ? t('pos.checkout.success.creditTitle')
-                  : t('pos.checkout.success.completedTitle')
-            }}
-          </h3>
-          <p class="text-sm leading-snug text-text-secondary text-center mb-4">
-            {{
-              orderResult?.status === 'pending'
-                ? t('pos.checkout.success.pendingBody')
-                : orderResult?.payment_method === 'credit'
-                  ? t('pos.checkout.success.creditBody')
-                  : t('pos.checkout.success.completedBody')
-            }}
-          </p>
+          <!-- Header -->
+          <div class="flex-shrink-0 flex items-start justify-between gap-3 px-5 pt-2 pb-3 border-b border-border">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="w-11 h-11 rounded-full flex items-center justify-center bg-state-success-bg flex-shrink-0">
+                <svg
+                  class="w-6 h-6 text-state-success-text"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-lg font-bold leading-tight text-text-primary">
+                  {{
+                    orderResult?.status === 'pending'
+                      ? t('pos.checkout.success.pendingTitle')
+                      : orderResult?.payment_method === 'credit'
+                        ? t('pos.checkout.success.creditTitle')
+                        : t('pos.checkout.success.completedTitle')
+                  }}
+                </h3>
+                <p class="text-sm leading-snug text-text-secondary mt-0.5">
+                  {{
+                    orderResult?.status === 'pending'
+                      ? t('pos.checkout.success.pendingBody')
+                      : orderResult?.payment_method === 'credit'
+                        ? t('pos.checkout.success.creditBody')
+                        : t('pos.checkout.success.completedBody')
+                  }}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
+              :aria-label="t('pos.comandasPanel.closePanelAria')"
+              @click="closeSuccessModal"
+            >
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
+          <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">
           <!-- Credit notice banner -->
           <div v-if="orderResult?.payment_method === 'credit'" class="mb-3 rounded-lg border border-state-warning-border/70 bg-state-warning-bg/70 px-3 py-2.5">
             <div class="flex items-center gap-2">
@@ -5293,17 +5336,22 @@ onUnmounted(() => {
 	              {{ t('pos.checkout.actions.printReceipt') }}
             </button>
           </div>
+          </div>
 
-          <!-- Accept Button -->
-          <button
-            @click="closeSuccessModal"
-            class="w-full py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-medium hover:bg-action-primary-hover-bg transition-colors"
-          >
-	            {{ t('pos.checkout.actions.newSale') }}
-          </button>
+          <!-- Sticky CTA -->
+          <div class="flex-shrink-0 border-t border-border p-4 bg-surface">
+            <button
+              type="button"
+              class="w-full min-h-[44px] py-3 px-4 bg-action-primary-bg text-action-primary-text rounded-lg font-medium hover:bg-action-primary-hover-bg transition-colors"
+              @click="closeSuccessModal"
+            >
+              {{ t('pos.checkout.actions.newSale') }}
+            </button>
+          </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
+
 
     <PosReceiptPrintTicket
       v-if="orderResult"
@@ -5784,6 +5832,22 @@ onUnmounted(() => {
   padding-left: 2mm;
   margin-top: -1px;
   font-size: 0.92em;
+}
+
+/* Checkout success slideover (#1985) — matches ComandasEstadoPanel motion */
+.checkout-success-panel-enter-active,
+.checkout-success-panel-leave-active {
+  transition: transform 0.25s ease;
+}
+.checkout-success-panel-enter-from,
+.checkout-success-panel-leave-to {
+  transform: translateY(100%);
+}
+@media (min-width: 768px) {
+  .checkout-success-panel-enter-from,
+  .checkout-success-panel-leave-to {
+    transform: translateX(100%);
+  }
 }
 </style>
 

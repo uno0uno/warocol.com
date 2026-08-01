@@ -1,0 +1,32 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 1985
+title: "Replace POS checkout success modal with right slideover"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1985-checkout-success-slideover
+risk: low
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Post-pay success UI is a right slideover on md+ (bottom sheet on mobile)
+  - Backdrop + header X + sticky "new sale" call closeSuccessModal
+  - All success content/actions preserved (print, email, FE, credit, fiscal)
+  - Motion matches ComandasEstadoPanel (translateX desktop / translateY mobile)
+
+out_of_scope:
+  - void-payment modal
+  - customer ID sheet
+  - thermal/print layout changes
+  - extracting CheckoutSuccessPanel.vue (optional, deferred)
+
+hints:
+  entry: "pages/pos/checkout.vue — showSuccessModal Teleport ~4937"
+  pattern: "components/pos/ComandasEstadoPanel.vue — panel Transition + shell"
+  tests: "manual POS pay flow on /pos/checkout"
+
+skip:
+  audits: [ux, color, typography]
