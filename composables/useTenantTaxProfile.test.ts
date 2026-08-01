@@ -19,6 +19,7 @@ import {
   taxConfigHasTaxes,
   taxConfigUsesMenuCategoryTaxUi,
   taxLineForCategory,
+  taxLinesForUi,
   validateCommercialMatrix,
   wave1PresetForCountry,
   additiveOrderTaxTotal,
@@ -386,11 +387,32 @@ describe('useTenantTaxProfile', () => {
     expect(body.exempt_menu_category_ids).toEqual([catB])
   })
 
-  it('uses menu-category tax UI only for commercial tax_lines (#1885)', () => {
-    expect(taxConfigUsesMenuCategoryTaxUi({ inc_applicable: true })).toBe(false)
+  it('uses menu-category tax UI for commercial tax_lines and CO columns (#1885 / #1994)', () => {
+    expect(taxConfigUsesMenuCategoryTaxUi({ inc_applicable: true, inc_rate: 0.08 })).toBe(true)
     expect(taxConfigUsesMenuCategoryTaxUi({
       tax_lines: [{ key: 'iva', label: 'IVA', rate: 0.16, included_in_price: false, gl_role: 'iva' }],
     })).toBe(true)
+    expect(taxConfigUsesMenuCategoryTaxUi({})).toBe(false)
+  })
+
+  it('synthesizes CO tax lines for Menú UI (#1994)', () => {
+    const lines = taxLinesForUi({
+      iva_applicable: true,
+      iva_rate: 0.19,
+      iva_included_in_price: false,
+      liquor_tax_applicable: true,
+      liquor_tax_rate: 0.05,
+    })
+    expect(lines.map(l => l.key)).toEqual(['iva', 'liquor'])
+    expect(lines[0]?.label).toBe('IVA 19%')
+    expect(lines[1]?.label).toBe('IVA licores 5%')
+
+    const incOnly = taxLinesForUi({
+      inc_applicable: true,
+      inc_rate: 0.08,
+      inc_included_in_price: true,
+    })
+    expect(incOnly.map(l => l.key)).toEqual(['inc'])
   })
 
   it('inherits tax line from menu category map with override precedence (#1885)', () => {
@@ -424,6 +446,37 @@ describe('useTenantTaxProfile', () => {
     expect(legacyTaxCategoryFromResolution(cfg, {
       tax_resolution: 'exempt',
     })).toBe('exempt')
+  })
+
+  it('CO inherit/preview uses synthesized lines and dual-writes liquor (#1994)', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const catB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const cfg = {
+      iva_applicable: true,
+      iva_rate: 0.19,
+      iva_included_in_price: false,
+      liquor_tax_applicable: true,
+      liquor_tax_rate: 0.05,
+      menu_category_line_map: { [catA]: 'liquor' },
+      exempt_menu_category_ids: [catB],
+    }
+    expect(inheritedTaxLineForMenuCategory(cfg, catA)?.key).toBe('liquor')
+    expect(inheritedTaxLineForMenuCategory(cfg, catB)).toBeNull()
+    expect(inheritedTaxLineForMenuCategory(cfg, 'unknown')?.key).toBe('iva')
+    expect(resolveProductTaxLinePreview(cfg, {
+      categoryId: catA,
+      tax_resolution: 'line',
+      tax_line_key: 'liquor',
+    })?.key).toBe('liquor')
+    expect(legacyTaxCategoryFromResolution(cfg, {
+      categoryId: catA,
+      tax_resolution: 'line',
+      tax_line_key: 'liquor',
+    })).toBe('liquor')
+    expect(legacyTaxCategoryFromResolution(cfg, {
+      categoryId: 'unknown',
+      tax_resolution: 'inherit',
+    })).toBe('standard')
   })
 
   it('additiveOrderTaxTotal includes exclusive MX IVA and skips included CO INC', () => {
