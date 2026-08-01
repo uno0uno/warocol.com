@@ -1029,12 +1029,12 @@ const {
   taxConfigUsesMenuCategoryTaxUi,
   inheritedTaxLineForMenuCategory,
   legacyTaxCategoryFromResolution,
-  normalizeTaxLines,
+  taxLinesForUi,
 } = useTenantTaxProfile()
 const hasTaxes = computed(() => taxConfigHasTaxes(taxConfig.value))
 const usesMenuCategoryTaxUi = computed(() => taxConfigUsesMenuCategoryTaxUi(taxConfig.value))
 const taxCategories = computed(() => taxCategoryOptions(taxConfig.value))
-const commercialTaxLines = computed(() => normalizeTaxLines(taxConfig.value?.tax_lines))
+const commercialTaxLines = computed(() => taxLinesForUi(taxConfig.value))
 const standardTaxHint = computed(() => {
   const line = taxLineForCategory(taxConfig.value, 'standard')
   if (line?.label) return line.label

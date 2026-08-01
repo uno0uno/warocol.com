@@ -391,13 +391,16 @@ export function taxLineForCategory(
   category: TaxCategoryKey,
 ): TaxLineDraft | null {
   if (category === 'exempt') return null
-  const lines = normalizeTaxLines(cfg?.tax_lines)
+  const lines = taxLinesForUi(cfg)
   if (!lines.length) return null
   const map = normalizeCategoryMap(cfg?.category_map)
   const mappedKey = map?.[category]
   if (mappedKey) {
     const match = lines.find(line => line.key === mappedKey)
     if (match) return match
+  }
+  if (category === 'liquor') {
+    return lines.find(line => line.key === 'liquor') ?? null
   }
   if (category === 'standard') return lines[0] ?? null
   return null
@@ -460,14 +463,59 @@ export function taxCategoryOptions(cfg: Record<string, unknown> | null | undefin
   return ['standard', 'liquor', 'exempt']
 }
 
-/** Commercial Menú inherit/override UX when tax_lines exist (#1885). CO keeps fiscal chips. */
+/**
+ * Tax lines for Menú UI: stored commercial tax_lines, else CO column synthesis (#1994).
+ * Mirrors API `_profile_from_co_columns` keys: `iva`|`inc` + optional `liquor`.
+ */
+export function taxLinesForUi(cfg: Record<string, unknown> | null | undefined): TaxLineDraft[] {
+  const stored = normalizeTaxLines(cfg?.tax_lines)
+  if (stored.length) return stored
+  if (!cfg) return []
+
+  const lines: TaxLineDraft[] = []
+  if (cfg.inc_applicable) {
+    const rate = Math.max(0, Number(cfg.inc_rate) || 0)
+    lines.push({
+      key: 'inc',
+      label: `INC ${Math.round(rate * 100)}%`,
+      rate,
+      included_in_price: Boolean(cfg.inc_included_in_price ?? true),
+      gl_role: 'inc',
+    })
+  } else if (cfg.iva_applicable) {
+    const rate = Math.max(0, Number(cfg.iva_rate) || 0)
+    lines.push({
+      key: 'iva',
+      label: `IVA ${Math.round(rate * 100)}%`,
+      rate,
+      included_in_price: Boolean(cfg.iva_included_in_price ?? false),
+      gl_role: 'iva',
+    })
+  }
+
+  if (cfg.liquor_tax_applicable) {
+    const rate = Math.max(0, Number(cfg.liquor_tax_rate) || 0.05)
+    const pct = Math.round(rate * 100)
+    lines.push({
+      key: 'liquor',
+      label: Math.abs(rate - 0.05) < 1e-9 ? 'IVA licores 5%' : `IVA licores ${pct}%`,
+      rate,
+      included_in_price: false,
+      gl_role: 'liquor',
+    })
+  }
+
+  return lines
+}
+
+/** Menú inherit/override UX when commercial tax_lines or CO synthesized lines exist (#1885 / #1994). */
 export type ProductTaxResolution = 'inherit' | 'exempt' | 'line'
 
 export function taxConfigUsesMenuCategoryTaxUi(
   cfg: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!taxConfigHasTaxes(cfg)) return false
-  return normalizeTaxLines(cfg?.tax_lines).length > 0
+  return taxLinesForUi(cfg).length > 0
 }
 
 /**
@@ -478,7 +526,7 @@ export function inheritedTaxLineForMenuCategory(
   cfg: Record<string, unknown> | null | undefined,
   categoryId: string | null | undefined,
 ): TaxLineDraft | null {
-  const lines = normalizeTaxLines(cfg?.tax_lines)
+  const lines = taxLinesForUi(cfg)
   if (!lines.length) return null
   const catId = String(categoryId || '').trim()
   const exemptIds = new Set(normalizeExemptMenuCategoryIds(cfg?.exempt_menu_category_ids))
@@ -504,7 +552,7 @@ export function resolveProductTaxLinePreview(
     tax_line_key?: string | null
   },
 ): TaxLineDraft | null {
-  const lines = normalizeTaxLines(cfg?.tax_lines)
+  const lines = taxLinesForUi(cfg)
   if (!lines.length) return null
   const resolution = String(options.tax_resolution || 'inherit').trim().toLowerCase()
   if (resolution === 'exempt') return null
@@ -528,6 +576,8 @@ export function legacyTaxCategoryFromResolution(
   if (!line) return 'exempt'
   const map = normalizeCategoryMap(cfg?.category_map)
   if (map?.liquor && line.key === map.liquor) return 'liquor'
+  // CO synthesized profile: liquor line key is always `liquor` (#1994).
+  if (line.key === 'liquor') return 'liquor'
   return 'standard'
 }
 
@@ -658,6 +708,7 @@ export function useTenantTaxProfile() {
     normalizeExemptMenuCategoryIds,
     normalizeJurisdictionOptions,
     taxConfigHasTaxes,
+    taxLinesForUi,
     taxLineForCategory,
     primaryTaxLine,
     taxCategoryOptions,
