@@ -19,6 +19,13 @@ import { computePromoEligibleSubtotal, linePromoSavingsForProduct } from '~/util
 import { normalizeFiscalDocumentId } from '~/utils/fiscalDocument'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+import {
+  formatReceiptModifierBlock,
+  formatReceiptProductBlock,
+  padReceiptLine,
+  receiptDivider,
+  collectThermalTicketText,
+} from '~/utils/receiptTicketPlainText'
 import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
@@ -1812,8 +1819,32 @@ const getModifierLineTotal = (mod: PrintModifier) =>
 
 const formatModifierPrintDesc = (mod: PrintModifier) => {
   const qty = Number(mod.quantity) || 1
-  return qty > 1 ? `+ ${mod.name} ×${qty}` : `+ ${mod.name}`
+  return qty > 1 ? `+ ${mod.name} x${qty}` : `+ ${mod.name}`
 }
+
+const prefacturaDash = receiptDivider()
+const prefacturaStrong = receiptDivider(32, '=')
+
+const prefacturaMoneyLine = (label: string, amount: number | string, negative = false) => {
+  const amt = formatCurrencyThermal(amount)
+  return padReceiptLine(label, negative ? `-${amt}` : amt)
+}
+
+const prefacturaProductBlock = (item: any) =>
+  formatReceiptProductBlock({
+    name: `${item.product?.name || item.name || 'Item'}${isKitchenServiceMode.value && item.fired === false ? ' *' : ''}`,
+    quantity: item.quantity,
+    unitPriceLabel: formatCurrencyThermal(getItemUnitPrice(item)),
+    lineTotalLabel: formatCurrencyThermal(getItemTotal(item)),
+  })
+
+const prefacturaModifierBlock = (mod: PrintModifier) =>
+  formatReceiptModifierBlock({
+    description: formatModifierPrintDesc(mod),
+    quantity: mod.quantity ?? 1,
+    unitPriceLabel: formatCurrencyThermal(Number(mod.price) || 0),
+    lineTotalLabel: formatCurrencyThermal(getModifierLineTotal(mod)),
+  })
 
 const receiptPrintLineGuards = (item: any) => [
   item.promo_opt_out,
@@ -2544,7 +2575,15 @@ const printReceipt = async () => {
     window.removeEventListener('afterprint', cleanup)
   }
   // Defer window.print until after await so body print classes stay until fallback.
-  const mode = await printTicketElement('pos-receipt', { browserPrint: () => {} })
+  // Prefer teleported ReceiptPrintTicket (plain-text layout #1979), not flex #pos-receipt.
+  const mode = await printTicketElement('pos-receipt', {
+    browserPrint: () => {},
+    getElementHtml: () => {
+      if (typeof document === 'undefined') return null
+      const el = document.querySelector('.receipt-print-ticket')
+      return collectThermalTicketText(el) || null
+    },
+  })
   if (mode === 'bridge') {
     cleanup()
     return
@@ -2882,7 +2921,13 @@ const printPrefactura = async () => {
 
   await nextTick()
   // Defer window.print until after await so body print classes stay until fallback.
-  const mode = await printTicketElement('pos-prefactura', { browserPrint: () => {} })
+  const mode = await printTicketElement('pos-prefactura', {
+    browserPrint: () => {},
+    getElementHtml: () => {
+      if (typeof document === 'undefined') return null
+      return collectThermalTicketText(document.getElementById('pos-prefactura')) || null
+    },
+  })
   if (mode === 'bridge') {
     cleanup()
     return
@@ -5342,105 +5387,74 @@ onUnmounted(() => {
         </div>
       </template>
     </template>
-    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-plain-line">{{ prefacturaDash }}</div>
 
-    <div class="receipt-product-header receipt-small">
-      <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>
-      <span class="receipt-col-total">{{ t('pos.receipt.total') }}</span>
-    </div>
+    <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
     <template v-for="item in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
-      <div class="receipt-product-line receipt-small">
-        <div class="receipt-product-name">
-          {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
-        </div>
-        <div class="receipt-product-values">
-          <span>{{ item.quantity }} × {{ formatCurrencyThermal(getItemUnitPrice(item)) }}</span>
-          <strong>{{ formatCurrencyThermal(getItemTotal(item)) }}</strong>
-        </div>
-      </div>
-      <div
+      <pre class="receipt-plain-pre">{{ prefacturaProductBlock(item) }}</pre>
+      <pre
         v-for="mod in (item.modifiers ?? [])"
         :key="`${item.id ?? item.orderItemId}-${mod.id}`"
-        class="receipt-product-line receipt-small receipt-modifier-row"
-      >
-        <div class="receipt-product-name">{{ formatModifierPrintDesc(mod) }}</div>
-        <div class="receipt-product-values">
-          <span>{{ (Number(mod.quantity) || 1) > 1 ? `${mod.quantity} × ` : '' }}{{ formatCurrencyThermal(Number(mod.price) || 0) }}</span>
-          <span>{{ formatCurrencyThermal(getModifierLineTotal(mod)) }}</span>
-        </div>
-      </div>
+        class="receipt-plain-pre"
+      >{{ prefacturaModifierBlock(mod) }}</pre>
     </template>
-    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-plain-line">{{ prefacturaDash }}</div>
 
-    <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
-      <span>{{ t('pos.receipt.subtotal') }}</span>
-      <span>{{ formatCurrencyThermal(prefacturaPrintData.cartSubtotal) }}</span>
+    <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-plain-line">
+      {{ prefacturaMoneyLine(t('pos.receipt.subtotal'), prefacturaPrintData.cartSubtotal) }}
     </div>
     <div
       v-for="promo in prefacturaPrintData.promoBreakdown"
       :key="promo.promotion_id ?? promo.promotion_name"
-      class="receipt-item"
+      class="receipt-plain-line"
     >
-      <span>{{ promo.promotion_name }}</span>
-      <span>-{{ formatCurrencyThermal(promo.savings) }}</span>
+      {{ prefacturaMoneyLine(promo.promotion_name, promo.savings, true) }}
     </div>
-    <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
-      <span>{{ t('pos.receipt.manualDiscount') }}</span>
-      <span>-{{ formatCurrencyThermal(prefacturaPrintData.manualDiscountAmount) }}</span>
+    <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-plain-line">
+      {{ prefacturaMoneyLine(t('pos.receipt.manualDiscount'), prefacturaPrintData.manualDiscountAmount, true) }}
     </div>
-    <div v-if="prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
-      <span>{{ prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : t('pos.receipt.waroRedeem') }}</span>
-      <span>-{{ formatCurrencyThermal(prefacturaPrintData.waroDiscountCop) }}</span>
+    <div v-if="prefacturaPrintData.waroDiscountCop > 0" class="receipt-plain-line">
+      {{ prefacturaMoneyLine(prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : t('pos.receipt.waroRedeem'), prefacturaPrintData.waroDiscountCop, true) }}
     </div>
-    <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
-      <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
-      <span>{{ formatCurrencyThermal(taxPreview.standard_tax) }}</span>
+    <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-plain-line">
+      {{ prefacturaMoneyLine(localizedInternalTaxLabel(taxPreview.standard_tax_label), taxPreview.standard_tax) }}
     </div>
-    <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
-      <span>{{ taxPreview.liquor_tax_label || t('pos.receipt.liquorVat') }}</span>
-      <span>{{ formatCurrencyThermal(taxPreview.liquor_tax) }}</span>
+    <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-plain-line">
+      {{ prefacturaMoneyLine(taxPreview.liquor_tax_label || t('pos.receipt.liquorVat'), taxPreview.liquor_tax) }}
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
     <template v-if="prefacturaPrintData.tipAmount > 0 || prefacturaPrintData.advanceApplied > 0">
-      <div class="receipt-item">
-        <span>{{ t('pos.receipt.orderTotal') }}</span>
-        <span>{{ formatCurrencyThermal(prefacturaPrintData.orderTotal) }}</span>
+      <div class="receipt-plain-line">
+        {{ prefacturaMoneyLine(t('pos.receipt.orderTotal'), prefacturaPrintData.orderTotal) }}
       </div>
-      <div class="receipt-item">
-        <span>{{ receiptTipLabel }}</span>
-        <span>{{ formatCurrencyThermal(prefacturaPrintData.tipAmount) }}</span>
+      <div class="receipt-plain-line">
+        {{ prefacturaMoneyLine(receiptTipLabel, prefacturaPrintData.tipAmount) }}
       </div>
-      <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-item">
-        <span>{{ prefacturaPrintData.tipTaxLabel }}</span>
-        <span>{{ formatCurrencyThermal(prefacturaPrintData.tipTaxAmount) }}</span>
+      <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-plain-line">
+        {{ prefacturaMoneyLine(prefacturaPrintData.tipTaxLabel, prefacturaPrintData.tipTaxAmount) }}
       </div>
-      <div v-if="prefacturaPrintData.advanceApplied > 0" class="receipt-item">
-        <span>{{ t('pos.receipt.tableAdvance') }}</span>
-        <span>-{{ formatCurrencyThermal(prefacturaPrintData.advanceApplied) }}</span>
+      <div v-if="prefacturaPrintData.advanceApplied > 0" class="receipt-plain-line">
+        {{ prefacturaMoneyLine(t('pos.receipt.tableAdvance'), prefacturaPrintData.advanceApplied, true) }}
       </div>
-      <div class="receipt-total">
-        <span>{{ t('pos.receipt.totalDue') }}</span>
-        <span>{{ formatCurrencyThermal(prefacturaPrintData.amountDue) }}</span>
+      <div class="receipt-plain-line receipt-plain-total">
+        {{ prefacturaMoneyLine(t('pos.receipt.totalDue'), prefacturaPrintData.amountDue) }}
       </div>
     </template>
-    <div v-else class="receipt-total">
-      <span>{{ t('pos.receipt.totalUpper') }}</span>
-      <span>{{ formatCurrencyThermal(prefacturaPrintData.orderTotal) }}</span>
+    <div v-else class="receipt-plain-line receipt-plain-total">
+      {{ prefacturaMoneyLine(t('pos.receipt.totalUpper'), prefacturaPrintData.orderTotal) }}
     </div>
     <template v-if="prefacturaPrintData.splitPayments.length > 0">
-      <div class="receipt-divider">--------------------------------</div>
+      <div class="receipt-plain-line">{{ prefacturaDash }}</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentsRegistered') }}</div>
       <div
         v-for="(p, idx) in prefacturaPrintData.splitPayments"
         :key="p.id"
-        class="receipt-item receipt-small"
+        class="receipt-plain-line receipt-small"
       >
-        <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
-        <span>{{ formatCurrencyThermal(p.amount) }}</span>
+        {{ prefacturaMoneyLine(`#${idx + 1} - ${p.payment_method_name}`, p.amount) }}
       </div>
-      <div class="receipt-item">
-        <span>{{ prefacturaPrintData.splitIsComplete ? t('pos.receipt.paymentComplete') : t('pos.receipt.balancePending') }}</span>
-        <span>{{ formatCurrencyThermal(prefacturaPrintData.splitRemaining) }}</span>
+      <div class="receipt-plain-line">
+        {{ prefacturaMoneyLine(prefacturaPrintData.splitIsComplete ? t('pos.receipt.paymentComplete') : t('pos.receipt.balancePending'), prefacturaPrintData.splitRemaining) }}
       </div>
     </template>
 
@@ -5448,7 +5462,7 @@ onUnmounted(() => {
       {{ t('pos.receipt.pendingKitchen') }}
     </div>
 
-    <div class="receipt-divider">================================</div>
+    <div class="receipt-plain-line">{{ prefacturaStrong }}</div>
     <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
     <div class="receipt-footer receipt-small" style="font-weight:bold;">{{ t('pos.receipt.prefacturaBanner') }}</div>
     <div class="receipt-footer receipt-small">
@@ -5708,6 +5722,25 @@ onUnmounted(() => {
 
 /* Prefactura product-line layout — mirrors ReceiptPrintTicket so numbers
    (qty × price = total) never overlap on narrow thermal paper. */
+#pos-prefactura .receipt-plain-line,
+#pos-prefactura .receipt-plain-pre,
+#pos-receipt .receipt-plain-line,
+#pos-receipt .receipt-plain-pre {
+  display: block;
+  margin: 2px 0;
+  padding: 0;
+  white-space: pre;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+}
+#pos-prefactura .receipt-plain-total,
+#pos-receipt .receipt-plain-total {
+  font-weight: 700;
+  margin-top: 4px;
+}
 #pos-prefactura .receipt-product-header {
   display: grid;
   grid-template-columns: 1fr auto;
