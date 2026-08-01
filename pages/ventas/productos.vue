@@ -384,18 +384,6 @@ onUnmounted(() => {
         </template>
       </UiResponsiveDataView>
 
-      <!-- Totals row (period totals — not page-only) -->
-      <div
-        v-if="productsTotal > 0 && !isRefreshing"
-        class="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl text-sm font-semibold"
-      >
-        <span class="text-text-secondary">{{ productsTotal === 1 ? t('ventas.productos.totalProducts', { count: productsTotal }) : t('ventas.productos.totalProducts_plural', { count: productsTotal }) }}</span>
-        <div class="flex items-center gap-6">
-          <span class="text-text-primary">{{ totals.quantity_sold }} {{ t('ventas.productos.unitsAbbr') }}</span>
-          <span class="text-primary">{{ formatCurrency(totals.total_revenue) }}</span>
-        </div>
-      </div>
-
       <!-- Pagination (match ventas/ordenes) -->
       <div v-if="productsTotal > 0" class="flex items-center justify-end px-1 py-2">
         <div class="flex items-center gap-1">
