@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  compactThermalMoneyLabel,
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
   padReceiptLine,
@@ -7,12 +8,19 @@ import {
   collectThermalTicketText,
 } from './receiptTicketPlainText'
 
+describe('compactThermalMoneyLabel', () => {
+  it('strips COP prefix for narrower thermal columns', () => {
+    expect(compactThermalMoneyLabel('$ COP 45.000,00')).toBe('$45.000,00')
+    expect(compactThermalMoneyLabel('$ 1.000')).toBe('$1.000')
+  })
+})
+
 describe('padReceiptLine', () => {
   it('keeps a space gap so label and amount do not mash', () => {
-    const line = padReceiptLine('Subtotal', '$ COP 1.763.000,00', 32)
+    const line = padReceiptLine('Subtotal', '$1.763.000,00', 32)
     expect(line).not.toMatch(/Subtotal\$/)
     expect(line).toContain('Subtotal')
-    expect(line).toContain('$ COP 1.763.000,00')
+    expect(line).toContain('$1.763.000,00')
     expect(line.length).toBe(32)
   })
 
@@ -22,32 +30,57 @@ describe('padReceiptLine', () => {
     expect(line.startsWith('Descripcion')).toBe(true)
     expect(line.endsWith('Total')).toBe(true)
   })
+
+  it('preserves leading indent and never truncates with ellipsis', () => {
+    const line = padReceiptLine('  13 x $45.000,00', '$585.000,00', 32)
+    expect(line).not.toContain('...')
+    expect(line.startsWith('  ') || line.includes('\n')).toBe(true)
+  })
+
+  it('stacks when both sides cannot fit instead of cutting digits', () => {
+    const line = padReceiptLine(
+      'TOTAL A COBRAR CON SERVICIO INCLUIDO',
+      '$1.845.600,00',
+      32,
+    )
+    expect(line).not.toContain('...')
+    expect(line).toContain('TOTAL A COBRAR')
+    expect(line).toContain('$1.845.600,00')
+    expect(line.includes('\n')).toBe(true)
+  })
 })
 
 describe('formatReceiptProductBlock', () => {
-  it('puts name and values on separate lines', () => {
+  it('puts name and values on separate lines without truncating money', () => {
     const block = formatReceiptProductBlock({
       name: 'poker 330 und',
       quantity: 13,
       unitPriceLabel: '$ COP 45.000,00',
       lineTotalLabel: '$ COP 585.000,00',
     })
-    expect(block.split('\n')).toHaveLength(2)
     expect(block).toContain('poker 330 und')
     expect(block).not.toMatch(/und13/)
     expect(block).toContain('13 x')
+    expect(block).not.toContain('...')
+    expect(block).toContain('$45.000,00')
+    expect(block).toContain('$585.000,00')
   })
 })
 
 describe('formatReceiptModifierBlock', () => {
-  it('keeps modifier description above amounts', () => {
+  it('indents modifier name and amount under the parent item', () => {
     const block = formatReceiptModifierBlock({
       description: '+ TOMATE DE PRUEBA',
-      quantity: 1,
+      quantity: 3,
       unitPriceLabel: '$ COP 9.000,00',
-      lineTotalLabel: '$ COP 9.000,00',
+      lineTotalLabel: '$ COP 27.000,00',
     })
-    expect(block.startsWith('+ TOMATE DE PRUEBA\n')).toBe(true)
+    const lines = block.split('\n')
+    expect(lines[0]).toMatch(/^\s{2}\+ TOMATE DE PRUEBA$/)
+    expect(block).not.toContain('...')
+    expect(block).toContain('$9.000,00')
+    expect(block).toContain('$27.000,00')
+    expect(lines[1]?.startsWith('  ')).toBe(true)
   })
 })
 
@@ -58,13 +91,13 @@ describe('receiptDivider', () => {
 })
 
 describe('collectThermalTicketText', () => {
-  it('preserves padReceiptLine spaces from hidden plain lines', () => {
-    const padded = padReceiptLine('Subtotal', '$ COP 100', 32)
-    const product = formatReceiptProductBlock({
-      name: 'poker',
-      quantity: 2,
-      unitPriceLabel: '$10',
-      lineTotalLabel: '$20',
+  it('preserves pad spaces and modifier indent from hidden plain lines', () => {
+    const padded = padReceiptLine('Subtotal', '$100', 32)
+    const mod = formatReceiptModifierBlock({
+      description: '+ Papas',
+      quantity: 1,
+      unitPriceLabel: '$ COP 5.000,00',
+      lineTotalLabel: '$ COP 5.000,00',
     })
     const root = {
       classList: { contains: () => false },
@@ -75,22 +108,15 @@ describe('collectThermalTicketText', () => {
           children: [],
         },
         {
-          classList: { contains: (c: string) => c === 'receipt-row' },
-          textContent: 'Mesa 15',
-          children: [],
-        },
-        {
           classList: { contains: (c: string) => c === 'receipt-plain-pre' },
-          textContent: product,
+          textContent: mod,
           children: [],
         },
       ],
     } as unknown as Element
 
     const text = collectThermalTicketText(root)
-    expect(text).not.toMatch(/Subtotal\$/)
-    expect(text.split('\n')[0]).toMatch(/Subtotal\s{2,}\$ COP 100/)
-    expect(text).toContain('Mesa 15')
-    expect(text).toContain('poker')
+    expect(text.split('\n')[0]).toMatch(/Subtotal\s{2,}\$100/)
+    expect(text).toMatch(/\n {2}\+ Papas/)
   })
 })
