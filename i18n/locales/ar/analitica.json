@@ -364,7 +364,8 @@
         "movementVoidApply": "إلغاء استخدام",
         "colType": "النوع",
         "colBalanceAfter": "الرصيد",
-        "empty": "لا توجد حركات محفظة"
+        "empty": "لا توجد حركات محفظة",
+        "colAmount": "المبلغ"
       },
       "credit": {
         "title": "الذمم المدينة",
@@ -390,14 +391,16 @@
         "amountToPay": "المبلغ المراد دفعه",
         "notesPlaceholder": "مثال: دفع جزئي متفق عليه...",
         "confirmPayment": "تأكيد الدفع",
-        "paymentError": "خطأ في تسجيل الدفع"
+        "paymentError": "خطأ في تسجيل الدفع",
+        "noDueDate": "بدون تاريخ"
       },
       "history": {
         "title": "سجل الطلبات",
         "empty": "لا توجد طلبات في هذه الفترة",
         "emptySub": "حاول تغيير النطاق الزمني",
         "total": "(إجمالي {total})",
-        "showingRange": "عرض {start} إلى {end} من أصل {total} طلب"
+        "showingRange": "عرض {start} إلى {end} من أصل {total} طلب",
+        "noWaros": "بدون Waros"
       }
     },
     "ingredientes": {

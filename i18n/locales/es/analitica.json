@@ -370,7 +370,8 @@
         "movementVoidApply": "Anulación de uso",
         "colType": "Tipo",
         "colBalanceAfter": "Saldo",
-        "empty": "Sin movimientos de billetera"
+        "empty": "Sin movimientos de billetera",
+        "colAmount": "Monto"
       },
       "credit": {
         "title": "Cartera",
@@ -396,14 +397,16 @@
         "amountToPay": "Monto a abonar",
         "notesPlaceholder": "Ej: Pago parcial acordado...",
         "confirmPayment": "Confirmar pago",
-        "paymentError": "Error al registrar el pago"
+        "paymentError": "Error al registrar el pago",
+        "noDueDate": "Sin fecha"
       },
       "history": {
         "title": "Historial de pedidos",
         "empty": "Sin pedidos en este período",
         "emptySub": "Prueba cambiando el rango de fechas",
         "total": "({total} total)",
-        "showingRange": "Mostrando {start} a {end} de {total} pedidos"
+        "showingRange": "Mostrando {start} a {end} de {total} pedidos",
+        "noWaros": "Sin Waros"
       }
     },
     "ingredientes": {

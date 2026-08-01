@@ -364,7 +364,8 @@
         "movementVoidApply": "Anulação de uso",
         "colType": "Tipo",
         "colBalanceAfter": "Saldo",
-        "empty": "Sem movimentos da carteira"
+        "empty": "Sem movimentos da carteira",
+        "colAmount": "Valor"
       },
       "credit": {
         "title": "Contas a Receber",
@@ -390,14 +391,16 @@
         "amountToPay": "Valor a pagar",
         "notesPlaceholder": "Ex: Pagamento parcial acordado...",
         "confirmPayment": "Confirmar pagamento",
-        "paymentError": "Erro ao registrar o pagamento"
+        "paymentError": "Erro ao registrar o pagamento",
+        "noDueDate": "Sem data"
       },
       "history": {
         "title": "Histórico de pedidos",
         "empty": "Sem pedidos neste período",
         "emptySub": "Tente mudar o período",
         "total": "({total} no total)",
-        "showingRange": "Mostrando {start} a {end} de {total} pedidos"
+        "showingRange": "Mostrando {start} a {end} de {total} pedidos",
+        "noWaros": "Sem Waros"
       }
     },
     "ingredientes": {

@@ -145,11 +145,8 @@ const walletMovementLabel = (type: string) => {
   const key = keyByType[type]
   return key ? t(key) : type
 }
-const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-}
+const orderStatusVariant = (status: string) =>
+  status === 'completed' ? 'success' : status === 'cancelled' ? 'destructive' : 'warning'
 
 // ── Actions ───────────────────────────────────────────────────────────────
 const previousPage = () => { if (canGoPrevious.value) currentPage.value-- }
@@ -174,19 +171,19 @@ const tableColumns = computed(() => [
 const carteraColumns = computed(() => [
   { key: 'order_number', title: t('analitica.customerDetail.orderNumberAlt'), sortable: false },
   { key: 'date', title: t('analitica.common.date'), sortable: false },
-  { key: 'total_amount', title: t('analitica.customerDetail.total'), sortable: false },
-  { key: 'credit_paid_amount', title: t('analitica.customerDetail.credit.paid'), sortable: false },
-  { key: 'remaining', title: t('analitica.customerDetail.credit.remaining'), sortable: false },
+  { key: 'total_amount', title: t('analitica.customerDetail.total'), sortable: false, align: 'right' as const },
+  { key: 'credit_paid_amount', title: t('analitica.customerDetail.credit.paid'), sortable: false, align: 'right' as const },
+  { key: 'remaining', title: t('analitica.customerDetail.credit.remaining'), sortable: false, align: 'right' as const },
   { key: 'due_date', title: t('analitica.customerDetail.credit.due'), sortable: false },
   { key: 'status_badge', title: t('analitica.customerDetail.status.title'), sortable: false },
-  { key: 'cartera_actions', title: '', sortable: false },
+  { key: 'cartera_actions', title: '', sortable: false, align: 'right' as const },
 ])
 
 const walletColumns = computed(() => [
   { key: 'movement_type', title: t('analitica.customerDetail.wallet.colType'), sortable: false },
   { key: 'created_at', title: t('analitica.common.date'), sortable: false },
-  { key: 'amount_cop', title: t('analitica.customerDetail.wallet.amount'), sortable: false },
-  { key: 'balance_after_cop', title: t('analitica.customerDetail.wallet.colBalanceAfter'), sortable: false },
+  { key: 'amount_cop', title: t('analitica.customerDetail.wallet.colAmount'), sortable: false, align: 'right' as const },
+  { key: 'balance_after_cop', title: t('analitica.customerDetail.wallet.colBalanceAfter'), sortable: false, align: 'right' as const },
 ])
 
 // Invoice slideover state
@@ -645,19 +642,19 @@ onUnmounted(() => {
       <!-- Wallet COP Section -->
       <div class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2 min-w-0">
+          <div class="min-w-0">
             <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
               {{ t('analitica.customerDetail.wallet.title') }}
             </h3>
-            <span v-if="isLoadingWallet" class="text-sm text-text-secondary">{{ t('common.loading') }}</span>
-            <span v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">{{ t('analitica.customerDetail.wallet.loadError') }}</span>
-            <span v-else class="text-lg font-bold text-primary">{{ formatCurrency(walletBalance) }}</span>
+            <p v-if="isLoadingWallet" class="text-sm text-text-secondary mt-0.5">{{ t('common.loading') }}</p>
+            <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600 mt-0.5">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
+            <p v-else class="text-lg font-bold text-primary mt-0.5 tabular-nums">{{ formatCurrency(walletBalance) }}</p>
           </div>
           <button
             type="button"
             :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
             @click="showWalletRechargeModal = true"
-            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
           >
             {{ t('analitica.customerDetail.wallet.recharge') }}
           </button>
@@ -679,14 +676,14 @@ onUnmounted(() => {
                 </div>
                 <span
                   :class="[
-                    'text-sm font-semibold flex-shrink-0',
+                    'text-sm font-semibold flex-shrink-0 tabular-nums',
                     item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
                   ]"
                 >
                   {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
                 </span>
               </div>
-              <p class="text-xs text-text-secondary mt-2">
+              <p class="text-xs text-text-secondary mt-2 tabular-nums">
                 {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
                 {{ formatCurrency(item.balance_after_cop) }}
               </p>
@@ -701,7 +698,7 @@ onUnmounted(() => {
           <template #cell-amount_cop="{ value }">
             <span
               :class="[
-                'text-sm font-semibold',
+                'text-sm font-semibold tabular-nums',
                 value >= 0 ? 'text-green-700' : 'text-red-600',
               ]"
             >
@@ -709,7 +706,7 @@ onUnmounted(() => {
             </span>
           </template>
           <template #cell-balance_after_cop="{ value }">
-            <span class="text-sm text-text-primary">{{ formatCurrency(value) }}</span>
+            <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
           </template>
         </UiResponsiveDataView>
       </div>
@@ -724,8 +721,8 @@ onUnmounted(() => {
             </svg>
             <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="text-lg font-bold text-red-600">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="text-lg font-bold text-red-600 tabular-nums">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
             <button
               @click="openGlobalPaymentPanel"
               class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
@@ -739,17 +736,17 @@ onUnmounted(() => {
         <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
           <div class="px-4 py-3">
             <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.orders') }}</p>
-            <p class="text-sm font-semibold text-text-primary">{{ carteraData.summary.order_count }}</p>
+            <p class="text-sm font-semibold text-text-primary tabular-nums">{{ carteraData.summary.order_count }}</p>
           </div>
           <div class="px-4 py-3">
             <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overduePlural') }}</p>
-            <p class="text-sm font-semibold" :class="carteraData.summary.overdue_count > 0 ? 'text-red-600' : 'text-text-secondary'">
+            <p class="text-sm font-semibold tabular-nums" :class="carteraData.summary.overdue_count > 0 ? 'text-red-600' : 'text-text-secondary'">
               {{ carteraData.summary.overdue_count }}
             </p>
           </div>
           <div class="px-4 py-3">
             <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overdueAmount') }}</p>
-            <p class="text-sm font-semibold" :class="carteraData.summary.overdue_amount > 0 ? 'text-red-600' : 'text-text-secondary'">
+            <p class="text-sm font-semibold tabular-nums" :class="carteraData.summary.overdue_amount > 0 ? 'text-red-600' : 'text-text-secondary'">
               {{ formatCurrency(carteraData.summary.overdue_amount) }}
             </p>
           </div>
@@ -770,10 +767,12 @@ onUnmounted(() => {
                   <p class="text-sm font-semibold text-text-primary"># {{ item.order_number }}</p>
                   <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
                 </div>
-                <span :class="[
-                  'text-xs px-2 py-1 rounded-full font-medium',
-                  item.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                ]">{{ creditStatusLabel(item.is_overdue) }}</span>
+                <UiStatusBadge
+                  :value="creditStatusLabel(item.is_overdue)"
+                  format="text"
+                  :variant="item.is_overdue ? 'destructive' : 'success'"
+                  size="sm"
+                />
               </div>
               <div class="text-sm text-text-secondary mb-3">
                 {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
@@ -791,15 +790,33 @@ onUnmounted(() => {
           <!-- Desktop cells -->
           <template #cell-order_number="{ value }"><span class="text-sm font-medium">#{{ value }}</span></template>
           <template #cell-date="{ value }"><span class="text-sm text-text-secondary">{{ formatDate(value) }}</span></template>
-          <template #cell-total_amount="{ value }"><span class="text-sm">{{ formatCurrency(value) }}</span></template>
-          <template #cell-credit_paid_amount="{ value }"><span class="text-sm text-green-700">{{ formatCurrency(value) }}</span></template>
-          <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span></template>
-          <template #cell-due_date="{ value }"><span class="text-sm text-text-secondary">{{ value ? formatDate(value) : '—' }}</span></template>
+          <template #cell-total_amount="{ value }"><span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span></template>
+          <template #cell-credit_paid_amount="{ value }">
+            <span
+              :class="[
+                'text-sm tabular-nums',
+                Number(value) > 0 ? 'text-green-700' : 'text-text-secondary',
+              ]"
+            >{{ formatCurrency(value) }}</span>
+          </template>
+          <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(value) }}</span></template>
+          <template #cell-due_date="{ value }">
+            <span v-if="value" class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+            <UiStatusBadge
+              v-else
+              :value="t('analitica.customerDetail.credit.noDueDate')"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </template>
           <template #cell-status_badge="{ row }">
-            <span :class="[
-              'text-xs px-2 py-1 rounded-full font-medium',
-              row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-            ]">{{ creditStatusLabel(row.is_overdue) }}</span>
+            <UiStatusBadge
+              :value="creditStatusLabel(row.is_overdue)"
+              format="text"
+              :variant="row.is_overdue ? 'destructive' : 'success'"
+              size="sm"
+            />
           </template>
           <template #cell-cartera_actions="{ row }">
             <button
@@ -877,9 +894,12 @@ onUnmounted(() => {
                 <p v-else class="font-medium text-text-primary"># {{ item.order_number }}</p>
                 <p class="text-sm text-text-secondary">{{ formatDate(item.date) }}</p>
               </div>
-              <span :class="['text-xs px-2 py-1 rounded-full font-medium', statusColors[item.status] || 'bg-gray-100 text-gray-800']">
-                {{ statusLabel(item.status) }}
-              </span>
+              <UiStatusBadge
+                :value="statusLabel(item.status)"
+                format="text"
+                :variant="orderStatusVariant(item.status)"
+                size="sm"
+              />
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-text-secondary">{{ formatProductCount(item.items_count) }} · {{ resolveLabel(item.payment_method) }}</span>
@@ -918,22 +938,29 @@ onUnmounted(() => {
         </template>
 
         <template #cell-payment_status="{ row }">
-          <template v-if="row.payment_status === 'credit' || row.payment_status === 'partial'">
-            <span :class="[
-              'text-xs px-2 py-1 rounded-full font-medium',
-              row.payment_status === 'partial' ? 'bg-amber-100 text-amber-800' :
-              row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-            ]">
-              {{ paymentStatusLabel(row.payment_status) }}
-            </span>
-          </template>
-          <span v-else class="text-sm text-text-secondary">—</span>
+          <UiStatusBadge
+            v-if="row.payment_status === 'credit' || row.payment_status === 'partial'"
+            :value="paymentStatusLabel(row.payment_status)"
+            format="text"
+            :variant="row.payment_status === 'partial' ? 'warning' : (row.is_overdue ? 'destructive' : 'warning')"
+            size="sm"
+          />
+          <UiStatusBadge
+            v-else
+            :value="t('analitica.customerDetail.credit.paid')"
+            format="text"
+            variant="success"
+            size="sm"
+          />
         </template>
 
         <template #cell-status="{ value }">
-          <span :class="['text-xs px-2 py-1 rounded-full font-medium', statusColors[value] || 'bg-gray-100 text-gray-800']">
-            {{ statusLabel(value) }}
-          </span>
+          <UiStatusBadge
+            :value="statusLabel(value)"
+            format="text"
+            :variant="orderStatusVariant(value)"
+            size="sm"
+          />
         </template>
 
         <template #cell-invoice="{ row }">
@@ -946,22 +973,44 @@ onUnmounted(() => {
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
             {{ row.invoice_prefix }}-{{ row.invoice_number }}
           </button>
-          <span v-else-if="row.invoice_status === 'pending'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-            <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            {{ t('analitica.customerDetail.invoiceStatus.processing') }}
+          <UiStatusBadge
+            v-else-if="row.invoice_status === 'pending'"
+            :value="t('analitica.customerDetail.invoiceStatus.processing')"
+            format="text"
+            variant="warning"
+            size="sm"
+          />
+          <span
+            v-else-if="row.invoice_status === 'rejected'"
+            :title="row.error_message || t('analitica.customerDetail.invoiceStatus.rejectedByDian')"
+          >
+            <UiStatusBadge
+              :value="t('analitica.customerDetail.invoiceStatus.rejected')"
+              format="text"
+              variant="destructive"
+              size="sm"
+            />
           </span>
-          <span v-else-if="row.invoice_status === 'rejected'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700" :title="row.error_message || t('analitica.customerDetail.invoiceStatus.rejectedByDian')">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-            {{ t('analitica.customerDetail.invoiceStatus.rejected') }}
-          </span>
-          <span v-else class="text-sm text-text-tertiary">—</span>
+          <UiStatusBadge
+            v-else
+            :value="t('ventas.ordenes.sinFactura')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-waros_earned="{ value }">
           <span v-if="value > 0" class="text-sm font-semibold text-amber-700">
             +{{ formatWaros(value) }}
           </span>
-          <span v-else class="text-sm text-text-secondary">—</span>
+          <UiStatusBadge
+            v-else
+            :value="t('analitica.customerDetail.history.noWaros')"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
       </UiResponsiveDataView>
 

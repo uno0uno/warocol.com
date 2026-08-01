@@ -364,7 +364,8 @@
         "movementVoidApply": "उपयोग रद्द",
         "colType": "प्रकार",
         "colBalanceAfter": "शेष",
-        "empty": "कोई वॉलेट मूवमेंट नहीं"
+        "empty": "कोई वॉलेट मूवमेंट नहीं",
+        "colAmount": "राशि"
       },
       "credit": {
         "title": "प्राप्य खाते",
@@ -390,14 +391,16 @@
         "amountToPay": "भुगतान की जाने वाली राशि",
         "notesPlaceholder": "उदा: सहमत आंशिक भुगतान...",
         "confirmPayment": "भुगतान की पुष्टि करें",
-        "paymentError": "भुगतान दर्ज करने में त्रुटि"
+        "paymentError": "भुगतान दर्ज करने में त्रुटि",
+        "noDueDate": "कोई तिथि नहीं"
       },
       "history": {
         "title": "ऑर्डर इतिहास",
         "empty": "इस अवधि में कोई ऑर्डर नहीं",
         "emptySub": "दिनांक सीमा बदलने का प्रयास करें",
         "total": "({total} कुल)",
-        "showingRange": "{total} ऑर्डर में से {start} से {end} दिखा रहा है"
+        "showingRange": "{total} ऑर्डर में से {start} से {end} दिखा रहा है",
+        "noWaros": "कोई Waros नहीं"
       }
     },
     "ingredientes": {

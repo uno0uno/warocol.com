@@ -364,7 +364,8 @@
         "movementVoidApply": "Nutzung storniert",
         "colType": "Typ",
         "colBalanceAfter": "Saldo",
-        "empty": "Keine Wallet-Bewegungen"
+        "empty": "Keine Wallet-Bewegungen",
+        "colAmount": "Betrag"
       },
       "credit": {
         "title": "Forderungen",
@@ -390,14 +391,16 @@
         "amountToPay": "Zu zahlender Betrag",
         "notesPlaceholder": "Z.B. Vereinbarte Teilzahlung...",
         "confirmPayment": "Zahlung bestätigen",
-        "paymentError": "Fehler beim Registrieren der Zahlung"
+        "paymentError": "Fehler beim Registrieren der Zahlung",
+        "noDueDate": "Kein Datum"
       },
       "history": {
         "title": "Bestellhistorie",
         "empty": "Keine Bestellungen in diesem Zeitraum",
         "emptySub": "Versuchen Sie, den Datumsbereich zu ändern",
         "total": "({total} gesamt)",
-        "showingRange": "Zeige {start} bis {end} von {total} Bestellungen"
+        "showingRange": "Zeige {start} bis {end} von {total} Bestellungen",
+        "noWaros": "Keine Waros"
       }
     },
     "ingredientes": {

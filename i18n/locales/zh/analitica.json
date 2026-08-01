@@ -364,7 +364,8 @@
         "movementVoidApply": "使用撤销",
         "colType": "类型",
         "colBalanceAfter": "余额",
-        "empty": "暂无钱包流水"
+        "empty": "暂无钱包流水",
+        "colAmount": "金额"
       },
       "credit": {
         "title": "应收账款",
@@ -390,14 +391,16 @@
         "amountToPay": "支付金额",
         "notesPlaceholder": "例如：已同意部分支付...",
         "confirmPayment": "确认支付",
-        "paymentError": "登记支付失败"
+        "paymentError": "登记支付失败",
+        "noDueDate": "无日期"
       },
       "history": {
         "title": "订单历史",
         "empty": "此期间无订单",
         "emptySub": "尝试更改日期范围",
         "total": "（共 {total} 条）",
-        "showingRange": "显示第 {start} 至 {end} 条，共 {total} 条订单"
+        "showingRange": "显示第 {start} 至 {end} 条，共 {total} 条订单",
+        "noWaros": "无 Waros"
       }
     },
     "ingredientes": {

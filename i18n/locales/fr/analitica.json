@@ -364,7 +364,8 @@
         "movementVoidApply": "Annulation d'utilisation",
         "colType": "Type",
         "colBalanceAfter": "Solde",
-        "empty": "Aucun mouvement de portefeuille"
+        "empty": "Aucun mouvement de portefeuille",
+        "colAmount": "Montant"
       },
       "credit": {
         "title": "Comptes clients",
@@ -390,14 +391,16 @@
         "amountToPay": "Montant à régler",
         "notesPlaceholder": "Ex: Paiement partiel convenu...",
         "confirmPayment": "Confirmer le paiement",
-        "paymentError": "Erreur lors de l'enregistrement du paiement"
+        "paymentError": "Erreur lors de l'enregistrement du paiement",
+        "noDueDate": "Sans date"
       },
       "history": {
         "title": "Historique des commandes",
         "empty": "Aucune commande pour cette période",
         "emptySub": "Essayez de modifier la plage de dates",
         "total": "({total} au total)",
-        "showingRange": "Affichage de {start} à {end} sur {total} commandes"
+        "showingRange": "Affichage de {start} à {end} sur {total} commandes",
+        "noWaros": "Sans Waros"
       }
     },
     "ingredientes": {

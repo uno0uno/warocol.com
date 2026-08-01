@@ -370,7 +370,8 @@
         "movementVoidApply": "Use voided",
         "colType": "Type",
         "colBalanceAfter": "Balance",
-        "empty": "No wallet movements"
+        "empty": "No wallet movements",
+        "colAmount": "Amount"
       },
       "credit": {
         "title": "Accounts receivable",
@@ -396,14 +397,16 @@
         "amountToPay": "Amount to pay",
         "notesPlaceholder": "Ex: Agreed partial payment...",
         "confirmPayment": "Confirm payment",
-        "paymentError": "Error registering payment"
+        "paymentError": "Error registering payment",
+        "noDueDate": "No date"
       },
       "history": {
         "title": "Order history",
         "empty": "No orders in this period",
         "emptySub": "Try changing the date range",
         "total": "({total} total)",
-        "showingRange": "Showing {start} to {end} of {total} orders"
+        "showingRange": "Showing {start} to {end} of {total} orders",
+        "noWaros": "No Waros"
       }
     },
     "ingredientes": {
