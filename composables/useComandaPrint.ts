@@ -26,12 +26,97 @@ export function formatComandaModifierLabel(
 ): string {
   const qty = Number(mod.quantity) || 1
   let label = mod.name
-  if (qty > 1) label += ` ×${qty}`
+  // ASCII separators — thermal Windows drivers often turn ×/· into "?"
+  if (qty > 1) label += ` x${qty}`
   if (options?.includePrice && mod.price != null) {
     const lineTotal = Number(mod.price) * qty
-    label += ` · ${options.formatPrice ? options.formatPrice(lineTotal) : String(lineTotal)}`
+    label += ` - ${options.formatPrice ? options.formatPrice(lineTotal) : String(lineTotal)}`
   }
   return label
+}
+
+export type ComandaTicketPlainTextOptions = {
+  businessName?: string
+  /** e.g. "*** COMANDA POS ***" */
+  title?: string
+  comandaLabel?: (numbers: string) => string
+  stationLabel?: (name: string) => string
+  noStationLabel?: string
+  specialNotesLabel?: string
+  includeModifierPrices?: boolean
+  formatPrice?: (amount: number) => string
+  formatTime?: (firedAt?: string | null) => string
+  orderComandas?: (comandas: ComandaPrintPayload[]) => ComandaPrintPayload[]
+}
+
+/**
+ * Shared plain-text comanda layout for ESC/POS auto-print and browser/thermal
+ * window.print (#1975). Explicit \\n so generic Windows drivers do not mash rows.
+ */
+export function buildComandaTicketPlainText(
+  comandas: ComandaPrintPayload[],
+  options: ComandaTicketPlainTextOptions = {},
+): string {
+  if (!comandas.length) return ''
+
+  const ordered = options.orderComandas
+    ? options.orderComandas(comandas)
+    : comandas
+  const first = ordered[0]!
+  const business = (options.businessName || 'WARO').trim() || 'WARO'
+  const title = options.title ?? '*** COMANDA POS ***'
+  const noStation = options.noStationLabel ?? 'Sin cocina asignada'
+  const specialNotes = options.specialNotesLabel ?? 'Notas especiales'
+  const stationLabel = options.stationLabel ?? ((name: string) => `Estacion: ${name}`)
+  const comandaLabel = options.comandaLabel ?? ((numbers: string) => `Comanda #${numbers}`)
+  const formatTime = options.formatTime ?? ((firedAt?: string | null) => formatComandaPrintTime(firedAt))
+
+  const numbers = [...new Set(ordered.map((c) => String(c.comanda_number ?? '—')))].join(', ')
+
+  type Section = { stationName: string; items: ComandaPrintItem[] }
+  const sections: Section[] = []
+  const byStation = new Map<string, Section>()
+  for (const comanda of ordered) {
+    const stationName = (comanda.station_name || '').trim() || noStation
+    let section = byStation.get(stationName)
+    if (!section) {
+      section = { stationName, items: [] }
+      byStation.set(stationName, section)
+      sections.push(section)
+    }
+    section.items.push(...comanda.items)
+  }
+
+  const lines: string[] = [
+    business,
+    title,
+    formatTime(first.fired_at),
+  ]
+  const table = (first.table_display_name || '').trim()
+  if (table) lines.push(table)
+  lines.push(comandaLabel(numbers))
+  lines.push('--------------------------------')
+
+  for (const section of sections) {
+    lines.push(stationLabel(section.stationName))
+    for (const item of section.items) {
+      const qty = Number(item.quantity) || 1
+      lines.push(`${qty}x ${item.kitchen_name}`)
+      for (const mod of item.modifiers_snapshot || []) {
+        lines.push(
+          `  - ${formatComandaModifierLabel(mod, {
+            includePrice: options.includeModifierPrices,
+            formatPrice: options.formatPrice,
+          })}`,
+        )
+      }
+      const notes = (item.notes || '').trim()
+      if (notes) lines.push(`  * ${specialNotes}: ${notes}`)
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
 }
 
 export type ComandaPrintPayload = {
