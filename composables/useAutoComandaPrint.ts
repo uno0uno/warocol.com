@@ -23,6 +23,9 @@ export type ComandaFiredSsePayload = {
   table_display_name?: string | null
   /** Explicit target from API: caja (mesa) | user (mostrador/barra) */
   auto_print_target?: 'caja' | 'user' | string
+  /** When false, SSE may exist but client must not auto-print (#1983) */
+  auto_print?: boolean
+  skip_auto_print?: boolean
   comandas?: unknown[]
 }
 
@@ -128,6 +131,7 @@ export async function autoPrintComandaFired(
   deps: AutoPrintDeps,
 ): Promise<'printed' | 'skipped'> {
   if (payload?.type && payload.type !== 'comanda_fired') return 'skipped'
+  if (payload.auto_print === false || payload.skip_auto_print === true) return 'skipped'
 
   const rawList = (payload.comandas || []) as Record<string, unknown>[]
   const mapped: ComandaPrintWithFallback[] = mapComandasForPrint(rawList).map((c) => {

@@ -1848,20 +1848,28 @@ const prefacturaModifierBlock = (mod: PrintModifier) =>
   })
 
 const receiptPrintLineGuards = (item: any) => [
+  // Identity-only — never qty-scaled fields (net_total / promoSavings / discount)
+  // or they block merging identical products (#1983).
   item.promo_opt_out,
   item.promoOptOut,
   item.promotionName,
   item.promoType,
-  item.promoSavings,
   item.applied_promotion_id,
-  item.discount_allocated,
-  item.net_total,
   item.tax_category,
 ]
 
+const checkoutProductKey = (item: any) =>
+  item.product?.id
+  ?? item.productId
+  ?? item.product_id
+  // Never fall back to line item.id — that prevents merging duplicates (#1983).
+  ?? item.product?.name
+  ?? item.productName
+  ?? item.name
+
 const consolidateCheckoutPrintItems = (items: any[]) =>
   consolidateReceiptPrintLines(items, {
-    productKey: item => item.product?.id ?? item.productId ?? item.product_id ?? item.id,
+    productKey: checkoutProductKey,
     displayName: item => item.product?.name ?? item.productName ?? item.name,
     quantity: item => item.quantity,
     unitPrice: item => getItemUnitPrice(item),
@@ -1884,7 +1892,7 @@ const printableReceiptItems = computed(() =>
 )
 
 const receiptTicketItems = computed(() =>
-  buildReceiptTicketItems(cartItemsSnapshot.value)
+  buildReceiptTicketItems(consolidateCheckoutPrintItems(cartItemsSnapshot.value))
 )
 
 function checkoutErrorMessage(error: any, fallback: string) {

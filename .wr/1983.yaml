@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1983
+title: "Merge identical receipt lines; do not auto-print comanda on sale finalize"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-1983-receipt-merge-no-comanda-pay
+
+paths:
+  - utils/receiptPrintLines.test.ts
+  - pages/pos/checkout.vue
+  - composables/useAutoComandaPrint.ts
+  - composables/useAutoComandaPrint.test.ts
+  - app/services/comandas_service.py
+  - app/services/pos_cart_service.py
+  - app/services/tables_service.py
+  - tests/test_comanda_fired_notification.py
+
+ac:
+  - Identical products merge on receipt (qty summed)
+  - Different mods/notes stay separate
+  - Checkout/pay autofire does not SSE auto-print comanda
+  - Explicit fire still notifies/prints
+  - Focused tests
+
+out_of_scope:
+  - Thermal layout
+  - Multi-station printers
+
+hints:
+  entry: "checkout guards + receiptTicketItems consolidate; fire_comandas notify_print=False"
+  pattern: "POS complete + close_session autofire skip notify"
+  tests: "Front: bunx vitest run utils/receiptPrintLines.test.ts composables/useAutoComandaPrint.test.ts | API: ./venv/bin/pytest tests/test_comanda_fired_notification.py -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "pay mesa with unfired items — no comanda print; prefactura merges poker lines"

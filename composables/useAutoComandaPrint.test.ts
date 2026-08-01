@@ -206,6 +206,27 @@ describe('autoPrintComandaFired', () => {
     expect(bridge.printRawEscPos).not.toHaveBeenCalled()
   })
 
+  it('skips when auto_print is false (checkout autofire)', async () => {
+    const bridge = fakeBridge()
+    const result = await autoPrintComandaFired(
+      {
+        type: 'comanda_fired',
+        source_type: 'table',
+        auto_print: false,
+        comandas: [
+          { id: 'c-pay', comanda_number: 1, items: [{ kitchen_name: 'X', quantity: 1 }] },
+        ],
+      },
+      {
+        bridge,
+        getCajaPrinterName: async () => 'CAJA',
+        getUserId: () => 'u1',
+      },
+    )
+    expect(result).toBe('skipped')
+    expect(bridge.printRawEscPos).not.toHaveBeenCalled()
+  })
+
   it('skips pos without user printer', async () => {
     const bridge = fakeBridge()
     const result = await autoPrintComandaFired(
