@@ -9,7 +9,7 @@ const props = defineProps<{
   businessName?: string
 }>()
 
-const { formatCurrencyThermal, formatDateTime } = useFormatters()
+const { formatDateTime } = useFormatters()
 
 const ticketPlainText = computed(() => {
   if (!props.comandas.length) return ''
@@ -20,8 +20,7 @@ const ticketPlainText = computed(() => {
     stationLabel: (name) => t('pos.printTicket.station', { name }),
     noStationLabel: t('pos.printTicket.noStation'),
     specialNotesLabel: t('pos.printTicket.specialNotes'),
-    includeModifierPrices: true,
-    formatPrice: formatCurrencyThermal,
+    // Kitchen tickets: name/qty only — no modifier prices (#1977)
     formatTime: (firedAt) => formatDateTime(firedAt ?? new Date().toISOString()),
   })
 })

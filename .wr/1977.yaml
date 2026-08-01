@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1977
+title: "Omit modifier prices on all comanda prints"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1977-comanda-no-prices
+
+paths:
+  - components/pos/ComandaPrintTickets.vue
+  - composables/useAutoComandaPrint.ts
+  - composables/useAutoComandaPrint.test.ts
+  - composables/useComandaPrint.test.ts
+
+ac:
+  - Auto ESC/POS omits modifier prices
+  - Manual ComandaPrintTickets omits modifier prices
+  - Mods still show name/qty; notes unchanged
+  - Receipt/prefactura untouched
+  - Tests updated
+
+out_of_scope:
+  - Prefactura/factura redesign
+  - API changes
+
+hints:
+  entry: "includeModifierPrices off in ticket callers"
+  pattern: "default false; helper still supports true"
+  tests: "bunx vitest run composables/useAutoComandaPrint.test.ts && bun test composables/useComandaPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "smoke print comanda with modifiers"
