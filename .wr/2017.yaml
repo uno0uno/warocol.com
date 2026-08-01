@@ -1,0 +1,26 @@
+issue: 2017
+title: "chore(ventas): remove period totals row on productos list"
+repo: warocol.com
+branch: wr-2017-remove-productos-totals-row
+date: 2026-08-01
+status: implemented
+
+intent: >
+  Remove the bottom period totals strip on /ventas/productos that duplicated
+  MetricCards (units + revenue). Keep filters, table, pagination, and header cards.
+
+changes:
+  - path: pages/ventas/productos.vue
+    note: Removed bottom Totals row block; totals computed kept for MetricCards.
+
+out_of_scope:
+  - API / schema changes
+  - Removing MetricCards
+  - i18n key cleanup (totalProducts unused in UI is optional)
+
+validation:
+  - UI-only removal; no automated test required
+  - Manual: page still shows MetricCards + table + pagination without bottom strip
+
+pr_notes: |
+  Closes #2017
