@@ -71,6 +71,25 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
+  it('falls back to browser when bridge print hangs past timeout', async () => {
+    const browserPrint = mock(() => {})
+    const bridge = fakeBridge({
+      connect: mock(() => Promise.resolve()),
+      printRawEscPos: mock(() => new Promise(() => {})), // never resolves
+    })
+
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName: async () => 'STAR_TP586',
+      bridge,
+      getElementHtml: () => '<div id="pos-receipt">OK</div>',
+      browserPrint,
+      bridgePrintTimeoutMs: 30,
+    })
+
+    expect(result).toBe('browser')
+    expect(browserPrint).toHaveBeenCalledTimes(1)
+  })
+
   it('falls back to browser when element content is missing', async () => {
     const printRawEscPos = mock(() => Promise.resolve())
     const browserPrint = mock(() => {})

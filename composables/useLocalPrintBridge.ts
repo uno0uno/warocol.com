@@ -89,7 +89,8 @@ function createDefaultClient(): PrintBridgeClientLike {
     ip: '127.0.0.1',
     port: 17890,
     connectTimeoutMs: 4000,
-    requestTimeoutMs: 15000,
+    // Keep print requests short so offline thermals fall back to window.print (#2003).
+    requestTimeoutMs: 5000,
     autoReconnect: false,
   })
 }
