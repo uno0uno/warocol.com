@@ -12,6 +12,7 @@ import {
   formatFiscalIdentityLabel,
 } from '~/utils/customerIdentityPresentation'
 import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -830,10 +831,7 @@ const printReceipt = async () => {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
-      const el = document.querySelector('.receipt-print-ticket') as HTMLElement | null
-      const text = el?.innerText?.trim()
-      if (text) return text
-      return el?.outerHTML?.trim() || null
+      return collectThermalTicketText(document.querySelector('.receipt-print-ticket')) || null
     },
   })
   if (mode === 'bridge') {

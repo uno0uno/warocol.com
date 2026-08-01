@@ -451,7 +451,11 @@ const printableItems = computed(() =>
           class="receipt-plain-line receipt-small"
         >
           {{ moneyLine(
-            `${line.label || t('pos.checkout.taxFallback')}${formatRate(line.rate) ? ` ${formatRate(line.rate)}` : ''}`,
+            [
+              line.label || t('pos.checkout.taxFallback'),
+              formatRate(line.rate),
+              Number(line.base) > 0 ? t('pos.receipt.taxBase', { amount: money(line.base) }) : null,
+            ].filter(Boolean).join(' '),
             line.amount,
           ) }}
         </div>

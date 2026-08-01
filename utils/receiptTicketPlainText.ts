@@ -32,6 +32,56 @@ export function receiptDivider(cols: number = RECEIPT_THERMAL_COLS, char = '-'):
   return char.repeat(cols)
 }
 
+/**
+ * Read printable text from a hidden ticket root (`display:none`).
+ * Prefer this over `innerText` (empty when hidden) or `outerHTML`→plain
+ * (collapses padReceiptLine spaces via ticketHtmlToPlainText).
+ */
+export function collectThermalTicketText(root: Element | null | undefined): string {
+  if (!root) return ''
+  const lines: string[] = []
+
+  const push = (raw: string, preserveInternalNewlines: boolean) => {
+    if (preserveInternalNewlines) {
+      const trimmed = raw.replace(/\s+$/g, '').replace(/^\s+/g, '')
+      if (trimmed) lines.push(trimmed)
+      return
+    }
+    const t = raw.replace(/\s+/g, ' ').trim()
+    if (t) lines.push(t)
+  }
+
+  const walk = (el: Element) => {
+    // Skip logos (raster handled separately by ESC/POS). Guard for non-DOM test envs.
+    const tag = (el as { tagName?: string }).tagName
+    if (tag && tag.toLowerCase() === 'img') return
+    if (typeof HTMLImageElement !== 'undefined' && el instanceof HTMLImageElement) return
+    const cls = el.classList
+    if (
+      cls.contains('receipt-plain-pre')
+      || cls.contains('receipt-plain-line')
+      || cls.contains('comanda-ticket-pre')
+    ) {
+      push(el.textContent || '', true)
+      return
+    }
+    if (
+      cls.contains('receipt-row')
+      || cls.contains('receipt-footer')
+      || cls.contains('receipt-header')
+      || cls.contains('receipt-document-title')
+      || cls.contains('receipt-cufe')
+    ) {
+      push(el.textContent || '', false)
+      return
+    }
+    for (const child of Array.from(el.children)) walk(child)
+  }
+
+  walk(root)
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 /** Product name on its own line; qty x unit … total padded. */
 export function formatReceiptProductBlock(opts: {
   name: string

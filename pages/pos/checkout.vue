@@ -24,6 +24,7 @@ import {
   formatReceiptProductBlock,
   padReceiptLine,
   receiptDivider,
+  collectThermalTicketText,
 } from '~/utils/receiptTicketPlainText'
 import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
@@ -2579,10 +2580,8 @@ const printReceipt = async () => {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
-      const el = document.querySelector('.receipt-print-ticket') as HTMLElement | null
-      const text = el?.innerText?.trim()
-      if (text) return text
-      return el?.outerHTML?.trim() || null
+      const el = document.querySelector('.receipt-print-ticket')
+      return collectThermalTicketText(el) || null
     },
   })
   if (mode === 'bridge') {
@@ -2926,10 +2925,7 @@ const printPrefactura = async () => {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
-      const el = document.getElementById('pos-prefactura')
-      const text = (el as HTMLElement | null)?.innerText?.trim()
-      if (text) return text
-      return el?.outerHTML?.trim() || null
+      return collectThermalTicketText(document.getElementById('pos-prefactura')) || null
     },
   })
   if (mode === 'bridge') {

@@ -4,6 +4,7 @@ import {
   formatReceiptProductBlock,
   padReceiptLine,
   receiptDivider,
+  collectThermalTicketText,
 } from './receiptTicketPlainText'
 
 describe('padReceiptLine', () => {
@@ -53,5 +54,43 @@ describe('formatReceiptModifierBlock', () => {
 describe('receiptDivider', () => {
   it('emits fixed-width dashes', () => {
     expect(receiptDivider(10)).toBe('----------')
+  })
+})
+
+describe('collectThermalTicketText', () => {
+  it('preserves padReceiptLine spaces from hidden plain lines', () => {
+    const padded = padReceiptLine('Subtotal', '$ COP 100', 32)
+    const product = formatReceiptProductBlock({
+      name: 'poker',
+      quantity: 2,
+      unitPriceLabel: '$10',
+      lineTotalLabel: '$20',
+    })
+    const root = {
+      classList: { contains: () => false },
+      children: [
+        {
+          classList: { contains: (c: string) => c === 'receipt-plain-line' },
+          textContent: padded,
+          children: [],
+        },
+        {
+          classList: { contains: (c: string) => c === 'receipt-row' },
+          textContent: 'Mesa 15',
+          children: [],
+        },
+        {
+          classList: { contains: (c: string) => c === 'receipt-plain-pre' },
+          textContent: product,
+          children: [],
+        },
+      ],
+    } as unknown as Element
+
+    const text = collectThermalTicketText(root)
+    expect(text).not.toMatch(/Subtotal\$/)
+    expect(text.split('\n')[0]).toMatch(/Subtotal\s{2,}\$ COP 100/)
+    expect(text).toContain('Mesa 15')
+    expect(text).toContain('poker')
   })
 })

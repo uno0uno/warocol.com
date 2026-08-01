@@ -27,8 +27,8 @@ out_of_scope:
   - Printer assignment UX
 
 hints:
-  entry: "padReceiptLine + ReceiptPrintTicket plain lines"
-  pattern: "explicit spaces in text; prefer innerText for ESC/POS"
+  entry: "padReceiptLine + collectThermalTicketText for hidden DOM"
+  pattern: "never rely on innerText of display:none; preserve pad spaces"
   tests: "bun test utils/receiptTicketPlainText.test.ts"
 
 risk:
