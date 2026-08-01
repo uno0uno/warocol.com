@@ -206,7 +206,9 @@
         "retrying": "Wird erneut versucht...",
         "retry": "Erneut versuchen",
         "continueAndIssue": "Weiter und ausstellen",
-        "saving": "Wird gespeichert..."
+        "saving": "Wird gespeichert...",
+        "generatedInline": "Rechnung erstellt: {invoice}",
+        "sendAnother": "An andere E-Mail senden"
       },
       "receiptEmail": {
         "askSend": "Beleg an Kunden senden?",
@@ -216,7 +218,8 @@
         "label": "Beleg per E-Mail",
         "send": "Senden",
         "fallbackError": "E-Mail konnte nicht gesendet werden.",
-        "invalidError": "E-Mail konnte nicht gesendet werden. Bitte Adresse prüfen."
+        "invalidError": "E-Mail konnte nicht gesendet werden. Bitte Adresse prüfen.",
+        "sendAnother": "An andere E-Mail senden"
       },
       "actions": {
         "leavePending": "Verkauf parken",
