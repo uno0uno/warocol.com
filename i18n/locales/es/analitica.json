@@ -364,7 +364,13 @@
         "error": "Error al registrar la recarga",
         "movementRecharge": "Recarga",
         "movementRedeem": "Uso en pedido",
-        "movementRefund": "Devolución"
+        "movementRefund": "Devolución",
+        "movementReceive": "Recarga",
+        "movementApply": "Uso en venta",
+        "movementVoidApply": "Anulación de uso",
+        "colType": "Tipo",
+        "colBalanceAfter": "Saldo",
+        "empty": "Sin movimientos de billetera"
       },
       "credit": {
         "title": "Cartera",

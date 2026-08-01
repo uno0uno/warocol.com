@@ -358,7 +358,13 @@
         "error": "रिचार्ज दर्ज करने में त्रुटि",
         "movementRecharge": "रिचार्ज",
         "movementRedeem": "ऑर्डर में उपयोग",
-        "movementRefund": "वापसी"
+        "movementRefund": "वापसी",
+        "movementReceive": "रिचार्ज",
+        "movementApply": "बिक्री में उपयोग",
+        "movementVoidApply": "उपयोग रद्द",
+        "colType": "प्रकार",
+        "colBalanceAfter": "शेष",
+        "empty": "कोई वॉलेट मूवमेंट नहीं"
       },
       "credit": {
         "title": "प्राप्य खाते",

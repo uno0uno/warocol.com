@@ -358,7 +358,13 @@
         "error": "خطأ في تسجيل الشحن",
         "movementRecharge": "شحن",
         "movementRedeem": "استخدام في طلب",
-        "movementRefund": "استرداد"
+        "movementRefund": "استرداد",
+        "movementReceive": "شحن",
+        "movementApply": "استخدام في البيع",
+        "movementVoidApply": "إلغاء استخدام",
+        "colType": "النوع",
+        "colBalanceAfter": "الرصيد",
+        "empty": "لا توجد حركات محفظة"
       },
       "credit": {
         "title": "الذمم المدينة",

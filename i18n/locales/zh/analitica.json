@@ -358,7 +358,13 @@
         "error": "充值登记失败",
         "movementRecharge": "充值",
         "movementRedeem": "订单使用",
-        "movementRefund": "退款"
+        "movementRefund": "退款",
+        "movementReceive": "充值",
+        "movementApply": "销售使用",
+        "movementVoidApply": "使用撤销",
+        "colType": "类型",
+        "colBalanceAfter": "余额",
+        "empty": "暂无钱包流水"
       },
       "credit": {
         "title": "应收账款",
