@@ -2,17 +2,19 @@
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[60] flex bg-overlay-backdrop/50"
+      class="fixed inset-0 z-[60] flex items-end md:items-stretch md:justify-end bg-overlay-backdrop/50"
       @click.self="handleClose"
     >
       <div
-        class="bottom-sheet-panel bg-surface w-full h-full max-h-[100dvh] flex flex-col"
+        class="bottom-sheet-panel bg-surface w-full max-h-[92dvh] md:max-h-none md:h-full md:max-w-md
+               flex flex-col rounded-t-2xl md:rounded-none shadow-2xl
+               md:border-s md:border-border"
         role="dialog"
         aria-modal="true"
         @click.stop
       >
 
-        <!-- Mobile drag handle (kept for familiarity; panel is full-viewport) -->
+        <!-- Mobile drag handle — bottom sheet; desktop docks as right slideover (#1999) -->
         <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
           <div class="w-10 h-1 rounded-full bg-border"></div>
         </div>
@@ -839,7 +841,7 @@ const handleClose = () => {
   opacity: 0;
 }
 
-/* Panel — mobile: slide up from bottom */
+/* Panel — mobile: bottom sheet; desktop: right slideover (#1999 / #1985) */
 .sheet-enter-active .bottom-sheet-panel,
 .sheet-leave-active .bottom-sheet-panel {
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
@@ -848,12 +850,10 @@ const handleClose = () => {
 .sheet-leave-to .bottom-sheet-panel {
   transform: translateY(100%);
 }
-
-/* Panel — desktop: no slide, just backdrop fade */
 @media (min-width: 768px) {
   .sheet-enter-from .bottom-sheet-panel,
   .sheet-leave-to .bottom-sheet-panel {
-    transform: translateY(0);
+    transform: translateX(100%);
   }
 }
 </style>

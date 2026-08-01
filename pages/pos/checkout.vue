@@ -3475,35 +3475,50 @@ onUnmounted(() => {
             {{ t('pos.checkout.customerData') }}
           </h2>
 
-          <!-- Customer selected: compact contact | fiscal layout -->
-          <div v-if="selectedCustomer" class="flex items-start gap-3 p-3 md:p-4 bg-primary/5 border border-primary/20 rounded-xl">
-            <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+          <!-- Customer selected: compact horizontal layout (#1999) -->
+          <div v-if="selectedCustomer" class="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+            <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
               {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
-            <div
-              class="flex-1 min-w-0 grid grid-cols-1 gap-3 md:gap-4"
-              :class="selectedCustomerIdentity.showSeparateAcquirer ? 'md:grid-cols-2' : ''"
-            >
+            <div class="flex-1 min-w-0 space-y-1">
               <div class="min-w-0">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
                   {{ t('pos.receipt.saleContact') }}
                 </p>
-                <p class="font-semibold text-text-primary truncate">{{ selectedCustomerDisplayName }}</p>
-                <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</p>
-                <p v-if="selectedCustomer.email" class="text-xs text-text-secondary truncate">{{ selectedCustomer.email }}</p>
-                <p v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="text-xs text-state-success-text truncate mt-0.5 flex items-center gap-1">
-                  <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <p class="font-semibold text-text-primary truncate leading-tight">{{ selectedCustomerDisplayName }}</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary">
+                <span class="truncate">{{ selectedCustomer.phone_number || t('pos.checkout.noPhone') }}</span>
+                <span v-if="selectedCustomer.email" class="truncate text-xs">{{ selectedCustomer.email }}</span>
+                <span
+                  v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer"
+                  class="inline-flex items-center gap-1 text-xs text-state-success-text truncate"
+                >
+                  <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                   {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
-                </p>
+                </span>
+                <span v-if="!isAnonymousCustomer" class="inline-flex" aria-live="polite">
+                  <div
+                    v-if="isWalletPending"
+                    class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
+                    :aria-label="t('pos.checkout.loadingWalletAria')"
+                  />
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
+                  >
+                    {{ t('pos.checkout.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
+                  </span>
+                </span>
               </div>
               <div
                 v-if="selectedCustomerIdentity.showSeparateAcquirer"
-                class="min-w-0 md:border-s md:border-primary/15 md:ps-4"
+                class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pt-0.5 border-t border-primary/15"
               >
                 <p class="text-[10px] font-bold uppercase tracking-wider text-state-warning-text">
                   {{ t('pos.receipt.fiscalAcquirer') }}
                 </p>
-                <p v-if="selectedCustomerIdentity.acquirer.name" class="text-sm font-semibold text-text-primary truncate">
+                <p v-if="selectedCustomerIdentity.acquirer.name" class="text-xs font-semibold text-text-primary truncate">
                   {{ selectedCustomerIdentity.acquirer.name }}
                 </p>
                 <p v-if="selectedCustomerIdentity.acquirer.fiscalId" class="text-xs text-text-secondary truncate">
@@ -3513,27 +3528,10 @@ onUnmounted(() => {
                   {{ selectedCustomerIdentity.acquirer.email }}
                 </p>
               </div>
-              <div
-                v-if="!isAnonymousCustomer"
-                class="flex flex-wrap gap-2 md:col-span-2"
-                aria-live="polite"
-              >
-                <div
-                  v-if="isWalletPending"
-                  class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
-                  :aria-label="t('pos.checkout.loadingWalletAria')"
-                />
-                <span
-                  v-else
-                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
-                >
-                  {{ t('pos.checkout.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
-                </span>
-              </div>
             </div>
             <button
               @click="showCustomerModal = true"
-              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0 self-center"
+              class="min-h-[44px] min-w-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0 self-center"
             >
               {{ t('pos.checkout.changeCustomer') }}
             </button>
