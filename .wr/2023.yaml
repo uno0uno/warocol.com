@@ -1,0 +1,39 @@
+issue: 2023
+title: "fix(pos): Venta Completada email rules + inline FEV"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2023-venta-completada-email-fev
+
+paths:
+  - pages/pos/checkout.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+
+ac:
+  - With FEV: auto-send when customer email available
+  - Without FEV: autofill email only
+  - After send: keep field to send to another recipient
+  - Inline Factura generada: FEV-XX
+  - Print remains clear
+  - Success shows all split tenders when present
+
+out_of_scope:
+  - CRM wallet/cartera
+  - API unless auto-send broken
+
+hints:
+  entry: "pages/pos/checkout.vue success panel + maybeAutoSendInvoiceEmailAfterFe"
+  pattern: "applyReceiptEmailAfterSale autofill; maybeAutoSend after FE; emailSent currently hides form"
+  tests: "manual smoke on /pos/checkout"
+
+risk:
+  sensitive: false
+  areas: [pos-checkout]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: "merge + pull main"

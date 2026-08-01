@@ -206,7 +206,9 @@
         "retrying": "正在重试...",
         "retry": "重试",
         "continueAndIssue": "继续并开具",
-        "saving": "正在保存..."
+        "saving": "正在保存...",
+        "generatedInline": "已生成发票：{invoice}",
+        "sendAnother": "发送到其他邮箱"
       },
       "receiptEmail": {
         "askSend": "发送收据给顾客？",
@@ -216,7 +218,8 @@
         "label": "通过邮件发送收据",
         "send": "发送",
         "fallbackError": "邮件发送失败。",
-        "invalidError": "邮件发送失败。请检查地址。"
+        "invalidError": "邮件发送失败。请检查地址。",
+        "sendAnother": "发送到其他邮箱"
       },
       "actions": {
         "leavePending": "挂起销售",

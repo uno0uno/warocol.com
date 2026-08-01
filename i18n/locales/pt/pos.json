@@ -206,7 +206,9 @@
         "retrying": "Tentando novamente...",
         "retry": "Tentar novamente",
         "continueAndIssue": "Continuar e emitir",
-        "saving": "Salvando..."
+        "saving": "Salvando...",
+        "generatedInline": "Fatura gerada: {invoice}",
+        "sendAnother": "Enviar para outro e-mail"
       },
       "receiptEmail": {
         "askSend": "Enviar recibo ao cliente?",
@@ -216,7 +218,8 @@
         "label": "Recibo por e-mail",
         "send": "Enviar",
         "fallbackError": "Não foi possível enviar o e-mail.",
-        "invalidError": "Não foi possível enviar o e-mail. Verifique o endereço."
+        "invalidError": "Não foi possível enviar o e-mail. Verifique o endereço.",
+        "sendAnother": "Enviar para outro e-mail"
       },
       "actions": {
         "leavePending": "Deixar venda pendente",

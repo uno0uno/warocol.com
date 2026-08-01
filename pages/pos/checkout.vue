@@ -191,6 +191,8 @@ const orderResult = ref<{
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
+/** Last address that received a receipt/invoice email (form stays open for another). */
+const lastSentEmail = ref('')
 const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
@@ -1085,6 +1087,7 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
   cartItemsSnapshot.value = snapshotCartItemsForReceipt()
   receiptEmail.value = ''
   emailSent.value = false
+  lastSentEmail.value = ''
   emailFromProfile.value = false
   splitMode.value = false
   posStore.clearAll()
@@ -1343,6 +1346,7 @@ function isGenericReceiptCustomer(customer: { phone_number?: string | null; emai
 
 function applyReceiptEmailAfterSale(customer: { phone_number?: string | null; email?: string | null } | null | undefined) {
   emailSent.value = false
+  lastSentEmail.value = ''
   if (isGenericReceiptCustomer(customer)) {
     receiptEmail.value = ''
     emailFromProfile.value = false
@@ -2097,6 +2101,7 @@ const processOrder = async () => {
         captureReceiptPrintContext()
         receiptEmail.value = ''
         emailSent.value = false
+        lastSentEmail.value = ''
         emailFromProfile.value = false
         posStore.exitSession()
         cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
@@ -2567,6 +2572,9 @@ const cancelOrder = async () => {
 const closeSuccessModal = () => {
   showSuccessModal.value = false
   emailFromProfile.value = false
+  emailSent.value = false
+  lastSentEmail.value = ''
+  receiptEmail.value = ''
   invoiceResult.value = null
   invoiceError.value = ''
   invoiceQrDataUrl.value = ''
@@ -3200,7 +3208,12 @@ const sendReceiptEmail = async () => {
         tip_amount: orderResult.value.tip_amount ?? 0,
       }
     })
+    const sentTo = (receiptEmail.value || '').trim()
     emailSent.value = true
+    lastSentEmail.value = sentTo
+    // Keep form open for another recipient (#2023)
+    receiptEmail.value = ''
+    emailFromProfile.value = false
   } catch (e: any) {
     // Surface the failure so the cashier knows the email did NOT go out (#134).
     // Most common case: 422 from EmailStr validation when the address is empty
@@ -5236,7 +5249,19 @@ onUnmounted(() => {
                 {{ formatCurrency(orderResultChargedAmount) }}
               </span>
             </div>
-            <div class="flex items-center justify-between gap-3 min-w-0">
+            <template v-if="splitPaymentsSnapshot.length > 0">
+              <div
+                v-for="p in splitPaymentsSnapshot"
+                :key="p.id"
+                class="flex items-center justify-between gap-3 min-w-0"
+              >
+                <span class="text-sm text-text-secondary shrink-0">{{ p.payment_method_name }}</span>
+                <span class="text-sm font-medium text-text-primary tabular-nums text-end">
+                  {{ formatCurrency(p.amount) }}
+                </span>
+              </div>
+            </template>
+            <div v-else class="flex items-center justify-between gap-3 min-w-0">
               <span class="text-sm text-text-secondary shrink-0">{{ t('pos.checkout.summary.paymentMethod') }}</span>
               <span class="text-sm font-medium text-text-primary min-w-0 overflow-x-auto whitespace-nowrap text-end">
                 {{
@@ -5373,14 +5398,15 @@ onUnmounted(() => {
 	              <span class="text-sm text-text-secondary">{{ invoiceProgress || t('pos.checkout.invoice.generating') }}</span>
             </div>
 
-            <!-- Success — the unified email action is shown below with receipt actions. -->
+            <!-- Success — one inline line (#2023); email actions below. -->
             <div
               v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
-              class="rounded-lg border border-state-success-border bg-state-success-bg p-3 text-center"
+              class="rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2.5 text-center"
             >
-	              <p class="text-xs font-semibold text-state-success-text">{{ t('pos.checkout.invoice.generated') }}</p>
-              <p class="text-sm font-semibold text-state-success-text mt-1">
-                {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
+              <p class="text-sm font-semibold text-state-success-text">
+                {{ t('pos.checkout.invoice.generatedInline', {
+                  invoice: `${invoiceResult.prefix}-${invoiceResult.invoice_number}`,
+                }) }}
               </p>
             </div>
 
@@ -5412,53 +5438,56 @@ onUnmounted(() => {
 
           <!-- Receipt actions -->
           <div class="mb-4 space-y-3">
-            <!-- Email receipt — always editable before send (#2008) -->
+            <!-- Email: autofill without FE; auto-send with FE; always allow another recipient (#2023) -->
             <div class="flex flex-col gap-1.5">
-              <template v-if="emailSent">
-                <div class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text">
-                  <svg class="h-[1em] w-[1em] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                  <span class="text-sm font-medium">
-                    {{ hasGeneratedInvoice
-                      ? t('pos.checkout.invoiceSent', { email: receiptEmail })
-                      : t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}
-                  </span>
-                </div>
-              </template>
-              <template v-else>
-                <label for="receipt-email" class="text-sm font-medium text-text-primary">
-                  {{
-                    hasGeneratedInvoice
+              <div
+                v-if="emailSent && lastSentEmail"
+                class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text"
+              >
+                <svg class="h-[1em] w-[1em] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <span class="text-sm font-medium">
+                  {{ hasGeneratedInvoice
+                    ? t('pos.checkout.invoiceSent', { email: lastSentEmail })
+                    : t('pos.checkout.receiptEmail.sentTo', { email: lastSentEmail }) }}
+                </span>
+              </div>
+              <label for="receipt-email" class="text-sm font-medium text-text-primary">
+                {{
+                  emailSent
+                    ? (hasGeneratedInvoice
+                      ? t('pos.checkout.invoice.sendAnother')
+                      : t('pos.checkout.receiptEmail.sendAnother'))
+                    : (hasGeneratedInvoice
                       ? t('pos.checkout.invoice.sendByEmail')
                       : (emailFromProfile
                         ? t('pos.checkout.receiptEmail.askSend')
-                        : t('pos.checkout.receiptEmail.label'))
-                  }}
-                  <span
-                    v-if="!emailFromProfile"
-                    class="font-normal text-text-tertiary"
-                  >{{ t('pos.checkout.optional') }}</span>
-                </label>
-                <div class="flex gap-2">
-                  <input
-                    id="receipt-email"
-                    v-model="receiptEmail"
-                    type="email"
-                    placeholder="cliente@email.com"
-                    autocomplete="email"
-                    class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  />
-                  <button
-                    type="button"
-                    @click="sendReceiptEmail"
-                    :disabled="!receiptEmail || isSendingEmail"
-                    class="shrink-0 min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
-                  >
-                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
-                    <span v-else-if="emailFromProfile">{{ t('pos.checkout.receiptEmail.confirmSend') }}</span>
-                    <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
-                  </button>
-                </div>
-              </template>
+                        : t('pos.checkout.receiptEmail.label')))
+                }}
+                <span
+                  v-if="!emailFromProfile && !emailSent"
+                  class="font-normal text-text-tertiary"
+                >{{ t('pos.checkout.optional') }}</span>
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="receipt-email"
+                  v-model="receiptEmail"
+                  type="email"
+                  placeholder="cliente@email.com"
+                  autocomplete="email"
+                  class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                />
+                <button
+                  type="button"
+                  @click="sendReceiptEmail"
+                  :disabled="!receiptEmail || isSendingEmail"
+                  class="shrink-0 min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
+                >
+                  <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
+                  <span v-else-if="emailFromProfile && !emailSent">{{ t('pos.checkout.receiptEmail.confirmSend') }}</span>
+                  <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
+                </button>
+              </div>
             </div>
 
             <!-- Print -->
