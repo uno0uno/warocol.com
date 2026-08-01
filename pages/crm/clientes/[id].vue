@@ -48,9 +48,11 @@ const { timezone } = useTenantTimezone()
 const { formatCalendarDate, formatDate: formatTenantDate, formatCurrency, formatNumber } = useFormatters()
 const dateFnsLocale = computed(() => toDateFnsLocale(locale.value))
 
-// ── Pagination ────────────────────────────────────────────────────────────
-const currentPage = ref(1)
-const perPage = 20
+// ── Pagination (match ventas/ordenes UI; max 10 rows per table) ───────────
+const TABLE_PAGE_SIZE = 10
+const ordersPage = ref(1)
+const walletPage = ref(1)
+const carteraPage = ref(1)
 
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { data: apiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -59,13 +61,13 @@ const { data: apiData, pending: isLoading, error: fetchError, refresh } = useAsy
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
-      page: currentPage.value,
-      per_page: perPage,
+      page: ordersPage.value,
+      per_page: TABLE_PAGE_SIZE,
     }
   }),
   {
     server: false,
-    watch: [currentTenant, dateRangeDates, currentPage],
+    watch: [currentTenant, dateRangeDates, ordersPage],
   }
 )
 
@@ -91,15 +93,14 @@ const avgTicket = computed(() => {
   if (!c || !c.total_orders) return 0
   return c.total_spent / c.total_orders
 })
-const ordersData = computed(() => (apiData.value as any)?.orders || { items: [], total: 0, page: 1, per_page: perPage })
+const ordersData = computed(() => (apiData.value as any)?.orders || { items: [], total: 0, page: 1, per_page: TABLE_PAGE_SIZE })
 const orders = computed(() => ordersData.value?.items || [])
 const totalOrders = computed(() => ordersData.value?.total || 0)
-
-const totalPages = computed(() => Math.ceil(totalOrders.value / perPage))
-const canGoPrevious = computed(() => currentPage.value > 1)
-const canGoNext = computed(() => currentPage.value < totalPages.value)
-const startItem = computed(() => totalOrders.value === 0 ? 0 : (currentPage.value - 1) * perPage + 1)
-const endItem = computed(() => Math.min(currentPage.value * perPage, totalOrders.value))
+const ordersTotalPages = computed(() => Math.max(1, Math.ceil(totalOrders.value / TABLE_PAGE_SIZE)))
+const goToOrdersPage = (page: number) => {
+  const next = Math.min(Math.max(1, page), ordersTotalPages.value)
+  if (next !== ordersPage.value) ordersPage.value = next
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const formatDate = (isoDate: string) => {
@@ -149,11 +150,9 @@ const orderStatusVariant = (status: string) =>
   status === 'completed' ? 'success' : status === 'cancelled' ? 'destructive' : 'warning'
 
 // ── Actions ───────────────────────────────────────────────────────────────
-const previousPage = () => { if (canGoPrevious.value) currentPage.value-- }
-const nextPage = () => { if (canGoNext.value) currentPage.value++ }
-const clearFilters = () => { dateRangeDates.value = null; currentPage.value = 1 }
+const clearFilters = () => { dateRangeDates.value = null; ordersPage.value = 1 }
 
-watch(dateRangeDates, () => { currentPage.value = 1 })
+watch(dateRangeDates, () => { ordersPage.value = 1 })
 
 // ── Table columns ─────────────────────────────────────────────────────────
 const tableColumns = computed(() => [
@@ -277,6 +276,17 @@ const {
 
 const walletBalance = computed(() => wallet.value?.balance_cop ?? 0)
 const walletMovements = computed(() => wallet.value?.movements ?? [])
+const walletTotal = computed(() => walletMovements.value.length)
+const walletTotalPages = computed(() => Math.max(1, Math.ceil(walletTotal.value / TABLE_PAGE_SIZE)))
+const walletPageItems = computed(() => {
+  const start = (walletPage.value - 1) * TABLE_PAGE_SIZE
+  return walletMovements.value.slice(start, start + TABLE_PAGE_SIZE)
+})
+const goToWalletPage = (page: number) => {
+  const next = Math.min(Math.max(1, page), walletTotalPages.value)
+  if (next !== walletPage.value) walletPage.value = next
+}
+watch(walletMovements, () => { walletPage.value = 1 })
 
 const walletPaymentGroups = computed(() => {
   const groups = paymentGroups.value.filter(
@@ -318,11 +328,24 @@ const fetchCartera = async () => {
   try {
     const res = await $fetch<any>(`/api/cartera/customers/${customerId.value}`)
     carteraData.value = res.data ?? res
+    carteraPage.value = 1
   } catch {
     // Non-critical — cartera section hidden on error
   } finally {
     isLoadingCartera.value = false
   }
+}
+
+const carteraOrdersAll = computed(() => carteraData.value?.orders || [])
+const carteraTotal = computed(() => carteraOrdersAll.value.length)
+const carteraTotalPages = computed(() => Math.max(1, Math.ceil(carteraTotal.value / TABLE_PAGE_SIZE)))
+const carteraPageItems = computed(() => {
+  const start = (carteraPage.value - 1) * TABLE_PAGE_SIZE
+  return carteraOrdersAll.value.slice(start, start + TABLE_PAGE_SIZE)
+})
+const goToCarteraPage = (page: number) => {
+  const next = Math.min(Math.max(1, page), carteraTotalPages.value)
+  if (next !== carteraPage.value) carteraPage.value = next
 }
 
 const showPaymentPanel = ref(false)
@@ -663,7 +686,7 @@ onUnmounted(() => {
           v-if="!isLoadingWallet"
           row-size="sm"
           :columns="walletColumns"
-          :data="walletMovements"
+          :data="walletPageItems"
           :empty-message="t('analitica.customerDetail.wallet.empty')"
           variant="default"
         >
@@ -709,6 +732,47 @@ onUnmounted(() => {
             <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
           </template>
         </UiResponsiveDataView>
+        <div v-if="walletTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              :disabled="walletPage <= 1"
+              @click="goToWalletPage(1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.primeraPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="walletPage <= 1"
+              @click="goToWalletPage(walletPage - 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaAnterior')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ walletPage }}</span>
+            <button
+              type="button"
+              :disabled="walletPage >= walletTotalPages"
+              @click="goToWalletPage(walletPage + 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaSiguiente')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="walletPage >= walletTotalPages"
+              @click="goToWalletPage(walletTotalPages)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.ultimaPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Cartera Section -->
@@ -755,7 +819,7 @@ onUnmounted(() => {
         <UiResponsiveDataView
           row-size="sm"
           :columns="carteraColumns"
-          :data="carteraData.orders || []"
+          :data="carteraPageItems"
           :empty-message="t('analitica.customerDetail.credit.empty')"
           variant="default"
         >
@@ -828,6 +892,47 @@ onUnmounted(() => {
             </button>
           </template>
         </UiResponsiveDataView>
+        <div v-if="carteraTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              :disabled="carteraPage <= 1"
+              @click="goToCarteraPage(1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.primeraPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="carteraPage <= 1"
+              @click="goToCarteraPage(carteraPage - 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaAnterior')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ carteraPage }}</span>
+            <button
+              type="button"
+              :disabled="carteraPage >= carteraTotalPages"
+              @click="goToCarteraPage(carteraPage + 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaSiguiente')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="carteraPage >= carteraTotalPages"
+              @click="goToCarteraPage(carteraTotalPages)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.ultimaPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Date Filter -->
@@ -1014,35 +1119,46 @@ onUnmounted(() => {
         </template>
       </UiResponsiveDataView>
 
-      <!-- Pagination -->
-      <div v-if="totalOrders > perPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button @click="previousPage" :disabled="!canGoPrevious"
-            :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            {{ t('analitica.clientes.prev') }}
+      <!-- Pagination (match ventas/ordenes) -->
+      <div v-if="totalOrders > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            :disabled="ordersPage <= 1"
+            @click="goToOrdersPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
           </button>
-          <button @click="nextPage" :disabled="!canGoNext"
-            :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            {{ t('analitica.clientes.next') }}
+          <button
+            type="button"
+            :disabled="ordersPage <= 1"
+            @click="goToOrdersPage(ordersPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
-        </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <p class="text-sm text-titan-700">
-            {{ t('analitica.customerDetail.history.showingRange', { start: startItem, end: endItem, total: totalOrders }) }}
-          </p>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <button @click="previousPage" :disabled="!canGoPrevious"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-s-md border border-titan-300 text-sm font-medium', canGoPrevious ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
-              {{ currentPage }} / {{ totalPages }}
-            </span>
-            <button @click="nextPage" :disabled="!canGoNext"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-e-md border border-titan-300 text-sm font-medium', canGoNext ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </nav>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ ordersPage }}</span>
+          <button
+            type="button"
+            :disabled="ordersPage >= ordersTotalPages"
+            @click="goToOrdersPage(ordersPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            type="button"
+            :disabled="ordersPage >= ordersTotalPages"
+            @click="goToOrdersPage(ordersTotalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
         </div>
       </div>
 
