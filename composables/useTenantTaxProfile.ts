@@ -333,9 +333,29 @@ export function buildCoTaxSavePayload(options: {
   iva_rate: number
   inc_rate: number
   liquor_tax_rate: number
+  /** Menu category UUID → synthesized line key (`iva`|`inc`|`liquor`) (#1993). */
+  menu_category_line_map?: Record<string, string | null> | null
   /** Menu category UUIDs treated as tax-exempt (#1989). */
   exempt_menu_category_ids?: unknown
-}): Record<string, boolean | number | string[]> {
+}): Record<string, boolean | number | string[] | Record<string, string | null>> {
+  const allowedKeys = new Set<string>()
+  if (options.inc_applicable) allowedKeys.add('inc')
+  else if (options.iva_applicable) allowedKeys.add('iva')
+  if (options.liquor_tax_applicable) allowedKeys.add('liquor')
+
+  const menu_category_line_map: Record<string, string | null> = {}
+  for (const [catId, lineKey] of Object.entries(options.menu_category_line_map || {})) {
+    const id = String(catId || '').trim()
+    if (!id) continue
+    if (lineKey == null || lineKey === '') {
+      menu_category_line_map[id] = null
+      continue
+    }
+    const key = String(lineKey)
+    if (!allowedKeys.has(key)) continue
+    menu_category_line_map[id] = key
+  }
+
   return {
     inc_applicable: Boolean(options.inc_applicable),
     inc_included_in_price: Boolean(options.inc_included_in_price),
@@ -345,6 +365,7 @@ export function buildCoTaxSavePayload(options: {
     iva_rate: Math.max(0, Number(options.iva_rate) || 0),
     inc_rate: Math.max(0, Number(options.inc_rate) || 0),
     liquor_tax_rate: Math.max(0, Number(options.liquor_tax_rate) || 0),
+    menu_category_line_map,
     exempt_menu_category_ids: normalizeExemptMenuCategoryIds(
       options.exempt_menu_category_ids ?? [],
     ),

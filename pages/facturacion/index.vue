@@ -477,6 +477,20 @@ const onExemptSearchInput = (event: Event) => {
   openExemptSearch()
 }
 
+/** Synthesized CO line keys for category chips (#1993). */
+const coTaxLineTargets = computed(() => {
+  const lines: { key: string; label: string }[] = []
+  if (taxForm.inc_applicable) {
+    lines.push({ key: 'inc', label: t('facturacion.tax.incTitle') })
+  } else if (taxForm.iva_applicable) {
+    lines.push({ key: 'iva', label: t('facturacion.tax.ivaTitle') })
+  }
+  if (taxForm.liquor_tax_applicable) {
+    lines.push({ key: 'liquor', label: t('facturacion.tax.liquorTitle') })
+  }
+  return lines
+})
+
 const linesToUi = (lines: { key: string; label: string; rate: number; included_in_price: boolean; gl_role: string }[]): MatrixLineUi[] =>
   lines.map(line => ({
     key: line.key,
@@ -769,6 +783,7 @@ const saveTaxConfig = async () => {
           iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
           inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
           liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+          menu_category_line_map: { ...menuCategoryLineMap.value },
           exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
         }),
       })
@@ -2119,6 +2134,87 @@ const matiasRegimeLabel = computed(() => {
         </div>
 
         <div class="border-t border-border/40" />
+
+        <!-- CO primary + liquor category chips (#1993) — reuse commercial search/chips helpers -->
+        <div v-if="coTaxLineTargets.length" class="space-y-4">
+          <div>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.categoryMapTitle') }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5 leading-relaxed">{{ t('facturacion.tax.coCategoryMapBody') }}</p>
+          </div>
+
+          <div
+            v-for="line in coTaxLineTargets"
+            :key="`co-line-${line.key}`"
+            class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4"
+          >
+            <div>
+              <p class="text-xs font-medium text-text-secondary">{{ line.label }}</p>
+              <p class="text-[11px] text-text-tertiary mt-0.5 leading-snug">{{ t('facturacion.tax.lineCategoriesHint') }}</p>
+            </div>
+
+            <div class="relative">
+              <input
+                :id="`co-tax-line-cat-search-${line.key}`"
+                type="search"
+                autocomplete="off"
+                :value="categorySearchByLine[line.key] || ''"
+                :placeholder="t('facturacion.tax.searchCategory')"
+                class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                @focus="openCategorySearch(line.key)"
+                @blur="closeCategorySearchSoon(line.key)"
+                @input="onCategorySearchInput(line.key, $event)"
+              >
+              <ul
+                v-if="categorySearchOpenKey === line.key && filteredCategoriesForLine(line.key).length"
+                class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                role="listbox"
+              >
+                <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`co-${line.key}-${choice.id}`">
+                  <button
+                    type="button"
+                    class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                    @mousedown.prevent="assignCategoryToLine(choice.id, line.key)"
+                  >
+                    {{ choice.name }}
+                    <span
+                      v-if="menuCategoryLineMap[choice.id] && menuCategoryLineMap[choice.id] !== line.key"
+                      class="ms-1 text-xs text-text-tertiary"
+                    >
+                      · {{ t('facturacion.tax.categoryReassignHint') }}
+                    </span>
+                    <span
+                      v-else-if="exemptMenuCategoryIds.includes(choice.id)"
+                      class="ms-1 text-xs text-text-tertiary"
+                    >
+                      · {{ t('facturacion.tax.mapExempt') }}
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <ul v-if="categoriesMappedToLine(line.key).length" class="flex flex-wrap gap-2" role="list">
+              <li
+                v-for="catId in categoriesMappedToLine(line.key)"
+                :key="`co-${line.key}-chip-${catId}`"
+                class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
+              >
+                <span>{{ menuCategoryLabel(catId) }}</span>
+                <button
+                  type="button"
+                  class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                  :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                  @click="unassignCategory(catId)"
+                >
+                  ×
+                </button>
+              </li>
+            </ul>
+            <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noCategoriesYet') }}</p>
+          </div>
+        </div>
+
+        <div v-if="coTaxLineTargets.length" class="border-t border-border/40" />
 
         <!-- CO exempt categories (#1989) — reuse commercial search/chips helpers -->
         <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4">

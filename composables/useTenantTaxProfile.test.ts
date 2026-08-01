@@ -336,6 +336,7 @@ describe('useTenantTaxProfile', () => {
     expect(body.iva_rate).toBe(0.19)
     expect(body.liquor_tax_rate).toBe(0.05)
     expect(body.iva_applicable).toBe(true)
+    expect(body.menu_category_line_map).toEqual({})
     expect(body.exempt_menu_category_ids).toEqual([])
   })
 
@@ -355,6 +356,34 @@ describe('useTenantTaxProfile', () => {
     })
     expect(body.exempt_menu_category_ids).toEqual([catB, catA])
     expect(body.inc_applicable).toBe(true)
+  })
+
+  it('includes menu_category_line_map in CO tax save payload (#1993)', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const catB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const catC = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    const body = buildCoTaxSavePayload({
+      inc_applicable: false,
+      inc_included_in_price: true,
+      iva_applicable: true,
+      iva_included_in_price: false,
+      liquor_tax_applicable: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      menu_category_line_map: {
+        [catA]: 'liquor',
+        [catB]: 'iva',
+        [catC]: 'inc', // dropped — INC not active
+        '': 'iva',
+      },
+      exempt_menu_category_ids: [catB],
+    })
+    expect(body.menu_category_line_map).toEqual({
+      [catA]: 'liquor',
+      [catB]: 'iva',
+    })
+    expect(body.exempt_menu_category_ids).toEqual([catB])
   })
 
   it('uses menu-category tax UI only for commercial tax_lines (#1885)', () => {
