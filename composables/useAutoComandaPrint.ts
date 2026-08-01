@@ -105,11 +105,10 @@ export function markComandasPrinted(comandas: ComandaPrintPayload[], orderId?: s
   }
 }
 
-/** Same layout as manual ComandaPrintTickets (#1975); fallback tickets last. */
+/** Same layout as manual ComandaPrintTickets (#1975); no modifier prices (#1977). */
 export function buildComandaPlainText(comandas: ComandaPrintWithFallback[]): string {
   return buildComandaTicketPlainText(comandas, {
     orderComandas: (list) => orderComandasForPrint(list as ComandaPrintWithFallback[]),
-    includeModifierPrices: true,
   })
 }
 

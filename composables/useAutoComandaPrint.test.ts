@@ -119,7 +119,8 @@ describe('buildComandaPlainText', () => {
     expect(text).toContain('Comanda #5')
     expect(text).toContain('Estacion: Cocina')
     expect(text).toContain('2x Burger')
-    expect(text).toContain('  - Extra queso - 2000')
+    expect(text).toContain('  - Extra queso')
+    expect(text).not.toContain('2000')
     expect(text).toContain('  * Notas especiales: sin cebolla')
     // Rows must not mash meta into one line
     expect(text).not.toMatch(/Mesa 2Comanda/)

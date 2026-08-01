@@ -34,7 +34,7 @@ describe('mapComandasForPrint', () => {
 })
 
 describe('buildComandaTicketPlainText', () => {
-  it('keeps meta rows and item details on separate lines', () => {
+  it('keeps meta rows and omits modifier prices by default (kitchen)', () => {
     const text = buildComandaTicketPlainText(
       [
         {
@@ -57,8 +57,6 @@ describe('buildComandaTicketPlainText', () => {
       ],
       {
         businessName: 'Waro Colombia',
-        includeModifierPrices: true,
-        formatPrice: (n) => `$${n}`,
         formatTime: () => '31/07/26, 19:05',
       },
     )
@@ -72,12 +70,36 @@ describe('buildComandaTicketPlainText', () => {
       '--------------------------------',
       'Estacion: Cocina',
       '1x Santa inquisicion',
-      '  - Papas Fritas - $5000',
-      '  - Tocineta x2 - $8000',
+      '  - Papas Fritas',
+      '  - Tocineta x2',
       '  * Notas especiales: GRATIS (HORA FELIZ)',
     ])
-    expect(text).not.toContain('?')
+    expect(text).not.toContain('$')
+    expect(text).not.toContain('5000')
     expect(text).not.toMatch(/19:05Mesa/)
+  })
+
+  it('can still include modifier prices when explicitly requested', () => {
+    const text = buildComandaTicketPlainText(
+      [
+        {
+          comanda_number: 1,
+          items: [
+            {
+              kitchen_name: 'X',
+              quantity: 1,
+              modifiers_snapshot: [{ name: 'Extra', price: 1000, quantity: 1 }],
+            },
+          ],
+        },
+      ],
+      {
+        includeModifierPrices: true,
+        formatPrice: (n) => `$${n}`,
+        formatTime: () => 't',
+      },
+    )
+    expect(text).toContain('  - Extra - $1000')
   })
 })
 
