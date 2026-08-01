@@ -128,6 +128,16 @@ describe('consolidateReceiptPrintLines', () => {
 
     assert.equal(lines.length, 2)
   })
+
+  it('merges plain duplicates like poker 13 + 19 into one line', () => {
+    const lines = group([
+      { productId: 'poker', name: 'poker 330 und', quantity: 13, unitPrice: 45000, total: 585000 },
+      { productId: 'poker', name: 'poker 330 und', quantity: 19, unitPrice: 45000, total: 855000 },
+    ])
+    assert.equal(lines.length, 1)
+    assert.equal(lines[0]!.quantity, 32)
+    assert.equal(lines[0]!.total, 1440000)
+  })
 })
 
 describe('buildReceiptTicketItems', () => {
