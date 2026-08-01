@@ -113,6 +113,32 @@ describe('buildComandaPlainText', () => {
     expect(text).toContain('2x Burger')
     expect(text).toContain('sin cebolla')
   })
+
+  it('prints fallback last and labels Sin cocina asignada', () => {
+    const text = buildComandaPlainText([
+      {
+        id: undefined,
+        comanda_number: 10,
+        station_id: null,
+        station_name: 'Sin cocina asignada',
+        print_fallback: true,
+        items: [{ kitchen_name: 'PASSION', quantity: 1, notes: 'CON PEPINILLOS' }],
+      },
+      {
+        id: 'st-1',
+        comanda_number: 10,
+        station_id: 'st-1',
+        station_name: 'Parrilla',
+        items: [{ kitchen_name: 'Burger', quantity: 1 }],
+      },
+    ])
+    const parrillaAt = text.indexOf('Parrilla')
+    const fallbackAt = text.indexOf('Sin cocina asignada')
+    expect(parrillaAt).toBeGreaterThanOrEqual(0)
+    expect(fallbackAt).toBeGreaterThan(parrillaAt)
+    expect(text).toContain('PASSION')
+    expect(text).toContain('CON PEPINILLOS')
+  })
 })
 
 describe('autoPrintComandaFired', () => {
@@ -204,6 +230,36 @@ describe('autoPrintComandaFired', () => {
     }
     expect(await autoPrintComandaFired(payload, deps)).toBe('printed')
     expect(await autoPrintComandaFired(payload, deps)).toBe('skipped')
+    expect(bridge.printRawEscPos).toHaveBeenCalledOnce()
+  })
+
+  it('prints fallback-only payload to caja for mesa', async () => {
+    const bridge = fakeBridge()
+    const result = await autoPrintComandaFired(
+      {
+        type: 'comanda_fired',
+        source_type: 'table',
+        table_display_name: 'Mesa 1',
+        auto_print_target: 'caja',
+        order_id: 'o-fb',
+        comandas: [
+          {
+            id: null,
+            comanda_number: 3,
+            station_id: null,
+            station_name: 'Sin cocina asignada',
+            print_fallback: true,
+            items: [{ kitchen_name: 'poker 330', quantity: 2 }],
+          },
+        ],
+      },
+      {
+        bridge,
+        getCajaPrinterName: async () => 'CAJA_1',
+        getUserId: () => 'u1',
+      },
+    )
+    expect(result).toBe('printed')
     expect(bridge.printRawEscPos).toHaveBeenCalledOnce()
   })
 })
