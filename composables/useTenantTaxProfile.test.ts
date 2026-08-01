@@ -336,6 +336,25 @@ describe('useTenantTaxProfile', () => {
     expect(body.iva_rate).toBe(0.19)
     expect(body.liquor_tax_rate).toBe(0.05)
     expect(body.iva_applicable).toBe(true)
+    expect(body.exempt_menu_category_ids).toEqual([])
+  })
+
+  it('includes exempt menu category ids in CO tax save payload (#1989)', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const catB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const body = buildCoTaxSavePayload({
+      inc_applicable: true,
+      inc_included_in_price: true,
+      iva_applicable: false,
+      iva_included_in_price: false,
+      liquor_tax_applicable: false,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      exempt_menu_category_ids: [catB, catA, catB, ''],
+    })
+    expect(body.exempt_menu_category_ids).toEqual([catB, catA])
+    expect(body.inc_applicable).toBe(true)
   })
 
   it('uses menu-category tax UI only for commercial tax_lines (#1885)', () => {

@@ -343,7 +343,8 @@ const { data: menuCategoriesData } = useQuery({
   query: () => $fetch<{ data?: MenuCategoryOption[] }>('/api/menu/categories', {
     query: { limit: 50 },
   }),
-  enabled: () => !!currentTenant.value && showCommercialTaxUi.value,
+  // Commercial matrix + CO exempt chips (#1989) both need the category list.
+  enabled: () => !!currentTenant.value && (showCommercialTaxUi.value || isFiscalIntegrated.value),
   staleTime: 60_000,
 })
 
@@ -768,6 +769,7 @@ const saveTaxConfig = async () => {
           iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
           inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
           liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+          exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
         }),
       })
     }
@@ -2114,6 +2116,63 @@ const matiasRegimeLabel = computed(() => {
               class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary tabular-nums"
             >
           </div>
+        </div>
+
+        <div class="border-t border-border/40" />
+
+        <!-- CO exempt categories (#1989) — reuse commercial search/chips helpers -->
+        <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4">
+          <div>
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.exemptTitle') }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5 leading-relaxed">{{ t('facturacion.tax.exemptHint') }}</p>
+          </div>
+          <div class="relative">
+            <input
+              id="co-tax-exempt-cat-search"
+              type="search"
+              autocomplete="off"
+              :value="exemptSearch"
+              :placeholder="t('facturacion.tax.searchExemptCategory')"
+              class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              @focus="openExemptSearch"
+              @blur="closeExemptSearchSoon"
+              @input="onExemptSearchInput"
+            >
+            <ul
+              v-if="exemptSearchOpen && filteredExemptCategories.length"
+              class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+              role="listbox"
+            >
+              <li v-for="choice in filteredExemptCategories" :key="`co-exempt-${choice.id}`">
+                <button
+                  type="button"
+                  class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                  @mousedown.prevent="assignExemptCategory(choice.id)"
+                >
+                  {{ choice.name }}
+                </button>
+              </li>
+            </ul>
+          </div>
+          <ul v-if="exemptMenuCategoryIds.length" class="flex flex-wrap gap-2" role="list">
+            <li
+              v-for="catId in exemptMenuCategoryIds"
+              :key="`co-exempt-chip-${catId}`"
+              class="text-xs bg-surface-secondary text-text-secondary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-border"
+            >
+              <span>{{ menuCategoryLabel(catId) }}</span>
+              <button
+                type="button"
+                class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                @click="unassignExemptCategory(catId)"
+              >
+                ×
+              </button>
+            </li>
+          </ul>
+          <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noExemptYet') }}</p>
+          <p class="text-xs text-text-tertiary leading-relaxed">{{ t('facturacion.tax.exemptNote') }}</p>
         </div>
 
       </div>

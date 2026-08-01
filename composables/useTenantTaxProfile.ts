@@ -333,7 +333,9 @@ export function buildCoTaxSavePayload(options: {
   iva_rate: number
   inc_rate: number
   liquor_tax_rate: number
-}): Record<string, boolean | number> {
+  /** Menu category UUIDs treated as tax-exempt (#1989). */
+  exempt_menu_category_ids?: unknown
+}): Record<string, boolean | number | string[]> {
   return {
     inc_applicable: Boolean(options.inc_applicable),
     inc_included_in_price: Boolean(options.inc_included_in_price),
@@ -343,6 +345,9 @@ export function buildCoTaxSavePayload(options: {
     iva_rate: Math.max(0, Number(options.iva_rate) || 0),
     inc_rate: Math.max(0, Number(options.inc_rate) || 0),
     liquor_tax_rate: Math.max(0, Number(options.liquor_tax_rate) || 0),
+    exempt_menu_category_ids: normalizeExemptMenuCategoryIds(
+      options.exempt_menu_category_ids ?? [],
+    ),
   }
 }
 
