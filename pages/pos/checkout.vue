@@ -3497,7 +3497,7 @@ onUnmounted(() => {
                   <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                   {{ t('pos.checkout.invoiceFiscalPrefix', { type: selectedCustomer.fiscal_id_type, id: selectedCustomer.fiscal_id }) }}
                 </span>
-                <template v-if="!isAnonymousCustomer">
+                <span v-if="!isAnonymousCustomer" class="inline-flex" aria-live="polite">
                   <div
                     v-if="isWalletPending"
                     class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
@@ -3509,7 +3509,7 @@ onUnmounted(() => {
                   >
                     {{ t('pos.checkout.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
                   </span>
-                </template>
+                </span>
               </div>
               <div
                 v-if="selectedCustomerIdentity.showSeparateAcquirer"
