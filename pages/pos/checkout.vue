@@ -2545,6 +2545,14 @@ const paymentGridClass = computed(() => {
   return 'grid-cols-2 md:grid-cols-4'
 })
 
+/** Template cannot resolve global sessionStorage — bind via this helper. */
+const backToPos = () => {
+  if (import.meta.client) {
+    window.sessionStorage.setItem('posNavigation', 'true')
+  }
+  router.push('/pos')
+}
+
 const cancelOrder = async () => {
   if (splitPayments.value.length > 0) {
     if (!window.confirm(t('pos.checkout.split.cancelWithPartials'))) return
@@ -2552,12 +2560,8 @@ const cancelOrder = async () => {
   if (posStore.activeTableSession?.isBar) {
     // Bar session — clear local cart but keep session alive (it's permanent)
     posStore.clearCart()
-    sessionStorage.setItem('posNavigation', 'true')
-    router.push('/pos')
-  } else {
-    sessionStorage.setItem('posNavigation', 'true')
-    router.push('/pos')
   }
+  backToPos()
 }
 
 const closeSuccessModal = () => {
@@ -3451,7 +3455,7 @@ onUnmounted(() => {
       </svg>
       <h2 class="text-xl font-semibold text-text-primary mb-2">{{ t('pos.checkout.emptyTitle') }}</h2>
       <p class="text-text-secondary mb-6">{{ t('pos.checkout.emptyBody') }}</p>
-      <UiButton variant="default" @click="sessionStorage.setItem('posNavigation', 'true'); router.push('/pos')">
+      <UiButton variant="default" @click="backToPos">
         {{ t('pos.checkout.backToPos') }}
       </UiButton>
     </div>
