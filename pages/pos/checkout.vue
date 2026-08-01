@@ -83,11 +83,14 @@ const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 const uiLocale = computed(() => toNumberLocaleTag(locale.value))
 
+const isGenericTaxLabel = (label?: string | null) => {
+  const normalized = String(label ?? '').trim().toLocaleLowerCase('es-CO')
+  return !normalized || normalized === 'impuesto' || normalized === 'tax'
+}
+
 const localizedInternalTaxLabel = (label?: string | null) => {
   const raw = String(label ?? '').trim()
-  if (!raw) return t('pos.checkout.taxFallback')
-  const normalized = raw.toLocaleLowerCase('es-CO')
-  if (normalized === 'impuesto' || normalized === 'tax') return t('pos.checkout.taxFallback')
+  if (isGenericTaxLabel(raw)) return t('pos.checkout.taxFallback')
   return raw
 }
 
@@ -489,12 +492,17 @@ const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) =>
     promoType: item.promoType ?? raw.promo_type ?? raw.locked_promo_type ?? null,
     promoSavings: Number(item.promoSavings ?? raw.promo_savings ?? raw.locked_promo_savings) || 0,
     promoOptOut: Boolean(item.promoOptOut ?? raw.promo_opt_out),
+    tax_category: item.taxCategory ?? raw.tax_category ?? null,
+    tax_label: item.taxLabel ?? raw.tax_label ?? null,
+    tax_amount: item.taxAmount ?? raw.tax_amount ?? null,
+    included_in_price: item.includedInPrice ?? raw.included_in_price ?? null,
     product: {
       id: item.productId,
       name: item.productName,
       price: item.unitPrice,
       image: '🍽️',
       category: '',
+      tax_category: item.taxCategory ?? raw.tax_category ?? null,
     },
     modifiers: item.modifiers ?? [],
     quantity: item.quantity,
@@ -576,6 +584,8 @@ const checkoutPromoPreview = computed<CheckoutPromoPreview | null>(() => {
       promo_savings: Number(session.promo_savings) || 0,
       subtotal_after_promos: Number(session.subtotal_after_promos ?? session.running_total) || 0,
       promo_breakdown: session.promo_breakdown ?? [],
+      // Mesa /current now annotates per-line tax (same shape as cart tax-preview)
+      lines: session.lines ?? session.promo_lines ?? [],
     }
   }
   return posTaxPreviewData.value as CheckoutPromoPreview | null
@@ -885,6 +895,12 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     promoType: i.promoType ?? i.promo_type ?? i.locked_promo_type ?? null,
     promoSavings: Number(i.promoSavings ?? i.promo_savings ?? i.locked_promo_savings) || 0,
     promoOptOut: Boolean(i.promoOptOut ?? i.promo_opt_out),
+    taxCategory: i.taxCategory ?? i.tax_category ?? null,
+    taxLabel: i.taxLabel ?? i.tax_label ?? null,
+    taxAmount: i.taxAmount != null || i.tax_amount != null
+      ? Number(i.taxAmount ?? i.tax_amount) || 0
+      : null,
+    includedInPrice: i.includedInPrice ?? i.included_in_price ?? null,
     modifiers: (i.modifiers ?? []).map((m: any) => ({
       id: m.id ?? '',
       name: m.name,
@@ -1705,9 +1721,29 @@ const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
   return key ? promoLineById.value.get(key) : undefined
 }
 
+const resolveLineTaxLabel = (
+  preview: PromoPreviewLine | undefined,
+  category: string,
+  item?: any,
+): string => {
+  const raw = String(preview?.tax_label ?? item?.tax_label ?? item?.taxLabel ?? '').trim()
+  if (!isGenericTaxLabel(raw)) return raw
+  if (category === 'exempt') return t('pos.cartItem.taxExempt')
+  if (category === 'liquor') {
+    const liq = taxPreview.value?.liquor_tax_label
+    if (!isGenericTaxLabel(liq)) return String(liq)
+    return t('pos.receipt.liquorVat')
+  }
+  if (category === 'standard') {
+    const std = taxPreview.value?.standard_tax_label
+    if (!isGenericTaxLabel(std)) return String(std)
+  }
+  return ''
+}
+
 const getLineTaxInfo = (item: any): { amount: number; label: string; includedInPrice: boolean } | null => {
   const preview = getLinePromoPreview(item)
-  const amount = Number(preview?.tax_amount) || 0
+  const amount = Number(preview?.tax_amount ?? item.tax_amount ?? item.taxAmount) || 0
   const category = String(
     preview?.tax_category
     ?? item.tax_category
@@ -1716,16 +1752,29 @@ const getLineTaxInfo = (item: any): { amount: number; label: string; includedInP
     ?? '',
   ).toLowerCase()
   const resolution = String(preview?.tax_resolution ?? item.tax_resolution ?? '').toLowerCase()
-  const label = localizedInternalTaxLabel(preview?.tax_label)
-  const includedInPrice = preview?.included_in_price === true
+  const includedInPrice = (
+    preview?.included_in_price
+    ?? item.included_in_price
+    ?? item.includedInPrice
+  ) === true
+  const label = resolveLineTaxLabel(preview, category, item)
 
-  if (amount > 0 && label) {
-    return { amount, label, includedInPrice }
-  }
   if (category === 'exempt' || resolution === 'exempt') {
     return { amount: 0, label: t('pos.cartItem.taxExempt'), includedInPrice: false }
   }
-  if (label) {
+  if (amount > 0) {
+    const amountLabel = label
+      || (category === 'liquor'
+        ? (isGenericTaxLabel(taxPreview.value?.liquor_tax_label)
+          ? t('pos.receipt.liquorVat')
+          : String(taxPreview.value?.liquor_tax_label))
+        : (isGenericTaxLabel(taxPreview.value?.standard_tax_label)
+          ? t('pos.checkout.taxFallback')
+          : String(taxPreview.value?.standard_tax_label || t('pos.checkout.taxFallback'))))
+    return { amount, label: amountLabel, includedInPrice }
+  }
+  // Never surface bare "Impuesto" without amount — that was the mesa/prefactura bug.
+  if (label && !isGenericTaxLabel(label)) {
     return { amount: 0, label, includedInPrice }
   }
   return null
@@ -4223,12 +4272,21 @@ onUnmounted(() => {
                 <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
               </div>
               <div
-                v-if="taxPreview && (taxPreview.standard_tax + taxPreview.liquor_tax) > 0"
+                v-if="taxPreview && taxPreview.standard_tax > 0"
                 class="flex justify-between text-sm text-text-secondary"
               >
-	                <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
+                <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
                 <span class="font-medium text-text-primary">
-                  {{ formatCurrency(taxPreview.standard_tax + taxPreview.liquor_tax) }}
+                  {{ formatCurrency(taxPreview.standard_tax) }}
+                </span>
+              </div>
+              <div
+                v-if="taxPreview && taxPreview.liquor_tax > 0"
+                class="flex justify-between text-sm text-text-secondary"
+              >
+                <span>{{ taxPreview.liquor_tax_label || t('pos.receipt.liquorVat') }}</span>
+                <span class="font-medium text-text-primary">
+                  {{ formatCurrency(taxPreview.liquor_tax) }}
                 </span>
               </div>
               <div
@@ -4728,12 +4786,21 @@ onUnmounted(() => {
               <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
             </div>
             <div
-              v-if="taxPreview && (taxPreview.standard_tax + taxPreview.liquor_tax) > 0"
+              v-if="taxPreview && taxPreview.standard_tax > 0"
               class="flex justify-between text-sm text-text-secondary"
             >
-	              <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
+              <span>{{ localizedInternalTaxLabel(taxPreview.standard_tax_label) }}</span>
               <span class="font-medium text-text-primary">
-                {{ formatCurrency(taxPreview.standard_tax + taxPreview.liquor_tax) }}
+                {{ formatCurrency(taxPreview.standard_tax) }}
+              </span>
+            </div>
+            <div
+              v-if="taxPreview && taxPreview.liquor_tax > 0"
+              class="flex justify-between text-sm text-text-secondary"
+            >
+              <span>{{ taxPreview.liquor_tax_label || t('pos.receipt.liquorVat') }}</span>
+              <span class="font-medium text-text-primary">
+                {{ formatCurrency(taxPreview.liquor_tax) }}
               </span>
             </div>
             <div
