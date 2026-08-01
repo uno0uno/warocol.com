@@ -364,7 +364,13 @@
         "error": "Error registering recharge",
         "movementRecharge": "Recharge",
         "movementRedeem": "Order use",
-        "movementRefund": "Refund"
+        "movementRefund": "Refund",
+        "movementReceive": "Recharge",
+        "movementApply": "Sale use",
+        "movementVoidApply": "Use voided",
+        "colType": "Type",
+        "colBalanceAfter": "Balance",
+        "empty": "No wallet movements"
       },
       "credit": {
         "title": "Accounts receivable",

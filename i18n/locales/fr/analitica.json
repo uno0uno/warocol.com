@@ -358,7 +358,13 @@
         "error": "Erreur lors de l'enregistrement de la recharge",
         "movementRecharge": "Recharge",
         "movementRedeem": "Utilisation en commande",
-        "movementRefund": "Remboursement"
+        "movementRefund": "Remboursement",
+        "movementReceive": "Recharge",
+        "movementApply": "Utilisation en vente",
+        "movementVoidApply": "Annulation d'utilisation",
+        "colType": "Type",
+        "colBalanceAfter": "Solde",
+        "empty": "Aucun mouvement de portefeuille"
       },
       "credit": {
         "title": "Comptes clients",

@@ -358,7 +358,13 @@
         "error": "Fehler beim Registrieren der Aufladung",
         "movementRecharge": "Aufladung",
         "movementRedeem": "Nutzung bei Bestellung",
-        "movementRefund": "Rückerstattung"
+        "movementRefund": "Rückerstattung",
+        "movementReceive": "Aufladung",
+        "movementApply": "Verkaufsnutzung",
+        "movementVoidApply": "Nutzung storniert",
+        "colType": "Typ",
+        "colBalanceAfter": "Saldo",
+        "empty": "Keine Wallet-Bewegungen"
       },
       "credit": {
         "title": "Forderungen",

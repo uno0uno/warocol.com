@@ -1,0 +1,39 @@
+issue: 2021
+title: "feat(crm): wallet COP movements as data table"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2021-wallet-cop-data-table
+
+paths:
+  - pages/crm/clientes/[id].vue
+  - i18n/locales/es/analitica.json
+  - i18n/locales/en/analitica.json
+  - i18n/locales/pt/analitica.json
+  - i18n/locales/fr/analitica.json
+  - i18n/locales/de/analitica.json
+  - i18n/locales/ar/analitica.json
+  - i18n/locales/hi/analitica.json
+  - i18n/locales/zh/analitica.json
+
+ac:
+  - Wallet movements use UiResponsiveDataView like Cartera/orders
+  - i18n for receive/apply/void_apply (+ recharge/redeem/refund aliases)
+  - No 5-row hard cap; show API movements payload
+  - Keep balance header + Recargar
+
+out_of_scope:
+  - POS split ledger (#2020)
+  - Recharge business logic changes
+
+hints:
+  entry: "pages/crm/clientes/[id].vue wallet section"
+  tests: "UI-only; no automated front test"
+
+risk:
+  sensitive: false
+  areas: [crm-ui]
+
+next:
+  after_pr: "merge and pull main"

@@ -358,7 +358,13 @@
         "error": "Erro ao registrar a recarga",
         "movementRecharge": "Recarga",
         "movementRedeem": "Uso no pedido",
-        "movementRefund": "Reembolso"
+        "movementRefund": "Reembolso",
+        "movementReceive": "Recarga",
+        "movementApply": "Uso na venda",
+        "movementVoidApply": "Anulação de uso",
+        "colType": "Tipo",
+        "colBalanceAfter": "Saldo",
+        "empty": "Sem movimentos da carteira"
       },
       "credit": {
         "title": "Contas a Receber",

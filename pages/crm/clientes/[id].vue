@@ -134,10 +134,16 @@ const paymentStatusLabel = (status: string) =>
     ? t('analitica.customerDetail.paymentStatus.partial')
     : t('analitica.customerDetail.paymentStatus.credit')
 const walletMovementLabel = (type: string) => {
-  if (type === 'recharge') return t('analitica.customerDetail.wallet.movementRecharge')
-  if (type === 'redeem') return t('analitica.customerDetail.wallet.movementRedeem')
-  if (type === 'refund') return t('analitica.customerDetail.wallet.movementRefund')
-  return type
+  const keyByType: Record<string, string> = {
+    receive: 'analitica.customerDetail.wallet.movementReceive',
+    recharge: 'analitica.customerDetail.wallet.movementRecharge',
+    apply: 'analitica.customerDetail.wallet.movementApply',
+    redeem: 'analitica.customerDetail.wallet.movementRedeem',
+    refund: 'analitica.customerDetail.wallet.movementRefund',
+    void_apply: 'analitica.customerDetail.wallet.movementVoidApply',
+  }
+  const key = keyByType[type]
+  return key ? t(key) : type
 }
 const statusColors: Record<string, string> = {
   completed: 'bg-green-100 text-green-800',
@@ -174,6 +180,13 @@ const carteraColumns = computed(() => [
   { key: 'due_date', title: t('analitica.customerDetail.credit.due'), sortable: false },
   { key: 'status_badge', title: t('analitica.customerDetail.status.title'), sortable: false },
   { key: 'cartera_actions', title: '', sortable: false },
+])
+
+const walletColumns = computed(() => [
+  { key: 'movement_type', title: t('analitica.customerDetail.wallet.colType'), sortable: false },
+  { key: 'created_at', title: t('analitica.common.date'), sortable: false },
+  { key: 'amount_cop', title: t('analitica.customerDetail.wallet.amount'), sortable: false },
+  { key: 'balance_after_cop', title: t('analitica.customerDetail.wallet.colBalanceAfter'), sortable: false },
 ])
 
 // Invoice slideover state
@@ -621,51 +634,84 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Wallet COP section -->
-        <div class="border-t border-border px-5 py-4">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.wallet.title') }}</p>
-              <p v-if="isLoadingWallet" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</p>
-              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
-              <p v-else class="text-sm font-semibold text-primary">{{ formatCurrency(walletBalance) }}</p>
-            </div>
-            <button
-              type="button"
-              :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
-              @click="showWalletRechargeModal = true"
-              class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-            >
-              {{ t('analitica.customerDetail.wallet.recharge') }}
-            </button>
-          </div>
-          <div v-if="walletMovements.length" class="mt-3 space-y-2 max-h-40 overflow-y-auto">
-            <div
-              v-for="mov in walletMovements.slice(0, 5)"
-              :key="mov.id"
-              class="flex items-center justify-between gap-3 text-sm py-1.5 border-b border-border/50 last:border-0"
-            >
-              <div class="min-w-0">
-                <p class="text-text-primary font-medium">{{ walletMovementLabel(mov.movement_type) }}</p>
-                <p class="text-xs text-text-secondary">{{ formatDate(mov.created_at) }}</p>
-              </div>
-              <span
-                :class="[
-                  'font-semibold flex-shrink-0',
-                  mov.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
-                ]"
-              >
-                {{ mov.amount_cop >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(mov.amount_cop)) }}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Stats -->
       <div class="grid grid-cols-2 gap-4">
         <MetricCard :title="t('analitica.customerDetail.totalOrders')" :value="customer.total_orders" format="number" variant="primary" />
         <MetricCard :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
+      </div>
+
+      <!-- Wallet COP Section -->
+      <div class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
+              {{ t('analitica.customerDetail.wallet.title') }}
+            </h3>
+            <span v-if="isLoadingWallet" class="text-sm text-text-secondary">{{ t('common.loading') }}</span>
+            <span v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">{{ t('analitica.customerDetail.wallet.loadError') }}</span>
+            <span v-else class="text-lg font-bold text-primary">{{ formatCurrency(walletBalance) }}</span>
+          </div>
+          <button
+            type="button"
+            :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
+            @click="showWalletRechargeModal = true"
+            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {{ t('analitica.customerDetail.wallet.recharge') }}
+          </button>
+        </div>
+        <UiResponsiveDataView
+          v-if="!isLoadingWallet"
+          row-size="sm"
+          :columns="walletColumns"
+          :data="walletMovements"
+          :empty-message="t('analitica.customerDetail.wallet.empty')"
+          variant="default"
+        >
+          <template #card="{ item }">
+            <div class="p-4 border-b border-border">
+              <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-text-primary">{{ walletMovementLabel(item.movement_type) }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
+                </div>
+                <span
+                  :class="[
+                    'text-sm font-semibold flex-shrink-0',
+                    item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
+                  ]"
+                >
+                  {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
+                </span>
+              </div>
+              <p class="text-xs text-text-secondary mt-2">
+                {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
+                {{ formatCurrency(item.balance_after_cop) }}
+              </p>
+            </div>
+          </template>
+          <template #cell-movement_type="{ value }">
+            <span class="text-sm font-medium text-text-primary">{{ walletMovementLabel(value) }}</span>
+          </template>
+          <template #cell-created_at="{ value }">
+            <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          </template>
+          <template #cell-amount_cop="{ value }">
+            <span
+              :class="[
+                'text-sm font-semibold',
+                value >= 0 ? 'text-green-700' : 'text-red-600',
+              ]"
+            >
+              {{ value >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(value)) }}
+            </span>
+          </template>
+          <template #cell-balance_after_cop="{ value }">
+            <span class="text-sm text-text-primary">{{ formatCurrency(value) }}</span>
+          </template>
+        </UiResponsiveDataView>
       </div>
 
       <!-- Cartera Section -->
