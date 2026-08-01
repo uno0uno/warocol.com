@@ -25,6 +25,7 @@ import {
   padReceiptLine,
   receiptDivider,
   collectThermalTicketText,
+  compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
@@ -1826,7 +1827,7 @@ const prefacturaDash = receiptDivider()
 const prefacturaStrong = receiptDivider(32, '=')
 
 const prefacturaMoneyLine = (label: string, amount: number | string, negative = false) => {
-  const amt = formatCurrencyThermal(amount)
+  const amt = compactThermalMoneyLabel(formatCurrencyThermal(amount))
   return padReceiptLine(label, negative ? `-${amt}` : amt)
 }
 

@@ -6,6 +6,7 @@ import {
   formatReceiptProductBlock,
   padReceiptLine,
   receiptDivider,
+  compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 
 interface ReceiptItemModifier {
@@ -148,7 +149,7 @@ const modifierBlock = (modifier: ReceiptItemModifier) =>
   })
 
 const moneyLine = (label: string, amount: number | string | null | undefined, negative = false) => {
-  const amt = money(amount)
+  const amt = compactThermalMoneyLabel(money(amount))
   return padReceiptLine(label, negative ? `-${amt}` : amt)
 }
 

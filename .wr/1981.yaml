@@ -1,0 +1,41 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1981
+title: "Indent receipt modifiers and stop truncating thermal money amounts"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1981-receipt-indent-money
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+
+ac:
+  - Modifiers indented under parent
+  - No ... truncation of money on 58mm
+  - Compact thermal money + stack when needed
+  - Prefactura/factura/ventas via shared helper
+  - Unit tests
+
+out_of_scope:
+  - DIAN content
+  - Comanda tickets
+  - Screen currency formatting
+
+hints:
+  entry: "padReceiptLine preserve indent; compactThermalMoneyLabel; stack not truncate"
+  pattern: "formatReceiptModifierBlock indent; moneyLine compact"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "thermal smoke prefactura with modifiers"
