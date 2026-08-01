@@ -1,4 +1,4 @@
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CustomerIdentificationModal from './CustomerIdentificationModal.vue'
 
@@ -48,13 +48,19 @@ const mountModal = () => {
   })
 }
 
+/** Teleported panel lives on document.body (#2004). */
+const dialogEl = () => document.body.querySelector('[role="dialog"]') as HTMLElement | null
+const bodyText = () => document.body.textContent || ''
+
 const searchFor = async (
-  wrapper: VueWrapper,
+  _wrapper: VueWrapper,
   results: CustomerSummary[],
   query = 'cliente',
 ) => {
   fetchMock.mockResolvedValueOnce({ success: true, data: results })
-  await wrapper.get('input[type="text"]').setValue(query)
+  const inputEl = document.body.querySelector('input[type="text"]') as HTMLInputElement | null
+  expect(inputEl).toBeTruthy()
+  await new DOMWrapper(inputEl!).setValue(query)
   await vi.advanceTimersByTimeAsync(300)
   await flushPromises()
 }
@@ -73,11 +79,22 @@ afterEach(() => {
 describe('CustomerIdentificationModal shell', () => {
   it('docks as a right slideover on desktop (md:max-w-md)', () => {
     const wrapper = mountModal()
-    const panel = wrapper.find('[role="dialog"]')
-    const classes = panel.classes()
+    const panel = dialogEl()
+    expect(panel).toBeTruthy()
+    const classes = panel!.className
     expect(classes).toContain('md:max-w-md')
     expect(classes).toContain('md:h-full')
-    expect(classes).not.toContain('h-full')
+    expect(classes.split(/\s+/)).not.toContain('h-full')
+    wrapper.unmount()
+  })
+
+  it('teleports overlay to document.body for full-viewport coverage', () => {
+    const wrapper = mountModal()
+    const overlay = Array.from(document.body.querySelectorAll('.fixed.inset-0'))
+      .find(el => el.className.includes('z-[80]'))
+    expect(overlay).toBeTruthy()
+    expect(document.body.contains(overlay!)).toBe(true)
+    expect(wrapper.element.contains(overlay!)).toBe(false)
     wrapper.unmount()
   })
 })
@@ -95,12 +112,12 @@ describe('CustomerIdentificationModal customer identities', () => {
       fiscal_business_name: 'Jaime Torres',
     }])
 
-    expect(wrapper.text()).toContain('Cliente/contacto')
-    expect(wrapper.text()).toContain('Medición y Control SAS')
-    expect(wrapper.text()).toContain('6044482986')
-    expect(wrapper.text()).toContain('Razón social / adquirente fiscal')
-    expect(wrapper.text()).toContain('Jaime Torres')
-    expect(wrapper.text()).toContain('NIT 860502327')
+    expect(bodyText()).toContain('Cliente/contacto')
+    expect(bodyText()).toContain('Medición y Control SAS')
+    expect(bodyText()).toContain('6044482986')
+    expect(bodyText()).toContain('Razón social / adquirente fiscal')
+    expect(bodyText()).toContain('Jaime Torres')
+    expect(bodyText()).toContain('NIT 860502327')
 
     wrapper.unmount()
   })
@@ -117,10 +134,10 @@ describe('CustomerIdentificationModal customer identities', () => {
       fiscal_business_name: 'Cafe Arbol S.A.S.',
     }])
 
-    expect(wrapper.text()).toContain('Café Árbol SAS')
-    expect(wrapper.text()).toContain('NIT 900123456')
-    expect(wrapper.text()).not.toContain('Razón social / adquirente fiscal')
-    expect(wrapper.text()).not.toContain('Cafe Arbol S.A.S.')
+    expect(bodyText()).toContain('Café Árbol SAS')
+    expect(bodyText()).toContain('NIT 900123456')
+    expect(bodyText()).not.toContain('Razón social / adquirente fiscal')
+    expect(bodyText()).not.toContain('Cafe Arbol S.A.S.')
 
     wrapper.unmount()
   })
@@ -139,10 +156,10 @@ describe('CustomerIdentificationModal customer identities', () => {
     await searchFor(wrapper, [summary])
     fetchMock.mockRejectedValueOnce(new Error('detail unavailable'))
 
-    const result = wrapper.findAll('button')
-      .find(button => button.text().includes('Contacto operativo'))
+    const result = Array.from(document.body.querySelectorAll('button'))
+      .find(button => (button.textContent || '').includes('Contacto operativo'))
     expect(result).toBeTruthy()
-    await result!.trigger('click')
+    result!.click()
     await flushPromises()
 
     expect(wrapper.emitted('customer-identified')?.[0]?.[0]).toMatchObject({
