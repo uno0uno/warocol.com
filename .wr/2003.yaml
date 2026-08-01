@@ -1,0 +1,34 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2003
+title: "fix(pos): fall back to window.print when thermal/caja print fails or hangs"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2003-print-browser-fallback
+risk: low
+
+paths:
+  - composables/useCajaTicketPrint.ts
+  - composables/useCajaTicketPrint.test.ts
+  - composables/useLocalPrintBridge.ts
+  - composables/useLocalPrintBridge.test.ts
+
+ac:
+  - Bridge print fail/timeout → browser fallback promptly (≤~5s)
+  - Queued-then-failed/unknown CUPS status must reject (not success bridge)
+  - Checkout deferred window.print still runs when mode is browser
+  - bun test composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts
+
+out_of_scope:
+  - CUPS/USB driver fixes
+  - Station comanda redesign
+  - checkout.vue deferred print pattern (keep; fix composable timeouts)
+
+hints:
+  entry: "printAndAwaitOutcome + waitForPrintTerminalStatus; printTicketViaCajaOrBrowser race"
+  pattern: "SDK print resolves on queued — wait status completed|failed|unknown"
+  tests: "bun test composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts"
+
+skip:
+  audits: [ux, color, typography]

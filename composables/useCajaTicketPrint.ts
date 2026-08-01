@@ -1,8 +1,9 @@
 /**
  * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
- * Falls back to window.print when bridge or caja assignment is missing.
+ * Falls back to window.print when bridge/caja is missing, print fails, or hangs (#2003).
  */
 import {
+  LocalPrintBridgeError,
   useLocalPrintBridge,
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
@@ -14,6 +15,9 @@ import {
 
 export type CajaTicketPrintResult = 'bridge' | 'browser'
 
+/** Cap wait so offline USB/CUPS cannot stall the cashier before browser fallback. */
+export const BRIDGE_PRINT_TIMEOUT_MS = 5000
+
 export type CajaTicketPrintDeps = {
   getCajaPrinterName: () => Promise<string | null | undefined>
   bridge?: LocalPrintBridge
@@ -22,6 +26,20 @@ export type CajaTicketPrintDeps = {
   browserPrint?: () => void
   /** Optional logo URL override; default discovers img.receipt-logo in print DOM. */
   getLogoSrc?: (elementId: string) => string | null
+  /** Override bridge print race timeout (tests). */
+  bridgePrintTimeoutMs?: number
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new LocalPrintBridgeError('PRINT_FAILED', `${label} timed out after ${ms}ms`))
+    }, ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer)
+  })
 }
 
 function defaultGetElementContent(elementId: string): string | null {
@@ -78,11 +96,18 @@ export async function printTicketViaCajaOrBrowser(
   }
 
   const bridge = deps.bridge ?? useLocalPrintBridge()
+  const timeoutMs = deps.bridgePrintTimeoutMs ?? BRIDGE_PRINT_TIMEOUT_MS
   try {
-    await bridge.connect()
-    await bridge.printRawEscPos(
-      printerName,
-      buildEscPosTicketBytes(content, { logoRaster }),
+    await withTimeout(
+      (async () => {
+        await bridge.connect()
+        await bridge.printRawEscPos(
+          printerName,
+          buildEscPosTicketBytes(content, { logoRaster }),
+        )
+      })(),
+      timeoutMs,
+      'Caja PrintBridge print',
     )
     return 'bridge'
   } catch {

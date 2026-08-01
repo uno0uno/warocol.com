@@ -19,6 +19,13 @@ export class LocalPrintBridgeError extends Error {
   }
 }
 
+export type PrintBridgeStatusEvent = {
+  requestId?: string
+  jobId?: string
+  status?: string
+  message?: string | null
+}
+
 /** Minimal PrintBridge client surface used by WARO (injectable for tests). */
 export type PrintBridgeClientLike = {
   connect: () => Promise<void>
@@ -26,6 +33,62 @@ export type PrintBridgeClientLike = {
   isConnected: () => boolean
   getPrintersList: () => Promise<Array<{ name: string }>>
   print: (job: Record<string, unknown>) => Promise<unknown>
+  /** SDK status stream — required to detect CUPS fail after queued accept (#2003). */
+  on?: (event: 'status', handler: (event: PrintBridgeStatusEvent) => void) => () => void
+}
+
+const PRINT_SUCCESS_STATUSES = new Set(['completed'])
+const PRINT_FAILURE_STATUSES = new Set(['failed', 'cancelled', 'unknown'])
+
+function newPrintRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `waro-print-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+/**
+ * SDK `print()` resolves on `queued` only. Wait for a terminal job status so
+ * offline thermals reject and callers can fall back to window.print (#2003).
+ * Clients without `on` keep queued-accept behavior (tests / stubs).
+ */
+export function waitForPrintTerminalStatus(
+  client: PrintBridgeClientLike,
+  requestId: string,
+): Promise<void> {
+  if (typeof client.on !== 'function') return Promise.resolve()
+
+  return new Promise((resolve, reject) => {
+    const off = client.on!('status', (event) => {
+      if (String(event?.requestId || '') !== requestId) return
+      const status = String(event?.status || '')
+      if (PRINT_SUCCESS_STATUSES.has(status)) {
+        off()
+        resolve()
+        return
+      }
+      if (PRINT_FAILURE_STATUSES.has(status)) {
+        off()
+        reject(
+          new LocalPrintBridgeError(
+            'PRINT_FAILED',
+            event?.message?.trim() || `Print ended with status ${status}`,
+          ),
+        )
+      }
+    })
+  })
+}
+
+async function printAndAwaitOutcome(
+  client: PrintBridgeClientLike,
+  job: Record<string, unknown>,
+): Promise<void> {
+  const requestId = String(job.requestId || newPrintRequestId())
+  const payload = { ...job, requestId }
+  const terminal = waitForPrintTerminalStatus(client, requestId)
+  await client.print(payload)
+  await terminal
 }
 
 let injectedClient: PrintBridgeClientLike | null = null
@@ -89,7 +152,8 @@ function createDefaultClient(): PrintBridgeClientLike {
     ip: '127.0.0.1',
     port: 17890,
     connectTimeoutMs: 4000,
-    requestTimeoutMs: 15000,
+    // Keep print requests short so offline thermals fall back to window.print (#2003).
+    requestTimeoutMs: 5000,
     autoReconnect: false,
   })
 }
@@ -175,7 +239,7 @@ export function createLocalPrintBridge(): LocalPrintBridge {
           ? bytesToBase64(new TextEncoder().encode(data))
           : bytesToBase64(data)
       try {
-        await c.print({
+        await printAndAwaitOutcome(c, {
           type: 'raw',
           printerName: name,
           dataBase64,
@@ -201,7 +265,7 @@ export function createLocalPrintBridge(): LocalPrintBridge {
       const pageWidthIn = options?.pageWidthIn ?? 2.25 // ~58mm thermal
       const widthMm = Math.round(pageWidthIn * 25.4)
       try {
-        await c.print({
+        await printAndAwaitOutcome(c, {
           type: 'raw-html',
           printerName: name,
           html,
