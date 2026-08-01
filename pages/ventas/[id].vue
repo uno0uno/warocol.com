@@ -830,9 +830,10 @@ const printReceipt = async () => {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
-      const el = document.querySelector('.receipt-print-ticket')
-      const html = el?.outerHTML?.trim()
-      return html || null
+      const el = document.querySelector('.receipt-print-ticket') as HTMLElement | null
+      const text = el?.innerText?.trim()
+      if (text) return text
+      return el?.outerHTML?.trim() || null
     },
   })
   if (mode === 'bridge') {

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
+import {
+  formatReceiptModifierBlock,
+  formatReceiptProductBlock,
+  padReceiptLine,
+  receiptDivider,
+} from '~/utils/receiptTicketPlainText'
 
 interface ReceiptItemModifier {
   id?: string | number | null
@@ -124,6 +130,30 @@ const modifierDescription = (modifier: ReceiptItemModifier) => {
   const qty = Number(modifier.quantity) || 1
   return qty > 1 ? `+ ${modifier.name} x${qty}` : `+ ${modifier.name}`
 }
+
+const productBlock = (item: { name: string; quantity: number | string; unitPrice: number; total: number }) =>
+  formatReceiptProductBlock({
+    name: item.name,
+    quantity: item.quantity,
+    unitPriceLabel: money(item.unitPrice),
+    lineTotalLabel: money(item.total),
+  })
+
+const modifierBlock = (modifier: ReceiptItemModifier) =>
+  formatReceiptModifierBlock({
+    description: modifierDescription(modifier),
+    quantity: modifier.quantity ?? 1,
+    unitPriceLabel: money(modifier.price),
+    lineTotalLabel: money(modifierTotal(modifier)),
+  })
+
+const moneyLine = (label: string, amount: number | string | null | undefined, negative = false) => {
+  const amt = money(amount)
+  return padReceiptLine(label, negative ? `-${amt}` : amt)
+}
+
+const dashDivider = receiptDivider()
+const strongDivider = receiptDivider(32, '=')
 
 const hasBreakdownSubtotal = computed(() =>
   (props.promoBreakdown?.length ?? 0) > 0
@@ -261,16 +291,16 @@ const printableItems = computed(() =>
       :logo-url="logoUrl"
     />
 
-    <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
+    <div class="receipt-plain-line">{{ strongDivider }}</div>
     <div v-if="invoice" class="receipt-row receipt-document-title">
       {{ t('pos.receipt.electronicInvoiceSale') }}
     </div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">
       <template v-if="invoiceNumberLabel">
-        {{ invoiceNumberLabel }}<span v-if="orderNumber"> · {{ documentLabel }} #{{ orderNumber }}</span>
+        {{ invoiceNumberLabel }}<template v-if="orderNumber"> · {{ documentLabel }} #{{ orderNumber }}</template>
       </template>
       <template v-else>
-        {{ documentLabel }}<span v-if="orderNumber"> #{{ orderNumber }}</span>
+        {{ documentLabel }}<template v-if="orderNumber"> #{{ orderNumber }}</template>
       </template>
     </div>
     <div v-if="soldAt" class="receipt-row receipt-small">{{ soldAt }}</div>
@@ -278,7 +308,7 @@ const printableItems = computed(() =>
     <div v-if="waiterName" class="receipt-row receipt-small">{{ t('pos.receipt.waiter', { name: waiterName }) }}</div>
 
     <template v-if="customerName || customerPhone || customerEmail">
-      <div class="receipt-divider" aria-hidden="true" />
+      <div class="receipt-plain-line">{{ dashDivider }}</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
       <div v-if="customerName" class="receipt-row receipt-small">{{ customerName }}</div>
       <div v-if="customerPhone" class="receipt-row receipt-small">{{ t('pos.receipt.phone', { phone: customerPhone }) }}</div>
@@ -286,121 +316,91 @@ const printableItems = computed(() =>
       <div v-if="!invoice && customerFiscalLabel" class="receipt-row receipt-small">{{ customerFiscalLabel }}</div>
     </template>
 
-    <div class="receipt-divider" aria-hidden="true" />
-    <div class="receipt-product-header receipt-small">
-      <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>
-      <span class="receipt-col-total">{{ t('pos.receipt.total') }}</span>
-    </div>
+    <div class="receipt-plain-line">{{ dashDivider }}</div>
+    <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
 
     <template v-for="item in printableItems" :key="item.id ?? item.name">
-      <div class="receipt-product-line receipt-small">
-        <div class="receipt-product-name">{{ item.name }}</div>
-        <div class="receipt-product-values">
-          <span>{{ item.quantity }} x {{ money(item.unitPrice) }}</span>
-          <strong>{{ money(item.total) }}</strong>
-        </div>
-      </div>
-      <div
+      <pre class="receipt-plain-pre">{{ productBlock(item) }}</pre>
+      <pre
         v-for="modifier in (item.modifiers ?? [])"
         :key="`${item.id ?? item.name}-${modifier.id ?? modifier.name}`"
-        class="receipt-product-line receipt-small receipt-modifier-row"
-      >
-        <div class="receipt-product-name">{{ modifierDescription(modifier) }}</div>
-        <div class="receipt-product-values">
-          <span>{{ Number(modifier.quantity) || 1 }} x {{ money(modifier.price) }}</span>
-          <span>{{ money(modifierTotal(modifier)) }}</span>
-        </div>
-      </div>
+        class="receipt-plain-pre receipt-modifier-pre"
+      >{{ modifierBlock(modifier) }}</pre>
     </template>
 
-    <div class="receipt-divider" aria-hidden="true" />
+    <div class="receipt-plain-line">{{ dashDivider }}</div>
 
-    <div v-if="hasBreakdownSubtotal && subtotal != null" class="receipt-item">
-      <span>{{ t('pos.receipt.subtotal') }}</span>
-      <span>{{ money(subtotal) }}</span>
+    <div v-if="hasBreakdownSubtotal && subtotal != null" class="receipt-plain-line">
+      {{ moneyLine(t('pos.receipt.subtotal'), subtotal) }}
     </div>
     <div
       v-for="promo in (promoBreakdown ?? [])"
       :key="promo.promotion_id ?? promo.promotion_name"
-      class="receipt-item"
+      class="receipt-plain-line"
     >
-      <span>{{ promo.promotion_name || t('pos.receipt.promoFallback') }}</span>
-      <span>-{{ money(promo.savings) }}</span>
+      {{ moneyLine(promo.promotion_name || t('pos.receipt.promoFallback'), promo.savings, true) }}
     </div>
-    <div v-if="Number(discountAmount) > 0" class="receipt-item">
-      <span>{{ t('pos.receipt.manualDiscount') }}</span>
-      <span>-{{ money(discountAmount) }}</span>
+    <div v-if="Number(discountAmount) > 0" class="receipt-plain-line">
+      {{ moneyLine(t('pos.receipt.manualDiscount'), discountAmount, true) }}
     </div>
-    <div v-if="Number(waroDiscountAmount) > 0" class="receipt-item">
-      <span>{{ waroDiscountLabel || t('pos.receipt.waroRedeem') }}</span>
-      <span>-{{ money(waroDiscountAmount) }}</span>
+    <div v-if="Number(waroDiscountAmount) > 0" class="receipt-plain-line">
+      {{ moneyLine(waroDiscountLabel || t('pos.receipt.waroRedeem'), waroDiscountAmount, true) }}
     </div>
 
     <template v-if="hasTaxBreakdown">
       <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxDetail') }}</div>
-      <div v-if="Number(standardTax) > 0" class="receipt-item receipt-small">
-        <span>{{ displayStandardTaxLabel }}</span>
-        <span>{{ money(standardTax) }}</span>
+      <div v-if="Number(standardTax) > 0" class="receipt-plain-line receipt-small">
+        {{ moneyLine(displayStandardTaxLabel, standardTax) }}
       </div>
-      <div v-if="Number(liquorTax) > 0" class="receipt-item receipt-small">
-        <span>{{ displayLiquorTaxLabel }}</span>
-        <span>{{ money(liquorTax) }}</span>
+      <div v-if="Number(liquorTax) > 0" class="receipt-plain-line receipt-small">
+        {{ moneyLine(displayLiquorTaxLabel, liquorTax) }}
       </div>
     </template>
 
     <template v-if="hasSettlementBreakdown">
-      <div class="receipt-item">
-        <span>{{ t('pos.receipt.orderTotal') }}</span>
-        <span>{{ money(orderTotal) }}</span>
+      <div class="receipt-plain-line">
+        {{ moneyLine(t('pos.receipt.orderTotal'), orderTotal) }}
       </div>
-      <div v-if="Number(tipAmount) > 0" class="receipt-item">
-        <span>{{ tipLabel || t('pos.receipt.tipDefault') }}</span>
-        <span>{{ money(tipAmount) }}</span>
+      <div v-if="Number(tipAmount) > 0" class="receipt-plain-line">
+        {{ moneyLine(tipLabel || t('pos.receipt.tipDefault'), tipAmount) }}
       </div>
-      <div v-if="Number(tipTaxAmount) > 0" class="receipt-item">
-        <span>{{ t('pos.receipt.tipTax') }}</span>
-        <span>{{ money(tipTaxAmount) }}</span>
+      <div v-if="Number(tipTaxAmount) > 0" class="receipt-plain-line">
+        {{ moneyLine(t('pos.receipt.tipTax'), tipTaxAmount) }}
       </div>
-      <div v-if="Number(advanceApplied) > 0" class="receipt-item">
-        <span>{{ t('pos.receipt.tableAdvance') }}</span>
-        <span>-{{ money(advanceApplied) }}</span>
+      <div v-if="Number(advanceApplied) > 0" class="receipt-plain-line">
+        {{ moneyLine(t('pos.receipt.tableAdvance'), advanceApplied, true) }}
       </div>
-      <div class="receipt-total">
-        <span>{{ t('pos.receipt.totalChargedUpper') }}</span>
-        <span>{{ money(finalTotal) }}</span>
+      <div class="receipt-plain-line receipt-plain-total">
+        {{ moneyLine(t('pos.receipt.totalChargedUpper'), finalTotal) }}
       </div>
     </template>
-    <div v-else class="receipt-total">
-      <span>{{ t('pos.receipt.totalUpper') }}</span>
-      <span>{{ money(orderTotal) }}</span>
+    <div v-else class="receipt-plain-line receipt-plain-total">
+      {{ moneyLine(t('pos.receipt.totalUpper'), orderTotal) }}
     </div>
 
-    <div class="receipt-divider" aria-hidden="true" />
+    <div class="receipt-plain-line">{{ dashDivider }}</div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentDetail') }}</div>
     <template v-if="(payments?.length ?? 0) > 0">
       <template v-for="(payment, idx) in payments" :key="payment.id ?? idx">
-        <div class="receipt-item receipt-small">
-          <span>#{{ idx + 1 }} · {{ payment.label }}</span>
-          <span>{{ money(payment.amount) }}</span>
+        <div class="receipt-plain-line receipt-small">
+          {{ moneyLine(`#${idx + 1} - ${payment.label}`, payment.amount) }}
         </div>
-        <div v-if="payment.change && payment.change > 0" class="receipt-item receipt-small">
-          <span>{{ t('pos.receipt.changeNumber', { number: idx + 1 }) }}</span>
-          <span>{{ money(payment.change) }}</span>
+        <div v-if="payment.change && payment.change > 0" class="receipt-plain-line receipt-small">
+          {{ moneyLine(t('pos.receipt.changeNumber', { number: idx + 1 }), payment.change) }}
         </div>
       </template>
     </template>
     <template v-else>
-      <div class="receipt-item receipt-small">
-        <span>{{ singlePaymentLabel || t('pos.checkout.summary.pendingPayment') }}</span>
-        <span>{{ money(finalTotal) }}</span>
+      <div class="receipt-plain-line receipt-small">
+        {{ moneyLine(singlePaymentLabel || t('pos.checkout.summary.pendingPayment'), finalTotal) }}
       </div>
     </template>
 
     <!-- Venta sin FE: comprobante del establecimiento (DIAN disclaimer only for CO FE tenants) -->
     <template v-if="!invoice">
-      <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
+      <div class="receipt-plain-line">{{ strongDivider }}</div>
       <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
-      <div class="receipt-divider" aria-hidden="true" />
+      <div class="receipt-plain-line">{{ dashDivider }}</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">
         {{ t('pos.receipt.saleReceipt') }}
       </div>
@@ -423,7 +423,7 @@ const printableItems = computed(() =>
     </template>
 
     <template v-else>
-      <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
+      <div class="receipt-plain-line">{{ strongDivider }}</div>
       <div class="receipt-fe-details">
         <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.printedElectronicInvoice') }}</div>
         <div v-if="invoice.issuedAt" class="receipt-row receipt-row--start receipt-small">{{ t('pos.receipt.dianIssueDate', { date: invoice.issuedAt }) }}</div>
@@ -443,16 +443,17 @@ const printableItems = computed(() =>
         <div v-if="invoicePaymentLabel" class="receipt-row receipt-row--start receipt-small">{{ t('pos.receipt.paymentForm', { label: invoicePaymentLabel }) }}</div>
       </div>
       <template v-if="invoiceTaxLines.length > 0">
-        <div class="receipt-divider" aria-hidden="true" />
+        <div class="receipt-plain-line">{{ dashDivider }}</div>
         <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxTributaryDetail') }}</div>
         <div
           v-for="(line, idx) in invoiceTaxLines"
           :key="`${line.label ?? 'tax'}-${idx}`"
-          class="receipt-tax-line receipt-small"
+          class="receipt-plain-line receipt-small"
         >
-          <span>{{ line.label || t('pos.checkout.taxFallback') }}<template v-if="formatRate(line.rate)"> {{ formatRate(line.rate) }}</template></span>
-          <span v-if="Number(line.base) > 0">{{ t('pos.receipt.taxBase', { amount: money(line.base) }) }}</span>
-          <span>{{ money(line.amount) }}</span>
+          {{ moneyLine(
+            `${line.label || t('pos.checkout.taxFallback')}${formatRate(line.rate) ? ` ${formatRate(line.rate)}` : ''}`,
+            line.amount,
+          ) }}
         </div>
       </template>
       <div v-if="invoice.cufe" class="receipt-row receipt-row--start receipt-small receipt-cufe">
@@ -465,7 +466,7 @@ const printableItems = computed(() =>
         class="receipt-qr"
       >
       <div v-if="invoiceDianUrl" class="receipt-row receipt-small">{{ t('pos.receipt.verifyDian') }}</div>
-      <div class="receipt-divider receipt-divider--strong" aria-hidden="true" />
+      <div class="receipt-plain-line">{{ strongDivider }}</div>
       <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
       <PosReceiptPlatformFooter document-kind="fe" :platform-legal="platformLegal" :matias-dian="true" />
     </template>
@@ -568,6 +569,33 @@ const printableItems = computed(() =>
   height: 30mm;
   margin: 4px auto;
   display: block;
+}
+
+.receipt-print-ticket .receipt-plain-line,
+.receipt-print-ticket .receipt-plain-pre {
+  display: block;
+  margin: 2px 0;
+  padding: 0;
+  white-space: pre;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+}
+
+.receipt-print-ticket .receipt-plain-pre {
+  margin: 4px 0;
+}
+
+.receipt-print-ticket .receipt-modifier-pre {
+  margin-top: 0;
+  padding-left: 0;
+}
+
+.receipt-print-ticket .receipt-plain-total {
+  font-weight: 700;
+  margin-top: 4px;
 }
 
 .receipt-print-ticket .receipt-footer {

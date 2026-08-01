@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1979
+title: "Fix thermal layout for prefactura, factura, and ventas order print"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1979-receipt-thermal-layout
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+  - pages/ventas/[id].vue
+
+ac:
+  - Prefactura thermal readable (no DescripcionTotal / Subtotal$)
+  - Factura checkout uses ReceiptPrintTicket plain layout
+  - ventas/[id] same layout via ReceiptPrintTicket
+  - Bridge + window.print both readable
+  - Focused tests for padReceiptLine / product blocks
+
+out_of_scope:
+  - Comanda tickets
+  - DIAN content changes
+  - Printer assignment UX
+
+hints:
+  entry: "padReceiptLine + ReceiptPrintTicket plain lines"
+  pattern: "explicit spaces in text; prefer innerText for ESC/POS"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "thermal smoke prefactura + ventas reprint"
