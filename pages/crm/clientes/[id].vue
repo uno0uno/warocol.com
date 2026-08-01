@@ -54,6 +54,11 @@ const ordersPage = ref(1)
 const walletPage = ref(1)
 const carteraPage = ref(1)
 
+// Accordion panels — sales open on entry; cartera/wallet closed
+const ordersOpen = ref(true)
+const carteraOpen = ref(false)
+const walletOpen = ref(false)
+
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { data: apiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   `customer-detail-${customerId.value}`,
@@ -662,279 +667,33 @@ onUnmounted(() => {
         <MetricCard :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
-      <!-- Wallet COP Section -->
+      <!-- 1. Historial de pedidos (open by default) -->
       <div class="bg-white border border-border rounded-xl overflow-hidden">
-        <div class="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
+        <button
+          type="button"
+          class="w-full px-5 py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
+          :aria-expanded="ordersOpen ? 'true' : 'false'"
+          @click="ordersOpen = !ordersOpen"
+        >
           <div class="min-w-0">
             <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
-              {{ t('analitica.customerDetail.wallet.title') }}
+              {{ t('analitica.customerDetail.history.title') }}
+              <span
+                v-if="totalOrders > 0"
+                class="ms-2 text-sm font-normal normal-case tracking-normal text-text-secondary"
+              >{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
             </h3>
-            <p v-if="isLoadingWallet" class="text-sm text-text-secondary mt-0.5">{{ t('common.loading') }}</p>
-            <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600 mt-0.5">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
-            <p v-else class="text-lg font-bold text-primary mt-0.5 tabular-nums">{{ formatCurrency(walletBalance) }}</p>
           </div>
-          <button
-            type="button"
-            :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
-            @click="showWalletRechargeModal = true"
-            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
-          >
-            {{ t('analitica.customerDetail.wallet.recharge') }}
-          </button>
-        </div>
-        <UiResponsiveDataView
-          v-if="!isLoadingWallet"
-          row-size="sm"
-          :columns="walletColumns"
-          :data="walletPageItems"
-          :empty-message="t('analitica.customerDetail.wallet.empty')"
-          variant="default"
-        >
-          <template #card="{ item }">
-            <div class="p-4 border-b border-border">
-              <div class="flex justify-between items-start gap-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-text-primary">{{ walletMovementLabel(item.movement_type) }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
-                </div>
-                <span
-                  :class="[
-                    'text-sm font-semibold flex-shrink-0 tabular-nums',
-                    item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
-                  ]"
-                >
-                  {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
-                </span>
-              </div>
-              <p class="text-xs text-text-secondary mt-2 tabular-nums">
-                {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
-                {{ formatCurrency(item.balance_after_cop) }}
-              </p>
-            </div>
-          </template>
-          <template #cell-movement_type="{ value }">
-            <span class="text-sm font-medium text-text-primary">{{ walletMovementLabel(value) }}</span>
-          </template>
-          <template #cell-created_at="{ value }">
-            <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
-          </template>
-          <template #cell-amount_cop="{ value }">
-            <span
-              :class="[
-                'text-sm font-semibold tabular-nums',
-                value >= 0 ? 'text-green-700' : 'text-red-600',
-              ]"
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="{ 'rotate-180': !ordersOpen }"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
             >
-              {{ value >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(value)) }}
-            </span>
-          </template>
-          <template #cell-balance_after_cop="{ value }">
-            <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
-          </template>
-        </UiResponsiveDataView>
-        <div v-if="walletTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              :disabled="walletPage <= 1"
-              @click="goToWalletPage(1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.primeraPagina')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-            </button>
-            <button
-              type="button"
-              :disabled="walletPage <= 1"
-              @click="goToWalletPage(walletPage - 1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.paginaAnterior')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ walletPage }}</span>
-            <button
-              type="button"
-              :disabled="walletPage >= walletTotalPages"
-              @click="goToWalletPage(walletPage + 1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.paginaSiguiente')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button
-              type="button"
-              :disabled="walletPage >= walletTotalPages"
-              @click="goToWalletPage(walletTotalPages)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.ultimaPagina')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cartera Section -->
-      <div v-if="carteraData && carteraData.summary?.total_outstanding > 0" class="bg-white border border-border rounded-xl overflow-hidden">
-        <!-- Header -->
-        <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
-            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
-          </div>
-          <div class="flex items-center gap-3 shrink-0">
-            <span class="text-lg font-bold text-red-600 tabular-nums">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
-            <button
-              @click="openGlobalPaymentPanel"
-              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              :aria-label="t('analitica.customerDetail.credit.payAllAria')"
-            >
-              {{ t('analitica.customerDetail.credit.payAll') }}
-            </button>
-          </div>
-        </div>
-        <!-- Summary strip -->
-        <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
-          <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.orders') }}</p>
-            <p class="text-sm font-semibold text-text-primary tabular-nums">{{ carteraData.summary.order_count }}</p>
-          </div>
-          <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overduePlural') }}</p>
-            <p class="text-sm font-semibold tabular-nums" :class="carteraData.summary.overdue_count > 0 ? 'text-red-600' : 'text-text-secondary'">
-              {{ carteraData.summary.overdue_count }}
-            </p>
-          </div>
-          <div class="px-4 py-3">
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overdueAmount') }}</p>
-            <p class="text-sm font-semibold tabular-nums" :class="carteraData.summary.overdue_amount > 0 ? 'text-red-600' : 'text-text-secondary'">
-              {{ formatCurrency(carteraData.summary.overdue_amount) }}
-            </p>
-          </div>
-        </div>
-        <!-- Credit orders list -->
-        <UiResponsiveDataView
-          row-size="sm"
-          :columns="carteraColumns"
-          :data="carteraPageItems"
-          :empty-message="t('analitica.customerDetail.credit.empty')"
-          variant="default"
-        >
-          <!-- Mobile card -->
-          <template #card="{ item }">
-            <div class="p-4 border-b border-border">
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <p class="text-sm font-semibold text-text-primary"># {{ item.order_number }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
-                </div>
-                <UiStatusBadge
-                  :value="creditStatusLabel(item.is_overdue)"
-                  format="text"
-                  :variant="item.is_overdue ? 'destructive' : 'success'"
-                  size="sm"
-                />
-              </div>
-              <div class="text-sm text-text-secondary mb-3">
-                {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
-                <span v-if="item.due_date"> · {{ t('analitica.customerDetail.credit.dueOn', { date: formatDate(item.due_date) }) }}</span>
-              </div>
-              <button
-                @click="openPaymentPanel(item)"
-                class="w-full min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-                :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: item.order_number })"
-              >
-                {{ t('analitica.customerDetail.credit.registerPayment') }}
-              </button>
-            </div>
-          </template>
-          <!-- Desktop cells -->
-          <template #cell-order_number="{ value }"><span class="text-sm font-medium">#{{ value }}</span></template>
-          <template #cell-date="{ value }"><span class="text-sm text-text-secondary">{{ formatDate(value) }}</span></template>
-          <template #cell-total_amount="{ value }"><span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span></template>
-          <template #cell-credit_paid_amount="{ value }">
-            <span
-              :class="[
-                'text-sm tabular-nums',
-                Number(value) > 0 ? 'text-green-700' : 'text-text-secondary',
-              ]"
-            >{{ formatCurrency(value) }}</span>
-          </template>
-          <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(value) }}</span></template>
-          <template #cell-due_date="{ value }">
-            <span v-if="value" class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
-            <UiStatusBadge
-              v-else
-              :value="t('analitica.customerDetail.credit.noDueDate')"
-              format="text"
-              variant="secondary"
-              size="sm"
-            />
-          </template>
-          <template #cell-status_badge="{ row }">
-            <UiStatusBadge
-              :value="creditStatusLabel(row.is_overdue)"
-              format="text"
-              :variant="row.is_overdue ? 'destructive' : 'success'"
-              size="sm"
-            />
-          </template>
-          <template #cell-cartera_actions="{ row }">
-            <button
-              @click="openPaymentPanel(row)"
-              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: row.order_number })"
-            >
-              {{ t('analitica.customerDetail.credit.pay') }}
-            </button>
-          </template>
-        </UiResponsiveDataView>
-        <div v-if="carteraTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              :disabled="carteraPage <= 1"
-              @click="goToCarteraPage(1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.primeraPagina')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-            </button>
-            <button
-              type="button"
-              :disabled="carteraPage <= 1"
-              @click="goToCarteraPage(carteraPage - 1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.paginaAnterior')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ carteraPage }}</span>
-            <button
-              type="button"
-              :disabled="carteraPage >= carteraTotalPages"
-              @click="goToCarteraPage(carteraPage + 1)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.paginaSiguiente')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button
-              type="button"
-              :disabled="carteraPage >= carteraTotalPages"
-              @click="goToCarteraPage(carteraTotalPages)"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              :aria-label="t('ventas.common.ultimaPagina')"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
+        </button>
+        <div v-show="ordersOpen" class="border-t border-border px-4 pb-3 pt-3 space-y-3">
       <!-- Date Filter -->
       <ClientOnly>
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
@@ -971,18 +730,10 @@ onUnmounted(() => {
         row-size="sm"
         :columns="tableColumns"
         :data="orders"
-        :title="t('analitica.customerDetail.history.title')"
         :empty-message="t('analitica.customerDetail.history.empty')"
         :empty-sub-message="t('analitica.customerDetail.history.emptySub')"
         variant="default"
       >
-        <template #header>
-          <h3 class="text-base font-bold text-text-primary">
-            {{ t('analitica.customerDetail.history.title') }}
-            <span v-if="totalOrders > 0" class="ms-2 text-sm font-normal text-text-secondary">{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
-          </h3>
-        </template>
-
         <!-- Mobile Card -->
         <template #card="{ item }">
           <div class="bg-white border border-border rounded-lg p-4">
@@ -1159,6 +910,317 @@ onUnmounted(() => {
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
           </button>
+        </div>
+  
+        </div>
+      </div>
+
+      <!-- 2. Cartera -->
+      <div class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
+          <button
+            type="button"
+            class="flex-1 min-w-0 flex items-center justify-between gap-3 text-start"
+            :aria-expanded="carteraOpen ? 'true' : 'false'"
+            @click="carteraOpen = !carteraOpen"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="min-w-0">
+                <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
+                <p class="text-lg font-bold text-red-600 tabular-nums mt-0.5">
+                  {{ formatCurrency(carteraData?.summary?.total_outstanding || 0) }}
+                </p>
+              </div>
+            </div>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="{ 'rotate-180': !carteraOpen }"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <button
+            v-if="(carteraData?.summary?.total_outstanding || 0) > 0"
+            type="button"
+            @click.stop="openGlobalPaymentPanel"
+            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
+            :aria-label="t('analitica.customerDetail.credit.payAllAria')"
+          >
+            {{ t('analitica.customerDetail.credit.payAll') }}
+          </button>
+        </div>
+        <div v-show="carteraOpen">
+          <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
+            <div class="px-4 py-3">
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.orders') }}</p>
+              <p class="text-sm font-semibold text-text-primary tabular-nums">{{ carteraData?.summary?.order_count || 0 }}</p>
+            </div>
+            <div class="px-4 py-3">
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overduePlural') }}</p>
+              <p class="text-sm font-semibold tabular-nums" :class="(carteraData?.summary?.overdue_count || 0) > 0 ? 'text-red-600' : 'text-text-secondary'">
+                {{ carteraData?.summary?.overdue_count || 0 }}
+              </p>
+            </div>
+            <div class="px-4 py-3">
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.overdueAmount') }}</p>
+              <p class="text-sm font-semibold tabular-nums" :class="(carteraData?.summary?.overdue_amount || 0) > 0 ? 'text-red-600' : 'text-text-secondary'">
+                {{ formatCurrency(carteraData?.summary?.overdue_amount || 0) }}
+              </p>
+            </div>
+          </div>
+        <UiResponsiveDataView
+          row-size="sm"
+          :columns="carteraColumns"
+          :data="carteraPageItems"
+          :empty-message="t('analitica.customerDetail.credit.empty')"
+          variant="default"
+        >
+          <!-- Mobile card -->
+          <template #card="{ item }">
+            <div class="p-4 border-b border-border">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <p class="text-sm font-semibold text-text-primary"># {{ item.order_number }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
+                </div>
+                <UiStatusBadge
+                  :value="creditStatusLabel(item.is_overdue)"
+                  format="text"
+                  :variant="item.is_overdue ? 'destructive' : 'success'"
+                  size="sm"
+                />
+              </div>
+              <div class="text-sm text-text-secondary mb-3">
+                {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
+                <span v-if="item.due_date"> · {{ t('analitica.customerDetail.credit.dueOn', { date: formatDate(item.due_date) }) }}</span>
+              </div>
+              <button
+                @click="openPaymentPanel(item)"
+                class="w-full min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+                :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: item.order_number })"
+              >
+                {{ t('analitica.customerDetail.credit.registerPayment') }}
+              </button>
+            </div>
+          </template>
+          <!-- Desktop cells -->
+          <template #cell-order_number="{ value }"><span class="text-sm font-medium">#{{ value }}</span></template>
+          <template #cell-date="{ value }"><span class="text-sm text-text-secondary">{{ formatDate(value) }}</span></template>
+          <template #cell-total_amount="{ value }"><span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span></template>
+          <template #cell-credit_paid_amount="{ value }">
+            <span
+              :class="[
+                'text-sm tabular-nums',
+                Number(value) > 0 ? 'text-green-700' : 'text-text-secondary',
+              ]"
+            >{{ formatCurrency(value) }}</span>
+          </template>
+          <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(value) }}</span></template>
+          <template #cell-due_date="{ value }">
+            <span v-if="value" class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+            <UiStatusBadge
+              v-else
+              :value="t('analitica.customerDetail.credit.noDueDate')"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </template>
+          <template #cell-status_badge="{ row }">
+            <UiStatusBadge
+              :value="creditStatusLabel(row.is_overdue)"
+              format="text"
+              :variant="row.is_overdue ? 'destructive' : 'success'"
+              size="sm"
+            />
+          </template>
+          <template #cell-cartera_actions="{ row }">
+            <button
+              @click="openPaymentPanel(row)"
+              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+              :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: row.order_number })"
+            >
+              {{ t('analitica.customerDetail.credit.pay') }}
+            </button>
+          </template>
+        </UiResponsiveDataView>
+        <div v-if="carteraTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              :disabled="carteraPage <= 1"
+              @click="goToCarteraPage(1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.primeraPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="carteraPage <= 1"
+              @click="goToCarteraPage(carteraPage - 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaAnterior')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ carteraPage }}</span>
+            <button
+              type="button"
+              :disabled="carteraPage >= carteraTotalPages"
+              @click="goToCarteraPage(carteraPage + 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaSiguiente')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="carteraPage >= carteraTotalPages"
+              @click="goToCarteraPage(carteraTotalPages)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.ultimaPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
+
+        </div>
+      </div>
+
+      <!-- 3. Billetera COP movements -->
+      <div class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
+          <button
+            type="button"
+            class="flex-1 min-w-0 flex items-center justify-between gap-3 text-start"
+            :aria-expanded="walletOpen ? 'true' : 'false'"
+            @click="walletOpen = !walletOpen"
+          >
+            <div class="min-w-0">
+              <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
+                {{ t('analitica.customerDetail.wallet.title') }}
+              </h3>
+              <p v-if="isLoadingWallet" class="text-sm text-text-secondary mt-0.5">{{ t('common.loading') }}</p>
+              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600 mt-0.5">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
+              <p v-else class="text-lg font-bold text-primary mt-0.5 tabular-nums">{{ formatCurrency(walletBalance) }}</p>
+            </div>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="{ 'rotate-180': !walletOpen }"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
+            @click.stop="showWalletRechargeModal = true"
+            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
+          >
+            {{ t('analitica.customerDetail.wallet.recharge') }}
+          </button>
+        </div>
+        <div v-show="walletOpen">
+        <UiResponsiveDataView
+          v-if="!isLoadingWallet"
+          row-size="sm"
+          :columns="walletColumns"
+          :data="walletPageItems"
+          :empty-message="t('analitica.customerDetail.wallet.empty')"
+          variant="default"
+        >
+          <template #card="{ item }">
+            <div class="p-4 border-b border-border">
+              <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-text-primary">{{ walletMovementLabel(item.movement_type) }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
+                </div>
+                <span
+                  :class="[
+                    'text-sm font-semibold flex-shrink-0 tabular-nums',
+                    item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
+                  ]"
+                >
+                  {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
+                </span>
+              </div>
+              <p class="text-xs text-text-secondary mt-2 tabular-nums">
+                {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
+                {{ formatCurrency(item.balance_after_cop) }}
+              </p>
+            </div>
+          </template>
+          <template #cell-movement_type="{ value }">
+            <span class="text-sm font-medium text-text-primary">{{ walletMovementLabel(value) }}</span>
+          </template>
+          <template #cell-created_at="{ value }">
+            <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          </template>
+          <template #cell-amount_cop="{ value }">
+            <span
+              :class="[
+                'text-sm font-semibold tabular-nums',
+                value >= 0 ? 'text-green-700' : 'text-red-600',
+              ]"
+            >
+              {{ value >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(value)) }}
+            </span>
+          </template>
+          <template #cell-balance_after_cop="{ value }">
+            <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+          </template>
+        </UiResponsiveDataView>
+        <div v-if="walletTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              :disabled="walletPage <= 1"
+              @click="goToWalletPage(1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.primeraPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="walletPage <= 1"
+              @click="goToWalletPage(walletPage - 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaAnterior')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ walletPage }}</span>
+            <button
+              type="button"
+              :disabled="walletPage >= walletTotalPages"
+              @click="goToWalletPage(walletPage + 1)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.paginaSiguiente')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button
+              type="button"
+              :disabled="walletPage >= walletTotalPages"
+              @click="goToWalletPage(walletTotalPages)"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :aria-label="t('ventas.common.ultimaPagina')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
         </div>
       </div>
 
