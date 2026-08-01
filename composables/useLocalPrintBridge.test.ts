@@ -145,4 +145,53 @@ describe('createLocalPrintBridge', () => {
     await expect(bridge.printHtml('', '<div/>')).rejects.toMatchObject({ code: 'INVALID' })
     await expect(bridge.printHtml('STAR', '  ')).rejects.toMatchObject({ code: 'INVALID' })
   })
+
+  it('rejects when status stream reports unknown/failed after queued accept', async () => {
+    let statusHandler: ((event: { requestId?: string; status?: string; message?: string }) => void) | null = null
+    const printSpy = mock(async (job: Record<string, unknown>) => {
+      const requestId = String(job.requestId)
+      queueMicrotask(() => statusHandler?.({ requestId, status: 'queued' }))
+      queueMicrotask(() => statusHandler?.({
+        requestId,
+        status: 'unknown',
+        message: 'Unable to send data to printer.',
+      }))
+      return { status: 'queued', requestId }
+    })
+    __setLocalPrintBridgeClientForTests({
+      ...mockClient({ print: printSpy }),
+      on: mock((_event: 'status', handler: typeof statusHandler) => {
+        statusHandler = handler
+        return () => { statusHandler = null }
+      }),
+    })
+
+    const bridge = createLocalPrintBridge()
+    await expect(bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('x')))
+      .rejects.toMatchObject({
+        code: 'PRINT_FAILED',
+        message: expect.stringContaining('Unable to send data to printer'),
+      })
+  })
+
+  it('resolves when status stream reports completed', async () => {
+    let statusHandler: ((event: { requestId?: string; status?: string }) => void) | null = null
+    const printSpy = mock(async (job: Record<string, unknown>) => {
+      const requestId = String(job.requestId)
+      queueMicrotask(() => statusHandler?.({ requestId, status: 'queued' }))
+      queueMicrotask(() => statusHandler?.({ requestId, status: 'completed' }))
+      return { status: 'queued', requestId }
+    })
+    __setLocalPrintBridgeClientForTests({
+      ...mockClient({ print: printSpy }),
+      on: mock((_event: 'status', handler: typeof statusHandler) => {
+        statusHandler = handler
+        return () => { statusHandler = null }
+      }),
+    })
+
+    const bridge = createLocalPrintBridge()
+    await bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok'))
+    expect(printSpy).toHaveBeenCalledTimes(1)
+  })
 })

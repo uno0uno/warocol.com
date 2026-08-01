@@ -12,12 +12,13 @@ paths:
   - composables/useCajaTicketPrint.ts
   - composables/useCajaTicketPrint.test.ts
   - composables/useLocalPrintBridge.ts
+  - composables/useLocalPrintBridge.test.ts
 
 ac:
   - Bridge print fail/timeout → browser fallback promptly (≤~5s)
+  - Queued-then-failed/unknown CUPS status must reject (not success bridge)
   - Checkout deferred window.print still runs when mode is browser
-  - Unit test: timeout / reject → browser
-  - bun test composables/useCajaTicketPrint.test.ts
+  - bun test composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts
 
 out_of_scope:
   - CUPS/USB driver fixes
@@ -25,9 +26,9 @@ out_of_scope:
   - checkout.vue deferred print pattern (keep; fix composable timeouts)
 
 hints:
-  entry: "printTicketViaCajaOrBrowser — race connect+printRawEscPos"
-  pattern: "Promise.race with BRIDGE_PRINT_TIMEOUT_MS; lower requestTimeoutMs"
-  tests: "bun test composables/useCajaTicketPrint.test.ts"
+  entry: "printAndAwaitOutcome + waitForPrintTerminalStatus; printTicketViaCajaOrBrowser race"
+  pattern: "SDK print resolves on queued — wait status completed|failed|unknown"
+  tests: "bun test composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts"
 
 skip:
   audits: [ux, color, typography]
