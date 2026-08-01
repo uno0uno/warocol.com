@@ -619,6 +619,12 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
     promoType: i.promoType ?? i.promo_type ?? i.locked_promo_type ?? null,
     promoSavings: Number(i.promoSavings ?? i.promo_savings ?? i.locked_promo_savings) || 0,
     promoOptOut: Boolean(i.promoOptOut ?? i.promo_opt_out),
+    taxCategory: i.taxCategory ?? i.tax_category ?? null,
+    taxLabel: i.taxLabel ?? i.tax_label ?? null,
+    taxAmount: i.taxAmount != null || i.tax_amount != null
+      ? Number(i.taxAmount ?? i.tax_amount) || 0
+      : null,
+    includedInPrice: i.includedInPrice ?? i.included_in_price ?? null,
     modifiers: (i.modifiers ?? []).map((m: any) => ({
       id: m.id ?? '',
       name: m.name,

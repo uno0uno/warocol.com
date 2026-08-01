@@ -102,6 +102,10 @@ export interface TabItem {
     promoType?: string | null
     promoSavings?: number
     promoOptOut?: boolean
+    taxCategory?: string | null
+    taxLabel?: string | null
+    taxAmount?: number | null
+    includedInPrice?: boolean | null
 }
 
 // Producto cacheado con modificadores completos
