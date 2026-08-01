@@ -61,6 +61,7 @@ export function collectThermalTicketText(root: Element | null | undefined): stri
       cls.contains('receipt-plain-pre')
       || cls.contains('receipt-plain-line')
       || cls.contains('comanda-ticket-pre')
+      || cls.contains('receipt-divider')
     ) {
       push(el.textContent || '', true)
       return
