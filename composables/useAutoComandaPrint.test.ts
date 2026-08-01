@@ -100,18 +100,30 @@ describe('dedupe', () => {
 })
 
 describe('buildComandaPlainText', () => {
-  it('includes qty and kitchen name', () => {
+  it('includes shared header, qty, mods, and special notes on separate lines', () => {
     const text = buildComandaPlainText([
       {
         comanda_number: 5,
         table_display_name: 'Mesa 2',
         station_name: 'Cocina',
-        items: [{ kitchen_name: 'Burger', quantity: 2, notes: 'sin cebolla' }],
+        items: [{
+          kitchen_name: 'Burger',
+          quantity: 2,
+          notes: 'sin cebolla',
+          modifiers_snapshot: [{ name: 'Extra queso', price: 2000, quantity: 1 }],
+        }],
       },
     ])
-    expect(text).toContain('COMANDA #5')
+    expect(text).toContain('*** COMANDA POS ***')
+    expect(text).toContain('Mesa 2')
+    expect(text).toContain('Comanda #5')
+    expect(text).toContain('Estacion: Cocina')
     expect(text).toContain('2x Burger')
-    expect(text).toContain('sin cebolla')
+    expect(text).toContain('  - Extra queso - 2000')
+    expect(text).toContain('  * Notas especiales: sin cebolla')
+    // Rows must not mash meta into one line
+    expect(text).not.toMatch(/Mesa 2Comanda/)
+    expect(text.indexOf('Mesa 2')).toBeLessThan(text.indexOf('Comanda #5'))
   })
 
   it('prints fallback last and labels Sin cocina asignada', () => {

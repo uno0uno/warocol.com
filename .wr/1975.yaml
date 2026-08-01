@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 1975
+title: "Unify comanda thermal print layout; no auto-print without PrintBridge"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1975-comanda-print-layout
+
+paths:
+  - composables/useComandaPrint.ts
+  - composables/useComandaPrint.test.ts
+  - composables/useAutoComandaPrint.ts
+  - composables/useAutoComandaPrint.test.ts
+  - components/pos/ComandaPrintTickets.vue
+
+ac:
+  - Auto-print skips without PrintBridge / printer (no window.print)
+  - Manual última/selected still browser-fallback when no bridge
+  - Shared plain-text layout for auto ESC/POS and manual print
+  - Thermal-readable newlines; ASCII mod separators
+  - Focused front tests for builder + auto skip
+
+out_of_scope:
+  - Prefactura/factura redesign
+  - Multi-station printer matrix
+  - API payload changes
+
+hints:
+  entry: "buildComandaTicketPlainText + ComandaPrintTickets pre"
+  pattern: "explicit \\n in pre; auto uses same builder"
+  tests: "bunx vitest run composables/useAutoComandaPrint.test.ts && bun test composables/useComandaPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "manual thermal smoke: última without bridge; auto with PrintBridge"

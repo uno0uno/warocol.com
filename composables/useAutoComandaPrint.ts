@@ -4,7 +4,10 @@
  * Never falls back to window.print — silent no-op without bridge/printer.
  */
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
-import { mapComandasForPrint } from '~/composables/useComandaPrint'
+import {
+  buildComandaTicketPlainText,
+  mapComandasForPrint,
+} from '~/composables/useComandaPrint'
 import { getUserPrinterName } from '~/composables/useUserPrinterPreference'
 import {
   LocalPrintBridgeError,
@@ -102,28 +105,12 @@ export function markComandasPrinted(comandas: ComandaPrintPayload[], orderId?: s
   }
 }
 
+/** Same layout as manual ComandaPrintTickets (#1975); fallback tickets last. */
 export function buildComandaPlainText(comandas: ComandaPrintWithFallback[]): string {
-  const blocks: string[] = []
-  for (const c of orderComandasForPrint(comandas)) {
-    const stationLabel = c.station_name
-      || (c.print_fallback || !c.station_id ? 'Sin cocina asignada' : '')
-    const lines: string[] = [
-      `COMANDA #${c.comanda_number}`,
-      c.table_display_name ? String(c.table_display_name) : '',
-      stationLabel ? `Estacion: ${stationLabel}` : '',
-      '----------------',
-    ]
-    for (const item of c.items) {
-      lines.push(`${item.quantity}x ${item.kitchen_name}`)
-      for (const mod of item.modifiers_snapshot || []) {
-        const qty = Number(mod.quantity) || 1
-        lines.push(`  + ${mod.name}${qty > 1 ? ` x${qty}` : ''}`)
-      }
-      if (item.notes?.trim()) lines.push(`  * ${item.notes.trim()}`)
-    }
-    blocks.push(lines.filter(Boolean).join('\n'))
-  }
-  return blocks.join('\n\n')
+  return buildComandaTicketPlainText(comandas, {
+    orderComandas: (list) => orderComandasForPrint(list as ComandaPrintWithFallback[]),
+    includeModifierPrices: true,
+  })
 }
 
 export type AutoPrintDeps = {
