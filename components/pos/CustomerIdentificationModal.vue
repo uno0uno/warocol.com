@@ -1,15 +1,30 @@
 <template>
   <!-- Teleport to body so fixed overlay covers full viewport (not dashboard content pane) #2004 -->
+  <!-- Chrome matches bodega StockAdjustmentPanel (#2008) -->
   <Teleport to="body">
-  <Transition name="sheet">
-    <div
-      v-if="modelValue"
-      class="fixed inset-0 z-[80] flex items-end md:items-stretch md:justify-end bg-overlay-backdrop/50"
-      @click.self="handleClose"
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
     >
       <div
-        class="bottom-sheet-panel bg-surface w-full max-h-[92dvh] md:max-h-none md:h-full md:max-w-md
-               flex flex-col rounded-t-2xl md:rounded-none shadow-2xl
+        v-if="modelValue"
+        class="fixed inset-0 z-[80] bg-overlay-backdrop/40"
+        aria-hidden="true"
+        @click="handleClose"
+      />
+    </Transition>
+
+    <Transition name="panel">
+      <div
+        v-if="modelValue"
+        class="fixed z-[81] flex flex-col bg-surface shadow-2xl
+               inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+               md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto
+               md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full
                md:border-s md:border-border"
         role="dialog"
         aria-modal="true"
@@ -18,28 +33,41 @@
 
         <!-- Mobile drag handle — bottom sheet; desktop docks as right slideover (#1999) -->
         <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
-          <div class="w-10 h-1 rounded-full bg-border"></div>
+          <div class="w-10 h-1 rounded-full bg-sheet-border"></div>
         </div>
 
-        <!-- Header -->
-        <div class="p-5 border-b border-border flex items-center justify-between flex-shrink-0">
-          <div>
-            <h2 class="text-xl font-bold text-text-primary">
-              {{ headerTitle }}
-            </h2>
-            <p class="text-sm text-text-secondary mt-0.5">
-              {{ headerSubtitle }}
-            </p>
+        <!-- Header (bodega articles panel aesthetic) -->
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+                aria-hidden="true"
+              >
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight">
+                  {{ headerTitle }}
+                </h2>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                  {{ headerSubtitle }}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="handleClose"
+              :aria-label="t('pos.customer.closeModalAria')"
+              class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
+            >
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            @click="handleClose"
-            :aria-label="t('pos.customer.closeModalAria')"
-            class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
-          >
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         <!-- STATE: Search -->
@@ -467,8 +495,7 @@
         </template>
 
       </div>
-    </div>
-  </Transition>
+    </Transition>
   </Teleport>
 </template>
 
@@ -834,28 +861,20 @@ const handleClose = () => {
 </script>
 
 <style scoped>
-/* Backdrop fade */
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.25s ease;
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
+/* Match StockAdjustmentPanel / bodega articles slideover (#2008) */
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 250ms ease;
 }
 
-/* Panel — mobile: bottom sheet; desktop: right slideover (#1999 / #1985) */
-.sheet-enter-active .bottom-sheet-panel,
-.sheet-leave-active .bottom-sheet-panel {
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-}
-.sheet-enter-from .bottom-sheet-panel,
-.sheet-leave-to .bottom-sheet-panel {
+.panel-enter-from,
+.panel-leave-to {
   transform: translateY(100%);
 }
+
 @media (min-width: 768px) {
-  .sheet-enter-from .bottom-sheet-panel,
-  .sheet-leave-to .bottom-sheet-panel {
+  .panel-enter-from,
+  .panel-leave-to {
     transform: translateX(100%);
   }
 }

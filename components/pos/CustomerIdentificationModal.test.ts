@@ -97,6 +97,29 @@ describe('CustomerIdentificationModal shell', () => {
     expect(wrapper.element.contains(overlay!)).toBe(false)
     wrapper.unmount()
   })
+
+  it('uses bodega-style header chrome (surface-secondary band)', () => {
+    const wrapper = mountModal()
+    const panel = dialogEl()
+    expect(panel).toBeTruthy()
+    expect(panel!.className).toContain('md:end-0')
+    const header = Array.from(panel!.querySelectorAll('div')).find(el =>
+      el.className.includes('bg-surface-secondary'),
+    )
+    expect(header).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('closes when backdrop is clicked (search UX)', async () => {
+    const wrapper = mountModal()
+    const overlay = Array.from(document.body.querySelectorAll('.fixed.inset-0'))
+      .find(el => el.className.includes('z-[80]')) as HTMLElement
+    expect(overlay).toBeTruthy()
+    overlay.click()
+    await flushPromises()
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([false])
+    wrapper.unmount()
+  })
 })
 
 describe('CustomerIdentificationModal customer identities', () => {

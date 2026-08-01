@@ -5018,7 +5018,6 @@ onUnmounted(() => {
           v-if="showSuccessModal"
           class="fixed inset-0 z-50 bg-overlay-backdrop/40"
           aria-hidden="true"
-          @click="closeSuccessModal"
         />
       </Transition>
 
@@ -5041,54 +5040,54 @@ onUnmounted(() => {
         >
           <!-- Mobile drag handle -->
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0" aria-hidden="true">
-            <div class="w-10 h-1 rounded-full bg-border" />
+            <div class="w-10 h-1 rounded-full bg-sheet-border" />
           </div>
 
-          <!-- Header -->
-          <div class="flex-shrink-0 flex items-start justify-between gap-3 px-5 pt-2 pb-3 border-b border-border">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div class="w-11 h-11 rounded-full flex items-center justify-center bg-state-success-bg flex-shrink-0">
-                <svg
-                  class="w-6 h-6 text-state-success-text"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <!-- Header (bodega StockAdjustmentPanel aesthetic #2008) -->
+          <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div
+                  class="flex-shrink-0 w-10 h-10 rounded-xl bg-state-success-bg flex items-center justify-center text-state-success-text"
                   aria-hidden="true"
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-base font-bold leading-tight text-text-primary">
+                    {{
+                      orderResult?.status === 'pending'
+                        ? t('pos.checkout.success.pendingTitle')
+                        : orderResult?.payment_method === 'credit'
+                          ? t('pos.checkout.success.creditTitle')
+                          : t('pos.checkout.success.completedTitle')
+                    }}
+                  </h3>
+                  <p class="text-xs leading-snug text-text-secondary mt-0.5">
+                    {{
+                      orderResult?.status === 'pending'
+                        ? t('pos.checkout.success.pendingBody')
+                        : orderResult?.payment_method === 'credit'
+                          ? t('pos.checkout.success.creditBody')
+                          : t('pos.checkout.success.completedBody')
+                    }}
+                  </p>
+                </div>
+              </div>
+              <!-- Close is an explicit panel action (backdrop does not dismiss #2008) -->
+              <button
+                type="button"
+                class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30 transition-colors"
+                :aria-label="t('pos.comandasPanel.closePanelAria')"
+                @click="closeSuccessModal"
+              >
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
-              </div>
-              <div class="min-w-0">
-                <h3 class="text-lg font-bold leading-tight text-text-primary">
-                  {{
-                    orderResult?.status === 'pending'
-                      ? t('pos.checkout.success.pendingTitle')
-                      : orderResult?.payment_method === 'credit'
-                        ? t('pos.checkout.success.creditTitle')
-                        : t('pos.checkout.success.completedTitle')
-                  }}
-                </h3>
-                <p class="text-sm leading-snug text-text-secondary mt-0.5">
-                  {{
-                    orderResult?.status === 'pending'
-                      ? t('pos.checkout.success.pendingBody')
-                      : orderResult?.payment_method === 'credit'
-                        ? t('pos.checkout.success.creditBody')
-                        : t('pos.checkout.success.completedBody')
-                  }}
-                </p>
-              </div>
+              </button>
             </div>
-            <button
-              type="button"
-              class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary-focus-ring/30"
-              :aria-label="t('pos.comandasPanel.closePanelAria')"
-              @click="closeSuccessModal"
-            >
-              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
 
           <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">
@@ -5337,44 +5336,31 @@ onUnmounted(() => {
 
           <!-- Receipt actions -->
           <div class="mb-4 space-y-3">
-            <!-- Email receipt -->
+            <!-- Email receipt — always editable before send (#2008) -->
             <div class="flex flex-col gap-1.5">
-              <!-- When email comes from profile: confirmation mode -->
-              <template v-if="emailFromProfile && !emailSent">
-	                <p class="text-sm font-medium text-text-primary">
-                    {{ hasGeneratedInvoice ? t('pos.checkout.invoice.sendByEmail') : t('pos.checkout.receiptEmail.askSend') }}
-                  </p>
-                <div class="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
-                  <svg class="h-[1em] w-[1em] shrink-0 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
-                  <span class="flex-1 truncate text-sm text-text-primary">{{ receiptEmail }}</span>
-                  <button
-                    @click="sendReceiptEmail"
-                    :disabled="!receiptEmail || isSendingEmail"
-                    class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
-                  >
-	                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
-	                    <span v-else>{{ t('pos.checkout.receiptEmail.confirmSend') }}</span>
-                  </button>
-                </div>
-              </template>
-
-              <!-- When email was sent (from profile or manual) -->
-              <template v-else-if="emailSent">
+              <template v-if="emailSent">
                 <div class="flex items-center gap-2 rounded-lg border border-state-success-border bg-state-success-bg px-3 py-2 text-state-success-text">
                   <svg class="h-[1em] w-[1em] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-	                  <span class="text-sm font-medium">
-                      {{ hasGeneratedInvoice
-                        ? t('pos.checkout.invoiceSent', { email: receiptEmail })
-                        : t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}
-                    </span>
+                  <span class="text-sm font-medium">
+                    {{ hasGeneratedInvoice
+                      ? t('pos.checkout.invoiceSent', { email: receiptEmail })
+                      : t('pos.checkout.receiptEmail.sentTo', { email: receiptEmail }) }}
+                  </span>
                 </div>
               </template>
-
-              <!-- When no profile email: manual input -->
               <template v-else>
-                <label for="receipt-email" class="text-xs font-semibold text-text-secondary">
-	                  {{ hasGeneratedInvoice ? t('pos.checkout.invoice.sendByEmail') : t('pos.checkout.receiptEmail.label') }}
-                    <span class="font-normal text-text-tertiary">{{ t('pos.checkout.optional') }}</span>
+                <label for="receipt-email" class="text-sm font-medium text-text-primary">
+                  {{
+                    hasGeneratedInvoice
+                      ? t('pos.checkout.invoice.sendByEmail')
+                      : (emailFromProfile
+                        ? t('pos.checkout.receiptEmail.askSend')
+                        : t('pos.checkout.receiptEmail.label'))
+                  }}
+                  <span
+                    v-if="!emailFromProfile"
+                    class="font-normal text-text-tertiary"
+                  >{{ t('pos.checkout.optional') }}</span>
                 </label>
                 <div class="flex gap-2">
                   <input
@@ -5382,15 +5368,18 @@ onUnmounted(() => {
                     v-model="receiptEmail"
                     type="email"
                     placeholder="cliente@email.com"
-                    class="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    autocomplete="email"
+                    class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
+                    type="button"
                     @click="sendReceiptEmail"
                     :disabled="!receiptEmail || isSendingEmail"
-                    class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary"
+                    class="shrink-0 min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-action-primary-bg text-action-primary-text hover:bg-action-primary-hover-bg"
                   >
-	                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
-	                    <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
+                    <span v-if="isSendingEmail">{{ t('pos.checkout.receiptEmail.sending') }}</span>
+                    <span v-else-if="emailFromProfile">{{ t('pos.checkout.receiptEmail.confirmSend') }}</span>
+                    <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
                   </button>
                 </div>
               </template>

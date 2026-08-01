@@ -1,0 +1,34 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2008
+title: "fix(pos): bodega-style customer & success slideovers; editable receipt email"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2008-bodega-slideovers-email
+risk: low
+
+paths:
+  - components/pos/CustomerIdentificationModal.vue
+  - components/pos/CustomerIdentificationModal.test.ts
+  - pages/pos/checkout.vue
+
+ac:
+  - Customer search slideover matches bodega StockAdjustmentPanel chrome
+  - Success slideover matches same aesthetic family
+  - Success backdrop click does not dismiss; Nueva Venta / panel X do
+  - Receipt email always editable before send; confirm uses edited address
+  - bunx vitest run components/pos/CustomerIdentificationModal.test.ts
+
+out_of_scope:
+  - Per-line tax (#2007)
+  - CRM redesign
+  - Void-payment modal
+
+hints:
+  entry: "StockAdjustmentPanel.vue chrome; success Teleport @click remove"
+  pattern: "Separate backdrop Transition + panel Transition; profile email was span-only"
+  tests: "bunx vitest run components/pos/CustomerIdentificationModal.test.ts"
+
+skip:
+  audits: [ux, color, typography]
