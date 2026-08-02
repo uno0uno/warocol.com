@@ -697,6 +697,7 @@
       "dianIssueDate": "DIAN issue date: {date}",
       "issuer": "Issuer: {label}",
       "acquirer": "Buyer: {label}",
+      "dianResolution": "DIAN resolution: {number}",
       "paymentForm": "Payment form/method: {label}",
       "taxTributaryDetail": "Tax detail",
       "taxBase": "Base {amount}",

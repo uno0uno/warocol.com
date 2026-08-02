@@ -1,0 +1,42 @@
+# Compact plan for wr-fast #2046
+issue: 2046
+title: "feat(pos): show DIAN resolution number on thermal/HTML receipts when configured"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2046-dian-resolution-receipt
+
+paths:
+  - pages/pos/checkout.vue
+  - pages/ventas/[id].vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - .wr/2046.yaml
+
+ac:
+  - Populate invoice.resolutionText from presentation.resolution when available
+  - FE footer slot in ReceiptPrintTicket shows line (thermal + HTML)
+  - Checkout + ventas/[id] wired
+  - Omit when no resolution
+  - Prefactura out of scope
+
+out_of_scope:
+  - Prefactura sale footer
+  - Email template
+  - API changes
+
+hints:
+  entry: "receiptInvoice / saleReceiptInvoice resolutionText"
+  pattern: "ReceiptPrintTicket.vue:475 invoice.resolutionText"
+  tests: "none — i18n + wiring; manual print check"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge to main"

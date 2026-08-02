@@ -2937,6 +2937,11 @@ const receiptInvoice = computed(() => {
     selectedCustomer.value,
     invoice.presentation?.acquirer,
   )
+  const resolutionNumber = String(
+    invoice.presentation?.resolution?.number
+    ?? invoice.presentation?.resolution?.resolution_number
+    ?? '',
+  ).trim()
   return {
     prefix: invoice.prefix,
     invoice_number: invoice.invoice_number,
@@ -2951,6 +2956,9 @@ const receiptInvoice = computed(() => {
     // Adquirente FE = snapshot fiscal returned by the invoice presentation.
     acquirerLabel: invoice.presentation?.acquirer
       ? formatFiscalIdentityLabel(invoiceIdentity.acquirer)
+      : null,
+    resolutionText: resolutionNumber
+      ? t('pos.receipt.dianResolution', { number: resolutionNumber })
       : null,
   }
 })
