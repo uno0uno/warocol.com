@@ -317,7 +317,7 @@ export function buildCoTaxLinesDraft(options: {
       included_in_price: Boolean(raw.included_in_price),
       gl_role: String(raw.gl_role || 'iva'),
       mode,
-      exclusive_group: mode === 'stack' ? null : (group || null),
+      exclusive_group: mode === 'stack' ? null : (group || 'vat'),
     })
   }
   return lines

@@ -570,7 +570,7 @@ const coCustomLinesToDraft = () => coCustomLines.value.map(line => ({
   included_in_price: Boolean(line.included_in_price),
   gl_role: line.gl_role || 'iva',
   mode: line.mode,
-  exclusive_group: null as string | null,
+  exclusive_group: line.mode === 'alternate' ? 'vat' : null,
 }))
 
 const syncCoCustomFromConfig = (cfg: Record<string, any> | null) => {
@@ -584,8 +584,10 @@ const syncCoCustomFromConfig = (cfg: Record<string, any> | null) => {
   }))
   const lines = normalizeTaxLines(cfg?.tax_lines)
   const gold = buildCoRestauranteTaxLines()
+  const customCount = coCustomLinesFromTaxLines(cfg?.tax_lines).length
   const looksLikeRestaurante = Boolean(
-    cfg?.iva_applicable
+    customCount === 0
+    && cfg?.iva_applicable
     && cfg?.liquor_tax_applicable
     && cfg?.iva_included_in_price
     && cfg?.liquor_tax_included_in_price
@@ -608,6 +610,7 @@ const applyCoRestaurantePreset = async () => {
   taxForm.liquor_tax_applicable = true
   taxForm.liquor_tax_rate_pct = 5
   taxForm.liquor_tax_included_in_price = true
+  coCustomLines.value = []
   coTaxProfileId.value = CO_TAX_PROFILE_RESTAURANTE
   // Map Bebidas-like categories → liquor when present.
   try {
@@ -1932,6 +1935,7 @@ const matiasRegimeLabel = computed(() => {
                   max="100"
                   step="0.01"
                   class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
+                  @input="coTaxProfileId = 'custom'"
                 >
                 <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
               </div>
@@ -1939,7 +1943,7 @@ const matiasRegimeLabel = computed(() => {
                 <button
                   type="button"
                   :aria-pressed="taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = true"
+                  @click="taxForm.iva_included_in_price = true; coTaxProfileId = 'custom'"
                   :class="[
                     'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
                     taxForm.iva_included_in_price
@@ -1952,7 +1956,7 @@ const matiasRegimeLabel = computed(() => {
                 <button
                   type="button"
                   :aria-pressed="!taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = false"
+                  @click="taxForm.iva_included_in_price = false; coTaxProfileId = 'custom'"
                   :class="[
                     'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
                     !taxForm.iva_included_in_price
