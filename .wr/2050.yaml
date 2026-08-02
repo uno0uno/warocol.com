@@ -1,0 +1,40 @@
+issue: 2050
+title: "fix(pos): number and separate product rows on prefatura/factura prints"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2050-receipt-item-separators
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+  - .wr/2050.yaml
+
+ac:
+  - Numbered product lines 1. 2. 3.
+  - Light separator between products
+  - Prefatura + factura (ReceiptPrintTicket + checkout paths)
+  - Modifiers stay under parent
+  - Unit tests for index + separator
+
+out_of_scope:
+  - Cart UI
+  - Tax math
+
+hints:
+  entry: "formatReceiptProductBlock index + receiptItemSeparator"
+  pattern: "ReceiptPrintTicket printableItems loop"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge main + stop local bac/front"

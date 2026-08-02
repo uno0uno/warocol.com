@@ -8,6 +8,7 @@ import {
   formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
+  receiptItemSeparator,
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 
@@ -152,13 +153,14 @@ const productTaxCue = (item: ReceiptItem) => {
   return formatReceiptTaxCue({ label })
 }
 
-const productBlock = (item: ReceiptItem) =>
+const productBlock = (item: ReceiptItem, index: number) =>
   formatReceiptProductBlock({
     name: item.name,
     quantity: item.quantity,
     unitPriceLabel: money(item.unitPrice),
     lineTotalLabel: money(item.total),
     taxCue: productTaxCue(item),
+    index,
   })
 
 const modifierBlock = (modifier: ReceiptItemModifier) =>
@@ -183,6 +185,7 @@ const taxBulletLine = (label: string, amount: number | string | null | undefined
 
 const dashDivider = receiptDivider()
 const strongDivider = receiptDivider(32, '=')
+const itemSeparator = receiptItemSeparator()
 
 const hasBreakdownSubtotal = computed(() =>
   (props.promoBreakdown?.length ?? 0) > 0
@@ -352,8 +355,9 @@ const printableItems = computed(() =>
     <div class="receipt-plain-line">{{ dashDivider }}</div>
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
 
-    <template v-for="item in printableItems" :key="item.id ?? item.name">
-      <pre class="receipt-plain-pre">{{ productBlock(item) }}</pre>
+    <template v-for="(item, idx) in printableItems" :key="item.id ?? item.name">
+      <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ itemSeparator }}</div>
+      <pre class="receipt-plain-pre">{{ productBlock(item, idx + 1) }}</pre>
       <pre
         v-for="modifier in (item.modifiers ?? [])"
         :key="`${item.id ?? item.name}-${modifier.id ?? modifier.name}`"
