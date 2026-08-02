@@ -6,6 +6,17 @@
 export const RECEIPT_THERMAL_COLS = 32
 export const RECEIPT_MODIFIER_INDENT = '  '
 
+/** Join non-empty receipt fragments with a compact separator (thermal chrome). */
+export function joinReceiptParts(
+  parts: Array<string | null | undefined>,
+  sep = ' · ',
+): string {
+  return parts
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(sep)
+}
+
 /** Light separator between product blocks (not the section dash). */
 export function receiptItemSeparator(cols: number = RECEIPT_THERMAL_COLS): string {
   return '·'.repeat(Math.max(8, Math.min(cols, 32)))

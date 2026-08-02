@@ -5,11 +5,19 @@ import {
   formatReceiptProductBlock,
   formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
+  joinReceiptParts,
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
   collectThermalTicketText,
 } from './receiptTicketPlainText'
+
+describe('joinReceiptParts', () => {
+  it('joins non-empty parts with a middle-dot separator', () => {
+    expect(joinReceiptParts(['NIT 1', '', 'Tel: 2', null, 'a@b.com'])).toBe('NIT 1 · Tel: 2 · a@b.com')
+    expect(joinReceiptParts([])).toBe('')
+  })
+})
 
 describe('compactThermalMoneyLabel', () => {
   it('strips COP prefix for narrower thermal columns', () => {
