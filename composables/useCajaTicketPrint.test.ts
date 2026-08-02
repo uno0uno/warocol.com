@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import {
+  __resetCajaPrintInFlightForTests,
   notifyCajaPrintResult,
   printTicketViaCajaOrBrowser,
 } from './useCajaTicketPrint'
@@ -28,6 +29,7 @@ function installMemoryLocalStorage() {
 beforeEach(() => {
   installMemoryLocalStorage()
   localStorage.removeItem('waro.cajaPrint.forceBrowser')
+  __resetCajaPrintInFlightForTests()
 })
 
 function fakeBridge(overrides: Partial<LocalPrintBridge> = {}): LocalPrintBridge {
@@ -64,19 +66,64 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
-  it('returns confirmed when CUPS soft-success outcome is reported as completed', async () => {
+  it('returns unconfirmed when CUPS soft-success outcome is reported', async () => {
     const browserPrint = mock(() => {})
     const result = await printTicketViaCajaOrBrowser('pos-receipt', {
       getCajaPrinterName: async () => 'STAR_TP586',
       bridge: fakeBridge({
-        printRawEscPos: mock(() => Promise.resolve('completed' as const)),
+        printRawEscPos: mock(() => Promise.resolve('unconfirmed' as const)),
       }),
       getElementHtml: () => '<div id="pos-receipt">OK</div>',
       browserPrint,
       isForceBrowser: () => false,
     })
 
-    expect(result).toEqual({ mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' })
+    expect(result).toEqual({ mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' })
+    expect(browserPrint).toHaveBeenCalledTimes(0)
+  })
+
+  it('falls back to browser when content is markup-only (cut-only ESC/POS)', async () => {
+    const printRawEscPos = mock(() => Promise.resolve('completed' as const))
+    const browserPrint = mock(() => {})
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName: async () => 'STAR_TP586',
+      bridge: fakeBridge({ printRawEscPos }),
+      getElementHtml: () => '<div id="pos-receipt"></div>',
+      browserPrint,
+      isForceBrowser: () => false,
+    })
+
+    expect(result).toEqual({ mode: 'browser' })
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
+    expect(browserPrint).toHaveBeenCalledTimes(1)
+  })
+
+  it('skips overlapping print attempts while one is in flight', async () => {
+    let resolvePrint: (value: 'completed') => void = () => {}
+    const printRawEscPos = mock(
+      () => new Promise<'completed'>((resolve) => { resolvePrint = resolve }),
+    )
+    const browserPrint = mock(() => {})
+    const bridge = fakeBridge({ printRawEscPos })
+    const deps = {
+      getCajaPrinterName: async () => 'STAR_TP586',
+      bridge,
+      getElementHtml: () => '<div id="pos-receipt">OK</div>',
+      browserPrint,
+      isForceBrowser: () => false,
+      bridgePrintTimeoutMs: 10_000,
+    }
+    const first = printTicketViaCajaOrBrowser('pos-receipt', deps)
+    await Promise.resolve()
+    const second = await printTicketViaCajaOrBrowser('pos-receipt', deps)
+    expect(second).toEqual({ mode: 'skipped' })
+    resolvePrint('completed')
+    await expect(first).resolves.toEqual({
+      mode: 'bridge',
+      confirmed: true,
+      printerName: 'STAR_TP586',
+    })
+    expect(printRawEscPos).toHaveBeenCalledTimes(1)
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
