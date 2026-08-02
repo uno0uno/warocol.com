@@ -710,7 +710,9 @@
       "printUnconfirmedTitle": "Check the printer",
       "printUnconfirmedBody": "Sent to {name}, but we could not confirm the ticket printed. Is it powered on?",
       "printRetry": "Retry",
-      "printWithBrowser": "Print with browser"
+      "printWithBrowser": "Print with browser",
+      "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer.",
+      "printUseThermal": "Use thermal printer"
     }
   }
 }

@@ -1,9 +1,34 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import {
   notifyUnconfirmedCajaPrint,
   printTicketViaCajaOrBrowser,
 } from './useCajaTicketPrint'
 import type { LocalPrintBridge } from './useLocalPrintBridge'
+
+function installMemoryLocalStorage() {
+  const store = new Map<string, string>()
+  const memoryStorage = {
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => { store.set(key, String(value)) },
+    removeItem: (key: string) => { store.delete(key) },
+    clear: () => { store.clear() },
+  }
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    configurable: true,
+    writable: true,
+  })
+  Object.defineProperty(globalThis, 'window', {
+    value: { localStorage: memoryStorage },
+    configurable: true,
+    writable: true,
+  })
+}
+
+beforeEach(() => {
+  installMemoryLocalStorage()
+  localStorage.removeItem('waro.cajaPrint.forceBrowser')
+})
 
 function fakeBridge(overrides: Partial<LocalPrintBridge> = {}): LocalPrintBridge {
   return {
@@ -48,10 +73,27 @@ describe('printTicketViaCajaOrBrowser', () => {
       }),
       getElementHtml: () => '<div id="pos-receipt">OK</div>',
       browserPrint,
+      isForceBrowser: () => false,
     })
 
     expect(result).toEqual({ mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' })
     expect(browserPrint).toHaveBeenCalledTimes(0)
+  })
+
+  it('skips bridge when sticky force-browser preference is on', async () => {
+    const printRawEscPos = mock(() => Promise.resolve('completed' as const))
+    const browserPrint = mock(() => {})
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName: async () => 'STAR_TP586',
+      bridge: fakeBridge({ printRawEscPos }),
+      getElementHtml: () => '<div id="pos-receipt">OK</div>',
+      browserPrint,
+      isForceBrowser: () => true,
+    })
+
+    expect(result).toEqual({ mode: 'browser' })
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
+    expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
   it('falls back to browser when caja assignment is missing', async () => {
@@ -166,5 +208,28 @@ describe('notifyUnconfirmedCajaPrint', () => {
       { t, toast: { warning }, onRetry, onBrowserPrint },
     )
     expect(warning).toHaveBeenCalledTimes(0)
+  })
+
+  it('enables sticky force-browser when cashier chooses browser CTA', () => {
+    localStorage.removeItem('waro.cajaPrint.forceBrowser')
+    const warning = mock(() => 1)
+    const onBrowserPrint = mock(() => {})
+    const t = (key: string) => key
+
+    notifyUnconfirmedCajaPrint(
+      { mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' },
+      {
+        t,
+        toast: { warning },
+        onRetry: () => {},
+        onBrowserPrint,
+      },
+    )
+
+    const [, options] = warning.mock.calls[0]!
+    options.actions[1].onClick()
+    expect(localStorage.getItem('waro.cajaPrint.forceBrowser')).toBe('1')
+    expect(onBrowserPrint).toHaveBeenCalledTimes(1)
+    localStorage.removeItem('waro.cajaPrint.forceBrowser')
   })
 })
