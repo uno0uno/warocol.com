@@ -22,6 +22,11 @@
         tag="div"
           class="dashboard-header-actions relative flex w-fit min-w-0 max-w-full flex-shrink-0 items-center justify-end gap-1.5 overflow-x-auto md:gap-2 lg:overflow-visible"
       >
+        <PosCajaPrintThermalChip
+          v-if="forceBrowserPrint"
+          key="caja-print-thermal-chip"
+        />
+
         <NotificationsNotificationBell key="notifications-bell" class="hidden lg:flex" />
 
         <NuxtLink
@@ -111,6 +116,7 @@ import { getDashboardHome } from '~/utils/internalAccess'
 
 const { t } = useI18n()
 const accessStore = useAccessStore()
+const { forceBrowser: forceBrowserPrint } = useCajaPrintPreference()
 
 const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),

@@ -712,7 +712,8 @@
       "printRetry": "Reintentar",
       "printWithBrowser": "Imprimir con el navegador",
       "printBrowserStickyBody": "Imprimiendo por el navegador hasta que vuelvas a la térmica.",
-      "printUseThermal": "Usar impresora térmica"
+      "printUseThermal": "Usar impresora térmica",
+      "printUseThermalShort": "Usar térmica"
     }
   }
 }
