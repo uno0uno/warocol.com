@@ -1085,10 +1085,8 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
     ...waroOrderResultFields(completeData.waro_redemption_summary, cartTotal.value),
   }
   cartItemsSnapshot.value = snapshotCartItemsForReceipt()
-  receiptEmail.value = ''
-  emailSent.value = false
-  lastSentEmail.value = ''
-  emailFromProfile.value = false
+  // Same email prep as normal/mesa success — required for FE auto-send (#2025)
+  applyReceiptEmailAfterSale(selectedCustomer.value)
   splitMode.value = false
   posStore.clearAll()
   showSuccessModal.value = true
@@ -1336,24 +1334,22 @@ const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
 
-/** Same rule as InvoiceEmailModal (#603 / #1763): Genérico walk-in must not lock receipt email. */
-function isGenericReceiptCustomer(customer: { phone_number?: string | null; email?: string | null } | null | undefined): boolean {
-  if (!customer) return true
-  const phone = customer.phone_number ?? ''
-  const email = (customer.email ?? '').toLowerCase()
-  return phone === '0000000000' || email.endsWith('@customer.temp')
+/** Usable receipt email: real address only (ignore walk-in @customer.temp). */
+function usableReceiptEmail(customer: { email?: string | null } | null | undefined): string {
+  const email = (customer?.email ?? '').trim()
+  if (!email || email.toLowerCase().endsWith('@customer.temp')) return ''
+  return email
 }
 
+/**
+ * Prefill Venta Completada email from the selected customer (#1893 / #2025).
+ * Prefer a usable email even when phone is the Genérico placeholder `0000000000`
+ * (cashier selected Genérico but filled a real email, or profile was updated).
+ */
 function applyReceiptEmailAfterSale(customer: { phone_number?: string | null; email?: string | null } | null | undefined) {
   emailSent.value = false
   lastSentEmail.value = ''
-  if (isGenericReceiptCustomer(customer)) {
-    receiptEmail.value = ''
-    emailFromProfile.value = false
-    return
-  }
-  const email = customer?.email ?? ''
-  const usable = email && !email.toLowerCase().endsWith('@customer.temp') ? email : ''
+  const usable = usableReceiptEmail(customer)
   receiptEmail.value = usable
   emailFromProfile.value = !!usable
 }

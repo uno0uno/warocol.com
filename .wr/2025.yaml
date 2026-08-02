@@ -1,0 +1,35 @@
+issue: 2025
+title: "fix(pos): auto-email after FE on split + usable customer email"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2025-auto-email-split-usable
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Split success calls applyReceiptEmailAfterSale (not blank email)
+  - Usable non-temp email autofills even when phone is 0000000000
+  - FE accepted + Matias auto-send when receiptEmail set
+  - Without FE autofill only; send-another kept
+
+out_of_scope:
+  - Non-Matias auto-send policy
+  - API receipt-email endpoint
+
+hints:
+  entry: "openSplitSuccessModal + applyReceiptEmailAfterSale"
+  pattern: "mesa/normal paths already call applyReceiptEmailAfterSale before clearAll"
+  tests: "manual: split + customer email → emit FE → auto-send"
+
+risk:
+  sensitive: false
+  areas: [pos-checkout]
+
+skip:
+  audits: [color, typography, ux]
+
+next:
+  after_pr: "merge when approved"
