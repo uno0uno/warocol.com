@@ -33,6 +33,7 @@ import {
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
+import { useCajaPrintPreference } from '~/composables/useCajaPrintPreference'
 import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
@@ -67,6 +68,10 @@ const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 const { printElement: printTicketElement } = useCajaTicketPrint()
+const {
+  forceBrowser: forceBrowserPrint,
+  clearForceBrowser: clearForceBrowserPrint,
+} = useCajaPrintPreference()
 
 /** POS-scoped tenant display/settings — available to cashier via restaurant-context. */
 const posCheckoutContext = computed(() => settingsData.value?.data ?? null)
@@ -3581,6 +3586,24 @@ onUnmounted(() => {
     <!-- Main Grid (cart has items and sync completed) -->
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
+      <!-- Sticky browser print mode (#2060) -->
+      <div
+        v-if="forceBrowserPrint"
+        role="status"
+        class="lg:col-span-12 flex flex-wrap items-center justify-between gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
+      >
+        <p class="text-sm text-state-warning-text font-medium">
+          {{ t('pos.receipt.printBrowserStickyBody') }}
+        </p>
+        <button
+          type="button"
+          class="shrink-0 min-h-[36px] px-3 py-1.5 text-sm font-semibold rounded-lg border border-state-warning-border bg-surface text-text-primary hover:bg-surface-secondary transition-colors"
+          @click="clearForceBrowserPrint"
+        >
+          {{ t('pos.receipt.printUseThermal') }}
+        </button>
+      </div>
+
       <!-- Live promotion hint — checkout header (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
@@ -5593,6 +5616,24 @@ onUnmounted(() => {
                   <span v-else>{{ t('pos.checkout.receiptEmail.send') }}</span>
                 </button>
               </div>
+            </div>
+
+            <!-- Sticky browser print mode (#2060) -->
+            <div
+              v-if="forceBrowserPrint"
+              role="status"
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-state-warning-border bg-state-warning-bg px-3 py-2"
+            >
+              <p class="text-xs text-state-warning-text font-medium">
+                {{ t('pos.receipt.printBrowserStickyBody') }}
+              </p>
+              <button
+                type="button"
+                class="shrink-0 text-xs font-semibold underline text-text-primary"
+                @click="clearForceBrowserPrint"
+              >
+                {{ t('pos.receipt.printUseThermal') }}
+              </button>
             </div>
 
             <!-- Print -->

@@ -710,7 +710,9 @@
       "printUnconfirmedTitle": "Revisa la impresora",
       "printUnconfirmedBody": "Enviado a {name}, pero no se pudo confirmar que salió el ticket. ¿Está encendida?",
       "printRetry": "Reintentar",
-      "printWithBrowser": "Imprimir con el navegador"
+      "printWithBrowser": "Imprimir con el navegador",
+      "printBrowserStickyBody": "Imprimiendo por el navegador hasta que vuelvas a la térmica.",
+      "printUseThermal": "Usar impresora térmica"
     }
   }
 }

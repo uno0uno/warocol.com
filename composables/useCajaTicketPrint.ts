@@ -2,7 +2,12 @@
  * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
  * Falls back to window.print when bridge/caja is missing, print fails, or hangs (#2003).
  * Soft CUPS “status gone” stays non-fatal but surfaces as unconfirmed (#2058).
+ * Sticky browser mode skips bridge until cashier returns to thermal (#2060).
  */
+import {
+  enableCajaPrintForceBrowser,
+  isCajaPrintForceBrowser,
+} from '~/composables/useCajaPrintPreference'
 import {
   LocalPrintBridgeError,
   useLocalPrintBridge,
@@ -33,6 +38,8 @@ export type CajaTicketPrintDeps = {
   getLogoSrc?: (elementId: string) => string | null
   /** Override bridge print race timeout (tests). */
   bridgePrintTimeoutMs?: number
+  /** Sticky browser preference (#2060); default reads localStorage. */
+  isForceBrowser?: () => boolean
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -80,6 +87,12 @@ export async function printTicketViaCajaOrBrowser(
     if (typeof window !== 'undefined') window.print()
   })
   const getContent = deps.getElementHtml ?? defaultGetElementContent
+  const forceBrowser = deps.isForceBrowser ?? isCajaPrintForceBrowser
+
+  if (forceBrowser()) {
+    browserPrint()
+    return { mode: 'browser' }
+  }
 
   let caja: string | null | undefined
   try {
@@ -166,7 +179,10 @@ export function notifyUnconfirmedCajaPrint(
         },
         {
           label: opts.t('pos.receipt.printWithBrowser'),
-          onClick: opts.onBrowserPrint,
+          onClick: () => {
+            enableCajaPrintForceBrowser()
+            opts.onBrowserPrint()
+          },
         },
       ],
     },
