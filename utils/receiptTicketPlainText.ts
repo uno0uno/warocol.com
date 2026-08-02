@@ -110,19 +110,22 @@ export function collectThermalTicketText(root: Element | null | undefined): stri
 /**
  * Compact per-line tax declaration for thermal / window.print.
  * Amount line when taxed; bare label for exempt / label-only.
+ * Always `{label} · {amount}` — never “Incluye …” wording.
  *
- * Prefer passing `text` from `t('…', { label, amount })` — vue-i18n already
- * interpolates placeholders, so do NOT pass `t('taxIncluded')` as a template
- * (that yields "Incluye ·" with empty slots).
+ * Prefer passing `text` from `t('pos.cartItem.taxLine', { label, amount })`.
+ * Do not pass broken i18n templates (empty placeholders).
  */
 export function formatReceiptTaxCue(opts: {
   label?: string | null
   amountLabel?: string | null
+  /** @deprecated Ignored — included-in-price no longer changes copy. */
   includedInPrice?: boolean | null
   /** Pre-localized full cue (preferred). */
   text?: string | null
+  /** @deprecated Ignored — use `template` / taxLine only. */
   includedTemplate?: string
   exclusiveTemplate?: string
+  template?: string
 }): string | null {
   const preformatted = String(opts.text ?? '').trim()
   if (preformatted) return preformatted
@@ -132,15 +135,22 @@ export function formatReceiptTaxCue(opts: {
   const amount = compactThermalMoneyLabel(String(opts.amountLabel ?? '').trim())
   if (!amount) return label
 
-  // Templates must still contain `{label}` / `{amount}`. If vue-i18n already
-  // emptied them ("Incluye ·"), rebuild from safe defaults.
-  let template = opts.includedInPrice
-    ? (opts.includedTemplate || 'Incluye {label} · {amount}')
-    : (opts.exclusiveTemplate || '{label} · {amount}')
+  let template = opts.template || opts.exclusiveTemplate || '{label} · {amount}'
   if (!template.includes('{label}') || !template.includes('{amount}')) {
-    template = opts.includedInPrice ? 'Incluye {label} · {amount}' : '{label} · {amount}'
+    template = '{label} · {amount}'
   }
   return template.replaceAll('{label}', label).replaceAll('{amount}', amount)
+}
+
+/** Indent product tax cue like adicionales (`  + …`). */
+export function formatReceiptProductTaxCueLine(
+  cue: string,
+  indent: string = RECEIPT_MODIFIER_INDENT,
+): string {
+  let text = String(cue ?? '').trim()
+  if (!text) return ''
+  if (text.startsWith('+')) text = text.slice(1).trim()
+  return `${indent}+ ${text}`
 }
 
 /** Product name on its own line; qty x unit … total padded (compact money). */
@@ -159,7 +169,7 @@ export function formatReceiptProductBlock(opts: {
   const left = `${opts.quantity} x ${unit}`
   const body = `${name}\n${padReceiptLine(left, total, cols)}`
   const cue = String(opts.taxCue ?? '').trim()
-  return cue ? `${body}\n${cue}` : body
+  return cue ? `${body}\n${formatReceiptProductTaxCueLine(cue)}` : body
 }
 
 /** Modifier indented under parent; compact money; no truncation. */

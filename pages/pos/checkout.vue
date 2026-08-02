@@ -1783,12 +1783,9 @@ const getLineTaxInfo = (item: any): { amount: number; label: string; includedInP
 }
 
 const formatLineTaxDisplay = (info: { amount: number; label: string; includedInPrice: boolean }): string => {
-  if (info.amount <= 0) return info.label
+  if (info.amount <= 0) return `+ ${info.label}`
   const amount = formatCurrency(info.amount)
-  if (info.includedInPrice) {
-    return t('pos.cartItem.taxIncluded', { label: info.label, amount })
-  }
-  return t('pos.cartItem.taxLine', { label: info.label, amount })
+  return `+ ${t('pos.cartItem.taxLine', { label: info.label, amount })}`
 }
 
 const lineTaxCueForPrint = (item: any): string | null => {
@@ -1803,18 +1800,11 @@ const lineTaxCueForPrint = (item: any): string | null => {
   const amount = Number.isFinite(mergedAmount) && mergedAmount > 0
     ? mergedAmount
     : (info?.amount ?? 0)
-  const includedInPrice = info?.includedInPrice
-    ?? item.included_in_price
-    ?? item.includedInPrice
-    ?? false
   const labelFinal = label || info!.label
   if (amount > 0) {
     const amountLabel = compactThermalMoneyLabel(formatCurrencyThermal(amount))
-    // Pass interpolated i18n text — never t('taxIncluded') as a .replace template.
     return formatReceiptTaxCue({
-      text: includedInPrice
-        ? t('pos.cartItem.taxIncluded', { label: labelFinal, amount: amountLabel })
-        : t('pos.cartItem.taxLine', { label: labelFinal, amount: amountLabel }),
+      text: t('pos.cartItem.taxLine', { label: labelFinal, amount: amountLabel }),
     })
   }
   return formatReceiptTaxCue({ label: labelFinal })

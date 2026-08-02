@@ -1,0 +1,44 @@
+# Compact plan for wr-fast #2042
+issue: 2042
+title: "fix(pos): indent product-line tax cues and drop Incluye on receipts/checkout"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2042-product-tax-cue
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+  - .wr/2042.yaml
+
+ac:
+  - Prefatura/factura product tax cue indented like adicionales (e.g. "  + IVA 19% · $X")
+  - Checkout order details same indent + no "Incluye"
+  - Always taxLine "{label} · {amount}" whether included-in-price or exclusive
+  - Exempt/label-only still works with indent under product
+  - Detalle de impuestos bullet style unchanged
+  - Unit tests cover no-Incluye + indent
+
+out_of_scope:
+  - Fiscal calc / API
+  - Detalle de impuestos redesign
+  - POS cart outside checkout
+  - Logo / brand assets
+
+hints:
+  entry: "formatReceiptProductBlock taxCue; formatLineTaxDisplay; productTaxCue"
+  pattern: "utils/receiptTicketPlainText.ts:formatReceiptModifierBlock indent+bullet"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "wr-review then human merge"
