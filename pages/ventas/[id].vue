@@ -775,6 +775,12 @@ const saleReceiptIssuerLabel = computed(() => {
 
 const saleReceiptInvoice = computed(() => {
   if (!invoiceData.value) return null
+  const presentation = (invoiceData.value as any)?.presentation
+  const resolutionNumber = String(
+    presentation?.resolution?.number
+    ?? presentation?.resolution?.resolution_number
+    ?? '',
+  ).trim()
   return {
     prefix: invoiceData.value.prefix,
     invoice_number: invoiceData.value.invoice_number,
@@ -786,6 +792,9 @@ const saleReceiptInvoice = computed(() => {
     taxLines: saleReceiptInvoiceTaxLines.value,
     issuerLabel: saleReceiptIssuerLabel.value,
     acquirerLabel: invoiceAcquirerLabel.value,
+    resolutionText: resolutionNumber
+      ? t('pos.receipt.dianResolution', { number: resolutionNumber })
+      : null,
   }
 })
 
