@@ -1759,19 +1759,19 @@ const matiasRegimeLabel = computed(() => {
       </div>
 
       <!-- CO fiscal-integrated: profile + primary (IVA|INC) + liquor + custom -->
-      <div v-else class="space-y-3">
+      <div v-else class="space-y-4">
 
         <div class="space-y-2">
           <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.coProfileTitle') }}</p>
           <p class="text-xs text-text-secondary">{{ t('facturacion.tax.coProfileBody') }}</p>
-          <div class="flex flex-wrap gap-2" role="group" :aria-label="t('facturacion.tax.coProfileTitle')">
+          <div class="inline-flex rounded-xl border border-border p-1 bg-surface-secondary/40 gap-1" role="group" :aria-label="t('facturacion.tax.coProfileTitle')">
             <button
               type="button"
               :aria-pressed="coTaxProfileId === CO_TAX_PROFILE_RESTAURANTE"
-              class="min-h-[40px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              class="min-h-[40px] px-3.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               :class="coTaxProfileId === CO_TAX_PROFILE_RESTAURANTE
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-background text-text-secondary hover:border-primary/40'"
+                ? 'bg-surface text-primary shadow-sm ring-1 ring-primary/25'
+                : 'text-text-secondary hover:text-text-primary'"
               @click="applyCoRestaurantePreset"
             >
               {{ t('facturacion.tax.coProfileRestaurante') }}
@@ -1779,72 +1779,72 @@ const matiasRegimeLabel = computed(() => {
             <button
               type="button"
               :aria-pressed="coTaxProfileId === 'custom'"
-              class="min-h-[40px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              class="min-h-[40px] px-3.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               :class="coTaxProfileId === 'custom'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-background text-text-secondary hover:border-primary/40'"
+                ? 'bg-surface text-primary shadow-sm ring-1 ring-primary/25'
+                : 'text-text-secondary hover:text-text-primary'"
               @click="coTaxProfileId = 'custom'"
             >
               {{ t('facturacion.tax.coProfileCustom') }}
             </button>
           </div>
         </div>
-        <div class="border-t border-border/40" />
 
         <!-- INC — only when sales profile is INC -->
         <template v-if="taxForm.inc_applicable && coPrimaryLineKey === 'inc'">
-          <div class="space-y-2">
-            <div
-              class="flex flex-wrap items-center gap-x-3 gap-y-2 min-h-[44px]"
-              role="group"
-              :aria-label="t('facturacion.tax.incTitle')"
-            >
-              <p class="text-sm font-semibold text-text-primary shrink-0">{{ t('facturacion.tax.incShort') }}</p>
-              <div class="flex items-center gap-1.5">
-                <label for="co-inc-rate" class="sr-only">{{ t('facturacion.tax.ratePercent') }}</label>
-                <input
-                  id="co-inc-rate"
-                  v-model.number="taxForm.inc_rate_pct"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
-                >
-                <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
+          <div class="rounded-xl border border-border bg-surface p-4 space-y-4" role="group" :aria-label="t('facturacion.tax.incTitle')">
+            <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.incShort') }}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-3 sm:gap-4 items-end">
+              <div class="space-y-1.5">
+                <label for="co-inc-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    id="co-inc-rate"
+                    v-model.number="taxForm.inc_rate_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full min-h-[40px] rounded-lg border border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                  <span class="text-xs text-text-tertiary shrink-0" aria-hidden="true">%</span>
+                </div>
               </div>
-              <div class="inline-flex rounded-lg border-2 border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howInc')">
-                <button
-                  type="button"
-                  :aria-pressed="taxForm.inc_included_in_price"
-                  @click="taxForm.inc_included_in_price = true"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    taxForm.inc_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.includedShort') }}
-                </button>
-                <button
-                  type="button"
-                  :aria-pressed="!taxForm.inc_included_in_price"
-                  @click="taxForm.inc_included_in_price = false"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    !taxForm.inc_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.addedShort') }}
-                </button>
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howInc') }}</p>
+                <div class="inline-flex w-full sm:w-auto rounded-lg border border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howInc')">
+                  <button
+                    type="button"
+                    :aria-pressed="taxForm.inc_included_in_price"
+                    @click="taxForm.inc_included_in_price = true"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      taxForm.inc_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.includedShort') }}
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="!taxForm.inc_included_in_price"
+                    @click="taxForm.inc_included_in_price = false"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold border-s border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      !taxForm.inc_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.addedShort') }}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-3 sm:p-4">
-              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.primaryCategoriesTitle', { tax: coPrimaryLabel }) }}</p>
+            <div class="space-y-2 pt-3 border-t border-border/50">
+              <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.primaryCategoriesTitle', { tax: coPrimaryLabel }) }}</p>
               <div class="relative">
                 <label class="sr-only" for="co-tax-line-cat-search-inc">
                   {{ t('facturacion.tax.searchCategory') }} — {{ coPrimaryLabel }}
@@ -1913,64 +1913,64 @@ const matiasRegimeLabel = computed(() => {
               <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.coPrimaryAllDefault') }}</p>
             </div>
           </div>
-          <div class="border-t border-border/40" />
         </template>
 
         <!-- IVA — only when sales profile is IVA -->
         <template v-if="taxForm.iva_applicable && coPrimaryLineKey === 'iva'">
-          <div class="space-y-2">
-            <div
-              class="flex flex-wrap items-center gap-x-3 gap-y-2 min-h-[44px]"
-              role="group"
-              :aria-label="t('facturacion.tax.ivaTitle')"
-            >
-              <p class="text-sm font-semibold text-text-primary shrink-0">{{ t('facturacion.tax.ivaShort') }}</p>
-              <div class="flex items-center gap-1.5">
-                <label for="co-iva-rate" class="sr-only">{{ t('facturacion.tax.ratePercent') }}</label>
-                <input
-                  id="co-iva-rate"
-                  v-model.number="taxForm.iva_rate_pct"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
-                  @input="coTaxProfileId = 'custom'"
-                >
-                <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
+          <div class="rounded-xl border border-border bg-surface p-4 space-y-4" role="group" :aria-label="t('facturacion.tax.ivaTitle')">
+            <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.ivaShort') }}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-3 sm:gap-4 items-end">
+              <div class="space-y-1.5">
+                <label for="co-iva-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    id="co-iva-rate"
+                    v-model.number="taxForm.iva_rate_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full min-h-[40px] rounded-lg border border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    @input="coTaxProfileId = 'custom'"
+                  >
+                  <span class="text-xs text-text-tertiary shrink-0" aria-hidden="true">%</span>
+                </div>
               </div>
-              <div class="inline-flex rounded-lg border-2 border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howIva')">
-                <button
-                  type="button"
-                  :aria-pressed="taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = true; coTaxProfileId = 'custom'"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    taxForm.iva_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.includedShort') }}
-                </button>
-                <button
-                  type="button"
-                  :aria-pressed="!taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = false; coTaxProfileId = 'custom'"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    !taxForm.iva_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.addedShort') }}
-                </button>
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howIva') }}</p>
+                <div class="inline-flex w-full sm:w-auto rounded-lg border border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howIva')">
+                  <button
+                    type="button"
+                    :aria-pressed="taxForm.iva_included_in_price"
+                    @click="taxForm.iva_included_in_price = true; coTaxProfileId = 'custom'"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      taxForm.iva_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.includedShort') }}
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="!taxForm.iva_included_in_price"
+                    @click="taxForm.iva_included_in_price = false; coTaxProfileId = 'custom'"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold border-s border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      !taxForm.iva_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.addedShort') }}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-3 sm:p-4">
-              <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.primaryCategoriesTitle', { tax: coPrimaryLabel }) }}</p>
+            <div class="space-y-2 pt-3 border-t border-border/50">
+              <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.primaryCategoriesTitle', { tax: coPrimaryLabel }) }}</p>
               <div class="relative">
                 <label class="sr-only" for="co-tax-line-cat-search-iva">
                   {{ t('facturacion.tax.searchCategory') }} — {{ coPrimaryLabel }}
@@ -2039,75 +2039,82 @@ const matiasRegimeLabel = computed(() => {
               <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.coPrimaryAllDefault') }}</p>
             </div>
           </div>
-          <div class="border-t border-border/40" />
         </template>
 
         <!-- IVA Licores: rate + categories (rate 0 still allows mapping) -->
-        <div class="space-y-2">
-          <div
-            class="flex flex-wrap items-center gap-x-3 gap-y-2 min-h-[44px]"
-            role="group"
-            :aria-label="t('facturacion.tax.liquorTitle')"
-          >
-            <p class="text-sm font-semibold text-text-primary shrink-0">{{ t('facturacion.tax.liquorShort') }}</p>
-            <template v-if="taxForm.liquor_tax_applicable">
-              <div class="flex items-center gap-1.5">
-                <label for="co-liquor-rate" class="sr-only">{{ t('facturacion.tax.ratePercent') }}</label>
-                <input
-                  id="co-liquor-rate"
-                  v-model.number="taxForm.liquor_tax_rate_pct"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
-                  @input="coTaxProfileId = 'custom'"
-                >
-                <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
-              </div>
-              <div class="inline-flex rounded-lg border-2 border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howLiquor')">
-                <button
-                  type="button"
-                  :aria-pressed="taxForm.liquor_tax_included_in_price"
-                  @click="taxForm.liquor_tax_included_in_price = true; coTaxProfileId = 'custom'"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    taxForm.liquor_tax_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.includedShort') }}
-                </button>
-                <button
-                  type="button"
-                  :aria-pressed="!taxForm.liquor_tax_included_in_price"
-                  @click="taxForm.liquor_tax_included_in_price = false; coTaxProfileId = 'custom'"
-                  :class="[
-                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-                    !taxForm.liquor_tax_included_in_price
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
-                  ]"
-                >
-                  {{ t('facturacion.tax.addedShort') }}
-                </button>
-              </div>
-            </template>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-auto">
+        <div
+          class="rounded-xl border bg-surface p-4 space-y-4"
+          :class="coLiquorNeedsCategories ? 'border-primary/50' : 'border-border'"
+          role="group"
+          :aria-label="t('facturacion.tax.liquorTitle')"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.liquorShort') }}</p>
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <span class="sr-only">{{ t('facturacion.tax.liquorTitle') }}</span>
               <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" @change="coTaxProfileId = 'custom'" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 
+          <template v-if="taxForm.liquor_tax_applicable">
+            <div class="grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-3 sm:gap-4 items-end">
+              <div class="space-y-1.5">
+                <label for="co-liquor-rate" class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.ratePercent') }}</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    id="co-liquor-rate"
+                    v-model.number="taxForm.liquor_tax_rate_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full min-h-[40px] rounded-lg border border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    @input="coTaxProfileId = 'custom'"
+                  >
+                  <span class="text-xs text-text-tertiary shrink-0" aria-hidden="true">%</span>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howLiquor') }}</p>
+                <div class="inline-flex w-full sm:w-auto rounded-lg border border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howLiquor')">
+                  <button
+                    type="button"
+                    :aria-pressed="taxForm.liquor_tax_included_in_price"
+                    @click="taxForm.liquor_tax_included_in_price = true; coTaxProfileId = 'custom'"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      taxForm.liquor_tax_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.includedShort') }}
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="!taxForm.liquor_tax_included_in_price"
+                    @click="taxForm.liquor_tax_included_in_price = false; coTaxProfileId = 'custom'"
+                    :class="[
+                      'flex-1 sm:flex-none min-h-[40px] px-4 text-sm font-semibold border-s border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                      !taxForm.liquor_tax_included_in_price
+                        ? 'bg-primary text-white'
+                        : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                    ]"
+                  >
+                    {{ t('facturacion.tax.addedShort') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <div
             v-if="taxForm.liquor_tax_applicable"
-            class="space-y-2 rounded-xl border p-3 sm:p-4"
-            :class="coLiquorNeedsCategories
-              ? 'border-primary/40 bg-primary/5'
-              : 'border-border bg-surface-secondary/30'"
+            class="space-y-2 pt-3 border-t border-border/50"
+            :class="coLiquorNeedsCategories ? 'rounded-lg bg-primary/5 px-2 py-2' : ''"
           >
-            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.liquorCategoriesTitle') }}</p>
+            <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.liquorCategoriesTitle') }}</p>
             <p
               v-if="coLiquorNeedsCategories"
               class="text-xs text-primary"
@@ -2178,10 +2185,8 @@ const matiasRegimeLabel = computed(() => {
           </div>
         </div>
 
-        <div class="border-t border-border/40" />
-
         <!-- CO free custom tax lines (#2028) -->
-        <div class="space-y-3">
+        <div class="rounded-xl border border-border bg-surface p-4 space-y-4">
           <div class="flex items-start justify-between gap-3">
             <div class="space-y-1 min-w-0">
               <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.coCustomTitle') }}</p>
@@ -2189,7 +2194,7 @@ const matiasRegimeLabel = computed(() => {
             </div>
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+              class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg border border-border bg-background text-text-primary text-sm font-semibold hover:border-primary/40 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-colors"
               @click="addCoCustomLine"
             >
               <PlusIcon class="w-4 h-4" aria-hidden="true" />
@@ -2200,25 +2205,10 @@ const matiasRegimeLabel = computed(() => {
           <div
             v-for="line in coCustomLines"
             :key="line.key"
-            class="rounded-xl border border-border bg-surface p-3 space-y-3"
+            class="rounded-xl border border-border bg-surface-secondary/25 p-4 space-y-4"
           >
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
-                {{ t('facturacion.tax.lineLabel') }}
-              </p>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg text-sm font-medium text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30"
-                :aria-label="t('facturacion.tax.removeLine')"
-                @click="removeCoCustomLine(line.key)"
-              >
-                <TrashIcon class="w-4 h-4" aria-hidden="true" />
-                <span class="hidden sm:inline">{{ t('facturacion.tax.removeLine') }}</span>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-3">
-              <div class="flex flex-col gap-1.5">
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_7rem_auto] gap-3 items-end">
+              <div class="space-y-1.5 min-w-0">
                 <label :for="`co-custom-label-${line.key}`" class="text-xs font-medium text-text-secondary">
                   {{ t('facturacion.tax.lineLabel') }}
                 </label>
@@ -2230,7 +2220,7 @@ const matiasRegimeLabel = computed(() => {
                   @input="coTaxProfileId = 'custom'"
                 >
               </div>
-              <div class="flex flex-col gap-1.5">
+              <div class="space-y-1.5">
                 <label :for="`co-custom-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
                   {{ t('facturacion.tax.ratePercent') }}
                 </label>
@@ -2245,52 +2235,79 @@ const matiasRegimeLabel = computed(() => {
                   @input="coTaxProfileId = 'custom'"
                 >
               </div>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30"
+                :aria-label="t('facturacion.tax.removeLine')"
+                @click="removeCoCustomLine(line.key)"
+              >
+                <TrashIcon class="w-4 h-4" aria-hidden="true" />
+              </button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="space-y-1.5">
+              <div class="space-y-1.5 min-w-0">
                 <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howCommercial') }}</p>
-                <div class="inline-flex w-full rounded-lg border-2 border-border overflow-hidden" role="group">
+                <div
+                  class="grid grid-cols-2 w-full rounded-lg border border-border overflow-hidden"
+                  role="group"
+                  :aria-label="t('facturacion.tax.howCommercial')"
+                >
                   <button
                     type="button"
-                    class="flex-1 min-h-[40px] px-2 text-xs sm:text-sm font-semibold transition-colors"
-                    :class="line.included_in_price ? 'bg-primary/10 text-primary' : 'bg-background text-text-secondary'"
+                    class="min-h-[40px] px-2 text-sm font-semibold transition-colors"
+                    :class="line.included_in_price ? 'bg-primary text-white' : 'bg-background text-text-secondary hover:bg-surface-secondary/60'"
+                    :aria-pressed="line.included_in_price"
                     @click="line.included_in_price = true; coTaxProfileId = 'custom'"
                   >
                     {{ t('facturacion.tax.includedShort') }}
                   </button>
                   <button
                     type="button"
-                    class="flex-1 min-h-[40px] px-2 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors"
-                    :class="!line.included_in_price ? 'bg-primary/10 text-primary' : 'bg-background text-text-secondary'"
+                    class="min-h-[40px] px-2 text-sm font-semibold border-s border-border transition-colors"
+                    :class="!line.included_in_price ? 'bg-primary text-white' : 'bg-background text-text-secondary hover:bg-surface-secondary/60'"
+                    :aria-pressed="!line.included_in_price"
                     @click="line.included_in_price = false; coTaxProfileId = 'custom'"
                   >
                     {{ t('facturacion.tax.addedShort') }}
                   </button>
                 </div>
               </div>
-              <div class="space-y-1.5">
-                <label :for="`co-custom-mode-${line.key}`" class="text-xs font-medium text-text-secondary">
-                  {{ t('facturacion.tax.modeLabel') }}
-                </label>
-                <select
-                  :id="`co-custom-mode-${line.key}`"
-                  v-model="line.mode"
-                  class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary"
-                  @change="coTaxProfileId = 'custom'"
+              <div class="space-y-1.5 min-w-0">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.modeLabel') }}</p>
+                <div
+                  class="grid grid-cols-2 w-full rounded-lg border border-border overflow-hidden"
+                  role="group"
+                  :aria-label="t('facturacion.tax.modeLabel')"
                 >
-                  <option value="alternate">{{ t('facturacion.tax.modeAlternate') }}</option>
-                  <option value="stack">{{ t('facturacion.tax.modeStack') }}</option>
-                </select>
-                <p class="text-xs text-text-tertiary">
-                  {{ line.mode === 'alternate'
-                    ? t('facturacion.tax.modeAlternateHelp')
-                    : t('facturacion.tax.modeStackHelp') }}
-                </p>
+                  <button
+                    type="button"
+                    class="min-h-[40px] px-2 text-sm font-semibold transition-colors"
+                    :class="line.mode === 'alternate' ? 'bg-primary text-white' : 'bg-background text-text-secondary hover:bg-surface-secondary/60'"
+                    :aria-pressed="line.mode === 'alternate'"
+                    @click="line.mode = 'alternate'; coTaxProfileId = 'custom'"
+                  >
+                    {{ t('facturacion.tax.modeAlternate') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="min-h-[40px] px-2 text-sm font-semibold border-s border-border transition-colors"
+                    :class="line.mode === 'stack' ? 'bg-primary text-white' : 'bg-background text-text-secondary hover:bg-surface-secondary/60'"
+                    :aria-pressed="line.mode === 'stack'"
+                    @click="line.mode = 'stack'; coTaxProfileId = 'custom'"
+                  >
+                    {{ t('facturacion.tax.modeStack') }}
+                  </button>
+                </div>
               </div>
             </div>
+            <p class="text-xs text-text-tertiary">
+              {{ line.mode === 'alternate'
+                ? t('facturacion.tax.modeAlternateHelp')
+                : t('facturacion.tax.modeStackHelp') }}
+            </p>
 
-            <div class="space-y-2">
+            <div class="space-y-2 pt-3 border-t border-border/50">
               <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.lineCategories') }}</p>
               <div class="relative">
                 <input
@@ -2346,10 +2363,8 @@ const matiasRegimeLabel = computed(() => {
           </div>
         </div>
 
-        <div class="border-t border-border/40" />
-
         <!-- CO exempt — title + search + chips -->
-        <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-3 sm:p-4">
+        <div class="rounded-xl border border-border bg-surface p-4 space-y-3">
           <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.exemptTitle') }}</p>
           <div class="relative">
             <label class="sr-only" for="co-tax-exempt-cat-search">

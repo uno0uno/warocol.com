@@ -180,7 +180,7 @@
       "coCustomTitle": "Impuestos libres",
       "coCustomBody": "Agrega un tributo extra con categorías y modo (sustituye o apila).",
       "modeLabel": "Modo",
-      "modeAlternate": "Sustituye primario",
+      "modeAlternate": "Sustituye",
       "modeStack": "Apila",
       "modeAlternateHelp": "Reemplaza el IVA/INC principal en las categorías asignadas (p. ej. 5% en lugar de 19%).",
       "modeStackHelp": "Se suma al impuesto principal. No uses apilar dentro de la misma familia IVA.",
