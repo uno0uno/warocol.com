@@ -28,11 +28,11 @@
         >
           <PosCajaPrintThermalChip v-if="forceBrowserPrint" />
 
-          <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_svg]:!w-5 [&_svg]:!h-5" />
+          <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_button]:rounded-lg [&_button]:border [&_button]:border-shell-action-border [&_button]:bg-shell-action-bg [&_svg]:!w-5 [&_svg]:!h-5" />
 
           <NuxtLink
             to="/abastecimiento/compras-directas/crear"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-cta-bg text-shell-cta-text px-2 xl:px-2.5 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
+            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 border border-shell-cta-bg bg-shell-cta-bg text-shell-cta-text px-2 xl:px-2.5 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
             :title="t('shell.uploadInvoiceAi')"
             :aria-label="t('shell.uploadInvoiceAi')"
           >
@@ -65,7 +65,7 @@
             :class="[
               'h-9 flex-shrink-0 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 transition-colors flex items-center justify-center gap-1.5',
               headerAction.iconOnly
-                ? 'bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus:ring-shell-action-focus-ring w-9 px-0'
+                ? 'bg-shell-action-bg border border-shell-action-border text-shell-icon-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring w-9 px-0'
                 : 'bg-shell-action-bg border border-shell-action-border text-shell-action-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring max-w-40 px-2 xl:px-2.5',
             ]"
             :aria-label="headerAction.ariaLabel || headerAction.label"
@@ -94,7 +94,7 @@
             :disabled="isRefreshing || isProgressiveLoading"
             :aria-label="t('shell.refreshData')"
             :aria-busy="isRefreshing || isProgressiveLoading"
-            class="hidden md:flex w-9 h-9 items-center justify-center bg-shell-icon-bg border-0 rounded-lg text-shell-icon-text hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            class="hidden md:flex w-9 h-9 items-center justify-center bg-shell-action-bg border border-shell-action-border rounded-lg text-shell-icon-text hover:bg-shell-action-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
             :title="t('shell.refresh')"
             @click="$emit('refresh')"
           >

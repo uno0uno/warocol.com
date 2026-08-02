@@ -61,7 +61,7 @@
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
       :title="isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar')"
-      class="flex items-center gap-1.5 h-9 px-2 bg-shell-account-bg border border-shell-account-border rounded-lg text-xs font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-1.5 h-9 px-2 bg-shell-action-bg border border-shell-action-border rounded-lg text-xs font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span class="w-1.5 h-1.5 bg-shell-account-indicator-bg rounded-full flex-shrink-0" />
       <span class="truncate max-w-[7.5rem] xl:max-w-[9rem]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
@@ -73,7 +73,7 @@
       to="/perfil"
       :aria-label="t('perfil.navigation.open')"
       :title="userName"
-      class="flex items-center justify-center h-9 w-9 bg-shell-account-bg border border-shell-account-border rounded-lg hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+      class="flex items-center justify-center h-9 w-9 bg-shell-action-bg border border-shell-action-border rounded-lg hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
     >
       <div class="w-7 h-7 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
         <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
