@@ -115,7 +115,7 @@
       "goToDayClose": "Go to day close",
       "shiftAlreadyOpen": "This shift is already open",
       "openingMustBePositive": "Float must be greater than zero",
-      "openingNotNegative": "Float cannot be negative",
+      "openingNotNegative": "Float cannot be negative. You can open the shift with a zero float.",
       "openFailed": "Could not open the shift",
       "cashCount": "Cash count",
       "cashDetail": "Cash detail",

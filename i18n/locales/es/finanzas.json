@@ -115,7 +115,7 @@
       "goToDayClose": "Ir al cierre del día",
       "shiftAlreadyOpen": "Este turno ya está abierto",
       "openingMustBePositive": "El fondo debe ser mayor a cero",
-      "openingNotNegative": "El fondo no puede ser negativo",
+      "openingNotNegative": "El fondo no puede ser negativo. Puedes abrir el turno con fondo en 0.",
       "openFailed": "No se pudo abrir el turno",
       "cashCount": "Conteo de caja",
       "cashDetail": "Detalle de caja",

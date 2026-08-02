@@ -424,9 +424,7 @@ const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
 
 const isPastAnchorDate = computed(() => periodStart.value < today)
 
-const canSubmitOpening = computed(() =>
-  isPastAnchorDate.value ? totalCounted.value >= 0 : totalCounted.value > 0,
-)
+const canSubmitOpening = computed(() => totalCounted.value >= 0)
 
 const { data: rawTemplateWindow } = useQuery({
   key: () => ['cierre', 'shift-window', currentTenant.value?.id, effectiveTemplateId.value, periodStart.value],
@@ -570,11 +568,7 @@ const goToCount = () => {
 
 const submitOpening = async () => {
   submitError.value = null
-  if (!isPastAnchorDate.value && totalCounted.value <= 0) {
-    submitError.value = t('finanzas.arqueo.openingMustBePositive')
-    return
-  }
-  if (isPastAnchorDate.value && totalCounted.value < 0) {
+  if (totalCounted.value < 0) {
     submitError.value = t('finanzas.arqueo.openingNotNegative')
     return
   }
