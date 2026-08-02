@@ -382,7 +382,7 @@ describe('useTenantTaxProfile', () => {
       menu_category_line_map: {
         [catA]: 'liquor',
         [catB]: 'iva',
-        [catC]: 'inc', // dropped — INC not active
+        [catC]: 'inc', // remapped to active primary (#2031)
         '': 'iva',
       },
       exempt_menu_category_ids: [catB],
@@ -390,8 +390,61 @@ describe('useTenantTaxProfile', () => {
     expect(body.menu_category_line_map).toEqual({
       [catA]: 'liquor',
       [catB]: 'iva',
+      [catC]: 'iva',
     })
     expect(body.exempt_menu_category_ids).toEqual([catB])
+  })
+
+  it('syncs IVA→INC tax_lines and remaps menu primary (#2031)', () => {
+    const catA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const catB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const lines = buildCoTaxLinesDraft({
+      inc_applicable: true,
+      iva_applicable: false,
+      liquor_tax_applicable: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      iva_included_in_price: true,
+      inc_included_in_price: true,
+      liquor_tax_included_in_price: true,
+      custom_lines: [{
+        key: 'bebidas',
+        label: 'Bebidas 5%',
+        rate: 0.05,
+        included_in_price: true,
+        gl_role: 'iva',
+        mode: 'alternate',
+        exclusive_group: 'vat',
+      }],
+    })
+    expect(lines.map(l => l.key)).toEqual(['inc', 'liquor', 'bebidas'])
+    const body = buildCoTaxSavePayload({
+      inc_applicable: true,
+      inc_included_in_price: true,
+      iva_applicable: false,
+      iva_included_in_price: true,
+      liquor_tax_applicable: true,
+      liquor_tax_included_in_price: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      tax_lines: lines,
+      menu_category_line_map: {
+        [catA]: 'iva',
+        [catB]: 'liquor',
+      },
+    })
+    expect((body.tax_lines as { key: string }[]).map(l => l.key)).toEqual(['inc', 'liquor', 'bebidas'])
+    expect(body.category_map).toEqual({
+      standard: 'inc',
+      liquor: 'liquor',
+      exempt: null,
+    })
+    expect(body.menu_category_line_map).toEqual({
+      [catA]: 'inc',
+      [catB]: 'liquor',
+    })
   })
 
   it('uses menu-category tax UI for commercial tax_lines and CO columns (#1885 / #1994)', () => {

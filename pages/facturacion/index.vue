@@ -1104,6 +1104,39 @@ const saveFiscalData = async () => {
         matias_company_id: fiscalForm.matias_company_id.trim(),
       },
     })
+    // #2031 — same as commercial: one save keeps Impuestos tax_lines aligned.
+    // Do not require liquor category mapping here (Impuestos owns that UX).
+    if (!isWaroCommercial.value) {
+      const tax_lines = buildCoTaxLinesDraft({
+        inc_applicable: taxForm.inc_applicable,
+        iva_applicable: taxForm.iva_applicable,
+        liquor_tax_applicable: taxForm.liquor_tax_applicable,
+        iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
+        inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
+        liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+        iva_included_in_price: taxForm.iva_included_in_price,
+        inc_included_in_price: taxForm.inc_included_in_price,
+        liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
+        custom_lines: coCustomLinesToDraft(),
+      })
+      await $fetch('/api/api/tenant/tax-config', {
+        method: 'PUT',
+        body: buildCoTaxSavePayload({
+          inc_applicable: taxForm.inc_applicable,
+          inc_included_in_price: taxForm.inc_included_in_price,
+          iva_applicable: taxForm.iva_applicable,
+          iva_included_in_price: taxForm.iva_included_in_price,
+          liquor_tax_applicable: taxForm.liquor_tax_applicable,
+          liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
+          iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
+          inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
+          liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+          menu_category_line_map: { ...menuCategoryLineMap.value },
+          exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
+          tax_lines,
+        }),
+      })
+    }
     await refreshFiscal()
     await refreshTaxConfig()
     invalidateReadiness()

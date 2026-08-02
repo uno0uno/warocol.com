@@ -1,0 +1,31 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2031
+title: "Facturación: sync sales tax profile and Impuestos tax_lines in one save"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2031-tax-profile-tax-lines-sync
+risk: low
+
+paths:
+  - pages/facturacion/index.vue
+  - composables/useTenantTaxProfile.ts
+  - composables/useTenantTaxProfile.test.ts
+
+ac:
+  - saveFiscalData (CO) also PUTs tax-config with rebuilt tax_lines in one flow
+  - buildCoTaxSavePayload remaps stale iva↔inc menu keys to active primary
+  - Liquor/custom lines preserved; fiscal save does not require liquor category mapping
+
+out_of_scope:
+  - Commercial tax UI
+  - Impuestos copy / layout changes
+
+hints:
+  entry: "saveFiscalData after fiscal PUT → buildCoTaxLinesDraft + buildCoTaxSavePayload"
+  pattern: "mirror Impuestos CO save without liquor-category toast gate"
+  tests: "bunx vitest run composables/useTenantTaxProfile.test.ts"
+
+skip:
+  audits: [ux, color, typography]
