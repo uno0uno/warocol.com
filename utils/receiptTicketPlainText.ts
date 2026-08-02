@@ -23,6 +23,15 @@ export function receiptItemSeparator(cols: number = RECEIPT_THERMAL_COLS): strin
 }
 
 /**
+ * Subtle separator between major receipt sections (header / meta / products / totals).
+ * Spaced dots — quieter than full dashes, visible in thermal text (#2056).
+ */
+export function receiptSectionSeparator(cols: number = RECEIPT_THERMAL_COLS): string {
+  const n = Math.max(4, Math.floor(Math.min(cols, 32) / 2))
+  return Array.from({ length: n }, () => '·').join(' ')
+}
+
+/**
  * Compact `$ COP 45.000,00` → `$45.000,00` so qty×unit + total fit 32 cols.
  */
 export function compactThermalMoneyLabel(label: string): string {

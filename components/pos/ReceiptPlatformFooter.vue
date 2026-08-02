@@ -8,7 +8,7 @@ import {
   EMPTY_PLATFORM_LEGAL,
   type PlatformLegalPrint,
 } from '~/constants/waroLegalEntity'
-import { joinReceiptParts } from '~/utils/receiptTicketPlainText'
+import { joinReceiptParts, receiptSectionSeparator } from '~/utils/receiptTicketPlainText'
 
 const props = withDefaults(defineProps<{
   documentKind?: 'prefactura' | 'sale' | 'fe'
@@ -20,6 +20,8 @@ const props = withDefaults(defineProps<{
   platformLegal: null,
   matiasDian: false,
 })
+
+const sectionSeparator = receiptSectionSeparator()
 
 const legal = computed(() => props.platformLegal ?? EMPTY_PLATFORM_LEGAL)
 const software = computed(() => legal.value.software)
@@ -86,14 +88,14 @@ const facturadorLine = computed(() => joinReceiptParts([
 
 <template>
   <div v-if="hasSoftware || showFacturador" class="receipt-platform-footer">
-    <div class="receipt-divider" aria-hidden="true" />
+    <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
 
     <div v-if="hasSoftware && softwareLine" class="receipt-row receipt-small">
       {{ softwareLine }}
     </div>
 
     <template v-if="showFacturador && facturadorLine">
-      <div class="receipt-divider" aria-hidden="true" />
+      <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
       <div class="receipt-row receipt-small">
         {{ facturadorLine }}
       </div>
