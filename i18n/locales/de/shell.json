@@ -57,7 +57,10 @@
     "businessOpen": "Geöffnet",
     "businessClosed": "Geschlossen",
     "businessOpenAria": "Restaurant geöffnet – zum Schließen klicken",
-    "businessClosedAria": "Restaurant geschlossen – zum Öffnen klicken"
+    "businessClosedAria": "Restaurant geschlossen – zum Öffnen klicken",
+    "printUseThermalShort": "Use thermal",
+    "printUseThermal": "Use thermal printer",
+    "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer."
   },
   "integraciones": {
     "pageTitle": "Integrationen - API-Schlüssel",

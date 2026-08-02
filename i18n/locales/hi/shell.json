@@ -57,7 +57,10 @@
     "businessOpen": "खुला",
     "businessClosed": "बंद",
     "businessOpenAria": "रेस्तरां खुला है — बंद करने के लिए क्लिक करें",
-    "businessClosedAria": "रेस्तरां बंद है — खोलने के लिए क्लिक करें"
+    "businessClosedAria": "रेस्तरां बंद है — खोलने के लिए क्लिक करें",
+    "printUseThermalShort": "Use thermal",
+    "printUseThermal": "Use thermal printer",
+    "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer."
   },
   "integraciones": {
     "pageTitle": "इंटीग्रेशन - API कुंजी",

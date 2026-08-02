@@ -57,7 +57,10 @@
     "businessOpen": "مفتوح",
     "businessClosed": "مغلق",
     "businessOpenAria": "المطعم مفتوح — انقر للإغلاق",
-    "businessClosedAria": "المطعم مغلق — انقر للفتح"
+    "businessClosedAria": "المطعم مغلق — انقر للفتح",
+    "printUseThermalShort": "Use thermal",
+    "printUseThermal": "Use thermal printer",
+    "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer."
   },
   "integraciones": {
     "pageTitle": "التكاملات - مفاتيح API",

@@ -57,7 +57,10 @@
     "businessOpen": "营业中",
     "businessClosed": "已打烊",
     "businessOpenAria": "餐厅营业中 — 点击关闭",
-    "businessClosedAria": "餐厅已打烊 — 点击开启"
+    "businessClosedAria": "餐厅已打烊 — 点击开启",
+    "printUseThermalShort": "Use thermal",
+    "printUseThermal": "Use thermal printer",
+    "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer."
   },
   "integraciones": {
     "pageTitle": "集成 - API 密钥",
