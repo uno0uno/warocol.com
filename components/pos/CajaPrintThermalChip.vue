@@ -27,7 +27,7 @@ const title = computed(() =>
 <template>
   <button
     type="button"
-    class="h-8 max-w-[7.5rem] flex-shrink-0 inline-flex items-center justify-center rounded-md px-2 text-[11px] font-medium text-text-secondary bg-surface-secondary/60 hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
+    class="h-9 max-w-[7.5rem] flex-shrink-0 inline-flex items-center justify-center rounded-lg border border-shell-action-border bg-shell-action-bg px-2 text-xs font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
     :title="title"
     :aria-label="ariaLabel"
     @click="clearForceBrowser"
