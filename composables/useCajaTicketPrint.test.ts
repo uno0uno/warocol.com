@@ -249,7 +249,7 @@ describe('notifyCajaPrintResult', () => {
     expect(success.mock.calls[0]![1].title).toBe('pos.receipt.printOkTitle')
   })
 
-  it('shows retry and browser actions only for unconfirmed bridge results', () => {
+  it('shows calm sent toast for soft-success with Didnt print help', () => {
     const success = mock(() => 1)
     const warning = mock(() => 1)
     const onRetry = mock(() => {})
@@ -262,18 +262,25 @@ describe('notifyCajaPrintResult', () => {
       { t, toast: { success, warning }, onRetry, onBrowserPrint },
     )
 
-    expect(warning).toHaveBeenCalledTimes(1)
-    expect(success).toHaveBeenCalledTimes(0)
-    const [, options] = warning.mock.calls[0]!
-    expect(options.title).toBe('pos.receipt.printUnconfirmedTitle')
-    expect(options.actions).toHaveLength(2)
+    expect(success).toHaveBeenCalledTimes(1)
+    expect(warning).toHaveBeenCalledTimes(0)
+    expect(success.mock.calls[0]![1].title).toBe('pos.receipt.printSentTitle')
+    const [, options] = success.mock.calls[0]!
+    expect(options.actions).toHaveLength(1)
+    expect(options.actions[0].label).toBe('pos.receipt.printDidNotComeOut')
+
     options.actions[0].onClick()
-    options.actions[1].onClick()
+    expect(warning).toHaveBeenCalledTimes(1)
+    const [, help] = warning.mock.calls[0]!
+    expect(help.title).toBe('pos.receipt.printUnconfirmedTitle')
+    expect(help.actions).toHaveLength(2)
+    help.actions[0].onClick()
+    help.actions[1].onClick()
     expect(onRetry).toHaveBeenCalledTimes(1)
     expect(onBrowserPrint).toHaveBeenCalledTimes(1)
   })
 
-  it('enables sticky force-browser when cashier chooses browser CTA', () => {
+  it('enables sticky force-browser when cashier chooses browser from help toast', () => {
     localStorage.removeItem('waro.cajaPrint.forceBrowser')
     const success = mock(() => 1)
     const warning = mock(() => 1)
@@ -290,8 +297,10 @@ describe('notifyCajaPrintResult', () => {
       },
     )
 
-    const [, options] = warning.mock.calls[0]!
-    options.actions[1].onClick()
+    const [, sent] = success.mock.calls[0]!
+    sent.actions[0].onClick()
+    const [, help] = warning.mock.calls[0]!
+    help.actions[1].onClick()
     expect(localStorage.getItem('waro.cajaPrint.forceBrowser')).toBe('1')
     expect(onBrowserPrint).toHaveBeenCalledTimes(1)
     localStorage.removeItem('waro.cajaPrint.forceBrowser')

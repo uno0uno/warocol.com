@@ -187,16 +187,10 @@ async function printTest(rowId: string, printerName: string) {
   try {
     await bridge.connect()
     const outcome = await bridge.printEscPosTestTicket(name, `WARO · ${name}`)
-    if (outcome === 'unconfirmed') {
-      toast.warning(t('operaciones.impresoras.testPrintUnconfirmed', { name }), {
-        title: t('operaciones.impresoras.testPrintTitle'),
-        duration: 12000,
-      })
-    } else {
-      toast.success(t('operaciones.impresoras.testPrintOk', { name }), {
-        title: t('operaciones.impresoras.testPrintTitle'),
-      })
-    }
+    // Soft-success is normal for Star — calm OK; hard fails hit catch (#2074).
+    toast.success(t('operaciones.impresoras.testPrintOk', { name }), {
+      title: t('operaciones.impresoras.testPrintTitle'),
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : t('operaciones.impresoras.testPrintError')
     toast.error(msg, { title: t('operaciones.impresoras.testPrintTitle') })

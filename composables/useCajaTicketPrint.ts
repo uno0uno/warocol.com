@@ -163,27 +163,53 @@ export async function printTicketViaCajaOrBrowser(
   }
 }
 
+type CajaPrintToastOptions = {
+  title?: string
+  duration?: number
+  actions?: Array<{ label: string; onClick: () => void }>
+}
+
 export type CajaPrintFeedbackToast = {
-  success: (
-    message: string,
-    options?: {
-      title?: string
-      duration?: number
+  success: (message: string, options?: CajaPrintToastOptions) => unknown
+  warning: (message: string, options?: CajaPrintToastOptions) => unknown
+}
+
+function showUnconfirmedHelpToast(
+  printerName: string,
+  opts: {
+    t: (key: string, params?: Record<string, unknown>) => string
+    toast: CajaPrintFeedbackToast
+    onRetry: () => void
+    onBrowserPrint: () => void
+  },
+): void {
+  opts.toast.warning(
+    opts.t('pos.receipt.printUnconfirmedBody', { name: printerName }),
+    {
+      title: opts.t('pos.receipt.printUnconfirmedTitle'),
+      duration: 15000,
+      actions: [
+        {
+          label: opts.t('pos.receipt.printRetry'),
+          onClick: opts.onRetry,
+        },
+        {
+          label: opts.t('pos.receipt.printWithBrowser'),
+          onClick: () => {
+            enableCajaPrintForceBrowser()
+            opts.onBrowserPrint()
+          },
+        },
+      ],
     },
-  ) => unknown
-  warning: (
-    message: string,
-    options?: {
-      title?: string
-      duration?: number
-      actions?: Array<{ label: string; onClick: () => void }>
-    },
-  ) => unknown
+  )
 }
 
 /**
- * Bridge feedback: green only on CUPS-confirmed completed; soft-success →
- * confirm-paper toast with retry / browser (#2058/#2072).
+ * Bridge feedback (#2074):
+ * - CUPS completed → calm success
+ * - Soft-success (typical Star) → calm “sent” + optional “¿No salió?” help
+ * - Escalated help only when cashier asks
  */
 export function notifyCajaPrintResult(
   result: CajaTicketPrintResult,
@@ -205,22 +231,16 @@ export function notifyCajaPrintResult(
     )
     return
   }
-  opts.toast.warning(
-    opts.t('pos.receipt.printUnconfirmedBody', { name: result.printerName }),
+  // Soft-success: assume happy path; escalate only if cashier says it did not print.
+  opts.toast.success(
+    opts.t('pos.receipt.printSentBody', { name: result.printerName }),
     {
-      title: opts.t('pos.receipt.printUnconfirmedTitle'),
-      duration: 15000,
+      title: opts.t('pos.receipt.printSentTitle'),
+      duration: 4000,
       actions: [
         {
-          label: opts.t('pos.receipt.printRetry'),
-          onClick: opts.onRetry,
-        },
-        {
-          label: opts.t('pos.receipt.printWithBrowser'),
-          onClick: () => {
-            enableCajaPrintForceBrowser()
-            opts.onBrowserPrint()
-          },
+          label: opts.t('pos.receipt.printDidNotComeOut'),
+          onClick: () => showUnconfirmedHelpToast(result.printerName, opts),
         },
       ],
     },
