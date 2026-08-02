@@ -11,7 +11,6 @@ import {
   buildCustomerIdentityPresentation,
   formatFiscalIdentityLabel,
 } from '~/utils/customerIdentityPresentation'
-import { useCajaPrintPreference } from '~/composables/useCajaPrintPreference'
 import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
@@ -22,10 +21,6 @@ useHead({ title: () => t('ventas.head.detail') })
 // Tenant reactivity
 const { currentTenant, businessProfile } = useTenantReactive()
 const { printElement: printTicketElement } = useCajaTicketPrint()
-const {
-  forceBrowser: forceBrowserPrint,
-  clearForceBrowser: clearForceBrowserPrint,
-} = useCajaPrintPreference()
 const { singular: tableSingular } = useTableLabel()
 const {
   receiptPrintSettings,
@@ -1107,23 +1102,6 @@ onUnmounted(() => {
 
     <!-- Order Details -->
     <div v-else class="space-y-6">
-      <div
-        v-if="forceBrowserPrint"
-        role="status"
-        class="flex flex-wrap items-center justify-between gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
-      >
-        <p class="text-sm text-state-warning-text font-medium">
-          {{ t('pos.receipt.printBrowserStickyBody') }}
-        </p>
-        <button
-          type="button"
-          class="shrink-0 min-h-[36px] px-3 py-1.5 text-sm font-semibold rounded-lg border border-state-warning-border bg-surface text-text-primary hover:bg-surface-secondary transition-colors"
-          @click="clearForceBrowserPrint"
-        >
-          {{ t('pos.receipt.printUseThermal') }}
-        </button>
-      </div>
-
       <!-- Order Info Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->

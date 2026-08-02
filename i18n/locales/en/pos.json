@@ -712,7 +712,8 @@
       "printRetry": "Retry",
       "printWithBrowser": "Print with browser",
       "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer.",
-      "printUseThermal": "Use thermal printer"
+      "printUseThermal": "Use thermal printer",
+      "printUseThermalShort": "Use thermal"
     }
   }
 }
