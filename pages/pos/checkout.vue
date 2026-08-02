@@ -22,6 +22,7 @@ import { buildReceiptTicketItems, consolidateReceiptPrintLines } from '~/utils/r
 import {
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
@@ -1948,6 +1949,13 @@ const prefacturaMoneyLine = (label: string, amount: number | string, negative = 
   const amt = compactThermalMoneyLabel(formatCurrencyThermal(amount))
   return padReceiptLine(label, negative ? `-${amt}` : amt)
 }
+
+const prefacturaTaxBulletLine = (label: string, amount: number | string) =>
+  formatReceiptTaxBulletLine({
+    label,
+    amountLabel: formatCurrencyThermal(amount),
+  })
+
 
 const prefacturaProductBlock = (item: any) =>
   formatReceiptProductBlock({
@@ -5635,10 +5643,10 @@ onUnmounted(() => {
       {{ prefacturaMoneyLine(prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : t('pos.receipt.waroRedeem'), prefacturaPrintData.waroDiscountCop, true) }}
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-plain-line">
-      {{ prefacturaMoneyLine(localizedInternalTaxLabel(taxPreview.standard_tax_label), taxPreview.standard_tax) }}
+      {{ prefacturaTaxBulletLine(localizedInternalTaxLabel(taxPreview.standard_tax_label), taxPreview.standard_tax) }}
     </div>
     <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-plain-line">
-      {{ prefacturaMoneyLine(taxPreview.liquor_tax_label || t('pos.receipt.liquorVat'), taxPreview.liquor_tax) }}
+      {{ prefacturaTaxBulletLine(taxPreview.liquor_tax_label || t('pos.receipt.liquorVat'), taxPreview.liquor_tax) }}
     </div>
     <!-- warocol.com#739 + #939 — pre-bill totals include tip, advance, and split settlement when applicable -->
     <template v-if="prefacturaPrintData.tipAmount > 0 || prefacturaPrintData.advanceApplied > 0">
@@ -5786,13 +5794,11 @@ onUnmounted(() => {
     </div>
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
 	      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxDetail') }}</div>
-      <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-item receipt-small">
-        <span>{{ localizedInternalTaxLabel(orderResult.standard_tax_label) }}</span>
-        <span>{{ formatCurrencyThermal(orderResult.standard_tax) }}</span>
+      <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-plain-line receipt-small">
+        {{ prefacturaTaxBulletLine(localizedInternalTaxLabel(orderResult.standard_tax_label), orderResult.standard_tax) }}
       </div>
-      <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
-	        <span>{{ localizedInternalTaxLabel(orderResult.liquor_tax_label) || t('pos.receipt.liquorVat') }}</span>
-        <span>{{ formatCurrencyThermal(orderResult.liquor_tax) }}</span>
+      <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-plain-line receipt-small">
+	        {{ prefacturaTaxBulletLine(localizedInternalTaxLabel(orderResult.liquor_tax_label) || t('pos.receipt.liquorVat'), orderResult.liquor_tax) }}
       </div>
     </template>
     <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->

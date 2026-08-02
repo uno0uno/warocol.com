@@ -182,3 +182,22 @@ export function formatReceiptModifierBlock(opts: {
   const left = qty > 1 ? `${qty} x ${unit}` : unit
   return `${indent}${desc}\n${padReceiptLine(`${indent}${left}`, total, cols)}`
 }
+
+/**
+ * Tax / tributary breakdown line — same indent + bullet as adicionales
+ * so Detalle de impuestos / Detalle tributario matches prefatura/factura modifiers.
+ */
+export function formatReceiptTaxBulletLine(opts: {
+  label: string
+  amountLabel: string
+  cols?: number
+  indent?: string
+}): string {
+  const cols = opts.cols ?? RECEIPT_THERMAL_COLS
+  const indent = opts.indent ?? RECEIPT_MODIFIER_INDENT
+  let label = String(opts.label ?? '').trim()
+  if (label.startsWith('+')) label = label.slice(1).trim()
+  const left = label ? `${indent}+ ${label}` : indent
+  const right = compactThermalMoneyLabel(opts.amountLabel)
+  return padReceiptLine(left, right, cols)
+}

@@ -3,6 +3,7 @@ import {
   compactThermalMoneyLabel,
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
@@ -138,6 +139,18 @@ describe('formatReceiptModifierBlock', () => {
     expect(block).toContain('$9.000,00')
     expect(block).toContain('$27.000,00')
     expect(lines[1]?.startsWith('  ')).toBe(true)
+  })
+})
+
+describe('formatReceiptTaxBulletLine', () => {
+  it('indents tax lines with + like adicionales', () => {
+    const line = formatReceiptTaxBulletLine({
+      label: 'INC 8%',
+      amountLabel: '$ COP 800,00',
+    })
+    expect(line).toMatch(/^\s{2}\+ INC 8%/)
+    expect(line).toContain('$800,00')
+    expect(line).not.toContain('...')
   })
 })
 

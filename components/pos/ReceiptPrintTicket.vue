@@ -4,6 +4,7 @@ import { consolidateReceiptPrintLines } from '~/utils/receiptPrintLines'
 import {
   formatReceiptModifierBlock,
   formatReceiptProductBlock,
+  formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
@@ -174,6 +175,13 @@ const moneyLine = (label: string, amount: number | string | null | undefined, ne
   const amt = compactThermalMoneyLabel(money(amount))
   return padReceiptLine(label, negative ? `-${amt}` : amt)
 }
+
+const taxBulletLine = (label: string, amount: number | string | null | undefined) =>
+  formatReceiptTaxBulletLine({
+    label,
+    amountLabel: money(amount),
+  })
+
 
 const dashDivider = receiptDivider()
 const strongDivider = receiptDivider(32, '=')
@@ -377,10 +385,10 @@ const printableItems = computed(() =>
     <template v-if="hasTaxBreakdown">
       <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxDetail') }}</div>
       <div v-if="Number(standardTax) > 0" class="receipt-plain-line receipt-small">
-        {{ moneyLine(displayStandardTaxLabel, standardTax) }}
+        {{ taxBulletLine(displayStandardTaxLabel, standardTax) }}
       </div>
       <div v-if="Number(liquorTax) > 0" class="receipt-plain-line receipt-small">
-        {{ moneyLine(displayLiquorTaxLabel, liquorTax) }}
+        {{ taxBulletLine(displayLiquorTaxLabel, liquorTax) }}
       </div>
     </template>
 
@@ -477,7 +485,7 @@ const printableItems = computed(() =>
           :key="`${line.label ?? 'tax'}-${idx}`"
           class="receipt-plain-line receipt-small"
         >
-          {{ moneyLine(
+          {{ taxBulletLine(
             [
               line.label || t('pos.checkout.taxFallback'),
               formatRate(line.rate),
