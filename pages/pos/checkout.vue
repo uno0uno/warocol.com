@@ -28,6 +28,7 @@ import {
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
+  receiptSectionSeparator,
   collectThermalTicketText,
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
@@ -1937,6 +1938,7 @@ const formatModifierPrintDesc = (mod: PrintModifier) => {
 const prefacturaDash = receiptDivider()
 const prefacturaStrong = receiptDivider(32, '=')
 const prefacturaItemSep = receiptItemSeparator()
+const prefacturaSectionSep = receiptSectionSeparator()
 
 const prefacturaMoneyLine = (label: string, amount: number | string, negative = false) => {
   const amt = compactThermalMoneyLabel(formatCurrencyThermal(amount))
@@ -5657,7 +5659,7 @@ onUnmounted(() => {
     </div>
     <div v-if="prefacturaSaleMetaLine" class="receipt-row receipt-small">{{ prefacturaSaleMetaLine }}</div>
     <template v-if="prefacturaSaleContactLine || prefacturaAcquirerLine">
-      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
       <div v-if="prefacturaSaleContactLine" class="receipt-row receipt-small">
         <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</span>
         · {{ prefacturaSaleContactLine }}
@@ -5667,7 +5669,7 @@ onUnmounted(() => {
         · {{ prefacturaAcquirerLine }}
       </div>
     </template>
-    <div class="receipt-plain-line">{{ prefacturaDash }}</div>
+    <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
     <template v-for="(item, idx) in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
@@ -5679,7 +5681,7 @@ onUnmounted(() => {
         class="receipt-plain-pre"
       >{{ prefacturaModifierBlock(mod) }}</pre>
     </template>
-    <div class="receipt-plain-line">{{ prefacturaDash }}</div>
+    <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-plain-line">
       {{ prefacturaMoneyLine(t('pos.receipt.subtotal'), prefacturaPrintData.cartSubtotal) }}
@@ -5725,7 +5727,7 @@ onUnmounted(() => {
       {{ prefacturaMoneyLine(t('pos.receipt.totalUpper'), prefacturaPrintData.orderTotal) }}
     </div>
     <template v-if="prefacturaPrintData.splitPayments.length > 0">
-      <div class="receipt-plain-line">{{ prefacturaDash }}</div>
+      <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentsRegistered') }}</div>
       <div
         v-for="(p, idx) in prefacturaPrintData.splitPayments"
@@ -5775,13 +5777,13 @@ onUnmounted(() => {
     </div>
     <div v-if="checkoutSaleMetaLine" class="receipt-row receipt-small">{{ checkoutSaleMetaLine }}</div>
     <template v-if="checkoutSaleContactLine">
-      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
       <div class="receipt-row receipt-small">
         <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}:</span>
         {{ ' ' }}{{ checkoutSaleContactLine }}
       </div>
     </template>
-    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div class="receipt-grid-header receipt-small">
       <span class="receipt-col-desc">{{ t('pos.receipt.description') }}</span>

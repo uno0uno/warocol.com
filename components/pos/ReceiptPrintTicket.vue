@@ -10,6 +10,7 @@ import {
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
+  receiptSectionSeparator,
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 
@@ -184,9 +185,9 @@ const taxBulletLine = (label: string, amount: number | string | null | undefined
   })
 
 
-const dashDivider = receiptDivider()
 const strongDivider = receiptDivider(32, '=')
 const itemSeparator = receiptItemSeparator()
+const sectionSeparator = receiptSectionSeparator()
 
 const hasBreakdownSubtotal = computed(() =>
   (props.promoBreakdown?.length ?? 0) > 0
@@ -377,14 +378,14 @@ const printableItems = computed(() =>
     <div v-if="saleMetaLine" class="receipt-row receipt-small">{{ saleMetaLine }}</div>
 
     <template v-if="saleContactLine">
-      <div class="receipt-plain-line">{{ dashDivider }}</div>
+      <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
       <div class="receipt-row receipt-small">
         <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</span>
         · {{ saleContactLine }}
       </div>
     </template>
 
-    <div class="receipt-plain-line">{{ dashDivider }}</div>
+    <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
 
     <template v-for="(item, idx) in printableItems" :key="item.id ?? item.name">
@@ -397,7 +398,7 @@ const printableItems = computed(() =>
       >{{ modifierBlock(modifier) }}</pre>
     </template>
 
-    <div class="receipt-plain-line">{{ dashDivider }}</div>
+    <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
 
     <div v-if="hasBreakdownSubtotal && subtotal != null" class="receipt-plain-line">
       {{ moneyLine(t('pos.receipt.subtotal'), subtotal) }}
@@ -447,7 +448,7 @@ const printableItems = computed(() =>
       {{ moneyLine(t('pos.receipt.totalUpper'), orderTotal) }}
     </div>
 
-    <div class="receipt-plain-line">{{ dashDivider }}</div>
+    <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.paymentDetail') }}</div>
     <template v-if="(payments?.length ?? 0) > 0">
       <template v-for="(payment, idx) in payments" :key="payment.id ?? idx">
@@ -469,7 +470,7 @@ const printableItems = computed(() =>
     <template v-if="!invoice">
       <div class="receipt-plain-line">{{ strongDivider }}</div>
       <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
-      <div class="receipt-plain-line">{{ dashDivider }}</div>
+      <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">
         {{ t('pos.receipt.saleReceipt') }}
       </div>
@@ -495,7 +496,7 @@ const printableItems = computed(() =>
       <div class="receipt-plain-line">{{ strongDivider }}</div>
       <div v-if="feChromeLine" class="receipt-row receipt-row--start receipt-small">{{ feChromeLine }}</div>
       <template v-if="invoiceTaxLines.length > 0">
-        <div class="receipt-plain-line">{{ dashDivider }}</div>
+        <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
         <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxTributaryDetail') }}</div>
         <div
           v-for="(line, idx) in invoiceTaxLines"

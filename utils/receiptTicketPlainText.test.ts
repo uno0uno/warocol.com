@@ -9,6 +9,7 @@ import {
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
+  receiptSectionSeparator,
   collectThermalTicketText,
 } from './receiptTicketPlainText'
 
@@ -16,6 +17,13 @@ describe('joinReceiptParts', () => {
   it('joins non-empty parts with a middle-dot separator', () => {
     expect(joinReceiptParts(['NIT 1', '', 'Tel: 2', null, 'a@b.com'])).toBe('NIT 1 · Tel: 2 · a@b.com')
     expect(joinReceiptParts([])).toBe('')
+  })
+})
+
+describe('receiptSectionSeparator', () => {
+  it('emits spaced dots quieter than a solid item separator', () => {
+    expect(receiptSectionSeparator(32)).toBe('· · · · · · · · · · · · · · · ·')
+    expect(receiptSectionSeparator(32)).not.toBe(receiptItemSeparator(32))
   })
 })
 
