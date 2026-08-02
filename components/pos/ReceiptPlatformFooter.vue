@@ -2,13 +2,13 @@
 const { t, locale } = useI18n({ useScope: 'global' })
 /**
  * Pie de documento: software WARO + (si FE) facturador Matias.
- * Datos desde backend platform_legal (env). Nunca hardcode de NIT/PII.
- * Emisor de la venta = tenant (cabecera), no este pie.
+ * Compact thermal chrome (#2054) — legal fields kept, fewer blank lines.
  */
 import {
   EMPTY_PLATFORM_LEGAL,
   type PlatformLegalPrint,
 } from '~/constants/waroLegalEntity'
+import { joinReceiptParts } from '~/utils/receiptTicketPlainText'
 
 const props = withDefaults(defineProps<{
   documentKind?: 'prefactura' | 'sale' | 'fe'
@@ -39,7 +39,6 @@ const showFacturador = computed(() =>
 
 const softwareRoleLabel = computed(() => {
   void locale.value
-  // Prefer API-provided legal Spanish only for the source locale.
   if (locale.value !== 'es') return t('pos.receipt.softwareRole')
   return software.value.role_label || t('pos.receipt.softwareRole')
 })
@@ -65,52 +64,38 @@ const facturadorNotIssuer = computed(() => {
   if (locale.value !== 'es') return t('pos.receipt.notIssuer')
   return facturador.value.not_issuer_disclaimer || t('pos.receipt.notIssuer')
 })
+
+const softwareLine = computed(() => joinReceiptParts([
+  softwareRoleLabel.value,
+  software.value.commercial_name,
+  software.value.nit ? t('pos.receipt.nitBare', { nit: software.value.nit }) : null,
+  software.value.website,
+  softwareIvaLabel.value,
+  softwareNotIssuer.value,
+]))
+
+const facturadorLine = computed(() => joinReceiptParts([
+  facturadorRoleLabel.value,
+  facturador.value.brand_name,
+  facturador.value.nit ? t('pos.receipt.nitBare', { nit: facturador.value.nit }) : null,
+  facturador.value.legal_name,
+  facturadorNotIssuer.value,
+  t('pos.receipt.dianIssuerTenant'),
+]))
 </script>
 
 <template>
   <div v-if="hasSoftware || showFacturador" class="receipt-platform-footer">
     <div class="receipt-divider" aria-hidden="true" />
 
-    <template v-if="hasSoftware">
-      <div class="receipt-row receipt-small" style="font-weight:bold;">
-        {{ softwareRoleLabel }}
-      </div>
-      <div v-if="software.commercial_name" class="receipt-row receipt-small">
-        {{ software.commercial_name }}
-      </div>
-      <div v-if="software.nit" class="receipt-row receipt-small">
-        {{ t('pos.receipt.nitBare', { nit: software.nit }) }}
-      </div>
-      <div v-if="software.website" class="receipt-row receipt-small">
-        {{ software.website }}
-      </div>
-      <div v-if="softwareIvaLabel" class="receipt-row receipt-small">
-        {{ softwareIvaLabel }}
-      </div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">
-        {{ softwareNotIssuer }}
-      </div>
-    </template>
+    <div v-if="hasSoftware && softwareLine" class="receipt-row receipt-small">
+      {{ softwareLine }}
+    </div>
 
-    <template v-if="showFacturador">
+    <template v-if="showFacturador && facturadorLine">
       <div class="receipt-divider" aria-hidden="true" />
-      <div class="receipt-row receipt-small" style="font-weight:bold;">
-        {{ facturadorRoleLabel }}
-      </div>
-      <div v-if="facturador.brand_name" class="receipt-row receipt-small">
-        {{ facturador.brand_name }}
-      </div>
-      <div v-if="facturador.nit" class="receipt-row receipt-small">
-        {{ t('pos.receipt.nitBare', { nit: facturador.nit }) }}
-      </div>
-      <div v-if="facturador.legal_name" class="receipt-row receipt-small">
-        {{ facturador.legal_name }}
-      </div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">
-        {{ facturadorNotIssuer }}
-      </div>
       <div class="receipt-row receipt-small">
-        {{ t('pos.receipt.dianIssuerTenant') }}
+        {{ facturadorLine }}
       </div>
     </template>
 

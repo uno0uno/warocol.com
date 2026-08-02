@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { buildReceiptLogoStyle } from '~/utils/receiptPrintConfig'
+import { joinReceiptParts } from '~/utils/receiptTicketPlainText'
 
 const props = defineProps<{
   fiscalData?: {
@@ -20,8 +21,7 @@ const props = defineProps<{
 
 /**
  * Cabecera del establecimiento (tenant) — emisor comercial / vendedor.
- * Según práctica Colombia: nombre o razón social + NIT del establecimiento.
- * WARO no va aquí (ver ReceiptPlatformFooter).
+ * Compact thermal chrome: fewer blank lines (#2054).
  */
 const headerName = computed(() =>
   props.fiscalData?.business_name?.trim()
@@ -43,6 +43,21 @@ const displayPhone = computed(() =>
 
 const sellerNit = computed(() => props.fiscalData?.nit?.trim() || null)
 
+const addressLine = computed(() => {
+  const address = String(displayAddress.value ?? '').trim()
+  const city = String(displayCity.value ?? '').trim()
+  if (address && city) return `${address}, ${city}`
+  return address || city || null
+})
+
+/** Role + NIT + tel + email on one dense line. */
+const metaLine = computed(() => joinReceiptParts([
+  t('pos.receipt.establishmentSeller'),
+  sellerNit.value ? t('pos.receipt.nit', { nit: sellerNit.value }) : null,
+  displayPhone.value ? t('pos.receipt.tel', { phone: displayPhone.value }) : null,
+  props.fiscalData?.email?.trim() || null,
+]))
+
 const logoStyle = computed(() => buildReceiptLogoStyle())
 </script>
 
@@ -56,21 +71,8 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
       :style="logoStyle"
     >
     <div class="receipt-header">{{ headerName }}</div>
-    <div class="receipt-row receipt-small" style="font-weight:bold;">
-      {{ t('pos.receipt.establishmentSeller') }}
-    </div>
-    <div v-if="sellerNit" class="receipt-row receipt-small">
-      {{ t('pos.receipt.nit', { nit: sellerNit }) }}
-    </div>
-    <div v-if="displayAddress" class="receipt-row receipt-small">
-      {{ displayAddress }}<span v-if="displayCity">, {{ displayCity }}</span>
-    </div>
-    <div v-if="displayPhone" class="receipt-row receipt-small">
-      {{ t('pos.receipt.tel', { phone: displayPhone }) }}
-    </div>
-    <div v-if="fiscalData?.email" class="receipt-row receipt-small">
-      {{ fiscalData.email }}
-    </div>
+    <div v-if="metaLine" class="receipt-row receipt-small">{{ metaLine }}</div>
+    <div v-if="addressLine" class="receipt-row receipt-small">{{ addressLine }}</div>
   </div>
 </template>
 
@@ -84,5 +86,8 @@ const logoStyle = computed(() => buildReceiptLogoStyle())
   object-position: center top;
   filter: grayscale(100%);
   -webkit-filter: grayscale(100%);
+}
+.receipt-print-header .receipt-header {
+  margin-bottom: 1px;
 }
 </style>

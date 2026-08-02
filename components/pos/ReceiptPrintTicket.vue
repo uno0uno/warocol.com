@@ -6,6 +6,7 @@ import {
   formatReceiptProductBlock,
   formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
+  joinReceiptParts,
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
@@ -265,6 +266,40 @@ const invoicePaymentLabel = computed(() => {
   return props.singlePaymentLabel || null
 })
 
+/** Dense chrome lines — keep products/totals verbose (#2054). */
+const saleMetaLine = computed(() => joinReceiptParts([
+  props.soldAt,
+  props.locationLabel,
+  props.waiterName ? t('pos.receipt.waiter', { name: props.waiterName }) : null,
+]))
+
+const saleContactLine = computed(() => joinReceiptParts([
+  props.customerName,
+  props.customerPhone ? t('pos.receipt.phone', { phone: props.customerPhone }) : null,
+  props.customerEmail ? t('pos.receipt.email', { email: props.customerEmail }) : null,
+  !props.invoice && props.customerFiscalLabel ? props.customerFiscalLabel : null,
+]))
+
+const feChromeLine = computed(() => {
+  if (!props.invoice) return null
+  return joinReceiptParts([
+    t('pos.receipt.printedElectronicInvoice'),
+    props.invoice.issuedAt
+      ? t('pos.receipt.dianIssueDate', { date: props.invoice.issuedAt })
+      : null,
+    !hasCompleteHeaderIssuer.value && (props.invoice.issuerLabel || fallbackIssuerLabel.value)
+      ? t('pos.receipt.issuer', { label: props.invoice.issuerLabel || fallbackIssuerLabel.value })
+      : null,
+    props.invoice.acquirerLabel
+      ? t('pos.receipt.acquirer', { label: props.invoice.acquirerLabel })
+      : null,
+    props.invoice.resolutionText,
+    invoicePaymentLabel.value
+      ? t('pos.receipt.paymentForm', { label: invoicePaymentLabel.value })
+      : null,
+  ])
+})
+
 const invoiceTaxLines = computed(() => {
   const explicit = (props.invoice?.taxLines ?? []).filter(line =>
     line?.label || Number(line?.base) > 0 || Number(line?.amount) > 0,
@@ -339,17 +374,14 @@ const printableItems = computed(() =>
         {{ documentLabel }}<template v-if="orderNumber"> #{{ orderNumber }}</template>
       </template>
     </div>
-    <div v-if="soldAt" class="receipt-row receipt-small">{{ soldAt }}</div>
-    <div v-if="locationLabel" class="receipt-row receipt-small">{{ locationLabel }}</div>
-    <div v-if="waiterName" class="receipt-row receipt-small">{{ t('pos.receipt.waiter', { name: waiterName }) }}</div>
+    <div v-if="saleMetaLine" class="receipt-row receipt-small">{{ saleMetaLine }}</div>
 
-    <template v-if="customerName || customerPhone || customerEmail">
+    <template v-if="saleContactLine">
       <div class="receipt-plain-line">{{ dashDivider }}</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
-      <div v-if="customerName" class="receipt-row receipt-small">{{ customerName }}</div>
-      <div v-if="customerPhone" class="receipt-row receipt-small">{{ t('pos.receipt.phone', { phone: customerPhone }) }}</div>
-      <div v-if="customerEmail" class="receipt-row receipt-small">{{ t('pos.receipt.email', { email: customerEmail }) }}</div>
-      <div v-if="!invoice && customerFiscalLabel" class="receipt-row receipt-small">{{ customerFiscalLabel }}</div>
+      <div class="receipt-row receipt-small">
+        <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</span>
+        · {{ saleContactLine }}
+      </div>
     </template>
 
     <div class="receipt-plain-line">{{ dashDivider }}</div>
@@ -461,24 +493,7 @@ const printableItems = computed(() =>
 
     <template v-else>
       <div class="receipt-plain-line">{{ strongDivider }}</div>
-      <div class="receipt-fe-details">
-        <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.printedElectronicInvoice') }}</div>
-        <div v-if="invoice.issuedAt" class="receipt-row receipt-row--start receipt-small">{{ t('pos.receipt.dianIssueDate', { date: invoice.issuedAt }) }}</div>
-        <div
-          v-if="!hasCompleteHeaderIssuer && (invoice.issuerLabel || fallbackIssuerLabel)"
-          class="receipt-row receipt-row--start receipt-small"
-        >
-          {{ t('pos.receipt.issuer', { label: invoice.issuerLabel || fallbackIssuerLabel }) }}
-        </div>
-        <div
-          v-if="invoice.acquirerLabel"
-          class="receipt-row receipt-row--start receipt-small"
-        >
-          {{ t('pos.receipt.acquirer', { label: invoice.acquirerLabel }) }}
-        </div>
-        <div v-if="invoice.resolutionText" class="receipt-row receipt-row--start receipt-small">{{ invoice.resolutionText }}</div>
-        <div v-if="invoicePaymentLabel" class="receipt-row receipt-row--start receipt-small">{{ t('pos.receipt.paymentForm', { label: invoicePaymentLabel }) }}</div>
-      </div>
+      <div v-if="feChromeLine" class="receipt-row receipt-row--start receipt-small">{{ feChromeLine }}</div>
       <template v-if="invoiceTaxLines.length > 0">
         <div class="receipt-plain-line">{{ dashDivider }}</div>
         <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.taxTributaryDetail') }}</div>

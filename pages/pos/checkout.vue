@@ -24,6 +24,7 @@ import {
   formatReceiptProductBlock,
   formatReceiptTaxBulletLine,
   formatReceiptTaxCue,
+  joinReceiptParts,
   padReceiptLine,
   receiptDivider,
   receiptItemSeparator,
@@ -3058,6 +3059,81 @@ function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null;
 const prefacturaDateTime = computed(() =>
   formatTenantDateTime()
 )
+
+const prefacturaSaleMetaLine = computed(() => {
+  const session = posStore.activeTableSession
+  const mesaLabel = isKitchenServiceMode.value && session?.tableName
+    ? `${tableSingular.value} ${prefacturaTableCode.value} — ${session.tableName}`
+    : null
+  return joinReceiptParts([
+    prefacturaDateTime.value,
+    mesaLabel,
+    !mesaLabel && session?.isBar ? t('pos.receipt.bar') : null,
+    !mesaLabel && !session?.isBar ? t('pos.receipt.counter') : null,
+    prefacturaWaiterName.value
+      ? t('pos.receipt.waiter', { name: prefacturaWaiterName.value })
+      : null,
+  ])
+})
+
+const prefacturaSaleContactLine = computed(() => {
+  const customer = selectedCustomer.value
+  if (!customer || isAnonymousCustomer.value) return ''
+  return joinReceiptParts([
+    customer.name || null,
+    customer.phone_number
+      ? t('pos.receipt.phone', { phone: customer.phone_number })
+      : null,
+    customer.email
+      ? t('pos.receipt.email', { email: customer.email })
+      : null,
+    customer.fiscal_id && !selectedCustomerIdentity.value.showSeparateAcquirer
+      ? `${customer.fiscal_id_type}: ${customer.fiscal_id}`
+      : null,
+  ])
+})
+
+const prefacturaAcquirerLine = computed(() => {
+  if (!selectedCustomerIdentity.value.showSeparateAcquirer) return ''
+  const acquirer = selectedCustomerIdentity.value.acquirer
+  return joinReceiptParts([
+    acquirer.name || null,
+    acquirer.fiscalId
+      ? `${acquirer.fiscalIdType}: ${acquirer.fiscalId}`
+      : null,
+    acquirer.email
+      ? t('pos.receipt.email', { email: acquirer.email })
+      : null,
+  ])
+})
+
+const checkoutSaleMetaLine = computed(() => {
+  const ctx = receiptPrintContext.value
+  if (!ctx) return ''
+  return joinReceiptParts([
+    ctx.soldAt || null,
+    ctx.wasMesa && ctx.tableName
+      ? `${tableSingular.value} ${ctx.tableCode} — ${ctx.tableName}`
+      : null,
+    !ctx.wasMesa && ctx.isBar ? t('pos.receipt.bar') : null,
+    !ctx.wasMesa && !ctx.isBar ? t('pos.receipt.counter') : null,
+    ctx.waiterName ? t('pos.receipt.waiter', { name: ctx.waiterName }) : null,
+  ])
+})
+
+const checkoutSaleContactLine = computed(() => {
+  const ctx = receiptPrintContext.value
+  if (!ctx?.customerName && !ctx?.customerPhone && !ctx?.customerEmail) return ''
+  return joinReceiptParts([
+    ctx?.customerName || null,
+    ctx?.customerPhone ? t('pos.receipt.phone', { phone: ctx.customerPhone }) : null,
+    ctx?.customerEmail ? t('pos.receipt.email', { email: ctx.customerEmail }) : null,
+    !invoiceResult.value && ctx?.customerFiscalId
+      ? `${ctx.customerFiscalIdType}: ${ctx.customerFiscalId}`
+      : null,
+  ])
+})
+
 // Prefactura is purely visual — never block on tax preview state. If taxes
 // haven't loaded (or the tenant has no taxes configured), the prefactura
 // just omits those lines. The prefactura footer disclaimer makes the document
@@ -5579,40 +5655,17 @@ onUnmounted(() => {
     <div class="receipt-row receipt-small" style="font-weight:bold;">
       {{ prefacturaDocumentLabel }}<span v-if="prefacturaDocNumber"> #{{ prefacturaDocNumber }}</span>
     </div>
-    <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
-    <div v-if="isKitchenServiceMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
-      {{ tableSingular }} {{ prefacturaTableCode }} — {{ posStore.activeTableSession.tableName }}
-    </div>
-    <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">{{ t('pos.receipt.bar') }}</div>
-    <div v-else class="receipt-row receipt-small">{{ t('pos.receipt.counter') }}</div>
-    <div v-if="prefacturaWaiterName" class="receipt-row receipt-small">
-      {{ t('pos.receipt.waiter', { name: prefacturaWaiterName }) }}
-    </div>
-    <template v-if="selectedCustomer && !isAnonymousCustomer">
+    <div v-if="prefacturaSaleMetaLine" class="receipt-row receipt-small">{{ prefacturaSaleMetaLine }}</div>
+    <template v-if="prefacturaSaleContactLine || prefacturaAcquirerLine">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
-      <div v-if="selectedCustomer.name" class="receipt-row receipt-small">{{ selectedCustomer.name }}</div>
-      <div v-if="selectedCustomer.phone_number" class="receipt-row receipt-small">
-        {{ t('pos.receipt.phone', { phone: selectedCustomer.phone_number }) }}
+      <div v-if="prefacturaSaleContactLine" class="receipt-row receipt-small">
+        <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</span>
+        · {{ prefacturaSaleContactLine }}
       </div>
-      <div v-if="selectedCustomer.email" class="receipt-row receipt-small">
-        {{ t('pos.receipt.email', { email: selectedCustomer.email }) }}
+      <div v-if="prefacturaAcquirerLine" class="receipt-row receipt-small">
+        <span style="font-weight:bold;">{{ t('pos.receipt.fiscalAcquirer') }}</span>
+        · {{ prefacturaAcquirerLine }}
       </div>
-      <div v-if="selectedCustomer.fiscal_id && !selectedCustomerIdentity.showSeparateAcquirer" class="receipt-row receipt-small">
-        {{ selectedCustomer.fiscal_id_type }}: {{ selectedCustomer.fiscal_id }}
-      </div>
-      <template v-if="selectedCustomerIdentity.showSeparateAcquirer">
-        <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.fiscalAcquirer') }}</div>
-        <div v-if="selectedCustomerIdentity.acquirer.name" class="receipt-row receipt-small">
-          {{ selectedCustomerIdentity.acquirer.name }}
-        </div>
-        <div v-if="selectedCustomerIdentity.acquirer.fiscalId" class="receipt-row receipt-small">
-          {{ selectedCustomerIdentity.acquirer.fiscalIdType }}: {{ selectedCustomerIdentity.acquirer.fiscalId }}
-        </div>
-        <div v-if="selectedCustomerIdentity.acquirer.email" class="receipt-row receipt-small">
-          {{ t('pos.receipt.email', { email: selectedCustomerIdentity.acquirer.email }) }}
-        </div>
-      </template>
     </template>
     <div class="receipt-plain-line">{{ prefacturaDash }}</div>
 
@@ -5720,27 +5773,12 @@ onUnmounted(() => {
     <div class="receipt-row receipt-small" style="font-weight:bold;">
       {{ receiptDocumentLabel }}<span v-if="(orderResult?.order_number ?? 0) > 0"> #{{ orderResult?.order_number }}</span>
     </div>
-    <div v-if="receiptPrintContext?.soldAt" class="receipt-row receipt-small">{{ receiptPrintContext.soldAt }}</div>
-    <div v-if="receiptPrintContext?.wasMesa && receiptPrintContext.tableName" class="receipt-row receipt-small">
-      {{ tableSingular }} {{ receiptPrintContext.tableCode }} — {{ receiptPrintContext.tableName }}
-    </div>
-    <div v-else-if="receiptPrintContext?.isBar" class="receipt-row receipt-small">{{ t('pos.receipt.bar') }}</div>
-    <div v-else-if="receiptPrintContext" class="receipt-row receipt-small">{{ t('pos.receipt.counter') }}</div>
-    <div v-if="receiptPrintContext?.waiterName" class="receipt-row receipt-small">
-      {{ t('pos.receipt.waiter', { name: receiptPrintContext.waiterName }) }}
-    </div>
-    <template v-if="receiptPrintContext?.customerName || receiptPrintContext?.customerPhone || receiptPrintContext?.customerEmail">
+    <div v-if="checkoutSaleMetaLine" class="receipt-row receipt-small">{{ checkoutSaleMetaLine }}</div>
+    <template v-if="checkoutSaleContactLine">
       <div class="receipt-divider receipt-small">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}</div>
-      <div v-if="receiptPrintContext.customerName" class="receipt-row receipt-small">{{ receiptPrintContext.customerName }}</div>
-      <div v-if="receiptPrintContext.customerPhone" class="receipt-row receipt-small">
-        {{ t('pos.receipt.phone', { phone: receiptPrintContext.customerPhone }) }}
-      </div>
-      <div v-if="receiptPrintContext.customerEmail" class="receipt-row receipt-small">
-        {{ t('pos.receipt.email', { email: receiptPrintContext.customerEmail }) }}
-      </div>
-      <div v-if="!invoiceResult && receiptPrintContext.customerFiscalId" class="receipt-row receipt-small">
-        {{ receiptPrintContext.customerFiscalIdType }}: {{ receiptPrintContext.customerFiscalId }}
+      <div class="receipt-row receipt-small">
+        <span style="font-weight:bold;">{{ t('pos.receipt.saleContact') }}:</span>
+        {{ ' ' }}{{ checkoutSaleContactLine }}
       </div>
     </template>
     <div class="receipt-divider">--------------------------------</div>
