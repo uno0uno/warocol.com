@@ -1,7 +1,7 @@
 /**
  * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
  * Falls back to window.print when bridge/caja is missing, print fails, or hangs (#2003).
- * Soft CUPS “status gone” counts as completed (Star always purges; #2070).
+ * Soft CUPS “status gone” → unconfirmed (may print or queue offline; #2058/#2072).
  * Sticky browser mode skips bridge until cashier returns to thermal (#2060).
  */
 import {
@@ -17,6 +17,7 @@ import {
 import {
   buildEscPosTicketBytes,
   findReceiptLogoSrc,
+  hasEscPosPrintablePlainText,
   loadEscPosLogoRasterFromUrl,
 } from '~/utils/escPosTicket'
 
@@ -24,9 +25,18 @@ export type CajaTicketPrintResult =
   | { mode: 'bridge'; confirmed: true; printerName: string }
   | { mode: 'bridge'; confirmed: false; printerName: string }
   | { mode: 'browser' }
+  | { mode: 'skipped' }
 
 /** Cap wait so offline USB/CUPS cannot stall the cashier before browser fallback. */
 export const BRIDGE_PRINT_TIMEOUT_MS = 5000
+
+/** Ignore double-clicks while a bridge/browser print attempt is in flight (#2072). */
+let cajaPrintInFlight = false
+
+/** Test-only: reset in-flight lock between cases. */
+export function __resetCajaPrintInFlightForTests(): void {
+  cajaPrintInFlight = false
+}
 
 export type CajaTicketPrintDeps = {
   getCajaPrinterName: () => Promise<string | null | undefined>
@@ -83,65 +93,73 @@ export async function printTicketViaCajaOrBrowser(
   elementId: string,
   deps: CajaTicketPrintDeps,
 ): Promise<CajaTicketPrintResult> {
+  if (cajaPrintInFlight) return { mode: 'skipped' }
+  cajaPrintInFlight = true
+
   const browserPrint = deps.browserPrint ?? (() => {
     if (typeof window !== 'undefined') window.print()
   })
   const getContent = deps.getElementHtml ?? defaultGetElementContent
   const forceBrowser = deps.isForceBrowser ?? isCajaPrintForceBrowser
 
-  if (forceBrowser()) {
-    browserPrint()
-    return { mode: 'browser' }
-  }
-
-  let caja: string | null | undefined
   try {
-    caja = await deps.getCajaPrinterName()
-  } catch {
-    browserPrint()
-    return { mode: 'browser' }
-  }
-
-  const printerName = (caja || '').trim()
-  if (!printerName) {
-    browserPrint()
-    return { mode: 'browser' }
-  }
-
-  const content = getContent(elementId)
-  if (!content?.trim()) {
-    browserPrint()
-    return { mode: 'browser' }
-  }
-
-  let logoRaster: Uint8Array | null = null
-  try {
-    const logoSrc = deps.getLogoSrc?.(elementId) ?? findReceiptLogoSrc(elementId)
-    if (logoSrc) {
-      logoRaster = await loadEscPosLogoRasterFromUrl(logoSrc, { elementId })
+    if (forceBrowser()) {
+      browserPrint()
+      return { mode: 'browser' }
     }
-  } catch {
-    logoRaster = null
-  }
 
-  const bridge = deps.bridge ?? useLocalPrintBridge()
-  const timeoutMs = deps.bridgePrintTimeoutMs ?? BRIDGE_PRINT_TIMEOUT_MS
-  try {
-    const outcome = await withTimeout(
-      (async () => {
-        await bridge.connect()
-        return bridge.printRawEscPos(
-          printerName,
-          buildEscPosTicketBytes(content, { logoRaster }),
-        )
-      })(),
-      timeoutMs,
-      'Caja PrintBridge print',
-    )
-    return bridgeResult(printerName, outcome)
-  } catch {
-    browserPrint()
-    return { mode: 'browser' }
+    let caja: string | null | undefined
+    try {
+      caja = await deps.getCajaPrinterName()
+    } catch {
+      browserPrint()
+      return { mode: 'browser' }
+    }
+
+    const printerName = (caja || '').trim()
+    if (!printerName) {
+      browserPrint()
+      return { mode: 'browser' }
+    }
+
+    const content = getContent(elementId)
+    // Reject markup/whitespace that would become cut-only ESC/POS (#2072).
+    if (!content?.trim() || !hasEscPosPrintablePlainText(content)) {
+      browserPrint()
+      return { mode: 'browser' }
+    }
+
+    let logoRaster: Uint8Array | null = null
+    try {
+      const logoSrc = deps.getLogoSrc?.(elementId) ?? findReceiptLogoSrc(elementId)
+      if (logoSrc) {
+        logoRaster = await loadEscPosLogoRasterFromUrl(logoSrc, { elementId })
+      }
+    } catch {
+      logoRaster = null
+    }
+
+    const bridge = deps.bridge ?? useLocalPrintBridge()
+    const timeoutMs = deps.bridgePrintTimeoutMs ?? BRIDGE_PRINT_TIMEOUT_MS
+    try {
+      const outcome = await withTimeout(
+        (async () => {
+          await bridge.connect()
+          return bridge.printRawEscPos(
+            printerName,
+            buildEscPosTicketBytes(content, { logoRaster }),
+          )
+        })(),
+        timeoutMs,
+        'Caja PrintBridge print',
+      )
+      return bridgeResult(printerName, outcome)
+    } catch {
+      browserPrint()
+      return { mode: 'browser' }
+    }
+  } finally {
+    cajaPrintInFlight = false
   }
 }
 
@@ -164,8 +182,8 @@ export type CajaPrintFeedbackToast = {
 }
 
 /**
- * Bridge feedback: success when accepted/completed; warning + retry/browser
- * only for rare unconfirmed outcomes (#2058/#2070).
+ * Bridge feedback: green only on CUPS-confirmed completed; soft-success →
+ * confirm-paper toast with retry / browser (#2058/#2072).
  */
 export function notifyCajaPrintResult(
   result: CajaTicketPrintResult,
@@ -209,7 +227,7 @@ export function notifyCajaPrintResult(
   )
 }
 
-/** @deprecated Prefer notifyCajaPrintResult (also shows success toast). */
+/** @deprecated Prefer notifyCajaPrintResult. */
 export function notifyUnconfirmedCajaPrint(
   result: CajaTicketPrintResult,
   opts: {

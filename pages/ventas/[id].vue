@@ -882,6 +882,10 @@ const printReceipt = async () => {
     })
     return
   }
+  if (printResult.mode === 'skipped') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
   window.print()
   window.setTimeout(cleanup, 1500)

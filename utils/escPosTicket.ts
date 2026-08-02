@@ -383,6 +383,11 @@ export async function loadEscPosLogoRasterFromUrl(
   }
 }
 
+/** True when content yields printable ticket lines (not init/cut-only). */
+export function hasEscPosPrintablePlainText(htmlOrText: string): boolean {
+  return Boolean(normalizeEscPosAscii(ticketHtmlToPlainText(htmlOrText)).trim())
+}
+
 /** Build ESC/POS raw ticket: init + optional logo + lines + optional QR + feed + partial cut. */
 export function buildEscPosTicketBytes(
   text: string,

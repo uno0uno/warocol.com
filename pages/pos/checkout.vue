@@ -2747,6 +2747,10 @@ const printReceipt = async () => {
     })
     return
   }
+  if (printResult.mode === 'skipped') {
+    cleanup()
+    return
+  }
   window.addEventListener('afterprint', cleanup)
   setTimeout(cleanup, 1500)
   window.print()
@@ -3183,6 +3187,10 @@ const printPrefactura = async () => {
         window.print()
       },
     })
+    return
+  }
+  if (printResult.mode === 'skipped') {
+    cleanup()
     return
   }
   window.addEventListener('afterprint', cleanup)

@@ -7,7 +7,7 @@ import {
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
-import { buildEscPosTicketBytes } from '~/utils/escPosTicket'
+import { buildEscPosTicketBytes, hasEscPosPrintablePlainText } from '~/utils/escPosTicket'
 import { nextTick } from 'vue'
 
 export type StationTicketPrintResult = 'bridge' | 'browser'
@@ -129,7 +129,9 @@ export async function printComandasViaBridgeOrBrowser(
       deps.setQueue(group.comandas)
       await waitForDom()
       const content = getContent(elementId)
-      if (!content?.trim()) throw new Error('Missing comanda print content')
+      if (!content?.trim() || !hasEscPosPrintablePlainText(content)) {
+        throw new Error('Missing comanda print content')
+      }
       await bridge.printRawEscPos(group.printerName!, buildEscPosTicketBytes(content))
     }
     // Unmapped leftovers (no caja) — leave queue as leftovers so deferred

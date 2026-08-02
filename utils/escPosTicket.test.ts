@@ -5,6 +5,7 @@ import {
   buildEscPosRasterBytes,
   buildEscPosTicketBytes,
   extractDianQrPayload,
+  hasEscPosPrintablePlainText,
   hasEscPosQrMarker,
   hasEscPosRasterMarker,
   normalizeEscPosAscii,
@@ -75,6 +76,18 @@ describe('buildEscPosQrCodeBytes', () => {
     expect(hasEscPosQrMarker(bytes)).toBe(true)
     const asText = String.fromCharCode(...bytes)
     expect(asText).toContain(SAMPLE_CUFE)
+  })
+})
+
+describe('hasEscPosPrintablePlainText', () => {
+  it('is false for empty or markup-only content', () => {
+    expect(hasEscPosPrintablePlainText('')).toBe(false)
+    expect(hasEscPosPrintablePlainText('   \n')).toBe(false)
+    expect(hasEscPosPrintablePlainText('<div id="pos-receipt"></div>')).toBe(false)
+  })
+
+  it('is true when ticket text remains after strip', () => {
+    expect(hasEscPosPrintablePlainText('<div>Total $10</div>')).toBe(true)
   })
 })
 
