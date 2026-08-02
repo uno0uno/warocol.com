@@ -635,9 +635,12 @@ const itemReceiptTotal = (item: any) => {
 /** Per-line tax cue for items table — same style as POS checkout (#2044). */
 const formatItemTaxDisplay = (item: any): string | null => {
   const category = String(item?.tax_category ?? '').toLowerCase()
+  const resolution = String(item?.tax_resolution ?? '').toLowerCase()
   const amount = Number(item?.tax_amount) || 0
   let label = String(item?.tax_label ?? '').trim()
-  if (!label && category === 'exempt') label = t('pos.cartItem.taxExempt')
+  if (!label && (category === 'exempt' || resolution === 'exempt')) {
+    label = t('pos.cartItem.taxExempt')
+  }
   if (!label) return null
   if (amount > 0) {
     return `+ ${t('pos.cartItem.taxLine', { label, amount: formatCurrency(amount) })}`
@@ -649,6 +652,11 @@ const saleReceiptItems = computed(() =>
   items.value.map((item: any) => {
     const quantity = Number(item.quantity) || 1
     const total = itemReceiptTotal(item)
+    const taxResolution = String(item.tax_resolution ?? '').toLowerCase()
+    const taxCategoryRaw = String(item.tax_category ?? '').toLowerCase()
+    const taxCategory = taxResolution === 'exempt' || taxCategoryRaw === 'exempt'
+      ? 'exempt'
+      : (item.tax_category ?? null)
     return {
       id: item.id,
       productId: item.product?.id ?? item.product_id ?? null,
@@ -663,7 +671,7 @@ const saleReceiptItems = computed(() =>
       promoOptOut: item.promo_opt_out ?? item.promoOptOut ?? null,
       discountAllocated: item.discount_allocated ?? null,
       netTotal: item.net_total ?? null,
-      taxCategory: item.tax_category ?? null,
+      taxCategory,
       taxLabel: item.tax_label ?? null,
       taxAmount: item.tax_amount != null ? Number(item.tax_amount) : null,
       includedInPrice: item.included_in_price ?? null,
