@@ -153,14 +153,14 @@ const productTaxCue = (item: ReceiptItem) => {
   return formatReceiptTaxCue({ label })
 }
 
-const productBlock = (item: ReceiptItem, index: number) =>
+const productBlock = (item: ReceiptItem) =>
   formatReceiptProductBlock({
     name: item.name,
     quantity: item.quantity,
     unitPriceLabel: money(item.unitPrice),
     lineTotalLabel: money(item.total),
     taxCue: productTaxCue(item),
-    index,
+    bullet: true,
   })
 
 const modifierBlock = (modifier: ReceiptItemModifier) =>
@@ -357,7 +357,7 @@ const printableItems = computed(() =>
 
     <template v-for="(item, idx) in printableItems" :key="item.id ?? item.name">
       <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ itemSeparator }}</div>
-      <pre class="receipt-plain-pre">{{ productBlock(item, idx + 1) }}</pre>
+      <pre class="receipt-plain-pre">{{ productBlock(item) }}</pre>
       <pre
         v-for="modifier in (item.modifiers ?? [])"
         :key="`${item.id ?? item.name}-${modifier.id ?? modifier.name}`"

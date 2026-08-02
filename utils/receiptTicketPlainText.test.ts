@@ -124,15 +124,16 @@ describe('formatReceiptProductBlock', () => {
     expect(block).not.toMatch(/Incluye/i)
   })
 
-  it('prefixes a 1-based index on the product name', () => {
+  it('prefixes a bullet on the product name when requested', () => {
     const block = formatReceiptProductBlock({
       name: 'Agua',
       quantity: 1,
       unitPriceLabel: '$3.500',
       lineTotalLabel: '$3.500',
-      index: 2,
+      bullet: true,
     })
-    expect(block.split('\n')[0]).toBe('2. Agua')
+    expect(block.split('\n')[0]).toBe('• Agua')
+    expect(block.split('\n')[0]).not.toMatch(/^\d+\./)
   })
 })
 

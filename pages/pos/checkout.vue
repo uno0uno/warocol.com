@@ -1949,14 +1949,14 @@ const prefacturaTaxBulletLine = (label: string, amount: number | string) =>
   })
 
 
-const prefacturaProductBlock = (item: any, index: number) =>
+const prefacturaProductBlock = (item: any) =>
   formatReceiptProductBlock({
     name: `${item.product?.name || item.name || 'Item'}${isKitchenServiceMode.value && item.fired === false ? ' *' : ''}`,
     quantity: item.quantity,
     unitPriceLabel: formatCurrencyThermal(getItemUnitPrice(item)),
     lineTotalLabel: formatCurrencyThermal(getItemTotal(item)),
     taxCue: lineTaxCueForPrint(item),
-    index,
+    bullet: true,
   })
 
 const prefacturaModifierBlock = (mod: PrintModifier) =>
@@ -5619,7 +5619,7 @@ onUnmounted(() => {
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
     <template v-for="(item, idx) in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
       <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ prefacturaItemSep }}</div>
-      <pre class="receipt-plain-pre">{{ prefacturaProductBlock(item, idx + 1) }}</pre>
+      <pre class="receipt-plain-pre">{{ prefacturaProductBlock(item) }}</pre>
       <pre
         v-for="mod in (item.modifiers ?? [])"
         :key="`${item.id ?? item.orderItemId}-${mod.id}`"
@@ -5754,7 +5754,7 @@ onUnmounted(() => {
     <template v-for="(item, idx) in printableReceiptItems" :key="item.id ?? item.orderItemId">
       <div v-if="idx > 0" class="receipt-divider receipt-small">{{ prefacturaItemSep }}</div>
       <div class="receipt-grid-row receipt-small">
-        <span class="receipt-col-desc">{{ idx + 1 }}. {{ item.product?.name || item.name }}</span>
+        <span class="receipt-col-desc">• {{ item.product?.name || item.name }}</span>
         <span class="receipt-col-qty">{{ item.quantity }}</span>
         <span class="receipt-col-price">{{ formatCurrencyThermal(getItemUnitPrice(item)) }}</span>
         <span class="receipt-col-total">{{ formatCurrencyThermal(getItemTotal(item)) }}</span>
