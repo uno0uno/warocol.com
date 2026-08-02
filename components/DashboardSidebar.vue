@@ -20,14 +20,13 @@
     <template #brand>
       <NuxtLink
         :to="dashboardHome"
-        class="flex h-11 w-[7.25rem] min-w-0 items-center justify-center overflow-hidden"
+        class="flex h-11 w-[8.5rem] min-w-0 items-center justify-center overflow-hidden"
         :aria-label="t('shell.goToDashboardHome')"
       >
         <img
-          :key="route.fullPath"
-          :src="sidebarLogoAnimationSrc"
+          :src="sidebarLogoSrc"
           alt="WARO"
-          class="h-7 w-full object-contain"
+          class="h-7 w-auto max-w-full object-contain"
         />
       </NuxtLink>
     </template>
@@ -194,13 +193,11 @@ defineEmits<{
 }>()
 
 const isLoggingOut = ref(false)
-const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
-const sidebarLogoAnimationSrc = computed(() =>
-  `/brand/waro-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
-)
+/** Static wordmark for dark slide menu (white fills). */
+const sidebarLogoSrc = '/brand/waro-colombia-logo.svg'
 
 const { hasCriticalAlerts } = useDataQualityStatus()
 

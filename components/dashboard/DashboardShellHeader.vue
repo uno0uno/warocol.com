@@ -5,14 +5,13 @@
         <NuxtLink
           v-if="!hideLogo"
           :to="dashboardHome"
-          class="dashboard-header-logo hidden xl:flex h-12 w-fit min-w-[214px] flex-shrink-0 items-center justify-center overflow-visible"
+          class="dashboard-header-logo hidden xl:flex h-12 w-fit max-w-[220px] flex-shrink-0 items-center justify-start overflow-visible"
           :aria-label="t('shell.goToDashboardHome')"
         >
           <img
-            :key="route.fullPath"
-            :src="logoAnimationSrc"
+            :src="headerLogoSrc"
             alt="WARO"
-            class="h-10 w-full object-contain"
+            class="h-8 w-auto max-h-9 object-contain object-left"
           />
         </NuxtLink>
 
@@ -110,7 +109,6 @@
 <script setup lang="ts">
 import { getDashboardHome } from '~/utils/internalAccess'
 
-const route = useRoute()
 const { t } = useI18n()
 const accessStore = useAccessStore()
 
@@ -118,9 +116,8 @@ const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
 )
 
-const logoAnimationSrc = computed(() =>
-  `/brand/waro-animated.svg?route=${encodeURIComponent(route.fullPath)}`,
-)
+/** Same SVG as slide menu: navy outline + white letter fills. */
+const headerLogoSrc = '/brand/waro-colombia-logo.svg'
 
 defineProps<{
   status?: { label: string; color: string }
