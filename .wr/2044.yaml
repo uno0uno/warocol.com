@@ -1,0 +1,38 @@
+# Compact plan for wr-fast #2044 (front PR)
+issue: 2044
+title: "fix(ventas): per-line tax cues on sale reprint and items table like POS checkout"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2044-ventas-tax-cues
+based_on: wr-2042-product-tax-cue (#2043)
+api_pr: https://github.com/uno0uno/api-warolabs/pull/772
+
+paths:
+  - pages/ventas/[id].vue
+  - .wr/2044.yaml
+
+ac:
+  - saleReceiptItems maps taxAmount/taxLabel/taxCategory/includedInPrice for ReceiptPrintTicket
+  - Items table shows + LABEL · $amount under product (no Incluye)
+  - Exempt shows + Exento when applicable
+
+out_of_scope:
+  - API (PR 772)
+  - Checkout #2042 changes (already on base branch)
+
+hints:
+  entry: "saleReceiptItems + formatItemTaxDisplay"
+  pattern: "pages/pos/checkout.vue formatLineTaxDisplay"
+  tests: "manual — depends on API fields; bun test utils/receiptTicketPlainText.test.ts already on base"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge API 772 then front; wr-review"
