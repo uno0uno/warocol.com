@@ -166,13 +166,12 @@ export function formatReceiptProductBlock(opts: {
   lineTotalLabel: string
   taxCue?: string | null
   cols?: number
-  /** 1-based line number shown before the product name. */
-  index?: number | null
+  /** Prefix product name with a bullet (not a number). */
+  bullet?: boolean | null
 }): string {
   const cols = opts.cols ?? RECEIPT_THERMAL_COLS
   const nameRaw = String(opts.name ?? '').trim() || 'Item'
-  const index = Number(opts.index)
-  const name = Number.isFinite(index) && index > 0 ? `${index}. ${nameRaw}` : nameRaw
+  const name = opts.bullet ? `• ${nameRaw}` : nameRaw
   const unit = compactThermalMoneyLabel(opts.unitPriceLabel)
   const total = compactThermalMoneyLabel(opts.lineTotalLabel)
   const left = `${opts.quantity} x ${unit}`
