@@ -2,7 +2,7 @@
 /**
  * Compact header control when sticky browser-print is active (#2062/#2064).
  * Clears force-browser so the next caja ticket uses the thermal printer again.
- * Copy lives under shell.* so the dashboard header always resolves i18n.
+ * Quiet chip — temporary mode, not a primary CTA.
  */
 const { t, te } = useI18n({ useScope: 'global' })
 const { clearForceBrowser } = useCajaPrintPreference()
@@ -27,7 +27,7 @@ const title = computed(() =>
 <template>
   <button
     type="button"
-    class="h-9 max-w-[9.5rem] flex-shrink-0 inline-flex items-center justify-center rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
+    class="h-8 max-w-[7.5rem] flex-shrink-0 inline-flex items-center justify-center rounded-md px-2 text-[11px] font-medium text-text-secondary bg-surface-secondary/60 hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
     :title="title"
     :aria-label="ariaLabel"
     @click="clearForceBrowser"

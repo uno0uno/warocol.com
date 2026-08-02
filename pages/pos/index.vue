@@ -2202,16 +2202,16 @@ onUnmounted(() => {
         type="button"
         :aria-label="readyComandasCount > 0 ? t('pos.banner.comandasStatusReady', { count: readyComandasCount }) : t('pos.banner.comandasStatus')"
         :title="readyComandasCount > 0 ? (readyComandasCount === 1 ? t('pos.banner.comandasReadyTitleOne', { count: readyComandasCount }) : t('pos.banner.comandasReadyTitleMany', { count: readyComandasCount })) : t('pos.banner.comandasStatus')"
-        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-action-secondary-bg text-action-secondary-text text-sm font-medium hover:bg-action-secondary-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action-secondary-focus-ring me-1.5 md:me-2 px-2.5 sm:px-3 md:px-4"
-        :class="readyComandasCount > 0 ? 'ring-1 ring-state-success-border/60' : ''"
+        class="relative inline-flex items-center gap-1.5 h-9 rounded-lg border border-shell-action-border bg-shell-action-bg text-shell-action-text text-sm font-medium hover:bg-shell-action-hover-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-shell-action-focus-ring px-2 xl:px-2.5"
+        :class="readyComandasCount > 0 ? 'ring-1 ring-state-success-border/50' : ''"
         @click="showExpediterPanel = true"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
           <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
           <path d="m9 14 2 2 4-4"/>
         </svg>
-        <span class="hidden sm:inline text-sm font-medium">{{ t('pos.banner.comandas') }}</span>
+        <span class="hidden xl:inline text-sm font-medium">{{ t('pos.banner.comandas') }}</span>
         <!-- Count badge: numeric on sm+, dot indicator on mobile -->
         <span
           v-if="readyComandasCount > 0"
