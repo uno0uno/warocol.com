@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import {
-  notifyUnconfirmedCajaPrint,
+  notifyCajaPrintResult,
   printTicketViaCajaOrBrowser,
 } from './useCajaTicketPrint'
 import type { LocalPrintBridge } from './useLocalPrintBridge'
@@ -64,19 +64,19 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
-  it('returns unconfirmed when CUPS soft-success outcome is reported', async () => {
+  it('returns confirmed when CUPS soft-success outcome is reported as completed', async () => {
     const browserPrint = mock(() => {})
     const result = await printTicketViaCajaOrBrowser('pos-receipt', {
       getCajaPrinterName: async () => 'STAR_TP586',
       bridge: fakeBridge({
-        printRawEscPos: mock(() => Promise.resolve('unconfirmed' as const)),
+        printRawEscPos: mock(() => Promise.resolve('completed' as const)),
       }),
       getElementHtml: () => '<div id="pos-receipt">OK</div>',
       browserPrint,
       isForceBrowser: () => false,
     })
 
-    expect(result).toEqual({ mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' })
+    expect(result).toEqual({ mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' })
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
@@ -180,20 +180,43 @@ describe('printTicketViaCajaOrBrowser', () => {
   })
 })
 
-describe('notifyUnconfirmedCajaPrint', () => {
+describe('notifyCajaPrintResult', () => {
+  it('shows success toast for confirmed bridge results', () => {
+    const success = mock(() => 1)
+    const warning = mock(() => 1)
+    const t = (key: string, params?: Record<string, unknown>) =>
+      params?.name ? `${key}:${params.name}` : key
+
+    notifyCajaPrintResult(
+      { mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' },
+      {
+        t,
+        toast: { success, warning },
+        onRetry: () => {},
+        onBrowserPrint: () => {},
+      },
+    )
+
+    expect(success).toHaveBeenCalledTimes(1)
+    expect(warning).toHaveBeenCalledTimes(0)
+    expect(success.mock.calls[0]![1].title).toBe('pos.receipt.printOkTitle')
+  })
+
   it('shows retry and browser actions only for unconfirmed bridge results', () => {
+    const success = mock(() => 1)
     const warning = mock(() => 1)
     const onRetry = mock(() => {})
     const onBrowserPrint = mock(() => {})
     const t = (key: string, params?: Record<string, unknown>) =>
       params?.name ? `${key}:${params.name}` : key
 
-    notifyUnconfirmedCajaPrint(
+    notifyCajaPrintResult(
       { mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' },
-      { t, toast: { warning }, onRetry, onBrowserPrint },
+      { t, toast: { success, warning }, onRetry, onBrowserPrint },
     )
 
     expect(warning).toHaveBeenCalledTimes(1)
+    expect(success).toHaveBeenCalledTimes(0)
     const [, options] = warning.mock.calls[0]!
     expect(options.title).toBe('pos.receipt.printUnconfirmedTitle')
     expect(options.actions).toHaveLength(2)
@@ -201,26 +224,20 @@ describe('notifyUnconfirmedCajaPrint', () => {
     options.actions[1].onClick()
     expect(onRetry).toHaveBeenCalledTimes(1)
     expect(onBrowserPrint).toHaveBeenCalledTimes(1)
-
-    warning.mockClear()
-    notifyUnconfirmedCajaPrint(
-      { mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' },
-      { t, toast: { warning }, onRetry, onBrowserPrint },
-    )
-    expect(warning).toHaveBeenCalledTimes(0)
   })
 
   it('enables sticky force-browser when cashier chooses browser CTA', () => {
     localStorage.removeItem('waro.cajaPrint.forceBrowser')
+    const success = mock(() => 1)
     const warning = mock(() => 1)
     const onBrowserPrint = mock(() => {})
     const t = (key: string) => key
 
-    notifyUnconfirmedCajaPrint(
+    notifyCajaPrintResult(
       { mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' },
       {
         t,
-        toast: { warning },
+        toast: { success, warning },
         onRetry: () => {},
         onBrowserPrint,
       },

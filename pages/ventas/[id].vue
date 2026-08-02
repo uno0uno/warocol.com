@@ -11,7 +11,7 @@ import {
   buildCustomerIdentityPresentation,
   formatFiscalIdentityLabel,
 } from '~/utils/customerIdentityPresentation'
-import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
@@ -869,7 +869,7 @@ const printReceipt = async () => {
   })
   if (printResult.mode === 'bridge') {
     cleanup()
-    notifyUnconfirmedCajaPrint(printResult, {
+    notifyCajaPrintResult(printResult, {
       t,
       toast: useToast(),
       onRetry: () => { void printReceipt() },

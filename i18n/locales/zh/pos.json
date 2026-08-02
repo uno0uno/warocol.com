@@ -695,6 +695,8 @@
       "promoFallback": "促销",
       "tipTax": "小费税",
       "totalChargedUpper": "已收总额",
+      "printOkTitle": "Ticket sent",
+      "printOkBody": "Printed on {name}",
       "printUnconfirmedTitle": "Check the printer",
       "printUnconfirmedBody": "Sent to {name}, but we could not confirm the ticket printed. Is it powered on?",
       "printRetry": "Retry",

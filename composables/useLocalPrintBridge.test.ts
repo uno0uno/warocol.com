@@ -190,7 +190,7 @@ describe('createLocalPrintBridge', () => {
       })
   })
 
-  it('resolves unconfirmed when CUPS purges job status after submit (no auto browser fallback)', async () => {
+  it('resolves completed when CUPS purges job status after submit (Star soft-success)', async () => {
     let statusHandler: ((event: { requestId?: string; status?: string; message?: string }) => void) | null = null
     const printSpy = mock(async (job: Record<string, unknown>) => {
       const requestId = String(job.requestId)
@@ -213,7 +213,7 @@ describe('createLocalPrintBridge', () => {
 
     const bridge = createLocalPrintBridge()
     await expect(bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok')))
-      .resolves.toBe('unconfirmed')
+      .resolves.toBe('completed')
     expect(printSpy).toHaveBeenCalledTimes(1)
   })
 

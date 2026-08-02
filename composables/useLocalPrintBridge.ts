@@ -54,7 +54,7 @@ function newPrintRequestId(): string {
  * Star/CUPS often purges the job right after accept. PrintBridge then emits
  * `unknown` + "CUPS job status was no longer available". That is not a print
  * failure — treating it as one caused thermal + window.print double tickets.
- * Callers should treat it as unconfirmed and offer a manual browser CTA (#2058).
+ * Treat as completed: Star reports this even when the ticket prints (#2070).
  * Real offline failures use other messages (e.g. "Unable to send data…").
  */
 export function isCupsJobStatusGoneSoftSuccess(
@@ -88,10 +88,10 @@ export function waitForPrintTerminalStatus(
         resolve('completed')
         return
       }
-      // CUPS purged job after submit — not hard fail; not confirmed either (#2058).
+      // CUPS purged job after submit — normal for Star; treat as success (#2070).
       if (isCupsJobStatusGoneSoftSuccess(status, message)) {
         off()
-        resolve('unconfirmed')
+        resolve('completed')
         return
       }
       if (PRINT_FAILURE_STATUSES.has(status)) {
