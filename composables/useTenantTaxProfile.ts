@@ -513,6 +513,12 @@ export function buildCoTaxSavePayload(options: {
     for (const line of tax_lines) allowedKeys.add(line.key)
   }
 
+  const primaryKey = options.inc_applicable
+    ? 'inc'
+    : (options.iva_applicable ? 'iva' : null)
+  const legacyPrimary = primaryKey === 'inc' ? 'iva' : (primaryKey === 'iva' ? 'inc' : null)
+
+  // Remap stale iva↔inc menu keys when Perfil de ventas flips (#2031).
   const menu_category_line_map: Record<string, string | null> = {}
   for (const [catId, lineKey] of Object.entries(options.menu_category_line_map || {})) {
     const id = String(catId || '').trim()
@@ -521,14 +527,15 @@ export function buildCoTaxSavePayload(options: {
       menu_category_line_map[id] = null
       continue
     }
-    const key = String(lineKey)
+    let key = String(lineKey)
+    if (legacyPrimary && key === legacyPrimary && primaryKey) {
+      key = primaryKey
+    } else if ((key === 'iva' || key === 'inc') && primaryKey && key !== primaryKey) {
+      key = primaryKey
+    }
     if (!allowedKeys.has(key)) continue
     menu_category_line_map[id] = key
   }
-
-  const primaryKey = options.inc_applicable
-    ? 'inc'
-    : (options.iva_applicable ? 'iva' : null)
   const category_map = options.category_map
     ? {
         standard: resolveCategoryMapValue(options.category_map.standard, primaryKey),
