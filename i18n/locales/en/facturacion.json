@@ -124,6 +124,7 @@
     },
     "fiscal": {
       "sectionTitle": "Fiscal data",
+      "sectionTitleCombined": "Fiscal data and taxes",
       "body": "",
       "nit": "NIT",
       "businessName": "Legal name",
@@ -140,6 +141,7 @@
       "email": "Invoicing email",
       "emailPlaceholder": "billing{'@'}myrestaurant.com",
       "save": "Save fiscal data",
+      "saveCombined": "Save fiscal data and taxes",
       "miNegocio": "My business",
       "identityTitle": "Identity",
       "identityHint": "",

@@ -1,0 +1,32 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2033
+title: "Facturación: unify Datos fiscales + Impuestos into one save"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2033-unify-fiscal-tax
+risk: low
+
+paths:
+  - pages/facturacion/index.vue
+  - i18n/locales/es/facturacion.json
+  - i18n/locales/en/facturacion.json
+
+ac:
+  - CO Facturación: one card for identity + Perfil de ventas + Impuestos
+  - One Guardar sends fiscal-data with nested tax_config (no second tax-config PUT)
+  - Commercial Impuestos card + save unchanged
+  - tax-config GET still used for Menú elsewhere
+
+out_of_scope:
+  - DIAN / Matias provider / print tickets merge
+  - Deleting tax-config endpoints
+
+hints:
+  entry: "saveFiscalData builds tax_config; template nests CO tax under fiscal card"
+  pattern: "commercial card v-if=showCommercialTaxUi"
+  tests: "bunx vitest run composables/useTenantTaxProfile.test.ts"
+
+skip:
+  audits: [ux, color, typography]

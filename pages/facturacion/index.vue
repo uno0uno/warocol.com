@@ -1097,16 +1097,19 @@ const saveFiscalData = async () => {
   isSavingFiscal.value = true
   try {
     applySalesTaxProfile()
-    await $fetch('/api/api/tenant/fiscal-data', {
-      method: 'PUT',
-      body: {
-        ...fiscalForm,
-        matias_company_id: fiscalForm.matias_company_id.trim(),
-      },
-    })
-    // #2031 — same as commercial: one save keeps Impuestos tax_lines aligned.
-    // Do not require liquor category mapping here (Impuestos owns that UX).
+    // #2033 — one PUT: fiscal identity/profile + Impuestos tax_config (CO).
+    let tax_config: Record<string, unknown> | undefined
     if (!isWaroCommercial.value) {
+      if (taxForm.liquor_tax_applicable && categoriesMappedToLine('liquor').length === 0) {
+        toast.error(t('facturacion.tax.liquorCategoriesRequired'), { title: t('facturacion.common.error') })
+        return
+      }
+      for (const line of coCustomLines.value) {
+        if (!String(line.label || '').trim()) {
+          toast.error(t('facturacion.tax.matrixError.missing_label'), { title: t('facturacion.common.error') })
+          return
+        }
+      }
       const tax_lines = buildCoTaxLinesDraft({
         inc_applicable: taxForm.inc_applicable,
         iva_applicable: taxForm.iva_applicable,
@@ -1119,24 +1122,36 @@ const saveFiscalData = async () => {
         liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
         custom_lines: coCustomLinesToDraft(),
       })
-      await $fetch('/api/api/tenant/tax-config', {
-        method: 'PUT',
-        body: buildCoTaxSavePayload({
-          inc_applicable: taxForm.inc_applicable,
-          inc_included_in_price: taxForm.inc_included_in_price,
-          iva_applicable: taxForm.iva_applicable,
-          iva_included_in_price: taxForm.iva_included_in_price,
-          liquor_tax_applicable: taxForm.liquor_tax_applicable,
-          liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
-          iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
-          inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
-          liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
-          menu_category_line_map: { ...menuCategoryLineMap.value },
-          exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
-          tax_lines,
-        }),
+      const modeError = validateTaxLineModes(tax_lines)
+      if (modeError) {
+        toast.error(t('facturacion.tax.matrixError.stack_exclusive_group'), {
+          title: t('facturacion.common.error'),
+        })
+        return
+      }
+      tax_config = buildCoTaxSavePayload({
+        inc_applicable: taxForm.inc_applicable,
+        inc_included_in_price: taxForm.inc_included_in_price,
+        iva_applicable: taxForm.iva_applicable,
+        iva_included_in_price: taxForm.iva_included_in_price,
+        liquor_tax_applicable: taxForm.liquor_tax_applicable,
+        liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
+        iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
+        inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
+        liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+        menu_category_line_map: { ...menuCategoryLineMap.value },
+        exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
+        tax_lines,
       })
     }
+    await $fetch('/api/api/tenant/fiscal-data', {
+      method: 'PUT',
+      body: {
+        ...fiscalForm,
+        matias_company_id: fiscalForm.matias_company_id.trim(),
+        ...(tax_config ? { tax_config } : {}),
+      },
+    })
     await refreshFiscal()
     await refreshTaxConfig()
     invalidateReadiness()
@@ -1310,7 +1325,7 @@ const matiasRegimeLabel = computed(() => {
     <div v-if="isFiscalIntegrated" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 space-y-5">
       <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2">
         <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
-        {{ t('facturacion.fiscal.sectionTitle') }}
+        {{ t('facturacion.fiscal.sectionTitleCombined') }}
       </h3>
 
       <!-- 1) Identity -->
@@ -1461,338 +1476,11 @@ const matiasRegimeLabel = computed(() => {
         </div>
       </section>
 
-      <div class="flex justify-end pt-1">
-        <button
-          @click="saveFiscalData"
-          :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name || fiscalForm.sales_tax_profile === 'unconfigured'"
-          class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
-        >
-          <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
-          <span>{{ isSavingFiscal ? t('facturacion.common.saving') : t('facturacion.fiscal.save') }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ══════ CONFIGURACIÓN FISCAL ══════ -->
-    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-        <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        {{ t('facturacion.tax.title') }}
-      </h3>
-
-      <!-- Commercial / non-DIAN: enable toggle + tax lines matrix + category map -->
-      <div v-if="showCommercialTaxUi" class="space-y-5">
-        <div class="flex items-center justify-between py-1">
-          <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.commercialEnableTitle') }}</p>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
-            <input v-model="commercialTaxApplicable" type="checkbox" class="sr-only peer" />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-          </label>
-        </div>
-
-        <div
-          v-if="showWave1CountryLocked"
-          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
-          role="status"
-        >
-          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
-          <p
-            :class="commercialTaxApplicable
-              ? 'text-sm font-semibold text-text-primary'
-              : 'text-sm text-text-secondary'"
-          >
-            {{ profileCountryCode }}
-            <span v-if="commercialTaxApplicable && commercialPresetPrimaryLabel(profileCountryCode)">
-              — {{ commercialPresetPrimaryLabel(profileCountryCode) }}
-            </span>
-          </p>
-        </div>
-
-        <div
-          v-else-if="showJurisdictionSummary"
-          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
-          role="status"
-        >
-          <p class="text-xs text-text-secondary">
-            {{ profileCountryCode === 'CA'
-              ? t('facturacion.tax.provinceLabel')
-              : t('facturacion.tax.stateLabel') }}
-          </p>
-          <p
-            :class="commercialTaxApplicable
-              ? 'text-sm font-semibold text-text-primary'
-              : 'text-sm text-text-secondary'"
-          >
-            {{ storedJurisdictionCode }}
-          </p>
-        </div>
-
-        <template v-if="commercialTaxApplicable">
-          <div v-if="showJurisdictionPicker" class="space-y-2">
-            <label for="tax-jurisdiction" class="text-sm font-medium text-text-primary">
-              {{ profileCountryCode === 'CA'
-                ? t('facturacion.tax.provinceLabel')
-                : t('facturacion.tax.stateLabel') }}
-            </label>
-            <select
-              id="tax-jurisdiction"
-              v-model="commercialJurisdictionCode"
-              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-              @change="onJurisdictionChange"
-            >
-              <option value="">{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
-              <option
-                v-for="option in jurisdictionOptions"
-                :key="option.code"
-                :value="option.code"
-              >
-                {{ option.code }} — {{ option.label }} ({{ Math.round(option.rate * 10000) / 100 }}%)
-              </option>
-            </select>
-          </div>
-
-          <div v-else-if="showWave1CountryPicker" class="space-y-2">
-            <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
-              {{ t('facturacion.tax.wave1Preset') }}
-            </label>
-            <select
-              id="wave1-tax-preset"
-              v-model="commercialPresetCountry"
-              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
-              @change="onCommercialPresetChange"
-            >
-              <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
-              <option v-for="code in COMMERCIAL_COUNTRY_CODES" :key="code" :value="code">
-                {{ code }} — {{ commercialPresetPrimaryLabel(code) }}
-              </option>
-            </select>
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex items-start justify-between gap-3">
-              <p class="text-sm font-semibold text-text-primary tracking-tight">{{ t('facturacion.tax.matrixTitle') }}</p>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-opacity"
-                :disabled="commercialLines.length >= MAX_COMMERCIAL_TAX_LINES"
-                @click="addCommercialLine"
-              >
-                <PlusIcon class="w-4 h-4" aria-hidden="true" />
-                {{ t('facturacion.tax.addLine') }}
-              </button>
-            </div>
-
-            <div
-              v-for="(line, lineIndex) in commercialLines"
-              :key="line.key"
-              class="rounded-xl border border-border bg-surface p-3 space-y-3"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
-                  {{ t('facturacion.tax.lineLabel') }} {{ lineIndex + 1 }}
-                </p>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg text-sm font-medium text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30 disabled:opacity-35 disabled:pointer-events-none transition-colors"
-                  :disabled="commercialLines.length <= 1"
-                  :aria-label="t('facturacion.tax.removeLine')"
-                  @click="removeCommercialLine(line.key)"
-                >
-                  <TrashIcon class="w-4 h-4" aria-hidden="true" />
-                  <span class="hidden sm:inline">{{ t('facturacion.tax.removeLine') }}</span>
-                </button>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label :for="`tax-line-label-${line.key}`" class="text-xs font-medium text-text-secondary">
-                    {{ t('facturacion.tax.lineLabel') }}
-                  </label>
-                  <input
-                    :id="`tax-line-label-${line.key}`"
-                    v-model="line.label"
-                    type="text"
-                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  >
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label :for="`tax-line-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
-                    {{ t('facturacion.tax.ratePercent') }}
-                  </label>
-                  <input
-                    :id="`tax-line-rate-${line.key}`"
-                    v-model.number="line.ratePct"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary tabular-nums focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  >
-                </div>
-              </div>
-
-              <div class="space-y-1.5">
-                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howCommercial') }}</p>
-                <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
-                  <button
-                    type="button"
-                    :aria-pressed="line.included_in_price"
-                    @click="line.included_in_price = true"
-                    :class="[
-                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-                      line.included_in_price
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
-                    ]"
-                  >
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
-                    </svg>
-                    <span>{{ t('facturacion.tax.included') }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    :aria-pressed="!line.included_in_price"
-                    @click="line.included_in_price = false"
-                    :class="[
-                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-                      !line.included_in_price
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
-                    ]"
-                  >
-                    <PlusIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{{ t('facturacion.tax.added') }}</span>
-                  </button>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.lineCategories') }}</p>
-
-                <div class="relative">
-                  <input
-                    :id="`tax-line-cat-search-${line.key}`"
-                    type="search"
-                    autocomplete="off"
-                    :value="categorySearchByLine[line.key] || ''"
-                    :placeholder="t('facturacion.tax.searchCategory')"
-                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    @focus="openCategorySearch(line.key)"
-                    @blur="closeCategorySearchSoon(line.key)"
-                    @input="onCategorySearchInput(line.key, $event)"
-                  >
-                  <ul
-                    v-if="categorySearchOpenKey === line.key && filteredCategoriesForLine(line.key).length"
-                    class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
-                    role="listbox"
-                  >
-                    <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`${line.key}-${choice.id}`">
-                      <button
-                        type="button"
-                        class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
-                        @mousedown.prevent="assignCategoryToLine(choice.id, line.key)"
-                      >
-                        {{ choice.name }}
-                        <span
-                          v-if="menuCategoryLineMap[choice.id] && menuCategoryLineMap[choice.id] !== line.key"
-                          class="ms-1 text-xs text-text-tertiary"
-                        >
-                          · {{ t('facturacion.tax.categoryReassignHint') }}
-                        </span>
-                        <span
-                          v-else-if="exemptMenuCategoryIds.includes(choice.id)"
-                          class="ms-1 text-xs text-text-tertiary"
-                        >
-                          · {{ t('facturacion.tax.mapExempt') }}
-                        </span>
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-
-                <ul v-if="categoriesMappedToLine(line.key).length" class="flex flex-wrap gap-2" role="list">
-                  <li
-                    v-for="catId in categoriesMappedToLine(line.key)"
-                    :key="`${line.key}-chip-${catId}`"
-                    class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
-                  >
-                    <span>{{ menuCategoryLabel(catId) }}</span>
-                    <button
-                      type="button"
-                      class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
-                      :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
-                      @click="unassignCategory(catId)"
-                    >
-                      ×
-                    </button>
-                  </li>
-                </ul>
-                <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noCategoriesYet') }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4">
-            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.exemptTitle') }}</p>
-            <div class="relative">
-              <input
-                id="tax-exempt-cat-search"
-                type="search"
-                autocomplete="off"
-                :value="exemptSearch"
-                :placeholder="t('facturacion.tax.searchExemptCategory')"
-                class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                @focus="openExemptSearch"
-                @blur="closeExemptSearchSoon"
-                @input="onExemptSearchInput"
-              >
-              <ul
-                v-if="exemptSearchOpen && filteredExemptCategories.length"
-                class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
-                role="listbox"
-              >
-                <li v-for="choice in filteredExemptCategories" :key="`exempt-${choice.id}`">
-                  <button
-                    type="button"
-                    class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
-                    @mousedown.prevent="assignExemptCategory(choice.id)"
-                  >
-                    {{ choice.name }}
-                    <span
-                      v-if="menuCategoryLineMap[choice.id]"
-                      class="ms-1 text-xs text-text-tertiary"
-                    >
-                      · {{ t('facturacion.tax.categoryReassignHint') }}
-                    </span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <ul v-if="exemptMenuCategoryIds.length" class="flex flex-wrap gap-2" role="list">
-              <li
-                v-for="catId in exemptMenuCategoryIds"
-                :key="`exempt-chip-${catId}`"
-                class="text-xs bg-surface-secondary text-text-secondary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-border"
-              >
-                <span>{{ menuCategoryLabel(catId) }}</span>
-                <button
-                  type="button"
-                  class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
-                  :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
-                  @click="unassignExemptCategory(catId)"
-                >
-                  ×
-                </button>
-              </li>
-            </ul>
-            <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noExemptYet') }}</p>
-          </div>
-        </template>
-      </div>
-
-      <!-- CO fiscal-integrated: profile + primary (IVA|INC) + liquor + custom -->
-      <div v-else class="space-y-4">
+      <section class="space-y-4 border-t border-border/40 pt-5" aria-labelledby="fiscal-tax-heading">
+        <h4 id="fiscal-tax-heading" class="text-sm font-semibold text-text-primary flex items-center gap-2">
+          <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
+          {{ t('facturacion.tax.title') }}
+        </h4>
 
         <div class="space-y-2">
           <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.coProfileTitle') }}</p>
@@ -2454,6 +2142,335 @@ const matiasRegimeLabel = computed(() => {
           </ul>
         </div>
 
+      </section>
+
+      <div class="flex justify-end pt-1">
+        <button
+          @click="saveFiscalData"
+          :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name || fiscalForm.sales_tax_profile === 'unconfigured'"
+          class="px-4 py-2 text-sm font-medium bg-action-primary-bg text-action-primary-text rounded-lg hover:bg-action-primary-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+        >
+          <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
+          <span>{{ isSavingFiscal ? t('facturacion.common.saving') : t('facturacion.fiscal.saveCombined') }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════ IMPUESTOS (commercial / non-DIAN) ══════ -->
+    <div v-if="showCommercialTaxUi" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+        <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
+        {{ t('facturacion.tax.title') }}
+      </h3>
+      <!-- Commercial / non-DIAN: enable toggle + tax lines matrix + category map -->
+      <div v-if="showCommercialTaxUi" class="space-y-5">
+        <div class="flex items-center justify-between py-1">
+          <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.commercialEnableTitle') }}</p>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
+            <input v-model="commercialTaxApplicable" type="checkbox" class="sr-only peer" />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+
+        <div
+          v-if="showWave1CountryLocked"
+          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
+          role="status"
+        >
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.wave1Preset') }}</p>
+          <p
+            :class="commercialTaxApplicable
+              ? 'text-sm font-semibold text-text-primary'
+              : 'text-sm text-text-secondary'"
+          >
+            {{ profileCountryCode }}
+            <span v-if="commercialTaxApplicable && commercialPresetPrimaryLabel(profileCountryCode)">
+              — {{ commercialPresetPrimaryLabel(profileCountryCode) }}
+            </span>
+          </p>
+        </div>
+
+        <div
+          v-else-if="showJurisdictionSummary"
+          class="rounded-lg border border-border bg-surface-secondary px-3 py-2.5 space-y-1"
+          role="status"
+        >
+          <p class="text-xs text-text-secondary">
+            {{ profileCountryCode === 'CA'
+              ? t('facturacion.tax.provinceLabel')
+              : t('facturacion.tax.stateLabel') }}
+          </p>
+          <p
+            :class="commercialTaxApplicable
+              ? 'text-sm font-semibold text-text-primary'
+              : 'text-sm text-text-secondary'"
+          >
+            {{ storedJurisdictionCode }}
+          </p>
+        </div>
+
+        <template v-if="commercialTaxApplicable">
+          <div v-if="showJurisdictionPicker" class="space-y-2">
+            <label for="tax-jurisdiction" class="text-sm font-medium text-text-primary">
+              {{ profileCountryCode === 'CA'
+                ? t('facturacion.tax.provinceLabel')
+                : t('facturacion.tax.stateLabel') }}
+            </label>
+            <select
+              id="tax-jurisdiction"
+              v-model="commercialJurisdictionCode"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+              @change="onJurisdictionChange"
+            >
+              <option value="">{{ t('facturacion.tax.jurisdictionPlaceholder') }}</option>
+              <option
+                v-for="option in jurisdictionOptions"
+                :key="option.code"
+                :value="option.code"
+              >
+                {{ option.code }} — {{ option.label }} ({{ Math.round(option.rate * 10000) / 100 }}%)
+              </option>
+            </select>
+          </div>
+
+          <div v-else-if="showWave1CountryPicker" class="space-y-2">
+            <label for="wave1-tax-preset" class="text-sm font-medium text-text-primary">
+              {{ t('facturacion.tax.wave1Preset') }}
+            </label>
+            <select
+              id="wave1-tax-preset"
+              v-model="commercialPresetCountry"
+              class="w-full min-h-[44px] rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary"
+              @change="onCommercialPresetChange"
+            >
+              <option value="">{{ t('facturacion.tax.wave1PresetPlaceholder') }}</option>
+              <option v-for="code in COMMERCIAL_COUNTRY_CODES" :key="code" :value="code">
+                {{ code }} — {{ commercialPresetPrimaryLabel(code) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-sm font-semibold text-text-primary tracking-tight">{{ t('facturacion.tax.matrixTitle') }}</p>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+                :disabled="commercialLines.length >= MAX_COMMERCIAL_TAX_LINES"
+                @click="addCommercialLine"
+              >
+                <PlusIcon class="w-4 h-4" aria-hidden="true" />
+                {{ t('facturacion.tax.addLine') }}
+              </button>
+            </div>
+
+            <div
+              v-for="(line, lineIndex) in commercialLines"
+              :key="line.key"
+              class="rounded-xl border border-border bg-surface p-3 space-y-3"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                  {{ t('facturacion.tax.lineLabel') }} {{ lineIndex + 1 }}
+                </p>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg text-sm font-medium text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30 disabled:opacity-35 disabled:pointer-events-none transition-colors"
+                  :disabled="commercialLines.length <= 1"
+                  :aria-label="t('facturacion.tax.removeLine')"
+                  @click="removeCommercialLine(line.key)"
+                >
+                  <TrashIcon class="w-4 h-4" aria-hidden="true" />
+                  <span class="hidden sm:inline">{{ t('facturacion.tax.removeLine') }}</span>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-3">
+                <div class="flex flex-col gap-1.5">
+                  <label :for="`tax-line-label-${line.key}`" class="text-xs font-medium text-text-secondary">
+                    {{ t('facturacion.tax.lineLabel') }}
+                  </label>
+                  <input
+                    :id="`tax-line-label-${line.key}`"
+                    v-model="line.label"
+                    type="text"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label :for="`tax-line-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
+                    {{ t('facturacion.tax.ratePercent') }}
+                  </label>
+                  <input
+                    :id="`tax-line-rate-${line.key}`"
+                    v-model.number="line.ratePct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary tabular-nums focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howCommercial') }}</p>
+                <div class="grid grid-cols-2 gap-2" role="group" :aria-label="t('facturacion.tax.howCommercial')">
+                  <button
+                    type="button"
+                    :aria-pressed="line.included_in_price"
+                    @click="line.included_in_price = true"
+                    :class="[
+                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                      line.included_in_price
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
+                    ]"
+                  >
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                    </svg>
+                    <span>{{ t('facturacion.tax.included') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="!line.included_in_price"
+                    @click="line.included_in_price = false"
+                    :class="[
+                      'inline-flex items-center justify-center gap-2 min-h-[44px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                      !line.included_in_price
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary/50'
+                    ]"
+                  >
+                    <PlusIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{{ t('facturacion.tax.added') }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.lineCategories') }}</p>
+
+                <div class="relative">
+                  <input
+                    :id="`tax-line-cat-search-${line.key}`"
+                    type="search"
+                    autocomplete="off"
+                    :value="categorySearchByLine[line.key] || ''"
+                    :placeholder="t('facturacion.tax.searchCategory')"
+                    class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    @focus="openCategorySearch(line.key)"
+                    @blur="closeCategorySearchSoon(line.key)"
+                    @input="onCategorySearchInput(line.key, $event)"
+                  >
+                  <ul
+                    v-if="categorySearchOpenKey === line.key && filteredCategoriesForLine(line.key).length"
+                    class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                    role="listbox"
+                  >
+                    <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`${line.key}-${choice.id}`">
+                      <button
+                        type="button"
+                        class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                        @mousedown.prevent="assignCategoryToLine(choice.id, line.key)"
+                      >
+                        {{ choice.name }}
+                        <span
+                          v-if="menuCategoryLineMap[choice.id] && menuCategoryLineMap[choice.id] !== line.key"
+                          class="ms-1 text-xs text-text-tertiary"
+                        >
+                          · {{ t('facturacion.tax.categoryReassignHint') }}
+                        </span>
+                        <span
+                          v-else-if="exemptMenuCategoryIds.includes(choice.id)"
+                          class="ms-1 text-xs text-text-tertiary"
+                        >
+                          · {{ t('facturacion.tax.mapExempt') }}
+                        </span>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <ul v-if="categoriesMappedToLine(line.key).length" class="flex flex-wrap gap-2" role="list">
+                  <li
+                    v-for="catId in categoriesMappedToLine(line.key)"
+                    :key="`${line.key}-chip-${catId}`"
+                    class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
+                  >
+                    <span>{{ menuCategoryLabel(catId) }}</span>
+                    <button
+                      type="button"
+                      class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                      :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                      @click="unassignCategory(catId)"
+                    >
+                      ×
+                    </button>
+                  </li>
+                </ul>
+                <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noCategoriesYet') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2 rounded-xl border border-border bg-surface-secondary/30 p-4">
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.exemptTitle') }}</p>
+            <div class="relative">
+              <input
+                id="tax-exempt-cat-search"
+                type="search"
+                autocomplete="off"
+                :value="exemptSearch"
+                :placeholder="t('facturacion.tax.searchExemptCategory')"
+                class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                @focus="openExemptSearch"
+                @blur="closeExemptSearchSoon"
+                @input="onExemptSearchInput"
+              >
+              <ul
+                v-if="exemptSearchOpen && filteredExemptCategories.length"
+                class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                role="listbox"
+              >
+                <li v-for="choice in filteredExemptCategories" :key="`exempt-${choice.id}`">
+                  <button
+                    type="button"
+                    class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                    @mousedown.prevent="assignExemptCategory(choice.id)"
+                  >
+                    {{ choice.name }}
+                    <span
+                      v-if="menuCategoryLineMap[choice.id]"
+                      class="ms-1 text-xs text-text-tertiary"
+                    >
+                      · {{ t('facturacion.tax.categoryReassignHint') }}
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <ul v-if="exemptMenuCategoryIds.length" class="flex flex-wrap gap-2" role="list">
+              <li
+                v-for="catId in exemptMenuCategoryIds"
+                :key="`exempt-chip-${catId}`"
+                class="text-xs bg-surface-secondary text-text-secondary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-border"
+              >
+                <span>{{ menuCategoryLabel(catId) }}</span>
+                <button
+                  type="button"
+                  class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                  :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                  @click="unassignExemptCategory(catId)"
+                >
+                  ×
+                </button>
+              </li>
+            </ul>
+            <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noExemptYet') }}</p>
+          </div>
+        </template>
       </div>
 
       <!-- Save button -->
@@ -2467,6 +2484,7 @@ const matiasRegimeLabel = computed(() => {
           <span>{{ isSavingTax ? t('facturacion.common.saving') : t('facturacion.tax.save') }}</span>
         </button>
       </div>
+
     </div>
 
     <!-- ══════ RESOLUCIÓN DIAN ══════ -->

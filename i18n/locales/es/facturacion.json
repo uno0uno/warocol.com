@@ -124,6 +124,7 @@
     },
     "fiscal": {
       "sectionTitle": "Datos fiscales",
+      "sectionTitleCombined": "Datos fiscales e impuestos",
       "body": "",
       "nit": "NIT",
       "businessName": "Razón social",
@@ -140,6 +141,7 @@
       "email": "Email facturación",
       "emailPlaceholder": "facturacion{'@'}mirestaurante.com",
       "save": "Guardar datos fiscales",
+      "saveCombined": "Guardar datos fiscales e impuestos",
       "miNegocio": "Mi negocio",
       "identityTitle": "Identidad",
       "identityHint": "",
