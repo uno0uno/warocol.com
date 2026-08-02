@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n()
-import { ref, computed, inject, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted, watch, type Ref } from 'vue'
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -16,6 +16,13 @@ const isUpdating = ref(false)
 // KDS token (provided by /cocina/[id].vue). Optional so the component
 // keeps working under cookie auth in non-KDS contexts.
 const kdsToken = inject<Ref<string>>('kdsToken')
+
+// Optimistic status so buttons flip before poll/refetch (#2037)
+const localStatus = ref(props.comanda.status)
+watch(
+  () => props.comanda.status,
+  (s) => { localStatus.value = s },
+)
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 const now = ref(new Date())
@@ -34,7 +41,7 @@ const alertLevel = computed(() => {
   const t1 = props.comanda.alert_threshold_1_min || 8
   const t2 = props.comanda.alert_threshold_2_min || 15
   
-  if (props.comanda.status === 'ready') return 'ready'
+  if (localStatus.value === 'ready') return 'ready'
   if (elapsedMinutes.value >= t2) return 'red'
   if (elapsedMinutes.value >= t1) return 'yellow'
   return 'normal'
@@ -69,6 +76,8 @@ const visibleItems = computed(() => props.comanda.items)
 const updateStatus = async (newStatus: string) => {
   if (isUpdating.value) return
   isUpdating.value = true
+  const previous = localStatus.value
+  localStatus.value = newStatus
   try {
     await $fetch(`/api/api/comandas/${props.comanda.id}/status`, {
       method: 'PATCH',
@@ -80,7 +89,13 @@ const updateStatus = async (newStatus: string) => {
       toast.success(t('cocina.card.delivered'))
     }
   } catch (error: any) {
+    localStatus.value = previous
     const status = error?.status ?? error?.statusCode ?? error?.response?.status
+    // Stale race may still 400 on older API — refresh quietly instead of toasting.
+    if (status === 400) {
+      emit('refresh')
+      return
+    }
     toast.error(
       status === 401
         ? t('cocina.card.tokenExpired')
@@ -159,7 +174,7 @@ onUnmounted(() => {
         v-for="item in visibleItems"
         :key="item.id"
         :item="item"
-        :comanda-status="comanda.status"
+        :comanda-status="localStatus"
         :comanda-id="comanda.id"
         @refresh="emit('refresh')"
       />
@@ -174,13 +189,13 @@ onUnmounted(() => {
 
     <!-- Card Actions — hidden for POS when status is not pending (backend auto-delivers) -->
     <div
-      v-if="!(comanda.source_type === 'pos' && comanda.status !== 'pending')"
+      v-if="!(comanda.source_type === 'pos' && localStatus !== 'pending')"
       class="p-3 mt-auto border-t border-border flex gap-2"
     >
 
       <!-- POS/Counter mode: skip 'preparing', go straight to ready -->
       <template v-if="comanda.source_type === 'pos'">
-        <template v-if="comanda.status === 'pending'">
+        <template v-if="localStatus === 'pending'">
           <button
             @click="markAsReady"
             :disabled="isUpdating"
@@ -202,7 +217,7 @@ onUnmounted(() => {
 
       <!-- Table mode: full flow pending → preparing → ready -->
       <template v-else>
-        <template v-if="comanda.status === 'pending'">
+        <template v-if="localStatus === 'pending'">
           <button
             @click="startPreparing"
             :disabled="isUpdating"
@@ -220,7 +235,7 @@ onUnmounted(() => {
             <span v-else>{{ t('common.cancel') }}</span>
           </button>
         </template>
-        <template v-else-if="comanda.status === 'preparing'">
+        <template v-else-if="localStatus === 'preparing'">
           <button
             @click="markAsReady"
             :disabled="isUpdating"
@@ -242,7 +257,7 @@ onUnmounted(() => {
 
       <!-- Table mode only: deliver when ready (POS auto-delivers on backend) -->
       <button
-        v-if="comanda.status === 'ready' && comanda.source_type !== 'pos'"
+        v-if="localStatus === 'ready' && comanda.source_type !== 'pos'"
         @click="deliverComanda"
         :disabled="isUpdating"
         class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"

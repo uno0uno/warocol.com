@@ -1,0 +1,34 @@
+issue: 2037
+title: "KDS: 400 on comanda status when UI is stale / duplicate transition"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2037-kds-status-idempotent
+
+paths:
+  - components/cocina/ComandaCard.vue
+
+ac:
+  - Optimistic localStatus flips buttons immediately
+  - On 400, refetch quietly (compat with pre-API deploy) instead of error toast
+  - Sync localStatus from props when poll/refetch lands
+
+out_of_scope:
+  - ItemRow redesign
+  - Poll interval changes
+
+hints:
+  entry: "ComandaCard updateStatus + localStatus"
+  pattern: "optimistic then emit refresh; 400 → refresh no toast"
+  tests: "n/a (no existing ComandaCard unit test)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "companion API PR"
