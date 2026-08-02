@@ -6,6 +6,7 @@ import {
   buildEscPosTestTicketBytes,
   bytesToBase64,
   createLocalPrintBridge,
+  isCupsJobStatusGoneSoftSuccess,
   normalizePrinterList,
 } from './useLocalPrintBridge'
 
@@ -146,6 +147,21 @@ describe('createLocalPrintBridge', () => {
     await expect(bridge.printHtml('STAR', '  ')).rejects.toMatchObject({ code: 'INVALID' })
   })
 
+  it('isCupsJobStatusGoneSoftSuccess detects Star/CUPS purge message', () => {
+    expect(isCupsJobStatusGoneSoftSuccess(
+      'unknown',
+      'CUPS job status was no longer available',
+    )).toBe(true)
+    expect(isCupsJobStatusGoneSoftSuccess(
+      'Unable to confirm next status',
+      'CUPS job status was no longer available',
+    )).toBe(true)
+    expect(isCupsJobStatusGoneSoftSuccess(
+      'unknown',
+      'Unable to send data to printer.',
+    )).toBe(false)
+  })
+
   it('rejects when status stream reports unknown/failed after queued accept', async () => {
     let statusHandler: ((event: { requestId?: string; status?: string; message?: string }) => void) | null = null
     const printSpy = mock(async (job: Record<string, unknown>) => {
@@ -172,6 +188,32 @@ describe('createLocalPrintBridge', () => {
         code: 'PRINT_FAILED',
         message: expect.stringContaining('Unable to send data to printer'),
       })
+  })
+
+  it('resolves when CUPS purges job status after submit (no window.print fallback)', async () => {
+    let statusHandler: ((event: { requestId?: string; status?: string; message?: string }) => void) | null = null
+    const printSpy = mock(async (job: Record<string, unknown>) => {
+      const requestId = String(job.requestId)
+      queueMicrotask(() => statusHandler?.({ requestId, status: 'queued' }))
+      queueMicrotask(() => statusHandler?.({ requestId, status: 'submitted' }))
+      queueMicrotask(() => statusHandler?.({
+        requestId,
+        status: 'unknown',
+        message: 'CUPS job status was no longer available',
+      }))
+      return { status: 'queued', requestId }
+    })
+    __setLocalPrintBridgeClientForTests({
+      ...mockClient({ print: printSpy }),
+      on: mock((_event: 'status', handler: typeof statusHandler) => {
+        statusHandler = handler
+        return () => { statusHandler = null }
+      }),
+    })
+
+    const bridge = createLocalPrintBridge()
+    await bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok'))
+    expect(printSpy).toHaveBeenCalledTimes(1)
   })
 
   it('resolves when status stream reports completed', async () => {
