@@ -45,6 +45,7 @@
       "testPrintAria": "Imprimir prueba en {name}",
       "testPrintTitle": "Probar",
       "testPrintOk": "Prueba enviada a {name}",
+      "testPrintUnconfirmed": "Enviado a {name}, pero no se pudo confirmar. Verifica que esté encendida y con papel.",
       "testPrintNeedPrinter": "Asigna una impresora primero",
       "testPrintError": "No se pudo imprimir la prueba",
       "stationsTitle": "Impresoras por cocina",

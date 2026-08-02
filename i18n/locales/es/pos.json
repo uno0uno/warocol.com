@@ -706,7 +706,11 @@
       "qrDianAlt": "QR verificación DIAN",
       "promoFallback": "Promoción",
       "tipTax": "Impuesto propina",
-      "totalChargedUpper": "TOTAL COBRADO"
+      "totalChargedUpper": "TOTAL COBRADO",
+      "printUnconfirmedTitle": "Revisa la impresora",
+      "printUnconfirmedBody": "Enviado a {name}, pero no se pudo confirmar que salió el ticket. ¿Está encendida?",
+      "printRetry": "Reintentar",
+      "printWithBrowser": "Imprimir con el navegador"
     }
   }
 }

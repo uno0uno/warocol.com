@@ -560,7 +560,8 @@
         "linuxAppImage": "Linux AppImage (amd64)",
         "recommended": "Recommended",
         "allReleases": "View all releases on GitHub"
-      }
+      },
+      "testPrintUnconfirmed": "Sent to {name}, but we could not confirm. Check that it is powered on and has paper."
     }
   }
 }

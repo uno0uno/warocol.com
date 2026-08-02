@@ -45,6 +45,7 @@
       "testPrintAria": "Print test on {name}",
       "testPrintTitle": "Test print",
       "testPrintOk": "Test sent to {name}",
+      "testPrintUnconfirmed": "Sent to {name}, but we could not confirm. Check that it is powered on and has paper.",
       "testPrintNeedPrinter": "Assign a printer first",
       "testPrintError": "Could not print test",
       "stationsTitle": "Kitchen printers",

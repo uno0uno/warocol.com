@@ -11,7 +11,7 @@ import {
   buildCustomerIdentityPresentation,
   formatFiscalIdentityLabel,
 } from '~/utils/customerIdentityPresentation'
-import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
@@ -860,15 +860,26 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  const mode = await printTicketElement('pos-receipt', {
+  const printResult = await printTicketElement('pos-receipt', {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
       return collectThermalTicketText(document.querySelector('.receipt-print-ticket')) || null
     },
   })
-  if (mode === 'bridge') {
+  if (printResult.mode === 'bridge') {
     cleanup()
+    notifyUnconfirmedCajaPrint(printResult, {
+      t,
+      toast: useToast(),
+      onRetry: () => { void printReceipt() },
+      onBrowserPrint: () => {
+        document.body.classList.add('printing-receipt-ticket')
+        window.addEventListener('afterprint', cleanup)
+        window.setTimeout(cleanup, 1500)
+        window.print()
+      },
+    })
     return
   }
   window.addEventListener('afterprint', cleanup)

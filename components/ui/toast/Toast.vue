@@ -24,6 +24,17 @@
       <div class="flex-1 min-w-0">
         <p :class="titleClasses" v-if="title">{{ title }}</p>
         <p :class="messageClasses">{{ message }}</p>
+        <div v-if="actions?.length" class="mt-2 flex flex-wrap gap-2">
+          <button
+            v-for="(action, idx) in actions"
+            :key="`${action.label}-${idx}`"
+            type="button"
+            class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-surface hover:bg-control-action-hover-bg transition-colors"
+            @click="runAction(action)"
+          >
+            {{ action.label }}
+          </button>
+        </div>
       </div>
       <button
         @click="close"
@@ -68,6 +79,10 @@ const props = defineProps({
   removing: {
     type: Boolean,
     default: false
+  },
+  actions: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -139,10 +154,19 @@ const close = () => {
   emit('close')
 }
 
+const runAction = (action) => {
+  try {
+    action?.onClick?.()
+  } finally {
+    close()
+  }
+}
+
 onMounted(() => {
   visible.value = true
-  
-  if (props.duration > 0) {
+
+  // Parent toast store also schedules removal; skip local timer when actions need time.
+  if (props.duration > 0 && !(props.actions?.length)) {
     setTimeout(() => {
       close()
     }, props.duration)
