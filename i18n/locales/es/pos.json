@@ -707,6 +707,8 @@
       "promoFallback": "Promoción",
       "tipTax": "Impuesto propina",
       "totalChargedUpper": "TOTAL COBRADO",
+      "printOkTitle": "Ticket enviado",
+      "printOkBody": "Impreso en {name}",
       "printUnconfirmedTitle": "Revisa la impresora",
       "printUnconfirmedBody": "Enviado a {name}, pero no se pudo confirmar que salió el ticket. ¿Está encendida?",
       "printRetry": "Reintentar",

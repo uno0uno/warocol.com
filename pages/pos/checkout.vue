@@ -33,7 +33,7 @@ import {
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
-import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
   buildCustomerIdentityPresentation,
@@ -2734,7 +2734,7 @@ const printReceipt = async () => {
   })
   if (printResult.mode === 'bridge') {
     cleanup()
-    notifyUnconfirmedCajaPrint(printResult, {
+    notifyCajaPrintResult(printResult, {
       t,
       toast,
       onRetry: () => { void printReceipt() },
@@ -3172,7 +3172,7 @@ const printPrefactura = async () => {
   })
   if (printResult.mode === 'bridge') {
     cleanup()
-    notifyUnconfirmedCajaPrint(printResult, {
+    notifyCajaPrintResult(printResult, {
       t,
       toast,
       onRetry: () => { void printPrefactura() },

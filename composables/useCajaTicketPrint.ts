@@ -1,7 +1,7 @@
 /**
  * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
  * Falls back to window.print when bridge/caja is missing, print fails, or hangs (#2003).
- * Soft CUPS “status gone” stays non-fatal but surfaces as unconfirmed (#2058).
+ * Soft CUPS “status gone” counts as completed (Star always purges; #2070).
  * Sticky browser mode skips bridge until cashier returns to thermal (#2060).
  */
 import {
@@ -146,6 +146,13 @@ export async function printTicketViaCajaOrBrowser(
 }
 
 export type CajaPrintFeedbackToast = {
+  success: (
+    message: string,
+    options?: {
+      title?: string
+      duration?: number
+    },
+  ) => unknown
   warning: (
     message: string,
     options?: {
@@ -156,8 +163,11 @@ export type CajaPrintFeedbackToast = {
   ) => unknown
 }
 
-/** Warn cashier when CUPS could not confirm paper out; offer retry / browser (#2058). */
-export function notifyUnconfirmedCajaPrint(
+/**
+ * Bridge feedback: success when accepted/completed; warning + retry/browser
+ * only for rare unconfirmed outcomes (#2058/#2070).
+ */
+export function notifyCajaPrintResult(
   result: CajaTicketPrintResult,
   opts: {
     t: (key: string, params?: Record<string, unknown>) => string
@@ -166,7 +176,17 @@ export function notifyUnconfirmedCajaPrint(
     onBrowserPrint: () => void
   },
 ): void {
-  if (result.mode !== 'bridge' || result.confirmed) return
+  if (result.mode !== 'bridge') return
+  if (result.confirmed) {
+    opts.toast.success(
+      opts.t('pos.receipt.printOkBody', { name: result.printerName }),
+      {
+        title: opts.t('pos.receipt.printOkTitle'),
+        duration: 3500,
+      },
+    )
+    return
+  }
   opts.toast.warning(
     opts.t('pos.receipt.printUnconfirmedBody', { name: result.printerName }),
     {
@@ -187,6 +207,19 @@ export function notifyUnconfirmedCajaPrint(
       ],
     },
   )
+}
+
+/** @deprecated Prefer notifyCajaPrintResult (also shows success toast). */
+export function notifyUnconfirmedCajaPrint(
+  result: CajaTicketPrintResult,
+  opts: {
+    t: (key: string, params?: Record<string, unknown>) => string
+    toast: CajaPrintFeedbackToast
+    onRetry: () => void
+    onBrowserPrint: () => void
+  },
+): void {
+  notifyCajaPrintResult(result, opts)
 }
 
 export function useCajaTicketPrint() {
