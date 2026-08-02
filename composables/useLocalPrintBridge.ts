@@ -48,6 +48,22 @@ function newPrintRequestId(): string {
 }
 
 /**
+ * Star/CUPS often purges the job right after accept. PrintBridge then emits
+ * `unknown` + "CUPS job status was no longer available". That is not a print
+ * failure — treating it as one caused thermal + window.print double tickets.
+ * Real offline failures use other messages (e.g. "Unable to send data…").
+ */
+export function isCupsJobStatusGoneSoftSuccess(
+  status: string,
+  message?: string | null,
+): boolean {
+  const msg = String(message || '').toLowerCase()
+  if (!msg.includes('cups job status was no longer available')) return false
+  const s = String(status || '').toLowerCase()
+  return s === 'unknown' || s.includes('unable to confirm') || s === ''
+}
+
+/**
  * SDK `print()` resolves on `queued` only. Wait for a terminal job status so
  * offline thermals reject and callers can fall back to window.print (#2003).
  * Clients without `on` keep queued-accept behavior (tests / stubs).
@@ -62,7 +78,14 @@ export function waitForPrintTerminalStatus(
     const off = client.on!('status', (event) => {
       if (String(event?.requestId || '') !== requestId) return
       const status = String(event?.status || '')
+      const message = event?.message
       if (PRINT_SUCCESS_STATUSES.has(status)) {
+        off()
+        resolve()
+        return
+      }
+      // CUPS purged job after submit (Star thermal) — accept as success.
+      if (isCupsJobStatusGoneSoftSuccess(status, message)) {
         off()
         resolve()
         return
@@ -72,7 +95,7 @@ export function waitForPrintTerminalStatus(
         reject(
           new LocalPrintBridgeError(
             'PRINT_FAILED',
-            event?.message?.trim() || `Print ended with status ${status}`,
+            message?.trim() || `Print ended with status ${status}`,
           ),
         )
       }
