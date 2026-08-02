@@ -632,6 +632,19 @@ const itemReceiptTotal = (item: any) => {
   return (Number(item.price_at_purchase) + modifiersTotal) * (Number(item.quantity) || 1)
 }
 
+/** Per-line tax cue for items table — same style as POS checkout (#2044). */
+const formatItemTaxDisplay = (item: any): string | null => {
+  const category = String(item?.tax_category ?? '').toLowerCase()
+  const amount = Number(item?.tax_amount) || 0
+  let label = String(item?.tax_label ?? '').trim()
+  if (!label && category === 'exempt') label = t('pos.cartItem.taxExempt')
+  if (!label) return null
+  if (amount > 0) {
+    return `+ ${t('pos.cartItem.taxLine', { label, amount: formatCurrency(amount) })}`
+  }
+  return `+ ${label}`
+}
+
 const saleReceiptItems = computed(() =>
   items.value.map((item: any) => {
     const quantity = Number(item.quantity) || 1
@@ -651,6 +664,9 @@ const saleReceiptItems = computed(() =>
       discountAllocated: item.discount_allocated ?? null,
       netTotal: item.net_total ?? null,
       taxCategory: item.tax_category ?? null,
+      taxLabel: item.tax_label ?? null,
+      taxAmount: item.tax_amount != null ? Number(item.tax_amount) : null,
+      includedInPrice: item.included_in_price ?? null,
       modifiers: (item.modifiers ?? []).map((modifier: any) => ({
         id: modifier.id,
         name: modifier.name || t('ventas.detail.additionFallback'),
@@ -1864,6 +1880,12 @@ onUnmounted(() => {
                       </div>
                       <div>
                         <p class="text-sm font-semibold text-text-primary">{{ item.product.name }}</p>
+                        <p
+                          v-if="formatItemTaxDisplay(item)"
+                          class="text-xs text-text-tertiary mt-0.5"
+                        >
+                          {{ formatItemTaxDisplay(item) }}
+                        </p>
                         <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
                       </div>
                     </div>
