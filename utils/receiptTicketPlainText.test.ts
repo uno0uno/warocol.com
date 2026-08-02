@@ -53,13 +53,13 @@ describe('padReceiptLine', () => {
 })
 
 describe('formatReceiptTaxCue', () => {
-  it('formats included and exclusive tax with amount', () => {
+  it('formats tax with amount using taxLine style (never Incluye)', () => {
     expect(formatReceiptTaxCue({
       label: 'IVA 19%',
       amountLabel: '$ COP 1.900,00',
       includedInPrice: true,
       includedTemplate: 'Incluye {label} · {amount}',
-    })).toBe('Incluye IVA 19% · $1.900,00')
+    })).toBe('IVA 19% · $1.900,00')
     expect(formatReceiptTaxCue({
       label: 'IVA 16%',
       amountLabel: '$160',
@@ -74,21 +74,19 @@ describe('formatReceiptTaxCue', () => {
 
   it('accepts pre-localized text from vue-i18n t(key, params)', () => {
     expect(formatReceiptTaxCue({
-      text: 'Incluye IVA 19% · $2.076,00',
-    })).toBe('Incluye IVA 19% · $2.076,00')
+      text: 'IVA 19% · $2.076,00',
+    })).toBe('IVA 19% · $2.076,00')
   })
 
-  it('recovers when i18n emptied template placeholders (Incluye ·)', () => {
+  it('recovers when i18n emptied template placeholders', () => {
     expect(formatReceiptTaxCue({
       label: 'IVA 19%',
       amountLabel: '$2.076,00',
-      includedInPrice: true,
-      includedTemplate: 'Incluye ·',
-    })).toBe('Incluye IVA 19% · $2.076,00')
+      exclusiveTemplate: '·',
+    })).toBe('IVA 19% · $2.076,00')
     expect(formatReceiptTaxCue({
       label: 'IVA licores 5%',
       amountLabel: '$1.500,00',
-      includedInPrice: false,
       exclusiveTemplate: '·',
     })).toBe('IVA licores 5% · $1.500,00')
   })
@@ -110,18 +108,19 @@ describe('formatReceiptProductBlock', () => {
     expect(block).toContain('$585.000,00')
   })
 
-  it('appends per-line tax declaration under the qty/total row', () => {
+  it('appends indented per-line tax cue under the qty/total row', () => {
     const block = formatReceiptProductBlock({
       name: 'Agua',
       quantity: 1,
       unitPriceLabel: '$3.500',
       lineTotalLabel: '$3.500',
-      taxCue: 'Incluye INC · $280',
+      taxCue: 'INC · $280',
     })
     const lines = block.split('\n')
     expect(lines[0]).toBe('Agua')
     expect(lines[1]).toContain('1 x')
-    expect(lines[2]).toBe('Incluye INC · $280')
+    expect(lines[2]).toBe('  + INC · $280')
+    expect(block).not.toMatch(/Incluye/i)
   })
 })
 

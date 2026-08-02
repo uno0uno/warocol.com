@@ -146,9 +146,7 @@ const productTaxCue = (item: ReceiptItem) => {
   if (hasAmount) {
     const amountLabel = compactThermalMoneyLabel(money(amount))
     return formatReceiptTaxCue({
-      text: item.includedInPrice === true
-        ? t('pos.cartItem.taxIncluded', { label, amount: amountLabel })
-        : t('pos.cartItem.taxLine', { label, amount: amountLabel }),
+      text: t('pos.cartItem.taxLine', { label, amount: amountLabel }),
     })
   }
   return formatReceiptTaxCue({ label })
