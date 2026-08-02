@@ -228,6 +228,7 @@ const taxForm = reactive({
   iva_applicable: false,
   iva_included_in_price: false,
   liquor_tax_applicable: false,
+  liquor_tax_included_in_price: false,
   iva_rate_pct: 19,
   inc_rate_pct: 8,
   liquor_tax_rate_pct: 5,
@@ -240,15 +241,31 @@ type MatrixLineUi = {
   ratePct: number
   included_in_price: boolean
   gl_role: string
+  mode?: 'primary' | 'alternate' | 'stack'
+  exclusive_group?: string | null
+}
+
+type CoCustomLineUi = {
+  key: string
+  label: string
+  ratePct: number
+  included_in_price: boolean
+  mode: 'alternate' | 'stack'
+  gl_role: string
 }
 
 const {
   COMMERCIAL_COUNTRY_CODES,
   MAX_COMMERCIAL_TAX_LINES,
+  CO_TAX_PROFILE_RESTAURANTE,
   commercialPresetForCountry,
   buildCommercialMatrixSavePayload,
   buildCoTaxSavePayload,
+  buildCoTaxLinesDraft,
+  buildCoRestauranteTaxLines,
+  coCustomLinesFromTaxLines,
   validateCommercialMatrix,
+  validateTaxLineModes,
   canRemoveTaxLine,
   suggestTaxLineKey,
   normalizeTaxLines,
@@ -261,6 +278,10 @@ const {
   shouldShowJurisdictionPicker,
   normalizeJurisdictionOptions,
 } = useTenantTaxProfile()
+
+/** CO free tax lines beyond iva/inc/liquor (#2028). */
+const coCustomLines = ref<CoCustomLineUi[]>([])
+const coTaxProfileId = ref<'custom' | typeof CO_TAX_PROFILE_RESTAURANTE>('custom')
 
 const rateToPct = (rate: unknown, fallback: number) => {
   const n = Number(rate)
@@ -513,13 +534,23 @@ watch(
   },
 )
 
-const linesToUi = (lines: { key: string; label: string; rate: number; included_in_price: boolean; gl_role: string }[]): MatrixLineUi[] =>
+const linesToUi = (lines: {
+  key: string
+  label: string
+  rate: number
+  included_in_price: boolean
+  gl_role: string
+  mode?: string
+  exclusive_group?: string | null
+}[]): MatrixLineUi[] =>
   lines.map(line => ({
     key: line.key,
     label: line.label,
     ratePct: Math.round(line.rate * 10000) / 100,
     included_in_price: line.included_in_price,
     gl_role: line.gl_role || 'iva',
+    mode: (line.mode as MatrixLineUi['mode']) || 'primary',
+    exclusive_group: line.exclusive_group ?? null,
   }))
 
 const uiLinesToDraft = () => commercialLines.value.map(line => ({
@@ -528,7 +559,107 @@ const uiLinesToDraft = () => commercialLines.value.map(line => ({
   rate: Math.max(0, Number(line.ratePct) || 0) / 100,
   included_in_price: Boolean(line.included_in_price),
   gl_role: line.gl_role || 'iva',
+  mode: line.mode || 'primary',
+  exclusive_group: line.exclusive_group ?? null,
 }))
+
+const coCustomLinesToDraft = () => coCustomLines.value.map(line => ({
+  key: line.key,
+  label: line.label.trim(),
+  rate: Math.max(0, Number(line.ratePct) || 0) / 100,
+  included_in_price: Boolean(line.included_in_price),
+  gl_role: line.gl_role || 'iva',
+  mode: line.mode,
+  exclusive_group: line.mode === 'alternate' ? 'vat' : null,
+}))
+
+const syncCoCustomFromConfig = (cfg: Record<string, any> | null) => {
+  coCustomLines.value = coCustomLinesFromTaxLines(cfg?.tax_lines).map(line => ({
+    key: line.key,
+    label: line.label,
+    ratePct: Math.round(line.rate * 10000) / 100,
+    included_in_price: Boolean(line.included_in_price),
+    mode: line.mode === 'alternate' ? 'alternate' : 'stack',
+    gl_role: line.gl_role || 'iva',
+  }))
+  const lines = normalizeTaxLines(cfg?.tax_lines)
+  const gold = buildCoRestauranteTaxLines()
+  const customCount = coCustomLinesFromTaxLines(cfg?.tax_lines).length
+  const looksLikeRestaurante = Boolean(
+    customCount === 0
+    && cfg?.iva_applicable
+    && cfg?.liquor_tax_applicable
+    && cfg?.iva_included_in_price
+    && cfg?.liquor_tax_included_in_price
+    && Math.abs(Number(cfg?.iva_rate) - gold[0]!.rate) < 1e-9
+    && Math.abs(Number(cfg?.liquor_tax_rate) - gold[1]!.rate) < 1e-9
+    && lines.some(l => l.key === 'iva' && l.mode === 'primary')
+    && lines.some(l => l.key === 'liquor' && l.mode === 'alternate'),
+  )
+  coTaxProfileId.value = looksLikeRestaurante ? CO_TAX_PROFILE_RESTAURANTE : 'custom'
+}
+
+const applyCoRestaurantePreset = async () => {
+  // Keep INC tenants on INC; only seed IVA path when IVA (or neither) is active.
+  if (!taxForm.inc_applicable) {
+    taxForm.iva_applicable = true
+    taxForm.inc_applicable = false
+  }
+  taxForm.iva_rate_pct = 19
+  taxForm.iva_included_in_price = true
+  taxForm.liquor_tax_applicable = true
+  taxForm.liquor_tax_rate_pct = 5
+  taxForm.liquor_tax_included_in_price = true
+  coCustomLines.value = []
+  coTaxProfileId.value = CO_TAX_PROFILE_RESTAURANTE
+  // Map Bebidas-like categories → liquor when present.
+  try {
+    await searchMenuCategories('bebida')
+    const matches = menuCategorySearchResults.value.filter(c =>
+      /bebida/i.test(String(c.name || '')),
+    )
+    for (const cat of matches) {
+      if (cat.id) assignCategoryToLine(cat.id, 'liquor')
+    }
+  } catch {
+    // Category search is best-effort for the preset.
+  }
+}
+
+const addCoCustomLine = () => {
+  const total = (taxForm.iva_applicable || taxForm.inc_applicable ? 1 : 0)
+    + (taxForm.liquor_tax_applicable ? 1 : 0)
+    + coCustomLines.value.length
+  if (total >= MAX_COMMERCIAL_TAX_LINES) {
+    toast.error(t('facturacion.tax.matrixTooMany', { max: MAX_COMMERCIAL_TAX_LINES }), {
+      title: t('facturacion.common.error'),
+    })
+    return
+  }
+  const existing = [
+    'iva', 'inc', 'liquor',
+    ...coCustomLines.value.map(l => l.key),
+  ]
+  const key = suggestTaxLineKey(t('facturacion.tax.newLineLabel'), existing)
+  coCustomLines.value.push({
+    key,
+    label: '',
+    ratePct: 0,
+    included_in_price: false,
+    mode: 'stack',
+    gl_role: 'iva',
+  })
+  coTaxProfileId.value = 'custom'
+}
+
+const removeCoCustomLine = (key: string) => {
+  if (!canRemoveTaxLine(key, null, menuCategoryLineMap.value)) {
+    toast.error(t('facturacion.tax.matrixLineInUse'), { title: t('facturacion.common.error') })
+    return
+  }
+  coCustomLines.value = coCustomLines.value.filter(line => line.key !== key)
+  coTaxProfileId.value = 'custom'
+}
 
 const setCategoryMapFrom = (map: Record<string, string | null> | null | undefined, fallbackKey?: string | null) => {
   const primary = fallbackKey || map?.standard || commercialLines.value[0]?.key || null
@@ -694,11 +825,13 @@ watch(taxConfig, (cfg) => {
   taxForm.iva_applicable = cfg.iva_applicable
   taxForm.iva_included_in_price = cfg.iva_included_in_price
   taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
+  taxForm.liquor_tax_included_in_price = Boolean(cfg.liquor_tax_included_in_price)
   taxForm.iva_rate_pct = rateToPct(cfg.iva_rate, 19)
   taxForm.inc_rate_pct = rateToPct(cfg.inc_rate, 8)
   taxForm.liquor_tax_rate_pct = rateToPct(cfg.liquor_tax_rate, 5)
   commercialTaxApplicable.value = cfg.commercial_tax_applicable !== false
   syncCommercialFromConfig(cfg)
+  if (!showCommercialTaxUi.value) syncCoCustomFromConfig(cfg)
 }, { immediate: true })
 
 watch(
@@ -798,6 +931,31 @@ const saveTaxConfig = async () => {
         toast.error(t('facturacion.tax.liquorCategoriesRequired'), { title: t('facturacion.common.error') })
         return
       }
+      for (const line of coCustomLines.value) {
+        if (!String(line.label || '').trim()) {
+          toast.error(t('facturacion.tax.matrixError.missing_label'), { title: t('facturacion.common.error') })
+          return
+        }
+      }
+      const tax_lines = buildCoTaxLinesDraft({
+        inc_applicable: taxForm.inc_applicable,
+        iva_applicable: taxForm.iva_applicable,
+        liquor_tax_applicable: taxForm.liquor_tax_applicable,
+        iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
+        inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
+        liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
+        iva_included_in_price: taxForm.iva_included_in_price,
+        inc_included_in_price: taxForm.inc_included_in_price,
+        liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
+        custom_lines: coCustomLinesToDraft(),
+      })
+      const modeError = validateTaxLineModes(tax_lines)
+      if (modeError) {
+        toast.error(t('facturacion.tax.matrixError.stack_exclusive_group'), {
+          title: t('facturacion.common.error'),
+        })
+        return
+      }
       await $fetch('/api/api/tenant/tax-config', {
         method: 'PUT',
         body: buildCoTaxSavePayload({
@@ -806,11 +964,13 @@ const saveTaxConfig = async () => {
           iva_applicable: taxForm.iva_applicable,
           iva_included_in_price: taxForm.iva_included_in_price,
           liquor_tax_applicable: taxForm.liquor_tax_applicable,
+          liquor_tax_included_in_price: taxForm.liquor_tax_included_in_price,
           iva_rate: Math.max(0, Number(taxForm.iva_rate_pct) || 0) / 100,
           inc_rate: Math.max(0, Number(taxForm.inc_rate_pct) || 0) / 100,
           liquor_tax_rate: Math.max(0, Number(taxForm.liquor_tax_rate_pct) || 0) / 100,
           menu_category_line_map: { ...menuCategoryLineMap.value },
           exempt_menu_category_ids: [...exemptMenuCategoryIds.value],
+          tax_lines,
         }),
       })
     }
@@ -1598,8 +1758,38 @@ const matiasRegimeLabel = computed(() => {
         </template>
       </div>
 
-      <!-- CO fiscal-integrated: only active primary (IVA|INC) + liquor -->
+      <!-- CO fiscal-integrated: profile + primary (IVA|INC) + liquor + custom -->
       <div v-else class="space-y-3">
+
+        <div class="space-y-2">
+          <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.coProfileTitle') }}</p>
+          <p class="text-xs text-text-secondary">{{ t('facturacion.tax.coProfileBody') }}</p>
+          <div class="flex flex-wrap gap-2" role="group" :aria-label="t('facturacion.tax.coProfileTitle')">
+            <button
+              type="button"
+              :aria-pressed="coTaxProfileId === CO_TAX_PROFILE_RESTAURANTE"
+              class="min-h-[40px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              :class="coTaxProfileId === CO_TAX_PROFILE_RESTAURANTE
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background text-text-secondary hover:border-primary/40'"
+              @click="applyCoRestaurantePreset"
+            >
+              {{ t('facturacion.tax.coProfileRestaurante') }}
+            </button>
+            <button
+              type="button"
+              :aria-pressed="coTaxProfileId === 'custom'"
+              class="min-h-[40px] px-3 rounded-lg border-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              :class="coTaxProfileId === 'custom'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background text-text-secondary hover:border-primary/40'"
+              @click="coTaxProfileId = 'custom'"
+            >
+              {{ t('facturacion.tax.coProfileCustom') }}
+            </button>
+          </div>
+        </div>
+        <div class="border-t border-border/40" />
 
         <!-- INC — only when sales profile is INC -->
         <template v-if="taxForm.inc_applicable && coPrimaryLineKey === 'inc'">
@@ -1745,6 +1935,7 @@ const matiasRegimeLabel = computed(() => {
                   max="100"
                   step="0.01"
                   class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
+                  @input="coTaxProfileId = 'custom'"
                 >
                 <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
               </div>
@@ -1752,7 +1943,7 @@ const matiasRegimeLabel = computed(() => {
                 <button
                   type="button"
                   :aria-pressed="taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = true"
+                  @click="taxForm.iva_included_in_price = true; coTaxProfileId = 'custom'"
                   :class="[
                     'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
                     taxForm.iva_included_in_price
@@ -1765,7 +1956,7 @@ const matiasRegimeLabel = computed(() => {
                 <button
                   type="button"
                   :aria-pressed="!taxForm.iva_included_in_price"
-                  @click="taxForm.iva_included_in_price = false"
+                  @click="taxForm.iva_included_in_price = false; coTaxProfileId = 'custom'"
                   :class="[
                     'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
                     !taxForm.iva_included_in_price
@@ -1870,12 +2061,41 @@ const matiasRegimeLabel = computed(() => {
                   max="100"
                   step="0.01"
                   class="w-[4.5rem] min-h-[40px] rounded-lg border-2 border-border bg-background px-2 text-sm text-text-primary tabular-nums text-center"
+                  @input="coTaxProfileId = 'custom'"
                 >
                 <span class="text-xs text-text-tertiary" aria-hidden="true">%</span>
               </div>
+              <div class="inline-flex rounded-lg border-2 border-border overflow-hidden" role="group" :aria-label="t('facturacion.tax.howLiquor')">
+                <button
+                  type="button"
+                  :aria-pressed="taxForm.liquor_tax_included_in_price"
+                  @click="taxForm.liquor_tax_included_in_price = true; coTaxProfileId = 'custom'"
+                  :class="[
+                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                    taxForm.liquor_tax_included_in_price
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                  ]"
+                >
+                  {{ t('facturacion.tax.includedShort') }}
+                </button>
+                <button
+                  type="button"
+                  :aria-pressed="!taxForm.liquor_tax_included_in_price"
+                  @click="taxForm.liquor_tax_included_in_price = false; coTaxProfileId = 'custom'"
+                  :class="[
+                    'min-h-[40px] px-3 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+                    !taxForm.liquor_tax_included_in_price
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-background text-text-secondary hover:bg-surface-secondary/60'
+                  ]"
+                >
+                  {{ t('facturacion.tax.addedShort') }}
+                </button>
+              </div>
             </template>
             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-auto">
-              <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
+              <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" @change="coTaxProfileId = 'custom'" />
               <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
@@ -1955,6 +2175,174 @@ const matiasRegimeLabel = computed(() => {
                 </button>
               </li>
             </ul>
+          </div>
+        </div>
+
+        <div class="border-t border-border/40" />
+
+        <!-- CO free custom tax lines (#2028) -->
+        <div class="space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary">{{ t('facturacion.tax.coCustomTitle') }}</p>
+              <p class="text-xs text-text-secondary">{{ t('facturacion.tax.coCustomBody') }}</p>
+            </div>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 shrink-0 min-h-[40px] px-3 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+              @click="addCoCustomLine"
+            >
+              <PlusIcon class="w-4 h-4" aria-hidden="true" />
+              {{ t('facturacion.tax.addLine') }}
+            </button>
+          </div>
+
+          <div
+            v-for="line in coCustomLines"
+            :key="line.key"
+            class="rounded-xl border border-border bg-surface p-3 space-y-3"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                {{ t('facturacion.tax.lineLabel') }}
+              </p>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg text-sm font-medium text-state-danger-text hover:bg-state-danger-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-state-danger-text/30"
+                :aria-label="t('facturacion.tax.removeLine')"
+                @click="removeCoCustomLine(line.key)"
+              >
+                <TrashIcon class="w-4 h-4" aria-hidden="true" />
+                <span class="hidden sm:inline">{{ t('facturacion.tax.removeLine') }}</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label :for="`co-custom-label-${line.key}`" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.lineLabel') }}
+                </label>
+                <input
+                  :id="`co-custom-label-${line.key}`"
+                  v-model="line.label"
+                  type="text"
+                  class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  @input="coTaxProfileId = 'custom'"
+                >
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label :for="`co-custom-rate-${line.key}`" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.ratePercent') }}
+                </label>
+                <input
+                  :id="`co-custom-rate-${line.key}`"
+                  v-model.number="line.ratePct"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm font-medium text-text-primary tabular-nums focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  @input="coTaxProfileId = 'custom'"
+                >
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.howCommercial') }}</p>
+                <div class="inline-flex w-full rounded-lg border-2 border-border overflow-hidden" role="group">
+                  <button
+                    type="button"
+                    class="flex-1 min-h-[40px] px-2 text-xs sm:text-sm font-semibold transition-colors"
+                    :class="line.included_in_price ? 'bg-primary/10 text-primary' : 'bg-background text-text-secondary'"
+                    @click="line.included_in_price = true; coTaxProfileId = 'custom'"
+                  >
+                    {{ t('facturacion.tax.includedShort') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 min-h-[40px] px-2 text-xs sm:text-sm font-semibold border-s-2 border-border transition-colors"
+                    :class="!line.included_in_price ? 'bg-primary/10 text-primary' : 'bg-background text-text-secondary'"
+                    @click="line.included_in_price = false; coTaxProfileId = 'custom'"
+                  >
+                    {{ t('facturacion.tax.addedShort') }}
+                  </button>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <label :for="`co-custom-mode-${line.key}`" class="text-xs font-medium text-text-secondary">
+                  {{ t('facturacion.tax.modeLabel') }}
+                </label>
+                <select
+                  :id="`co-custom-mode-${line.key}`"
+                  v-model="line.mode"
+                  class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary"
+                  @change="coTaxProfileId = 'custom'"
+                >
+                  <option value="alternate">{{ t('facturacion.tax.modeAlternate') }}</option>
+                  <option value="stack">{{ t('facturacion.tax.modeStack') }}</option>
+                </select>
+                <p class="text-xs text-text-tertiary">
+                  {{ line.mode === 'alternate'
+                    ? t('facturacion.tax.modeAlternateHelp')
+                    : t('facturacion.tax.modeStackHelp') }}
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-xs font-medium text-text-secondary">{{ t('facturacion.tax.lineCategories') }}</p>
+              <div class="relative">
+                <input
+                  :id="`co-custom-cat-search-${line.key}`"
+                  type="search"
+                  autocomplete="off"
+                  :value="categorySearchByLine[line.key] || ''"
+                  :placeholder="t('facturacion.tax.searchCategory')"
+                  class="w-full min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  @focus="openCategorySearch(line.key)"
+                  @blur="closeCategorySearchSoon(line.key)"
+                  @input="onCategorySearchInput(line.key, $event)"
+                >
+                <ul
+                  v-if="categorySearchOpenKey === line.key && filteredCategoriesForLine(line.key).length"
+                  class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg p-1"
+                  role="listbox"
+                >
+                  <li v-for="choice in filteredCategoriesForLine(line.key)" :key="`co-custom-${line.key}-${choice.id}`">
+                    <button
+                      type="button"
+                      class="w-full text-start rounded-md px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                      @mousedown.prevent="assignCategoryToLine(choice.id, line.key); coTaxProfileId = 'custom'"
+                    >
+                      {{ choice.name }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <ul
+                v-if="categoriesMappedToLine(line.key).length"
+                class="flex flex-wrap gap-2"
+                role="list"
+              >
+                <li
+                  v-for="catId in categoriesMappedToLine(line.key)"
+                  :key="`co-custom-chip-${line.key}-${catId}`"
+                  class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full flex items-center gap-1 font-medium"
+                >
+                  <span>{{ menuCategoryLabel(catId) }}</span>
+                  <button
+                    type="button"
+                    class="hover:opacity-70 min-h-[24px] min-w-[24px] flex items-center justify-center"
+                    :aria-label="t('facturacion.tax.removeCategory', { name: menuCategoryLabel(catId) })"
+                    @click="unassignCategory(catId); coTaxProfileId = 'custom'"
+                  >
+                    ×
+                  </button>
+                </li>
+              </ul>
+              <p v-else class="text-xs text-text-tertiary">{{ t('facturacion.tax.noCategoriesYet') }}</p>
+            </div>
           </div>
         </div>
 

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCoTaxSavePayload,
+  buildCoTaxLinesDraft,
+  buildCoRestauranteTaxLines,
   buildCommercialMatrixSavePayload,
   buildCommercialTaxSavePayload,
   canRemoveTaxLine,
+  coCustomLinesFromTaxLines,
   commercialPresetForCountry,
   countryNeedsJurisdiction,
   inheritedTaxLineForMenuCategory,
@@ -21,6 +24,7 @@ import {
   taxLineForCategory,
   taxLinesForUi,
   validateCommercialMatrix,
+  validateTaxLineModes,
   wave1PresetForCountry,
   additiveOrderTaxTotal,
 } from './useTenantTaxProfile'
@@ -330,6 +334,7 @@ describe('useTenantTaxProfile', () => {
       iva_applicable: true,
       iva_included_in_price: false,
       liquor_tax_applicable: true,
+      liquor_tax_included_in_price: true,
       iva_rate: 0.19,
       inc_rate: 0.08,
       liquor_tax_rate: 0.05,
@@ -337,6 +342,8 @@ describe('useTenantTaxProfile', () => {
     expect(body.iva_rate).toBe(0.19)
     expect(body.liquor_tax_rate).toBe(0.05)
     expect(body.iva_applicable).toBe(true)
+    expect(body.liquor_tax_included_in_price).toBe(true)
+    expect(body.commercial_tax_applicable).toBe(false)
     expect(body.menu_category_line_map).toEqual({})
     expect(body.exempt_menu_category_ids).toEqual([])
   })
@@ -402,10 +409,13 @@ describe('useTenantTaxProfile', () => {
       iva_included_in_price: false,
       liquor_tax_applicable: true,
       liquor_tax_rate: 0.05,
+      liquor_tax_included_in_price: true,
     })
     expect(lines.map(l => l.key)).toEqual(['iva', 'liquor'])
     expect(lines[0]?.label).toBe('IVA 19%')
     expect(lines[1]?.label).toBe('IVA licores 5%')
+    expect(lines[1]?.included_in_price).toBe(true)
+    expect(lines[1]?.mode).toBe('alternate')
 
     const incOnly = taxLinesForUi({
       inc_applicable: true,
@@ -413,6 +423,94 @@ describe('useTenantTaxProfile', () => {
       inc_included_in_price: true,
     })
     expect(incOnly.map(l => l.key)).toEqual(['inc'])
+  })
+
+  it('builds Restaurante CO gold-path tax_lines (#2028)', () => {
+    const lines = buildCoRestauranteTaxLines()
+    expect(lines).toHaveLength(2)
+    expect(lines[0]).toMatchObject({
+      key: 'iva',
+      rate: 0.19,
+      included_in_price: true,
+      mode: 'primary',
+      exclusive_group: 'vat',
+    })
+    expect(lines[1]).toMatchObject({
+      key: 'liquor',
+      rate: 0.05,
+      included_in_price: true,
+      mode: 'alternate',
+      exclusive_group: 'vat',
+    })
+  })
+
+  it('builds CO tax_lines draft with custom stack line and validates modes (#2028)', () => {
+    const lines = buildCoTaxLinesDraft({
+      inc_applicable: false,
+      iva_applicable: true,
+      liquor_tax_applicable: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      iva_included_in_price: true,
+      inc_included_in_price: true,
+      liquor_tax_included_in_price: true,
+      custom_lines: [{
+        key: 'tourist',
+        label: 'Tourist 2%',
+        rate: 0.02,
+        included_in_price: false,
+        gl_role: 'iva',
+        mode: 'stack',
+      }],
+    })
+    expect(lines.map(l => l.key)).toEqual(['iva', 'liquor', 'tourist'])
+    expect(validateTaxLineModes(lines)).toBeNull()
+    expect(validateTaxLineModes([
+      ...lines,
+      {
+        key: 'frontera',
+        label: 'Frontera',
+        rate: 0.08,
+        included_in_price: true,
+        gl_role: 'iva',
+        mode: 'stack',
+        exclusive_group: 'vat',
+      },
+    ])).toBe('stack_exclusive_group')
+
+    const body = buildCoTaxSavePayload({
+      inc_applicable: false,
+      inc_included_in_price: true,
+      iva_applicable: true,
+      iva_included_in_price: true,
+      liquor_tax_applicable: true,
+      liquor_tax_included_in_price: true,
+      iva_rate: 0.19,
+      inc_rate: 0.08,
+      liquor_tax_rate: 0.05,
+      tax_lines: lines,
+      menu_category_line_map: {
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': 'tourist',
+      },
+    })
+    expect(Array.isArray(body.tax_lines)).toBe(true)
+    expect((body.tax_lines as { key: string }[]).map(l => l.key)).toEqual(['iva', 'liquor', 'tourist'])
+    expect(body.menu_category_line_map).toEqual({
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': 'tourist',
+    })
+    expect(coCustomLinesFromTaxLines(body.tax_lines).map(l => l.key)).toEqual(['tourist'])
+  })
+
+  it('normalizes mode on tax_lines JSON (#2028)', () => {
+    const lines = normalizeTaxLines([
+      { key: 'iva', rate: 0.19, mode: 'PRIMARY', exclusive_group: 'vat' },
+      { key: 'liquor', rate: 0.05, mode: 'alternate', included_in_price: true },
+    ])
+    expect(lines[0]?.mode).toBe('primary')
+    expect(lines[0]?.exclusive_group).toBe('vat')
+    expect(lines[1]?.mode).toBe('alternate')
+    expect(lines[1]?.included_in_price).toBe(true)
   })
 
   it('inherits tax line from menu category map with override precedence (#1885)', () => {

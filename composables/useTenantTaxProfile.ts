@@ -5,15 +5,27 @@
  * COMMERCIAL_TAX_PRESETS are a client fallback / UX mirror.
  */
 
+export type TaxLineMode = 'primary' | 'alternate' | 'stack'
+
+export const TAX_LINE_MODES: readonly TaxLineMode[] = ['primary', 'alternate', 'stack'] as const
+
 export type TaxLineDraft = {
   key: string
   label: string
   rate: number
   included_in_price: boolean
   gl_role: string
+  /** primary | alternate (override) | stack — api-warolabs#764 */
+  mode?: TaxLineMode
+  exclusive_group?: string | null
 }
 
 export type TaxCategoryKey = 'standard' | 'liquor' | 'exempt'
+
+/** CO UX preset id — seeds columns + tax_lines (#2028). */
+export const CO_TAX_PROFILE_RESTAURANTE = 'restaurante_co' as const
+
+export type CoTaxProfileId = typeof CO_TAX_PROFILE_RESTAURANTE | 'custom'
 
 export type CommercialTaxPreset = {
   lines: TaxLineDraft[]
@@ -162,6 +174,13 @@ function parseJsonField(raw: unknown): unknown {
   }
 }
 
+export function normalizeTaxLineMode(raw: unknown): TaxLineMode {
+  const mode = String(raw || 'primary').trim().toLowerCase()
+  return (TAX_LINE_MODES as readonly string[]).includes(mode)
+    ? (mode as TaxLineMode)
+    : 'primary'
+}
+
 export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
   const parsed = parseJsonField(raw)
   if (!Array.isArray(parsed)) return []
@@ -171,15 +190,142 @@ export function normalizeTaxLines(raw: unknown): TaxLineDraft[] {
     const row = item as Record<string, unknown>
     const key = String(row.key || '').trim()
     if (!key) continue
+    const groupRaw = row.exclusive_group
+    const exclusive_group = groupRaw == null || String(groupRaw).trim() === ''
+      ? null
+      : String(groupRaw).trim()
     lines.push({
       key,
       label: String(row.label || key),
       rate: Number(row.rate) || 0,
       included_in_price: Boolean(row.included_in_price),
       gl_role: String(row.gl_role || 'iva'),
+      mode: normalizeTaxLineMode(row.mode),
+      exclusive_group,
     })
   }
   return lines
+}
+
+/** Refuse stack inside an exclusive_group (api-warolabs#764 / epic #2027). */
+export function validateTaxLineModes(lines: TaxLineDraft[]): 'stack_exclusive_group' | null {
+  for (const line of lines) {
+    const mode = normalizeTaxLineMode(line.mode)
+    const group = line.exclusive_group == null ? '' : String(line.exclusive_group).trim()
+    if (mode === 'stack' && group) return 'stack_exclusive_group'
+  }
+  return null
+}
+
+/**
+ * Gold-path CO preset: IVA 19% Incluido primary + Licores 5% Incluido alternate.
+ * Menu Bebidas → liquor map is applied by the page (category ids are tenant-specific).
+ */
+export function buildCoRestauranteTaxLines(options?: {
+  iva_rate?: number
+  liquor_tax_rate?: number
+}): TaxLineDraft[] {
+  const ivaRate = Math.max(0, Number(options?.iva_rate ?? 0.19) || 0.19)
+  const liquorRate = Math.max(0, Number(options?.liquor_tax_rate ?? 0.05) || 0.05)
+  return [
+    {
+      key: 'iva',
+      label: `IVA ${Math.round(ivaRate * 100)}%`,
+      rate: ivaRate,
+      included_in_price: true,
+      gl_role: 'iva',
+      mode: 'primary',
+      exclusive_group: 'vat',
+    },
+    {
+      key: 'liquor',
+      label: Math.abs(liquorRate - 0.05) < 1e-9
+        ? 'IVA licores 5%'
+        : `IVA licores ${Math.round(liquorRate * 100)}%`,
+      rate: liquorRate,
+      included_in_price: true,
+      gl_role: 'liquor',
+      mode: 'alternate',
+      exclusive_group: 'vat',
+    },
+  ]
+}
+
+/** Synthesize CO tax_lines from column form + optional custom free lines (#2028). */
+export function buildCoTaxLinesDraft(options: {
+  inc_applicable: boolean
+  iva_applicable: boolean
+  liquor_tax_applicable: boolean
+  iva_rate: number
+  inc_rate: number
+  liquor_tax_rate: number
+  iva_included_in_price: boolean
+  inc_included_in_price: boolean
+  liquor_tax_included_in_price: boolean
+  custom_lines?: TaxLineDraft[] | null
+}): TaxLineDraft[] {
+  const lines: TaxLineDraft[] = []
+  if (options.inc_applicable) {
+    const rate = Math.max(0, Number(options.inc_rate) || 0)
+    lines.push({
+      key: 'inc',
+      label: `INC ${Math.round(rate * 100)}%`,
+      rate,
+      included_in_price: Boolean(options.inc_included_in_price),
+      gl_role: 'inc',
+      mode: 'primary',
+      exclusive_group: 'vat',
+    })
+  } else if (options.iva_applicable) {
+    const rate = Math.max(0, Number(options.iva_rate) || 0)
+    lines.push({
+      key: 'iva',
+      label: `IVA ${Math.round(rate * 100)}%`,
+      rate,
+      included_in_price: Boolean(options.iva_included_in_price),
+      gl_role: 'iva',
+      mode: 'primary',
+      exclusive_group: 'vat',
+    })
+  }
+  if (options.liquor_tax_applicable) {
+    const rate = Math.max(0, Number(options.liquor_tax_rate) || 0)
+    lines.push({
+      key: 'liquor',
+      label: Math.abs(rate - 0.05) < 1e-9
+        ? 'IVA licores 5%'
+        : `IVA licores ${Math.round(rate * 100)}%`,
+      rate,
+      included_in_price: Boolean(options.liquor_tax_included_in_price),
+      gl_role: 'liquor',
+      mode: 'alternate',
+      exclusive_group: 'vat',
+    })
+  }
+  const reserved = new Set(['iva', 'inc', 'liquor'])
+  for (const raw of options.custom_lines || []) {
+    const key = String(raw.key || '').trim()
+    if (!key || reserved.has(key)) continue
+    const mode = normalizeTaxLineMode(raw.mode || 'stack')
+    const group = raw.exclusive_group == null || String(raw.exclusive_group).trim() === ''
+      ? null
+      : String(raw.exclusive_group).trim()
+    lines.push({
+      key,
+      label: String(raw.label || key).trim() || key,
+      rate: Math.max(0, Number(raw.rate) || 0),
+      included_in_price: Boolean(raw.included_in_price),
+      gl_role: String(raw.gl_role || 'iva'),
+      mode,
+      exclusive_group: mode === 'stack' ? null : (group || 'vat'),
+    })
+  }
+  return lines
+}
+
+export function coCustomLinesFromTaxLines(raw: unknown): TaxLineDraft[] {
+  const reserved = new Set(['iva', 'inc', 'liquor'])
+  return normalizeTaxLines(raw).filter(line => !reserved.has(line.key))
 }
 
 export function normalizeCategoryMap(raw: unknown): Record<string, string | null> | null {
@@ -303,6 +449,10 @@ export function buildCommercialMatrixSavePayload(options: {
     rate: Math.max(0, Number(line.rate) || 0),
     included_in_price: Boolean(line.included_in_price),
     gl_role: String(line.gl_role || 'iva'),
+    mode: normalizeTaxLineMode(line.mode),
+    exclusive_group: line.exclusive_group == null || String(line.exclusive_group).trim() === ''
+      ? null
+      : String(line.exclusive_group).trim(),
   }))
   const primaryKey = tax_lines[0]?.key || null
   const standard = resolveCategoryMapValue(options.category_map?.standard, primaryKey)
@@ -323,25 +473,45 @@ export function buildCommercialMatrixSavePayload(options: {
   return { tax_lines, category_map, menu_category_line_map, exempt_menu_category_ids }
 }
 
-/** CO column bridge PUT fields (#1873 / #1874) — rates as fractions. */
+/** CO column bridge PUT fields (#1873 / #1874 / #2028) — rates as fractions. */
 export function buildCoTaxSavePayload(options: {
   inc_applicable: boolean
   inc_included_in_price: boolean
   iva_applicable: boolean
   iva_included_in_price: boolean
   liquor_tax_applicable: boolean
+  liquor_tax_included_in_price?: boolean
   iva_rate: number
   inc_rate: number
   liquor_tax_rate: number
-  /** Menu category UUID → synthesized line key (`iva`|`inc`|`liquor`) (#1993). */
+  /** Menu category UUID → line key (`iva`|`inc`|`liquor`|custom) (#1993/#2028). */
   menu_category_line_map?: Record<string, string | null> | null
   /** Menu category UUIDs treated as tax-exempt (#1989). */
   exempt_menu_category_ids?: unknown
-}): Record<string, boolean | number | string[] | Record<string, string | null>> {
+  /** Explicit tax_lines (mode + included); dual-read with columns (#764/#2028). */
+  tax_lines?: TaxLineDraft[] | null
+  category_map?: Record<string, string | null> | null
+}): Record<string, unknown> {
   const allowedKeys = new Set<string>()
   if (options.inc_applicable) allowedKeys.add('inc')
   else if (options.iva_applicable) allowedKeys.add('iva')
   if (options.liquor_tax_applicable) allowedKeys.add('liquor')
+
+  let tax_lines: TaxLineDraft[] | undefined
+  if (options.tax_lines != null) {
+    tax_lines = options.tax_lines.map(line => ({
+      key: String(line.key || '').trim(),
+      label: String(line.label || line.key || '').trim(),
+      rate: Math.max(0, Number(line.rate) || 0),
+      included_in_price: Boolean(line.included_in_price),
+      gl_role: String(line.gl_role || 'iva'),
+      mode: normalizeTaxLineMode(line.mode),
+      exclusive_group: line.exclusive_group == null || String(line.exclusive_group).trim() === ''
+        ? null
+        : String(line.exclusive_group).trim(),
+    })).filter(line => line.key)
+    for (const line of tax_lines) allowedKeys.add(line.key)
+  }
 
   const menu_category_line_map: Record<string, string | null> = {}
   for (const [catId, lineKey] of Object.entries(options.menu_category_line_map || {})) {
@@ -356,20 +526,43 @@ export function buildCoTaxSavePayload(options: {
     menu_category_line_map[id] = key
   }
 
-  return {
+  const primaryKey = options.inc_applicable
+    ? 'inc'
+    : (options.iva_applicable ? 'iva' : null)
+  const category_map = options.category_map
+    ? {
+        standard: resolveCategoryMapValue(options.category_map.standard, primaryKey),
+        liquor: resolveCategoryMapValue(
+          options.category_map.liquor,
+          options.liquor_tax_applicable ? 'liquor' : primaryKey,
+        ),
+        exempt: resolveCategoryMapValue(options.category_map.exempt, null),
+      }
+    : {
+        standard: primaryKey,
+        liquor: options.liquor_tax_applicable ? 'liquor' : primaryKey,
+        exempt: null,
+      }
+
+  const payload: Record<string, unknown> = {
     inc_applicable: Boolean(options.inc_applicable),
     inc_included_in_price: Boolean(options.inc_included_in_price),
     iva_applicable: Boolean(options.iva_applicable),
     iva_included_in_price: Boolean(options.iva_included_in_price),
     liquor_tax_applicable: Boolean(options.liquor_tax_applicable),
+    liquor_tax_included_in_price: Boolean(options.liquor_tax_included_in_price ?? false),
     iva_rate: Math.max(0, Number(options.iva_rate) || 0),
     inc_rate: Math.max(0, Number(options.inc_rate) || 0),
     liquor_tax_rate: Math.max(0, Number(options.liquor_tax_rate) || 0),
+    commercial_tax_applicable: false,
     menu_category_line_map,
     exempt_menu_category_ids: normalizeExemptMenuCategoryIds(
       options.exempt_menu_category_ids ?? [],
     ),
+    category_map,
   }
+  if (tax_lines) payload.tax_lines = tax_lines
+  return payload
 }
 
 export function taxConfigHasTaxes(cfg: Record<string, unknown> | null | undefined): boolean {
@@ -481,6 +674,8 @@ export function taxLinesForUi(cfg: Record<string, unknown> | null | undefined): 
       rate,
       included_in_price: Boolean(cfg.inc_included_in_price ?? true),
       gl_role: 'inc',
+      mode: 'primary',
+      exclusive_group: 'vat',
     })
   } else if (cfg.iva_applicable) {
     const rate = Math.max(0, Number(cfg.iva_rate) || 0)
@@ -490,6 +685,8 @@ export function taxLinesForUi(cfg: Record<string, unknown> | null | undefined): 
       rate,
       included_in_price: Boolean(cfg.iva_included_in_price ?? false),
       gl_role: 'iva',
+      mode: 'primary',
+      exclusive_group: 'vat',
     })
   }
 
@@ -500,8 +697,10 @@ export function taxLinesForUi(cfg: Record<string, unknown> | null | undefined): 
       key: 'liquor',
       label: Math.abs(rate - 0.05) < 1e-9 ? 'IVA licores 5%' : `IVA licores ${pct}%`,
       rate,
-      included_in_price: false,
+      included_in_price: Boolean(cfg.liquor_tax_included_in_price ?? false),
       gl_role: 'liquor',
+      mode: 'alternate',
+      exclusive_group: 'vat',
     })
   }
 
@@ -699,10 +898,13 @@ export function useTenantTaxProfile() {
     COMMERCIAL_TAX_PRESETS,
     JURISDICTION_COUNTRY_CODES,
     MAX_COMMERCIAL_TAX_LINES,
+    TAX_LINE_MODES,
+    CO_TAX_PROFILE_RESTAURANTE,
     countryNeedsJurisdiction,
     shouldShowWave1CountryPicker,
     shouldShowJurisdictionPicker,
     normalizeTaxLines,
+    normalizeTaxLineMode,
     normalizeCategoryMap,
     normalizeMenuCategoryLineMap,
     normalizeExemptMenuCategoryIds,
@@ -721,7 +923,11 @@ export function useTenantTaxProfile() {
     buildCommercialTaxSavePayload,
     buildCommercialMatrixSavePayload,
     buildCoTaxSavePayload,
+    buildCoTaxLinesDraft,
+    buildCoRestauranteTaxLines,
+    coCustomLinesFromTaxLines,
     validateCommercialMatrix,
+    validateTaxLineModes,
     canRemoveTaxLine,
     suggestTaxLineKey,
     resolveCategoryMapValue,
