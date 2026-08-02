@@ -5,18 +5,18 @@
       @click="openModal"
       :disabled="isUpdating"
       :aria-label="businessProfile.is_currently_open ? t('shell.businessOpenAria') : t('shell.businessClosedAria')"
-      class="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-1.5 h-9 px-2 rounded-lg border border-transparent transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-secondary/70"
       :class="businessProfile.is_currently_open
-        ? 'bg-status-success-bg border-status-success-text text-status-success-text hover:opacity-80'
-        : 'bg-status-critical-bg border-status-critical-text text-status-critical-text hover:opacity-80'"
+        ? 'text-status-success-text'
+        : 'text-status-critical-text'"
     >
       <!-- Status dot -->
       <span
-        class="w-2 h-2 rounded-full flex-shrink-0"
-        :class="businessProfile.is_currently_open ? 'bg-status-success-text animate-pulse' : 'bg-status-critical-text'"
+        class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        :class="businessProfile.is_currently_open ? 'bg-status-success-text' : 'bg-status-critical-text'"
         aria-hidden="true"
       />
-      <span class="text-sm font-medium hidden sm:inline">
+      <span class="text-xs font-medium hidden sm:inline">
         {{ businessProfile.is_currently_open ? t('shell.businessOpen') : t('shell.businessClosed') }}
       </span>
       <!-- Spinner when updating -->

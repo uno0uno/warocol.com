@@ -54,29 +54,30 @@
   </Teleport>
 
   <!-- Header: Tenant + User info (desktop only) -->
-  <div class="hidden lg:flex items-center gap-2">
-    <!-- Tenant selector button — same style as refresh button -->
+  <div class="hidden lg:flex items-center gap-1">
+    <!-- Tenant selector — compact -->
     <button
       @click="openTenantModal"
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
-      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg text-sm font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      :title="isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar')"
+      class="flex items-center gap-1.5 h-9 px-2 bg-shell-account-bg border border-shell-account-border rounded-lg text-xs font-medium text-shell-account-text hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <span class="w-2 h-2 bg-shell-account-indicator-bg rounded-full flex-shrink-0" />
-      <span class="truncate max-w-[150px]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
+      <span class="w-1.5 h-1.5 bg-shell-account-indicator-bg rounded-full flex-shrink-0" />
+      <span class="truncate max-w-[7.5rem] xl:max-w-[9rem]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
       <ChevronDownIcon class="w-3.5 h-3.5 text-shell-account-chevron-text flex-shrink-0" />
     </button>
 
-    <!-- User profile -->
+    <!-- User profile — avatar only (name in aria/title) -->
     <NuxtLink
       to="/perfil"
       :aria-label="t('perfil.navigation.open')"
-      class="flex items-center gap-2 h-11 px-3 bg-shell-account-bg border-2 border-shell-account-border rounded-lg hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+      :title="userName"
+      class="flex items-center justify-center h-9 w-9 bg-shell-account-bg border border-shell-account-border rounded-lg hover:bg-shell-account-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
     >
-      <span class="text-sm font-medium text-shell-account-text truncate max-w-[120px]">{{ userName }}</span>
-      <div class="w-8 h-8 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+      <div class="w-7 h-7 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
         <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
-        <span v-else class="text-xs font-bold text-shell-account-icon-text" aria-hidden="true">{{ userInitials }}</span>
+        <span v-else class="text-[10px] font-bold text-shell-account-icon-text" aria-hidden="true">{{ userInitials }}</span>
       </div>
     </NuxtLink>
   </div>
