@@ -40,6 +40,9 @@ export type PrintBridgeClientLike = {
 const PRINT_SUCCESS_STATUSES = new Set(['completed'])
 const PRINT_FAILURE_STATUSES = new Set(['failed', 'cancelled', 'unknown'])
 
+/** Bridge accepted the job; CUPS may not confirm paper out (#2058). */
+export type BridgePrintOutcome = 'completed' | 'unconfirmed'
+
 function newPrintRequestId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -51,6 +54,7 @@ function newPrintRequestId(): string {
  * Star/CUPS often purges the job right after accept. PrintBridge then emits
  * `unknown` + "CUPS job status was no longer available". That is not a print
  * failure — treating it as one caused thermal + window.print double tickets.
+ * Callers should treat it as unconfirmed and offer a manual browser CTA (#2058).
  * Real offline failures use other messages (e.g. "Unable to send data…").
  */
 export function isCupsJobStatusGoneSoftSuccess(
@@ -71,8 +75,8 @@ export function isCupsJobStatusGoneSoftSuccess(
 export function waitForPrintTerminalStatus(
   client: PrintBridgeClientLike,
   requestId: string,
-): Promise<void> {
-  if (typeof client.on !== 'function') return Promise.resolve()
+): Promise<BridgePrintOutcome> {
+  if (typeof client.on !== 'function') return Promise.resolve('completed')
 
   return new Promise((resolve, reject) => {
     const off = client.on!('status', (event) => {
@@ -81,13 +85,13 @@ export function waitForPrintTerminalStatus(
       const message = event?.message
       if (PRINT_SUCCESS_STATUSES.has(status)) {
         off()
-        resolve()
+        resolve('completed')
         return
       }
-      // CUPS purged job after submit (Star thermal) — accept as success.
+      // CUPS purged job after submit — not hard fail; not confirmed either (#2058).
       if (isCupsJobStatusGoneSoftSuccess(status, message)) {
         off()
-        resolve()
+        resolve('unconfirmed')
         return
       }
       if (PRINT_FAILURE_STATUSES.has(status)) {
@@ -106,12 +110,12 @@ export function waitForPrintTerminalStatus(
 async function printAndAwaitOutcome(
   client: PrintBridgeClientLike,
   job: Record<string, unknown>,
-): Promise<void> {
+): Promise<BridgePrintOutcome> {
   const requestId = String(job.requestId || newPrintRequestId())
   const payload = { ...job, requestId }
   const terminal = waitForPrintTerminalStatus(client, requestId)
   await client.print(payload)
-  await terminal
+  return terminal
 }
 
 let injectedClient: PrintBridgeClientLike | null = null
@@ -201,9 +205,9 @@ export type LocalPrintBridge = {
   isAvailable: () => boolean
   connect: () => Promise<void>
   listPrinters: () => Promise<string[]>
-  printRawEscPos: (printerName: string, data: Uint8Array | string) => Promise<void>
-  printEscPosTestTicket: (printerName: string, message?: string) => Promise<void>
-  printHtml: (printerName: string, html: string, options?: { pageWidthIn?: number }) => Promise<void>
+  printRawEscPos: (printerName: string, data: Uint8Array | string) => Promise<BridgePrintOutcome>
+  printEscPosTestTicket: (printerName: string, message?: string) => Promise<BridgePrintOutcome>
+  printHtml: (printerName: string, html: string, options?: { pageWidthIn?: number }) => Promise<BridgePrintOutcome>
 }
 
 export function createLocalPrintBridge(): LocalPrintBridge {
@@ -262,7 +266,7 @@ export function createLocalPrintBridge(): LocalPrintBridge {
           ? bytesToBase64(new TextEncoder().encode(data))
           : bytesToBase64(data)
       try {
-        await printAndAwaitOutcome(c, {
+        return await printAndAwaitOutcome(c, {
           type: 'raw',
           printerName: name,
           dataBase64,
@@ -273,7 +277,7 @@ export function createLocalPrintBridge(): LocalPrintBridge {
     },
 
     async printEscPosTestTicket(printerName: string, message?: string) {
-      await this.printRawEscPos(printerName, buildEscPosTestTicketBytes(message))
+      return this.printRawEscPos(printerName, buildEscPosTestTicketBytes(message))
     },
 
     async printHtml(printerName: string, html: string, options?: { pageWidthIn?: number }) {
@@ -288,7 +292,7 @@ export function createLocalPrintBridge(): LocalPrintBridge {
       const pageWidthIn = options?.pageWidthIn ?? 2.25 // ~58mm thermal
       const widthMm = Math.round(pageWidthIn * 25.4)
       try {
-        await printAndAwaitOutcome(c, {
+        return await printAndAwaitOutcome(c, {
           type: 'raw-html',
           printerName: name,
           html,

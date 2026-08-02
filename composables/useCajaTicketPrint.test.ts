@@ -1,5 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { printTicketViaCajaOrBrowser } from './useCajaTicketPrint'
+import {
+  notifyUnconfirmedCajaPrint,
+  printTicketViaCajaOrBrowser,
+} from './useCajaTicketPrint'
 import type { LocalPrintBridge } from './useLocalPrintBridge'
 
 function fakeBridge(overrides: Partial<LocalPrintBridge> = {}): LocalPrintBridge {
@@ -7,16 +10,16 @@ function fakeBridge(overrides: Partial<LocalPrintBridge> = {}): LocalPrintBridge
     isAvailable: () => true,
     connect: mock(() => Promise.resolve()),
     listPrinters: mock(() => Promise.resolve(['STAR_TP586'])),
-    printRawEscPos: mock(() => Promise.resolve()),
-    printEscPosTestTicket: mock(() => Promise.resolve()),
-    printHtml: mock(() => Promise.resolve()),
+    printRawEscPos: mock(() => Promise.resolve('completed' as const)),
+    printEscPosTestTicket: mock(() => Promise.resolve('completed' as const)),
+    printHtml: mock(() => Promise.resolve('completed' as const)),
     ...overrides,
   }
 }
 
 describe('printTicketViaCajaOrBrowser', () => {
   it('prints ESC/POS raw via bridge when caja is assigned', async () => {
-    const printRawEscPos = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve('completed' as const))
     const browserPrint = mock(() => {})
     const bridge = fakeBridge({ printRawEscPos })
 
@@ -27,7 +30,7 @@ describe('printTicketViaCajaOrBrowser', () => {
       browserPrint,
     })
 
-    expect(result).toBe('bridge')
+    expect(result).toEqual({ mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' })
     expect(printRawEscPos).toHaveBeenCalledTimes(1)
     const [printer, payload] = printRawEscPos.mock.calls[0]!
     expect(printer).toBe('STAR_TP586')
@@ -36,8 +39,23 @@ describe('printTicketViaCajaOrBrowser', () => {
     expect(browserPrint).toHaveBeenCalledTimes(0)
   })
 
+  it('returns unconfirmed when CUPS soft-success outcome is reported', async () => {
+    const browserPrint = mock(() => {})
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName: async () => 'STAR_TP586',
+      bridge: fakeBridge({
+        printRawEscPos: mock(() => Promise.resolve('unconfirmed' as const)),
+      }),
+      getElementHtml: () => '<div id="pos-receipt">OK</div>',
+      browserPrint,
+    })
+
+    expect(result).toEqual({ mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' })
+    expect(browserPrint).toHaveBeenCalledTimes(0)
+  })
+
   it('falls back to browser when caja assignment is missing', async () => {
-    const printRawEscPos = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve('completed' as const))
     const browserPrint = mock(() => {})
     const bridge = fakeBridge({ printRawEscPos })
 
@@ -48,7 +66,7 @@ describe('printTicketViaCajaOrBrowser', () => {
       browserPrint,
     })
 
-    expect(result).toBe('browser')
+    expect(result).toEqual({ mode: 'browser' })
     expect(printRawEscPos).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
@@ -67,7 +85,7 @@ describe('printTicketViaCajaOrBrowser', () => {
       browserPrint,
     })
 
-    expect(result).toBe('browser')
+    expect(result).toEqual({ mode: 'browser' })
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
@@ -86,12 +104,12 @@ describe('printTicketViaCajaOrBrowser', () => {
       bridgePrintTimeoutMs: 30,
     })
 
-    expect(result).toBe('browser')
+    expect(result).toEqual({ mode: 'browser' })
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
 
   it('falls back to browser when element content is missing', async () => {
-    const printRawEscPos = mock(() => Promise.resolve())
+    const printRawEscPos = mock(() => Promise.resolve('completed' as const))
     const browserPrint = mock(() => {})
 
     const result = await printTicketViaCajaOrBrowser('missing', {
@@ -101,7 +119,7 @@ describe('printTicketViaCajaOrBrowser', () => {
       browserPrint,
     })
 
-    expect(result).toBe('browser')
+    expect(result).toEqual({ mode: 'browser' })
     expect(printRawEscPos).toHaveBeenCalledTimes(0)
     expect(browserPrint).toHaveBeenCalledTimes(1)
   })
@@ -114,8 +132,39 @@ describe('printTicketViaCajaOrBrowser', () => {
       getElementHtml: () => '<div/>',
       browserPrint: () => {},
     })
-    expect(result).toBe('browser')
+    expect(result).toEqual({ mode: 'browser' })
     deferred()
     expect(deferred).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('notifyUnconfirmedCajaPrint', () => {
+  it('shows retry and browser actions only for unconfirmed bridge results', () => {
+    const warning = mock(() => 1)
+    const onRetry = mock(() => {})
+    const onBrowserPrint = mock(() => {})
+    const t = (key: string, params?: Record<string, unknown>) =>
+      params?.name ? `${key}:${params.name}` : key
+
+    notifyUnconfirmedCajaPrint(
+      { mode: 'bridge', confirmed: false, printerName: 'STAR_TP586' },
+      { t, toast: { warning }, onRetry, onBrowserPrint },
+    )
+
+    expect(warning).toHaveBeenCalledTimes(1)
+    const [, options] = warning.mock.calls[0]!
+    expect(options.title).toBe('pos.receipt.printUnconfirmedTitle')
+    expect(options.actions).toHaveLength(2)
+    options.actions[0].onClick()
+    options.actions[1].onClick()
+    expect(onRetry).toHaveBeenCalledTimes(1)
+    expect(onBrowserPrint).toHaveBeenCalledTimes(1)
+
+    warning.mockClear()
+    notifyUnconfirmedCajaPrint(
+      { mode: 'bridge', confirmed: true, printerName: 'STAR_TP586' },
+      { t, toast: { warning }, onRetry, onBrowserPrint },
+    )
+    expect(warning).toHaveBeenCalledTimes(0)
   })
 })

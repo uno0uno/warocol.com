@@ -8,6 +8,7 @@
         :title="toast.title"
         :message="toast.message"
         :duration="toast.duration"
+        :actions="toast.actions"
         :stack-offset="getStackOffset(index)"
         :removing="toast.removing"
         @close="remove(toast.id)"

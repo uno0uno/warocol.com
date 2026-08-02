@@ -694,7 +694,11 @@
       "qrDianAlt": "QR de vérification DIAN",
       "promoFallback": "Promotion",
       "tipTax": "Taxe sur le pourboire",
-      "totalChargedUpper": "TOTAL FACTURÉ"
+      "totalChargedUpper": "TOTAL FACTURÉ",
+      "printUnconfirmedTitle": "Check the printer",
+      "printUnconfirmedBody": "Sent to {name}, but we could not confirm the ticket printed. Is it powered on?",
+      "printRetry": "Retry",
+      "printWithBrowser": "Print with browser"
     }
   }
 }

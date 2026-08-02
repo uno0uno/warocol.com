@@ -190,7 +190,7 @@ describe('createLocalPrintBridge', () => {
       })
   })
 
-  it('resolves when CUPS purges job status after submit (no window.print fallback)', async () => {
+  it('resolves unconfirmed when CUPS purges job status after submit (no auto browser fallback)', async () => {
     let statusHandler: ((event: { requestId?: string; status?: string; message?: string }) => void) | null = null
     const printSpy = mock(async (job: Record<string, unknown>) => {
       const requestId = String(job.requestId)
@@ -212,11 +212,12 @@ describe('createLocalPrintBridge', () => {
     })
 
     const bridge = createLocalPrintBridge()
-    await bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok'))
+    await expect(bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok')))
+      .resolves.toBe('unconfirmed')
     expect(printSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('resolves when status stream reports completed', async () => {
+  it('resolves completed when status stream reports completed', async () => {
     let statusHandler: ((event: { requestId?: string; status?: string }) => void) | null = null
     const printSpy = mock(async (job: Record<string, unknown>) => {
       const requestId = String(job.requestId)
@@ -233,7 +234,8 @@ describe('createLocalPrintBridge', () => {
     })
 
     const bridge = createLocalPrintBridge()
-    await bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok'))
+    await expect(bridge.printRawEscPos('STAR_TP586', buildEscPosTestTicketBytes('ok')))
+      .resolves.toBe('completed')
     expect(printSpy).toHaveBeenCalledTimes(1)
   })
 })

@@ -33,7 +33,7 @@ import {
   compactThermalMoneyLabel,
 } from '~/utils/receiptTicketPlainText'
 import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
-import { useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { notifyUnconfirmedCajaPrint, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
 import {
   buildCustomerIdentityPresentation,
@@ -2724,7 +2724,7 @@ const printReceipt = async () => {
   }
   // Defer window.print until after await so body print classes stay until fallback.
   // Prefer teleported ReceiptPrintTicket (plain-text layout #1979), not flex #pos-receipt.
-  const mode = await printTicketElement('pos-receipt', {
+  const printResult = await printTicketElement('pos-receipt', {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
@@ -2732,8 +2732,19 @@ const printReceipt = async () => {
       return collectThermalTicketText(el) || null
     },
   })
-  if (mode === 'bridge') {
+  if (printResult.mode === 'bridge') {
     cleanup()
+    notifyUnconfirmedCajaPrint(printResult, {
+      t,
+      toast,
+      onRetry: () => { void printReceipt() },
+      onBrowserPrint: () => {
+        document.body.classList.add('printing-receipt-ticket')
+        window.addEventListener('afterprint', cleanup)
+        setTimeout(cleanup, 1500)
+        window.print()
+      },
+    })
     return
   }
   window.addEventListener('afterprint', cleanup)
@@ -3152,15 +3163,26 @@ const printPrefactura = async () => {
 
   await nextTick()
   // Defer window.print until after await so body print classes stay until fallback.
-  const mode = await printTicketElement('pos-prefactura', {
+  const printResult = await printTicketElement('pos-prefactura', {
     browserPrint: () => {},
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
       return collectThermalTicketText(document.getElementById('pos-prefactura')) || null
     },
   })
-  if (mode === 'bridge') {
+  if (printResult.mode === 'bridge') {
     cleanup()
+    notifyUnconfirmedCajaPrint(printResult, {
+      t,
+      toast,
+      onRetry: () => { void printPrefactura() },
+      onBrowserPrint: () => {
+        document.body.classList.add('printing-prefactura')
+        window.addEventListener('afterprint', cleanup)
+        setTimeout(cleanup, 2000)
+        window.print()
+      },
+    })
     return
   }
   window.addEventListener('afterprint', cleanup)

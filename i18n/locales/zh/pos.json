@@ -694,7 +694,11 @@
       "qrDianAlt": "DIAN验证二维码",
       "promoFallback": "促销",
       "tipTax": "小费税",
-      "totalChargedUpper": "已收总额"
+      "totalChargedUpper": "已收总额",
+      "printUnconfirmedTitle": "Check the printer",
+      "printUnconfirmedBody": "Sent to {name}, but we could not confirm the ticket printed. Is it powered on?",
+      "printRetry": "Retry",
+      "printWithBrowser": "Print with browser"
     }
   }
 }

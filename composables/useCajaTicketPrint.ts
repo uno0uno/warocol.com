@@ -1,10 +1,12 @@
 /**
  * Prefactura/factura → configured caja printer via PrintBridge ESC/POS raw (#1960/#1965).
  * Falls back to window.print when bridge/caja is missing, print fails, or hangs (#2003).
+ * Soft CUPS “status gone” stays non-fatal but surfaces as unconfirmed (#2058).
  */
 import {
   LocalPrintBridgeError,
   useLocalPrintBridge,
+  type BridgePrintOutcome,
   type LocalPrintBridge,
 } from '~/composables/useLocalPrintBridge'
 import {
@@ -13,7 +15,10 @@ import {
   loadEscPosLogoRasterFromUrl,
 } from '~/utils/escPosTicket'
 
-export type CajaTicketPrintResult = 'bridge' | 'browser'
+export type CajaTicketPrintResult =
+  | { mode: 'bridge'; confirmed: true; printerName: string }
+  | { mode: 'bridge'; confirmed: false; printerName: string }
+  | { mode: 'browser' }
 
 /** Cap wait so offline USB/CUPS cannot stall the cashier before browser fallback. */
 export const BRIDGE_PRINT_TIMEOUT_MS = 5000
@@ -52,6 +57,17 @@ function defaultGetElementContent(elementId: string): string | null {
   return html || null
 }
 
+function bridgeResult(
+  printerName: string,
+  outcome: BridgePrintOutcome,
+): CajaTicketPrintResult {
+  return {
+    mode: 'bridge',
+    confirmed: outcome === 'completed',
+    printerName,
+  }
+}
+
 /**
  * Try PrintBridge raw ESC/POS to the tenant caja printer; otherwise call browserPrint().
  * Never throws — browser fallback absorbs bridge errors.
@@ -70,19 +86,19 @@ export async function printTicketViaCajaOrBrowser(
     caja = await deps.getCajaPrinterName()
   } catch {
     browserPrint()
-    return 'browser'
+    return { mode: 'browser' }
   }
 
   const printerName = (caja || '').trim()
   if (!printerName) {
     browserPrint()
-    return 'browser'
+    return { mode: 'browser' }
   }
 
   const content = getContent(elementId)
   if (!content?.trim()) {
     browserPrint()
-    return 'browser'
+    return { mode: 'browser' }
   }
 
   let logoRaster: Uint8Array | null = null
@@ -98,10 +114,10 @@ export async function printTicketViaCajaOrBrowser(
   const bridge = deps.bridge ?? useLocalPrintBridge()
   const timeoutMs = deps.bridgePrintTimeoutMs ?? BRIDGE_PRINT_TIMEOUT_MS
   try {
-    await withTimeout(
+    const outcome = await withTimeout(
       (async () => {
         await bridge.connect()
-        await bridge.printRawEscPos(
+        return bridge.printRawEscPos(
           printerName,
           buildEscPosTicketBytes(content, { logoRaster }),
         )
@@ -109,11 +125,52 @@ export async function printTicketViaCajaOrBrowser(
       timeoutMs,
       'Caja PrintBridge print',
     )
-    return 'bridge'
+    return bridgeResult(printerName, outcome)
   } catch {
     browserPrint()
-    return 'browser'
+    return { mode: 'browser' }
   }
+}
+
+export type CajaPrintFeedbackToast = {
+  warning: (
+    message: string,
+    options?: {
+      title?: string
+      duration?: number
+      actions?: Array<{ label: string; onClick: () => void }>
+    },
+  ) => unknown
+}
+
+/** Warn cashier when CUPS could not confirm paper out; offer retry / browser (#2058). */
+export function notifyUnconfirmedCajaPrint(
+  result: CajaTicketPrintResult,
+  opts: {
+    t: (key: string, params?: Record<string, unknown>) => string
+    toast: CajaPrintFeedbackToast
+    onRetry: () => void
+    onBrowserPrint: () => void
+  },
+): void {
+  if (result.mode !== 'bridge' || result.confirmed) return
+  opts.toast.warning(
+    opts.t('pos.receipt.printUnconfirmedBody', { name: result.printerName }),
+    {
+      title: opts.t('pos.receipt.printUnconfirmedTitle'),
+      duration: 15000,
+      actions: [
+        {
+          label: opts.t('pos.receipt.printRetry'),
+          onClick: opts.onRetry,
+        },
+        {
+          label: opts.t('pos.receipt.printWithBrowser'),
+          onClick: opts.onBrowserPrint,
+        },
+      ],
+    },
+  )
 }
 
 export function useCajaTicketPrint() {
