@@ -6,6 +6,11 @@
 export const RECEIPT_THERMAL_COLS = 32
 export const RECEIPT_MODIFIER_INDENT = '  '
 
+/** Light separator between product blocks (not the section dash). */
+export function receiptItemSeparator(cols: number = RECEIPT_THERMAL_COLS): string {
+  return '·'.repeat(Math.max(8, Math.min(cols, 32)))
+}
+
 /**
  * Compact `$ COP 45.000,00` → `$45.000,00` so qty×unit + total fit 32 cols.
  */
@@ -161,9 +166,13 @@ export function formatReceiptProductBlock(opts: {
   lineTotalLabel: string
   taxCue?: string | null
   cols?: number
+  /** 1-based line number shown before the product name. */
+  index?: number | null
 }): string {
   const cols = opts.cols ?? RECEIPT_THERMAL_COLS
-  const name = String(opts.name ?? '').trim() || 'Item'
+  const nameRaw = String(opts.name ?? '').trim() || 'Item'
+  const index = Number(opts.index)
+  const name = Number.isFinite(index) && index > 0 ? `${index}. ${nameRaw}` : nameRaw
   const unit = compactThermalMoneyLabel(opts.unitPriceLabel)
   const total = compactThermalMoneyLabel(opts.lineTotalLabel)
   const left = `${opts.quantity} x ${unit}`

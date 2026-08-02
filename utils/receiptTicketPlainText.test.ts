@@ -7,6 +7,7 @@ import {
   formatReceiptTaxCue,
   padReceiptLine,
   receiptDivider,
+  receiptItemSeparator,
   collectThermalTicketText,
 } from './receiptTicketPlainText'
 
@@ -121,6 +122,25 @@ describe('formatReceiptProductBlock', () => {
     expect(lines[1]).toContain('1 x')
     expect(lines[2]).toBe('  + INC · $280')
     expect(block).not.toMatch(/Incluye/i)
+  })
+
+  it('prefixes a 1-based index on the product name', () => {
+    const block = formatReceiptProductBlock({
+      name: 'Agua',
+      quantity: 1,
+      unitPriceLabel: '$3.500',
+      lineTotalLabel: '$3.500',
+      index: 2,
+    })
+    expect(block.split('\n')[0]).toBe('2. Agua')
+  })
+})
+
+describe('receiptItemSeparator', () => {
+  it('emits a light middle-dot line for between-item gaps', () => {
+    const sep = receiptItemSeparator(10)
+    expect(sep).toBe('··········')
+    expect(sep).not.toContain('-')
   })
 })
 
