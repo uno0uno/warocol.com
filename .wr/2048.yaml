@@ -1,0 +1,37 @@
+issue: 2048
+title: "feat(arqueo): allow opening cash shift with zero float"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2048-zero-opening-float
+
+paths:
+  - pages/finanzas/arqueo/apertura.vue
+  - i18n/locales/es/finanzas.json
+  - i18n/locales/en/finanzas.json
+  - .wr/2048.yaml
+
+ac:
+  - Allow openingCash 0 for today/past
+  - Reject negatives only
+  - API unchanged
+
+out_of_scope:
+  - Z/X close logic
+  - API
+
+hints:
+  entry: "canSubmitOpening + submitOpening"
+  pattern: "OpenShiftCreate openingCash ge=0"
+  tests: "none — validation wiring"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge main + stop local servers"
