@@ -21,22 +21,67 @@
         </NuxtLink>
       </nav>
 
-      <!-- Search — solo desktop -->
-      <div class="hidden md:flex ms-auto relative items-center w-full max-w-[240px]">
-        <svg class="absolute start-3 w-[14px] h-[14px] text-ebony-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      <!-- Language selector (replaces dead search) -->
+      <div class="hidden md:flex ms-auto relative items-center min-w-[7.5rem] max-w-[11rem]">
+        <label class="sr-only" for="public-header-locale">{{ t('shell.language') }}</label>
+        <select
+          id="public-header-locale"
+          class="w-full appearance-none rounded-xl border border-titan-200 bg-titan-50 py-[7px] ps-3 pe-8 text-[13px] font-medium text-ebony-600 outline-none transition-colors hover:border-crocus-300 focus:border-crocus-300"
+          :value="locale"
+          :dir="localeDir"
+          @change="onLocaleChange"
+        >
+          <option
+            v-for="definition in localeOptions"
+            :key="definition.code"
+            :value="definition.code"
+            :dir="definition.direction"
+          >
+            {{ definition.name }}
+          </option>
+        </select>
+        <svg
+          class="pointer-events-none absolute end-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ebony-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
-        <input
-          type="text"
-          class="w-full py-[7px] ps-[34px] pe-[44px] border border-titan-200 rounded-xl bg-titan-50 text-[13px] text-ebony-600 outline-none cursor-default font-inherit placeholder-ebony-400 focus:border-crocus-300 transition-colors"
-          placeholder="Buscar..."
-          readonly
-        />
-        <span class="absolute end-3 text-[10px] text-ebony-400 bg-surface border border-titan-200 py-[1px] px-1.5 rounded-md tracking-[0.02em] font-mono">⌘K</span>
       </div>
 
       <!-- Acciones derecha -->
       <div class="flex items-center gap-1 sm:gap-2 shrink-0 ms-auto md:ms-0">
+        <!-- Mobile language selector -->
+        <div class="relative md:hidden">
+          <label class="sr-only" for="public-header-locale-mobile">{{ t('shell.language') }}</label>
+          <select
+            id="public-header-locale-mobile"
+            class="appearance-none rounded-xl border border-titan-200 bg-titan-50 py-[7px] ps-2 pe-7 text-[12px] font-medium text-ebony-600 outline-none"
+            :value="locale"
+            :dir="localeDir"
+            @change="onLocaleChange"
+          >
+            <option
+              v-for="definition in localeOptions"
+              :key="definition.code"
+              :value="definition.code"
+              :dir="definition.direction"
+            >
+              {{ definition.code.toUpperCase() }}
+            </option>
+          </select>
+          <svg
+            class="pointer-events-none absolute end-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-ebony-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
         <!-- Ingresar / Mi Panel — siempre disponible, incluido móvil y tablet -->
         <NuxtLink
           :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"
@@ -61,13 +106,31 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 import { useCityCatalog } from '~/composables/useCityCatalog'
+import {
+  APP_LOCALE_DEFINITIONS,
+  getLocaleDirection,
+  normalizeEnabledAppLocale,
+  type AppLocaleCode,
+} from '~/utils/appLocales'
 import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
 import logo from '~/public/logo_waro_colombia.png'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n({ useScope: 'global' })
+const { locale, applyPersonalLocale } = useAppLocale()
 const { cityFromRoute, isCityRoute } = useCityCatalog()
+
+const localeOptions = APP_LOCALE_DEFINITIONS.filter(definition => definition.enabled)
+const localeDir = computed(() => getLocaleDirection(locale.value))
+
+async function onLocaleChange(event: Event) {
+  const next = normalizeEnabledAppLocale((event.target as HTMLSelectElement).value)
+  if (!next) return
+  await applyPersonalLocale(next as AppLocaleCode)
+}
+
 // Default CO market until a dedicated US landing exists (epic #2093 decision).
 const headerCta = getPublicCta('pos', 'header', { lang: 'es', country: 'Colombia' })
 
