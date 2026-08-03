@@ -507,15 +507,22 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
-        // Still invalidate list so the created expense appears on return
         cache.invalidateQueries({ key: ['finance', 'expenses'] })
-        submitError.value = t('finanzas.gastos.createUploadWarn')
+        cache.invalidateQueries({ key: ['expense', response.data.id] })
+        useToast().warning(t('finanzas.gastos.createUploadWarn'))
+        await navigateTo(`/finanzas/gastos/${response.data.id}`)
         return
       }
     }
 
-    // Invalidate list cache so return to index shows progressive refresh (like productos)
+    // Invalidate list + seed detail cache path, then open the new expense
     cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    const newId = response?.data?.id
+    if (newId) {
+      cache.invalidateQueries({ key: ['expense', newId] })
+      await navigateTo(`/finanzas/gastos/${newId}`)
+      return
+    }
     await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     if (handleQuotaError(error, { resource: 'expenses_per_period', showInline: false })) {

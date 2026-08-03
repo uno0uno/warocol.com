@@ -19,29 +19,6 @@
     <!-- Main Content -->
     <div v-else-if="expense">
 
-      <!-- Navigation Header -->
-      <div class="flex items-center gap-3 mb-4">
-        <NuxtLink
-          to='/finanzas/gastos'
-          class="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-border text-text-primary rounded-lg hover:border-primary transition-colors text-sm font-medium"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          <span>{{ t('finanzas.common.back') }}</span>
-        </NuxtLink>
-        <button
-          v-if="!isEditing"
-          @click="deleteExpense"
-          class="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 transition-colors text-sm font-medium"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          <span>{{ t('finanzas.common.delete') }}</span>
-        </button>
-      </div>
-
       <!-- Header Card -->
       <div class="bg-surface border-2 border-border rounded-lg mb-6">
         <div class="p-6">
@@ -145,14 +122,22 @@
                 </svg>
                 <span>{{ t('finanzas.gastos.detailTitle') }}</span>
               </h3>
-              <button
-                v-if="!isEditing"
-                type="button"
-                @click="startEditing"
-                class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
-              >
-                {{ t('common.edit') }}
-              </button>
+              <div v-if="!isEditing" class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="startEditing"
+                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+                >
+                  {{ t('common.edit') }}
+                </button>
+                <button
+                  type="button"
+                  @click="deleteExpense"
+                  class="px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 text-sm font-medium"
+                >
+                  {{ t('finanzas.common.delete') }}
+                </button>
+              </div>
             </div>
 
             <!-- View Mode - Table Format -->
@@ -461,9 +446,8 @@
                     </div>
                   </a>
                   <button
-                    v-if="isEditing"
                     type="button"
-                    @click="removeAttachment(attachment.id)"
+                    @click="onRemoveAttachmentClick(attachment.id)"
                     class="text-destructive hover:text-destructive/80 flex-shrink-0"
                     :title="t('finanzas.gastos.removeFile')"
                     :aria-label="t('finanzas.gastos.removeFile')"
@@ -476,9 +460,11 @@
               </div>
             </div>
 
-            <!-- Add New Attachments (Edit Mode) -->
-            <div v-if="isEditing">
-              <p class="text-sm text-text-secondary mb-3">{{ t('finanzas.gastos.addNewFiles') }}</p>
+            <!-- Add attachments (view: upload now; edit: stage for save) -->
+            <div>
+              <p class="text-sm text-text-secondary mb-3">
+                {{ isEditing ? t('finanzas.gastos.addNewFiles') : t('finanzas.gastos.addDocsHint') }}
+              </p>
               <div class="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 <input
                   ref="fileInput"
@@ -489,17 +475,18 @@
                   class="hidden"
                 />
 
-                <div v-if="selectedFiles.length === 0">
+                <div v-if="selectedFiles.length === 0 || !isEditing">
                   <svg class="mx-auto h-12 w-12 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   <p class="mt-2 text-sm text-text-secondary">{{ t('finanzas.gastos.dragFiles') }}</p>
                   <button
                     type="button"
-                    @click="$refs.fileInput.click()"
-                    class="mt-2 btn-secondary px-4 py-2 rounded-lg text-sm"
+                    :disabled="isUploadingAttachments"
+                    class="mt-2 btn-secondary px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+                    @click="fileInput?.click()"
                   >
-                    {{ t('finanzas.gastos.selectFiles') }}
+                    {{ isUploadingAttachments ? t('finanzas.gastos.uploadingFiles') : t('finanzas.gastos.selectFiles') }}
                   </button>
                 </div>
 
@@ -526,7 +513,7 @@
                   </div>
                   <button
                     type="button"
-                    @click="$refs.fileInput.click()"
+                    @click="fileInput?.click()"
                     class="btn-secondary px-4 py-2 rounded-lg text-sm w-full"
                   >
                     {{ t('finanzas.gastos.addFiles') }}
@@ -535,7 +522,10 @@
               </div>
             </div>
 
-            <p v-if="!isEditing && (!expense.attachments || expense.attachments.length === 0)" class="text-sm text-text-secondary text-center py-4">
+            <p
+              v-if="!isEditing && (!expense.attachments || expense.attachments.length === 0) && !isUploadingAttachments"
+              class="text-sm text-text-secondary text-center py-4"
+            >
               {{ t('finanzas.gastos.noAttachments') }}
             </p>
           </div>
@@ -670,6 +660,24 @@
 
     </div>
 
+    <FinanzasExpensePrintTicket
+      v-if="expense"
+      :title="t('finanzas.gastos.printTitle')"
+      :expense-number="expense.expenseNumber"
+      :date-label="t('finanzas.gastos.colDate')"
+      :category-label="t('finanzas.gastos.colCategory')"
+      :description-label="t('finanzas.gastos.colDesc')"
+      :amount-label="t('finanzas.gastos.colAmount')"
+      :method-label="t('finanzas.common.method')"
+      :type-label="t('finanzas.gastos.colType')"
+      :date-value="formatCalendarDate(expense.transactionDate)"
+      :category-value="expense.category?.categoryName || t('finanzas.common.noCategory')"
+      :description-value="expense.description || t('finanzas.gastos.noDesc')"
+      :amount-value="formatCurrency(expense.amount)"
+      :method-value="resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId)"
+      :type-value="expenseTypeLabel(expense.expenseType)"
+    />
+
     <UiConfirmActionModal
       v-model="quotaLimitModalOpen"
       :title="t('billing.upgrade.quotaBlocked')"
@@ -682,13 +690,34 @@
   </div>
 </template>
 
+<style>
+@media print {
+  body.printing-receipt-ticket * {
+    visibility: hidden !important;
+  }
+  body.printing-receipt-ticket #expense-print-ticket,
+  body.printing-receipt-ticket #expense-print-ticket * {
+    visibility: visible !important;
+  }
+  body.printing-receipt-ticket #expense-print-ticket {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm;
+  }
+}
+</style>
+
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { useFormatters } from '~/composables/useFormatters'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
+import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -710,6 +739,8 @@ const onNewInstanceClick = () => {
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
+const { printElement: printTicketElement } = useCajaTicketPrint()
+const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 
 // Payment methods
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
@@ -724,6 +755,7 @@ function resolvePaymentLabel(slug: string | null | undefined, methodId?: string 
 const isEditing = ref(false)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
+const isUploadingAttachments = ref(false)
 const attachmentsToRemove = ref<string[]>([])
 
 // File upload state
@@ -763,9 +795,21 @@ useHead({
 
 // Layout actions
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-onMounted(() => { setRefreshHandler(refetch) })
+onMounted(() => {
+  setRefreshHandler(refetch)
+  setHeaderAction?.({
+    label: t('finanzas.gastos.print'),
+    ariaLabel: t('finanzas.gastos.printAria'),
+    icon: 'printer',
+    iconOnly: true,
+    handler: () => { void printExpense() },
+  })
+})
 registerProgressiveLoading(isRefreshing)
-onUnmounted(() => { clearRefreshHandler(refetch) })
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+  setHeaderAction?.(undefined)
+})
 
 // Form state
 const form = reactive({
@@ -779,22 +823,121 @@ const form = reactive({
 })
 
 // File handling
-const handleFileSelect = (event: Event) => {
+const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files) {
-    selectedFiles.value.push(...Array.from(target.files))
-    target.value = '' // Reset input
+  if (!target.files?.length) return
+  const files = Array.from(target.files)
+  target.value = ''
+
+  if (isEditing.value) {
+    selectedFiles.value.push(...files)
+    return
   }
+
+  await uploadAttachmentsNow(files)
 }
 
 const removeFile = (index: number) => {
   selectedFiles.value.splice(index, 1)
 }
 
+const uploadAttachmentsNow = async (files: File[]) => {
+  if (!files.length) return
+  isUploadingAttachments.value = true
+  try {
+    const formData = new FormData()
+    files.forEach(file => formData.append('files', file))
+    await $fetch(`/api/finance/expenses/${expenseId}/attachments`, {
+      method: 'POST',
+      body: formData,
+    })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    await refetch()
+  } catch (err) {
+    console.error('Error uploading files:', err)
+    useToast().error(t('finanzas.gastos.uploadError'))
+  } finally {
+    isUploadingAttachments.value = false
+  }
+}
+
 const removeAttachment = (attachmentId: string) => {
   if (confirm(t('finanzas.gastos.deleteAttachmentConfirm'))) {
     attachmentsToRemove.value.push(attachmentId)
   }
+}
+
+const onRemoveAttachmentClick = async (attachmentId: string) => {
+  if (isEditing.value) {
+    removeAttachment(attachmentId)
+    return
+  }
+  if (!confirm(t('finanzas.gastos.deleteAttachmentConfirm'))) return
+  try {
+    await $fetch(`/api/finance/expenses/${expenseId}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    })
+    cache.invalidateQueries({ key: ['expense', expenseId] })
+    cache.invalidateQueries({ key: ['finance', 'expenses'] })
+    await refetch()
+  } catch (err) {
+    console.error('Error deleting attachment:', err)
+    useToast().error(t('finanzas.gastos.deleteAttachmentError'))
+  }
+}
+
+const expenseTypeLabel = (type?: string | null) => {
+  switch (type) {
+    case 'cogs': return t('finanzas.gastos.typeCogs')
+    case 'admin_expense': return t('finanzas.gastos.typeAdmin')
+    case 'sales_expense': return t('finanzas.gastos.typeSales')
+    case 'financial_expense': return t('finanzas.gastos.typeFinancial')
+    case 'other_expense': return t('finanzas.gastos.typeOther')
+    default: return t('finanzas.gastos.unclassified')
+  }
+}
+
+const printExpense = async () => {
+  if (!expense.value) {
+    useToast().error(t('finanzas.gastos.printNoData'))
+    return
+  }
+  document.body.classList.add('printing-receipt-ticket')
+  await nextTick()
+  const cleanup = () => {
+    document.body.classList.remove('printing-receipt-ticket')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  const printResult = await printTicketElement('expense-print-ticket', {
+    browserPrint: () => {},
+    getElementHtml: () => {
+      if (typeof document === 'undefined') return null
+      return collectThermalTicketText(document.querySelector('#expense-print-ticket')) || null
+    },
+  })
+  if (printResult.mode === 'bridge') {
+    cleanup()
+    notifyCajaPrintResult(printResult, {
+      t,
+      toast: useToast(),
+      onRetry: () => { void printExpense() },
+      onBrowserPrint: () => {
+        document.body.classList.add('printing-receipt-ticket')
+        window.addEventListener('afterprint', cleanup)
+        window.setTimeout(cleanup, 1500)
+        window.print()
+      },
+    })
+    return
+  }
+  if (printResult.mode === 'skipped') {
+    cleanup()
+    return
+  }
+  window.addEventListener('afterprint', cleanup)
+  window.print()
+  window.setTimeout(cleanup, 1500)
 }
 
 // Start editing
