@@ -1,15 +1,48 @@
 <script setup lang="ts">
+import { resolveArticleMarket } from '~/utils/articleMarket'
+
+const props = withDefaults(defineProps<{
+  lang?: string | null
+  country?: string | null
+}>(), {
+  lang: null,
+  country: null,
+})
+
 const leadModal = useLeadModal()
+
+const market = computed(() =>
+  resolveArticleMarket({ lang: props.lang, country: props.country }),
+)
+
+const copy = computed(() => {
+  if (market.value.isUsEn) {
+    return {
+      title: 'ZERO MYSTERY IN YOUR RESTAURANT.',
+      subtitle: 'From the price of a plate to an employee shift. We put technology within reach that turns your data into clear decisions.',
+      emphasis: 'We guide you so it stays easy.',
+      button: 'TALK TO US',
+      microcopy: '2 minutes. No card required. An advisor will contact you.',
+    }
+  }
+  return {
+    title: 'CERO MISTERIO EN TU RESTAURANTE.',
+    subtitle: 'Desde el precio de un plato hasta el turno de un empleado. Ponemos a tu alcance la tecnología que convierte tus datos en decisiones certeras.',
+    emphasis: 'Nosotros te guiamos para que sea fácil.',
+    button: 'HABLA CON NOSOTROS',
+    microcopy: '2 minutos. Sin tarjeta. Un asesor te contacta.',
+  }
+})
 
 const openLeadModal = () => leadModal.open('habla_con_nosotros')
 </script>
 
 <template>
   <section class="hero">
-    <h1 class="font-quantico">CERO MISTERIO EN TU RESTAURANTE.</h1>
+    <h1 class="font-quantico">{{ copy.title }}</h1>
     <p class="subtitle">
-      Desde el precio de un plato hasta el turno de un empleado. Ponemos a tu alcance la tecnología que convierte tus datos en decisiones certeras.
-      <em>Nosotros te guiamos para que sea fácil.</em>
+      {{ copy.subtitle }}
+      <em>{{ copy.emphasis }}</em>
     </p>
 
     <div class="cta-buttons">
@@ -19,9 +52,9 @@ const openLeadModal = () => leadModal.open('habla_con_nosotros')
         aria-haspopup="dialog"
         @click="openLeadModal"
       >
-        HABLA CON NOSOTROS
+        {{ copy.button }}
       </button>
-      <p class="cta-microcopy">2 minutos. Sin tarjeta. Un asesor te contacta.</p>
+      <p class="cta-microcopy">{{ copy.microcopy }}</p>
     </div>
   </section>
 </template>

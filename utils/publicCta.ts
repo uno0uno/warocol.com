@@ -1,3 +1,8 @@
+import {
+  resolveArticleMarket,
+  type ArticleMarket,
+  type ArticleMarketInput,
+} from './articleMarket.ts'
 import { sanitizeRegistrationAttribution, type RegistrationAttribution } from './registrationFlow.ts'
 import { trackOnboardingEvent, type DataLayerTarget } from './onboardingAnalytics.ts'
 
@@ -32,18 +37,45 @@ export interface PublicCtaTouch {
   content: string
 }
 
+export interface PublicOffer {
+  annualPrice: string
+  monthlyEquivalent: string
+  activation: string
+}
+
 interface PublicAttributionStorage {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
 }
 
-export const PUBLIC_OFFER = Object.freeze({
+/** Colombia ES public marketing offer (default). */
+export const PUBLIC_OFFER: PublicOffer = Object.freeze({
   annualPrice: 'COP 95.900/año',
   monthlyEquivalent: 'menos de COP 8.000/mes',
   activation: 'El acceso a los módulos se activa después del pago.',
 })
 
-/** In-app Starter trial banner price slot (warocol.com#1917). Public marketing CTAs stay COP. */
+function toArticleMarket(marketInput: ArticleMarketInput | ArticleMarket = {}): ArticleMarket {
+  if ('isUsEn' in marketInput && 'annualPriceLabel' in marketInput) {
+    return marketInput as ArticleMarket
+  }
+  return resolveArticleMarket(marketInput)
+}
+
+/** Resolve public offer strings from article/public market input. Default → CO. */
+export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMarket = {}): PublicOffer {
+  const market = toArticleMarket(marketInput)
+  if (market.isUsEn) {
+    return {
+      annualPrice: market.annualPriceLabel,
+      monthlyEquivalent: 'under USD $25/month',
+      activation: 'Module access activates after payment.',
+    }
+  }
+  return PUBLIC_OFFER
+}
+
+/** In-app Starter trial banner price slot (warocol.com#1917). */
 export function resolveTrialPriceAnchor(options: {
   locale?: string | null
   countryCode?: string | null
@@ -53,10 +85,15 @@ export function resolveTrialPriceAnchor(options: {
   const country = String(options.countryCode || '').toUpperCase()
   const currency = String(options.currencyCode || '').toUpperCase()
   const isMexico = country === 'MX' || currency === 'MXN'
+  const isUs = country === 'US' || currency === 'USD'
 
   if (isMexico) {
     // No approved MXN list price yet — avoid showing COP to MX tenants.
     return isEn ? 'Plan Pro' : 'el Plan Pro'
+  }
+
+  if (isUs) {
+    return isEn ? 'under USD $25/month' : 'menos de USD $25/mes'
   }
 
   return isEn ? 'under COP 8,000/month' : PUBLIC_OFFER.monthlyEquivalent
@@ -65,16 +102,25 @@ export function resolveTrialPriceAnchor(options: {
 // Activate only after recording a verifiable source, date, scope and disclosure here.
 export const PUBLIC_CTA_COMPARISON: PublicCtaComparison | null = null
 
-const INTENT_LABELS: Record<PublicCtaIntent, string> = {
+const INTENT_LABELS_ES: Record<PublicCtaIntent, string> = {
   pos: 'POS para restaurantes',
   pricing: 'Precio claro',
   costs: 'Costos e inventario',
   management: 'Administración conectada',
   team: 'Equipo y nómina',
 }
-const PUBLIC_CTA_INTENTS = new Set<PublicCtaIntent>(Object.keys(INTENT_LABELS) as PublicCtaIntent[])
 
-const BENEFIT_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> = {
+const INTENT_LABELS_EN: Record<PublicCtaIntent, string> = {
+  pos: 'Restaurant POS',
+  pricing: 'Clear pricing',
+  costs: 'Costs and inventory',
+  management: 'Connected operations',
+  team: 'Team and payroll',
+}
+
+const PUBLIC_CTA_INTENTS = new Set<PublicCtaIntent>(Object.keys(INTENT_LABELS_ES) as PublicCtaIntent[])
+
+const BENEFIT_COPY_ES: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> = {
   pos: {
     headline: 'Vende y controla tu restaurante desde un solo POS.',
     body: 'Gestiona caja, mesas, inventario, costos y facturas de proveedores con información conectada.',
@@ -97,27 +143,77 @@ const BENEFIT_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>
   },
 }
 
-const FINAL_COPY: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> = {
+const BENEFIT_COPY_EN: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> = {
   pos: {
-    headline: 'Activa un POS creado para restaurantes colombianos.',
-    body: `Vende, controla inventario y conoce tus costos con el Plan Pro por ${PUBLIC_OFFER.annualPrice}.`,
+    headline: 'Sell and control your restaurant from one POS.',
+    body: 'Manage checkout, tables, inventory, costs, and supplier invoices with connected data.',
   },
   pricing: {
-    headline: 'Activa WARO con un plan anual claro.',
-    body: `Plan Pro por ${PUBLIC_OFFER.annualPrice}, equivalente a ${PUBLIC_OFFER.monthlyEquivalent}.`,
+    headline: 'Start with clear pricing from signup.',
+    body: 'Create your account, confirm your business details, and choose a plan before modules activate.',
   },
   costs: {
-    headline: 'Empieza a controlar costos e inventario con datos reales.',
-    body: 'Crea tu cuenta, confirma el negocio y elige el plan que activarás desde Billing.',
+    headline: 'Turn purchases and inventory into profitable decisions.',
+    body: 'See plate costs, stock, and margins without separate spreadsheets.',
   },
   management: {
-    headline: 'Pon la operación de tu restaurante en orden.',
-    body: 'Crea tu cuenta y activa las herramientas para administrar el negocio desde un solo lugar.',
+    headline: 'Run restaurant operations in one place.',
+    body: 'Connect sales, tables, delivery, inventory, and costs for more control.',
   },
   team: {
-    headline: 'Gestiona la operación y el equipo con menos reprocesos.',
-    body: 'Crea tu cuenta y activa WARO para conectar la información diaria de tu restaurante.',
+    headline: 'Connect shifts, sales, and tips with your team.',
+    body: 'Cut payroll rework and review daily operations from the same platform.',
   },
+}
+
+function finalCopyEs(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  return {
+    pos: {
+      headline: 'Activa un POS creado para restaurantes colombianos.',
+      body: `Vende, controla inventario y conoce tus costos con el Plan Pro por ${offer.annualPrice}.`,
+    },
+    pricing: {
+      headline: 'Activa WARO con un plan anual claro.',
+      body: `Plan Pro por ${offer.annualPrice}, equivalente a ${offer.monthlyEquivalent}.`,
+    },
+    costs: {
+      headline: 'Empieza a controlar costos e inventario con datos reales.',
+      body: 'Crea tu cuenta, confirma el negocio y elige el plan que activarás desde Billing.',
+    },
+    management: {
+      headline: 'Pon la operación de tu restaurante en orden.',
+      body: 'Crea tu cuenta y activa las herramientas para administrar el negocio desde un solo lugar.',
+    },
+    team: {
+      headline: 'Gestiona la operación y el equipo con menos reprocesos.',
+      body: 'Crea tu cuenta y activa WARO para conectar la información diaria de tu restaurante.',
+    },
+  }
+}
+
+function finalCopyEn(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  return {
+    pos: {
+      headline: 'Activate a POS built for restaurant operators.',
+      body: `Sell, control inventory, and know your costs with Plan Pro for ${offer.annualPrice}.`,
+    },
+    pricing: {
+      headline: 'Activate WARO with a clear annual plan.',
+      body: `Plan Pro for ${offer.annualPrice}, equivalent to ${offer.monthlyEquivalent}.`,
+    },
+    costs: {
+      headline: 'Start controlling costs and inventory with real data.',
+      body: 'Create your account, confirm the business, and choose the plan you will activate from Billing.',
+    },
+    management: {
+      headline: 'Get your restaurant operations in order.',
+      body: 'Create your account and activate the tools to manage the business from one place.',
+    },
+    team: {
+      headline: 'Run operations and your team with less rework.',
+      body: 'Create your account and activate WARO to connect your restaurant\'s daily information.',
+    },
+  }
 }
 
 const normalizeAttributionValue = (value: string, fallback: string) => {
@@ -139,26 +235,43 @@ export const resolveBlogCtaIntent = (slug: string): PublicCtaIntent => {
   return 'management'
 }
 
-export const getPublicCta = (intent: PublicCtaIntent, placement: PublicCtaPlacement): PublicCta => {
+export const getPublicCta = (
+  intent: PublicCtaIntent,
+  placement: PublicCtaPlacement,
+  marketInput: ArticleMarketInput | ArticleMarket = {},
+): PublicCta => {
+  const market = toArticleMarket(marketInput)
+  const offer = resolvePublicOffer(market)
+  const isEn = market.isUsEn
+
+  const benefit = isEn ? BENEFIT_COPY_EN[intent] : BENEFIT_COPY_ES[intent]
+  const finals = isEn ? finalCopyEn(offer) : finalCopyEs(offer)
+
   const copy = placement === 'benefit'
-    ? BENEFIT_COPY[intent]
+    ? benefit
     : placement === 'price'
-      ? {
-          headline: `Plan Pro por ${PUBLIC_OFFER.annualPrice}.`,
-          body: `${PUBLIC_OFFER.monthlyEquivalent}; el acceso se habilita después del pago.`,
-        }
-      : FINAL_COPY[intent]
+      ? (isEn
+          ? {
+              headline: `Plan Pro for ${offer.annualPrice}.`,
+              body: `${offer.monthlyEquivalent}; access unlocks after payment.`,
+            }
+          : {
+              headline: `Plan Pro por ${offer.annualPrice}.`,
+              body: `${offer.monthlyEquivalent}; el acceso se habilita después del pago.`,
+            })
+      : finals[intent]
+
   const button = placement === 'header'
-    ? 'Crear cuenta'
+    ? (isEn ? 'Create account' : 'Crear cuenta')
     : placement === 'final'
-      ? 'Crear cuenta y elegir plan'
-      : 'Registrarme en WARO'
+      ? (isEn ? 'Create account and choose a plan' : 'Crear cuenta y elegir plan')
+      : (isEn ? 'Sign up for WARO' : 'Registrarme en WARO')
 
   return {
-    eyebrow: INTENT_LABELS[intent],
+    eyebrow: (isEn ? INTENT_LABELS_EN : INTENT_LABELS_ES)[intent],
     ...copy,
     button,
-    microcopy: `${PUBLIC_OFFER.annualPrice}. ${PUBLIC_OFFER.activation}`,
+    microcopy: `${offer.annualPrice}. ${offer.activation}`,
     campaign: 'self_service_paid',
     variant: `${intent}_${placement}_v1`,
     intent,
@@ -167,8 +280,11 @@ export const getPublicCta = (intent: PublicCtaIntent, placement: PublicCtaPlacem
   }
 }
 
-export const getBlogPublicCta = (slug: string, placement: Extract<PublicCtaPlacement, 'benefit' | 'price' | 'final'>) =>
-  getPublicCta(resolveBlogCtaIntent(slug), placement)
+export const getBlogPublicCta = (
+  slug: string,
+  placement: Extract<PublicCtaPlacement, 'benefit' | 'price' | 'final'>,
+  marketInput: ArticleMarketInput | ArticleMarket = {},
+) => getPublicCta(resolveBlogCtaIntent(slug), placement, marketInput)
 
 export const buildPublicCtaAttribution = (cta: PublicCta, touch: PublicCtaTouch): RegistrationAttribution =>
   sanitizeRegistrationAttribution({
