@@ -1778,10 +1778,7 @@ const getLineTaxInfo = (item: any): { amount: number; label: string; includedInP
           : String(taxPreview.value?.standard_tax_label || t('pos.checkout.taxFallback'))))
     return { amount, label: amountLabel, includedInPrice }
   }
-  // Never surface bare "Impuesto" without amount — that was the mesa/prefactura bug.
-  if (label && !isGenericTaxLabel(label)) {
-    return { amount: 0, label, includedInPrice }
-  }
+  // Zero-amount non-exempt labels (e.g. IVA 16% with commercial tax off) must not surface (#2081).
   return null
 }
 
@@ -1793,11 +1790,17 @@ const formatLineTaxDisplay = (info: { amount: number; label: string; includedInP
 
 const lineTaxCueForPrint = (item: any): string | null => {
   const info = getLineTaxInfo(item)
+  const category = String(
+    item.tax_category
+    ?? item.taxCategory
+    ?? item.product?.tax_category
+    ?? '',
+  ).toLowerCase()
+  const resolution = String(item.tax_resolution ?? item.taxResolution ?? '').toLowerCase()
+  const isExempt = category === 'exempt' || resolution === 'exempt'
   const label = info?.label
     ?? localizedInternalTaxLabel(item.tax_label ?? item.taxLabel)
-    ?? (String(item.tax_category ?? item.taxCategory ?? '').toLowerCase() === 'exempt'
-      ? t('pos.cartItem.taxExempt')
-      : '')
+    ?? (isExempt ? t('pos.cartItem.taxExempt') : '')
   if (!label && !info) return null
   const mergedAmount = Number(item.tax_amount ?? item.taxAmount)
   const amount = Number.isFinite(mergedAmount) && mergedAmount > 0
@@ -1810,7 +1813,11 @@ const lineTaxCueForPrint = (item: any): string | null => {
       text: t('pos.cartItem.taxLine', { label: labelFinal, amount: amountLabel }),
     })
   }
-  return formatReceiptTaxCue({ label: labelFinal })
+  // Bare cue for exempt only — getLineTaxInfo returns $0 info solely for exempt (#2081).
+  if ((isExempt || (info != null && info.amount <= 0)) && labelFinal) {
+    return formatReceiptTaxCue({ label: labelFinal })
+  }
+  return null
 }
 
 /** Freeze per-line tax fields onto the receipt snapshot before cart clear. */
@@ -1818,13 +1825,28 @@ const snapshotCartItemsForReceipt = () =>
   cartItems.value.map((item: any) => {
     const preview = getLinePromoPreview(item)
     const info = getLineTaxInfo(item)
+    const resolution = String(
+      preview?.tax_resolution ?? item.tax_resolution ?? item.taxResolution ?? '',
+    ).toLowerCase()
+    const rawCategory = String(
+      preview?.tax_category
+      ?? item.tax_category
+      ?? item.taxCategory
+      ?? item.product?.tax_category
+      ?? '',
+    ).toLowerCase()
+    const isExempt = resolution === 'exempt'
+      || rawCategory === 'exempt'
+      || (info != null && info.amount <= 0 && Boolean(info.label))
     return {
       ...item,
-      tax_category: preview?.tax_category
-        ?? item.tax_category
-        ?? item.taxCategory
-        ?? item.product?.tax_category
-        ?? null,
+      tax_category: isExempt
+        ? 'exempt'
+        : (preview?.tax_category
+          ?? item.tax_category
+          ?? item.taxCategory
+          ?? item.product?.tax_category
+          ?? null),
       tax_label: info?.label ?? preview?.tax_label ?? null,
       tax_amount: info && info.amount > 0
         ? info.amount

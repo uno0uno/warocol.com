@@ -158,6 +158,8 @@ export function formatReceiptTaxCue(opts: {
   const label = String(opts.label ?? '').trim()
   if (!label) return null
   const amount = compactThermalMoneyLabel(String(opts.amountLabel ?? '').trim())
+  // Bare label is for exempt (or explicit caller-gated cues). Callers must not
+  // pass zero-amount IVA labels — see #2081 productTaxCue / lineTaxCueForPrint.
   if (!amount) return label
 
   let template = opts.template || opts.exclusiveTemplate || '{label} · {amount}'

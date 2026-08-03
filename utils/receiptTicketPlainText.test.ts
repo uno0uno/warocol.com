@@ -84,7 +84,8 @@ describe('formatReceiptTaxCue', () => {
     })).toBe('IVA 16% · $160')
   })
 
-  it('returns bare label for exempt / zero-amount cues', () => {
+  it('returns bare label for exempt cues (callers gate zero-amount IVA)', () => {
+    // Utility still formats bare labels; checkout/ticket suppress non-exempt $0 (#2081).
     expect(formatReceiptTaxCue({ label: 'Exento' })).toBe('Exento')
     expect(formatReceiptTaxCue({ label: '', amountLabel: '$1' })).toBeNull()
   })
