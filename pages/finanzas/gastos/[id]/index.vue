@@ -352,14 +352,14 @@
                   {{ t('finanzas.gastos.amountReq') }}
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
                   <input
                     type="number"
                     v-model.number="form.amount"
                     required
                     min="0"
                     step="1"
-                    class="input-base w-full ps-8 pe-4 py-2"
+                    class="input-base w-full ps-12 pe-4 py-2"
                     placeholder="0"
                   />
                 </div>
@@ -925,7 +925,7 @@ const handleSubmit = async () => {
 }
 
 // Format functions
-const { formatDate, formatCalendarDate, formatCurrency } = useFormatters()
+const { formatDate, formatCalendarDate, formatCurrency, currencyCode } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return '0 Bytes'

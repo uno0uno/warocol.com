@@ -83,14 +83,14 @@
                   Monto *
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
                   <input
                     type="number"
                     v-model.number="form.amount"
                     required
                     min="0"
                     step="1"
-                    class="input-base w-full ps-8 pe-4 py-2"
+                    class="input-base w-full ps-12 pe-4 py-2"
                     placeholder="0"
                   />
                 </div>
@@ -158,6 +158,7 @@
 <script setup lang="ts">
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -166,6 +167,7 @@ const expenseId = route.params.id as string
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
+const { currencyCode } = useFormatters()
 
 // Payment methods
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()

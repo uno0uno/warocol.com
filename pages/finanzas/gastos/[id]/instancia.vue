@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -141,14 +142,7 @@ const onCreateInstanceClick = () => {
   void handleCreateClick(() => { void createInstance() })
 }
 
-// Helper functions
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
+const { formatCurrency, currencyCode } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes'
@@ -272,13 +266,13 @@ watch(expenseData, (data) => {
                   Monto (Opcional)
                 </label>
                 <div class="relative">
-                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
                   <UiDecimalInput
                     v-model="instanceForm.amount"
                     :min="0"
                     :precision="2"
                     :placeholder="`Predeterminado: ${expense ? formatCurrency(expense.amount) : ''}`"
-                    class="input-base w-full ps-8 pe-4 py-2"
+                    class="input-base w-full ps-12 pe-4 py-2"
                   />
                 </div>
                 <p class="text-xs text-text-tertiary mt-1">
