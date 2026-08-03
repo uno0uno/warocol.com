@@ -1,3 +1,8 @@
+import {
+  resolveArticleMarket,
+  type ArticleMarket,
+  type ArticleMarketInput,
+} from './articleMarket.ts'
 import { resolveBlogCtaIntent } from './publicCta.ts'
 
 export type BlogLeadCtaPlacement = 'benefit' | 'price' | 'final'
@@ -9,12 +14,31 @@ export interface BlogLeadCtaContent {
   microcopy: string
 }
 
-const LEAD_MICROCOPY = '2 minutos. Sin tarjeta. Un asesor te contacta.'
+const LEAD_MICROCOPY_ES = '2 minutos. Sin tarjeta. Un asesor te contacta.'
+const LEAD_MICROCOPY_EN = '2 minutes. No card required. An advisor will contact you.'
 
-const COMMERCIAL_PRICE = {
-  headline: 'Plan Pro anual desde COP 95.900.',
-  body: 'POS, inventario, costos por plato y escaneo inteligente de facturas. Sin permanencia.',
-  button: 'Ver mis opciones',
+function commercialPriceEs(annualPriceLabel: string) {
+  // Keep historical Colombia copy when label is the CO default.
+  if (annualPriceLabel === 'COP 95.900/año') {
+    return {
+      headline: 'Plan Pro anual desde COP 95.900.',
+      body: 'POS, inventario, costos por plato y escaneo inteligente de facturas. Sin permanencia.',
+      button: 'Ver mis opciones',
+    }
+  }
+  return {
+    headline: `Plan Pro anual desde ${annualPriceLabel.replace(/\/año$/, '')}.`,
+    body: 'POS, inventario, costos por plato y escaneo inteligente de facturas. Sin permanencia.',
+    button: 'Ver mis opciones',
+  }
+}
+
+function commercialPriceEn(annualPriceLabel: string) {
+  return {
+    headline: `Pro plan from ${annualPriceLabel}.`,
+    body: 'POS, inventory, plate-level food cost, and smart invoice scanning. No lock-in.',
+    button: 'See my options',
+  }
 }
 
 function isCommercialSlug(slug: string): boolean {
@@ -22,8 +46,12 @@ function isCommercialSlug(slug: string): boolean {
   return intent === 'pos' || intent === 'pricing'
 }
 
-function copyForSlug(slug: string): Pick<BlogLeadCtaContent, 'headline' | 'body' | 'button'> {
+function copyForSlugEs(
+  slug: string,
+  annualPriceLabel: string,
+): Pick<BlogLeadCtaContent, 'headline' | 'body' | 'button'> {
   const s = slug.toLocaleLowerCase()
+  const commercial = commercialPriceEs(annualPriceLabel)
 
   if (/nomina|liquidacion|desprendible|prima-de-servicios|mesero|brigada/.test(s)) {
     return {
@@ -35,8 +63,8 @@ function copyForSlug(slug: string): Pick<BlogLeadCtaContent, 'headline' | 'body'
 
   if (/precio|gratis|free|full|open-source|comparativa/.test(s)) {
     return {
-      headline: COMMERCIAL_PRICE.headline,
-      body: COMMERCIAL_PRICE.body,
+      headline: commercial.headline,
+      body: commercial.body,
       button: 'Ver mis opciones',
     }
   }
@@ -72,19 +100,88 @@ function copyForSlug(slug: string): Pick<BlogLeadCtaContent, 'headline' | 'body'
   }
 }
 
-export function getBlogLeadCta(slug: string, placement: BlogLeadCtaPlacement = 'final'): BlogLeadCtaContent {
-  const base = copyForSlug(slug)
+function copyForSlugEn(
+  slug: string,
+  annualPriceLabel: string,
+): Pick<BlogLeadCtaContent, 'headline' | 'body' | 'button'> {
+  const s = slug.toLocaleLowerCase()
+  const commercial = commercialPriceEn(annualPriceLabel)
+
+  if (/nomina|liquidacion|desprendible|prima-de-servicios|mesero|brigada|payroll|tip/.test(s)) {
+    return {
+      headline: 'Stop payroll mistakes before they cost you.',
+      body: 'WARO connects shifts, sales, tips, and inventory so you can run the full restaurant operation from one place.',
+      button: 'See how it works',
+    }
+  }
+
+  if (/precio|gratis|free|full|open-source|comparativa|price|pricing/.test(s)) {
+    return {
+      headline: commercial.headline,
+      body: commercial.body,
+      button: 'See my options',
+    }
+  }
+
+  if (/food-cost|punto-de-equilibrio|arqueo|inventario|mise-en-place|costos|inventory|cost/.test(s)) {
+    return {
+      headline: 'Stop losing money to spreadsheet food cost.',
+      body: 'WARO shows plate costs, inventory, and margins in real time so you decide with data, not guesswork.',
+      button: 'I want to see how it works',
+    }
+  }
+
+  if (/software|pos|pdv|tpv|sistema-pos|contable/.test(s)) {
+    return {
+      headline: `Restaurant POS from ${annualPriceLabel}.`,
+      body: 'Sell, manage tables, inventory, costs, and supplier invoices with AI — built for restaurant operators.',
+      button: 'See a demo',
+    }
+  }
+
+  if (/administrar|ingenieria-de-menu|cocinas|corrientazo|gastrobar|nombres|manage|menu/.test(s)) {
+    return {
+      headline: 'Run your restaurant without more spreadsheets.',
+      body: 'WARO connects POS, inventory, costs, tables, and delivery in one simple panel.',
+      button: 'Get my free demo',
+    }
+  }
+
+  return {
+    headline: 'Run your restaurant with WARO.',
+    body: `POS, inventory, plate-level food cost, and smart invoice scanning from ${annualPriceLabel}.`,
+    button: 'Start free',
+  }
+}
+
+export function getBlogLeadCta(
+  slug: string,
+  placement: BlogLeadCtaPlacement = 'final',
+  marketInput: ArticleMarketInput | ArticleMarket = {},
+): BlogLeadCtaContent {
+  const market = 'isUsEn' in marketInput && 'annualPriceLabel' in marketInput
+    ? marketInput as ArticleMarket
+    : resolveArticleMarket(marketInput)
+
+  const base = market.isUsEn
+    ? copyForSlugEn(slug, market.annualPriceLabel)
+    : copyForSlugEs(slug, market.annualPriceLabel)
+
+  const microcopy = market.isUsEn ? LEAD_MICROCOPY_EN : LEAD_MICROCOPY_ES
+  const commercial = market.isUsEn
+    ? commercialPriceEn(market.annualPriceLabel)
+    : commercialPriceEs(market.annualPriceLabel)
 
   if (placement === 'price' && isCommercialSlug(slug)) {
     return {
-      ...COMMERCIAL_PRICE,
-      microcopy: LEAD_MICROCOPY,
+      ...commercial,
+      microcopy,
     }
   }
 
   return {
     ...base,
-    microcopy: LEAD_MICROCOPY,
+    microcopy,
   }
 }
 
