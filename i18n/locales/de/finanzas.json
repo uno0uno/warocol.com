@@ -57,6 +57,7 @@
       "order": "Bestellung",
       "invoice": "Rechnung",
       "tips": "Trinkgelder",
+      "summary": "Zusammenfassung",
       "error": "Fehler"
     },
     "arqueo": {

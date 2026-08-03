@@ -57,6 +57,7 @@
       "order": "Orden",
       "invoice": "Factura",
       "tips": "Propinas",
+      "summary": "Resumen",
       "error": "Error"
     },
     "arqueo": {

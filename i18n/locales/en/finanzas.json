@@ -57,6 +57,7 @@
       "order": "Order",
       "invoice": "Invoice",
       "tips": "Tips",
+      "summary": "Summary",
       "error": "Error"
     },
     "arqueo": {

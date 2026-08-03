@@ -57,6 +57,7 @@
       "order": "Commande",
       "invoice": "Facture",
       "tips": "Pourboires",
+      "summary": "Résumé",
       "error": "Erreur"
     },
     "arqueo": {

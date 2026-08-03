@@ -57,6 +57,7 @@
       "order": "Pedido",
       "invoice": "Fatura",
       "tips": "Gorjetas",
+      "summary": "Resumo",
       "error": "Erro"
     },
     "arqueo": {

@@ -57,6 +57,7 @@
       "order": "订单",
       "invoice": "发票",
       "tips": "小费",
+      "summary": "摘要",
       "error": "错误"
     },
     "arqueo": {
