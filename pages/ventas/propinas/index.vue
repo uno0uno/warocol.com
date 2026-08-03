@@ -3,6 +3,7 @@ const { t, locale } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { formatDisplayedTipPercent } from '~/utils/tipPercentDisplay'
 
 definePageMeta({
   layout: 'dashboard',
@@ -15,6 +16,7 @@ useHead({ title: () => t('ventas.head.propinas') })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const { formatDateTime: formatDate, formatCurrency } = useFormatters()
+
 
 // Payment groups (same query as /ventas/ordenes — shared cache)
 const { data: paymentGroupsData } = useQuery({
@@ -222,7 +224,29 @@ const exportToEmail = async () => {
 }
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
-const formatPercent = (value: number) => `${(value || 0).toFixed(2)}%`
+const formatPercent = (
+  tipAmount: number,
+  totalAmount: number,
+  tipSource?: string | null,
+  fallbackPercent?: number | null,
+) => formatDisplayedTipPercent({
+  tipAmount,
+  totalAmount,
+  tipSource,
+  fallbackPercent,
+})
+
+const formatPercentLabel = (item: {
+  tip_amount?: number
+  total_amount?: number
+  tip_source?: string | null
+  tip_percent?: number
+}) => formatPercent(
+  Number(item.tip_amount) || 0,
+  Number(item.total_amount) || 0,
+  item.tip_source,
+  item.tip_percent,
+)
 
 const channelLabel = (ch: string | null | undefined) => {
   if (ch === 'online') return t('ventas.propinas.online')
@@ -350,9 +374,9 @@ onUnmounted(() => clearRefreshHandler(refetch))
         />
         <MetricCard
           :title="t('ventas.propinas.avgOverSale')"
-          :value="aggregates.avg_pct"
+          :value="Math.round(Number(aggregates.avg_pct) || 0)"
           format="percentage"
-          :precision="2"
+          :precision="0"
           variant="primary"
         />
         <MetricCard
@@ -549,7 +573,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
               </div>
               <div class="text-end">
                 <p class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
-                <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
+                <p class="text-xs text-text-secondary tabular-nums">{{ formatPercentLabel(item) }}</p>
               </div>
             </div>
           </div>
@@ -577,8 +601,8 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #cell-tip_amount="{ value }">
           <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
         </template>
-        <template #cell-tip_percent="{ value }">
-          <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
+        <template #cell-tip_percent="{ row }">
+          <span class="text-sm tabular-nums text-text-secondary">{{ formatPercentLabel(row) }}</span>
         </template>
         <template #cell-member_name="{ row }">
           <button

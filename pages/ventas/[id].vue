@@ -13,6 +13,7 @@ import {
 } from '~/utils/customerIdentityPresentation'
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import { displayedTipPercent } from '~/utils/tipPercentDisplay'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -467,9 +468,14 @@ const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
 const orderTipPercent = computed(() => {
   const o = order.value
   if (!o?.tip_amount || o.tip_amount <= 0) return null
-  const total = Number(o.total_amount) || 0
-  if (total <= 0) return null
-  return Math.round((Number(o.tip_amount) / total) * 10000) / 100
+  const presets = (businessProfile.value as { tip_default_percentages?: Array<number | string> } | null)
+    ?.tip_default_percentages
+  return displayedTipPercent({
+    tipAmount: Number(o.tip_amount),
+    totalAmount: Number(o.total_amount) || 0,
+    tipSource: (o as { tip_source?: string | null }).tip_source,
+    presets,
+  })
 })
 
 const orderAdvanceApplied = computed(() => Number(order.value?.advance_applied) || 0)
