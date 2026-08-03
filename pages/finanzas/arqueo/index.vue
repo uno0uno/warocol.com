@@ -13,16 +13,17 @@
         v-if="closedRows.length > 0"
         class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-5"
       >
-        <MetricCard :title="t('finanzas.arqueo.totalSales')" :value="summaryStats.totalSales" format="currency" variant="primary" />
+        <MetricCard size="compact" :title="t('finanzas.arqueo.totalSales')" :value="summaryStats.totalSales" format="currency" variant="primary" />
         <MetricCard
+          size="compact"
           :title="t('finanzas.arqueo.cashDiff')"
           :value="summaryStats.cashDifference"
           format="currency"
           :variant="summaryStats.cashDifference >= 0 ? 'primary' : 'destructive'"
         />
-        <MetricCard :title="t('finanzas.common.cash')" :value="summaryStats.totalCash" format="currency" variant="primary" />
-        <MetricCard :title="t('finanzas.common.card')" :value="summaryStats.totalCard" format="currency" variant="primary" />
-        <MetricCard :title="t('finanzas.arqueo.cashExpenses')" :value="summaryStats.gastosEfectivo" format="currency" variant="primary" class="col-span-2 md:col-span-1 xl:col-span-1" />
+        <MetricCard size="compact" :title="t('finanzas.common.cash')" :value="summaryStats.totalCash" format="currency" variant="primary" />
+        <MetricCard size="compact" :title="t('finanzas.common.card')" :value="summaryStats.totalCard" format="currency" variant="primary" />
+        <MetricCard size="compact" :title="t('finanzas.arqueo.cashExpenses')" :value="summaryStats.gastosEfectivo" format="currency" variant="primary" class="col-span-2 md:col-span-1 xl:col-span-1" />
       </div>
 
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->

@@ -38,7 +38,10 @@
     </div>
 
     <!-- Mobile Layout (below md) -->
-    <div class="md:hidden flex flex-col flex-1 justify-between min-h-[52px]">
+    <div
+      class="md:hidden flex flex-col flex-1 justify-between"
+      :class="size === 'compact' ? 'min-h-[44px]' : 'min-h-[52px]'"
+    >
       <!-- Title -->
       <div :class="cn(titleVariants({ size }), 'text-text-primary opacity-85')">
         {{ title }}
@@ -83,6 +86,8 @@ const metricCardVariants = cva(
         info: 'border-info'
       },
       size: {
+        // Dense KPI strip (e.g. arqueo summary) — smaller than sm, opt-in only (#2076).
+        compact: 'px-3 py-2.5 md:px-3 md:py-2.5',
         sm: 'px-4 py-4 md:px-6 md:py-3',
         default: 'px-5 py-4 md:px-8 md:py-4',
         lg: 'px-6 py-5 md:px-10 md:py-6'
@@ -108,6 +113,7 @@ const valueVariants = cva(
         info: 'text-info'
       },
       size: {
+        compact: 'text-lg md:text-xl tabular-nums tracking-tight',
         sm: 'text-2xl md:text-2xl',
         default: 'text-3xl md:text-4xl',
         lg: 'text-3xl md:text-5xl'
@@ -125,6 +131,7 @@ const titleVariants = cva(
   {
     variants: {
       size: {
+        compact: 'text-xs leading-tight md:text-xs md:font-semibold md:tracking-wide',
         sm: 'text-sm leading-tight md:text-sm md:font-semibold md:tracking-wide',
         default: 'text-sm leading-tight md:text-base md:font-semibold md:tracking-wide',
         lg: 'text-base leading-tight md:text-lg md:font-semibold md:tracking-wide'
@@ -141,6 +148,7 @@ const subtitleVariants = cva(
   {
     variants: {
       size: {
+        compact: 'text-xs md:text-xs',
         sm: 'text-sm md:text-xs',
         default: 'text-sm md:text-xs',
         lg: 'text-base md:text-sm'
@@ -165,6 +173,7 @@ const unitVariants = cva(
         info: 'text-info'
       },
       size: {
+        compact: 'text-xs',
         sm: 'text-sm',
         default: 'text-base',
         lg: 'text-lg'
