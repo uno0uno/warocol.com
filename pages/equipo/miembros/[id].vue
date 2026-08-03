@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { formatDisplayedTipPercent } from '~/utils/tipPercentDisplay'
 
 definePageMeta({
   layout: 'dashboard',
@@ -187,7 +188,19 @@ const formatCurrency = (v: number) =>
     style: 'currency', currency: 'COP', minimumFractionDigits: 0,
   }).format(v || 0)
 
-const formatPercent = (v: number) => `${(v || 0).toFixed(2)}%`
+const formatPercent = (v: number) => `${Math.round(Number(v) || 0)}%`
+
+const formatTipPercentLabel = (item: {
+  tip_amount?: number
+  total_amount?: number
+  tip_source?: string | null
+  tip_percent?: number
+}) => formatDisplayedTipPercent({
+  tipAmount: Number(item.tip_amount) || 0,
+  totalAmount: Number(item.total_amount) || 0,
+  tipSource: item.tip_source,
+  fallbackPercent: item.tip_percent,
+})
 
 const formatDate = (iso: string | null | undefined) => {
   if (!iso) return ''
@@ -315,7 +328,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
                     <p class="text-xs text-text-secondary">{{ t('equipo.miembros.subtotal') }}: {{ formatCurrency(item.total_amount) }}</p>
                     <div class="text-right">
                       <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
-                      <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
+                      <p class="text-xs text-text-secondary tabular-nums">{{ formatTipPercentLabel(item) }}</p>
                     </div>
                   </div>
                 </div>
@@ -336,8 +349,8 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
               <template #cell-tip_amount="{ value }">
                 <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
               </template>
-              <template #cell-tip_percent="{ value }">
-                <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
+              <template #cell-tip_percent="{ row }">
+                <span class="text-sm tabular-nums text-text-secondary">{{ formatTipPercentLabel(row) }}</span>
               </template>
             </UiResponsiveDataView>
           </div>
