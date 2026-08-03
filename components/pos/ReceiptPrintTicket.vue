@@ -144,8 +144,9 @@ const productTaxCue = (item: ReceiptItem) => {
   const amount = Number(item.taxAmount)
   const hasAmount = Number.isFinite(amount) && amount > 0
   const isExempt = String(item.taxCategory ?? '').toLowerCase() === 'exempt'
+  const exemptLabel = t('pos.cartItem.taxExempt')
   const label = String(item.taxLabel ?? '').trim()
-    || (isExempt ? t('pos.cartItem.taxExempt') : '')
+    || (isExempt ? exemptLabel : '')
   if (!label) return null
   if (hasAmount) {
     const amountLabel = compactThermalMoneyLabel(money(amount))
@@ -153,8 +154,8 @@ const productTaxCue = (item: ReceiptItem) => {
       text: t('pos.cartItem.taxLine', { label, amount: amountLabel }),
     })
   }
-  // Bare cue only for exempt — never zero-amount IVA (#2081).
-  if (isExempt) return formatReceiptTaxCue({ label })
+  // Bare cue for exempt — also accept snapshot label when category already normalized (#2081).
+  if (isExempt || label === exemptLabel) return formatReceiptTaxCue({ label })
   return null
 }
 

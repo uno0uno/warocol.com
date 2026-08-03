@@ -1790,7 +1790,12 @@ const formatLineTaxDisplay = (info: { amount: number; label: string; includedInP
 
 const lineTaxCueForPrint = (item: any): string | null => {
   const info = getLineTaxInfo(item)
-  const category = String(item.tax_category ?? item.taxCategory ?? '').toLowerCase()
+  const category = String(
+    item.tax_category
+    ?? item.taxCategory
+    ?? item.product?.tax_category
+    ?? '',
+  ).toLowerCase()
   const resolution = String(item.tax_resolution ?? item.taxResolution ?? '').toLowerCase()
   const isExempt = category === 'exempt' || resolution === 'exempt'
   const label = info?.label
@@ -1808,8 +1813,10 @@ const lineTaxCueForPrint = (item: any): string | null => {
       text: t('pos.cartItem.taxLine', { label: labelFinal, amount: amountLabel }),
     })
   }
-  // Bare cue only for exempt lines — never "IVA 16%" with $0 (#2081).
-  if (isExempt && labelFinal) return formatReceiptTaxCue({ label: labelFinal })
+  // Bare cue for exempt only — getLineTaxInfo returns $0 info solely for exempt (#2081).
+  if ((isExempt || (info != null && info.amount <= 0)) && labelFinal) {
+    return formatReceiptTaxCue({ label: labelFinal })
+  }
   return null
 }
 
@@ -1818,13 +1825,28 @@ const snapshotCartItemsForReceipt = () =>
   cartItems.value.map((item: any) => {
     const preview = getLinePromoPreview(item)
     const info = getLineTaxInfo(item)
+    const resolution = String(
+      preview?.tax_resolution ?? item.tax_resolution ?? item.taxResolution ?? '',
+    ).toLowerCase()
+    const rawCategory = String(
+      preview?.tax_category
+      ?? item.tax_category
+      ?? item.taxCategory
+      ?? item.product?.tax_category
+      ?? '',
+    ).toLowerCase()
+    const isExempt = resolution === 'exempt'
+      || rawCategory === 'exempt'
+      || (info != null && info.amount <= 0 && Boolean(info.label))
     return {
       ...item,
-      tax_category: preview?.tax_category
-        ?? item.tax_category
-        ?? item.taxCategory
-        ?? item.product?.tax_category
-        ?? null,
+      tax_category: isExempt
+        ? 'exempt'
+        : (preview?.tax_category
+          ?? item.tax_category
+          ?? item.taxCategory
+          ?? item.product?.tax_category
+          ?? null),
       tax_label: info?.label ?? preview?.tax_label ?? null,
       tax_amount: info && info.amount > 0
         ? info.amount
