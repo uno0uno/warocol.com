@@ -69,13 +69,11 @@
       </Transition>
     </Teleport>
 
-      <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4 p-3 sm:p-4">
-        <h1 class="text-lg font-semibold text-text-primary">{{ t('finanzas.arqueo.openShift') }}</h1>
-        <p class="text-sm text-text-secondary mt-1">
-          {{ t('finanzas.arqueo.openingHint') }}
-        </p>
-      </div>
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
 
+    <template v-else>
       <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4 flex flex-col gap-4">
         <div v-if="aperturaMode === 'template'">
           <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ t('finanzas.arqueo.shift') }}</label>
@@ -274,6 +272,7 @@
           </div>
         </div>
       </div>
+    </template>
   </div>
 
   <UiConfirmActionModal
@@ -297,7 +296,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { useQueryCache } from '@pinia/colada'
@@ -414,10 +413,15 @@ const periodEndTime = computed(() => {
   return combineDateAndTimeISO(periodEnd.value, initEndTime)
 })
 
-const { data: rawShiftTemplates } = useQuery({
+const templatesQueryEnabled = computed(() => !!currentTenant.value && aperturaMode.value === 'template')
+const {
+  data: rawShiftTemplates,
+  asyncStatus: templatesAsyncStatus,
+  refetch: refetchShiftTemplates,
+} = useQuery({
   key: () => ['cierre', 'shift-templates', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: ShiftTemplateOption[] }>('/api/cierre/shift-templates'),
-  enabled: () => !!currentTenant.value && aperturaMode.value === 'template',
+  enabled: () => templatesQueryEnabled.value,
   staleTime: 120_000,
 })
 const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
@@ -426,13 +430,20 @@ const isPastAnchorDate = computed(() => periodStart.value < today)
 
 const canSubmitOpening = computed(() => totalCounted.value >= 0)
 
-const { data: rawTemplateWindow } = useQuery({
+const templateWindowQueryEnabled = computed(
+  () => !!currentTenant.value && aperturaMode.value === 'template' && !!effectiveTemplateId.value,
+)
+const {
+  data: rawTemplateWindow,
+  asyncStatus: templateWindowAsyncStatus,
+  refetch: refetchTemplateWindow,
+} = useQuery({
   key: () => ['cierre', 'shift-window', currentTenant.value?.id, effectiveTemplateId.value, periodStart.value],
   query: () => $fetch<{ success: boolean; data: { periodStartTime: string; periodEndTime: string } }>(
     '/api/cierre/shift-window',
     { params: { shift_template_id: effectiveTemplateId.value!, date: periodStart.value } },
   ),
-  enabled: () => !!currentTenant.value && aperturaMode.value === 'template' && !!effectiveTemplateId.value,
+  enabled: () => templateWindowQueryEnabled.value,
   staleTime: 30_000,
 })
 
@@ -446,18 +457,55 @@ const windowParams = computed(() =>
   }),
 )
 
-const { data: rawShiftStatus, refetch: refetchShiftStatus } = useQuery({
+const shiftStatusQueryEnabled = computed(() => {
+  if (!currentTenant.value) return false
+  if (aperturaMode.value === 'template') return !!selectedTemplateId.value
+  return true
+})
+const {
+  data: rawShiftStatus,
+  asyncStatus: shiftStatusAsyncStatus,
+  refetch: refetchShiftStatus,
+} = useQuery({
   key: () => ['cierre', 'shift-status', currentTenant.value?.id, aperturaMode.value, JSON.stringify(windowParams.value)],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', {
     params: windowParams.value,
   }),
-  enabled: () => {
-    if (!currentTenant.value) return false
-    if (aperturaMode.value === 'template') return !!selectedTemplateId.value
-    return true
-  },
+  enabled: () => shiftStatusQueryEnabled.value,
   staleTime: 0,
 })
+
+/** Cold load: block form until templates (template mode) or shift-status (day/custom) resolve. */
+const isLoading = computed(() => {
+  if (!currentTenant.value) return true
+  if (aperturaMode.value === 'template') return rawShiftTemplates.value == null
+  return shiftStatusQueryEnabled.value && rawShiftStatus.value == null
+})
+
+/** Warm/refetch: keep form visible; header matrix via registerProgressiveLoading. */
+const isRefreshing = computed(() => {
+  if (isLoading.value) return false
+  const templatesRefreshing = templatesQueryEnabled.value
+    && templatesAsyncStatus.value === 'loading'
+    && rawShiftTemplates.value != null
+  const windowRefreshing = templateWindowQueryEnabled.value
+    && templateWindowAsyncStatus.value === 'loading'
+  const statusRefreshing = shiftStatusQueryEnabled.value
+    && shiftStatusAsyncStatus.value === 'loading'
+  return templatesRefreshing || windowRefreshing || statusRefreshing
+})
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const handleRefresh = async () => {
+  await Promise.all([
+    templatesQueryEnabled.value ? refetchShiftTemplates() : Promise.resolve(),
+    templateWindowQueryEnabled.value ? refetchTemplateWindow() : Promise.resolve(),
+    shiftStatusQueryEnabled.value ? refetchShiftStatus() : Promise.resolve(),
+  ])
+}
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(handleRefresh) })
+onUnmounted(() => { clearRefreshHandler(handleRefresh) })
 
 const existingShift = computed(() => rawShiftStatus.value?.data ?? null)
 const dayWindowLoading = computed(() => rawShiftStatus.value == null && usesDayWindow.value)
