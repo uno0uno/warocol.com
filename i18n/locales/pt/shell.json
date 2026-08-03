@@ -401,6 +401,13 @@
     "pendingPublication": "Pendente de publicação",
     "metaDescription": "Consulte o PDF vigente dos Termos e Condições de WARO Colômbia e registre sua aceitação explícita."
   },
+  "home": {
+    "title": "ZERO MISTÉRIO NO SEU RESTAURANTE.",
+    "subtitle": "Do preço de um prato ao turno de um funcionário. Colocamos ao seu alcance a tecnologia que transforma dados em decisões claras.",
+    "emphasis": "Nós guiamos você para que seja fácil.",
+    "button": "FALE CONOSCO",
+    "microcopy": "2 minutos. Sem cartão. Um consultor entrará em contato."
+  },
   "auth": {
     "loginTitle": "Fazer Login",
     "registerTitle": "Criar conta",
@@ -493,7 +500,8 @@
     "emailInvalid": "Informe um e-mail válido",
     "sendCodeError": "Erro ao enviar o código",
     "wrongCode": "Código incorreto",
-    "resendCodeError": "Erro ao reenviar o código"
+    "resendCodeError": "Erro ao reenviar o código",
+    "myPanel": "Meu Painel"
   },
   "onboarding": {
     "pageTitle": "Configure seu negócio | WARO",
