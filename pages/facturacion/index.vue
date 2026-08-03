@@ -2164,9 +2164,12 @@ const matiasRegimeLabel = computed(() => {
       </h3>
       <!-- Commercial / non-DIAN: enable toggle + tax lines matrix + category map -->
       <div v-if="showCommercialTaxUi" class="space-y-5">
-        <div class="flex items-center justify-between py-1">
-          <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.commercialEnableTitle') }}</p>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-4">
+        <div class="flex items-start justify-between gap-3 py-1">
+          <div class="min-w-0 flex-1 space-y-1">
+            <p class="text-sm font-medium text-text-primary">{{ t('facturacion.tax.commercialEnableTitle') }}</p>
+            <p class="text-xs text-text-secondary leading-snug">{{ t('facturacion.tax.commercialEnableBody') }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ms-2 mt-0.5">
             <input v-model="commercialTaxApplicable" type="checkbox" class="sr-only peer" />
             <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>

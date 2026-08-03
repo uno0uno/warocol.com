@@ -143,8 +143,9 @@ const modifierDescription = (modifier: ReceiptItemModifier) => {
 const productTaxCue = (item: ReceiptItem) => {
   const amount = Number(item.taxAmount)
   const hasAmount = Number.isFinite(amount) && amount > 0
+  const isExempt = String(item.taxCategory ?? '').toLowerCase() === 'exempt'
   const label = String(item.taxLabel ?? '').trim()
-    || (String(item.taxCategory ?? '').toLowerCase() === 'exempt' ? t('pos.cartItem.taxExempt') : '')
+    || (isExempt ? t('pos.cartItem.taxExempt') : '')
   if (!label) return null
   if (hasAmount) {
     const amountLabel = compactThermalMoneyLabel(money(amount))
@@ -152,7 +153,9 @@ const productTaxCue = (item: ReceiptItem) => {
       text: t('pos.cartItem.taxLine', { label, amount: amountLabel }),
     })
   }
-  return formatReceiptTaxCue({ label })
+  // Bare cue only for exempt — never zero-amount IVA (#2081).
+  if (isExempt) return formatReceiptTaxCue({ label })
+  return null
 }
 
 const productBlock = (item: ReceiptItem) =>

@@ -632,20 +632,23 @@ const itemReceiptTotal = (item: any) => {
   return (Number(item.price_at_purchase) + modifiersTotal) * (Number(item.quantity) || 1)
 }
 
-/** Per-line tax cue for items table — same style as POS checkout (#2044). */
+/** Per-line tax cue for items table — same style as POS checkout (#2044 / #2081). */
 const formatItemTaxDisplay = (item: any): string | null => {
   const category = String(item?.tax_category ?? '').toLowerCase()
   const resolution = String(item?.tax_resolution ?? '').toLowerCase()
+  const isExempt = category === 'exempt' || resolution === 'exempt'
   const amount = Number(item?.tax_amount) || 0
   let label = String(item?.tax_label ?? '').trim()
-  if (!label && (category === 'exempt' || resolution === 'exempt')) {
+  if (!label && isExempt) {
     label = t('pos.cartItem.taxExempt')
   }
   if (!label) return null
   if (amount > 0) {
     return `+ ${t('pos.cartItem.taxLine', { label, amount: formatCurrency(amount) })}`
   }
-  return `+ ${label}`
+  // Bare cue only for exempt — suppress zero-amount IVA labels (#2081).
+  if (isExempt) return `+ ${label}`
+  return null
 }
 
 const saleReceiptItems = computed(() =>
