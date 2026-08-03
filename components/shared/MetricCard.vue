@@ -95,7 +95,7 @@ const metricCardVariants = cva(
     },
     defaultVariants: {
       variant: 'secondary',
-      size: 'default'
+      size: 'compact'
     }
   }
 )
@@ -121,7 +121,7 @@ const valueVariants = cva(
     },
     defaultVariants: {
       variant: 'secondary',
-      size: 'default'
+      size: 'compact'
     }
   }
 )
@@ -138,7 +138,7 @@ const titleVariants = cva(
       }
     },
     defaultVariants: {
-      size: 'default'
+      size: 'compact'
     }
   }
 )
@@ -155,7 +155,7 @@ const subtitleVariants = cva(
       }
     },
     defaultVariants: {
-      size: 'default'
+      size: 'compact'
     }
   }
 )
@@ -181,7 +181,7 @@ const unitVariants = cva(
     },
     defaultVariants: {
       variant: 'secondary',
-      size: 'default'
+      size: 'compact'
     }
   }
 )
@@ -265,7 +265,7 @@ interface Props extends MetricCardProps { }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'secondary',
-  size: 'default',
+  size: 'compact',
   suffix: '',
   unit: '',
   subtitle: '',

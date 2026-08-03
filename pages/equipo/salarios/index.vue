@@ -130,21 +130,21 @@ onUnmounted(() => {
           :value="stats.totalPayroll"
           format="currency"
           variant="primary"
-          size="sm"
+          size="compact"
         />
         <SharedMetricCard
           :title="t('equipo.salarios.employees')"
           :value="stats.totalEmployees"
           format="number"
           variant="primary"
-          size="sm"
+          size="compact"
         />
         <SharedMetricCard
           :title="t('equipo.salarios.withSalary')"
           :value="stats.employeesWithSalary"
           format="number"
           variant="primary"
-          size="sm"
+          size="compact"
           class="col-span-2 md:col-span-1"
         />
       </div>
