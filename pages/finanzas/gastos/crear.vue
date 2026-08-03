@@ -507,8 +507,9 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
-        submitError.value = t('finanzas.gastos.createUploadWarn')
+        cache.invalidateQueries({ key: ['finance', 'expenses'] })
         cache.invalidateQueries({ key: ['expense', response.data.id] })
+        useToast().warning(t('finanzas.gastos.createUploadWarn'))
         await navigateTo(`/finanzas/gastos/${response.data.id}`)
         return
       }
