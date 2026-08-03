@@ -38,7 +38,7 @@
           :value="formatQuantity(metrics.consumed_quantity)"
           format="text"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="displayIngredientUnit"
           class="min-w-0 overflow-hidden"
         />
@@ -47,7 +47,7 @@
           :value="formatCurrency(metrics.estimated_consumed_cost)"
           format="text"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="costBasisLabel"
           class="min-w-0 overflow-hidden"
         />
@@ -56,7 +56,7 @@
           :value="formatUnitCost(metrics.weighted_avg_cost_per_unit)"
           format="text"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="t('analitica.ingredientes.weightedPurchase')"
           class="min-w-0 overflow-hidden"
         />
@@ -65,7 +65,7 @@
           :value="formatUnitCost(metrics.latest_cost_per_unit)"
           format="text"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="latestCostLabel"
           class="min-w-0 overflow-hidden"
         />
@@ -74,7 +74,7 @@
           :value="formatCostVariation(metrics.cost_variation_pct)"
           format="text"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="t('analitica.ingredientes.firstVsLastPurchase')"
           class="min-w-0 overflow-hidden"
         />
@@ -83,7 +83,7 @@
           :value="metrics.movement_count"
           format="number"
           variant="primary"
-          size="sm"
+          size="compact"
           :subtitle="coverageLabel(metrics.data_coverage)"
           class="min-w-0 overflow-hidden"
         />
