@@ -322,6 +322,7 @@ import {
   writePublicCtaAttribution,
   writeVerifiedPublicCtaAttribution,
 } from '~/utils/publicCta'
+import { suggestCountryFromLocale } from '~/utils/countryLocale'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
 import {
   countryNeedsJurisdiction,
@@ -348,7 +349,7 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const authStore = useAuthStore()
 const toast = useToast()
-const { syncAuthenticatedLocale } = useAppLocale()
+const { syncAuthenticatedLocale, locale: appLocale } = useAppLocale()
 const { public: { baseUrl } } = useRuntimeConfig()
 
 const email = ref('')
@@ -684,6 +685,16 @@ onMounted(async () => {
       taxJurisdictionCode.value = ''
     } else if (!compatibleCurrencies.value.includes(baseCurrencyCode.value)) {
       baseCurrencyCode.value = compatibleCurrencies.value[0] || ''
+    }
+    if (!businessCountryCode.value) {
+      const suggested = suggestCountryFromLocale(appLocale.value)
+      if (suggested && registrationCatalog.value.some(option => option.country_code === suggested)) {
+        businessCountryCode.value = suggested
+        baseCurrencyCode.value = (
+          registrationCatalog.value.find(option => option.country_code === suggested)?.currency_codes[0]
+          || ''
+        )
+      }
     }
     if (!needsJurisdiction.value
       || !jurisdictionOptions.value.some(option => option.code === taxJurisdictionCode.value)) {
