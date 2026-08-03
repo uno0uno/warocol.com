@@ -68,7 +68,8 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { cityFromRoute, isCityRoute } = useCityCatalog()
-const headerCta = getPublicCta('pos', 'header')
+// Default CO market until a dedicated US landing exists (epic #2093 decision).
+const headerCta = getPublicCta('pos', 'header', { lang: 'es', country: 'Colombia' })
 
 const startRegistration = () => router.push(activatePublicCta(
   headerCta,

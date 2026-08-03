@@ -117,3 +117,40 @@ test('trial banner price anchor avoids COP for Mexico tenants', () => {
     /COP/i,
   )
 })
+
+test('public CTAs render EN + USD $300/year for US English market', () => {
+  const us = { lang: 'en', country: 'United States' }
+  const posFinal = getPublicCta('pos', 'final', us)
+  assert.match(posFinal.body, /USD \$300\/year/)
+  assert.match(posFinal.microcopy, /USD \$300\/year/)
+  assert.match(posFinal.microcopy, /Module access activates/i)
+  assert.equal(posFinal.button, 'Create account and choose a plan')
+  assert.doesNotMatch(posFinal.body, /COP/i)
+
+  const price = getPublicCta('pricing', 'price', us)
+  assert.match(price.headline, /USD \$300\/year/)
+  assert.match(price.body, /USD \$25\/month/)
+})
+
+test('omitted market keeps Colombia ES COP public CTAs', () => {
+  const omitted = getPublicCta('pos', 'final')
+  const co = getPublicCta('pos', 'final', { lang: 'es', country: 'Colombia' })
+  assert.equal(omitted.body, co.body)
+  assert.match(omitted.body, /COP 95\.900\/año/)
+  assert.equal(omitted.button, 'Crear cuenta y elegir plan')
+})
+
+test('trial banner price anchor uses USD for US tenants', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'US', currencyCode: 'USD' }),
+    'under USD $25/month',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'US', currencyCode: 'USD' }),
+    'menos de USD $25/mes',
+  )
+  assert.doesNotMatch(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'US', currencyCode: 'USD' }),
+    /COP/i,
+  )
+})
