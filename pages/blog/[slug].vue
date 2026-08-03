@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { resolveArticleMarket } from '~/utils/articleMarket'
+
 definePageMeta({ layout: 'blog' })
 
 const route = useRoute()
@@ -59,10 +61,17 @@ const { data: articleData, pending, error: fetchError } = useAsyncData<ArticleRe
 
 const article = computed(() => articleData.value?.data || null)
 
+const articleMarket = computed(() =>
+  resolveArticleMarket({
+    lang: article.value?.lang,
+    country: article.value?.country,
+  }),
+)
+
 // Format date
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString(articleMarket.value.localeTag, {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -89,83 +98,86 @@ const siteUrl = config.public.siteUrl || 'https://warocol.com'
 // SoftwareApplication declares WARO as Point of Sale Software so Google and
 // LLMs (ChatGPT, Gemini, Perplexity) classify WARO as a POS rather than as a
 // connector to one — addresses the misclassification surfaced by GSC analysis.
-const articleSchema = computed(() => ({
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Article',
-      headline: article.value?.meta_title || article.value?.title || '',
-      description: article.value?.meta_descripcion || article.value?.description || '',
-      image: article.value?.cover || article.value?.thumbnail || '',
-      datePublished: article.value?.created_at || '',
-      dateModified: article.value?.updated_at || article.value?.created_at || '',
-      author: {
-        '@type': 'Person',
-        name: article.value?.author_info?.name || article.value?.author_name || 'WARO Colombia'
+const articleSchema = computed(() => {
+  const market = articleMarket.value
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Article',
+        headline: article.value?.meta_title || article.value?.title || '',
+        description: article.value?.meta_descripcion || article.value?.description || '',
+        image: article.value?.cover || article.value?.thumbnail || '',
+        datePublished: article.value?.created_at || '',
+        dateModified: article.value?.updated_at || article.value?.created_at || '',
+        author: {
+          '@type': 'Person',
+          name: article.value?.author_info?.name || article.value?.author_name || 'WARO Colombia'
+        },
+        publisher: { '@id': `${siteUrl}#organization` },
+        url: `${siteUrl}/blog/${article.value?.slug || ''}`,
+        keywords: article.value?.tags || '',
+        inLanguage: market.inLanguage
       },
-      publisher: { '@id': `${siteUrl}#organization` },
-      url: `${siteUrl}/blog/${article.value?.slug || ''}`,
-      keywords: article.value?.tags || '',
-      inLanguage: 'es-CO'
-    },
-    {
-      '@type': 'Organization',
-      '@id': `${siteUrl}#organization`,
-      name: 'WARO Colombia',
-      url: siteUrl,
-      sameAs: ['https://warocol.com']
-    },
-    {
-      '@type': 'SoftwareApplication',
-      '@id': `${siteUrl}#waro-pos`,
-      name: 'WARO',
-      alternateName: 'WARO POS',
-      applicationCategory: 'Point of Sale Software',
-      applicationSubCategory: 'Restaurant POS',
-      operatingSystem: 'Web, iOS, Android',
-      url: siteUrl,
-      publisher: { '@id': `${siteUrl}#organization` },
-      offers: {
-        '@type': 'Offer',
-        price: '95900',
-        priceCurrency: 'COP',
-        availability: 'https://schema.org/InStock',
-        priceSpecification: {
-          '@type': 'UnitPriceSpecification',
-          price: '7992',
-          priceCurrency: 'COP',
-          billingDuration: 'P1M',
-          description: 'Equivalente mensual del plan anual de $95.900 COP'
+      {
+        '@type': 'Organization',
+        '@id': `${siteUrl}#organization`,
+        name: 'WARO Colombia',
+        url: siteUrl,
+        sameAs: ['https://warocol.com']
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${siteUrl}#waro-pos`,
+        name: 'WARO',
+        alternateName: 'WARO POS',
+        applicationCategory: 'Point of Sale Software',
+        applicationSubCategory: 'Restaurant POS',
+        operatingSystem: 'Web, iOS, Android',
+        url: siteUrl,
+        publisher: { '@id': `${siteUrl}#organization` },
+        offers: {
+          '@type': 'Offer',
+          price: market.annualPrice,
+          priceCurrency: market.currency,
+          availability: 'https://schema.org/InStock',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: market.monthlyPrice,
+            priceCurrency: market.currency,
+            billingDuration: 'P1M',
+            description: market.monthlyOfferDescription
+          }
+        },
+        featureList: [
+          'Punto de venta con catálogo y modificadores',
+          'Plano de mesas con estados en tiempo real',
+          'KDS para cocina con estaciones personalizadas',
+          'Cobro parcial multi-método',
+          'Propinas con atribución a mesero (Ley 1935/2018)',
+          'Inventario por receta con descuento automático',
+          'Facturación electrónica DIAN nativa',
+          'Bitácora de números quemados DIAN',
+          'Arqueo de caja por plantilla de turno',
+          'Programa de fidelización Waros nativo',
+          'Pedido por QR en mesa',
+          'Domicilios propios sin comisión'
+        ],
+        areaServed: {
+          '@type': 'Country',
+          name: market.areaServedName
         }
-      },
-      featureList: [
-        'Punto de venta con catálogo y modificadores',
-        'Plano de mesas con estados en tiempo real',
-        'KDS para cocina con estaciones personalizadas',
-        'Cobro parcial multi-método',
-        'Propinas con atribución a mesero (Ley 1935/2018)',
-        'Inventario por receta con descuento automático',
-        'Facturación electrónica DIAN nativa',
-        'Bitácora de números quemados DIAN',
-        'Arqueo de caja por plantilla de turno',
-        'Programa de fidelización Waros nativo',
-        'Pedido por QR en mesa',
-        'Domicilios propios sin comisión'
-      ],
-      areaServed: {
-        '@type': 'Country',
-        name: 'Colombia'
       }
-    }
-  ]
-}))
+    ]
+  }
+})
 
 useSeoMeta({
   title: () => article.value?.meta_title || article.value?.title || 'Artículo | Waro Colombia',
   description: () => article.value?.meta_descripcion || article.value?.description || '',
   ogType: 'article',
   ogSiteName: 'Waro Colombia',
-  ogLocale: 'es_CO',
+  ogLocale: () => articleMarket.value.ogLocale,
   ogTitle: () => article.value?.meta_title || article.value?.title || '',
   ogDescription: () => article.value?.meta_descripcion || article.value?.description || '',
   ogImage: () => article.value?.cover || article.value?.thumbnail || '',
