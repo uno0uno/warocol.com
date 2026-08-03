@@ -401,6 +401,13 @@
     "pendingPublication": "Veröffentlichung ausstehend",
     "metaDescription": "Prüfen Sie das aktuelle PDF der Allgemeinen Geschäftsbedingungen von WARO Kolumbien und registrieren Sie Ihre explizite Annahme."
   },
+  "home": {
+    "title": "NULL MYSTERIUM IN IHREM RESTAURANT.",
+    "subtitle": "Vom Preis eines Gerichts bis zur Schicht eines Mitarbeiters. Wir machen Technologie zugänglich, die Ihre Daten in klare Entscheidungen verwandelt.",
+    "emphasis": "Wir begleiten Sie, damit es einfach bleibt.",
+    "button": "SPRECHEN SIE MIT UNS",
+    "microcopy": "2 Minuten. Keine Karte nötig. Ein Berater meldet sich."
+  },
   "auth": {
     "loginTitle": "Anmelden",
     "registerTitle": "Konto erstellen",
@@ -493,7 +500,8 @@
     "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein.",
     "sendCodeError": "Fehler beim Senden des Codes",
     "wrongCode": "Falscher Code",
-    "resendCodeError": "Fehler beim erneuten Senden des Codes"
+    "resendCodeError": "Fehler beim erneuten Senden des Codes",
+    "myPanel": "Mein Panel"
   },
   "onboarding": {
     "pageTitle": "Unternehmen einrichten | WARO",

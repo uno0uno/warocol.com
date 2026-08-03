@@ -82,12 +82,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-        <!-- Ingresar / Mi Panel — siempre disponible, incluido móvil y tablet -->
+        <!-- Sign in / My Panel — always available, including mobile and tablet -->
         <NuxtLink
           :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"
           class="inline-flex items-center min-h-9 text-[12px] sm:text-[13px] font-semibold text-ebony-600 hover:text-crocus-600 hover:bg-titan-50 px-2 sm:px-3 py-1.5 rounded-xl transition-all no-underline whitespace-nowrap"
         >
-          {{ authStore.isSessionValid ? 'Mi Panel' : 'Ingresar' }}
+          {{ authStore.isSessionValid ? t('auth.myPanel') : t('auth.signIn') }}
         </NuxtLink>
 
         <button
@@ -95,7 +95,7 @@
           type="button"
           @click="startRegistration"
         >
-          {{ headerCta.button }}
+          {{ t('auth.createAccount') }}
         </button>
       </div>
 

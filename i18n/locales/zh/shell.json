@@ -401,6 +401,13 @@
     "pendingPublication": "待发布",
     "metaDescription": "查阅 WARO Colombia 当前条款和条件PDF并记录明确接受。"
   },
+  "home": {
+    "title": "餐厅运营，不再神秘。",
+    "subtitle": "从菜品定价到员工排班。我们让技术触手可及，把数据变成清晰决策。",
+    "emphasis": "我们一路引导，让一切保持简单。",
+    "button": "联系我们",
+    "microcopy": "2 分钟。无需银行卡。顾问会与您联系。"
+  },
   "auth": {
     "loginTitle": "登录",
     "registerTitle": "创建账户",
@@ -493,7 +500,8 @@
     "emailInvalid": "请输入有效的电子邮件",
     "sendCodeError": "发送验证码失败",
     "wrongCode": "验证码不正确",
-    "resendCodeError": "重新发送验证码失败"
+    "resendCodeError": "重新发送验证码失败",
+    "myPanel": "我的面板"
   },
   "onboarding": {
     "pageTitle": "设置您的企业 | WARO",

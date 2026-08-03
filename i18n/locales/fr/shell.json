@@ -401,6 +401,13 @@
     "pendingPublication": "En attente de publication",
     "metaDescription": "Consultez le PDF actuel des Conditions Générales de WARO Colombia et enregistrez votre acceptation explicite."
   },
+  "home": {
+    "title": "ZÉRO MYSTÈRE DANS VOTRE RESTAURANT.",
+    "subtitle": "Du prix d’un plat au service d’un employé. Nous mettons à votre portée une technologie qui transforme vos données en décisions claires.",
+    "emphasis": "Nous vous guidons pour que ce soit simple.",
+    "button": "PARLEZ-NOUS",
+    "microcopy": "2 minutes. Sans carte. Un conseiller vous contactera."
+  },
   "auth": {
     "loginTitle": "Connexion",
     "registerTitle": "Créer un compte",
@@ -493,7 +500,8 @@
     "emailInvalid": "Veuillez saisir une adresse e-mail valide",
     "sendCodeError": "Erreur lors de l'envoi du code",
     "wrongCode": "Code incorrect",
-    "resendCodeError": "Erreur lors du renvoi du code"
+    "resendCodeError": "Erreur lors du renvoi du code",
+    "myPanel": "Mon tableau"
   },
   "onboarding": {
     "pageTitle": "Configurez votre entreprise | WARO",

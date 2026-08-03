@@ -468,6 +468,13 @@
     "pendingPublication": "Pending publication",
     "metaDescription": "Review the current WARO Colombia Terms and Conditions PDF and record explicit acceptance."
   },
+  "home": {
+    "title": "ZERO MYSTERY IN YOUR RESTAURANT.",
+    "subtitle": "From the price of a plate to an employee shift. We put technology within reach that turns your data into clear decisions.",
+    "emphasis": "We guide you so it stays easy.",
+    "button": "TALK TO US",
+    "microcopy": "2 minutes. No card required. An advisor will contact you."
+  },
   "auth": {
     "loginTitle": "Sign in",
     "registerTitle": "Create account",
@@ -560,7 +567,8 @@
     "emailInvalid": "Enter a valid email",
     "sendCodeError": "Could not send the code",
     "wrongCode": "Incorrect code",
-    "resendCodeError": "Could not resend the code"
+    "resendCodeError": "Could not resend the code",
+    "myPanel": "My Panel"
   },
   "onboarding": {
     "pageTitle": "Set up your business | WARO",
