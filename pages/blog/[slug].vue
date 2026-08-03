@@ -255,7 +255,12 @@ useHead({
       />
 
       <!-- Article Content -->
-      <BlogArticleContent :content="article.content" :slug="slug">
+      <BlogArticleContent
+        :content="article.content"
+        :slug="slug"
+        :lang="article.lang"
+        :country="article.country"
+      >
         <!-- Breadcrumb Slot -->
         <template #breadcrumb>
           <BlogBreadcrumb />
@@ -263,7 +268,11 @@ useHead({
 
         <!-- CTA Slot -->
         <template #cta>
-          <BlogArticleCTA :slug="slug" />
+          <BlogArticleCTA
+            :slug="slug"
+            :lang="article.lang"
+            :country="article.country"
+          />
         </template>
 
         <!-- Author Card Slot -->

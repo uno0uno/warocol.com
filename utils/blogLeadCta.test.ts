@@ -6,6 +6,9 @@ import {
   getBlogLeadCta,
 } from './blogLeadCta.ts'
 
+const US_EN = { lang: 'en', country: 'United States' }
+const CO_ES = { lang: 'es', country: 'Colombia' }
+
 test('maps blog slugs to pain-first lead copy', () => {
   const gastrobar = getBlogLeadCta('gastrobar-que-es', 'final')
   assert.match(gastrobar.headline, /restaurante/i)
@@ -23,6 +26,33 @@ test('shows price placement only on commercial slugs', () => {
   const informational = getBlogLeadCta('inventario-restaurante', 'price')
   assert.doesNotMatch(informational.headline, /activa después del pago/)
   assert.equal(informational.button, 'Quiero ver cómo funciona')
+})
+
+test('keeps Colombia ES COP copy when market is CO', () => {
+  const pos = getBlogLeadCta('software-pos-restaurantes', 'final', CO_ES)
+  assert.match(pos.headline, /COP 95\.900/)
+  assert.match(pos.microcopy, /Sin tarjeta/)
+
+  const price = getBlogLeadCta('precio-sistema-pos', 'price', CO_ES)
+  assert.match(price.headline, /COP 95\.900/)
+})
+
+test('shows EN CTA with USD $300/year for US English market', () => {
+  const pos = getBlogLeadCta('software-pos-restaurants', 'final', US_EN)
+  assert.match(pos.headline, /USD \$300\/year/)
+  assert.match(pos.microcopy, /No card/i)
+  assert.match(pos.button, /demo/i)
+
+  const price = getBlogLeadCta('restaurant-pos-pricing', 'price', US_EN)
+  assert.match(price.headline, /USD \$300\/year/)
+  assert.equal(price.button, 'See my options')
+})
+
+test('defaults omitted market to Colombia ES behavior', () => {
+  const omitted = getBlogLeadCta('software-pos-restaurantes', 'final')
+  const explicit = getBlogLeadCta('software-pos-restaurantes', 'final', CO_ES)
+  assert.equal(omitted.headline, explicit.headline)
+  assert.equal(omitted.microcopy, explicit.microcopy)
 })
 
 test('builds stable blog lead attribution sources', () => {

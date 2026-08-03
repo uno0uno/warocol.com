@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { blogLeadSource } from '~/utils/blogLeadCta'
 
-const props = defineProps<{ slug: string }>()
+const props = defineProps<{
+  slug: string
+  lang?: string | null
+  country?: string | null
+}>()
 const leadModal = useLeadModal()
-const ctaContent = computed(() => useBlogCta(props.slug))
+const ctaContent = computed(() =>
+  useBlogCta(props.slug, 'final', { lang: props.lang, country: props.country }),
+)
 const openLeadModal = () => leadModal.open(blogLeadSource(props.slug))
 </script>
 
