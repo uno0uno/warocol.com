@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { resolveArticleMarket } from '~/utils/articleMarket'
+import { articleLangToLocale } from '~/utils/articleLangToLocale'
 
 definePageMeta({ layout: 'blog' })
 
 const route = useRoute()
 const config = useRuntimeConfig()
+const { applyPersonalLocale } = useAppLocale()
 
 // Types
 interface AuthorInfo {
@@ -66,6 +68,15 @@ const articleMarket = computed(() =>
     lang: article.value?.lang,
     country: article.value?.country,
   }),
+)
+
+watch(
+  () => article.value?.lang,
+  async (lang) => {
+    const code = articleLangToLocale(lang)
+    if (code) await applyPersonalLocale(code)
+  },
+  { immediate: true },
 )
 
 // Format date
