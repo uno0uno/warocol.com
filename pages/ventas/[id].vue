@@ -1870,6 +1870,13 @@ onUnmounted(() => {
                     align="left"
                   />
                 </th>
+                <th class="px-6 py-3 text-start">
+                  <UiTableHeaderFilter
+                    :title="t('ventas.common.impuesto')"
+                    filter-type="none"
+                    align="left"
+                  />
+                </th>
                 <th class="px-6 py-3 text-center">
                   <UiTableHeaderFilter
                     :title="t('ventas.detail.quantityShort')"
@@ -1915,15 +1922,14 @@ onUnmounted(() => {
                       </div>
                       <div>
                         <p class="text-sm font-semibold text-text-primary">{{ item.product.name }}</p>
-                        <p
-                          v-if="formatItemTaxDisplay(item)"
-                          class="text-xs text-text-tertiary mt-0.5"
-                        >
-                          {{ formatItemTaxDisplay(item) }}
-                        </p>
                         <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
                       </div>
                     </div>
+                  </td>
+                  <td class="px-6 py-4 text-start">
+                    <span class="text-xs text-text-secondary tabular-nums">
+                      {{ formatItemTaxDisplay(item) || '—' }}
+                    </span>
                   </td>
                   <td class="px-6 py-4 text-center">
                     <span
@@ -1959,6 +1965,9 @@ onUnmounted(() => {
                         <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
                       </div>
                     </td>
+                    <td class="px-6 py-2 text-start">
+                      <span class="text-xs text-text-tertiary">—</span>
+                    </td>
                     <td class="px-6 py-2 text-center">
                       <span class="text-xs text-text-tertiary">x{{ modifier.quantity ?? 1 }}</span>
                     </td>
@@ -1973,7 +1982,7 @@ onUnmounted(() => {
               </template>
               <tr v-if="visibleItems.length === 0">
                 <td
-                  :colspan="isEditMode ? 5 : 4"
+                  :colspan="isEditMode ? 6 : 5"
                   class="px-6 py-12 text-center text-sm text-text-secondary"
                 >
                   {{ t('ventas.detail.noProductsForFilter') }}
@@ -1983,7 +1992,7 @@ onUnmounted(() => {
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
                 <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
+                <td colspan="4" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
                   {{ t('ventas.detail.orderTotalLabel') }}
                 </td>
                 <td class="px-6 py-4 text-end">
