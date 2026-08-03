@@ -1,0 +1,36 @@
+issue: 2076
+title: "fix(finanzas): compact arqueo summary MetricCards so currency fits"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2076-arqueo-metriccard-compact
+
+paths:
+  - components/shared/MetricCard.vue
+  - pages/finanzas/arqueo/index.vue
+
+ac:
+  - Arqueo summary amounts fully visible for compact currency ($6,67 M / -$333,78 k)
+  - Use MetricCard size=compact on arqueo grid only (no blind global shrink)
+  - Other MetricCard call sites keep default/sm/lg visuals
+  - grid-cols-2 / md:3 / xl:5 still layout correctly
+
+out_of_scope:
+  - API/totals math
+  - arqueo create/detail pages
+
+hints:
+  entry: "pages/finanzas/arqueo/index.vue MetricCard grid"
+  pattern: "MetricCard.vue already has size sm|default|lg CVA — add compact denser than sm"
+  tests: "bun test components/shared/metricCardValue.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge + pull + stop local servers"
