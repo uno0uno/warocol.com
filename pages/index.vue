@@ -9,6 +9,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+definePageMeta({
+  layout: 'home',
+})
+
 const route = useRoute()
 const { public: config } = useRuntimeConfig()
 
@@ -35,11 +39,17 @@ useHead({
 
 <style scoped>
 .index-page {
-    position: relative;
-    min-height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: transparent;
-    color: hsl(250, 30%, 16%); /* Ebony 900 - Texto oscuro con alto contraste */
-    overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: transparent;
+  color: hsl(250, 30%, 16%);
 }
 </style>

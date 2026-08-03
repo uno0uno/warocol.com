@@ -65,9 +65,21 @@ const foodItems = [
 
 .food-item {
   position: absolute;
-  font-size: 50px;
+  font-size: clamp(1.5rem, 4vw, 3.125rem);
   opacity: 0.08;
   filter: grayscale(100%) brightness(0.7);
+}
+
+@media (max-width: 768px) {
+  .food-item {
+    font-size: 1.35rem;
+    opacity: 0.06;
+  }
+
+  /* Hide every other item on mobile to reduce visual noise. */
+  .food-item:nth-child(even) {
+    display: none;
+  }
 }
 
 .food-item:nth-child(1) { left: 5%; top: 10%; }
