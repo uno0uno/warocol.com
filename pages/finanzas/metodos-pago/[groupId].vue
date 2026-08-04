@@ -1,6 +1,14 @@
 <template>
   <div class="page-layout">
 
+    <!-- Full shell waits for groups+methods(+accounts) so header/GL do not paint before matrix (#2125 follow-up) -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[300px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <CommonsTheErrorState v-else-if="fetchError" />
+
+    <template v-else>
     <!-- Header: group name + add button -->
     <div class="flex items-center justify-between mb-3">
       <h1 class="text-base font-bold text-text-primary">{{ group ? paymentGroupLabel(group) : '…' }}</h1>
@@ -60,15 +68,7 @@
       <span v-else class="text-xs text-text-secondary flex-shrink-0">{{ t('finanzas.metodosPago.defaultLower') }}</span>
     </div>
 
-    <!-- Loading -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[300px]">
-      <CommonsTheCustomLoader size="large" />
-    </div>
-
-    <CommonsTheErrorState v-else-if="fetchError" />
-
     <UiResponsiveDataView
-      v-else
       :columns="columns"
       :data="methods"
       :empty-message="t('finanzas.metodosPago.noMethods')"
@@ -179,6 +179,7 @@
         </div>
       </template>
     </UiResponsiveDataView>
+    </template>
 
   </div>
 
@@ -775,17 +776,23 @@ const createAccountForMethod = async (
 ): Promise<string> => {
   // Helper that POSTs the sub-account; on uniqueness conflict (race condition)
   // it refetches the chart and retries once with a recomputed code.
-  const buildBody = (code: string) => ({
-    code,
-    name: methodName,
-    parentId: parent.id,
-    isDetail: true,
-    isActive: true,
-    accountClass: parent.accountClass,
-    accountType: parent.accountType,
-    normalBalance: parent.normalBalance,
-    level: parent.level + 1,
-  })
+  const buildBody = (code: string) => {
+    // Allowed ladder is 1/2/4/6/8 (CO + GLOBAL). parent.level+1 can be 5 under Bank.
+    const ladder = [1, 2, 4, 6, 8]
+    const idx = ladder.indexOf(parent.level)
+    const level = idx >= 0 && idx < ladder.length - 1 ? ladder[idx + 1] : 6
+    return {
+      code,
+      name: methodName,
+      parentId: parent.id,
+      isDetail: true,
+      isActive: true,
+      accountClass: parent.accountClass,
+      accountType: parent.accountType,
+      normalBalance: parent.normalBalance,
+      level,
+    }
+  }
   try {
     await $fetch('/api/accounting/accounts', { method: 'POST', body: buildBody(desiredCode) })
     return desiredCode
