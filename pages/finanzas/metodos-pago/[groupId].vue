@@ -267,58 +267,103 @@
             />
           </div>
 
-          <!-- Required PUC parent + auto-create dedicated sub-account (#2121) -->
+          <!-- PUC parent: assume group GL when set; otherwise require select (#2123) -->
           <div
             v-if="panelMode === 'create' && group && !isCashGroup(group)"
             class="space-y-3"
           >
-            <div class="flex flex-col gap-1.5">
-              <label for="panel-parent-account" class="text-sm font-medium text-text-primary">
-                {{ t('finanzas.metodosPago.parentAccountReq') }}
-              </label>
-              <select
-                id="panel-parent-account"
-                v-model="panelParentCode"
-                required
-                :disabled="saving || leafAccounts.length === 0"
-                class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                :aria-describedby="'panel-parent-help'"
+            <!-- Group already has parent → no redundant select -->
+            <template v-if="groupHasParentAccount">
+              <div class="rounded-lg border border-border bg-surface px-4 py-3 space-y-1.5">
+                <p class="text-sm font-semibold text-text-primary leading-snug">
+                  {{ t('finanzas.metodosPago.groupParentAssumedTitle') }}
+                </p>
+                <p class="text-xs text-text-secondary leading-snug">
+                  {{ t('finanzas.metodosPago.groupParentAssumedHelp') }}
+                </p>
+                <p v-if="parentAccount" class="text-sm font-mono text-text-primary">
+                  {{ parentAccount.code }} · {{ parentAccount.name }}
+                </p>
+                <p v-else-if="panelParentCode" class="text-sm font-mono text-text-primary">
+                  {{ panelParentCode }}
+                </p>
+              </div>
+
+              <div
+                v-if="panelParentCode && panelName.trim() && parentAccount"
+                class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
               >
-                <option value="" disabled>
-                  {{ leafAccounts.length ? t('finanzas.metodosPago.parentAccountPlaceholder') : t('finanzas.metodosPago.parentAccountLoading') }}
-                </option>
-                <option v-for="acct in leafAccounts" :key="acct.code" :value="acct.code">
-                  {{ acct.code }} · {{ acct.name }}
-                </option>
-              </select>
-              <p id="panel-parent-help" class="text-xs text-text-secondary leading-snug">
-                {{ t('finanzas.metodosPago.parentAccountHelp') }}
-              </p>
-            </div>
+                <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
+                  {{ t('finanzas.metodosPago.preview') }}
+                </p>
+                <p class="text-sm text-text-primary leading-snug">
+                  {{ t('finanzas.metodosPago.previewCreateAccount') }}
+                  <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
+                  {{ t('finanzas.metodosPago.previewUnder') }}
+                  <span class="font-mono">{{ parentAccount.code }} {{ parentAccount.name }}</span>.
+                </p>
+              </div>
 
-            <div
-              v-if="panelParentCode && panelName.trim() && parentAccount"
-              class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
-            >
-              <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
-                {{ t('finanzas.metodosPago.preview') }}
-              </p>
-              <p class="text-sm text-text-primary leading-snug">
-                {{ t('finanzas.metodosPago.previewCreateAccount') }}
-                <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
-                {{ t('finanzas.metodosPago.previewUnder') }}
-                <span class="font-mono">{{ parentAccount.code }} {{ parentAccount.name }}</span>.
-              </p>
-            </div>
+              <div
+                v-else-if="panelParentCode && !parentAccount && accountsLoaded"
+                class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
+              >
+                <p class="text-xs text-state-warning-text leading-snug">
+                  {{ t('finanzas.metodosPago.groupParentMissingInChart') }}
+                </p>
+              </div>
+            </template>
 
-            <div
-              v-else-if="leafAccounts.length === 0"
-              class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
-            >
-              <p class="text-xs text-state-warning-text leading-snug">
-                {{ t('finanzas.metodosPago.parentAccountEmpty') }}
-              </p>
-            </div>
+            <!-- Group has no GL → user must pick parent -->
+            <template v-else>
+              <div class="flex flex-col gap-1.5">
+                <label for="panel-parent-account" class="text-sm font-medium text-text-primary">
+                  {{ t('finanzas.metodosPago.parentAccountReq') }}
+                </label>
+                <select
+                  id="panel-parent-account"
+                  v-model="panelParentCode"
+                  required
+                  :disabled="saving || leafAccounts.length === 0"
+                  class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-describedby="panel-parent-help"
+                >
+                  <option value="" disabled>
+                    {{ leafAccounts.length ? t('finanzas.metodosPago.parentAccountPlaceholder') : t('finanzas.metodosPago.parentAccountLoading') }}
+                  </option>
+                  <option v-for="acct in leafAccounts" :key="acct.code" :value="acct.code">
+                    {{ acct.code }} · {{ acct.name }}
+                  </option>
+                </select>
+                <p id="panel-parent-help" class="text-xs text-text-secondary leading-snug">
+                  {{ t('finanzas.metodosPago.parentAccountHelp') }}
+                </p>
+              </div>
+
+              <div
+                v-if="panelParentCode && panelName.trim() && parentAccount"
+                class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
+              >
+                <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
+                  {{ t('finanzas.metodosPago.preview') }}
+                </p>
+                <p class="text-sm text-text-primary leading-snug">
+                  {{ t('finanzas.metodosPago.previewCreateAccount') }}
+                  <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
+                  {{ t('finanzas.metodosPago.previewUnder') }}
+                  <span class="font-mono">{{ parentAccount.code }} {{ parentAccount.name }}</span>.
+                </p>
+              </div>
+
+              <div
+                v-else-if="leafAccounts.length === 0"
+                class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
+              >
+                <p class="text-xs text-state-warning-text leading-snug">
+                  {{ t('finanzas.metodosPago.parentAccountEmpty') }}
+                </p>
+              </div>
+            </template>
           </div>
 
           <!-- Submit error -->
@@ -500,9 +545,14 @@ const leafAccounts = computed<TenantAccount[]>(() =>
   (accountsData.value?.data ?? []).filter(a => a.isDetail && a.isActive)
 )
 
+const accountsLoaded = computed(() => accountsData.value?.data != null)
+
 const currentGlAccount = computed(() =>
-  leafAccounts.value.find(a => a.code === group.value?.glAccountCode)
+  (accountsData.value?.data ?? []).find(a => a.code === group.value?.glAccountCode && a.isActive)
+    ?? leafAccounts.value.find(a => a.code === group.value?.glAccountCode)
 )
+
+const groupHasParentAccount = computed(() => Boolean(group.value?.glAccountCode?.trim()))
 
 const savingGl = ref(false)
 const glAccountCode = ref<string>('')
@@ -616,11 +666,11 @@ const paymentGroupLabel = (paymentGroup: PaymentGroup): string => {
 
 const isCashGroup = (paymentGroup: PaymentGroup) => ['cash', 'efectivo'].includes(paymentGroup.slug)
 
-const parentAccount = computed<TenantAccount | null>(() =>
-  panelParentCode.value
-    ? leafAccounts.value.find(a => a.code === panelParentCode.value) ?? null
-    : null,
-)
+const parentAccount = computed<TenantAccount | null>(() => {
+  if (!panelParentCode.value) return null
+  const all = accountsData.value?.data ?? []
+  return all.find(a => a.code === panelParentCode.value && a.isActive) ?? null
+})
 const previewSuffix = computed(() =>
   parentAccount.value
     ? suggestSubAccountSuffix(parentAccount.value.code, accountsData.value?.data ?? [])
@@ -637,15 +687,18 @@ const canSavePanel = computed(() => {
 })
 
 const syncPanelParentDefault = () => {
+  // When group has GL, always lock to that code (even before chart resolves).
   panelParentCode.value = defaultPaymentMethodParentCode(
     group.value?.glAccountCode,
-    leafAccounts.value.map(a => a.code),
+    groupHasParentAccount.value ? [] : leafAccounts.value.map(a => a.code),
   )
 }
 
-watch(leafAccounts, () => {
-  if (showPanel.value && panelMode.value === 'create' && !panelParentCode.value) {
-    syncPanelParentDefault()
+watch([leafAccounts, group], () => {
+  if (showPanel.value && panelMode.value === 'create') {
+    if (groupHasParentAccount.value || !panelParentCode.value) {
+      syncPanelParentDefault()
+    }
   }
 })
 
