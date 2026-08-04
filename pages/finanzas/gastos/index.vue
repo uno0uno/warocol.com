@@ -122,6 +122,13 @@ watch([categoryFilter, expenseTypeFilter, currentMonth], () => {
   currentPage.value = 1
 })
 
+// If the last item on a later page is deleted, clamp to the new last page
+watch(expensesTotalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
+
 const clearFilters = () => {
   clearSearch()
   categoryFilter.value = ''
