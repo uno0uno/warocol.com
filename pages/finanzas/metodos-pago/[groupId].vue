@@ -513,9 +513,26 @@ const methods = computed<PaymentMethod[]>(() =>
 
 const fetchError = computed(() => groupsError.value || methodsError.value)
 
-const hasEverLoaded = ref(false)
-watch(() => methodsData.value, (v) => { if (v != null) hasEverLoaded.value = true })
-watch(() => currentTenant.value?.id, () => { hasEverLoaded.value = false })
+// ── Accounts (for GL selector) — declare before loading flags (#2125) ─────
+
+const accountsQueryEnabled = computed(() => {
+  const g = group.value
+  if (!currentTenant.value || !g) return false
+  return !['cash', 'efectivo'].includes(g.slug)
+})
+
+const {
+  data: accountsData,
+  status: accountsStatus,
+  asyncStatus: accountsAsyncStatus,
+  error: accountsError,
+  refetch: refetchAccounts,
+} = useQuery({
+  key: () => ['accounting', 'accounts', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: TenantAccount[] }>('/api/accounting/accounts'),
+  enabled: () => accountsQueryEnabled.value,
+  staleTime: 60_000,
+})
 
 const isMethodsFetching = computed(() =>
   !!currentTenant.value &&
@@ -525,21 +542,34 @@ const isGroupsFetching = computed(() =>
   !!currentTenant.value &&
   (groupsStatus.value === 'pending' || groupsAsyncStatus.value === 'loading'),
 )
-const isFetching = computed(() => isMethodsFetching.value || isGroupsFetching.value)
-const isLoading = computed(() => !hasEverLoaded.value && isMethodsFetching.value && !fetchError.value)
+const isAccountsFetching = computed(() =>
+  accountsQueryEnabled.value &&
+  (accountsStatus.value === 'pending' || accountsAsyncStatus.value === 'loading'),
+)
 
-// ── Accounts (for GL selector) ────────────────────────────────────────────
+/** Progressive matrix: busy while any required query for this page is in flight. */
+const isFetching = computed(() =>
+  isMethodsFetching.value || isGroupsFetching.value || isAccountsFetching.value,
+)
 
-const { data: accountsData, refetch: refetchAccounts } = useQuery({
-  key: () => ['accounting', 'accounts', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: TenantAccount[] }>('/api/accounting/accounts'),
-  enabled: () => {
-    const g = group.value
-    if (!currentTenant.value || !g) return false
-    return !['cash', 'efectivo'].includes(g.slug)
-  },
-  staleTime: 60_000,
+const requiredQueriesSettled = computed(() => {
+  if (methodsData.value == null || groupsData.value == null) return false
+  // Cash (or unknown group): no accounts wait.
+  if (!accountsQueryEnabled.value) return true
+  // Non-cash: wait for chart payload or a hard error (don't block the table forever).
+  return accountsData.value?.data != null || accountsError.value != null
 })
+
+const hasEverLoaded = ref(false)
+watch(requiredQueriesSettled, (ok) => {
+  if (ok) hasEverLoaded.value = true
+})
+watch(() => currentTenant.value?.id, () => { hasEverLoaded.value = false })
+
+/** Full-page loader: first paint only, after groups+methods(+accounts when needed). */
+const isLoading = computed(() =>
+  !!currentTenant.value && !hasEverLoaded.value && !fetchError.value,
+)
 
 const leafAccounts = computed<TenantAccount[]>(() =>
   (accountsData.value?.data ?? []).filter(a => a.isDetail && a.isActive)
@@ -582,7 +612,9 @@ useHead(() => ({
 }))
 
 const refreshAll = async () => {
-  await Promise.all([refetchGroups(), refetchMethods()])
+  const tasks: Array<Promise<unknown>> = [refetchGroups(), refetchMethods()]
+  if (accountsQueryEnabled.value) tasks.push(refetchAccounts())
+  await Promise.all(tasks)
 }
 
 registerProgressiveLoading(isFetching)
