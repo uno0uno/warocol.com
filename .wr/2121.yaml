@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-fast #2121.
+issue: 2121
+title: "fix(finanzas): always assign PUC account when creating a payment method"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2121-payment-method-puc-required
+
+paths:
+  - pages/finanzas/metodos-pago/[groupId].vue
+  - composables/useChartOfAccounts.ts
+  - composables/useChartOfAccounts.test.ts
+  - i18n/locales/es/finanzas.json
+  - i18n/locales/en/finanzas.json
+  - .wr/2121.yaml
+
+ac:
+  - Create panel always shows parent PUC select + help for non-cash
+  - Chart accounts load for default groups too
+  - Create always auto-creates sub-account; cannot save without parent
+  - Cash excluded
+  - es + en copy
+  - Unit tests for parent default helper
+
+out_of_scope:
+  - API POST require (optional deferred)
+  - Group CRUD redesign
+  - Cash group changes
+
+hints:
+  entry: "pages/finanzas/metodos-pago/[groupId].vue create panel"
+  pattern: "defaultPaymentMethodParentCode + always createAccountForMethod"
+  tests: "bunx tsx --test composables/useChartOfAccounts.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"
