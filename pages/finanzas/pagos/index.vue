@@ -337,6 +337,8 @@ const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus,
       supplier_id: selectedSupplierFilter.value || undefined,
       payment_status: selectedStatusFilter.value || undefined,
       date_filter: selectedDateFilter.value || undefined,
+      // Opt-in unpaid direct credit purchases for Pagos (API #2110); keep false elsewhere
+      include_direct_payables: true,
     }
   }),
   enabled: () => !!currentTenant.value,

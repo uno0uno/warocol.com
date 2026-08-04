@@ -80,13 +80,27 @@
             {{ t('abastecimiento.compraDirectaDetalle.pendingPaymentHelp') }}
           </p>
         </div>
-        <button
-          type="button"
-          class="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-shell-cta-bg px-4 text-sm font-semibold text-shell-cta-text transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
-          @click="showPaymentPanel = true"
-        >
-          {{ t('abastecimiento.compraDirectaDetalle.pay') }}
-        </button>
+        <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <NuxtLink
+            :to="{
+              path: '/finanzas/pagos',
+              query: {
+                search: purchase.purchase_number,
+                highlight: purchase.id,
+              },
+            }"
+            class="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-border px-4 text-sm font-medium text-text-primary transition-colors hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+          >
+            {{ t('finanzas.pagos.viewInPagos') }}
+          </NuxtLink>
+          <button
+            type="button"
+            class="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-shell-cta-bg px-4 text-sm font-semibold text-shell-cta-text transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+            @click="showPaymentPanel = true"
+          >
+            {{ t('abastecimiento.compraDirectaDetalle.pay') }}
+          </button>
+        </div>
       </div>
 
       <!-- Items Section -->
