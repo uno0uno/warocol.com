@@ -343,18 +343,31 @@ const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus,
   staleTime: 30_000,
 })
 
+
+const { data: expensePayablesData, asyncStatus: expenseQueryAsyncStatus, refetch: refetchExpenses } = useQuery({
+  key: () => ['finance', 'expense-payables', currentTenant.value?.id],
+  query: () => $fetch('/api/finance/expenses/payables', { params: { limit: 250 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
 const loading = computed(() => !purchasesData.value)
-const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && purchasesData.value != null)
+
+const isRefreshing = computed(() => (queryAsyncStatus.value === 'loading' || expenseQueryAsyncStatus.value === 'loading') && purchasesData.value != null)
 
 // Inject refresh handler setter from layout
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
+async function refetchAll() {
+  await Promise.all([refetch(), refetchExpenses()])
+}
+
 onMounted(() => {
-  setRefreshHandler(refetch)
+  setRefreshHandler(refetchAll)
 })
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
-  clearRefreshHandler(refetch)
+  clearRefreshHandler(refetchAll)
 })
 
 // Filter pending purchases based on payment_type and status
@@ -390,6 +403,7 @@ const paidPurchases = computed(() => {
 // Table columns configuration
 const pendingColumns = computed(() => [
   { key: 'seleccion', title: '', sortable: false, align: 'center' as const, class: 'font-normal' },
+  { key: 'tipo', title: t('finanzas.pagos.colType'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'orden', title: t('finanzas.pagos.colOrder'), sortable: true, align: 'left' as const, class: 'font-bold' },
   { key: 'fechaOrden', title: t('finanzas.pagos.colOrderDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
@@ -413,8 +427,11 @@ const paidColumns = computed(() => [
 ])
 
 // Transform pending purchases data for table
+const pendingExpensePayables = computed(() => expensePayablesData.value?.data || [])
+
 const pendingTableData = computed(() => {
-  return pendingPurchases.value.map(purchase => ({
+  const purchases = pendingPurchases.value.map(purchase => ({
+    tipo: t('finanzas.pagos.typePurchase'),
     orden: purchase.purchase_number,
     fecha: formatDate(purchase.purchase_date),
     fechaOrden: formatDate(purchase.purchase_date),
@@ -424,8 +441,22 @@ const pendingTableData = computed(() => {
     monto: parseFloat(purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     vencimiento: formatDate(purchase.payment_due_date),
     estaVencido: isOverdue(purchase.payment_due_date),
-    purchaseData: purchase
+    purchaseData: { ...purchase, payableKind: 'purchase' },
   }))
+  const expenses = pendingExpensePayables.value.map((expense: any) => ({
+    tipo: t('finanzas.pagos.typeExpense'),
+    orden: expense.expenseNumber || expense.expense_number || expense.id,
+    fecha: formatDate(expense.transactionDate || expense.transaction_date),
+    fechaOrden: formatDate(expense.transactionDate || expense.transaction_date),
+    proveedor: expense.description || expense.category?.categoryName || t('finanzas.pagos.typeExpense'),
+    factura: '-',
+    fechaFactura: '-',
+    monto: parseFloat(expense.amount || '0'),
+    vencimiento: '-',
+    estaVencido: false,
+    purchaseData: { ...expense, id: expense.id, payableKind: 'expense' },
+  }))
+  return [...purchases, ...expenses]
 })
 
 // Transform paid purchases data for table
@@ -573,8 +604,18 @@ function isSelected(purchaseId: string): boolean {
 
 // Navigation functions
 function navigateToPayment(purchases: any[]) {
+  const kinds = new Set(purchases.map(p => p.payableKind || 'purchase'))
+  if (kinds.size > 1) {
+    useToast().warning(t('finanzas.pagos.mixedSelectionWarn') || 'Selecciona solo compras o solo gastos', { title: t('finanzas.pagos.warning') })
+    return
+  }
+  const kind = purchases[0]?.payableKind || 'purchase'
   const ids = purchases.map(p => p.id).join(',')
-  navigateTo(`/finanzas/pagos/registrar?ids=${ids}`)
+  if (kind === 'expense') {
+    navigateTo(`/finanzas/pagos/registrar?expenseIds=${ids}`)
+  } else {
+    navigateTo(`/finanzas/pagos/registrar?ids=${ids}`)
+  }
 }
 
 const {

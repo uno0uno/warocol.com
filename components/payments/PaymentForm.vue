@@ -110,7 +110,7 @@
             <div class="max-h-48 overflow-y-auto space-y-2 pe-2 custom-scrollbar">
               <div v-for="purchase in purchases" :key="purchase.id"
                 class="flex justify-between items-center text-sm py-1 border-b border-border/50 last:border-0">
-                <span class="text-text-secondary">#{{ purchase.purchase_number }}</span>
+                <span class="text-text-secondary">#{{ purchase.purchase_number || purchase.expenseNumber || purchase.expense_number }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(getPurchaseAmount(purchase)) }}</span>
               </div>
             </div>
@@ -122,11 +122,11 @@
           <div class="bg-background rounded-lg p-4 border border-border">
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm text-text-secondary">Orden de Compra</span>
-              <span class="font-medium text-text-primary">#{{ purchases[0]?.purchase_number }}</span>
+              <span class="font-medium text-text-primary">#{{ purchases[0]?.purchase_number || purchases[0]?.expenseNumber || purchases[0]?.expense_number }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-text-secondary">Proveedor</span>
-              <span class="font-medium text-text-primary truncate block max-w-[150px]">{{ purchases[0]?.supplier_name || 'N/A' }}</span>
+              <span class="font-medium text-text-primary truncate block max-w-[150px]">{{ purchases[0]?.supplier_name || purchases[0]?.description || 'N/A' }}</span>
             </div>
           </div>
         </div>
@@ -207,6 +207,7 @@ import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
 const props = defineProps<{
   purchases: any[]
+  payableKind?: 'purchase' | 'expense'
   compact?: boolean
 }>()
 
@@ -215,13 +216,17 @@ const emit = defineEmits<{
   paid: []
 }>()
 
+const quotaResource = props.payableKind === 'expense'
+  ? 'expense_payments_per_period'
+  : 'supplier_payments_per_period'
+
 const {
   quotaLimitModalOpen,
   quotaLimitModalMessage,
   closeQuotaLimitModal,
   goToBillingFromQuotaLimitModal,
   handleCreateClick,
-} = useOperationalQuotaGate('supplier_payments_per_period')
+} = useOperationalQuotaGate(quotaResource)
 const { handleQuotaError, getQuotaMessage, isQuotaExceededError } = useQuotaExceeded()
 
 const loading = ref(false)
@@ -285,10 +290,19 @@ const compactSubmitButtonLabel = computed(() => {
 
 // Helper functions
 function getPurchaseAmount(purchase: any): number {
+  if (props.payableKind === 'expense') {
+    return Math.round(parseFloat(purchase.amount || purchase.total_amount || 0))
+  }
   const invoiceAmount = purchase.invoice_amount ? parseFloat(purchase.invoice_amount) : null
   const totalAmount = parseFloat(purchase.total_amount || 0)
   const taxAmount = parseFloat(purchase.tax_amount || 0)
   return Math.round(invoiceAmount || (totalAmount + taxAmount))
+}
+
+function payEndpoint(id: string): string {
+  return props.payableKind === 'expense'
+    ? `/api/finance/expenses/${id}/pay`
+    : `/api/suppliers/purchases/${id}/pay`
 }
 
 function formatCurrency(value: number): string {
@@ -370,7 +384,7 @@ const handleSubmit = async () => {
             }
           }
 
-          const response = await $fetch(`/api/suppliers/purchases/${purchaseId}/pay`, {
+          const response = await $fetch(payEndpoint(purchaseId), {
             method: 'POST',
             body: formDataPayload
           })
@@ -382,9 +396,9 @@ const handleSubmit = async () => {
           console.error(`Error paying purchase ${purchaseId}:`, error)
           if (isQuotaExceededError(error)) {
             stoppedByQuota = true
-            quotaLimitModalMessage.value = getQuotaMessage(error, 'supplier_payments_per_period')
+            quotaLimitModalMessage.value = getQuotaMessage(error, quotaResource)
             quotaLimitModalOpen.value = true
-            handleQuotaError(error, { resource: 'supplier_payments_per_period', showInline: false })
+            handleQuotaError(error, { resource: quotaResource, showInline: false })
             break
           }
           errorCount++
@@ -433,7 +447,7 @@ const handleSubmit = async () => {
         }
       }
 
-      const response = await $fetch(`/api/suppliers/purchases/${props.purchases[0].id}/pay`, {
+      const response = await $fetch(payEndpoint(props.purchases[0].id), {
         method: 'POST',
         body: formDataPayload
       })
@@ -444,8 +458,8 @@ const handleSubmit = async () => {
       }
     }
   } catch (error: any) {
-    if (handleQuotaError(error, { resource: 'supplier_payments_per_period', showInline: false })) {
-      quotaLimitModalMessage.value = getQuotaMessage(error, 'supplier_payments_per_period')
+    if (handleQuotaError(error, { resource: quotaResource, showInline: false })) {
+      quotaLimitModalMessage.value = getQuotaMessage(error, quotaResource)
       quotaLimitModalOpen.value = true
       return
     }

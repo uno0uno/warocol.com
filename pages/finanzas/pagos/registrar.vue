@@ -1,24 +1,25 @@
 <template>
   <div class="page-layout">
-    <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-[60vh]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
     <CommonsTheErrorState v-else-if="error" />
 
-    <!-- Content -->
     <div v-else class="w-full mx-auto">
-      <!-- Form Container -->
-      <PaymentsPaymentForm :purchases="purchases" @cancel="navigateTo('/finanzas/pagos')" @paid="handlePaid" />
+      <PaymentsPaymentForm
+        :purchases="payables"
+        :payable-kind="payableKind"
+        @cancel="navigateTo('/finanzas/pagos')"
+        @paid="handlePaid"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
@@ -32,51 +33,68 @@ useHead({ title: () => t('finanzas.pagos.registerTitle') })
 const route = useRoute()
 const loading = ref(true)
 const error = ref<string | null>(null)
-const purchases = ref<any[]>([])
+const payables = ref<any[]>([])
+const payableKind = ref<'purchase' | 'expense'>('purchase')
 
-// Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-async function loadPurchases() {
+async function loadPayables() {
   loading.value = true
   error.value = null
-  
-  const idsParam = route.query.ids as string
-  if (!idsParam) {
+
+  const expenseIdsParam = route.query.expenseIds as string | undefined
+  const idsParam = (route.query.ids as string) || ''
+
+  if (!expenseIdsParam && !idsParam) {
     error.value = t('finanzas.pagos.noneSpecified')
     loading.value = false
     return
   }
 
-  const ids = idsParam.split(',').filter(Boolean)
-  
   try {
-    // Fetch purchases individually to avoid API limits and ensure we get specific records
-    const fetchPromises = ids.map(id => 
-      $fetch(`/api/suppliers/purchases/${id}`)
-        .catch(err => {
-          console.error(`Error fetching purchase ${id}:`, err)
-          return null
-        })
-    )
-
-    const results = await Promise.all(fetchPromises)
-    const foundPurchases = results
-      .filter(r => r !== null && r.data)
-      .map(r => r.data)
-
-    if (foundPurchases.length === 0) {
-      error.value = t('finanzas.pagos.notFound')
+    if (expenseIdsParam) {
+      payableKind.value = 'expense'
+      const ids = expenseIdsParam.split(',').filter(Boolean)
+      const results = await Promise.all(
+        ids.map(id =>
+          $fetch(`/api/finance/expenses/${id}`).catch((err) => {
+            console.error(`Error fetching expense ${id}:`, err)
+            return null
+          }),
+        ),
+      )
+      const found = results.filter(r => r !== null && (r as any).data).map(r => (r as any).data)
+      if (found.length === 0) {
+        error.value = t('finanzas.pagos.notFound')
+      } else {
+        payables.value = found
+        if (found.length !== ids.length) {
+          useToast().warning(t('finanzas.pagos.someLoadError'), { title: t('finanzas.pagos.warning') })
+        }
+      }
     } else {
-      purchases.value = foundPurchases
-      
-      if (foundPurchases.length !== ids.length) {
-        useToast().warning(t('finanzas.pagos.someLoadError'), { title: t('finanzas.pagos.warning') })
+      payableKind.value = 'purchase'
+      const ids = idsParam.split(',').filter(Boolean)
+      const results = await Promise.all(
+        ids.map(id =>
+          $fetch(`/api/suppliers/purchases/${id}`).catch((err) => {
+            console.error(`Error fetching purchase ${id}:`, err)
+            return null
+          }),
+        ),
+      )
+      const found = results.filter(r => r !== null && (r as any).data).map(r => (r as any).data)
+      if (found.length === 0) {
+        error.value = t('finanzas.pagos.notFound')
+      } else {
+        payables.value = found
+        if (found.length !== ids.length) {
+          useToast().warning(t('finanzas.pagos.someLoadError'), { title: t('finanzas.pagos.warning') })
+        }
       }
     }
-    
   } catch (err: any) {
-    console.error('Error loading purchases:', err)
+    console.error('Error loading payables:', err)
     error.value = err.data?.detail || err.message || t('finanzas.pagos.loadError')
   } finally {
     loading.value = false
@@ -87,11 +105,10 @@ async function handlePaid() {
   await navigateTo('/finanzas/pagos?refresh=true')
 }
 
-// Inject refresh handler setter from layout
 const { setRefreshHandler } = useLayoutActions()
 
 onMounted(() => {
-  setRefreshHandler(loadPurchases)
-  loadPurchases()
+  setRefreshHandler(loadPayables)
+  loadPayables()
 })
 </script>
