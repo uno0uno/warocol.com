@@ -563,12 +563,15 @@ const requiredQueriesSettled = computed(() => {
 const hasEverLoaded = ref(false)
 watch(requiredQueriesSettled, (ok) => {
   if (ok) hasEverLoaded.value = true
-})
+}, { immediate: true })
 watch(() => currentTenant.value?.id, () => { hasEverLoaded.value = false })
 
-/** Full-page loader: first paint only, after groups+methods(+accounts when needed). */
+/** Full-page loader: first paint only; require in-flight gate so warm cache remounts cannot stick. */
 const isLoading = computed(() =>
-  !!currentTenant.value && !hasEverLoaded.value && !fetchError.value,
+  !!currentTenant.value &&
+  !hasEverLoaded.value &&
+  isFetching.value &&
+  !fetchError.value,
 )
 
 const leafAccounts = computed<TenantAccount[]>(() =>
