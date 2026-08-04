@@ -106,13 +106,25 @@
               <span :class="['text-sm font-bold text-text-primary', { 'animate-pulse': row.isHighlighted }]">{{ row.orden }}</span>
             </template>
 
+            <template #cell-fechaOrden="{ row }">
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ row.fechaOrden }}</span>
+            </template>
+
             <template #cell-factura="{ row }">
               <span class="text-sm text-text-secondary">{{ row.factura }}</span>
             </template>
 
+            <template #cell-fechaFactura="{ row }">
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ row.fechaFactura }}</span>
+            </template>
+
+            <template #cell-monto="{ row }">
+              <span class="text-sm font-medium text-text-primary whitespace-nowrap tabular-nums">{{ formatCurrency(row.monto) }}</span>
+            </template>
+
             <template #cell-vencimiento="{ row }">
               <span v-if="row.vencimiento" :class="[
-                'px-2 py-1 rounded text-xs',
+                'px-2 py-1 rounded text-xs whitespace-nowrap',
                 row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
               ]">
                 {{ row.vencimiento }}
@@ -176,15 +188,19 @@
             </template>
 
             <template #cell-fechaOrden="{ row }">
-              <span :class="['text-sm text-text-secondary', { 'animate-pulse': row.isHighlighted }]">{{ row.fechaOrden }}</span>
+              <span :class="['text-sm text-text-secondary whitespace-nowrap', { 'animate-pulse': row.isHighlighted }]">{{ row.fechaOrden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
               <span class="text-sm text-text-secondary">{{ row.factura }}</span>
             </template>
 
+            <template #cell-fechaFactura="{ row }">
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ row.fechaFactura }}</span>
+            </template>
+
             <template #cell-montoPagado="{ row }">
-              <span class="text-sm font-bold text-primary">{{ formatCurrency(row.montoPagado) }}</span>
+              <span class="text-sm font-bold text-primary whitespace-nowrap tabular-nums">{{ formatCurrency(row.montoPagado) }}</span>
             </template>
 
             <template #cell-metodo="{ row }">
@@ -435,13 +451,13 @@ const pendingTableData = computed(() => {
   const purchases = pendingPurchases.value.map(purchase => ({
     tipo: t('finanzas.pagos.typePurchase'),
     orden: purchase.purchase_number,
-    fecha: formatDate(purchase.purchase_date),
-    fechaOrden: formatDate(purchase.purchase_date),
+    fecha: formatCalendarDate(purchase.purchase_date),
+    fechaOrden: formatCalendarDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
     factura: purchase.invoice_number || '-',
-    fechaFactura: formatDate(purchase.invoice_date),
+    fechaFactura: formatCalendarDate(purchase.invoice_date),
     monto: parseFloat(purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
-    vencimiento: formatDate(purchase.payment_due_date),
+    vencimiento: formatCalendarDate(purchase.payment_due_date),
     estaVencido: isOverdue(purchase.payment_due_date),
     purchaseData: { ...purchase, payableKind: 'purchase' },
     isHighlighted: highlightId.value === purchase.id,
@@ -449,8 +465,8 @@ const pendingTableData = computed(() => {
   const expenses = pendingExpensePayables.value.map((expense: any) => ({
     tipo: t('finanzas.pagos.typeExpense'),
     orden: expense.expenseNumber || expense.expense_number || expense.id,
-    fecha: formatDate(expense.transactionDate || expense.transaction_date),
-    fechaOrden: formatDate(expense.transactionDate || expense.transaction_date),
+    fecha: formatCalendarDate(expense.transactionDate || expense.transaction_date),
+    fechaOrden: formatCalendarDate(expense.transactionDate || expense.transaction_date),
     proveedor: expense.description || expense.category?.categoryName || t('finanzas.pagos.typeExpense'),
     factura: '-',
     fechaFactura: '-',
@@ -466,11 +482,11 @@ const pendingTableData = computed(() => {
 const paidTableData = computed(() => {
   return paidPurchases.value.map(purchase => ({
     orden: purchase.purchase_number,
-    fecha: formatDate(purchase.purchase_date),
-    fechaOrden: formatDate(purchase.purchase_date),
+    fecha: formatCalendarDate(purchase.purchase_date),
+    fechaOrden: formatCalendarDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
     factura: purchase.invoice_number || '-',
-    fechaFactura: formatDate(purchase.invoice_date),
+    fechaFactura: formatCalendarDate(purchase.invoice_date),
     montoPagado: parseFloat(purchase.payment_amount || purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     fechaPago: formatDate(purchase.payment_date_final || purchase.payment_date || purchase.paid_at),
     metodo: formatPaymentMethod(purchase.payment_method_final || purchase.payment_method),
@@ -568,7 +584,7 @@ function getSupplierName(purchase: any): string {
   return supplier?.name || t('common.nA')
 }
 
-const { formatDate: _fmtDate, formatCurrency } = useFormatters()
+const { formatDate: _fmtDate, formatCalendarDate, formatCurrency } = useFormatters()
 function formatDate(dateString: string | null | undefined): string {
   return _fmtDate(dateString)
 }
