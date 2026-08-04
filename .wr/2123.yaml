@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-fast #2123.
+issue: 2123
+title: "fix(finanzas): use group PUC parent when creating payment methods (skip redundant select)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2123-group-puc-parent-assumed
+
+paths:
+  - pages/finanzas/metodos-pago/[groupId].vue
+  - composables/useChartOfAccounts.ts
+  - composables/useChartOfAccounts.test.ts
+  - i18n/locales/es/finanzas.json
+  - i18n/locales/en/finanzas.json
+  - .wr/2123.yaml
+
+ac:
+  - Group with glAccountCode: hide select, assume parent, show help + preview
+  - Group without GL: keep required select
+  - Never first-leaf fallback when group GL is set
+  - Still always create dedicated sub-account
+  - es/en copy for assumed path
+
+out_of_scope:
+  - API changes
+  - Cash group behavior
+  - Reverting always-assign PUC
+
+hints:
+  entry: "pages/finanzas/metodos-pago/[groupId].vue create panel"
+  pattern: "groupHasParentAccount + defaultPaymentMethodParentCode always returns group code"
+  tests: "bunx tsx --test composables/useChartOfAccounts.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"

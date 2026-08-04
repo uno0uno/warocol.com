@@ -36,15 +36,15 @@ export const suggestSubAccountSuffix = (
 }
 
 /**
- * Prefer the group's GL code when it is a selectable leaf; otherwise first leaf.
- * Empty string means the create form must wait for chart data / user pick.
+ * When the group already has a GL code, always use it (do not fall back to an
+ * arbitrary first leaf). When unset, optionally soft-default to the first leaf
+ * for the required select path.
  */
 export const defaultPaymentMethodParentCode = (
   groupGlAccountCode: string | null | undefined,
   leafAccountCodes: string[],
 ): string => {
-  if (groupGlAccountCode && leafAccountCodes.includes(groupGlAccountCode)) {
-    return groupGlAccountCode
-  }
+  const groupCode = groupGlAccountCode?.trim()
+  if (groupCode) return groupCode
   return leafAccountCodes[0] ?? ''
 }

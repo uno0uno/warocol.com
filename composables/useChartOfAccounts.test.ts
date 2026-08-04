@@ -23,13 +23,15 @@ describe('suggestSubAccountSuffix', () => {
 })
 
 describe('defaultPaymentMethodParentCode', () => {
-  it('prefers group GL when it is a leaf', () => {
+  it('always uses group GL when set, even if not in the leaf list', () => {
     assert.equal(defaultPaymentMethodParentCode('1105', ['1110', '1105']), '1105')
+    assert.equal(defaultPaymentMethodParentCode('9999', ['1110', '1105']), '9999')
+    assert.equal(defaultPaymentMethodParentCode(' 1110 ', ['1105']), '1110')
   })
 
-  it('falls back to first leaf when group GL missing or not a leaf', () => {
+  it('falls back to first leaf only when group GL is missing', () => {
     assert.equal(defaultPaymentMethodParentCode(null, ['1110', '1105']), '1110')
-    assert.equal(defaultPaymentMethodParentCode('9999', ['1110', '1105']), '1110')
-    assert.equal(defaultPaymentMethodParentCode('1110', []), '')
+    assert.equal(defaultPaymentMethodParentCode('', ['1110', '1105']), '1110')
+    assert.equal(defaultPaymentMethodParentCode(undefined, []), '')
   })
 })
