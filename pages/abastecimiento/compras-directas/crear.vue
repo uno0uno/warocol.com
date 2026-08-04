@@ -76,23 +76,22 @@
                     type="file"
                     class="hidden"
                     accept="image/*"
-                    capture="environment"
                     @change="handleScanFileSelect"
                   />
                   <button
                     type="button"
                     :disabled="isScanning || isQuotaExceeded || isScanBlocked"
                     @click="scanFileInput?.click()"
-                    class="px-2.5 py-2 sm:px-3 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0 min-h-[44px]"
-                    :aria-label="isScanBlocked ? 'Escaneo deshabilitado — suscripción inactiva' : isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer factura con IA'"
-                    :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
+                    class="px-3 py-2 bg-primary/10 text-primary border border-primary/25 rounded-lg hover:bg-primary/15 transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 flex-shrink-0 min-h-[44px]"
+                    :aria-label="scanButtonAriaLabel"
+                    :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : 'Toma una foto o elige una imagen de la galería'"
                   >
-                    <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
+                    <span v-if="!isScanning" class="relative flex-shrink-0" aria-hidden="true">
+                      <CameraIcon class="w-5 h-5" />
+                      <SparklesIcon class="w-3 h-3 absolute -top-1 -end-1 text-primary" />
+                    </span>
                     <UiLoadingDots v-else size="9px" />
-                    <span class="hidden sm:inline">{{ isScanning ? currentPhrase : 'Leer factura con IA' }}</span>
-                    <span class="inline sm:hidden">{{ isScanning ? '...' : 'IA' }}</span>
+                    <span class="font-semibold">{{ isScanning ? currentPhrase : 'Escanear factura con IA' }}</span>
                   </button>
                 </div>
               </template>
@@ -121,7 +120,7 @@
             </div>
 
             <p class="text-xs text-text-secondary mb-3 sm:mb-4">
-              Sube una <strong>foto o imagen</strong> de la factura de compra (OCR). No importa archivos XML/ZIP de factura electrónica DIAN.
+              Toma una <strong>foto</strong> o elige una imagen de la <strong>galería</strong>; la IA lee la factura y precarga ítems. No importa XML/ZIP de DIAN.
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -174,19 +173,31 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
+                <span class="block text-sm font-medium text-text-primary mb-2">
                   Tipo de pago
-                </label>
-                <select
-                  v-model="form.payment_type"
-                  class="input-base w-full px-4 py-2"
+                </span>
+                <div
+                  class="grid grid-cols-3 gap-2"
+                  role="radiogroup"
+                  aria-label="Tipo de pago"
                 >
-                  <option value="credito">Credito - Pago Diferido</option>
-                  <option value="contado">Contado - Pago Inmediato</option>
-                  <option value="contraentrega">Contraentrega</option>
-                </select>
+                  <button
+                    v-for="option in paymentTypeOptions"
+                    :key="option.value"
+                    type="button"
+                    role="radio"
+                    :aria-checked="form.payment_type === option.value"
+                    class="h-10 min-h-[40px] rounded-lg border px-2 text-sm font-medium text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    :class="form.payment_type === option.value
+                      ? 'border-primary bg-primary/8'
+                      : 'border-border bg-background hover:border-primary/40'"
+                    @click="form.payment_type = option.value"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
                 <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
-                  Contado exige un método de pago abajo. Sin pago, usa Crédito.
+                  Elige un método en Comprobante de pago, o cambia a Crédito.
                 </p>
               </div>
 
@@ -439,11 +450,13 @@
 
             <UiFormSection
               title="Documentos"
-              description="Opcional — puedes agregar la factura y comprobante ahora o después"
+              :description="form.payment_type === 'credito'
+                ? 'Opcional — factura ahora; el pago se registra después en Pagos'
+                : 'Opcional — puedes agregar factura y comprobante ahora o después'"
             >
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
+              <div class="border border-border rounded-xl p-4 bg-background space-y-4">
                 <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
                   <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Factura
@@ -465,11 +478,36 @@
                 </div>
               </div>
 
-              <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
+              <!-- Crédito: quiet deferred-pay panel (keeps grid balanced) -->
+              <div
+                v-if="form.payment_type === 'credito'"
+                class="border border-dashed border-border rounded-xl p-4 bg-surface-secondary/40 flex flex-col justify-center gap-2 min-h-[140px]"
+              >
+                <div class="flex items-center gap-2 text-text-secondary">
+                  <CreditCardIcon class="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <h4 class="text-base font-semibold text-text-primary">Pago diferido</h4>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Esta compra quedará pendiente. Registra el pago después en <span class="font-medium text-text-primary">Finanzas → Pagos</span>.
+                </p>
+              </div>
+
+              <!-- Contado / contraentrega: proof block -->
+              <div
+                v-else
+                class="border border-border rounded-xl p-4 bg-background space-y-4"
+              >
                 <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
                   <CreditCardIcon class="w-5 h-5 text-primary flex-shrink-0" />
-                  Comprobante de Pago
+                  Comprobante de pago
+                  <span
+                    v-if="form.payment_type === 'contado'"
+                    class="text-xs font-medium text-destructive"
+                  >*</span>
+                  <span
+                    v-else
+                    class="ms-auto text-xs font-normal text-text-tertiary"
+                  >Opcional</span>
                 </h4>
 
                 <div>
@@ -558,11 +596,11 @@
                     <p class="text-xs font-medium text-text-secondary">Pago</p>
                     <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
-                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
+                  <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
                     <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                   </div>
-                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
+                  <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Fecha pago</p>
                     <p class="text-xs font-semibold text-text-primary">
                       {{ form.payment_date ? fnsFormat(form.payment_date, 'dd/MM/yy', { locale: es }) : '-' }}
@@ -571,7 +609,7 @@
                 </div>
 
                 <!-- Documentos -->
-                <div v-if="form.invoice_number || form.invoice_files.length || form.payment_files.length" class="p-4 space-y-2">
+                <div v-if="form.invoice_number || form.invoice_files.length || (form.payment_type !== 'credito' && form.payment_files.length)" class="p-4 space-y-2">
                   <p class="text-xs font-semibold text-text-secondary mb-2">Documentos</p>
                   <div v-if="form.invoice_number" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -580,7 +618,7 @@
                     <span class="text-text-primary font-medium">{{ form.invoice_number }}</span>
                     <span v-if="form.invoice_files.length" class="text-success">· {{ form.invoice_files.length }} adjunto(s)</span>
                   </div>
-                  <div v-if="form.payment_reference" class="flex items-center gap-2 text-xs">
+                  <div v-if="form.payment_type !== 'credito' && form.payment_reference" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
@@ -708,7 +746,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon, CameraIcon, SparklesIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useBilling } from '@/composables/useBilling'
@@ -824,6 +862,21 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+
+const clearPaymentProof = () => {
+  form.value.payment_method = ''
+  form.value.payment_method_id = null
+  form.value.payment_reference = ''
+  form.value.payment_date = null
+  form.value.payment_files = []
+}
+
+watch(
+  () => form.value.payment_type,
+  (type) => {
+    if (type === 'credito') clearPaymentProof()
+  },
+)
 
 watch(hasPaymentSelected, (selected) => {
   if (selected) {
@@ -1011,14 +1064,18 @@ const getIngredientName = (id: string) => {
 
 const getPaymentTypeText = (type: string) => {
   const types: Record<string, string> = {
-    'contado': 'Contado - Pago Inmediato',
-    'credito': 'Credito - Pago Diferido',
-    'contraentrega': 'Contraentrega'
+    contado: 'Contado',
+    credito: 'Crédito',
+    contraentrega: 'Contraentrega',
   }
   return types[type] || type
 }
 
-
+const paymentTypeOptions = [
+  { value: 'credito', label: 'Crédito' },
+  { value: 'contado', label: 'Contado' },
+  { value: 'contraentrega', label: 'Contraentrega' },
+] as const
 
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []
@@ -1271,6 +1328,13 @@ const { accessStatus } = useBilling()
 const isScanBlocked = computed(() =>
   ['read_only', 'blocked'].includes(accessStatus.value?.level ?? '')
 )
+
+const scanButtonAriaLabel = computed(() => {
+  if (isScanBlocked.value) return 'Escaneo deshabilitado — suscripción inactiva'
+  if (isQuotaExceeded.value) return 'Escaneo deshabilitado — cuota agotada'
+  if (isScanning.value) return currentPhrase.value
+  return 'Escanear factura con IA: tomar foto o elegir de la galería'
+})
 
 // Quota exceeded modal
 const showQuotaModal = ref(false)
@@ -1654,7 +1718,7 @@ const handleSubmit = async () => {
     if (form.value.purchase_date) payload.purchase_date = purchaseDatePayloadISO(form.value.purchase_date)
     if (form.value.notes) payload.notes = form.value.notes
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
-    if (form.value.payment_method) {
+    if (form.value.payment_type !== 'credito' && form.value.payment_method) {
       payload.payment_method = form.value.payment_method
       if (form.value.payment_method_id) {
         payload.payment_method_id = form.value.payment_method_id
@@ -1675,11 +1739,13 @@ const handleSubmit = async () => {
 
     if (response.success) {
       // Upload files if present
-      if ((form.value.invoice_files.length > 0 || form.value.payment_files.length > 0) && response.data?.id) {
+      if ((form.value.invoice_files.length > 0 || (form.value.payment_type !== 'credito' && form.value.payment_files.length > 0)) && response.data?.id) {
         try {
           const formData = new FormData()
           form.value.invoice_files.forEach((file) => formData.append('invoice_files', file))
-          form.value.payment_files.forEach((file) => formData.append('payment_files', file))
+          if (form.value.payment_type !== 'credito') {
+            form.value.payment_files.forEach((file) => formData.append('payment_files', file))
+          }
 
           await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
             method: 'POST',
