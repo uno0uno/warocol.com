@@ -76,23 +76,25 @@
                     type="file"
                     class="hidden"
                     accept="image/*"
-                    capture="environment"
                     @change="handleScanFileSelect"
                   />
                   <button
                     type="button"
                     :disabled="isScanning || isQuotaExceeded || isScanBlocked"
                     @click="scanFileInput?.click()"
-                    class="px-2.5 py-2 sm:px-3 bg-shell-icon-bg text-shell-icon-text rounded-lg hover:bg-shell-icon-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0 min-h-[44px]"
-                    :aria-label="isScanBlocked ? 'Escaneo deshabilitado — suscripción inactiva' : isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer factura con IA'"
-                    :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
+                    class="px-3 py-2 bg-primary/10 text-primary border border-primary/25 rounded-lg hover:bg-primary/15 transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 flex-shrink-0 min-h-[44px]"
+                    :aria-label="scanButtonAriaLabel"
+                    :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : 'Toma una foto o elige una imagen de la galería'"
                   >
-                    <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
+                    <span v-if="!isScanning" class="relative flex-shrink-0" aria-hidden="true">
+                      <CameraIcon class="w-5 h-5" />
+                      <SparklesIcon class="w-3 h-3 absolute -top-1 -end-1 text-primary" />
+                    </span>
                     <UiLoadingDots v-else size="9px" />
-                    <span class="hidden sm:inline">{{ isScanning ? currentPhrase : 'Leer factura con IA' }}</span>
-                    <span class="inline sm:hidden">{{ isScanning ? '...' : 'IA' }}</span>
+                    <span class="flex flex-col items-start leading-tight text-start">
+                      <span class="font-semibold">{{ isScanning ? currentPhrase : 'Escanear factura' }}</span>
+                      <span v-if="!isScanning" class="text-[10px] font-normal text-primary/80">Foto o galería · IA</span>
+                    </span>
                   </button>
                 </div>
               </template>
@@ -121,7 +123,7 @@
             </div>
 
             <p class="text-xs text-text-secondary mb-3 sm:mb-4">
-              Sube una <strong>foto o imagen</strong> de la factura de compra (OCR). No importa archivos XML/ZIP de factura electrónica DIAN.
+              Toma una <strong>foto</strong> o elige una imagen de la <strong>galería</strong>; la IA lee la factura y precarga ítems. No importa XML/ZIP de DIAN.
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -748,7 +750,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon, CameraIcon, SparklesIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useBilling } from '@/composables/useBilling'
@@ -1330,6 +1332,13 @@ const { accessStatus } = useBilling()
 const isScanBlocked = computed(() =>
   ['read_only', 'blocked'].includes(accessStatus.value?.level ?? '')
 )
+
+const scanButtonAriaLabel = computed(() => {
+  if (isScanBlocked.value) return 'Escaneo deshabilitado — suscripción inactiva'
+  if (isQuotaExceeded.value) return 'Escaneo deshabilitado — cuota agotada'
+  if (isScanning.value) return currentPhrase.value
+  return 'Escanear factura con IA: tomar foto o elegir de la galería'
+})
 
 // Quota exceeded modal
 const showQuotaModal = ref(false)
