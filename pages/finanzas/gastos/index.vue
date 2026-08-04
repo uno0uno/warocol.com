@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
@@ -35,6 +35,9 @@ const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch 
 const categoryFilter = ref('')
 const expenseTypeFilter = ref('')
 
+const PAGE_SIZE = 25
+const currentPage = ref(1)
+
 const hasActiveFilters = computed(
   () =>
     !!localSearchTerm.value
@@ -44,7 +47,7 @@ const hasActiveFilters = computed(
     || currentMonth.value !== defaultMonth(),
 )
 
-const performSearch = () => applySearch()
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 const EXPENSE_TYPE_LABELS = computed<Record<string, string>>(() => ({
   cogs: t('finanzas.gastos.typeCogs'),
@@ -72,9 +75,11 @@ const categoryFilterOptions = computed(() =>
   })),
 )
 
-// Load expenses from API
+// Load expenses from API (page/limit — API already paginates; stats stay filter-wide)
 const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['finance', 'expenses', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: PAGE_SIZE,
     month: currentMonth.value,
     category: categoryFilter.value || null,
     search: appliedSearch.value || null,
@@ -82,6 +87,8 @@ const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, 
   }],
   query: () => $fetch('/api/finance/expenses', {
     params: {
+      page: currentPage.value,
+      limit: PAGE_SIZE,
       month_year: currentMonth.value,
       category_id: categoryFilter.value || undefined,
       search: appliedSearch.value || undefined,
@@ -98,12 +105,36 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && expe
 // Computed
 const expenses = computed(() => expensesData.value?.data || [])
 const stats = computed(() => expensesData.value?.stats || null)
+const expensesTotal = computed(() => expensesData.value?.total ?? 0)
+const expensesTotalPages = computed(() =>
+  Math.max(1, Math.ceil(expensesTotal.value / PAGE_SIZE)),
+)
+
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, expensesTotalPages.value))
+}
+
+watch(() => currentTenant.value?.id, () => {
+  currentPage.value = 1
+})
+
+watch([categoryFilter, expenseTypeFilter, currentMonth], () => {
+  currentPage.value = 1
+})
+
+// If the last item on a later page is deleted, clamp to the new last page
+watch(expensesTotalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
 
 const clearFilters = () => {
   clearSearch()
   categoryFilter.value = ''
   expenseTypeFilter.value = ''
   currentMonth.value = defaultMonth()
+  currentPage.value = 1
 }
 
 const { formatCalendarDate, formatCurrency } = useFormatters()
@@ -343,6 +374,49 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
       </UiResponsiveDataView>
+
+      <!-- Pagination (same pattern as ventas/ordenes) -->
+      <div v-if="expensesTotal > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            :disabled="currentPage <= 1"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+            @click="goToPage(1)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          </button>
+          <button
+            type="button"
+            :disabled="currentPage <= 1"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+            @click="goToPage(currentPage - 1)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            type="button"
+            :disabled="currentPage >= expensesTotalPages"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+            @click="goToPage(currentPage + 1)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            type="button"
+            :disabled="currentPage >= expensesTotalPages"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+            @click="goToPage(expensesTotalPages)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <UiConfirmActionModal
