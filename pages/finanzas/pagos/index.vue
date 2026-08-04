@@ -103,7 +103,7 @@
             </template>
 
             <template #cell-orden="{ row }">
-              <span class="text-sm font-bold text-text-primary">{{ row.orden }}</span>
+              <span :class="['text-sm font-bold text-text-primary', { 'animate-pulse': row.isHighlighted }]">{{ row.orden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
@@ -426,7 +426,8 @@ const pendingTableData = computed(() => {
     monto: parseFloat(purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     vencimiento: formatDate(purchase.payment_due_date),
     estaVencido: isOverdue(purchase.payment_due_date),
-    purchaseData: purchase
+    purchaseData: purchase,
+    isHighlighted: highlightId.value === purchase.id,
   }))
 })
 

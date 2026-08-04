@@ -82,6 +82,7 @@
         </div>
         <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
           <NuxtLink
+            v-if="purchase.payment_type !== 'contado'"
             :to="{
               path: '/finanzas/pagos',
               query: {
