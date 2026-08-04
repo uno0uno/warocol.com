@@ -422,30 +422,33 @@
                 </div>
               </div>
 
-              <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <CreditCardIcon class="w-5 h-5 text-primary" />
-                  Comprobante de Pago
-                </h4>
+              <!-- Tipo de pago (always) + Comprobante only when paying now (#2128) -->
+              <div class="border-2 border-border rounded-lg p-4 bg-background/50 space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-text-secondary mb-2">
+                    Tipo de pago
+                  </label>
+                  <select
+                    v-model="form.payment_type"
+                    class="input-base w-full px-4 py-2"
+                  >
+                    <option value="credito">Credito - Pago Diferido</option>
+                    <option value="contado">Contado - Pago Inmediato</option>
+                    <option value="contraentrega">Contraentrega</option>
+                  </select>
+                  <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
+                    Contado exige un método de pago. Sin pago, usa Crédito.
+                  </p>
+                  <p v-else-if="form.payment_type === 'credito'" class="mt-1.5 text-xs text-text-secondary">
+                    El pago se registra después en Pagos. No se adjunta comprobante aquí.
+                  </p>
+                </div>
 
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
-                      Tipo de pago
-                    </label>
-                    <select
-                      v-model="form.payment_type"
-                      class="input-base w-full px-4 py-2"
-                    >
-                      <option value="credito">Credito - Pago Diferido</option>
-                      <option value="contado">Contado - Pago Inmediato</option>
-                      <option value="contraentrega">Contraentrega</option>
-                    </select>
-                    <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
-                      Contado exige un método de pago. Sin pago, usa Crédito.
-                    </p>
-                  </div>
+                <div v-if="form.payment_type !== 'credito'" class="space-y-4 pt-2 border-t border-border">
+                  <h4 class="font-semibold text-text-primary flex items-center gap-2">
+                    <CreditCardIcon class="w-5 h-5 text-primary" />
+                    Comprobante de Pago
+                  </h4>
 
                   <div>
                     <label class="block text-sm font-medium text-text-secondary mb-2">
@@ -690,7 +693,10 @@
           </div>
 
           <!-- Documents Summary -->
-          <div v-if="form.invoice_number || hasPaymentSelected || form.invoice_files.length || form.payment_files.length" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50">
+          <div
+            v-if="form.invoice_number || form.invoice_files.length || (form.payment_type !== 'credito' && (hasPaymentSelected || form.payment_files.length))"
+            class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50"
+          >
             <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Documentos</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div v-if="form.invoice_number || form.invoice_files.length">
@@ -699,7 +705,7 @@
                 <p v-if="existingInvoiceAttachments.length" class="text-xs text-success mt-1">{{ existingInvoiceAttachments.length }} archivo(s) existente(s)</p>
                 <p v-if="form.invoice_files.length" class="text-xs text-primary mt-1">+ {{ form.invoice_files.length }} archivo(s) nuevo(s)</p>
               </div>
-              <div v-if="hasPaymentSelected || form.payment_files.length">
+              <div v-if="form.payment_type !== 'credito' && (hasPaymentSelected || form.payment_files.length)">
                 <p class="text-sm text-text-secondary">Pago:</p>
                 <p v-if="hasPaymentSelected" class="font-medium text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                 <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
@@ -862,6 +868,20 @@ const paymentGroups = computed(() =>
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
 
+const clearPaymentProof = () => {
+  form.value.payment_method = ''
+  form.value.payment_method_id = null
+  form.value.payment_reference = ''
+  form.value.payment_files = []
+}
+
+watch(
+  () => form.value.payment_type,
+  (type) => {
+    if (type === 'credito') clearPaymentProof()
+  },
+)
+
 watch(hasPaymentSelected, (selected) => {
   if (selected) return
   form.value.payment_reference = ''
@@ -902,6 +922,10 @@ watch(originalPurchase, (purchase) => {
     // Contado without method is invalid on load — normalize to crédito
     if (form.value.payment_type === 'contado' && !form.value.payment_method && !form.value.payment_method_id) {
       form.value.payment_type = 'credito'
+    }
+    // Crédito must not keep a leftover method (marks paid / wrong GL)
+    if (form.value.payment_type === 'credito') {
+      clearPaymentProof()
     }
     form.value.items = (purchase.items || []).map((item: any) => {
       const purchaseQty = item.purchase_quantity || item.quantity || 1
@@ -1145,6 +1169,9 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    const isCredit = form.value.payment_type === 'credito'
+    if (isCredit) clearPaymentProof()
+
     // 1. Prepare JSON payload for update
     const payload = {
       items_data: JSON.stringify(form.value.items.map(item => ({
@@ -1160,11 +1187,11 @@ const handleSubmit = async () => {
       notes: form.value.notes,
       invoice_number: form.value.invoice_number,
       payment_type: form.value.payment_type,
-      payment_method: form.value.payment_method || null,
-      payment_method_id: form.value.payment_method_id || null,
-      payment_reference: form.value.payment_reference || null,
-      payment_amount: form.value.payment_method ? Number(totalAmount.value) : null,
-      payment_date: form.value.payment_method ? tenantNowISO() : null
+      payment_method: isCredit ? null : (form.value.payment_method || null),
+      payment_method_id: isCredit ? null : (form.value.payment_method_id || null),
+      payment_reference: isCredit ? null : (form.value.payment_reference || null),
+      payment_amount: !isCredit && form.value.payment_method ? Number(totalAmount.value) : null,
+      payment_date: !isCredit && form.value.payment_method ? tenantNowISO() : null
     }
 
     // 2. Update Direct Purchase (PUT - JSON)
@@ -1177,7 +1204,7 @@ const handleSubmit = async () => {
     })
 
     // 3. Upload files if present (POST - Multipart)
-    if ((form.value.invoice_files?.length > 0 || form.value.payment_files?.length > 0) && response.data?.id) {
+    if ((form.value.invoice_files?.length > 0 || (!isCredit && form.value.payment_files?.length > 0)) && response.data?.id) {
       try {
         const formData = new FormData()
         
@@ -1185,7 +1212,7 @@ const handleSubmit = async () => {
           form.value.invoice_files.forEach(file => formData.append('invoice_files', file))
         }
         
-        if (form.value.payment_files?.length) {
+        if (!isCredit && form.value.payment_files?.length) {
           form.value.payment_files.forEach(file => formData.append('payment_files', file))
         }
 

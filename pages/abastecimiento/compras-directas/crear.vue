@@ -186,7 +186,10 @@
                   <option value="contraentrega">Contraentrega</option>
                 </select>
                 <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
-                  Contado exige un método de pago abajo. Sin pago, usa Crédito.
+                  Contado exige un método de pago en Comprobante de Pago. Sin pago, usa Crédito.
+                </p>
+                <p v-else-if="form.payment_type === 'credito'" class="mt-1.5 text-xs text-text-secondary">
+                  El pago se registra después en Pagos. No se adjunta comprobante aquí.
                 </p>
               </div>
 
@@ -465,9 +468,11 @@
                 </div>
               </div>
 
-              <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
-                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+              <!-- Comprobante de Pago: only when paying now (#2128 — hide on crédito) -->
+              <div
+                v-if="form.payment_type !== 'credito'"
+                class="border-2 border-border rounded-lg p-4 bg-background space-y-4"
+              >                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
                   <CreditCardIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Comprobante de Pago
                 </h4>
@@ -558,11 +563,11 @@
                     <p class="text-xs font-medium text-text-secondary">Pago</p>
                     <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
-                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
+                  <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
                     <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                   </div>
-                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
+                  <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Fecha pago</p>
                     <p class="text-xs font-semibold text-text-primary">
                       {{ form.payment_date ? fnsFormat(form.payment_date, 'dd/MM/yy', { locale: es }) : '-' }}
@@ -571,7 +576,7 @@
                 </div>
 
                 <!-- Documentos -->
-                <div v-if="form.invoice_number || form.invoice_files.length || form.payment_files.length" class="p-4 space-y-2">
+                <div v-if="form.invoice_number || form.invoice_files.length || (form.payment_type !== 'credito' && form.payment_files.length)" class="p-4 space-y-2">
                   <p class="text-xs font-semibold text-text-secondary mb-2">Documentos</p>
                   <div v-if="form.invoice_number" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -580,7 +585,7 @@
                     <span class="text-text-primary font-medium">{{ form.invoice_number }}</span>
                     <span v-if="form.invoice_files.length" class="text-success">· {{ form.invoice_files.length }} adjunto(s)</span>
                   </div>
-                  <div v-if="form.payment_reference" class="flex items-center gap-2 text-xs">
+                  <div v-if="form.payment_type !== 'credito' && form.payment_reference" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
@@ -824,6 +829,21 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+
+const clearPaymentProof = () => {
+  form.value.payment_method = ''
+  form.value.payment_method_id = null
+  form.value.payment_reference = ''
+  form.value.payment_date = null
+  form.value.payment_files = []
+}
+
+watch(
+  () => form.value.payment_type,
+  (type) => {
+    if (type === 'credito') clearPaymentProof()
+  },
+)
 
 watch(hasPaymentSelected, (selected) => {
   if (selected) {
@@ -1654,7 +1674,7 @@ const handleSubmit = async () => {
     if (form.value.purchase_date) payload.purchase_date = purchaseDatePayloadISO(form.value.purchase_date)
     if (form.value.notes) payload.notes = form.value.notes
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
-    if (form.value.payment_method) {
+    if (form.value.payment_type !== 'credito' && form.value.payment_method) {
       payload.payment_method = form.value.payment_method
       if (form.value.payment_method_id) {
         payload.payment_method_id = form.value.payment_method_id
@@ -1675,11 +1695,13 @@ const handleSubmit = async () => {
 
     if (response.success) {
       // Upload files if present
-      if ((form.value.invoice_files.length > 0 || form.value.payment_files.length > 0) && response.data?.id) {
+      if ((form.value.invoice_files.length > 0 || (form.value.payment_type !== 'credito' && form.value.payment_files.length > 0)) && response.data?.id) {
         try {
           const formData = new FormData()
           form.value.invoice_files.forEach((file) => formData.append('invoice_files', file))
-          form.value.payment_files.forEach((file) => formData.append('payment_files', file))
+          if (form.value.payment_type !== 'credito') {
+            form.value.payment_files.forEach((file) => formData.append('payment_files', file))
+          }
 
           await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
             method: 'POST',
