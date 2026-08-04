@@ -78,6 +78,16 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">
+                  {{ t('finanzas.gastos.paymentType') }}
+                </label>
+                <select v-model="form.paymentType" class="input-base w-full px-4 py-2">
+                  <option value="contado">{{ t('finanzas.gastos.paymentTypeContado') }}</option>
+                  <option value="credito">{{ t('finanzas.gastos.paymentTypeCredito') }}</option>
+                </select>
+              </div>
+
+              <div v-if="form.paymentType === 'contado'">
+                <label class="block text-sm font-medium text-text-primary mb-1">
                   {{ t('finanzas.gastos.methodReq') }}
                 </label>
                 <select
@@ -92,6 +102,9 @@
                     </optgroup>
                   </template>
                 </select>
+              </div>
+              <div v-else class="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-text-secondary">
+                {{ t('finanzas.gastos.creditPayableHelp') }}
               </div>
 
               <div>
@@ -363,6 +376,7 @@ const form = reactive({
   expenseCategoryId: '',
   description: '',
   amount: null as number | null,
+  paymentType: 'contado' as 'contado' | 'credito',
   paymentMethod: 'cash',
   expenseType: '' as string,
   isRecurring: false,
@@ -412,7 +426,7 @@ const isFormValid = computed(() => {
     && form.description.trim()
     && form.amount
     && form.amount > 0
-    && form.paymentMethod
+    && (form.paymentType === 'credito' || form.paymentMethod)
 
   return form.isRecurring ? Boolean(baseValid && form.frequency) : Boolean(baseValid)
 })
@@ -485,7 +499,8 @@ const handleSubmit = async () => {
       isRecurring: form.isRecurring,
       frequency: form.isRecurring ? form.frequency : null,
       recurringEndDate: form.isRecurring && form.recurringEndDate ? form.recurringEndDate : null,
-      paymentMethod: form.paymentMethod,
+      paymentType: form.paymentType,
+      paymentMethod: form.paymentType === 'contado' ? form.paymentMethod : null,
       expenseType: form.expenseType || null,
     }
 
