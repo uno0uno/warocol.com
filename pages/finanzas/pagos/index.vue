@@ -203,6 +203,10 @@
               <span class="text-sm font-bold text-primary whitespace-nowrap tabular-nums">{{ formatCurrency(row.montoPagado) }}</span>
             </template>
 
+            <template #cell-fechaPago="{ row }">
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ row.fechaPago }}</span>
+            </template>
+
             <template #cell-metodo="{ row }">
               <span class="text-sm text-text-secondary">{{ row.metodo || '-' }}</span>
             </template>
@@ -427,7 +431,7 @@ const pendingColumns = computed(() => [
   { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'factura', title: t('finanzas.pagos.colInvoice'), sortable: false, align: 'left' as const, class: 'font-normal' },
   { key: 'fechaFactura', title: t('finanzas.pagos.colInvoiceDate'), sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'monto', title: t('finanzas.pagos.colAmount'), sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
+  { key: 'monto', title: t('finanzas.pagos.colAmount'), sortable: true, align: 'right' as const, class: 'font-normal' },
   { key: 'vencimiento', title: t('finanzas.pagos.colDue'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'acciones', title: t('finanzas.common.actions'), sortable: false, align: 'center' as const, class: 'font-normal' }
 ])
@@ -438,8 +442,8 @@ const paidColumns = computed(() => [
   { key: 'proveedor', title: t('finanzas.pagos.colProvider'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'factura', title: t('finanzas.pagos.colInvoice'), sortable: false, align: 'left' as const, class: 'font-normal' },
   { key: 'fechaFactura', title: t('finanzas.pagos.colInvoiceDate'), sortable: false, align: 'left' as const, class: 'font-normal' },
-  { key: 'montoPagado', title: t('finanzas.pagos.colPaid'), sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
-  { key: 'fechaPago', title: t('finanzas.pagos.colPaymentDate'), sortable: true, align: 'left' as const, format: 'text' as const, class: 'font-normal' },
+  { key: 'montoPagado', title: t('finanzas.pagos.colPaid'), sortable: true, align: 'right' as const, class: 'font-normal' },
+  { key: 'fechaPago', title: t('finanzas.pagos.colPaymentDate'), sortable: true, align: 'left' as const, class: 'font-normal' },
   { key: 'metodo', title: t('finanzas.pagos.colMethod'), sortable: false, align: 'left' as const, class: 'font-normal' },
   { key: 'estado', title: t('finanzas.pagos.colStatus'), sortable: false, align: 'center' as const, class: 'font-normal' }
 ])
