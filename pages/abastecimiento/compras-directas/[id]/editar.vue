@@ -343,14 +343,13 @@
                   type="button"
                   role="radio"
                   :aria-checked="form.payment_type === option.value"
-                  class="min-h-[52px] rounded-xl border-2 px-2 py-2 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  class="h-10 min-h-[40px] rounded-lg border px-2 text-sm font-medium text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   :class="form.payment_type === option.value
                     ? 'border-primary bg-primary/8'
                     : 'border-border bg-background hover:border-primary/40'"
                   @click="form.payment_type = option.value"
                 >
-                  <span class="block text-sm font-semibold text-text-primary leading-snug">{{ option.label }}</span>
-                  <span class="block mt-0.5 text-[11px] text-text-tertiary leading-tight">{{ option.hint }}</span>
+                  {{ option.label }}
                 </button>
               </div>
               <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
@@ -895,9 +894,9 @@ const form = ref({
 })
 
 const paymentTypeOptions = [
-  { value: 'credito', label: 'Crédito', hint: 'Pagas después' },
-  { value: 'contado', label: 'Contado', hint: 'Pagas ahora' },
-  { value: 'contraentrega', label: 'Contraentrega', hint: 'Al recibir' },
+  { value: 'credito', label: 'Crédito' },
+  { value: 'contado', label: 'Contado' },
+  { value: 'contraentrega', label: 'Contraentrega' },
 ] as const
 
 // Payment methods
