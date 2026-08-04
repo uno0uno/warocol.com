@@ -174,22 +174,32 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
+                <span class="block text-sm font-medium text-text-primary mb-2">
                   Tipo de pago
-                </label>
-                <select
-                  v-model="form.payment_type"
-                  class="input-base w-full px-4 py-2"
+                </span>
+                <div
+                  class="grid grid-cols-3 gap-2"
+                  role="radiogroup"
+                  aria-label="Tipo de pago"
                 >
-                  <option value="credito">Credito - Pago Diferido</option>
-                  <option value="contado">Contado - Pago Inmediato</option>
-                  <option value="contraentrega">Contraentrega</option>
-                </select>
+                  <button
+                    v-for="option in paymentTypeOptions"
+                    :key="option.value"
+                    type="button"
+                    role="radio"
+                    :aria-checked="form.payment_type === option.value"
+                    class="min-h-[52px] rounded-xl border-2 px-2 py-2 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    :class="form.payment_type === option.value
+                      ? 'border-primary bg-primary/8'
+                      : 'border-border bg-background hover:border-primary/40'"
+                    @click="form.payment_type = option.value"
+                  >
+                    <span class="block text-sm font-semibold text-text-primary leading-snug">{{ option.label }}</span>
+                    <span class="block mt-0.5 text-[11px] text-text-tertiary leading-tight">{{ option.hint }}</span>
+                  </button>
+                </div>
                 <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
-                  Contado exige un método de pago en Comprobante de Pago. Sin pago, usa Crédito.
-                </p>
-                <p v-else-if="form.payment_type === 'credito'" class="mt-1.5 text-xs text-text-secondary">
-                  El pago se registra después en Pagos. No se adjunta comprobante aquí.
+                  Elige un método en Comprobante de pago, o cambia a Crédito.
                 </p>
               </div>
 
@@ -442,11 +452,13 @@
 
             <UiFormSection
               title="Documentos"
-              description="Opcional — puedes agregar la factura y comprobante ahora o después"
+              :description="form.payment_type === 'credito'
+                ? 'Opcional — factura ahora; el pago se registra después en Pagos'
+                : 'Opcional — puedes agregar factura y comprobante ahora o después'"
             >
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
+              <div class="border border-border rounded-xl p-4 bg-background space-y-4">
                 <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
                   <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Factura
@@ -468,13 +480,36 @@
                 </div>
               </div>
 
-              <!-- Comprobante de Pago: only when paying now (#2128 — hide on crédito) -->
+              <!-- Crédito: quiet deferred-pay panel (keeps grid balanced) -->
               <div
-                v-if="form.payment_type !== 'credito'"
-                class="border-2 border-border rounded-lg p-4 bg-background space-y-4"
-              >                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+                v-if="form.payment_type === 'credito'"
+                class="border border-dashed border-border rounded-xl p-4 bg-surface-secondary/40 flex flex-col justify-center gap-2 min-h-[140px]"
+              >
+                <div class="flex items-center gap-2 text-text-secondary">
+                  <CreditCardIcon class="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <h4 class="text-base font-semibold text-text-primary">Pago diferido</h4>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Esta compra quedará pendiente. Registra el pago después en <span class="font-medium text-text-primary">Finanzas → Pagos</span>.
+                </p>
+              </div>
+
+              <!-- Contado / contraentrega: proof block -->
+              <div
+                v-else
+                class="border border-border rounded-xl p-4 bg-background space-y-4"
+              >
+                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
                   <CreditCardIcon class="w-5 h-5 text-primary flex-shrink-0" />
-                  Comprobante de Pago
+                  Comprobante de pago
+                  <span
+                    v-if="form.payment_type === 'contado'"
+                    class="text-xs font-medium text-destructive"
+                  >*</span>
+                  <span
+                    v-else
+                    class="ms-auto text-xs font-normal text-text-tertiary"
+                  >Opcional</span>
                 </h4>
 
                 <div>
@@ -1031,14 +1066,18 @@ const getIngredientName = (id: string) => {
 
 const getPaymentTypeText = (type: string) => {
   const types: Record<string, string> = {
-    'contado': 'Contado - Pago Inmediato',
-    'credito': 'Credito - Pago Diferido',
-    'contraentrega': 'Contraentrega'
+    contado: 'Contado',
+    credito: 'Crédito',
+    contraentrega: 'Contraentrega',
   }
   return types[type] || type
 }
 
-
+const paymentTypeOptions = [
+  { value: 'credito', label: 'Crédito', hint: 'Pagas después' },
+  { value: 'contado', label: 'Contado', hint: 'Pagas ahora' },
+  { value: 'contraentrega', label: 'Contraentrega', hint: 'Al recibir' },
+] as const
 
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []

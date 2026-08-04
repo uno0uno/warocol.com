@@ -318,30 +318,65 @@
 
         <!-- Step 2: Documentos -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Documentos</h3>
-            <p class="text-sm text-text-secondary mb-6">Agrega o actualiza factura y comprobante de pago</p>
+          <div class="p-4 sm:p-6 space-y-6">
+            <div>
+              <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Documentos</h3>
+              <p class="text-sm text-text-secondary">
+                {{ form.payment_type === 'credito'
+                  ? 'Actualiza la factura; el pago se registra después en Pagos'
+                  : 'Agrega o actualiza factura y comprobante de pago' }}
+              </p>
+            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <span class="block text-sm font-medium text-text-primary mb-2">
+                Tipo de pago
+              </span>
+              <div
+                class="grid grid-cols-3 gap-2"
+                role="radiogroup"
+                aria-label="Tipo de pago"
+              >
+                <button
+                  v-for="option in paymentTypeOptions"
+                  :key="option.value"
+                  type="button"
+                  role="radio"
+                  :aria-checked="form.payment_type === option.value"
+                  class="min-h-[52px] rounded-xl border-2 px-2 py-2 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  :class="form.payment_type === option.value
+                    ? 'border-primary bg-primary/8'
+                    : 'border-border bg-background hover:border-primary/40'"
+                  @click="form.payment_type = option.value"
+                >
+                  <span class="block text-sm font-semibold text-text-primary leading-snug">{{ option.label }}</span>
+                  <span class="block mt-0.5 text-[11px] text-text-tertiary leading-tight">{{ option.hint }}</span>
+                </button>
+              </div>
+              <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
+                Elige un método en Comprobante de pago, o cambia a Crédito.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+              <div class="border border-border rounded-xl p-4 bg-background space-y-4">
+                <h4 class="font-semibold text-text-primary flex items-center gap-2">
                   <DocumentTextIcon class="w-5 h-5 text-primary" />
                   Factura
                 </h4>
 
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
-                      Numero de Factura
-                    </label>
-                    <input
-                      v-model="form.invoice_number"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Ej: FV-12345"
-                    />
-                  </div>
+                <div>
+                  <label class="block text-sm font-medium text-text-secondary mb-2">
+                    Numero de Factura
+                  </label>
+                  <input
+                    v-model="form.invoice_number"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Ej: FV-12345"
+                  />
+                </div>
 
                   <!-- Existing Attachments -->
                   <div v-if="existingInvoiceAttachments.length > 0">
@@ -419,35 +454,38 @@
                       </div>
                     </div>
                   </div>
-                </div>
               </div>
 
-              <!-- Tipo de pago (always) + Comprobante only when paying now (#2128) -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background/50 space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-text-secondary mb-2">
-                    Tipo de pago
-                  </label>
-                  <select
-                    v-model="form.payment_type"
-                    class="input-base w-full px-4 py-2"
-                  >
-                    <option value="credito">Credito - Pago Diferido</option>
-                    <option value="contado">Contado - Pago Inmediato</option>
-                    <option value="contraentrega">Contraentrega</option>
-                  </select>
-                  <p v-if="form.payment_type === 'contado' && !hasPaymentSelected" class="mt-1.5 text-xs text-warning">
-                    Contado exige un método de pago. Sin pago, usa Crédito.
-                  </p>
-                  <p v-else-if="form.payment_type === 'credito'" class="mt-1.5 text-xs text-text-secondary">
-                    El pago se registra después en Pagos. No se adjunta comprobante aquí.
-                  </p>
+              <!-- Crédito: deferred pay panel -->
+              <div
+                v-if="form.payment_type === 'credito'"
+                class="border border-dashed border-border rounded-xl p-4 bg-surface-secondary/40 flex flex-col justify-center gap-2 min-h-[140px]"
+              >
+                <div class="flex items-center gap-2 text-text-secondary">
+                  <CreditCardIcon class="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <h4 class="font-semibold text-text-primary">Pago diferido</h4>
                 </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Esta compra quedará pendiente. Registra el pago después en <span class="font-medium text-text-primary">Finanzas → Pagos</span>.
+                </p>
+              </div>
 
-                <div v-if="form.payment_type !== 'credito'" class="space-y-4 pt-2 border-t border-border">
+              <!-- Contado / contraentrega: proof -->
+              <div
+                v-else
+                class="border border-border rounded-xl p-4 bg-background space-y-4"
+              >
                   <h4 class="font-semibold text-text-primary flex items-center gap-2">
                     <CreditCardIcon class="w-5 h-5 text-primary" />
-                    Comprobante de Pago
+                    Comprobante de pago
+                    <span
+                      v-if="form.payment_type === 'contado'"
+                      class="text-xs font-medium text-destructive"
+                    >*</span>
+                    <span
+                      v-else
+                      class="ms-auto text-xs font-normal text-text-tertiary"
+                    >Opcional</span>
                   </h4>
 
                   <div>
@@ -563,12 +601,11 @@
                       </div>
                     </div>
                   </div>
-                </div>
               </div>
             </div>
 
             <!-- Notes -->
-            <div class="mt-6">
+            <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
                 Notas Generales
               </label>
@@ -856,6 +893,12 @@ const form = ref({
   payment_files: [] as File[],
   items: [] as PurchaseItem[]
 })
+
+const paymentTypeOptions = [
+  { value: 'credito', label: 'Crédito', hint: 'Pagas después' },
+  { value: 'contado', label: 'Contado', hint: 'Pagas ahora' },
+  { value: 'contraentrega', label: 'Contraentrega', hint: 'Al recibir' },
+] as const
 
 // Payment methods
 const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
