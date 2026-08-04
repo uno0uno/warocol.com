@@ -267,58 +267,58 @@
             />
           </div>
 
-          <!-- Issue #533 — Auto-create PUC sub-account on method creation -->
-          <!-- Checkbox: only on create + when group supports it -->
-          <label
-            v-if="panelMode === 'create' && canAutoCreate"
-            class="flex items-start gap-3 px-4 py-3 rounded-lg border-2 border-border bg-surface cursor-pointer hover:border-primary/40 transition-colors"
+          <!-- Required PUC parent + auto-create dedicated sub-account (#2121) -->
+          <div
+            v-if="panelMode === 'create' && group && !isCashGroup(group)"
+            class="space-y-3"
           >
-            <input
-              v-model="autoCreateAccount"
-              type="checkbox"
-              :disabled="saving"
-              class="mt-1 h-4 w-4 text-primary focus:ring-2 focus:ring-primary/30"
-              aria-describedby="auto-create-help"
-            />
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold text-text-primary leading-snug">
-                {{ t('finanzas.metodosPago.autoCreateTitle') }}
-              </p>
-              <p id="auto-create-help" class="text-xs text-text-secondary leading-snug mt-0.5">
-                {{ t('finanzas.metodosPago.autoCreateHelp') }}
+            <div class="flex flex-col gap-1.5">
+              <label for="panel-parent-account" class="text-sm font-medium text-text-primary">
+                {{ t('finanzas.metodosPago.parentAccountReq') }}
+              </label>
+              <select
+                id="panel-parent-account"
+                v-model="panelParentCode"
+                required
+                :disabled="saving || leafAccounts.length === 0"
+                class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                :aria-describedby="'panel-parent-help'"
+              >
+                <option value="" disabled>
+                  {{ leafAccounts.length ? t('finanzas.metodosPago.parentAccountPlaceholder') : t('finanzas.metodosPago.parentAccountLoading') }}
+                </option>
+                <option v-for="acct in leafAccounts" :key="acct.code" :value="acct.code">
+                  {{ acct.code }} · {{ acct.name }}
+                </option>
+              </select>
+              <p id="panel-parent-help" class="text-xs text-text-secondary leading-snug">
+                {{ t('finanzas.metodosPago.parentAccountHelp') }}
               </p>
             </div>
-          </label>
 
-          <!-- Preview line -->
-          <div
-            v-if="panelMode === 'create' && autoCreateAccount && canAutoCreate && panelName.trim()"
-            class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
-          >
-            <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
-              {{ t('finanzas.metodosPago.preview') }}
-            </p>
-            <p class="text-sm text-text-primary leading-snug">
-              {{ t('finanzas.metodosPago.previewCreateAccount') }}
-              <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
-              {{ t('finanzas.metodosPago.previewUnder') }}
-              <span class="font-mono">{{ parentAccount!.code }} {{ parentAccount!.name }}</span>.
-            </p>
-          </div>
+            <div
+              v-if="panelParentCode && panelName.trim() && parentAccount"
+              class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
+            >
+              <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
+                {{ t('finanzas.metodosPago.preview') }}
+              </p>
+              <p class="text-sm text-text-primary leading-snug">
+                {{ t('finanzas.metodosPago.previewCreateAccount') }}
+                <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
+                {{ t('finanzas.metodosPago.previewUnder') }}
+                <span class="font-mono">{{ parentAccount.code }} {{ parentAccount.name }}</span>.
+              </p>
+            </div>
 
-          <!-- Warning: group has no default account configured -->
-          <div
-            v-else-if="panelMode === 'create' && group && !isCashGroup(group) && !group.glAccountCode"
-            class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
-          >
-            <p class="text-xs text-state-warning-text leading-snug flex items-start gap-1.5">
-              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>
-                {{ t('finanzas.metodosPago.autoCreateWarning') }}
-              </span>
-            </p>
+            <div
+              v-else-if="leafAccounts.length === 0"
+              class="rounded-lg border border-state-warning-border bg-state-warning-bg px-4 py-3"
+            >
+              <p class="text-xs text-state-warning-text leading-snug">
+                {{ t('finanzas.metodosPago.parentAccountEmpty') }}
+              </p>
+            </div>
           </div>
 
           <!-- Submit error -->
@@ -330,7 +330,7 @@
         <!-- Footer -->
         <div class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-3">
           <button
-            :disabled="saving || !panelName.trim()"
+            :disabled="saving || !canSavePanel"
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="onSavePanelClick"
           >
@@ -360,10 +360,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
+import {
+  defaultPaymentMethodParentCode,
+  suggestSubAccountSuffix,
+} from '~/composables/useChartOfAccounts'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -484,7 +488,11 @@ const isLoading = computed(() => !hasEverLoaded.value && isMethodsFetching.value
 const { data: accountsData, refetch: refetchAccounts } = useQuery({
   key: () => ['accounting', 'accounts', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: TenantAccount[] }>('/api/accounting/accounts'),
-  enabled: () => !!currentTenant.value && group.value?.tenantId !== null,
+  enabled: () => {
+    const g = group.value
+    if (!currentTenant.value || !g) return false
+    return !['cash', 'efectivo'].includes(g.slug)
+  },
   staleTime: 60_000,
 })
 
@@ -584,8 +592,7 @@ const panelMethod = ref<PaymentMethod | null>(null)
 const panelName  = ref('')
 const saving     = ref(false)
 const panelInput = ref<HTMLInputElement | null>(null)
-// Issue #533 — auto-create PUC sub-account state
-const autoCreateAccount = ref(true)
+const panelParentCode = ref('')
 const panelError = ref('')
 const panelTitle = computed(() =>
   panelMode.value === 'create'
@@ -610,8 +617,8 @@ const paymentGroupLabel = (paymentGroup: PaymentGroup): string => {
 const isCashGroup = (paymentGroup: PaymentGroup) => ['cash', 'efectivo'].includes(paymentGroup.slug)
 
 const parentAccount = computed<TenantAccount | null>(() =>
-  group.value?.glAccountCode
-    ? leafAccounts.value.find(a => a.code === group.value!.glAccountCode) ?? null
+  panelParentCode.value
+    ? leafAccounts.value.find(a => a.code === panelParentCode.value) ?? null
     : null,
 )
 const previewSuffix = computed(() =>
@@ -622,18 +629,32 @@ const previewSuffix = computed(() =>
 const previewCode = computed(() =>
   parentAccount.value ? parentAccount.value.code + previewSuffix.value : '',
 )
-const canAutoCreate = computed(() =>
-  group.value?.slug !== 'cash'
-  && !!group.value?.glAccountCode
-  && !!parentAccount.value,
-)
+const canSavePanel = computed(() => {
+  if (!panelName.value.trim()) return false
+  if (panelMode.value === 'edit') return true
+  if (!group.value || isCashGroup(group.value)) return false
+  return !!parentAccount.value
+})
+
+const syncPanelParentDefault = () => {
+  panelParentCode.value = defaultPaymentMethodParentCode(
+    group.value?.glAccountCode,
+    leafAccounts.value.map(a => a.code),
+  )
+}
+
+watch(leafAccounts, () => {
+  if (showPanel.value && panelMode.value === 'create' && !panelParentCode.value) {
+    syncPanelParentDefault()
+  }
+})
 
 const openCreate = async () => {
   panelMode.value = 'create'
   panelMethod.value = null
   panelName.value = ''
-  autoCreateAccount.value = true
   panelError.value = ''
+  syncPanelParentDefault()
   showPanel.value = true
   await nextTick()
   panelInput.value?.focus()
@@ -647,7 +668,7 @@ const openEdit = async (method: PaymentMethod) => {
   panelMode.value = 'edit'
   panelMethod.value = method
   panelName.value = method.name
-  autoCreateAccount.value = false
+  panelParentCode.value = ''
   panelError.value = ''
   showPanel.value = true
   await nextTick()
@@ -658,6 +679,7 @@ const closePanel = () => {
   showPanel.value = false
   panelMethod.value = null
   panelName.value = ''
+  panelParentCode.value = ''
   panelError.value = ''
 }
 
@@ -702,18 +724,18 @@ const savePanel = async () => {
   panelError.value = ''
   try {
     if (panelMode.value === 'create') {
-      let glAccountCode: string | null = null
-
-      // Issue #533 — optionally auto-create the PUC sub-account first.
-      if (autoCreateAccount.value && canAutoCreate.value && parentAccount.value) {
-        glAccountCode = await createAccountForMethod(
-          parentAccount.value,
-          previewCode.value,
-          panelName.value.trim(),
-        )
+      if (!parentAccount.value) {
+        panelError.value = t('finanzas.metodosPago.parentAccountRequired')
+        return
       }
 
-      // Create the method (now with glAccountCode if auto-created).
+      // Always auto-create a dedicated PUC sub-account under the selected parent (#2121).
+      const glAccountCode = await createAccountForMethod(
+        parentAccount.value,
+        previewCode.value,
+        panelName.value.trim(),
+      )
+
       await $fetch('/api/finanzas/metodos-pago', {
         method: 'POST',
         body: {
