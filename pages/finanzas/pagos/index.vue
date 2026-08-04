@@ -103,7 +103,7 @@
             </template>
 
             <template #cell-orden="{ row }">
-              <span class="text-sm font-bold text-text-primary">{{ row.orden }}</span>
+              <span :class="['text-sm font-bold text-text-primary', { 'animate-pulse': row.isHighlighted }]">{{ row.orden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
@@ -337,6 +337,8 @@ const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus,
       supplier_id: selectedSupplierFilter.value || undefined,
       payment_status: selectedStatusFilter.value || undefined,
       date_filter: selectedDateFilter.value || undefined,
+      // Opt-in unpaid direct credit purchases for Pagos (API #2110); keep false elsewhere
+      include_direct_payables: true,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -442,6 +444,7 @@ const pendingTableData = computed(() => {
     vencimiento: formatDate(purchase.payment_due_date),
     estaVencido: isOverdue(purchase.payment_due_date),
     purchaseData: { ...purchase, payableKind: 'purchase' },
+    isHighlighted: highlightId.value === purchase.id,
   }))
   const expenses = pendingExpensePayables.value.map((expense: any) => ({
     tipo: t('finanzas.pagos.typeExpense'),
