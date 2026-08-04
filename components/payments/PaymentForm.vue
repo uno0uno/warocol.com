@@ -59,13 +59,13 @@
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto Pagado *</label>
               <div class="relative">
-                <span class="absolute start-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <span class="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text-secondary pointer-events-none">{{ currencyCode }}</span>
                 <UiDecimalInput
                   v-model="formData.payment_amount"
                   :min="0.01"
                   :precision="2"
                   required
-                  class="w-full ps-8 pe-4 py-2.5 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary transition-colors"
+                  class="w-full ps-12 pe-4 py-2.5 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary transition-colors"
                   placeholder="0.00"
                 />
               </div>
@@ -241,6 +241,7 @@ const formData = ref({
 
 const selectedFiles = ref<File[]>([])
 const { todayISO, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
+const { formatCurrency, currencyCode } = useFormatters()
 const {
   data: paymentMethodsData,
   error: paymentMethodsError,
@@ -303,14 +304,6 @@ function payEndpoint(id: string): string {
   return props.payableKind === 'expense'
     ? `/api/finance/expenses/${id}/pay`
     : `/api/suppliers/purchases/${id}/pay`
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
 }
 
 function formatPaymentOptionLabel(label: string, glAccountCode?: string | null): string {

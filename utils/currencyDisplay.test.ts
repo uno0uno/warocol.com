@@ -144,6 +144,16 @@ describe('formatMoney', () => {
       currency: 'EUR', locale: 'de', minorUnits: 2, notation: 'compact',
     }), expected)
   })
+
+  it('formats MXN amounts on a single line for Pagos table cells', () => {
+    const formatted = formatMoney(900, { currency: 'MXN', locale: 'es', minorUnits: 2 })
+    assert.equal(formatted.includes('\n'), false)
+    assert.match(formatted, /900/)
+    assert.notEqual(
+      formatted,
+      formatMoney(900, { currency: 'COP', locale: 'es', minorUnits: 0 }),
+    )
+  })
 })
 
 describe('normalizeMinorUnits', () => {

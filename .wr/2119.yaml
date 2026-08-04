@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-fast #2119. Keep <=80 lines.
+issue: 2119
+title: "fix(finanzas): tenant currency and date display on Pagos payment UI"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2119-pagos-tenant-currency
+
+paths:
+  - components/payments/PaymentForm.vue
+  - pages/finanzas/pagos/index.vue
+  - utils/currencyDisplay.test.ts
+  - .wr/2119.yaml
+
+ac:
+  - PaymentForm uses useFormatters currencyCode + formatCurrency (no hardcoded COP/$)
+  - Pagos pending/paid amounts use tenant formatCurrency
+  - Pagos dates use formatCalendarDate and whitespace-nowrap
+  - Gastos spot-check only if already OK
+  - currencyDisplay tests still pass (MXN covered)
+
+out_of_scope:
+  - API / FX / multi-currency ledger
+  - Epic #2109 payables behavior changes
+
+hints:
+  entry: "components/payments/PaymentForm.vue formatCurrency COP hardcode; pages/finanzas/pagos/index.vue monto raw + formatDate"
+  pattern: "pages/finanzas/gastos/crear.vue:66 currencyCode prefix + useFormatters"
+  tests: "node --import tsx --test utils/currencyDisplay.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"
