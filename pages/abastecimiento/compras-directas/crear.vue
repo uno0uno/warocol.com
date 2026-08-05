@@ -789,6 +789,7 @@ import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProdu
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 
+const { t } = useI18n({ useScope: 'global' })
 const { todayISO, dateAtNoon } = useTenantTimezone()
 const {
   formatCurrency,
