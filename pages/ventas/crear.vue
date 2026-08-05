@@ -14,6 +14,8 @@ import {
   type PosPaymentGroup,
 } from '~/utils/paymentDefaults'
 import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
+import { useOpenSale } from '~/composables/useOpenSale'
+import type { ActiveTableSession } from '~/stores/usePOSStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,9 @@ interface LineItem {
   unit_price: number
   modifier_groups: ModifierGroup[]
   selected_modifiers: ModifierOption[]
+  display_name?: string | null
+  notes?: string | null
+  is_open_sale?: boolean
 }
 
 interface SelectedCustomer {
@@ -80,6 +85,31 @@ const discountInput = ref('')
 const splitMode = ref(false)
 const splitAmountInput = ref<number | null>(null)
 const splitPayments = ref<ManualSplitPayment[]>([])
+const openSaleModalOpen = ref(false)
+const openSaleModalRef = ref<{ clearSubmitting: () => void } | null>(null)
+const isMesaMode = computed(() => false)
+const activeTableSession = ref<ActiveTableSession | null>(null)
+
+const { currentTenant } = useTenantReactive()
+const { data: settingsData } = useQuery({
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/pos/restaurant-context'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const {
+  openSaleProduct,
+  showOpenSaleButton,
+  openSaleEnabled,
+  openSaleDisabledReason,
+  validateOpenSaleAmount,
+  buildOpenSaleCartLine,
+} = useOpenSale({
+  settingsData,
+  isMesaMode,
+  activeTableSession,
+})
 
 // Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
 // `Date.prototype.toISOString()` returns UTC, which the input then renders
@@ -102,6 +132,10 @@ const form = ref({
   payment_method_id: null as string | null,
   items: [] as LineItem[]
 })
+
+const openSalePrimaryIdle = computed(
+  () => openSaleEnabled.value && showOpenSaleButton.value && form.value.items.length === 0,
+)
 
 // ─── Products catalog ─────────────────────────────────────────────────────────
 
@@ -309,6 +343,43 @@ function cartQtyFor(productId: string) {
 
 function productFor(item: LineItem) {
   return products.value.find((p: any) => p.id === item.product_id)
+}
+
+function itemDisplayName(item: LineItem) {
+  return item.display_name || productFor(item)?.name || t('ventas.crear.productFallback')
+}
+
+function handleOpenSaleClick() {
+  if (!openSaleEnabled.value) {
+    useToast().warning(openSaleDisabledReason.value ?? t('pos.banner.openSaleUnavailable'), {
+      title: t('pos.banner.openSale'),
+    })
+    return
+  }
+  openSaleModalOpen.value = true
+}
+
+function handleOpenSaleConfirm(payload: { amount: number; description?: string }) {
+  try {
+    const amount = validateOpenSaleAmount(payload.amount)
+    const line = buildOpenSaleCartLine(amount, payload.description)
+    form.value.items.push({
+      product_id: line.product.id,
+      quantity: 1,
+      unit_price: amount,
+      modifier_groups: [],
+      selected_modifiers: [],
+      display_name: line.product.name,
+      notes: line.notes ?? null,
+      is_open_sale: true,
+    })
+    openSaleModalOpen.value = false
+    useToast().success(t('pos.banner.addedToCart'), { title: t('pos.banner.openSale') })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : t('pos.banner.openSaleAddError')
+    useToast().error(message, { title: t('pos.banner.openSale') })
+    openSaleModalRef.value?.clearSubmitting()
+  }
 }
 
 // ─── Modifier helpers ─────────────────────────────────────────────────────────
@@ -668,8 +739,8 @@ async function submit() {
           </NuxtLink>
           <h1 class="text-base font-bold text-text-primary">{{ t('ventas.crear.title') }}</h1>
         </div>
-        <!-- Row 2: date + payment + customer -->
-        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(16rem,1.3fr)] gap-2">
+        <!-- Row 2: date + customer + payment -->
+        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(16rem,1.3fr)_minmax(0,1fr)] gap-2">
           <input
             id="order_date"
             v-model="form.order_date"
@@ -679,24 +750,6 @@ async function submit() {
             :aria-label="t('ventas.crear.dateLabel')"
             class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
-          <select
-            id="payment_method"
-            v-model="paymentSelectValue"
-            required
-            :aria-label="t('ventas.crear.paymentMethod')"
-            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
-          >
-            <template v-for="g in visiblePaymentGroups" :key="g.id">
-              <!-- Group default option (when no specific method picked) -->
-              <option :value="`${g.slug}:`">{{ groupLabel(g) }}</option>
-              <!-- Specific methods nested under the group -->
-              <optgroup v-if="g.methods && g.methods.length > 0" :label="groupLabel(g)">
-                <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
-                  {{ groupLabel(g) }} · {{ m.name }}
-                </option>
-              </optgroup>
-            </template>
-          </select>
           <div
             v-if="selectedCustomer"
             class="min-h-9 w-full px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 flex items-center gap-2"
@@ -787,6 +840,24 @@ async function submit() {
             </svg>
             <span>{{ t('ventas.crear.identifyCustomer') }}</span>
           </button>
+          <select
+            id="payment_method"
+            v-model="paymentSelectValue"
+            required
+            :aria-label="t('ventas.crear.paymentMethod')"
+            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+          >
+            <template v-for="g in visiblePaymentGroups" :key="g.id">
+              <!-- Group default option (when no specific method picked) -->
+              <option :value="`${g.slug}:`">{{ groupLabel(g) }}</option>
+              <!-- Specific methods nested under the group -->
+              <optgroup v-if="g.methods && g.methods.length > 0" :label="groupLabel(g)">
+                <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
+                  {{ groupLabel(g) }} · {{ m.name }}
+                </option>
+              </optgroup>
+            </template>
+          </select>
         </div>
       </div>
 
@@ -1086,6 +1157,23 @@ async function submit() {
 
           <!-- Cart items (scrollable) -->
           <div class="flex-1 overflow-y-auto max-h-[50vh] p-4 flex flex-col gap-3">
+            <button
+              v-if="showOpenSaleButton"
+              type="button"
+              class="w-full min-h-[44px] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              :class="openSalePrimaryIdle
+                ? 'bg-action-primary-bg text-action-primary-text hover:opacity-90 active:scale-[0.98] shadow-sm'
+                : 'border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+              :aria-disabled="!openSaleEnabled"
+              :title="openSaleDisabledReason ?? undefined"
+              @click="handleOpenSaleClick"
+            >
+              <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+              </svg>
+              {{ t('pos.cart.openSale') }}
+            </button>
+
             <!-- Empty state -->
             <div
               v-if="form.items.length === 0"
@@ -1104,8 +1192,9 @@ async function submit() {
               class="flex items-start gap-3 py-2 border-b border-border last:border-0"
             >
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
+                <p class="text-sm font-medium text-text-primary truncate">{{ itemDisplayName(item) }}</p>
                 <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
+                <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
                 <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="mod in item.selected_modifiers"
@@ -1123,7 +1212,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="t('ventas.crear.reduceQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.reduceQty', { name: itemDisplayName(item) })"
                   @click="decrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1134,7 +1223,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="t('ventas.crear.increaseQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.increaseQty', { name: itemDisplayName(item) })"
                   @click="incrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1149,7 +1238,7 @@ async function submit() {
                 <button
                   type="button"
                   class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="t('ventas.crear.removeItem', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
                   @click="removeItem(index)"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1289,6 +1378,23 @@ async function submit() {
         max-height="xl"
       >
         <div class="p-4 flex flex-col gap-3">
+          <button
+            v-if="showOpenSaleButton"
+            type="button"
+            class="w-full min-h-[44px] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            :class="openSalePrimaryIdle
+              ? 'bg-action-primary-bg text-action-primary-text hover:opacity-90 active:scale-[0.98] shadow-sm'
+              : 'border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+            :aria-disabled="!openSaleEnabled"
+            :title="openSaleDisabledReason ?? undefined"
+            @click="handleOpenSaleClick"
+          >
+            <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+            </svg>
+            {{ t('pos.cart.openSale') }}
+          </button>
+
           <div
             v-if="form.items.length === 0"
             class="py-10 flex flex-col items-center text-center text-text-secondary"
@@ -1306,8 +1412,9 @@ async function submit() {
               class="flex items-start gap-3 py-2 border-b border-border last:border-0"
             >
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary truncate">{{ productFor(item)?.name }}</p>
+                <p class="text-sm font-medium text-text-primary truncate">{{ itemDisplayName(item) }}</p>
                 <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
+                <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
                 <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="mod in item.selected_modifiers"
@@ -1324,7 +1431,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="t('ventas.crear.reduceQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.reduceQty', { name: itemDisplayName(item) })"
                   @click="decrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1335,7 +1442,7 @@ async function submit() {
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
-                  :aria-label="t('ventas.crear.increaseQty', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.increaseQty', { name: itemDisplayName(item) })"
                   @click="incrementItem(index)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1349,7 +1456,7 @@ async function submit() {
                 <button
                   type="button"
                   class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="t('ventas.crear.removeItem', { name: productFor(item)?.name ?? t('ventas.crear.productFallback') })"
+                  :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
                   @click="removeItem(index)"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1482,6 +1589,13 @@ async function submit() {
         @fiscal-updated="onCustomerIdentified"
       />
     </Teleport>
+
+    <PosOpenSaleModal
+      ref="openSaleModalRef"
+      v-model="openSaleModalOpen"
+      :shell-name="openSaleProduct?.name"
+      @confirm="handleOpenSaleConfirm"
+    />
   </div>
 </template>
 

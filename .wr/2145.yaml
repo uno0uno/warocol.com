@@ -1,0 +1,39 @@
+# Compact plan for wr-fast #2145. Keep <=80 lines.
+issue: 2145
+title: "feat(ventas): align /ventas/crear header LTR + add open sale"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2145-ventas-crear-open-sale
+
+paths:
+  - pages/ventas/crear.vue
+
+ac:
+  - Header LTR Fecha → Cliente → Método de pago
+  - Venta libre CTA when open_sale enabled + shell product (desktop + mobile cart)
+  - Open sale adds cart line with shell product_id + custom unit_price; submit via /orders/manual
+  - CTA hidden/blocked when open sale unavailable (POS messaging)
+  - Catalog, modifiers, discount, split, customer ID unchanged
+
+out_of_scope:
+  - persisting open-sale notes on /orders/manual API
+  - /pos redesign
+  - other Ventas pages
+  - new i18n keys beyond pos.*
+
+hints:
+  entry: "pages/ventas/crear.vue header grid + cart panel"
+  pattern: "reuse composables/useOpenSale.ts + components/pos/OpenSaleModal.vue like pages/pos/index.vue"
+  tests: "static AC checks on crear.vue (no dedicated unit test file)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
