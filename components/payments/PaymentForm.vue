@@ -275,9 +275,9 @@ const paymentGroups = computed(() =>
     .filter(group => group.slug !== 'credit' && !group.triggersCartera),
 )
 const { paymentSelectValue } = usePaymentSelectValue(formData, paymentGroups)
-/** Expense pay persists from_cash_drawer; purchase /pay ignores it until API follow-up. */
+/** Cash drawer toggle for expense and purchase pay when method is cash. */
 const showCashDrawerToggle = computed(
-  () => props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method),
+  () => isCashPaymentSlug(formData.value.payment_method),
 )
 const selectedPaymentPucLabel = computed(() => {
   if (!formData.value.payment_method) return ''
@@ -360,8 +360,7 @@ watch(
 )
 
 function appendDrawerFlag(payload: FormData) {
-  // Only expense pay accepts/persists the flag today (api-warolabs#786).
-  if (props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method)) {
+  if (isCashPaymentSlug(formData.value.payment_method)) {
     payload.append('from_cash_drawer', String(formData.value.from_cash_drawer))
   }
 }
