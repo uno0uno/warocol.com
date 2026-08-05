@@ -25,12 +25,42 @@ describe('localizeSystemAccountName', () => {
   const t = (key: string) => {
     if (key === 'finanzas.contabilidad.systemAccounts.cash') return 'Efectivo'
     if (key === 'finanzas.contabilidad.systemAccounts.taxPayable') return 'Impuestos por pagar'
+    if (key === 'finanzas.contabilidad.systemAccounts.assets') return 'Activos'
+    if (key === 'finanzas.contabilidad.systemAccounts.currentAssets') return 'Activos corrientes'
+    if (key === 'finanzas.contabilidad.systemAccounts.expenses') return 'Gastos'
     return key
   }
 
   it('maps known global managerial codes via i18n', () => {
     assert.equal(localizeSystemAccountName({ code: '1000', name: 'Cash' }, t), 'Efectivo')
     assert.equal(localizeSystemAccountName({ code: '2100', name: 'Tax payable' }, t), 'Impuestos por pagar')
+  })
+
+  it('maps GLOBAL class and group header codes via i18n (#2137)', () => {
+    assert.equal(localizeSystemAccountName({ code: '1', name: 'Assets' }, t), 'Activos')
+    assert.equal(
+      localizeSystemAccountName({ code: '10', name: 'Current assets' }, t),
+      'Activos corrientes',
+    )
+  })
+
+  it('keeps CO PUC class stored names when isColombiaPuc (#2137)', () => {
+    assert.equal(
+      localizeSystemAccountName(
+        { code: '5', name: 'Gastos operacionales de administración' },
+        t,
+        { isColombiaPuc: true },
+      ),
+      'Gastos operacionales de administración',
+    )
+    assert.equal(
+      localizeSystemAccountName(
+        { code: '1', name: 'Activo' },
+        t,
+        { isColombiaPuc: true },
+      ),
+      'Activo',
+    )
   })
 
   it('keeps CO PUC / custom stored names when code is not in the global map', () => {
@@ -41,6 +71,10 @@ describe('localizeSystemAccountName', () => {
     assert.equal(
       localizeSystemAccountName({ code: '100005', name: 'Caja secundaria' }, t),
       'Caja secundaria',
+    )
+    assert.equal(
+      localizeSystemAccountName({ code: '101005', name: 'NEQUI' }, t),
+      'NEQUI',
     )
   })
 })

@@ -4,9 +4,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 import { getAccountLevel, getAccountLevelKey, getAccountLevelVariant, localizeSystemAccountName } from '~/utils/accountingDisplay'
 
-const displayAccountName = (account: { code: string; name: string }) =>
-  localizeSystemAccountName(account, key => t(key))
-
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: () => t('finanzas.contabilidad.accountsTitle') })
 
@@ -16,6 +13,9 @@ const { addDaysISO, dateAtNoon, isoFromDate, monthBounds, timezone, todayISO } =
 const { formatCalendarDate, formatCurrency } = useFormatters()
 const formatAmount = (v: number) => formatCurrency(v ?? 0)
 const { isColombiaPuc } = useTenantFinancialProfile()
+
+const displayAccountName = (account: { code: string; name: string }) =>
+  localizeSystemAccountName(account, key => t(key), { isColombiaPuc: isColombiaPuc.value })
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const showAll = ref(false)

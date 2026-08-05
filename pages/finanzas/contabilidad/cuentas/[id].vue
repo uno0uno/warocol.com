@@ -94,7 +94,7 @@ const account = computed<TenantAccount | null>(() =>
   accountsData.value?.data?.find(a => a.id === accountId.value) ?? null
 )
 const displayAccountName = (acct: { code: string; name: string }) =>
-  localizeSystemAccountName(acct, key => t(key))
+  localizeSystemAccountName(acct, key => t(key), { isColombiaPuc: isColombiaPuc.value })
 const accountDisplayName = computed(() =>
   account.value ? displayAccountName(account.value) : '',
 )

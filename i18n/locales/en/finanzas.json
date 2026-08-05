@@ -774,6 +774,18 @@
         "costs": "Costs"
       },
       "systemAccounts": {
+        "assets": "Assets",
+        "currentAssets": "Current assets",
+        "liabilities": "Liabilities",
+        "currentLiabilities": "Current liabilities",
+        "equity": "Equity",
+        "equityDetails": "Equity",
+        "income": "Income",
+        "operatingRevenue": "Operating revenue",
+        "expenses": "Expenses",
+        "operatingExpenses": "Operating expenses",
+        "costs": "Costs",
+        "cogsDetails": "Cost of goods sold details",
         "cash": "Cash",
         "bank": "Bank",
         "accountsReceivable": "Accounts receivable",
