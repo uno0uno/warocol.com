@@ -177,7 +177,7 @@
                   Tipo de pago
                 </span>
                 <div
-                  class="grid grid-cols-3 gap-2"
+                  class="grid grid-cols-2 gap-2"
                   role="radiogroup"
                   aria-label="Tipo de pago"
                 >
@@ -492,7 +492,7 @@
                 </p>
               </div>
 
-              <!-- Contado / contraentrega: proof block -->
+              <!-- Contado: proof block (crédito pays later in Pagos) -->
               <div
                 v-else
                 class="border border-border rounded-xl p-4 bg-background space-y-4"
@@ -1066,6 +1066,7 @@ const getPaymentTypeText = (type: string) => {
   const types: Record<string, string> = {
     contado: 'Contado',
     credito: 'Crédito',
+    // Legacy rows only — option removed from create/edit
     contraentrega: 'Contraentrega',
   }
   return types[type] || type
@@ -1074,7 +1075,6 @@ const getPaymentTypeText = (type: string) => {
 const paymentTypeOptions = [
   { value: 'credito', label: 'Crédito' },
   { value: 'contado', label: 'Contado' },
-  { value: 'contraentrega', label: 'Contraentrega' },
 ] as const
 
 const getPurchaseUnitOptions = (ingredientId: string) => {
