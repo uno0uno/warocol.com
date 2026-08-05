@@ -8,3 +8,34 @@ services:
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+    labels:
+      # willfarrell/autoheal restarts unhealthy containers (restart policy alone does not)
+      autoheal: "true"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # Watches Docker health; restarts labeled containers when unhealthy.
+  # One-time: `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
+  # after pull so healthcheck + autoheal are applied (build then up remains OK).
+  autoheal:
+    image: willfarrell/autoheal:latest
+    container_name: warocol-autoheal
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_INTERVAL=10
+      - AUTOHEAL_START_PERIOD=40
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - warolabs-network
