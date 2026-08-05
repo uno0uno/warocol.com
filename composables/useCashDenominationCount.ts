@@ -1,13 +1,23 @@
-import { ref, computed } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
+import { resolveCashDenominations } from '~/utils/cashDenominations'
+import { useFormatters } from '~/composables/useFormatters'
 
-export const CASH_DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000] as const
+export function useCashDenominationCount(currencyOverride?: Ref<string | null | undefined>) {
+  const { currencyCode, currencyMinorUnits } = useFormatters()
 
-export function useCashDenominationCount() {
-  const counts = ref<Record<number, string>>(
-    Object.fromEntries(CASH_DENOMINATIONS.map(d => [d, '0'])),
-  )
+  const denominations = computed(() => resolveCashDenominations(
+    currencyOverride?.value ?? currencyCode.value,
+    currencyMinorUnits.value,
+  ))
+
+  const counts = ref<Record<number, string>>({})
   const monedasAmount = ref('0')
   const denomRefs = ref<HTMLInputElement[]>([])
+
+  // Keep entered counts when the tenant currency resolves late; drop stale faces.
+  watch(denominations, (list) => {
+    counts.value = Object.fromEntries(list.map(d => [d, counts.value[d] ?? '0']))
+  }, { immediate: true })
 
   const setDenomRef = (el: unknown, idx: number) => {
     if (el) denomRefs.value[idx] = el as HTMLInputElement
@@ -21,13 +31,13 @@ export function useCashDenominationCount() {
   const sanitizeIntStr = (e: Event): string => sanitizeInt(e)
 
   const totalCounted = computed(() =>
-    CASH_DENOMINATIONS.reduce((sum, d) => sum + d * (parseInt(counts.value[d]) || 0), 0)
+    denominations.value.reduce((sum, d) => sum + d * (parseInt(counts.value[d]) || 0), 0)
     + (parseInt(monedasAmount.value) || 0),
   )
 
   const toBreakdown = (): Record<string, number> => {
     const breakdown: Record<string, number> = {}
-    for (const d of CASH_DENOMINATIONS) {
+    for (const d of denominations.value) {
       const n = parseInt(counts.value[d]) || 0
       if (n > 0) breakdown[String(d)] = n
     }
@@ -41,12 +51,12 @@ export function useCashDenominationCount() {
   }
 
   const setFromAmount = (amount: number) => {
-    for (const d of CASH_DENOMINATIONS) counts.value[d] = '0'
+    for (const d of denominations.value) counts.value[d] = '0'
     monedasAmount.value = String(Math.max(0, Math.round(amount)))
   }
 
   return {
-    denominations: CASH_DENOMINATIONS,
+    denominations,
     counts,
     monedasAmount,
     denomRefs,

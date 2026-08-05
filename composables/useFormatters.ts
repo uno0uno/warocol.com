@@ -90,6 +90,19 @@ export const useFormatters = () => {
     })
   }
 
+  /**
+   * Money with a spaced explicit sign (`− MXN 550,00`).
+   * Intl puts a tight `-` before the currency code, which readers miss on
+   * arqueo screens where a negative amount changes the meaning of the row.
+   */
+  const formatCurrencySigned = (
+    value: number | string | null | undefined,
+  ): string => {
+    const amount = Number(value ?? 0)
+    if (!Number.isFinite(amount) || amount === 0) return formatCurrency(0)
+    return `${amount < 0 ? '−' : '+'} ${formatCurrency(Math.abs(amount))}`
+  }
+
   /** Thermal / ESC/POS tickets — ISO code + ASCII amount (#1965). */
   const formatCurrencyThermal = (
     value: number | string | null | undefined,
@@ -137,6 +150,7 @@ export const useFormatters = () => {
     formatCalendarDate,
     formatDateShort,
     formatCurrency,
+    formatCurrencySigned,
     formatCurrencyThermal,
     formatNumber,
     formatDateTime,
