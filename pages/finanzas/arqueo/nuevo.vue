@@ -54,7 +54,7 @@
               <div class="mt-2 flex items-center justify-between gap-3 border-t border-border pt-2 text-sm">
                 <span class="text-text-secondary">{{ cashCloseSuccessLabels.difference }}</span>
                 <span class="font-bold" :class="(successData?.cashDifference ?? 0) >= 0 ? 'text-state-success-text' : 'text-destructive'">
-                  {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
+                  {{ formatCurrencySigned(successData?.cashDifference) }}
                 </span>
               </div>
             </div>
@@ -250,7 +250,7 @@
                 <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashTips') }}</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashExpensesLong') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
                 <div v-if="(xPreviewData.cashPurchases ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.cashPurchases') }}</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.cashPurchases) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span><span :class="Number(xPreviewData.cashExpected ?? 0) < 0 ? 'text-destructive' : ''">{{ formatCurrencySigned(xPreviewData.cashExpected) }}</span></div>
               </div>
             </div>
             <!-- Desglose -->
@@ -456,7 +456,7 @@
             <div v-else class="rounded-lg border-2 overflow-hidden" :class="diffResultClass">
               <div class="px-3 py-2.5 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <svg v-if="cashDiff >= 0" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-if="cashDiffIsSurplus" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                   </svg>
                   <svg v-else class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -464,11 +464,17 @@
                   </svg>
                   <span class="text-sm font-semibold">{{ t('finanzas.common.difference') }}</span>
                 </div>
-                <span class="text-lg font-bold">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+                <span class="text-lg font-bold">{{ formatCurrencySigned(cashDiff) }}</span>
               </div>
               <div class="px-3 py-2 border-t border-black/10 flex justify-between text-xs opacity-80">
                 <span>{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
-                <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
+                <span class="font-medium" :class="isCashExpectedNegative ? 'text-destructive' : ''">{{ formatCurrencySigned(previewData?.cashExpected) }}</span>
+              </div>
+              <div v-if="isCashExpectedNegative" class="px-3 py-2 border-t border-black/10 text-xs">
+                <p class="font-semibold">{{ t('finanzas.arqueo.expectedNegative') }}</p>
+                <p class="mt-0.5 opacity-90">{{ t('finanzas.arqueo.expectedNegativeHelp') }}</p>
+                <p class="mt-0.5 opacity-90">{{ t('finanzas.arqueo.expectedNegativeDiffHelp') }}</p>
+                <NuxtLink :to="aperturaLink" class="mt-1 inline-block font-semibold underline">{{ t('finanzas.arqueo.openShift') }}</NuxtLink>
               </div>
             </div>
 
@@ -645,7 +651,7 @@
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">{{ t('finanzas.arqueo.expected') }}</span>
-                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
+                <span class="font-medium" :class="isCashExpectedNegative ? 'text-destructive' : 'text-text-primary'">{{ formatCurrencySigned(previewData?.cashExpected) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">{{ t('finanzas.arqueo.counted') }}</span>
@@ -655,19 +661,19 @@
             <!-- Diferencia — accent row -->
             <div
               class="px-3 py-2.5 border-t-2 flex items-center justify-between"
-              :class="cashDiff >= 0 ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
+              :class="cashDiffIsSurplus ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
             >
               <div class="flex items-center gap-1.5">
-                <svg v-if="cashDiff >= 0" class="w-3.5 h-3.5 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg v-if="cashDiffIsSurplus" class="w-3.5 h-3.5 text-state-success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
                 <svg v-else class="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.common.difference') }}</span>
+                <span class="text-xs font-semibold" :class="cashDiffIsSurplus ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.common.difference') }}</span>
               </div>
-              <span class="text-sm font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
-                {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
+              <span class="text-sm font-bold" :class="cashDiffIsSurplus ? 'text-state-success-text' : 'text-destructive'">
+                {{ formatCurrencySigned(cashDiff) }}
               </span>
             </div>
           </div>
@@ -770,11 +776,14 @@
           <!-- Diferencia caja -->
           <div
             class="rounded-lg border-2 px-3 py-2.5"
-            :class="cashDiff >= 0 ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
+            :class="cashDiffIsSurplus ? 'bg-state-success-bg border-state-success-border' : 'bg-destructive/5 border-destructive/20'"
           >
-            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.arqueo.cashDifference') }}</p>
-            <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-state-success-text' : 'text-destructive'">
-              {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
+            <p class="text-xs mb-0.5" :class="cashDiffIsSurplus ? 'text-state-success-text' : 'text-destructive'">{{ t('finanzas.arqueo.cashDifference') }}</p>
+            <p class="text-base font-bold" :class="cashDiffIsSurplus ? 'text-state-success-text' : 'text-destructive'">
+              {{ formatCurrencySigned(cashDiff) }}
+            </p>
+            <p v-if="isCashExpectedNegative" class="mt-1 text-[11px] leading-snug text-destructive">
+              {{ t('finanzas.arqueo.expectedNegativeDiffHelp') }}
             </p>
           </div>
         </div>
@@ -803,7 +812,7 @@
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
-                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
+                <span class="font-medium" :class="isCashExpectedNegative ? 'text-destructive' : 'text-text-primary'">{{ formatCurrencySigned(previewData?.cashExpected) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">{{ t('finanzas.arqueo.counted') }}</span>
@@ -921,6 +930,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowBody, buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { resolveCashDenominations } from '~/utils/cashDenominations'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
 
@@ -946,7 +956,15 @@ const { addDaysISO, dateAtNoon, isoFromDate, timeHHMMFromISO, timezone, todayISO
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
-const { formatCalendarDate, formatCurrency: formatMoneyValue, formatDateTime: _fmtDateTime, formatNumber } = useFormatters()
+const {
+  formatCalendarDate,
+  formatCurrency: formatMoneyValue,
+  formatCurrencySigned,
+  formatDateTime: _fmtDateTime,
+  formatNumber,
+  currencyCode,
+  currencyMinorUnits,
+} = useFormatters()
 const formatIsoDateLong = (iso: string) => formatCalendarDate(iso)
 const initStart = (route.query.start as string) || today
 
@@ -1156,10 +1174,11 @@ const cierreSuccess   = ref(false)
 const successData     = ref<Record<string, any> | null>(null)
 
 // ── Denominations ─────────────────────────────────────────────────────────
-const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000]
-const counts = ref<Record<number, string>>(
-  Object.fromEntries(denominations.map(d => [d, '0']))
-)
+const denominations = computed(() => resolveCashDenominations(currencyCode.value, currencyMinorUnits.value))
+const counts = ref<Record<number, string>>({})
+watch(denominations, (list) => {
+  counts.value = Object.fromEntries(list.map(d => [d, counts.value[d] ?? '0']))
+}, { immediate: true })
 const monedasAmount  = ref('0')
 const methodAmounts  = ref<Record<string, string>>({})
 const notes          = ref('')
@@ -1170,7 +1189,7 @@ const setDenomRef = (el: any, idx: number) => {
 }
 
 const totalCounted = computed(() =>
-  denominations.reduce((sum, d) => sum + d * (parseInt(counts.value[d]) || 0), 0)
+  denominations.value.reduce((sum, d) => sum + d * (parseInt(counts.value[d]) || 0), 0)
   + parseMoneyInput(monedasAmount.value)
 )
 
@@ -1199,6 +1218,9 @@ const previewBusy    = computed(() => previewLoading.value || isRefreshing.value
 registerProgressiveLoading(isRefreshing)
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
+const cashExpected = computed(() => Number(previewData.value?.cashExpected ?? 0))
+const isCashExpectedNegative = computed(() => cashExpected.value < 0)
+const cashDiffIsSurplus = computed(() => cashDiff.value >= 0 && !isCashExpectedNegative.value)
 
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
 const groupLabel = (slug: string) => {
@@ -1343,6 +1365,8 @@ const paymentBreakdownReported = computed(() =>
 )
 
 const diffResultClass = computed(() => {
+  // A negative expected drawer makes any "surplus" meaningless — never show it green.
+  if (isCashExpectedNegative.value) return 'border-state-warning-border bg-state-warning-bg text-state-warning-text'
   if (cashDiff.value >= 0) return 'border-state-success-border bg-state-success-bg text-state-success-text'
   if (Math.abs(cashDiff.value) < (previewData.value?.cashExpected ?? 1) * 0.02) return 'border-state-warning-border bg-state-warning-bg text-state-warning-text'
   return 'border-destructive/30 bg-destructive/5 text-destructive'

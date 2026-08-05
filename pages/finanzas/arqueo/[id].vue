@@ -132,7 +132,7 @@
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Esperado en caja</span>
-              <span class="font-semibold text-text-primary">{{ formatCurrency(cierre.cashExpected) }}</span>
+              <span class="font-semibold" :class="Number(cierre.cashExpected ?? 0) < 0 ? 'text-destructive' : 'text-text-primary'">{{ formatCurrencySigned(cierre.cashExpected) }}</span>
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Efectivo contado</span>
@@ -347,13 +347,14 @@ useHead(() => ({
   title: cierre.value ? `Arqueo ${formatPeriodDates(cierre.value)} - Warocol` : 'Arqueo de caja - Warocol',
 }))
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
-
 const hasCapturedTips = (data?: Record<string, any> | null) =>
   Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
-const { formatDateTime: _fmtDateTime } = useFormatters()
+const {
+  formatDateTime: _fmtDateTime,
+  formatCurrency,
+  formatCurrencySigned,
+} = useFormatters()
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 
 const formatDate = (iso: string) => {

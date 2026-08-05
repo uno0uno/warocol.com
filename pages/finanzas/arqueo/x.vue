@@ -101,7 +101,11 @@
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm font-semibold">
             <span class="text-text-primary">{{ t('finanzas.arqueo.expectedInDrawer') }}</span>
-            <span class="text-text-primary">{{ formatCurrency(previewData.cashExpected) }}</span>
+            <span :class="Number(previewData.cashExpected ?? 0) < 0 ? 'text-destructive' : 'text-text-primary'">{{ formatCurrencySigned(previewData.cashExpected) }}</span>
+          </div>
+          <div v-if="Number(previewData.cashExpected ?? 0) < 0" class="px-4 py-2.5 text-xs text-destructive border-t border-border">
+            <p class="font-semibold">{{ t('finanzas.arqueo.expectedNegative') }}</p>
+            <p class="mt-0.5">{{ t('finanzas.arqueo.expectedNegativeHelp') }}</p>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
             <span class="text-text-secondary">{{ t('finanzas.arqueo.openTables', {
@@ -197,7 +201,7 @@ const { currentTenant } = useTenantReactive()
 const { plural: tablePlural } = useTableLabel()
 const route = useRoute()
 const { addDaysISO, dateAtNoon, isoFromDate, timezone, todayISO } = useTenantTimezone()
-const { formatCalendarDate, formatCurrency: formatMoneyValue } = useFormatters()
+const { formatCalendarDate, formatCurrency: formatMoneyValue, formatCurrencySigned } = useFormatters()
 
 const today = todayISO()
 const maxDate = computed(() => dateAtNoon(todayISO()))
