@@ -774,6 +774,18 @@
         "costs": "Costos"
       },
       "systemAccounts": {
+        "assets": "Activos",
+        "currentAssets": "Activos corrientes",
+        "liabilities": "Pasivos",
+        "currentLiabilities": "Pasivos corrientes",
+        "equity": "Patrimonio",
+        "equityDetails": "Patrimonio",
+        "income": "Ingresos",
+        "operatingRevenue": "Ingresos operativos",
+        "expenses": "Gastos",
+        "operatingExpenses": "Gastos operativos",
+        "costs": "Costos",
+        "cogsDetails": "Detalle costo de ventas",
         "cash": "Efectivo",
         "bank": "Banco",
         "accountsReceivable": "Cuentas por cobrar",

@@ -1,5 +1,19 @@
 /** Global managerial chart codes (non-CO). CO PUC uses different codes — left as stored. */
 export const GLOBAL_SYSTEM_ACCOUNT_I18N_KEYS: Record<string, string> = {
+  // Class / group headers (were left as English DB names)
+  '1': 'assets',
+  '10': 'currentAssets',
+  '2': 'liabilities',
+  '20': 'currentLiabilities',
+  '3': 'equity',
+  '30': 'equityDetails',
+  '4': 'income',
+  '40': 'operatingRevenue',
+  '5': 'expenses',
+  '50': 'operatingExpenses',
+  '6': 'costs',
+  '60': 'cogsDetails',
+  // Detail system accounts
   '1000': 'cash',
   '1010': 'bank',
   '1100': 'accountsReceivable',
