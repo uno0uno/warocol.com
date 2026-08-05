@@ -653,13 +653,69 @@
         </aside>
       </Transition>
     </Teleport>
+
+    <AbastecimientoDirectPurchasePrintTicket
+      v-if="purchase"
+      :title="t('abastecimiento.compraDirectaDetalle.printTitle')"
+      :purchase-number="purchase.purchase_number"
+      :date-label="t('abastecimiento.compraDirectaDetalle.purchaseDate')"
+      :date-value="formatDate(purchase.purchase_date)"
+      :supplier-label="t('abastecimiento.compraDirectaDetalle.supplier')"
+      :supplier-value="purchase.supplier_name || t('abastecimiento.compraDirectaDetalle.emptySupplier')"
+      :status-label="t('abastecimiento.compraDirectaDetalle.currentStatus')"
+      :status-value="getStatusText(purchase.status)"
+      :payment-label="t('abastecimiento.compraDirectaDetalle.paymentMethod')"
+      :payment-value="purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—'"
+      :items="printTicketItems"
+      :total-label="t('abastecimiento.compraDirectaDetalle.purchaseTotal')"
+      :total-value="formatCurrency(purchase.total_amount)"
+      :notes-label="t('abastecimiento.compraDirectaDetalle.notes')"
+      :notes-value="purchase.notes || null"
+    />
+
+    <AbastecimientoDirectPurchasePrintDocument
+      v-if="purchase"
+      :title="t('abastecimiento.compraDirectaDetalle.printTitle')"
+      :purchase-number="purchase.purchase_number"
+      :date-label="t('abastecimiento.compraDirectaDetalle.purchaseDate')"
+      :date-value="formatDate(purchase.purchase_date)"
+      :supplier-label="t('abastecimiento.compraDirectaDetalle.supplier')"
+      :supplier-value="purchase.supplier_name || t('abastecimiento.compraDirectaDetalle.emptySupplier')"
+      :supplier-tax-id="purchase.supplier_tax_id || null"
+      :status-label="t('abastecimiento.compraDirectaDetalle.currentStatus')"
+      :status-value="getStatusText(purchase.status)"
+      :payment-label="t('abastecimiento.compraDirectaDetalle.paymentMethod')"
+      :payment-value="purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—'"
+      :item-name-label="WAREHOUSE_COPY.warehouseItemColumn"
+      :qty-label="t('abastecimiento.compraDirectaDetalle.quantityShort')"
+      :unit-label="t('abastecimiento.compraDirectaDetalle.unit')"
+      :unit-cost-label="t('abastecimiento.compraDirectaDetalle.unitPrice')"
+      :line-total-label="t('abastecimiento.compraDirectaDetalle.total')"
+      :items="printDocumentItems"
+      :total-label="t('abastecimiento.compraDirectaDetalle.purchaseTotal')"
+      :total-value="formatCurrency(purchase.total_amount)"
+      :notes-label="t('abastecimiento.compraDirectaDetalle.notes')"
+      :notes-value="purchase.notes || null"
+    />
+
+    <UiPrintFormatChooserModal
+      v-model="printFormatModalOpen"
+      :title="t('abastecimiento.compraDirectaDetalle.printFormatTitle')"
+      :message="t('abastecimiento.compraDirectaDetalle.printFormatMessage')"
+      :ticket-label="t('abastecimiento.compraDirectaDetalle.printFormatTicket')"
+      :ticket-hint="t('abastecimiento.compraDirectaDetalle.printFormatTicketHint')"
+      :document-label="t('abastecimiento.compraDirectaDetalle.printFormatDocument')"
+      :document-hint="t('abastecimiento.compraDirectaDetalle.printFormatDocumentHint')"
+      :cancel-label="t('abastecimiento.compraDirectaDetalle.printFormatCancel')"
+      @select="onPrintFormatSelect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { format as fnsFormat } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
-import { computed } from 'vue'
+import { computed, inject, nextTick, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
 import { useQuery } from '@pinia/colada'
@@ -667,12 +723,18 @@ import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useWarehouseCopy } from '~/composables/useWarehouseCopy'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
+import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
+import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import type { PrintFormatChoice } from '~/components/ui/PrintFormatChooserModal.vue'
 
 const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
+const { printElement: printTicketElement } = useCajaTicketPrint()
+const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
+const printFormatModalOpen = ref(false)
 
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
@@ -1095,11 +1157,161 @@ const getAttachmentTypeLabel = (type: string) => {
 const getAttachmentUrl = (attachment: any) =>
   attachment?.file_url || attachment?.s3_url || attachment?.url || ''
 
+const printTicketItems = computed(() => {
+  const items = purchase.value?.items || []
+  return items.map((item: any) => {
+    const qty = item.purchase_quantity || item.quantity || 0
+    const unit = item.purchase_unit || item.unit || ''
+    return {
+      name: item.ingredient_name || '—',
+      qtyLabel: `${qty} ${unit}`.trim(),
+      unitCostLabel: formatUnitCost(getPurchaseUnitCost(item)),
+      totalLabel: formatCurrency(item.total_cost || 0),
+    }
+  })
+})
+
+const printDocumentItems = computed(() => {
+  const items = purchase.value?.items || []
+  return items.map((item: any) => {
+    const qty = item.purchase_quantity || item.quantity || 0
+    const unit = item.purchase_unit || item.unit || ''
+    return {
+      name: item.ingredient_name || '—',
+      qtyLabel: String(qty),
+      unit,
+      unitCostLabel: formatUnitCost(getPurchaseUnitCost(item)),
+      totalLabel: formatCurrency(item.total_cost || 0),
+      notes: item.notes || null,
+    }
+  })
+})
+
+const openPrintFormatChooser = () => {
+  if (!purchase.value) {
+    toast.error(t('abastecimiento.compraDirectaDetalle.printNoData'))
+    return
+  }
+  printFormatModalOpen.value = true
+}
+
+const onPrintFormatSelect = (format: PrintFormatChoice) => {
+  if (format === 'ticket') {
+    void printPurchaseTicket()
+    return
+  }
+  void printPurchaseDocument()
+}
+
+const printPurchaseTicket = async () => {
+  if (!purchase.value) {
+    toast.error(t('abastecimiento.compraDirectaDetalle.printNoData'))
+    return
+  }
+  document.body.classList.add('printing-receipt-ticket')
+  await nextTick()
+  const cleanup = () => {
+    document.body.classList.remove('printing-receipt-ticket')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  const printResult = await printTicketElement('direct-purchase-print-ticket', {
+    browserPrint: () => {},
+    getElementHtml: () => {
+      if (typeof document === 'undefined') return null
+      return collectThermalTicketText(document.querySelector('#direct-purchase-print-ticket')) || null
+    },
+  })
+  if (printResult.mode === 'bridge') {
+    cleanup()
+    notifyCajaPrintResult(printResult, {
+      t,
+      toast,
+      onRetry: () => { void printPurchaseTicket() },
+      onBrowserPrint: () => {
+        document.body.classList.add('printing-receipt-ticket')
+        window.addEventListener('afterprint', cleanup)
+        window.setTimeout(cleanup, 1500)
+        window.print()
+      },
+    })
+    return
+  }
+  if (printResult.mode === 'skipped') {
+    cleanup()
+    return
+  }
+  window.addEventListener('afterprint', cleanup)
+  window.print()
+  window.setTimeout(cleanup, 1500)
+}
+
+const printPurchaseDocument = async () => {
+  if (!purchase.value) {
+    toast.error(t('abastecimiento.compraDirectaDetalle.printNoData'))
+    return
+  }
+  document.body.classList.add('printing-letter-document')
+  await nextTick()
+  const cleanup = () => {
+    document.body.classList.remove('printing-letter-document')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  window.addEventListener('afterprint', cleanup)
+  window.print()
+  window.setTimeout(cleanup, 1500)
+}
+
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-onMounted(() => { setRefreshHandler(refetch) })
+onMounted(() => {
+  setRefreshHandler(refetch)
+  setHeaderAction?.({
+    label: t('abastecimiento.compraDirectaDetalle.print'),
+    ariaLabel: t('abastecimiento.compraDirectaDetalle.printAria'),
+    icon: 'printer',
+    iconOnly: true,
+    handler: () => { openPrintFormatChooser() },
+  })
+})
 registerProgressiveLoading(isRefreshing)
-onUnmounted(() => { clearRefreshHandler(refetch) })
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+  setHeaderAction?.(undefined)
+})
 </script>
+
+<style>
+@media print {
+  body.printing-receipt-ticket * {
+    visibility: hidden !important;
+  }
+  body.printing-receipt-ticket #direct-purchase-print-ticket,
+  body.printing-receipt-ticket #direct-purchase-print-ticket * {
+    visibility: visible !important;
+  }
+  body.printing-receipt-ticket #direct-purchase-print-ticket {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm;
+  }
+
+  body.printing-letter-document * {
+    visibility: hidden !important;
+  }
+  body.printing-letter-document #direct-purchase-print-document,
+  body.printing-letter-document #direct-purchase-print-document * {
+    visibility: visible !important;
+  }
+  body.printing-letter-document #direct-purchase-print-document {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+</style>
 
 <style scoped>
 .panel-enter-active,

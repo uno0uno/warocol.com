@@ -1,0 +1,51 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2131
+title: "Add dual print (thermal ticket + letter/legal HTML) for direct purchases and expenses"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2131-dual-print-compras-gastos
+
+paths:
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - pages/finanzas/gastos/[id]/index.vue
+  - components/ui/PrintFormatChooserModal.vue
+  - components/abastecimiento/DirectPurchasePrintTicket.vue
+  - components/abastecimiento/DirectPurchasePrintDocument.vue
+  - components/Finanzas/ExpensePrintDocument.vue
+  - i18n/locales/es/finanzas.json
+  - i18n/locales/en/finanzas.json
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+  - .wr/2131.yaml
+
+ac:
+  - Direct purchase detail has header Imprimir action
+  - Print opens format chooser: Tirilla vs HTML carta/oficio
+  - Tirilla uses thermal bridge with browser ticket fallback
+  - Carta/oficio prints letter-sized HTML with purchase data
+  - Expense header print opens same chooser; tirilla kept; letter HTML added
+  - Print CSS shows only selected surface
+  - i18n es/en for chooser and print labels
+
+out_of_scope:
+  - API / PDF backend
+  - list/create/edit pages
+  - POS/ventas print changes
+  - printer assignment settings UI
+
+hints:
+  entry: "pages/finanzas/gastos/[id]/index.vue printExpense + ExpensePrintTicket; useCajaTicketPrint"
+  pattern: "gastos/[id]/index.vue: setHeaderAction printer + printing-receipt-ticket body class"
+  tests: "bun test composables/useCajaTicketPrint.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-review on PR if needed"
