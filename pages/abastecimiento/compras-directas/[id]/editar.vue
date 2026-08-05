@@ -860,6 +860,7 @@ import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, readFromCashDrawer } from '~/utils/paymentDefaults'
 
+const { t } = useI18n({ useScope: 'global' })
 const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
 const {
   formatCurrency,
