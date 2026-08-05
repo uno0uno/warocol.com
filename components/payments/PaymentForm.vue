@@ -46,6 +46,23 @@
               </p>
             </div>
 
+            <div v-if="formData.payment_method === 'cash'" class="space-y-1.5">
+              <label class="block text-sm font-medium text-text-primary">
+                {{ t('finanzas.paymentForm.fromCashDrawerLabel') }}
+              </label>
+              <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                  <input v-model="formData.from_cash_drawer" type="radio" :value="true" class="text-primary" />
+                  {{ t('finanzas.paymentForm.fromCashDrawerYes') }}
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                  <input v-model="formData.from_cash_drawer" type="radio" :value="false" class="text-primary" />
+                  {{ t('finanzas.paymentForm.fromCashDrawerNo') }}
+                </label>
+              </div>
+              <p class="text-xs text-text-secondary">{{ t('finanzas.paymentForm.fromCashDrawerHelp') }}</p>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Referencia de Pago *</label>
               <input v-model="formData.payment_reference" type="text" required
@@ -199,8 +216,8 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { ref, computed, onMounted } from 'vue'
-import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
+import { ref, computed, onMounted, watch } from 'vue'
+import { mergePosPaymentGroupsFromApi, isCashPaymentSlug } from '~/utils/paymentDefaults'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
@@ -236,6 +253,7 @@ const formData = ref({
   payment_reference: '',
   payment_amount: 0,
   payment_date: '',
+  from_cash_drawer: true,
   notes: ''
 })
 
@@ -325,9 +343,23 @@ onMounted(() => {
     payment_reference: '',
     payment_amount: totalAmount.value,
     payment_date: tenantDateTimeLocalNow(),
+    from_cash_drawer: true,
     notes: ''
   }
 })
+
+watch(
+  () => formData.value.payment_method,
+  (method) => {
+    if (!isCashPaymentSlug(method)) formData.value.from_cash_drawer = true
+  },
+)
+
+function appendDrawerFlag(payload: FormData) {
+  if (isCashPaymentSlug(formData.value.payment_method)) {
+    payload.append('from_cash_drawer', String(formData.value.from_cash_drawer))
+  }
+}
 
 const handleSubmit = async () => {
   if (!canSubmitPayment.value) return
@@ -368,6 +400,7 @@ const handleSubmit = async () => {
           if (formData.value.notes) {
             formDataPayload.append('notes', formData.value.notes)
           }
+          appendDrawerFlag(formDataPayload)
 
           // Create new File objects from stored blobs for each request
           if (fileData.length > 0) {
@@ -433,6 +466,7 @@ const handleSubmit = async () => {
       if (formData.value.notes) {
         formDataPayload.append('notes', formData.value.notes)
       }
+      appendDrawerFlag(formDataPayload)
 
       if (selectedFiles.value.length > 0) {
         for (const file of selectedFiles.value) {

@@ -105,6 +105,12 @@
                 <p class="text-lg font-semibold text-text-primary">
                   {{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}
                 </p>
+                <p
+                  v-if="isExpenseCash"
+                  class="text-sm text-text-secondary"
+                >
+                  {{ expenseCashDrawerLabel }}
+                </p>
               </div>
             </div>
           </div>
@@ -763,6 +769,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import { isCashPaymentSlug, readFromCashDrawer } from '~/utils/paymentDefaults'
 import type { PrintFormatChoice } from '~/components/ui/PrintFormatChooserModal.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
@@ -833,6 +840,13 @@ const { data: expenseData, asyncStatus, error: fetchError, refetch } = useQuery(
 const expense = computed(() => (expenseData.value as any)?.data)
 const isLoading = computed(() => !expenseData.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && expenseData.value != null)
+
+const isExpenseCash = computed(() => isCashPaymentSlug(expense.value?.paymentMethod))
+const expenseCashDrawerLabel = computed(() =>
+  readFromCashDrawer(expense.value)
+    ? t('finanzas.gastos.fromCashDrawerYes')
+    : t('finanzas.gastos.fromCashDrawerNo'),
+)
 
 useHead({
   title: () => expense.value

@@ -47,6 +47,44 @@ export const SYNTHETIC_POS_PAYMENT_SLUGS = [WALLET_PAYMENT_SLUG] as const
 /** POS-only tenders that must not appear on supplier purchase payment pickers (#1823). */
 export const PURCHASE_EXCLUDED_PAYMENT_SLUGS = ['credit', WALLET_PAYMENT_SLUG] as const
 
+/** Till cash group slug (api-warolabs#786 / warocol.com#2135). */
+export const CASH_PAYMENT_SLUG = 'cash'
+
+export function isCashPaymentSlug(slug: string | null | undefined): boolean {
+  return (slug || '').trim().toLowerCase() === CASH_PAYMENT_SLUG
+}
+
+/** Resolve group slug from a select value that may be a group slug or method UUID. */
+export function resolvePaymentGroupSlug(
+  value: string | null | undefined,
+  groups: PosPaymentGroup[],
+): string | null {
+  if (!value) return null
+  const v = String(value).trim()
+  for (const group of groups) {
+    if (group.slug === v) return group.slug
+    if (group.methods.some(m => m.id === v)) return group.slug
+  }
+  return isCashPaymentSlug(v) ? CASH_PAYMENT_SLUG : v
+}
+
+export function isCashPaymentSelection(
+  value: string | null | undefined,
+  groups: PosPaymentGroup[],
+): boolean {
+  return isCashPaymentSlug(resolvePaymentGroupSlug(value, groups))
+}
+
+/** Normalize API camelCase / snake_case drawer flag (default true = left the till). */
+export function readFromCashDrawer(
+  record: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!record) return true
+  const raw = record.fromCashDrawer ?? record.from_cash_drawer
+  if (raw === undefined || raw === null) return true
+  return Boolean(raw)
+}
+
 /**
  * Merge tenant API payment groups with synthetic defaults (e.g. customer_wallet).
  * The wallet tender is handled in checkout logic but is not a DB-configured group.

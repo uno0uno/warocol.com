@@ -111,6 +111,23 @@
                 </select>
               </div>
 
+              <div v-if="isCashMethodSelected" class="space-y-1.5">
+                <label class="block text-sm font-medium text-text-primary">
+                  {{ t('finanzas.gastos.fromCashDrawerLabel') }}
+                </label>
+                <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                    <input v-model="form.fromCashDrawer" type="radio" :value="true" class="text-primary" />
+                    {{ t('finanzas.gastos.fromCashDrawerYes') }}
+                  </label>
+                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                    <input v-model="form.fromCashDrawer" type="radio" :value="false" class="text-primary" />
+                    {{ t('finanzas.gastos.fromCashDrawerNo') }}
+                  </label>
+                </div>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.gastos.fromCashDrawerHelp') }}</p>
+              </div>
+
               <!-- Expense Type -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -159,9 +176,11 @@
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
+import { isCashPaymentSelection, readFromCashDrawer } from '~/utils/paymentDefaults'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
+const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const expenseId = route.params.id as string
 
@@ -208,6 +227,7 @@ const form = reactive({
   description: '',
   amount: null as number | null,
   paymentMethod: 'cash',
+  fromCashDrawer: true,
   expenseType: '' as string,
 })
 
@@ -218,11 +238,19 @@ const paymentOptionValues = computed(() => paymentGroups.value.flatMap((group: a
 
 const firstPaymentOption = computed(() => paymentOptionValues.value[0] || 'cash')
 
+const isCashMethodSelected = computed(() =>
+  isCashPaymentSelection(form.paymentMethod, paymentGroups.value as any[]),
+)
+
 watch(paymentGroups, () => {
   if (!paymentOptionValues.value.includes(form.paymentMethod)) {
     form.paymentMethod = firstPaymentOption.value
   }
 }, { immediate: true, deep: true })
+
+watch(isCashMethodSelected, (isCash) => {
+  if (!isCash) form.fromCashDrawer = true
+})
 
 // Initialize form with expense data
 watch(expense, (newExpense) => {
@@ -232,6 +260,7 @@ watch(expense, (newExpense) => {
     form.description = newExpense.description || ''
     form.amount = newExpense.amount || null
     form.paymentMethod = newExpense.paymentMethodId || newExpense.paymentMethod || firstPaymentOption.value
+    form.fromCashDrawer = readFromCashDrawer(newExpense)
     form.expenseType = newExpense.expenseType || ''
   }
 }, { immediate: true })
@@ -262,6 +291,7 @@ const handleSubmit = async () => {
       amount: form.amount,
       paymentMethod: form.paymentMethod,
       expenseType: form.expenseType || null,
+      ...(isCashMethodSelected.value ? { fromCashDrawer: form.fromCashDrawer } : {}),
     }
 
     await $fetch(`/api/finance/expenses/${expenseId}`, {

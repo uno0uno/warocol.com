@@ -103,7 +103,26 @@
                   </template>
                 </select>
               </div>
-              <div v-else class="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-text-secondary">
+              <div
+                v-if="form.paymentType === 'contado' && isCashMethodSelected"
+                class="space-y-1.5"
+              >
+                <label class="block text-sm font-medium text-text-primary">
+                  {{ t('finanzas.gastos.fromCashDrawerLabel') }}
+                </label>
+                <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                    <input v-model="form.fromCashDrawer" type="radio" :value="true" class="text-primary" />
+                    {{ t('finanzas.gastos.fromCashDrawerYes') }}
+                  </label>
+                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                    <input v-model="form.fromCashDrawer" type="radio" :value="false" class="text-primary" />
+                    {{ t('finanzas.gastos.fromCashDrawerNo') }}
+                  </label>
+                </div>
+                <p class="text-xs text-text-secondary">{{ t('finanzas.gastos.fromCashDrawerHelp') }}</p>
+              </div>
+              <div v-else-if="form.paymentType === 'credito'" class="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-text-secondary">
                 {{ t('finanzas.gastos.creditPayableHelp') }}
               </div>
 
@@ -268,6 +287,15 @@
               <span class="text-text-secondary">{{ t('finanzas.gastos.methodLabel') }}</span>
               <span class="font-semibold text-text-primary text-end truncate">{{ paymentMethodLabel }}</span>
             </div>
+            <div
+              v-if="form.paymentType === 'contado' && isCashMethodSelected"
+              class="flex justify-between gap-3 text-sm"
+            >
+              <span class="text-text-secondary">{{ t('finanzas.gastos.fromCashDrawerLabel') }}</span>
+              <span class="font-semibold text-text-primary text-end truncate">
+                {{ form.fromCashDrawer ? t('finanzas.gastos.fromCashDrawerYes') : t('finanzas.gastos.fromCashDrawerNo') }}
+              </span>
+            </div>
             <div class="flex justify-between gap-3 text-sm">
               <span class="text-text-secondary">{{ t('finanzas.gastos.typeLabel') }}</span>
               <span class="font-semibold text-text-primary text-end">{{ expenseTypeLabel }}</span>
@@ -325,6 +353,7 @@ import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
+import { isCashPaymentSelection } from '~/utils/paymentDefaults'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -378,6 +407,7 @@ const form = reactive({
   amount: null as number | null,
   paymentType: 'contado' as 'contado' | 'credito',
   paymentMethod: 'cash',
+  fromCashDrawer: true,
   expenseType: '' as string,
   isRecurring: false,
   frequency: '',
@@ -391,11 +421,19 @@ const paymentOptionValues = computed(() => paymentGroups.value.flatMap((group: a
 
 const firstPaymentOption = computed(() => paymentOptionValues.value[0] || 'cash')
 
+const isCashMethodSelected = computed(() =>
+  isCashPaymentSelection(form.paymentMethod, paymentGroups.value as any[]),
+)
+
 watch(paymentGroups, () => {
   if (!paymentOptionValues.value.includes(form.paymentMethod)) {
     form.paymentMethod = firstPaymentOption.value
   }
 }, { immediate: true, deep: true })
+
+watch(isCashMethodSelected, (isCash) => {
+  if (!isCash) form.fromCashDrawer = true
+})
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
@@ -502,6 +540,9 @@ const handleSubmit = async () => {
       paymentType: form.paymentType,
       paymentMethod: form.paymentType === 'contado' ? form.paymentMethod : null,
       expenseType: form.expenseType || null,
+      ...(form.paymentType === 'contado' && isCashMethodSelected.value
+        ? { fromCashDrawer: form.fromCashDrawer }
+        : {}),
     }
 
     const response: any = await $fetch('/api/finance/expenses', {

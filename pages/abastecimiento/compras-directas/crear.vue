@@ -532,6 +532,25 @@
                   </select>
                 </div>
 
+                <div v-if="hasPaymentSelected && isCashPaymentSelected" class="space-y-1.5">
+                  <label class="block text-sm font-medium text-text-primary">
+                    {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerLabel') }}
+                  </label>
+                  <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                    <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                      <input v-model="form.from_cash_drawer" type="radio" :value="true" class="text-primary" />
+                      {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes') }}
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                      <input v-model="form.from_cash_drawer" type="radio" :value="false" class="text-primary" />
+                      {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo') }}
+                    </label>
+                  </div>
+                  <p class="text-xs text-text-secondary">
+                    {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerHelp') }}
+                  </p>
+                </div>
+
                 <div v-if="hasPaymentSelected">
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Referencia de pago</label>
                   <input
@@ -599,6 +618,17 @@
                   <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
                     <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
+                  </div>
+                  <div
+                    v-if="hasPaymentSelected && form.payment_type !== 'credito' && isCashPaymentSelected"
+                    class="flex justify-between items-center"
+                  >
+                    <p class="text-xs font-medium text-text-secondary">{{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerLabel') }}</p>
+                    <p class="text-xs font-semibold text-text-primary">
+                      {{ form.from_cash_drawer
+                        ? t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes')
+                        : t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo') }}
+                    </p>
                   </div>
                   <div v-if="hasPaymentSelected && form.payment_type !== 'credito'" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Fecha pago</p>
@@ -754,7 +784,7 @@ import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
-import { filterPurchasePaymentGroups, mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
+import { filterPurchasePaymentGroups, isCashPaymentSlug, mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
@@ -832,6 +862,7 @@ const form = ref({
   payment_method_id: null as string | null,
   payment_reference: '',
   payment_date: localDateAtNoon(todayISO()) as Date | null,
+  from_cash_drawer: true,
   payment_files: [] as File[],
   items: [createEmptyItem()] as PurchaseItem[]
 })
@@ -862,12 +893,18 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+const isCashPaymentSelected = computed(() => isCashPaymentSlug(form.value.payment_method))
+
+watch(isCashPaymentSelected, (isCash) => {
+  if (!isCash) form.value.from_cash_drawer = true
+})
 
 const clearPaymentProof = () => {
   form.value.payment_method = ''
   form.value.payment_method_id = null
   form.value.payment_reference = ''
   form.value.payment_date = null
+  form.value.from_cash_drawer = true
   form.value.payment_files = []
 }
 
@@ -1729,6 +1766,9 @@ const handleSubmit = async () => {
       }
       if (form.value.payment_reference) {
         payload.payment_reference = form.value.payment_reference
+      }
+      if (isCashPaymentSelected.value) {
+        payload.fromCashDrawer = form.value.from_cash_drawer
       }
     }
 
