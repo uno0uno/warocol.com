@@ -512,6 +512,25 @@
                     </select>
                   </div>
 
+                  <div v-if="hasPaymentSelected && isCashPaymentSelected" class="space-y-1.5">
+                    <label class="block text-sm font-medium text-text-secondary">
+                      {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerLabel') }}
+                    </label>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                      <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                        <input v-model="form.from_cash_drawer" type="radio" :value="true" class="text-primary" />
+                        {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes') }}
+                      </label>
+                      <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+                        <input v-model="form.from_cash_drawer" type="radio" :value="false" class="text-primary" />
+                        {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo') }}
+                      </label>
+                    </div>
+                    <p class="text-xs text-text-secondary">
+                      {{ t('abastecimiento.compraDirectaDetalle.fromCashDrawerHelp') }}
+                    </p>
+                  </div>
+
                   <div v-if="hasPaymentSelected">
                     <label class="block text-sm font-medium text-text-secondary mb-2">
                       Referencia de Pago
@@ -744,6 +763,14 @@
               <div v-if="form.payment_type !== 'credito' && (hasPaymentSelected || form.payment_files.length)">
                 <p class="text-sm text-text-secondary">Pago:</p>
                 <p v-if="hasPaymentSelected" class="font-medium text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
+                <p
+                  v-if="hasPaymentSelected && isCashPaymentSelected"
+                  class="text-xs text-text-secondary"
+                >
+                  {{ form.from_cash_drawer
+                    ? t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes')
+                    : t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo') }}
+                </p>
                 <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
                 <p v-if="existingPaymentAttachments.length" class="text-xs text-success mt-1">{{ existingPaymentAttachments.length }} comprobante(s) existente(s)</p>
                 <p v-if="form.payment_files.length" class="text-xs text-primary mt-1">+ {{ form.payment_files.length }} comprobante(s) nuevo(s)</p>
@@ -831,7 +858,7 @@ import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
-import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
+import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, readFromCashDrawer } from '~/utils/paymentDefaults'
 
 const { todayISO, dateAtNoon, isoFromDate, timeHHMMFromISO, combineDateAndTimeISO } = useTenantTimezone()
 const {
@@ -889,6 +916,7 @@ const form = ref({
   payment_method: '',
   payment_method_id: null as string | null,
   payment_reference: '',
+  from_cash_drawer: true,
   payment_files: [] as File[],
   items: [] as PurchaseItem[]
 })
@@ -908,11 +936,17 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+const isCashPaymentSelected = computed(() => isCashPaymentSlug(form.value.payment_method))
+
+watch(isCashPaymentSelected, (isCash) => {
+  if (!isCash) form.value.from_cash_drawer = true
+})
 
 const clearPaymentProof = () => {
   form.value.payment_method = ''
   form.value.payment_method_id = null
   form.value.payment_reference = ''
+  form.value.from_cash_drawer = true
   form.value.payment_files = []
 }
 
@@ -960,6 +994,7 @@ watch(originalPurchase, (purchase) => {
     form.value.payment_method = purchase.payment_method || ''
     form.value.payment_method_id = purchase.payment_method_id || null
     form.value.payment_reference = purchase.payment_reference || ''
+    form.value.from_cash_drawer = readFromCashDrawer(purchase)
     // Contado without method is invalid on load — normalize to crédito
     if (form.value.payment_type === 'contado' && !form.value.payment_method && !form.value.payment_method_id) {
       form.value.payment_type = 'credito'
@@ -1236,7 +1271,10 @@ const handleSubmit = async () => {
       payment_method_id: isCredit ? null : (form.value.payment_method_id || null),
       payment_reference: isCredit ? null : (form.value.payment_reference || null),
       payment_amount: !isCredit && form.value.payment_method ? Number(totalAmount.value) : null,
-      payment_date: !isCredit && form.value.payment_method ? tenantNowISO() : null
+      payment_date: !isCredit && form.value.payment_method ? tenantNowISO() : null,
+      ...(!isCredit && isCashPaymentSelected.value
+        ? { fromCashDrawer: form.value.from_cash_drawer }
+        : {}),
     }
 
     // 2. Update Direct Purchase (PUT - JSON)

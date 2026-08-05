@@ -67,6 +67,12 @@
           <p class="text-lg font-semibold text-text-primary">
             {{ purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—' }}
           </p>
+          <p
+            v-if="isPurchaseCash"
+            class="text-sm text-text-secondary"
+          >
+            {{ purchaseCashDrawerLabel }}
+          </p>
         </PurchasesPurchaseInfoCard>
       </PurchasesPurchaseOrderHeader>
 
@@ -725,6 +731,7 @@ import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import { isCashPaymentSlug, readFromCashDrawer } from '~/utils/paymentDefaults'
 import type { PrintFormatChoice } from '~/components/ui/PrintFormatChooserModal.vue'
 
 const route = useRoute()
@@ -782,6 +789,12 @@ const { data: purchaseResponse, asyncStatus, error: fetchError, refetch } = useQ
 })
 
 const purchase = computed(() => (purchaseResponse.value as any)?.data || null)
+const isPurchaseCash = computed(() => isCashPaymentSlug(purchase.value?.payment_method))
+const purchaseCashDrawerLabel = computed(() =>
+  readFromCashDrawer(purchase.value)
+    ? t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes')
+    : t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo'),
+)
 const isLoading = computed(() => !purchaseResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && purchaseResponse.value != null)
 const refresh = refetch
