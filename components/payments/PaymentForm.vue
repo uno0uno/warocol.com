@@ -47,18 +47,30 @@
             </div>
 
             <div v-if="showCashDrawerToggle" class="space-y-1.5">
-              <label class="block text-sm font-medium text-text-primary">
+              <label id="payment-cash-drawer-label" class="block text-sm font-medium text-text-primary">
                 {{ t('finanzas.paymentForm.fromCashDrawerLabel') }}
               </label>
-              <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
-                  <input v-model="formData.from_cash_drawer" type="radio" :value="true" class="text-primary" />
+              <div
+                class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                role="group"
+                aria-labelledby="payment-cash-drawer-label"
+              >
+                <button
+                  type="button"
+                  :aria-pressed="formData.from_cash_drawer === true"
+                  :class="cashDrawerButtonClass(true)"
+                  @click="formData.from_cash_drawer = true"
+                >
                   {{ t('finanzas.paymentForm.fromCashDrawerYes') }}
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
-                  <input v-model="formData.from_cash_drawer" type="radio" :value="false" class="text-primary" />
+                </button>
+                <button
+                  type="button"
+                  :aria-pressed="formData.from_cash_drawer === false"
+                  :class="cashDrawerButtonClass(false)"
+                  @click="formData.from_cash_drawer = false"
+                >
                   {{ t('finanzas.paymentForm.fromCashDrawerNo') }}
-                </label>
+                </button>
               </div>
               <p class="text-xs text-text-secondary">{{ t('finanzas.paymentForm.fromCashDrawerHelp') }}</p>
             </div>
@@ -158,9 +170,16 @@
           <!-- Actions -->
           <div class="space-y-3">
             <button type="submit" :disabled="!canSubmitPayment"
-              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-primary/20">
-              <CommonsTheCustomLoader v-if="loading" size="small" />
-              <span>{{ submitButtonLabel }}</span>
+              class="w-full py-3 bg-action-success-bg text-action-success-text rounded-lg hover:bg-action-success-hover-bg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold shadow-lg shadow-primary/20">
+              <template v-if="loading">
+                <span>{{ submitButtonLabel }}</span>
+                <CommonsInlineDots
+                  :size="5"
+                  color="currentColor"
+                  :aria-label="t('finanzas.paymentForm.processing')"
+                />
+              </template>
+              <span v-else>{{ submitButtonLabel }}</span>
             </button>
             
             <button type="button" @click="$emit('cancel')" :disabled="loading"
@@ -194,9 +213,17 @@
         <button
           type="submit"
           :disabled="!canSubmitPayment"
-          class="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+          class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
-          <span>{{ compactSubmitButtonLabel }}</span>
+          <template v-if="loading">
+            <span>{{ compactSubmitButtonLabel }}</span>
+            <CommonsInlineDots
+              :size="5"
+              color="currentColor"
+              :aria-label="t('finanzas.paymentForm.processing')"
+            />
+          </template>
+          <span v-else>{{ compactSubmitButtonLabel }}</span>
         </button>
       </div>
     </div>
@@ -370,6 +397,16 @@ function appendDrawerFlag(payload: FormData) {
     formData.value.payment_method,
     formData.value.from_cash_drawer,
   )
+}
+
+function cashDrawerButtonClass(isFromDrawer: boolean) {
+  const selected = formData.value.from_cash_drawer === isFromDrawer
+  return [
+    'min-h-11 rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+    selected
+      ? 'border-primary bg-primary/10 text-primary'
+      : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:bg-surface-secondary hover:text-text-primary',
+  ]
 }
 
 const handleSubmit = async () => {
