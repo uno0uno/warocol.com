@@ -56,5 +56,7 @@ describe('cash drawer helpers (#2135)', () => {
     assert.equal(readFromCashDrawer({ fromCashDrawer: false }), false)
     assert.equal(readFromCashDrawer({ from_cash_drawer: false }), false)
     assert.equal(readFromCashDrawer({ fromCashDrawer: true }), true)
+    assert.equal(readFromCashDrawer({ fromCashDrawer: 'false' }), false)
+    assert.equal(readFromCashDrawer({ from_cash_drawer: 'true' }), true)
   })
 })

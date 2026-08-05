@@ -82,6 +82,12 @@ export function readFromCashDrawer(
   if (!record) return true
   const raw = record.fromCashDrawer ?? record.from_cash_drawer
   if (raw === undefined || raw === null) return true
+  if (typeof raw === 'boolean') return raw
+  if (typeof raw === 'string') {
+    const normalized = raw.trim().toLowerCase()
+    if (normalized === 'false' || normalized === '0') return false
+    if (normalized === 'true' || normalized === '1') return true
+  }
   return Boolean(raw)
 }
 

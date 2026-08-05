@@ -46,7 +46,7 @@
               </p>
             </div>
 
-            <div v-if="formData.payment_method === 'cash'" class="space-y-1.5">
+            <div v-if="showCashDrawerToggle" class="space-y-1.5">
               <label class="block text-sm font-medium text-text-primary">
                 {{ t('finanzas.paymentForm.fromCashDrawerLabel') }}
               </label>
@@ -275,6 +275,10 @@ const paymentGroups = computed(() =>
     .filter(group => group.slug !== 'credit' && !group.triggersCartera),
 )
 const { paymentSelectValue } = usePaymentSelectValue(formData, paymentGroups)
+/** Expense pay persists from_cash_drawer; purchase /pay ignores it until API follow-up. */
+const showCashDrawerToggle = computed(
+  () => props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method),
+)
 const selectedPaymentPucLabel = computed(() => {
   if (!formData.value.payment_method) return ''
   const group = paymentGroups.value.find(g => g.slug === formData.value.payment_method)
@@ -356,7 +360,8 @@ watch(
 )
 
 function appendDrawerFlag(payload: FormData) {
-  if (isCashPaymentSlug(formData.value.payment_method)) {
+  // Only expense pay accepts/persists the flag today (api-warolabs#786).
+  if (props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method)) {
     payload.append('from_cash_drawer', String(formData.value.from_cash_drawer))
   }
 }
