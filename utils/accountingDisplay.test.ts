@@ -27,6 +27,7 @@ describe('localizeSystemAccountName', () => {
     if (key === 'finanzas.contabilidad.systemAccounts.taxPayable') return 'Impuestos por pagar'
     if (key === 'finanzas.contabilidad.systemAccounts.assets') return 'Activos'
     if (key === 'finanzas.contabilidad.systemAccounts.currentAssets') return 'Activos corrientes'
+    if (key === 'finanzas.contabilidad.systemAccounts.expenses') return 'Gastos'
     return key
   }
 
@@ -40,6 +41,25 @@ describe('localizeSystemAccountName', () => {
     assert.equal(
       localizeSystemAccountName({ code: '10', name: 'Current assets' }, t),
       'Activos corrientes',
+    )
+  })
+
+  it('keeps CO PUC class stored names when isColombiaPuc (#2137)', () => {
+    assert.equal(
+      localizeSystemAccountName(
+        { code: '5', name: 'Gastos operacionales de administración' },
+        t,
+        { isColombiaPuc: true },
+      ),
+      'Gastos operacionales de administración',
+    )
+    assert.equal(
+      localizeSystemAccountName(
+        { code: '1', name: 'Activo' },
+        t,
+        { isColombiaPuc: true },
+      ),
+      'Activo',
     )
   })
 
