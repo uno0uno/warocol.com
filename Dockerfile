@@ -27,4 +27,10 @@ ENV HOST=0.0.0.0
 ENV NODE_ENV=production
 
 EXPOSE 3001
+
+# Liveness: Bun event-loop hang accepts TCP but fails HTTP (#2133).
+# Probe /health (not /api/* — that prefix is proxied to the API).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD bun -e "fetch('http://127.0.0.1:3001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
 CMD ["bun", ".output/server/index.mjs"]

@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-fast #2133. Keep <=80 lines.
+issue: 2133
+title: "chore(ops): add Docker HEALTHCHECK so warocol-nuxt restarts on hang"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2133-nuxt-healthcheck
+
+paths:
+  - server/routes/health.get.ts
+  - server/routes/health.get.test.mjs
+  - Dockerfile
+  - docker-compose.prod.yml
+  - .wr/2133.yaml
+
+ac:
+  - HEALTHCHECK probes HTTP on app port (~30s)
+  - Hang (TCP up, HTTP dead) → unhealthy within a few intervals
+  - Unhealthy → auto restart (autoheal + label); restart policy alone is not enough
+  - Deploy note: one-time recreate for healthcheck/autoheal
+  - No Postgres / Fluent Bit / API changes
+
+out_of_scope:
+  - Nitro request logging
+  - SSE notifications stream hardening
+  - Memory limits / nginx alerts
+
+hints:
+  entry: "server/routes/health.get.ts → GET /health (not /api/*)"
+  pattern: "docker-compose.prod.yml restart: unless-stopped; /api/** proxied in nuxt.config"
+  tests: "node --test server/routes/health.get.test.mjs (structural)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "server: pull + compose build + up -d (recreate once for healthcheck)"
