@@ -678,6 +678,36 @@
       :type-value="expenseTypeLabel(expense.expenseType)"
     />
 
+    <FinanzasExpensePrintDocument
+      v-if="expense"
+      :title="t('finanzas.gastos.printTitle')"
+      :expense-number="expense.expenseNumber"
+      :date-label="t('finanzas.gastos.colDate')"
+      :category-label="t('finanzas.gastos.colCategory')"
+      :description-label="t('finanzas.gastos.colDesc')"
+      :amount-label="t('finanzas.gastos.colAmount')"
+      :method-label="t('finanzas.common.method')"
+      :type-label="t('finanzas.gastos.colType')"
+      :date-value="formatCalendarDate(expense.transactionDate)"
+      :category-value="expense.category?.categoryName || t('finanzas.common.noCategory')"
+      :description-value="expense.description || t('finanzas.gastos.noDesc')"
+      :amount-value="formatCurrency(expense.amount)"
+      :method-value="resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId)"
+      :type-value="expenseTypeLabel(expense.expenseType)"
+    />
+
+    <UiPrintFormatChooserModal
+      v-model="printFormatModalOpen"
+      :title="t('finanzas.gastos.printFormatTitle')"
+      :message="t('finanzas.gastos.printFormatMessage')"
+      :ticket-label="t('finanzas.gastos.printFormatTicket')"
+      :ticket-hint="t('finanzas.gastos.printFormatTicketHint')"
+      :document-label="t('finanzas.gastos.printFormatDocument')"
+      :document-hint="t('finanzas.gastos.printFormatDocumentHint')"
+      :cancel-label="t('finanzas.gastos.printFormatCancel')"
+      @select="onPrintFormatSelect"
+    />
+
     <UiConfirmActionModal
       v-model="quotaLimitModalOpen"
       :title="t('billing.upgrade.quotaBlocked')"
@@ -706,6 +736,21 @@
     top: 0;
     width: 72mm;
   }
+
+  body.printing-letter-document * {
+    visibility: hidden !important;
+  }
+  body.printing-letter-document #expense-print-document,
+  body.printing-letter-document #expense-print-document * {
+    visibility: visible !important;
+  }
+  body.printing-letter-document #expense-print-document {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
 }
 </style>
 
@@ -718,6 +763,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import type { PrintFormatChoice } from '~/components/ui/PrintFormatChooserModal.vue'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
@@ -741,6 +787,7 @@ const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 const { printElement: printTicketElement } = useCajaTicketPrint()
 const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
+const printFormatModalOpen = ref(false)
 
 // Payment methods
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
@@ -802,7 +849,7 @@ onMounted(() => {
     ariaLabel: t('finanzas.gastos.printAria'),
     icon: 'printer',
     iconOnly: true,
-    handler: () => { void printExpense() },
+    handler: () => { openPrintFormatChooser() },
   })
 })
 registerProgressiveLoading(isRefreshing)
@@ -898,7 +945,23 @@ const expenseTypeLabel = (type?: string | null) => {
   }
 }
 
-const printExpense = async () => {
+const openPrintFormatChooser = () => {
+  if (!expense.value) {
+    useToast().error(t('finanzas.gastos.printNoData'))
+    return
+  }
+  printFormatModalOpen.value = true
+}
+
+const onPrintFormatSelect = (format: PrintFormatChoice) => {
+  if (format === 'ticket') {
+    void printExpenseTicket()
+    return
+  }
+  void printExpenseDocument()
+}
+
+const printExpenseTicket = async () => {
   if (!expense.value) {
     useToast().error(t('finanzas.gastos.printNoData'))
     return
@@ -921,7 +984,7 @@ const printExpense = async () => {
     notifyCajaPrintResult(printResult, {
       t,
       toast: useToast(),
-      onRetry: () => { void printExpense() },
+      onRetry: () => { void printExpenseTicket() },
       onBrowserPrint: () => {
         document.body.classList.add('printing-receipt-ticket')
         window.addEventListener('afterprint', cleanup)
@@ -934,6 +997,22 @@ const printExpense = async () => {
   if (printResult.mode === 'skipped') {
     cleanup()
     return
+  }
+  window.addEventListener('afterprint', cleanup)
+  window.print()
+  window.setTimeout(cleanup, 1500)
+}
+
+const printExpenseDocument = async () => {
+  if (!expense.value) {
+    useToast().error(t('finanzas.gastos.printNoData'))
+    return
+  }
+  document.body.classList.add('printing-letter-document')
+  await nextTick()
+  const cleanup = () => {
+    document.body.classList.remove('printing-letter-document')
+    window.removeEventListener('afterprint', cleanup)
   }
   window.addEventListener('afterprint', cleanup)
   window.print()
