@@ -217,7 +217,12 @@
 <script setup lang="ts">
 const { t } = useI18n()
 import { ref, computed, onMounted, watch } from 'vue'
-import { mergePosPaymentGroupsFromApi, isCashPaymentSlug } from '~/utils/paymentDefaults'
+import {
+  mergePosPaymentGroupsFromApi,
+  isCashPaymentSlug,
+  shouldShowCashDrawerToggle,
+  appendCashDrawerFormField,
+} from '~/utils/paymentDefaults'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
@@ -275,9 +280,9 @@ const paymentGroups = computed(() =>
     .filter(group => group.slug !== 'credit' && !group.triggersCartera),
 )
 const { paymentSelectValue } = usePaymentSelectValue(formData, paymentGroups)
-/** Expense pay persists from_cash_drawer; purchase /pay ignores it until API follow-up. */
+/** Cash drawer toggle for expense and purchase pay when method is cash. */
 const showCashDrawerToggle = computed(
-  () => props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method),
+  () => shouldShowCashDrawerToggle(formData.value.payment_method),
 )
 const selectedPaymentPucLabel = computed(() => {
   if (!formData.value.payment_method) return ''
@@ -360,10 +365,11 @@ watch(
 )
 
 function appendDrawerFlag(payload: FormData) {
-  // Only expense pay accepts/persists the flag today (api-warolabs#786).
-  if (props.payableKind === 'expense' && isCashPaymentSlug(formData.value.payment_method)) {
-    payload.append('from_cash_drawer', String(formData.value.from_cash_drawer))
-  }
+  appendCashDrawerFormField(
+    payload,
+    formData.value.payment_method,
+    formData.value.from_cash_drawer,
+  )
 }
 
 const handleSubmit = async () => {

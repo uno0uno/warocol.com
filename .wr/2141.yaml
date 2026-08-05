@@ -1,0 +1,39 @@
+# Compact plan for wr-fast #2141 (front companion). Keep <=80 lines.
+issue: 2141
+title: "feat(finanzas): from_cash_drawer en pago efectivo de compras"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2141-purchase-pay-cash-drawer
+
+paths:
+  - components/payments/PaymentForm.vue
+  - utils/paymentDefaults.ts
+  - utils/paymentDefaults.purchaseFilter.test.ts
+  - .wr/2141.yaml
+
+ac:
+  - Toggle visible for purchase cash (not only expense)
+  - FormData sends from_cash_drawer on purchase /pay
+  - Non-cash hides toggle
+  - Unit tests cover toggle + FormData helpers
+
+out_of_scope:
+  - API (companion PR on api-warolabs)
+  - POS checkout
+
+hints:
+  entry: "components/payments/PaymentForm.vue + paymentDefaults helpers"
+  pattern: "expense path already correct"
+  tests: "node --test utils/paymentDefaults.purchaseFilter.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review; wr-review"

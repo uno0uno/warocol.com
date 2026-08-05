@@ -2,11 +2,13 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   WALLET_PAYMENT_SLUG,
+  appendCashDrawerFormField,
   filterPurchasePaymentGroups,
   isCashPaymentSelection,
   mergePosPaymentGroupsFromApi,
   readFromCashDrawer,
   resolvePaymentGroupSlug,
+  shouldShowCashDrawerToggle,
 } from './paymentDefaults.ts'
 
 describe('filterPurchasePaymentGroups', () => {
@@ -58,5 +60,19 @@ describe('cash drawer helpers (#2135)', () => {
     assert.equal(readFromCashDrawer({ fromCashDrawer: true }), true)
     assert.equal(readFromCashDrawer({ fromCashDrawer: 'false' }), false)
     assert.equal(readFromCashDrawer({ from_cash_drawer: 'true' }), true)
+  })
+
+  it('purchase/expense pay: toggle only for cash and FormData flag (#2141)', () => {
+    assert.equal(shouldShowCashDrawerToggle('cash'), true)
+    assert.equal(shouldShowCashDrawerToggle('card'), false)
+    assert.equal(shouldShowCashDrawerToggle(''), false)
+
+    const cashPayload = new FormData()
+    appendCashDrawerFormField(cashPayload, 'cash', false)
+    assert.equal(cashPayload.get('from_cash_drawer'), 'false')
+
+    const cardPayload = new FormData()
+    appendCashDrawerFormField(cardPayload, 'card', false)
+    assert.equal(cardPayload.get('from_cash_drawer'), null)
   })
 })
