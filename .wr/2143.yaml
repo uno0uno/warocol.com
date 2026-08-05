@@ -1,0 +1,38 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2143
+title: "fix(finanzas): botones de caja + InlineDots en pagos"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2143-payment-drawer-buttons
+
+paths:
+  - components/payments/PaymentForm.vue
+
+ac:
+  - De caja / Fuera de caja son dos botones (no radio/checkbox) con estado seleccionado visible
+  - Misma UX en registrar pago, compra directa y gastos via PaymentForm compartido
+  - Logica from_cash_drawer sin cambio de contrato
+  - Al Procesando, CommonsInlineDots (no Matrix / TheCustomLoader en submit)
+  - Accesible (teclado / aria) y usable en mobile
+
+out_of_scope:
+  - API / reglas de arqueo / GL
+  - Loader de carga de metodos de pago (TheCustomLoader full-page)
+  - Otros loaders del modulo
+
+hints:
+  entry: "components/payments/PaymentForm.vue — showCashDrawerToggle + submit buttons"
+  pattern: "components/cocina/StationPanel.vue:186 InlineDots; pages/finanzas/contabilidad/cuentas/[id].vue:809 aria-pressed group"
+  tests: "rg -n 'type=\"radio\"|CommonsInlineDots|cashDrawerButtonClass|from_cash_drawer' components/payments/PaymentForm.vue"
+
+risk:
+  sensitive: false
+  areas: [payments-ux]
+
+skip:
+  audits: [color, typography, ux-full]
+
+next:
+  after_pr: "/wr-review"
