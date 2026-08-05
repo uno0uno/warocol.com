@@ -333,7 +333,7 @@
                 Tipo de pago
               </span>
               <div
-                class="grid grid-cols-3 gap-2"
+                class="grid grid-cols-2 gap-2"
                 role="radiogroup"
                 aria-label="Tipo de pago"
               >
@@ -469,7 +469,7 @@
                 </p>
               </div>
 
-              <!-- Contado / contraentrega: proof -->
+              <!-- Contado: proof (crédito pays later in Pagos) -->
               <div
                 v-else
                 class="border border-border rounded-xl p-4 bg-background space-y-4"
@@ -896,7 +896,6 @@ const form = ref({
 const paymentTypeOptions = [
   { value: 'credito', label: 'Crédito' },
   { value: 'contado', label: 'Contado' },
-  { value: 'contraentrega', label: 'Contraentrega' },
 ] as const
 
 // Payment methods
@@ -963,6 +962,10 @@ watch(originalPurchase, (purchase) => {
     form.value.payment_reference = purchase.payment_reference || ''
     // Contado without method is invalid on load — normalize to crédito
     if (form.value.payment_type === 'contado' && !form.value.payment_method && !form.value.payment_method_id) {
+      form.value.payment_type = 'credito'
+    }
+    // Contraentrega duplicates crédito on direct purchases — fold into crédito
+    if (form.value.payment_type === 'contraentrega') {
       form.value.payment_type = 'credito'
     }
     // Crédito must not keep a leftover method (marks paid / wrong GL)
