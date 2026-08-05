@@ -54,6 +54,21 @@ export function isCashPaymentSlug(slug: string | null | undefined): boolean {
   return (slug || '').trim().toLowerCase() === CASH_PAYMENT_SLUG
 }
 
+/** UI: show de caja / fuera de caja only for cash tender (#2141). */
+export function shouldShowCashDrawerToggle(slug: string | null | undefined): boolean {
+  return isCashPaymentSlug(slug)
+}
+
+/** FormData for expense/purchase /pay when method is cash. */
+export function appendCashDrawerFormField(
+  payload: FormData,
+  paymentMethodSlug: string | null | undefined,
+  fromCashDrawer: boolean,
+): void {
+  if (!isCashPaymentSlug(paymentMethodSlug)) return
+  payload.append('from_cash_drawer', String(fromCashDrawer))
+}
+
 /** Resolve group slug from a select value that may be a group slug or method UUID. */
 export function resolvePaymentGroupSlug(
   value: string | null | undefined,

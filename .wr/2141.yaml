@@ -9,21 +9,24 @@ branch: wr-2141-purchase-pay-cash-drawer
 
 paths:
   - components/payments/PaymentForm.vue
+  - utils/paymentDefaults.ts
+  - utils/paymentDefaults.purchaseFilter.test.ts
   - .wr/2141.yaml
 
 ac:
   - Toggle visible for purchase cash (not only expense)
   - FormData sends from_cash_drawer on purchase /pay
   - Non-cash hides toggle
+  - Unit tests cover toggle + FormData helpers
 
 out_of_scope:
   - API (companion PR on api-warolabs)
   - POS checkout
 
 hints:
-  entry: "components/payments/PaymentForm.vue showCashDrawerToggle + appendDrawerFlag"
+  entry: "components/payments/PaymentForm.vue + paymentDefaults helpers"
   pattern: "expense path already correct"
-  tests: "rg -n 'showCashDrawerToggle|appendDrawerFlag|from_cash_drawer' components/payments/PaymentForm.vue"
+  tests: "node --test utils/paymentDefaults.purchaseFilter.test.ts"
 
 risk:
   sensitive: false
