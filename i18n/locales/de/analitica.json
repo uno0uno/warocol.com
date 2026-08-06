@@ -349,7 +349,7 @@
         "rechargeAria": "Kunden-Wallet aufladen",
         "rechargeTitle": "Wallet aufladen",
         "currentBalance": "Aktueller Saldo",
-        "amount": "Betrag (COP)",
+        "amount": "Betrag ({currency})",
         "selectMethod": "Methode auswählen",
         "notesPlaceholder": "Z.B. Baraufladung...",
         "submitRecharge": "Aufladung registrieren",

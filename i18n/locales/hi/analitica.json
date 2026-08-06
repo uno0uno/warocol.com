@@ -349,7 +349,7 @@
         "rechargeAria": "ग्राहक का वॉलेट रिचार्ज करें",
         "rechargeTitle": "वॉलेट रिचार्ज करें",
         "currentBalance": "वर्तमान शेष",
-        "amount": "राशि (COP)",
+        "amount": "राशि ({currency})",
         "selectMethod": "तरीका चुनें",
         "notesPlaceholder": "उदा. नकद रिचार्ज...",
         "submitRecharge": "रिचार्ज दर्ज करें",

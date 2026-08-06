@@ -349,7 +349,7 @@
         "rechargeAria": "为客户钱包充值",
         "rechargeTitle": "钱包充值",
         "currentBalance": "当前余额",
-        "amount": "金额 (COP)",
+        "amount": "金额 ({currency})",
         "selectMethod": "选择方式",
         "notesPlaceholder": "例如：现金充值...",
         "submitRecharge": "登记充值",

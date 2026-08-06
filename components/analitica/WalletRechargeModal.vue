@@ -66,7 +66,7 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="wallet-amount" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.wallet.amount') }}</label>
+            <label for="wallet-amount" class="text-sm font-medium text-text-primary">{{ t('analitica.customerDetail.wallet.amount', { currency: currencyCode }) }}</label>
             <input
               id="wallet-amount"
               v-model.number="amount"
@@ -170,7 +170,7 @@ const emit = defineEmits<Emits>()
 
 const { show: showToast } = useToast()
 const { t } = useI18n({ useScope: 'global' })
-const { formatCurrency } = useFormatters()
+const { formatCurrency, currencyCode } = useFormatters()
 
 const open = computed({
   get: () => props.modelValue,

@@ -355,7 +355,7 @@
         "rechargeAria": "Recharge customer wallet",
         "rechargeTitle": "Recharge wallet",
         "currentBalance": "Current balance",
-        "amount": "Amount (COP)",
+        "amount": "Amount ({currency})",
         "selectMethod": "Select method",
         "notesPlaceholder": "Ex. Cash recharge...",
         "submitRecharge": "Register recharge",

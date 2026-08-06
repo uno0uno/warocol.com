@@ -349,7 +349,7 @@
         "rechargeAria": "Recharger le portefeuille du client",
         "rechargeTitle": "Recharger le portefeuille",
         "currentBalance": "Solde actuel",
-        "amount": "Montant (COP)",
+        "amount": "Montant ({currency})",
         "selectMethod": "Sélectionner la méthode",
         "notesPlaceholder": "Ex. Recharge en espèces...",
         "submitRecharge": "Enregistrer la recharge",
