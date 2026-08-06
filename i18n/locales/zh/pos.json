@@ -57,7 +57,7 @@
       "title": "自定义销售",
       "productPrefix": "产品: {name}",
       "customAmount": "自定义金额",
-      "amountLabel": "金额 (COP)",
+      "amountLabel": "金额 ({currency})",
       "amountPlaceholder": "例如 25000",
       "description": "描述",
       "optional": "(可选)",

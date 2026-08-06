@@ -57,7 +57,7 @@
       "title": "Open sale",
       "productPrefix": "Product: {name}",
       "customAmount": "Custom amount",
-      "amountLabel": "Amount (COP)",
+      "amountLabel": "Amount ({currency})",
       "amountPlaceholder": "e.g. 25000",
       "description": "Description",
       "optional": "(optional)",

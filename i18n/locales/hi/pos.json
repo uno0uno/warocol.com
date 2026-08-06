@@ -57,7 +57,7 @@
       "title": "खुली बिक्री",
       "productPrefix": "उत्पाद: {name}",
       "customAmount": "कस्टम राशि",
-      "amountLabel": "राशि (COP)",
+      "amountLabel": "राशि ({currency})",
       "amountPlaceholder": "उदा. 25000",
       "description": "विवरण",
       "optional": "(वैकल्पिक)",
