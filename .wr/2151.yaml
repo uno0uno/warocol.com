@@ -1,0 +1,46 @@
+issue: 2151
+title: "feat(ventas): match POS product grid on /ventas/crear and tenant currency in Open Sale"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2151-crear-grid-open-sale-currency
+
+paths:
+  - pages/ventas/crear.vue
+  - components/pos/OpenSaleModal.vue
+  - i18n/locales/en/pos.json
+  - i18n/locales/es/pos.json
+  - i18n/locales/pt/pos.json
+  - i18n/locales/fr/pos.json
+  - i18n/locales/de/pos.json
+  - i18n/locales/zh/pos.json
+  - i18n/locales/ar/pos.json
+  - i18n/locales/hi/pos.json
+  - .wr/2151.yaml
+
+ac:
+  - "/ventas/crear product cards use POS grid breakpoints (grid-cols-3 sm:grid-cols-4 md:grid-cols-5)"
+  - "Open Sale amount label uses tenant currencyCode via i18n param, not hardcoded COP"
+  - "All locale amountLabel strings use {currency} placeholder"
+  - "Verified on /ventas/crear and POS Open Sale entry"
+
+out_of_scope:
+  - cart panel chrome / discount-split WIP (stashed)
+  - API changes
+  - amountCop keys elsewhere
+
+hints:
+  entry: "components/pos/OpenSaleModal.vue + pages/ventas/crear.vue product grid"
+  pattern: "useFormatters().currencyCode; pages/pos/index.vue:2105 grid"
+  tests: "none targeted; no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
