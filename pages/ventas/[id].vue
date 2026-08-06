@@ -423,13 +423,16 @@ const orderEmailLabel = computed(() => {
   const n = order.value?.order_number
   return n != null ? `#${n}` : t('ventas.detail.emailInvoiceCta')
 })
+/** FE card: historical invoice always; otherwise only when Colombia FE is ready. */
 const shouldShowInvoiceSection = computed(() => Boolean(
   invoiceData.value
-    || isCreditOnlyInvoiceBlocked.value
     || (
       isInvoicingReady.value
       && !isReadinessLoading.value
-      && orderHasInvoiceCustomer.value
+      && (
+        isCreditOnlyInvoiceBlocked.value
+        || orderHasInvoiceCustomer.value
+      )
     ),
 ))
 const invoiceSectionTransitionKey = computed(() => {
@@ -1310,9 +1313,9 @@ onUnmounted(() => {
 
       <!-- Electronic Invoice Section — visible when:
            (a) the order already has an emitted invoice (historical data), OR
-           (b) the tenant has DIAN invoicing configured and ready and the order
-               has an associated customer. Payment method is not part of this gate.
-           Otherwise hidden entirely (matches the POS checkout guard pattern). -->
+           (b) tenant FE is ready (Colombia + Matias) and either credit-only
+               blocked messaging applies or the order has a customer for emit.
+           Non–FE-ready tenants (e.g. MX) never see this card (#2147). -->
       <Transition name="slide-down" mode="out-in" appear>
         <div
           v-if="shouldShowInvoiceSection"

@@ -1,0 +1,39 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2147
+title: "Hide electronic invoice section on sale detail unless Colombia FE is ready"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2147-sale-detail-fe-gate
+
+paths:
+  - pages/ventas/[id].vue
+
+ac:
+  - Sale detail hides FE section for non-Colombia / non–FE-ready tenants, including credit-only sales
+  - Colombia without invoicing_ready also hides FE section (incl. credit-only)
+  - Colombia FE-ready keeps emit / credit-only unavailable / accepted-invoice flows
+  - Historical invoiceData still renders when present
+  - Matias/DIAN copy gates via isMatiasDian unchanged
+
+out_of_scope:
+  - API invoicing readiness (already requires CO + Matias)
+  - POS checkout redesign
+  - Enabling FE for Mexico
+  - i18n copy changes (not required)
+
+hints:
+  entry: "pages/ventas/[id].vue#shouldShowInvoiceSection"
+  pattern: "Gate isCreditOnlyInvoiceBlocked behind isInvoicingReady; keep invoiceData always visible"
+  tests: "none — static assert on shouldShowInvoiceSection (no page unit test)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"
