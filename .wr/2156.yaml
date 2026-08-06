@@ -1,0 +1,38 @@
+issue: 2156
+title: "feat(ventas): show sale date on /ventas/[id] near order items"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2156-sale-detail-date
+
+paths:
+  - pages/ventas/[id].vue
+  - .wr/2156.yaml
+
+ac:
+  - "Sale datetime visible under/beside Items de la orden heading"
+  - "Uses saleReceiptSoldAt priority (completed_at || closed_at || created_at || updated_at)"
+  - "Hidden when no date available"
+  - "Label via ventas.common.fecha (no new i18n required)"
+
+out_of_scope:
+  - editing sale date
+  - API changes
+  - meta card redesign
+  - receipt printer changes
+
+hints:
+  entry: "pages/ventas/[id].vue order items header ~1800"
+  pattern: "saleReceiptSoldAt computed ~728"
+  tests: "static rg check for saleReceiptSoldAt under orderItemsTitle; no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
