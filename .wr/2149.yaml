@@ -1,0 +1,39 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2149
+title: "Open-sale slideover + rebalance sale-detail meta cards"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2149-open-sale-slideover
+
+paths:
+  - components/pos/OpenSaleModal.vue
+  - pages/ventas/[id].vue
+
+ac:
+  - OpenSaleModal is right slideover on desktop (md:end-0, max-w-md, full height)
+  - Mobile remains bottom sheet; amount/description/CTAs preserved
+  - POS and /ventas/crear pick up slideover via shared component
+  - /ventas/[id] meta row rebalanced (phone folded into customer; asymmetric grid)
+  - Payment highlight readable without dominating
+
+out_of_scope:
+  - Open-sale API / business rules
+  - Accounting or credit balances
+  - New i18n keys unless required
+
+hints:
+  entry: "components/pos/OpenSaleModal.vue shell; pages/ventas/[id].vue Order Info Grid"
+  pattern: "Mirror CustomerIdentificationModal Teleport + panel transition (#2008)"
+  tests: "static asserts — no OpenSaleModal unit test"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"

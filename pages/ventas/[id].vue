@@ -1118,15 +1118,19 @@ onUnmounted(() => {
 
     <!-- Order Details -->
     <div v-else class="space-y-6">
-      <!-- Order Info Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Customer Name -->
-        <div
-          class="bg-surface border border-border rounded-xl p-4"
-        >
+      <!-- Order Info Grid — customer denser; phone folded in (#2149) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+        <!-- Customer + phone -->
+        <div class="bg-surface border border-border rounded-xl p-4 md:col-span-2 xl:col-span-1">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.detail.saleCustomer') }}</p>
-          <p class="text-lg font-bold text-text-primary">
+          <p class="text-base font-bold text-text-primary leading-snug break-words">
             {{ saleCustomerCardLabel }}
+          </p>
+          <p
+            class="mt-1 text-sm font-medium tabular-nums"
+            :class="saleCustomerIdentity.contact.phone ? 'text-text-primary' : 'text-text-tertiary'"
+          >
+            {{ saleCustomerIdentity.contact.phone || t('ventas.common.sinTelefono') }}
           </p>
           <p
             v-if="saleCustomerIdentity.contact.email && saleCustomerIdentity.contact.email !== preInvoiceContactLabel"
@@ -1148,19 +1152,6 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <!-- Customer Phone -->
-        <div
-          class="bg-surface border border-border rounded-xl p-4"
-        >
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.telefono') }}</p>
-          <p
-            class="text-lg font-bold"
-            :class="saleCustomerIdentity.contact.phone ? 'text-text-primary' : 'text-text-tertiary'"
-          >
-            {{ saleCustomerIdentity.contact.phone || t('ventas.common.sinTelefono') }}
-          </p>
-        </div>
-
         <!-- Waiter (checkout / mesa close attribution — #663/#665/#666) -->
         <div
           class="bg-surface border border-border rounded-xl p-4"
@@ -1169,24 +1160,24 @@ onUnmounted(() => {
           <NuxtLink
             v-if="order.served_by_member_id"
             :to="`/equipo/miembros/${order.served_by_member_id}`"
-            class="text-lg font-bold text-primary hover:underline"
+            class="text-base font-bold text-primary hover:underline"
           >
             {{ order.served_by_member_name || t('ventas.detail.assigned') }}
           </NuxtLink>
-          <p v-else class="text-lg font-bold text-text-tertiary">
+          <p v-else class="text-base font-bold text-text-tertiary">
             {{ t('ventas.detail.unassigned') }}
           </p>
         </div>
 
         <!-- Payment Method -->
         <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
-          class="bg-surface border-2 border-info rounded-xl p-4 text-start w-full"
-          :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
+          class="border border-info/50 bg-info/5 rounded-xl p-4 text-start w-full"
+          :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-info/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
           @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
           :aria-label="order.split_payments && order.split_payments.length > 0 ? t('ventas.detail.viewSplitDetail') : undefined">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
           <div class="flex items-center justify-between gap-2">
-            <p class="text-lg font-bold text-info leading-tight">
+            <p class="text-base font-bold text-info leading-tight">
               <template v-if="order.split_payments && order.split_payments.length > 0">
                 {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
               </template>
@@ -1205,11 +1196,11 @@ onUnmounted(() => {
           v-if="order.status === 'pending'"
           type="button"
           @click="openFinalizeSalePanel"
-          class="bg-status-success-bg border-2 border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
+          class="bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group md:col-span-2 xl:col-span-4 order-last"
         >
           <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
           <div class="flex items-center justify-between gap-3">
-            <span class="text-lg font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
+            <span class="text-base font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
             <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
