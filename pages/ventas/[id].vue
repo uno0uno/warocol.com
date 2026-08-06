@@ -1799,11 +1799,17 @@ onUnmounted(() => {
 
       <!-- Order Items -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
-        <div class="p-6 border-b border-border flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-text-primary">{{ t('ventas.detail.orderItemsTitle', { count: order.items_count }) }}</h2>
+        <div class="p-6 border-b border-border flex justify-between items-start gap-3">
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-text-primary">{{ t('ventas.detail.orderItemsTitle', { count: order.items_count }) }}</h2>
+            <p v-if="saleReceiptSoldAt" class="mt-1 text-sm text-text-secondary">
+              <span class="font-medium text-text-tertiary">{{ t('ventas.common.fecha') }}:</span>
+              {{ saleReceiptSoldAt }}
+            </p>
+          </div>
 
           <!-- Edit/Save Buttons -->
-          <div class="flex gap-2">
+          <div class="flex gap-2 shrink-0">
             <template v-if="!isEditMode">
               <button @click="enterEditMode"
                 class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
