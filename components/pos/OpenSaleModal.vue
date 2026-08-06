@@ -57,7 +57,7 @@
             <button
               type="button"
               :aria-label="t('common.close')"
-              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="handleClose"
             >
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <form class="flex-1 overflow-y-auto px-6 py-5 space-y-4" @submit.prevent="handleSubmit">
+        <form id="open-sale-form" class="flex-1 overflow-y-auto px-6 py-5 space-y-4" @submit.prevent="handleSubmit">
           <div>
             <label for="open-sale-amount" class="block text-sm font-medium text-text-primary mb-1.5">
               {{ t('pos.openSale.amountLabel') }} <span class="text-destructive">*</span>
@@ -112,10 +112,10 @@
             {{ t('common.cancel') }}
           </button>
           <button
-            type="button"
+            type="submit"
+            form="open-sale-form"
             :disabled="isSubmitting"
             class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-action-primary-bg text-action-primary-text font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="handleSubmit"
           >
             {{ isSubmitting ? t('pos.openSale.adding') : resolvedConfirmLabel }}
           </button>
