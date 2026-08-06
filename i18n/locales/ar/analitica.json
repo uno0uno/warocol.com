@@ -349,7 +349,7 @@
         "rechargeAria": "شحن محفظة العميل",
         "rechargeTitle": "شحن المحفظة",
         "currentBalance": "الرصيد الحالي",
-        "amount": "المبلغ (COP)",
+        "amount": "المبلغ ({currency})",
         "selectMethod": "تحديد طريقة",
         "notesPlaceholder": "مثال: شحن نقدي...",
         "submitRecharge": "تسجيل الشحن",

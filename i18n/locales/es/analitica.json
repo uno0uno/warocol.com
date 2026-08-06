@@ -355,7 +355,7 @@
         "rechargeAria": "Recargar billetera del cliente",
         "rechargeTitle": "Recargar billetera",
         "currentBalance": "Saldo actual",
-        "amount": "Monto (COP)",
+        "amount": "Monto ({currency})",
         "selectMethod": "Seleccionar método",
         "notesPlaceholder": "Ej. Recarga en efectivo...",
         "submitRecharge": "Registrar recarga",

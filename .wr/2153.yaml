@@ -1,0 +1,45 @@
+issue: 2153
+title: "fix(crm): use tenant currency on wallet recharge amount label"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2153-wallet-recharge-currency
+
+paths:
+  - components/analitica/WalletRechargeModal.vue
+  - i18n/locales/en/analitica.json
+  - i18n/locales/es/analitica.json
+  - i18n/locales/pt/analitica.json
+  - i18n/locales/fr/analitica.json
+  - i18n/locales/de/analitica.json
+  - i18n/locales/zh/analitica.json
+  - i18n/locales/ar/analitica.json
+  - i18n/locales/hi/analitica.json
+  - .wr/2153.yaml
+
+ac:
+  - "Wallet recharge amount label uses tenant currencyCode"
+  - "i18n analitica.customerDetail.wallet.amount uses {currency} in all locales"
+  - "WalletRechargeModal passes currencyCode into t()"
+  - "Verified on /crm/clientes/[id] for non-COP tenant"
+
+out_of_scope:
+  - API *_cop field renames
+  - recharge payment logic
+  - movement table column renames
+
+hints:
+  entry: "components/analitica/WalletRechargeModal.vue"
+  pattern: "OpenSaleModal #2151: t(..., { currency: currencyCode })"
+  tests: "python i18n static check; no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"

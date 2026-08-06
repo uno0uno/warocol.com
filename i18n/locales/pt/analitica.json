@@ -349,7 +349,7 @@
         "rechargeAria": "Recarregar carteira do cliente",
         "rechargeTitle": "Recarregar carteira",
         "currentBalance": "Saldo atual",
-        "amount": "Valor (COP)",
+        "amount": "Valor ({currency})",
         "selectMethod": "Selecionar método",
         "notesPlaceholder": "Ex: Recarga em dinheiro...",
         "submitRecharge": "Registrar recarga",
