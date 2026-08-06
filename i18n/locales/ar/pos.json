@@ -57,7 +57,7 @@
       "title": "بيع حر",
       "productPrefix": "المنتج: {name}",
       "customAmount": "مبلغ مخصص",
-      "amountLabel": "المبلغ (COP)",
+      "amountLabel": "المبلغ ({currency})",
       "amountPlaceholder": "مثال: 25000",
       "description": "الوصف",
       "optional": "(اختياري)",

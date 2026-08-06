@@ -70,7 +70,7 @@
         <form id="open-sale-form" class="flex-1 overflow-y-auto px-6 py-5 space-y-4" @submit.prevent="handleSubmit">
           <div>
             <label for="open-sale-amount" class="block text-sm font-medium text-text-primary mb-1.5">
-              {{ t('pos.openSale.amountLabel') }} <span class="text-destructive">*</span>
+              {{ t('pos.openSale.amountLabel', { currency: currencyCode }) }} <span class="text-destructive">*</span>
             </label>
             <input
               id="open-sale-amount"
@@ -128,6 +128,8 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, watch, nextTick, computed } from 'vue'
+
+const { currencyCode } = useFormatters()
 
 const props = withDefaults(
   defineProps<{

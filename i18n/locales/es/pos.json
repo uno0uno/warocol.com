@@ -57,7 +57,7 @@
       "title": "Venta libre",
       "productPrefix": "Producto: {name}",
       "customAmount": "Monto personalizado",
-      "amountLabel": "Monto (COP)",
+      "amountLabel": "Monto ({currency})",
       "amountPlaceholder": "Ej. 25000",
       "description": "Descripción",
       "optional": "(opcional)",

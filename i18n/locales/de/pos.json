@@ -57,7 +57,7 @@
       "title": "Freier Verkauf",
       "productPrefix": "Produkt: {name}",
       "customAmount": "Benutzerdefinierter Betrag",
-      "amountLabel": "Betrag (COP)",
+      "amountLabel": "Betrag ({currency})",
       "amountPlaceholder": "z.B. 25000",
       "description": "Beschreibung",
       "optional": "(optional)",

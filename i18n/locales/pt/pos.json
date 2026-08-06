@@ -57,7 +57,7 @@
       "title": "Venda livre",
       "productPrefix": "Produto: {name}",
       "customAmount": "Valor personalizado",
-      "amountLabel": "Valor (COP)",
+      "amountLabel": "Valor ({currency})",
       "amountPlaceholder": "Ex: 25000",
       "description": "Descrição",
       "optional": "(opcional)",
