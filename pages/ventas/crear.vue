@@ -133,10 +133,6 @@ const form = ref({
   items: [] as LineItem[]
 })
 
-const openSalePrimaryIdle = computed(
-  () => openSaleEnabled.value && showOpenSaleButton.value && form.value.items.length === 0,
-)
-
 // ─── Products catalog ─────────────────────────────────────────────────────────
 
 const { data: productsData, pending: loadingProducts } = useFetch('/api/menu/products', {
@@ -725,144 +721,136 @@ async function submit() {
     >
 
       <!-- ── Compact Header ──────────────────────────────────────────────── -->
-      <div class="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
-        <!-- Row 1: back + title -->
-        <div class="flex items-center gap-3">
-          <NuxtLink
-            to="/ventas"
-            class="flex items-center justify-center w-9 h-9 shrink-0 rounded-lg border border-border hover:bg-surface-secondary transition-colors"
-            :aria-label="t('ventas.common.volver')"
-          >
-            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </NuxtLink>
-          <h1 class="text-base font-bold text-text-primary">{{ t('ventas.crear.title') }}</h1>
-        </div>
-        <!-- Row 2: date + customer + payment -->
-        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(16rem,1.3fr)_minmax(0,1fr)] gap-2">
-          <input
-            id="order_date"
-            v-model="form.order_date"
-            type="datetime-local"
-            :max="new Date().toISOString().slice(0, 16)"
-            required
-            :aria-label="t('ventas.crear.dateLabel')"
-            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          />
-          <div
-            v-if="selectedCustomer"
-            class="min-h-9 w-full px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 flex items-center gap-2"
-          >
-            <div class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
-              {{ selectedCustomerInitial }}
-            </div>
-            <div class="min-w-0 flex-1">
-              <p
-                v-if="!isAnonymousCustomer"
-                class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary"
-              >
-                {{ t('pos.customer.contactLabel') }}
-              </p>
-              <p class="text-sm font-medium text-text-primary truncate">
-                {{ selectedCustomer.name || t('ventas.crear.customerNoData') }}
-              </p>
-              <p class="text-xs text-text-secondary truncate">
-                {{ selectedCustomer.phone_number || t('ventas.common.sinTelefono') }}
-              </p>
-              <p
-                v-if="selectedCustomerIdentity.hasFiscalIdentity && !selectedCustomerIdentity.showSeparateAcquirer && selectedCustomerIdentity.acquirer.fiscalId"
-                class="text-xs text-text-secondary truncate"
-              >
-                {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
-              </p>
-              <div
-                v-if="selectedCustomerIdentity.showSeparateAcquirer"
-                class="mt-1 border-s-2 border-primary/30 ps-2"
-              >
-                <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
-                  {{ t('pos.customer.fiscalAcquirerLabel') }}
+      <div class="rounded-xl border border-border bg-surface p-4">
+        <!-- Date + customer + payment -->
+        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(16rem,1.3fr)_minmax(0,1fr)] gap-3">
+          <div class="flex flex-col gap-1.5 min-w-0">
+            <label for="order_date" class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+              {{ t('ventas.crear.dateLabel') }}
+            </label>
+            <input
+              id="order_date"
+              v-model="form.order_date"
+              type="datetime-local"
+              :max="new Date().toISOString().slice(0, 16)"
+              required
+              class="h-10 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5 min-w-0">
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+              {{ t('pos.customer.contactLabel') }}
+            </span>
+            <div
+              v-if="selectedCustomer"
+              class="min-h-10 w-full px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 flex items-center gap-2"
+            >
+              <div class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                {{ selectedCustomerInitial }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-text-primary truncate">
+                  {{ selectedCustomer.name || t('ventas.crear.customerNoData') }}
                 </p>
-                <p class="text-xs font-semibold text-text-primary break-words">
-                  {{ selectedCustomerIdentity.acquirer.name }}
+                <p class="text-xs text-text-secondary truncate">
+                  {{ selectedCustomer.phone_number || t('ventas.common.sinTelefono') }}
                 </p>
                 <p
-                  v-if="selectedCustomerIdentity.acquirer.fiscalId"
+                  v-if="selectedCustomerIdentity.hasFiscalIdentity && !selectedCustomerIdentity.showSeparateAcquirer && selectedCustomerIdentity.acquirer.fiscalId"
                   class="text-xs text-text-secondary truncate"
                 >
                   {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
                 </p>
-              </div>
-              <div
-                v-if="!isAnonymousCustomer"
-                class="flex flex-wrap gap-2 mt-1"
-                aria-live="polite"
-              >
                 <div
-                  v-if="isWalletPending"
-                  class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
-                  :aria-label="t('ventas.crear.walletLoading')"
-                />
-                <span
-                  v-else
-                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
+                  v-if="selectedCustomerIdentity.showSeparateAcquirer"
+                  class="mt-1 border-s-2 border-primary/30 ps-2"
                 >
-                  {{ t('ventas.crear.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
-                </span>
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                    {{ t('pos.customer.fiscalAcquirerLabel') }}
+                  </p>
+                  <p class="text-xs font-semibold text-text-primary break-words">
+                    {{ selectedCustomerIdentity.acquirer.name }}
+                  </p>
+                  <p
+                    v-if="selectedCustomerIdentity.acquirer.fiscalId"
+                    class="text-xs text-text-secondary truncate"
+                  >
+                    {{ [selectedCustomerIdentity.acquirer.fiscalIdType, selectedCustomerIdentity.acquirer.fiscalId].filter(Boolean).join(' ') }}
+                  </p>
+                </div>
+                <div
+                  v-if="!isAnonymousCustomer"
+                  class="flex flex-wrap gap-2 mt-1"
+                  aria-live="polite"
+                >
+                  <div
+                    v-if="isWalletPending"
+                    class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
+                    :aria-label="t('ventas.crear.walletLoading')"
+                  />
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-state-success-bg text-state-success-text border border-state-success-border"
+                  >
+                    {{ t('ventas.crear.walletBalance', { amount: formatCurrency(walletBalanceCop) }) }}
+                  </span>
+                </div>
               </div>
+              <button
+                type="button"
+                class="h-7 px-2 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors shrink-0"
+                @click="showCustomerModal = true"
+              >
+                {{ t('ventas.common.cambiar') }}
+              </button>
+              <button
+                type="button"
+                class="h-7 w-7 rounded-md text-text-secondary hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                :aria-label="t('ventas.crear.removeCustomer')"
+                @click="clearCustomer"
+              >
+                <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             <button
+              v-else
               type="button"
-              class="h-7 px-2 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors shrink-0"
+              class="min-h-10 w-full px-3 py-2 rounded-lg border border-dashed border-border bg-background text-sm font-medium text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
               @click="showCustomerModal = true"
             >
-              {{ t('ventas.common.cambiar') }}
-            </button>
-            <button
-              type="button"
-              class="h-7 w-7 rounded-md text-text-secondary hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
-              :aria-label="t('ventas.crear.removeCustomer')"
-              @click="clearCustomer"
-            >
-              <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
               </svg>
+              <span>{{ t('ventas.crear.identifyCustomer') }}</span>
             </button>
           </div>
-          <button
-            v-else
-            type="button"
-            class="min-h-9 w-full px-3 py-2 rounded-lg border border-dashed border-border bg-background text-sm font-medium text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
-            @click="showCustomerModal = true"
-          >
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <span>{{ t('ventas.crear.identifyCustomer') }}</span>
-          </button>
-          <select
-            id="payment_method"
-            v-model="paymentSelectValue"
-            required
-            :aria-label="t('ventas.crear.paymentMethod')"
-            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
-          >
-            <template v-for="g in visiblePaymentGroups" :key="g.id">
-              <!-- Group default option (when no specific method picked) -->
-              <option :value="`${g.slug}:`">{{ groupLabel(g) }}</option>
-              <!-- Specific methods nested under the group -->
-              <optgroup v-if="g.methods && g.methods.length > 0" :label="groupLabel(g)">
-                <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
-                  {{ groupLabel(g) }} · {{ m.name }}
-                </option>
-              </optgroup>
-            </template>
-          </select>
+          <div class="flex flex-col gap-1.5 min-w-0">
+            <label for="payment_method" class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+              {{ t('ventas.crear.paymentMethod') }}
+            </label>
+            <select
+              id="payment_method"
+              v-model="paymentSelectValue"
+              required
+              class="h-10 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+            >
+              <template v-for="g in visiblePaymentGroups" :key="g.id">
+                <option :value="`${g.slug}:`">{{ groupLabel(g) }}</option>
+                <optgroup v-if="g.methods && g.methods.length > 0" :label="groupLabel(g)">
+                  <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
+                    {{ groupLabel(g) }} · {{ m.name }}
+                  </option>
+                </optgroup>
+              </template>
+            </select>
+          </div>
         </div>
       </div>
 
       <!-- ── POS Layout: grid left / cart right ─────────────────────────── -->
-      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6 lg:items-start flex flex-col gap-4 min-w-0">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-6 lg:items-start flex flex-col gap-4 min-w-0">
 
         <!-- ── LEFT: Product Grid + Modifier Panel ───────────────────────── -->
         <div class="flex flex-col gap-4 min-w-0">
@@ -1145,39 +1133,22 @@ async function submit() {
         </div><!-- end left -->
 
         <!-- ── RIGHT: Desktop Cart Panel ─────────────────────────────────── -->
-        <div class="hidden lg:flex min-w-0 flex-col rounded-xl border border-border bg-surface overflow-hidden sticky top-4">
+        <div class="hidden lg:flex min-w-0 flex-col rounded-xl border border-border bg-surface overflow-hidden sticky top-4 shadow-sm">
 
           <!-- Cart header -->
           <div class="px-4 py-3 border-b border-border bg-primary flex items-center justify-between">
             <h2 class="text-sm font-semibold text-primary-foreground">{{ t('ventas.crear.orderTitle') }}</h2>
-            <span class="text-xs bg-primary-foreground/10 text-primary-foreground rounded-full px-2 py-0.5 font-medium">
+            <span class="text-xs bg-primary-foreground/15 text-primary-foreground rounded-full px-2.5 py-0.5 font-medium tabular-nums">
               {{ t(totalItemCount === 1 ? 'ventas.crear.unitCountOne' : 'ventas.crear.unitCountMany', { count: totalItemCount }) }}
             </span>
           </div>
 
           <!-- Cart items (scrollable) -->
-          <div class="flex-1 overflow-y-auto max-h-[50vh] p-4 flex flex-col gap-3">
-            <button
-              v-if="showOpenSaleButton"
-              type="button"
-              class="w-full min-h-[44px] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-              :class="openSalePrimaryIdle
-                ? 'bg-action-primary-bg text-action-primary-text hover:opacity-90 active:scale-[0.98] shadow-sm'
-                : 'border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
-              :aria-disabled="!openSaleEnabled"
-              :title="openSaleDisabledReason ?? undefined"
-              @click="handleOpenSaleClick"
-            >
-              <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
-              </svg>
-              {{ t('pos.cart.openSale') }}
-            </button>
-
+          <div class="flex-1 overflow-y-auto max-h-[46vh] p-3 flex flex-col gap-2">
             <!-- Empty state -->
             <div
               v-if="form.items.length === 0"
-              class="py-10 flex flex-col items-center text-center text-text-secondary"
+              class="py-12 flex flex-col items-center text-center text-text-secondary"
             >
               <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -1189,60 +1160,60 @@ async function submit() {
             <div
               v-for="(item, index) in form.items"
               :key="item.product_id + index"
-              class="flex items-start gap-3 py-2 border-b border-border last:border-0"
+              class="rounded-lg border border-border/70 bg-background/60 p-3"
             >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary truncate">{{ itemDisplayName(item) }}</p>
-                <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
-                <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
-                <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
-                  <span
-                    v-for="mod in item.selected_modifiers"
-                    :key="mod.id"
-                    class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
+              <div class="flex items-start gap-2">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-text-primary leading-snug">{{ itemDisplayName(item) }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
+                  <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                  <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(itemTotal(item)) }}</span>
+                  <button
+                    type="button"
+                    class="text-destructive/80 hover:text-destructive transition-colors p-0.5"
+                    :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
+                    @click="removeItem(index)"
                   >
-                    {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
-                    · {{ formatCurrency(modifierLineTotal(mod)) }}
-                  </span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              <!-- Qty controls -->
-              <div class="flex items-center gap-1 shrink-0">
+              <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-2">
+                <span
+                  v-for="mod in item.selected_modifiers"
+                  :key="mod.id"
+                  class="text-[11px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md"
+                >
+                  {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
+                  · {{ formatCurrency(modifierLineTotal(mod)) }}
+                </span>
+              </div>
+
+              <div class="mt-2.5 flex items-center gap-1">
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
                   :aria-label="t('ventas.crear.reduceQty', { name: itemDisplayName(item) })"
                   @click="decrementItem(index)"
                 >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                   </svg>
                 </button>
-                <span class="w-6 text-center text-sm font-semibold text-text-primary select-none">{{ item.quantity }}</span>
+                <span class="min-w-8 text-center text-sm font-semibold text-text-primary tabular-nums select-none">{{ item.quantity }}</span>
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
                   :aria-label="t('ventas.crear.increaseQty', { name: itemDisplayName(item) })"
                   @click="incrementItem(index)"
                 >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Item total + remove -->
-              <div class="flex flex-col items-end gap-1 shrink-0">
-                <span class="text-sm font-semibold text-primary">{{ formatCurrency(itemTotal(item)) }}</span>
-                <button
-                  type="button"
-                  class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
-                  @click="removeItem(index)"
-                >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
               </div>
@@ -1251,19 +1222,51 @@ async function submit() {
 
           <!-- Total + Submit (desktop) -->
           <div class="p-4 border-t border-border flex flex-col gap-3 bg-surface">
-            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.descuento') }}</span>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-if="showOpenSaleButton"
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border border-border text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary"
+                :aria-disabled="!openSaleEnabled"
+                :title="openSaleDisabledReason ?? undefined"
+                @click="handleOpenSaleClick"
+              >
+                + {{ t('pos.cart.openSale') }}
+              </button>
+              <button
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                :class="discountEnabled
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+                @click="discountEnabled = !discountEnabled"
+              >
+                {{ t('ventas.common.descuento') }}
+              </button>
+              <button
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                :class="splitMode
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+                @click="splitMode = !splitMode"
+              >
+                {{ t('ventas.crear.splitAction') }}
+              </button>
+            </div>
+
+            <div v-if="discountEnabled" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.common.descuento') }}</span>
                 <button
                   type="button"
-                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
-                  :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
-                  @click="discountEnabled = !discountEnabled"
+                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
+                  @click="discountEnabled = false"
                 >
-                  {{ discountEnabled ? t('ventas.crear.active') : t('ventas.common.agregar') }}
+                  {{ t('ventas.common.quitar') }}
                 </button>
               </div>
-              <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+              <div class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
                 <select
                   v-model="discountType"
                   class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary"
@@ -1283,68 +1286,68 @@ async function submit() {
               <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
               <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
                 <span>{{ t('ventas.common.descuentoManual') }}</span>
-                <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
+                <span class="font-semibold tabular-nums">-{{ formatCurrency(discountAmount) }}</span>
               </div>
             </div>
 
-            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">{{ t('ventas.crear.splitPayment') }}</span>
+            <div v-if="splitMode" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.crear.splitPayment') }}</span>
                 <button
                   type="button"
-                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
-                  :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
-                  @click="splitMode = !splitMode"
+                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
+                  @click="splitMode = false"
                 >
-                  {{ splitMode ? t('ventas.crear.active') : t('ventas.crear.splitAction') }}
+                  {{ t('ventas.common.quitar') }}
                 </button>
               </div>
-              <div v-if="splitMode" class="flex flex-col gap-2">
-                <div v-if="splitPayments.length > 0" class="flex flex-col gap-1">
-                  <div
-                    v-for="payment in splitPayments"
-                    :key="payment.id"
-                    class="flex items-center justify-between gap-2 text-sm"
-                  >
-                    <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
-                    <div class="flex items-center gap-2">
-                      <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
-                      <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
-                    </div>
+              <div v-if="splitPayments.length > 0" class="flex flex-col gap-1">
+                <div
+                  v-for="payment in splitPayments"
+                  :key="payment.id"
+                  class="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(payment.amount) }}</span>
+                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
                   </div>
                 </div>
-                <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                  <input
-                    v-model.number="splitAmountInput"
-                    type="number"
-                    min="1"
-                    :max="Math.round(splitRemaining)"
-                    class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
-                    :placeholder="t('ventas.crear.amountPlaceholder')"
-                  />
-                  <button
-                    type="button"
-                    class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
-                    :disabled="!!splitAmountValidationError"
-                    @click="addSplitPayment"
-                  >
-                    {{ t('ventas.common.agregar') }}
-                  </button>
-                </div>
-                <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
-                  <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
-                </div>
+              </div>
+              <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  v-model.number="splitAmountInput"
+                  type="number"
+                  min="1"
+                  :max="Math.round(splitRemaining)"
+                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                  :placeholder="t('ventas.crear.amountPlaceholder')"
+                />
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                  :disabled="!!splitAmountValidationError"
+                  @click="addSplitPayment"
+                >
+                  {{ t('ventas.common.agregar') }}
+                </button>
+              </div>
+              <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
+                <span class="font-semibold tabular-nums" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
               </div>
             </div>
-            <div v-if="subtotal !== total" class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
-              <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">{{ t('ventas.common.total') }}</span>
-              <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
+
+            <div class="rounded-lg bg-background border border-border px-3 py-2.5 flex flex-col gap-1">
+              <div v-if="subtotal !== total" class="flex items-center justify-between">
+                <span class="text-xs text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
+                <span class="text-xs font-medium text-text-secondary tabular-nums">{{ formatCurrency(subtotal) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.total') }}</span>
+                <span class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(total) }}</span>
+              </div>
             </div>
             <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>
             <button
@@ -1377,24 +1380,7 @@ async function submit() {
         :title="t('ventas.crear.currentOrder')"
         max-height="xl"
       >
-        <div class="p-4 flex flex-col gap-3">
-          <button
-            v-if="showOpenSaleButton"
-            type="button"
-            class="w-full min-h-[44px] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-            :class="openSalePrimaryIdle
-              ? 'bg-action-primary-bg text-action-primary-text hover:opacity-90 active:scale-[0.98] shadow-sm'
-              : 'border border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
-            :aria-disabled="!openSaleEnabled"
-            :title="openSaleDisabledReason ?? undefined"
-            @click="handleOpenSaleClick"
-          >
-            <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
-            </svg>
-            {{ t('pos.cart.openSale') }}
-          </button>
-
+        <div class="p-4 flex flex-col gap-2">
           <div
             v-if="form.items.length === 0"
             class="py-10 flex flex-col items-center text-center text-text-secondary"
@@ -1409,58 +1395,60 @@ async function submit() {
             <div
               v-for="(item, index) in form.items"
               :key="item.product_id + index"
-              class="flex items-start gap-3 py-2 border-b border-border last:border-0"
+              class="rounded-lg border border-border/70 bg-background/60 p-3"
             >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary truncate">{{ itemDisplayName(item) }}</p>
-                <p class="text-xs text-text-secondary">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
-                <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
-                <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-1">
-                  <span
-                    v-for="mod in item.selected_modifiers"
-                    :key="mod.id"
-                    class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full"
+              <div class="flex items-start gap-2">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-text-primary leading-snug">{{ itemDisplayName(item) }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
+                  <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                  <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(itemTotal(item)) }}</span>
+                  <button
+                    type="button"
+                    class="text-destructive/80 hover:text-destructive transition-colors p-0.5"
+                    :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
+                    @click="removeItem(index)"
                   >
-                    {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
-                    · {{ formatCurrency(modifierLineTotal(mod)) }}
-                  </span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              <div class="flex items-center gap-1 shrink-0">
+              <div v-if="item.selected_modifiers.length > 0" class="flex flex-wrap gap-1 mt-2">
+                <span
+                  v-for="mod in item.selected_modifiers"
+                  :key="mod.id"
+                  class="text-[11px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md"
+                >
+                  {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template>
+                  · {{ formatCurrency(modifierLineTotal(mod)) }}
+                </span>
+              </div>
+
+              <div class="mt-2.5 flex items-center gap-1">
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
                   :aria-label="t('ventas.crear.reduceQty', { name: itemDisplayName(item) })"
                   @click="decrementItem(index)"
                 >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                   </svg>
                 </button>
-                <span class="w-7 text-center text-sm font-semibold text-text-primary select-none">{{ item.quantity }}</span>
+                <span class="min-w-8 text-center text-sm font-semibold text-text-primary tabular-nums select-none">{{ item.quantity }}</span>
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
                   :aria-label="t('ventas.crear.increaseQty', { name: itemDisplayName(item) })"
                   @click="incrementItem(index)"
                 >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-
-              <div class="flex flex-col items-end gap-1 shrink-0">
-                <span class="text-sm font-semibold text-primary">{{ formatCurrency(itemTotal(item)) }}</span>
-                <button
-                  type="button"
-                  class="text-destructive hover:text-destructive/70 transition-colors p-0.5"
-                  :aria-label="t('ventas.crear.removeItem', { name: itemDisplayName(item) })"
-                  @click="removeItem(index)"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
@@ -1470,19 +1458,51 @@ async function submit() {
 
         <template #footer>
           <div class="p-4 flex flex-col gap-3">
-            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.descuento') }}</span>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-if="showOpenSaleButton"
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border border-border text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary"
+                :aria-disabled="!openSaleEnabled"
+                :title="openSaleDisabledReason ?? undefined"
+                @click="handleOpenSaleClick"
+              >
+                + {{ t('pos.cart.openSale') }}
+              </button>
+              <button
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                :class="discountEnabled
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+                @click="discountEnabled = !discountEnabled"
+              >
+                {{ t('ventas.common.descuento') }}
+              </button>
+              <button
+                type="button"
+                class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                :class="splitMode
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+                @click="splitMode = !splitMode"
+              >
+                {{ t('ventas.crear.splitAction') }}
+              </button>
+            </div>
+
+            <div v-if="discountEnabled" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.common.descuento') }}</span>
                 <button
                   type="button"
-                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
-                  :class="discountEnabled ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
-                  @click="discountEnabled = !discountEnabled"
+                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
+                  @click="discountEnabled = false"
                 >
-                  {{ discountEnabled ? t('ventas.crear.active') : t('ventas.common.agregar') }}
+                  {{ t('ventas.common.quitar') }}
                 </button>
               </div>
-              <div v-if="discountEnabled" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+              <div class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
                 <select v-model="discountType" class="h-9 px-2 rounded-lg border border-border bg-background text-sm text-text-primary">
                   <option value="percent">{{ t('ventas.common.porcentaje') }}</option>
                   <option value="fixed">{{ t('ventas.crear.fixedCop') }}</option>
@@ -1499,62 +1519,62 @@ async function submit() {
               <p v-if="discountValidationError" class="text-xs text-destructive">{{ discountValidationError }}</p>
               <div v-if="discountAmount > 0" class="flex items-center justify-between text-sm text-primary">
                 <span>{{ t('ventas.common.descuentoManual') }}</span>
-                <span class="font-semibold">-{{ formatCurrency(discountAmount) }}</span>
+                <span class="font-semibold tabular-nums">-{{ formatCurrency(discountAmount) }}</span>
               </div>
             </div>
 
-            <div class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-text-primary">{{ t('ventas.crear.splitPayment') }}</span>
+            <div v-if="splitMode" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.crear.splitPayment') }}</span>
                 <button
                   type="button"
-                  class="h-7 px-3 rounded-lg text-xs font-semibold border transition-colors"
-                  :class="splitMode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-secondary'"
-                  @click="splitMode = !splitMode"
+                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
+                  @click="splitMode = false"
                 >
-                  {{ splitMode ? t('ventas.crear.active') : t('ventas.crear.splitAction') }}
+                  {{ t('ventas.common.quitar') }}
                 </button>
               </div>
-              <div v-if="splitMode" class="flex flex-col gap-2">
-                <div v-for="payment in splitPayments" :key="payment.id" class="flex items-center justify-between gap-2 text-sm">
-                  <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-text-primary">{{ formatCurrency(payment.amount) }}</span>
-                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
-                  </div>
-                </div>
-                <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                  <input
-                    v-model.number="splitAmountInput"
-                    type="number"
-                    min="1"
-                    :max="Math.round(splitRemaining)"
-                    class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
-                    :placeholder="t('ventas.crear.amountPlaceholder')"
-                  />
-                  <button
-                    type="button"
-                    class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
-                    :disabled="!!splitAmountValidationError"
-                    @click="addSplitPayment"
-                  >
-                    {{ t('ventas.common.agregar') }}
-                  </button>
-                </div>
-                <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
-                  <span class="font-semibold" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
+              <div v-for="payment in splitPayments" :key="payment.id" class="flex items-center justify-between gap-2 text-sm">
+                <span class="truncate text-text-secondary">{{ paymentLabel(payment) }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(payment.amount) }}</span>
+                  <button type="button" class="text-destructive text-xs font-semibold" @click="removeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
                 </div>
               </div>
+              <div v-if="!splitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  v-model.number="splitAmountInput"
+                  type="number"
+                  min="1"
+                  :max="Math.round(splitRemaining)"
+                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                  :placeholder="t('ventas.crear.amountPlaceholder')"
+                />
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                  :disabled="!!splitAmountValidationError"
+                  @click="addSplitPayment"
+                >
+                  {{ t('ventas.common.agregar') }}
+                </button>
+              </div>
+              <p v-if="splitAmountValidationError" class="text-xs text-destructive">{{ splitAmountValidationError }}</p>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-text-secondary">{{ splitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
+                <span class="font-semibold tabular-nums" :class="splitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(splitRemaining) }}</span>
+              </div>
             </div>
-            <div v-if="subtotal !== total" class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
-              <span class="text-sm font-medium text-text-secondary">{{ formatCurrency(subtotal) }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">{{ t('ventas.common.total') }}</span>
-              <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
+
+            <div class="rounded-lg bg-background border border-border px-3 py-2.5 flex flex-col gap-1">
+              <div v-if="subtotal !== total" class="flex items-center justify-between">
+                <span class="text-xs text-text-secondary">{{ t('ventas.common.subtotal') }}</span>
+                <span class="text-xs font-medium text-text-secondary tabular-nums">{{ formatCurrency(subtotal) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-text-primary">{{ t('ventas.common.total') }}</span>
+                <span class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(total) }}</span>
+              </div>
             </div>
             <p v-if="singlePaymentValidationError" class="text-xs text-destructive">{{ singlePaymentValidationError }}</p>
             <button
