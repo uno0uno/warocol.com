@@ -11,6 +11,8 @@ export type DirectPurchasePrintItem = {
 defineProps<{
   title: string
   purchaseNumber?: string | number | null
+  businessName?: string | null
+  businessTaxId?: string | null
   dateLabel: string
   dateValue: string
   supplierLabel: string
@@ -40,6 +42,18 @@ defineProps<{
     aria-hidden="true"
   >
     <header class="doc-header">
+      <p
+        v-if="businessName"
+        class="doc-business"
+      >
+        {{ businessName }}
+      </p>
+      <p
+        v-if="businessTaxId"
+        class="doc-business-tax"
+      >
+        NIT {{ businessTaxId }}
+      </p>
       <h1>{{ title }}</h1>
       <p
         v-if="purchaseNumber"
@@ -133,6 +147,15 @@ defineProps<{
     margin: 0;
     font-size: 18pt;
     font-weight: 700;
+  }
+  .doc-business {
+    margin: 0 0 2px;
+    font-size: 12pt;
+    font-weight: 700;
+  }
+  .doc-business-tax {
+    margin: 0 0 8px;
+    font-size: 10pt;
   }
   .doc-number {
     margin: 4px 0 0;
