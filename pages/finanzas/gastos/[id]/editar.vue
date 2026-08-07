@@ -112,18 +112,38 @@
               </div>
 
               <div v-if="isCashMethodSelected" class="space-y-1.5">
-                <label class="block text-sm font-medium text-text-primary">
+                <span class="block text-sm font-medium text-text-primary">
                   {{ t('finanzas.gastos.fromCashDrawerLabel') }}
-                </label>
-                <div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
-                    <input v-model="form.fromCashDrawer" type="radio" :value="true" class="text-primary" />
+                </span>
+                <div
+                  class="grid grid-cols-2 gap-2"
+                  role="radiogroup"
+                  :aria-label="t('finanzas.gastos.fromCashDrawerLabel')"
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    :aria-checked="form.fromCashDrawer === true"
+                    class="h-10 min-h-[40px] rounded-lg border px-2 text-sm font-medium text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    :class="form.fromCashDrawer === true
+                      ? 'border-primary bg-primary/8'
+                      : 'border-border bg-background hover:border-primary/40'"
+                    @click="form.fromCashDrawer = true"
+                  >
                     {{ t('finanzas.gastos.fromCashDrawerYes') }}
-                  </label>
-                  <label class="inline-flex items-center gap-2 text-sm text-text-primary cursor-pointer">
-                    <input v-model="form.fromCashDrawer" type="radio" :value="false" class="text-primary" />
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    :aria-checked="form.fromCashDrawer === false"
+                    class="h-10 min-h-[40px] rounded-lg border px-2 text-sm font-medium text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    :class="form.fromCashDrawer === false
+                      ? 'border-primary bg-primary/8'
+                      : 'border-border bg-background hover:border-primary/40'"
+                    @click="form.fromCashDrawer = false"
+                  >
                     {{ t('finanzas.gastos.fromCashDrawerNo') }}
-                  </label>
+                  </button>
                 </div>
                 <p class="text-xs text-text-secondary">{{ t('finanzas.gastos.fromCashDrawerHelp') }}</p>
               </div>

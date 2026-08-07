@@ -1,0 +1,35 @@
+issue: 2164
+title: "ui(compras/gastos): cash-origin as Contado/Crédito-style option cards"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2164-cash-origin-cards
+risk: low
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+  - pages/abastecimiento/compras-directas/[id]/editar.vue
+  - pages/finanzas/gastos/crear.vue
+  - pages/finanzas/gastos/[id]/editar.vue
+  - .wr/2164.yaml
+
+ac:
+  - "Compra directa crear/editar: cash origin = 2 option cards like Contado/Crédito"
+  - "Gastos crear/editar: same cards when cash selected"
+  - "Help copy kept; default from_cash_drawer true; payload unchanged"
+  - "radiogroup/radio/aria-checked a11y"
+
+out_of_scope:
+  - API / from_cash_drawer contract
+  - gastos Contado/Crédito select → cards
+  - PaymentForm restyle
+  - arqueo math
+
+hints:
+  entry: "compras-directas/crear Tipo de pago cards ~175"
+  pattern: "grid-cols-2 radiogroup border-primary bg-primary/8"
+  tests: "node --test utils/paymentDefaults.purchaseFilter.test.ts; static rg no radio inputs"
+
+skip:
+  audits: [ux, color, typography]
