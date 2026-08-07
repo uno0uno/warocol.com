@@ -1,19 +1,12 @@
 # Primeros pasos
 
-Bienvenido a WARO COLOMBIA. Esta guía te explica cómo entrar a la plataforma y qué encontrarás una vez dentro.
+Bienvenido a WARO COLOMBIA. Esta guía te explica cómo entrar a la plataforma y por dónde empezar.
 
 ---
 
-## Hola desde bogota colombia
+![Saifer](https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/intro-saifer-thermal.jpg)
 
-![Saifer](https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/intro-saifer.jpg)
-Desarrollador independiente (Indie Hacker)
-
----
-
-WARO COLOMBIA nació de un problema real. Mi amigo Bryan tiene un restaurante llamado [Armelo Perro](https://warocol.com/armelo-perro) y en su tiempo pasó problemas con sus sistemas internos. Decidí ayudarle y así nació esta solución.
-
-Soy desarrollador independiente y me apasiona crear tecnología que use mucha gente, cobrando lo justo y generando impacto real. Con [Waro Tickets](https://warotickets.com/) hemos aportado a la cultura nacional trabajando con artistas de talla internacional. Además, trabajo en [Klira IA](https://getklira.com), he pasado por multinacionales y viajado a China, México y Ecuador buscando entender el mundo tecnológico.
+WARO COLOMBIA nació ayudando a un restaurante real en Bogotá a ordenar su operación diaria. Hoy es la plataforma para que tu negocio venda, cobre y controle el día a día sin fricción.
 
 ---
 
@@ -49,7 +42,7 @@ Si acabas de crear tu cuenta, sigue este orden para poner tu operación en march
 
 **1. Configura tu Menú (paso crítico)**
 
-Es obligatorio crear tu menú para habilitar el POS y los Domicilios.
+Es obligatorio crear tu menú para habilitar el POS y los pedidos online.
 
 - [Menú](/docs/usuarios/menu) — crea tus recetas, productos y modificadores antes de vender cualquier cosa.
 
@@ -58,8 +51,8 @@ Es obligatorio crear tu menú para habilitar el POS y los Domicilios.
 Con los productos listos ya puedes operar:
 
 - [POS](/docs/usuarios/pos) — toma pedidos presenciales y cóbralos en caja.
-- [Domicilios](/docs/usuarios/domicilios) — gestiona pedidos a domicilio desde el mismo sistema.
-- [Mesas](/docs/usuarios/mesas) — si tienes salón, controla las mesas y sesiones activas.
+- [Despacho](/docs/usuarios/despacho) — gestiona pedidos a domicilio y recogida.
+- [Mesas](/docs/usuarios/operaciones/mesas) — si tienes salón, controla las mesas y sesiones activas.
 
 **3. Controla tus finanzas**
 
@@ -73,7 +66,7 @@ Una vez vendas, lleva el control del dinero:
 
 Cuando quieras entender a fondo tus costos:
 
-- [Abastecimiento](/docs/usuarios/compras) — registra facturas con IA, gestiona proveedores y órdenes de compra.
+- [Abastecimiento](/docs/usuarios/abastecimiento) — registra facturas con IA, gestiona proveedores y órdenes de compra.
 
 **5. Gestiona tu equipo**
 
