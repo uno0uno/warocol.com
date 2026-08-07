@@ -34,6 +34,7 @@ describe('app locale catalog', () => {
 
   it('loads the personal profile message domain', () => {
     assert.ok(LOCALE_MESSAGE_FILES.includes('perfil.json'))
+    assert.ok(LOCALE_MESSAGE_FILES.includes('docs.json'))
   })
 
   it('maps language, numeric tags, and RTL direction', () => {

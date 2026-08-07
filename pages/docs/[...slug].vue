@@ -13,7 +13,7 @@ const slug = computed(() => {
   return Array.isArray(parts) ? parts.join('/') : parts || 'README'
 })
 
-const { data, error, status, refresh } = await useFetch(
+const { data, error, status } = await useFetch(
   () => `/docs-content/${slug.value}?locale=${locale.value}`,
   { watch: [locale, slug] },
 )
@@ -98,8 +98,6 @@ function handleClick(e: MouseEvent) {
   }
   navigateTo(`/docs/${resolved}`)
 }
-
-watch(locale, () => { void refresh() })
 </script>
 
 <template>
