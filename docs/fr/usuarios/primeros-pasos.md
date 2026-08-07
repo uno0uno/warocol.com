@@ -16,21 +16,21 @@ WARO COLOMBIA n'utilise pas de mots de passe. L'accès se fait par **lien magiqu
 
 ### Étape par étape
 
-1. Allez sur [warocol.com](https://warocol.com/auth/login) et cliquez sur **Iniciar sesión**
-2. Saisissez votre adresse e-mail et cliquez sur **Siguiente**
+1. Allez sur [warocol.com](https://warocol.com/auth/login) et cliquez sur **Se connecter**
+2. Saisissez votre adresse e-mail et cliquez sur **Suivant**
 3. Vérifiez votre boîte mail — vous recevrez un message avec deux options pour entrer :
 
 **Option A — Lien direct :**
 Cliquez sur le bouton de l'e-mail. Le navigateur s'ouvre et vous êtes connecté automatiquement.
 
 **Option B — Code à 6 chiffres :**
-Copiez le code affiché dans l'e-mail, collez-le sur l'écran WARO COLOMBIA et cliquez sur **Verificar Código**.
+Copiez le code affiché dans l'e-mail, collez-le sur l'écran WARO COLOMBIA et cliquez sur **Vérifier le code**.
 
-> Le lien et le code sont valides **15 minutes**. S'ils expirent, revenez à l'écran de connexion et demandez-en un nouveau avec « Reenviar ».
+> Le lien et le code sont valides **15 minutes**. S'ils expirent, revenez à l'écran de connexion et demandez-en un nouveau avec « Renvoyer ».
 
 ### Si vous n'avez pas encore de compte
 
-Ouvrez **Crear cuenta** depuis l'écran d'accès ou allez sur [registro](/registro). Saisissez votre e-mail, l'indicatif et le numéro WhatsApp, acceptez le consentement et vérifiez l'e-mail via le lien ou le code à 6 chiffres.
+Ouvrez **Créer un compte** depuis l'écran d'accès ou allez sur [registro](/registro). Saisissez votre e-mail, l'indicatif et le numéro WhatsApp, acceptez le consentement et vérifiez l'e-mail via le lien ou le code à 6 chiffres.
 
 Après vérification, WARO COLOMBIA ouvre la configuration initiale de votre établissement. Si vous interrompez le processus, reconnectez-vous avec le même e-mail pour reprendre à l'étape en cours. L'inscription n'exige ni appel ni accompagnement humain.
 
@@ -78,12 +78,12 @@ Configurez les accès et la paie :
 
 ## Se déconnecter
 
-La session reste active tant que vous utilisez la plateforme. Pour vous déconnecter manuellement, cliquez sur votre nom ou avatar en bas du menu latéral et sélectionnez **Cerrar sesión**.
+La session reste active tant que vous utilisez la plateforme. Pour vous déconnecter manuellement, cliquez sur votre nom ou avatar en bas du menu latéral et sélectionnez **Se déconnecter**.
 
 ---
 
 ## Si quelque chose ne fonctionne pas
 
-- **L'e-mail n'est pas arrivé** — vérifiez le dossier spam. Sinon, cliquez sur « Reenviar » sur l'écran de connexion.
+- **L'e-mail n'est pas arrivé** — vérifiez le dossier spam. Sinon, cliquez sur « Renvoyer » sur l'écran de connexion.
 - **Le code ne fonctionne pas** — il a peut-être expiré. Demandez-en un nouveau.
 - **Je ne peux pas me connecter** — contactez l'équipe WARO COLOMBIA pour vérifier que votre e-mail est activé.

@@ -16,8 +16,8 @@ O WARO COLOMBIA não usa senhas. O acesso é por **link mágico**: cada vez que 
 
 ### Passo a passo
 
-1. Vá em [warocol.com](https://warocol.com/auth/login) e clique em **Iniciar sesión**
-2. Digite seu endereço de e-mail e clique em **Siguiente**
+1. Vá em [warocol.com](https://warocol.com/auth/login) e clique em **Fazer login**
+2. Digite seu endereço de e-mail e clique em **Próximo**
 3. Confira seu e-mail — você receberá uma mensagem com duas opções para entrar:
 
 **Opção A — Link direto:**
@@ -30,7 +30,7 @@ Copie o código que aparece no e-mail, cole na tela do WARO COLOMBIA e clique em
 
 ### Se você ainda não tem conta
 
-Abra **Crear cuenta** na tela de acesso ou entre em [registro](/registro). Informe seu e-mail, o DDI e o número de WhatsApp, aceite o consentimento e verifique o e-mail pelo link ou pelo código de 6 dígitos.
+Abra **Criar conta** na tela de acesso ou entre em [registro](/registro). Informe seu e-mail, o DDI e o número de WhatsApp, aceite o consentimento e verifique o e-mail pelo link ou pelo código de 6 dígitos.
 
 Depois de verificar, o WARO COLOMBIA abre a configuração inicial do seu negócio. Se interromper o processo, você pode voltar a entrar com o mesmo e-mail para continuar a partir do passo pendente. O registro não exige ligação nem consultoria humana.
 
@@ -78,7 +78,7 @@ Configure acessos e folha de pagamento:
 
 ## Encerrar sessão
 
-A sessão permanece ativa enquanto você usa a plataforma. Para encerrar a sessão manualmente, clique no seu nome ou avatar no canto inferior do menu lateral e selecione **Cerrar sesión**.
+A sessão permanece ativa enquanto você usa a plataforma. Para encerrar a sessão manualmente, clique no seu nome ou avatar no canto inferior do menu lateral e selecione **Sair**.
 
 ---
 

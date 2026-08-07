@@ -16,21 +16,21 @@ WARO COLOMBIA arbeitet ohne Passwörter. Der Zugang erfolgt über einen **Magic 
 
 ### Schritt für Schritt
 
-1. Gehen Sie zu [warocol.com](https://warocol.com/auth/login) und klicken Sie auf **Iniciar sesión**
-2. Geben Sie Ihre E-Mail-Adresse ein und klicken Sie auf **Siguiente**
+1. Gehen Sie zu [warocol.com](https://warocol.com/auth/login) und klicken Sie auf **Anmelden**
+2. Geben Sie Ihre E-Mail-Adresse ein und klicken Sie auf **Weiter**
 3. Prüfen Sie Ihr Postfach — Sie erhalten eine Nachricht mit zwei Anmeldeoptionen:
 
 **Option A — Direkter Link:**
 Klicken Sie auf den Button in der E-Mail. Der Browser öffnet sich und Sie sind automatisch angemeldet.
 
 **Option B — 6-stelliger Code:**
-Kopieren Sie den Code aus der E-Mail, fügen Sie ihn auf dem WARO-COLOMBIA-Bildschirm ein und klicken Sie auf **Verificar Código**.
+Kopieren Sie den Code aus der E-Mail, fügen Sie ihn auf dem WARO-COLOMBIA-Bildschirm ein und klicken Sie auf **Code überprüfen**.
 
-> Link und Code sind **15 Minuten** gültig. Sind sie abgelaufen, kehren Sie zum Login-Bildschirm zurück und fordern Sie mit „Reenviar“ einen neuen an.
+> Link und Code sind **15 Minuten** gültig. Sind sie abgelaufen, kehren Sie zum Login-Bildschirm zurück und fordern Sie mit „Erneut senden“ einen neuen an.
 
 ### Wenn Sie noch kein Konto haben
 
-Öffnen Sie **Crear cuenta** auf dem Anmeldebildschirm oder gehen Sie zu [registro](/registro). Geben Sie E-Mail, Vorwahl und WhatsApp-Nummer ein, akzeptieren Sie die Einwilligung und bestätigen Sie die E-Mail über den Link oder den 6-stelligen Code.
+Öffnen Sie **Konto erstellen** auf dem Anmeldebildschirm oder gehen Sie zu [registro](/registro). Geben Sie E-Mail, Vorwahl und WhatsApp-Nummer ein, akzeptieren Sie die Einwilligung und bestätigen Sie die E-Mail über den Link oder den 6-stelligen Code.
 
 Nach der Bestätigung öffnet WARO COLOMBIA die Erstkonfiguration Ihres Betriebs. Unterbrechen Sie den Prozess, können Sie sich mit derselben E-Mail erneut anmelden und beim offenen Schritt fortfahren. Die Registrierung erfordert weder Anruf noch menschliche Beratung.
 
@@ -78,12 +78,12 @@ Zugänge und Lohnabrechnung einrichten:
 
 ## Abmelden
 
-Die Sitzung bleibt aktiv, solange Sie die Plattform nutzen. Zum manuellen Abmelden klicken Sie unten im Seitenmenü auf Ihren Namen oder Avatar und wählen **Cerrar sesión**.
+Die Sitzung bleibt aktiv, solange Sie die Plattform nutzen. Zum manuellen Abmelden klicken Sie unten im Seitenmenü auf Ihren Namen oder Avatar und wählen **Abmelden**.
 
 ---
 
 ## Wenn etwas nicht funktioniert
 
-- **E-Mail nicht angekommen** — prüfen Sie den Spam-Ordner. Fehlt sie dort, klicken Sie auf dem Login-Bildschirm auf „Reenviar“.
+- **E-Mail nicht angekommen** — prüfen Sie den Spam-Ordner. Fehlt sie dort, klicken Sie auf dem Login-Bildschirm auf „Erneut senden“.
 - **Code funktioniert nicht** — möglicherweise abgelaufen. Fordern Sie einen neuen an.
 - **Kein Zugang** — kontaktieren Sie das WARO-COLOMBIA-Team, damit Ihre E-Mail freigeschaltet wird.
