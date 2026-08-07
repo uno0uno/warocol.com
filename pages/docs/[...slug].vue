@@ -88,15 +88,7 @@ function handleClick(e: MouseEvent) {
   const href = anchor.getAttribute('href')
   if (!href || href.startsWith('http') || href.startsWith('#')) return
   e.preventDefault()
-  const currentDir = slug.value.split('/').slice(0, -1).join('/')
-  let resolved = href.replace(/\.md$/, '')
-  if (resolved.startsWith('./')) {
-    resolved = resolved.slice(2)
-    resolved = currentDir ? `${currentDir}/${resolved}` : resolved
-  } else if (!resolved.startsWith('/')) {
-    resolved = currentDir ? `${currentDir}/${resolved}` : resolved
-  }
-  navigateTo(`/docs/${resolved}`)
+  navigateTo(resolveDocsNavigatePath(href, slug.value))
 }
 </script>
 
