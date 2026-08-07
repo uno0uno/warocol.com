@@ -8,7 +8,7 @@ Guías de uso de la plataforma, organizadas como en el menú de documentación.
 
 ### Inicio
 - [Primeros pasos](./usuarios/primeros-pasos.md) — login y orden recomendado para empezar
-- [Índice de usuario](./usuarios.md) — módulos por grupo (Principal, Herramientas, Cuenta)
+- [Índice de usuario](./usuarios.md) — módulos por grupo (Principal, Herramientas, Cuenta y Dev)
 
 ### Principal
 - [POS](./usuarios/pos.md) — pedidos presenciales y cobro en caja
