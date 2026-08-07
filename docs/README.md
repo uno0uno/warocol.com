@@ -1,45 +1,41 @@
 # Documentación WARO Colombia
 
-Guías de uso de la plataforma, organizadas por sección.
+Guías de uso de la plataforma, organizadas como en el menú de documentación.
 
 ---
 
 ## Para restauranteros
 
 ### Inicio
-- [Primeros pasos](./usuarios/primeros-pasos.md) — login, recorrido del dashboard y orden de configuración inicial
+- [Primeros pasos](./usuarios/primeros-pasos.md) — login y orden recomendado para empezar
+- [Índice de usuario](./usuarios.md) — módulos por grupo (Principal, Herramientas, Cuenta)
 
-### Menú
-- [Recetas](./usuarios/menu/recetas.md) — qué es una receta base y cómo crearla
-- [Crear producto](./usuarios/menu/crear-producto.md) — cómo agregar un producto al menú
-- [Modificadores](./usuarios/menu/modificadores.md) — opciones para personalizar productos (tamaños, extras, salsas)
+### Principal
+- [POS](./usuarios/pos.md) — pedidos presenciales y cobro en caja
+- [Ventas](./usuarios/ventas.md) — historial de órdenes y reportes
+- [Despacho](./usuarios/despacho.md) — pedidos online (domicilios y recogida)
 
-### Inventario
-- [Registrar ajuste](./usuarios/inventario/registrar-ajuste.md) — corregir el stock de un ingrediente
-- [Ver movimientos](./usuarios/inventario/ver-movimientos.md) — historial de entradas y salidas
+### Herramientas
+- [Analítica Ventas](./usuarios/analitica.md) — métricas de ventas y tendencias
+- [Finanzas](./usuarios/finanzas.md) — arqueo, cartera, gastos y contabilidad
+- [Facturación](./usuarios/facturacion.md) — facturación electrónica DIAN
+- [Menú](./usuarios/menu.md) — recetas, productos y modificadores
+- [Operaciones](./usuarios/operaciones.md) — cocina, mesas y turnos
+- [Abastecimiento](./usuarios/abastecimiento.md) — proveedores, compras y stock
+- [Equipo](./usuarios/equipo.md) — miembros, salarios y nómina
 
-### Compras
-- [Gestionar proveedores](./usuarios/compras/gestionar-proveedores.md) — registrar y administrar proveedores
-- [Crear orden de compra](./usuarios/compras/crear-orden-compra.md) — pedido formal a un proveedor
+### Cuenta
+- [Mi Negocio](./usuarios/negocio.md) — perfil público y pedidos online
+- [Mi Plan](./usuarios/mi-plan.md) — suscripción y uso de IA
 
-### Equipo
-- [Agregar empleado](./usuarios/equipo/agregar-empleado.md) — invitar un miembro y configurar su rol y salario
-- [Registrar pago](./usuarios/equipo/registrar-pago.md) — registrar el pago de salario a un empleado
-
-### Analítica
-- [Leer el dashboard](./usuarios/analitica/leer-dashboard.md) — entender las métricas de ventas, rentabilidad y clientes
-
-### POS
-- [Procesar una venta](./usuarios/pos/procesar-venta.md) — tomar un pedido presencial y cobrarlo
+### Dev
+- [Integraciones](./dev.md) — API pública
+- [CLI](./cli.md) — herramientas de línea de comandos
 
 ---
 
 ## Orden recomendado para empezar
 
 1. [Primeros pasos](./usuarios/primeros-pasos.md)
-2. [Recetas](./usuarios/menu/recetas.md)
-3. [Crear producto](./usuarios/menu/crear-producto.md)
-4. [Modificadores](./usuarios/menu/modificadores.md) *(si aplica)*
-5. [Gestionar proveedores](./usuarios/compras/gestionar-proveedores.md)
-6. [Agregar empleado](./usuarios/equipo/agregar-empleado.md)
-7. [Procesar una venta](./usuarios/pos/procesar-venta.md)
+2. [Menú](./usuarios/menu.md)
+3. [POS](./usuarios/pos.md)
