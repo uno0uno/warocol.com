@@ -1,0 +1,40 @@
+issue: 2158
+title: "fix(abastecimiento): remove copy-link on direct purchase header; enrich print ticket/document"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2158-direct-purchase-print
+
+paths:
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - components/abastecimiento/DirectPurchasePrintTicket.vue
+  - components/abastecimiento/DirectPurchasePrintDocument.vue
+  - .wr/2158.yaml
+
+ac:
+  - "Copy-link button removed; copyPurchaseLink cleaned up"
+  - "Thermal ticket has tenant header, supplier NIT, payment+drawer detail"
+  - "HTML document has same richer meta"
+  - "Format chooser still works"
+  - "Verified on paid cash purchase with drawer/off-drawer detail"
+
+out_of_scope:
+  - API changes
+  - meta card redesign
+  - POS sale receipt components
+
+hints:
+  entry: "compras-directas/[id]/index.vue + DirectPurchasePrint*"
+  pattern: "useReceiptPrintSettings fiscal_data; purchaseCashDrawerLabel"
+  tests: "python static asserts; no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"

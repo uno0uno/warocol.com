@@ -25,17 +25,7 @@
           :label="formatDate(purchase.purchase_date)"
           icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
         >
-          <div class="flex items-center gap-2">
-            <p class="text-lg font-semibold text-text-primary">{{ purchase.purchase_number }}</p>
-            <button @click="copyPurchaseLink"
-              class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary transition-colors"
-              :title="t('abastecimiento.compraDirectaDetalle.copyLink')">
-              <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            </button>
-          </div>
+          <p class="text-lg font-semibold text-text-primary">{{ purchase.purchase_number }}</p>
         </PurchasesPurchaseInfoCard>
 
         <!-- Supplier -->
@@ -664,14 +654,17 @@
       v-if="purchase"
       :title="t('abastecimiento.compraDirectaDetalle.printTitle')"
       :purchase-number="purchase.purchase_number"
+      :business-name="printBusinessName"
+      :business-tax-id="printBusinessTaxId"
       :date-label="t('abastecimiento.compraDirectaDetalle.purchaseDate')"
       :date-value="formatDate(purchase.purchase_date)"
       :supplier-label="t('abastecimiento.compraDirectaDetalle.supplier')"
       :supplier-value="purchase.supplier_name || t('abastecimiento.compraDirectaDetalle.emptySupplier')"
+      :supplier-tax-id="purchase.supplier_tax_id || null"
       :status-label="t('abastecimiento.compraDirectaDetalle.currentStatus')"
       :status-value="getStatusText(purchase.status)"
       :payment-label="t('abastecimiento.compraDirectaDetalle.paymentMethod')"
-      :payment-value="purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—'"
+      :payment-value="printPaymentValue"
       :items="printTicketItems"
       :total-label="t('abastecimiento.compraDirectaDetalle.purchaseTotal')"
       :total-value="formatCurrency(purchase.total_amount)"
@@ -683,6 +676,8 @@
       v-if="purchase"
       :title="t('abastecimiento.compraDirectaDetalle.printTitle')"
       :purchase-number="purchase.purchase_number"
+      :business-name="printBusinessName"
+      :business-tax-id="printBusinessTaxId"
       :date-label="t('abastecimiento.compraDirectaDetalle.purchaseDate')"
       :date-value="formatDate(purchase.purchase_date)"
       :supplier-label="t('abastecimiento.compraDirectaDetalle.supplier')"
@@ -691,7 +686,7 @@
       :status-label="t('abastecimiento.compraDirectaDetalle.currentStatus')"
       :status-value="getStatusText(purchase.status)"
       :payment-label="t('abastecimiento.compraDirectaDetalle.paymentMethod')"
-      :payment-value="purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—'"
+      :payment-value="printPaymentValue"
       :item-name-label="WAREHOUSE_COPY.warehouseItemColumn"
       :qty-label="t('abastecimiento.compraDirectaDetalle.quantityShort')"
       :unit-label="t('abastecimiento.compraDirectaDetalle.unit')"
@@ -740,6 +735,7 @@ const toast = useToast()
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { printElement: printTicketElement } = useCajaTicketPrint()
+const { settingsData } = useReceiptPrintSettings()
 const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 const printFormatModalOpen = ref(false)
 
@@ -795,6 +791,16 @@ const purchaseCashDrawerLabel = computed(() =>
     ? t('abastecimiento.compraDirectaDetalle.fromCashDrawerYes')
     : t('abastecimiento.compraDirectaDetalle.fromCashDrawerNo'),
 )
+const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
+const printBusinessName = computed(() => fiscalData.value?.business_name?.trim() || null)
+const printBusinessTaxId = computed(() => fiscalData.value?.nit?.trim() || null)
+const printPaymentValue = computed(() => {
+  const current = purchase.value
+  if (!current?.payment_method) return '—'
+  const method = resolvePaymentLabel(current.payment_method, current.payment_method_id)
+  if (!isPurchaseCash.value) return method
+  return `${method} · ${purchaseCashDrawerLabel.value}`
+})
 const isLoading = computed(() => !purchaseResponse.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && purchaseResponse.value != null)
 const refresh = refetch
@@ -1094,32 +1100,6 @@ const uploadFile = async (file: File, type: 'invoice' | 'payment') => {
     toast.error(error.data?.detail || t('abastecimiento.compraDirectaDetalle.uploadError'), { title: t('common.error') })
   } finally {
     isUploading.value = false
-  }
-}
-
-// Copy link
-const copyPurchaseLink = async () => {
-  try {
-    const baseUrl = window.location.origin
-    const purchaseUrl = `${baseUrl}/abastecimiento/compras-directas/${purchaseId}`
-
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(purchaseUrl)
-    } else {
-      const textArea = document.createElement('textarea')
-      textArea.value = purchaseUrl
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-    }
-
-    toast.success(t('abastecimiento.compraDirectaDetalle.copySuccess'), { title: t('abastecimiento.compraDirectaDetalle.copiedTitle') })
-  } catch (error) {
-    console.error('Error copying link:', error)
-    toast.error(t('abastecimiento.compraDirectaDetalle.copyError'), { title: t('common.error') })
   }
 }
 

@@ -11,10 +11,13 @@ export type DirectPurchasePrintItem = {
 defineProps<{
   title: string
   purchaseNumber?: string | number | null
+  businessName?: string | null
+  businessTaxId?: string | null
   dateLabel: string
   dateValue: string
   supplierLabel: string
   supplierValue: string
+  supplierTaxId?: string | null
   statusLabel: string
   statusValue: string
   paymentLabel: string
@@ -33,6 +36,18 @@ defineProps<{
     class="receipt-print-ticket direct-purchase-print-ticket"
     aria-hidden="true"
   >
+    <pre
+      v-if="businessName"
+      class="receipt-plain-pre"
+    >{{ businessName }}</pre>
+    <pre
+      v-if="businessTaxId"
+      class="receipt-plain-pre"
+    >NIT {{ businessTaxId }}</pre>
+    <pre
+      v-if="businessName || businessTaxId"
+      class="receipt-plain-pre"
+    >{{ receiptDivider() }}</pre>
     <pre class="receipt-plain-pre">{{ title }}</pre>
     <pre
       v-if="purchaseNumber"
@@ -41,6 +56,10 @@ defineProps<{
     <pre class="receipt-plain-pre">{{ receiptDivider() }}</pre>
     <pre class="receipt-plain-pre">{{ padReceiptLine(dateLabel, dateValue) }}</pre>
     <pre class="receipt-plain-pre">{{ padReceiptLine(supplierLabel, supplierValue) }}</pre>
+    <pre
+      v-if="supplierTaxId"
+      class="receipt-plain-pre"
+    >{{ padReceiptLine('NIT', supplierTaxId) }}</pre>
     <pre class="receipt-plain-pre">{{ padReceiptLine(statusLabel, statusValue) }}</pre>
     <pre class="receipt-plain-pre">{{ padReceiptLine(paymentLabel, paymentValue) }}</pre>
     <pre class="receipt-plain-pre">{{ receiptDivider() }}</pre>
