@@ -14,6 +14,7 @@ export const LOCALE_MESSAGE_FILES = [
   'crm.json',
   'equipo.json',
   'perfil.json',
+  'docs.json',
 ] as const
 
 export const APP_LOCALE_DEFINITIONS = [

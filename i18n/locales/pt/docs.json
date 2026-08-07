@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "nav": {
+      "primerosPasos": "Primeiros passos",
+      "pos": "POS",
+      "ventas": "Vendas",
+      "despacho": "Despacho",
+      "analitica": "Analítica de vendas",
+      "finanzas": "Finanças",
+      "facturacion": "Faturação",
+      "menu": "Cardápio",
+      "operaciones": "Operações",
+      "abastecimiento": "Abastecimento",
+      "equipo": "Equipe",
+      "negocio": "Meu negócio",
+      "miPlan": "Meu plano",
+      "integraciones": "Integrações",
+      "cli": "CLI"
+    },
+    "section": {
+      "principal": "Principal",
+      "herramientas": "Ferramentas",
+      "cuenta": "Conta",
+      "dev": "Dev"
+    },
+    "tocTitle": "Nesta página",
+    "sheetTitle": "Conteúdo",
+    "loading": "Carregando...",
+    "notFound": "Documento não encontrado.",
+    "backToIndex": "Voltar ao índice",
+    "fallbackTitle": "Documentação"
+  }
+}

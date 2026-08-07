@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "nav": {
+      "primerosPasos": "入门指南",
+      "pos": "POS",
+      "ventas": "销售",
+      "despacho": "配送",
+      "analitica": "销售分析",
+      "finanzas": "财务",
+      "facturacion": "开票",
+      "menu": "菜单",
+      "operaciones": "运营",
+      "abastecimiento": "采购补给",
+      "equipo": "团队",
+      "negocio": "我的店铺",
+      "miPlan": "我的套餐",
+      "integraciones": "集成",
+      "cli": "CLI"
+    },
+    "section": {
+      "principal": "主要",
+      "herramientas": "工具",
+      "cuenta": "账户",
+      "dev": "Dev"
+    },
+    "tocTitle": "本页内容",
+    "sheetTitle": "目录",
+    "loading": "加载中...",
+    "notFound": "未找到文档。",
+    "backToIndex": "返回目录",
+    "fallbackTitle": "文档"
+  }
+}
