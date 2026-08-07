@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "nav": {
+      "primerosPasos": "Getting started",
+      "pos": "POS",
+      "ventas": "Sales",
+      "despacho": "Dispatch",
+      "analitica": "Sales analytics",
+      "finanzas": "Finance",
+      "facturacion": "Invoicing",
+      "menu": "Menu",
+      "operaciones": "Operations",
+      "abastecimiento": "Supply",
+      "equipo": "Team",
+      "negocio": "My business",
+      "miPlan": "My plan",
+      "integraciones": "Integrations",
+      "cli": "CLI"
+    },
+    "section": {
+      "principal": "Main",
+      "herramientas": "Tools",
+      "cuenta": "Account",
+      "dev": "Dev"
+    },
+    "tocTitle": "On this page",
+    "sheetTitle": "Contents",
+    "loading": "Loading...",
+    "notFound": "Document not found.",
+    "backToIndex": "Back to index",
+    "fallbackTitle": "Documentation"
+  }
+}

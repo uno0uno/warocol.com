@@ -5,6 +5,7 @@ import MarkdownIt from 'markdown-it'
 definePageMeta({ layout: 'docs' })
 
 const route = useRoute()
+const { t, locale } = useI18n()
 const { headings } = useDocsToc()
 
 const slug = computed(() => {
@@ -12,7 +13,10 @@ const slug = computed(() => {
   return Array.isArray(parts) ? parts.join('/') : parts || 'README'
 })
 
-const { data, error, status } = await useFetch(() => `/docs-content/${slug.value}`)
+const { data, error, status, refresh } = await useFetch(
+  () => `/docs-content/${slug.value}?locale=${locale.value}`,
+  { watch: [locale, slug] },
+)
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
 
@@ -54,7 +58,7 @@ watch(data, () => {
 
 const pageTitle = computed(() => {
   const match = (data.value?.content as string || '').match(/^#\s+(.+)/m)
-  return match ? match[1] : 'Documentación'
+  return match ? match[1] : t('docs.fallbackTitle')
 })
 
 const displayedTitle = ref('')
@@ -94,19 +98,21 @@ function handleClick(e: MouseEvent) {
   }
   navigateTo(`/docs/${resolved}`)
 }
+
+watch(locale, () => { void refresh() })
 </script>
 
 <template>
   <!-- Loading -->
   <div v-if="status === 'pending'" class="flex items-center justify-center min-h-[40vh]">
-    <p class="text-sm text-text-tertiary">Cargando...</p>
+    <p class="text-sm text-text-tertiary">{{ t('docs.loading') }}</p>
   </div>
 
   <!-- 404 -->
   <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-    <p class="text-text-secondary">Documento no encontrado.</p>
+    <p class="text-text-secondary">{{ t('docs.notFound') }}</p>
     <NuxtLink to="/docs" class="text-sm text-badge-primary-text hover:underline">
-      Volver al índice
+      {{ t('docs.backToIndex') }}
     </NuxtLink>
   </div>
 

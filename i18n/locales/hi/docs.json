@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "nav": {
+      "primerosPasos": "शुरुआत",
+      "pos": "POS",
+      "ventas": "बिक्री",
+      "despacho": "डिस्पैच",
+      "analitica": "बिक्री विश्लेषण",
+      "finanzas": "वित्त",
+      "facturacion": "इनवॉइसिंग",
+      "menu": "मेनू",
+      "operaciones": "संचालन",
+      "abastecimiento": "आपूर्ति",
+      "equipo": "टीम",
+      "negocio": "मेरा व्यवसाय",
+      "miPlan": "मेरा प्लान",
+      "integraciones": "इंटीग्रेशन",
+      "cli": "CLI"
+    },
+    "section": {
+      "principal": "मुख्य",
+      "herramientas": "टूल्स",
+      "cuenta": "खाता",
+      "dev": "Dev"
+    },
+    "tocTitle": "इस पृष्ठ पर",
+    "sheetTitle": "सामग्री",
+    "loading": "लोड हो रहा है...",
+    "notFound": "दस्तावेज़ नहीं मिला।",
+    "backToIndex": "सूची पर वापस जाएँ",
+    "fallbackTitle": "दस्तावेज़ीकरण"
+  }
+}

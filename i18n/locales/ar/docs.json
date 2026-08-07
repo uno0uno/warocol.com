@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "nav": {
+      "primerosPasos": "الخطوات الأولى",
+      "pos": "نقطة البيع",
+      "ventas": "المبيعات",
+      "despacho": "التوصيل",
+      "analitica": "تحليلات المبيعات",
+      "finanzas": "المالية",
+      "facturacion": "الفوترة",
+      "menu": "القائمة",
+      "operaciones": "العمليات",
+      "abastecimiento": "التوريد",
+      "equipo": "الفريق",
+      "negocio": "نشاطي",
+      "miPlan": "خطتي",
+      "integraciones": "التكاملات",
+      "cli": "CLI"
+    },
+    "section": {
+      "principal": "الرئيسي",
+      "herramientas": "الأدوات",
+      "cuenta": "الحساب",
+      "dev": "Dev"
+    },
+    "tocTitle": "في هذه الصفحة",
+    "sheetTitle": "المحتوى",
+    "loading": "جاري التحميل...",
+    "notFound": "المستند غير موجود.",
+    "backToIndex": "العودة إلى الفهرس",
+    "fallbackTitle": "التوثيق"
+  }
+}

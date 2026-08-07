@@ -1,9 +1,8 @@
 <script setup lang="ts">
-const route = useRoute()
-
 import Header from '~/components/layout/Header.vue'
 import BottomNav from '~/components/layout/BottomNav.vue'
 import { useDocsNav } from '~/composables/useDocsNav'
+import { getLocaleDirection } from '~/utils/appLocales'
 import {
   BookOpenIcon,
   CodeBracketIcon,
@@ -22,35 +21,54 @@ import {
   CreditCardIcon,
 } from '@heroicons/vue/24/outline'
 
-type NavSection = { section: string; path?: undefined; icon?: undefined; label?: undefined }
-type NavItem    = { label: string; path: string; icon: unknown; section?: undefined }
-type NavEntry   = NavSection | NavItem
+const route = useRoute()
+const { t, locale } = useI18n()
 
-const nav: NavEntry[] = [
-  { label: 'Primeros pasos',  path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
+type NavSection = { sectionKey: string; path?: undefined; icon?: undefined; labelKey?: undefined }
+type NavItem = { labelKey: string; path: string; icon: unknown; sectionKey?: undefined }
+type NavEntry = NavSection | NavItem
 
-  { section: 'Principal' },
-  { label: 'POS',             path: '/docs/usuarios/pos',            icon: ComputerDesktopIcon },
-  { label: 'Ventas',          path: '/docs/usuarios/ventas',         icon: ShoppingCartIcon },
-  { label: 'Despacho',        path: '/docs/usuarios/despacho',       icon: MapPinIcon },
+const navEntries: NavEntry[] = [
+  { labelKey: 'docs.nav.primerosPasos', path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
 
-  { section: 'Herramientas' },
-  { label: 'Analítica Ventas', path: '/docs/usuarios/analitica',     icon: ChartBarIcon },
-  { label: 'Finanzas',         path: '/docs/usuarios/finanzas',      icon: BanknotesIcon },
-  { label: 'Facturación',      path: '/docs/usuarios/facturacion',   icon: DocumentTextIcon },
-  { label: 'Menú',             path: '/docs/usuarios/menu',          icon: CubeIcon },
-  { label: 'Operaciones',      path: '/docs/usuarios/operaciones',   icon: AdjustmentsHorizontalIcon },
-  { label: 'Abastecimiento',   path: '/docs/usuarios/abastecimiento', icon: TruckIcon },
-  { label: 'Equipo',           path: '/docs/usuarios/equipo',        icon: UserGroupIcon },
+  { sectionKey: 'docs.section.principal' },
+  { labelKey: 'docs.nav.pos', path: '/docs/usuarios/pos', icon: ComputerDesktopIcon },
+  { labelKey: 'docs.nav.ventas', path: '/docs/usuarios/ventas', icon: ShoppingCartIcon },
+  { labelKey: 'docs.nav.despacho', path: '/docs/usuarios/despacho', icon: MapPinIcon },
 
-  { section: 'Cuenta' },
-  { label: 'Mi Negocio',      path: '/docs/usuarios/negocio',        icon: BuildingStorefrontIcon },
-  { label: 'Mi Plan',         path: '/docs/usuarios/mi-plan',        icon: CreditCardIcon },
+  { sectionKey: 'docs.section.herramientas' },
+  { labelKey: 'docs.nav.analitica', path: '/docs/usuarios/analitica', icon: ChartBarIcon },
+  { labelKey: 'docs.nav.finanzas', path: '/docs/usuarios/finanzas', icon: BanknotesIcon },
+  { labelKey: 'docs.nav.facturacion', path: '/docs/usuarios/facturacion', icon: DocumentTextIcon },
+  { labelKey: 'docs.nav.menu', path: '/docs/usuarios/menu', icon: CubeIcon },
+  { labelKey: 'docs.nav.operaciones', path: '/docs/usuarios/operaciones', icon: AdjustmentsHorizontalIcon },
+  { labelKey: 'docs.nav.abastecimiento', path: '/docs/usuarios/abastecimiento', icon: TruckIcon },
+  { labelKey: 'docs.nav.equipo', path: '/docs/usuarios/equipo', icon: UserGroupIcon },
 
-  { section: 'Dev' },
-  { label: 'Integraciones',    path: '/docs/dev',                    icon: CodeBracketIcon },
-  { label: 'CLI',             path: '/docs/cli',                     icon: CommandLineIcon },
+  { sectionKey: 'docs.section.cuenta' },
+  { labelKey: 'docs.nav.negocio', path: '/docs/usuarios/negocio', icon: BuildingStorefrontIcon },
+  { labelKey: 'docs.nav.miPlan', path: '/docs/usuarios/mi-plan', icon: CreditCardIcon },
+
+  { sectionKey: 'docs.section.dev' },
+  { labelKey: 'docs.nav.integraciones', path: '/docs/dev', icon: CodeBracketIcon },
+  { labelKey: 'docs.nav.cli', path: '/docs/cli', icon: CommandLineIcon },
 ]
+
+const nav = computed(() =>
+  navEntries.map((item) => {
+    if (item.sectionKey) {
+      return { section: t(item.sectionKey), sectionKey: item.sectionKey }
+    }
+    return {
+      label: t(item.labelKey!),
+      labelKey: item.labelKey,
+      path: item.path!,
+      icon: item.icon,
+    }
+  }),
+)
+
+const docsDir = computed(() => getLocaleDirection(locale.value))
 
 function isActive(path: string) {
   return route.path === path
@@ -90,7 +108,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="docs-shell bg-surface">
+  <div class="docs-shell bg-surface" :dir="docsDir">
     <NuxtLoadingIndicator />
 
     <Header />
@@ -103,9 +121,9 @@ onMounted(() => {
           <nav class="docs-nav">
 
             <template v-for="item in nav">
-              <div v-if="item.section" :key="item.section" class="docs-nav-section">{{ item.section }}</div>
+              <div v-if="'section' in item && item.section" :key="item.sectionKey" class="docs-nav-section">{{ item.section }}</div>
               <NuxtLink
-                v-else
+                v-else-if="'path' in item && item.path"
                 :key="item.path"
                 :to="item.path"
                 class="docs-nav-item"
@@ -131,7 +149,7 @@ onMounted(() => {
       <!-- TOC derecho — solo desktop cuando hay headings -->
       <aside v-if="headings.length > 0" class="docs-toc">
         <div class="docs-toc-inner">
-          <p class="docs-toc-title">En esta página</p>
+          <p class="docs-toc-title">{{ t('docs.tocTitle') }}</p>
           <nav class="docs-toc-rail">
             <a
               v-for="h in headings"
@@ -150,13 +168,13 @@ onMounted(() => {
     </div>
 
     <!-- Bottom sheet nav — solo mobile -->
-    <UiBottomSheetModal v-model="showDocsNav" title="Contenido" max-height="lg">
+    <UiBottomSheetModal v-model="showDocsNav" :title="t('docs.sheetTitle')" max-height="lg">
       <div class="sheet-v2">
 
         <!-- Nav grid — click navega directamente -->
         <div class="sheet-grid">
           <NuxtLink
-            v-for="item in nav.filter(i => !i.section)"
+            v-for="item in nav.filter((i): i is { label: string; path: string; icon: unknown; labelKey: string } => 'path' in i && !!i.path)"
             :key="item.path"
             :to="item.path"
             class="sheet-grid-item"
