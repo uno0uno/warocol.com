@@ -1,0 +1,39 @@
+issue: 2160
+title: "ui: polish PrintFormatChooserModal visual hierarchy"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2160-print-format-chooser-polish
+
+paths:
+  - components/ui/PrintFormatChooserModal.vue
+  - .wr/2160.yaml
+
+ac:
+  - "Ticket/document options are distinct cards with icon + title + hint"
+  - "Cancel is visually secondary"
+  - "Existing WARO tokens only"
+  - "a11y dialog/focus/Esc/hit targets preserved"
+  - "select/cancel emit contract unchanged"
+  - "Spot-check on compras-directas print chooser"
+
+out_of_scope:
+  - print content
+  - i18n rewrites
+  - print pipeline redesign
+
+hints:
+  entry: "components/ui/PrintFormatChooserModal.vue"
+  pattern: "icon well primary/10; quieter cancel"
+  tests: "python static asserts; no build/lint"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
