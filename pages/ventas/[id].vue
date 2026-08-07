@@ -728,7 +728,7 @@ const saleReceiptLocationLabel = computed(() => {
 const saleReceiptSoldAt = computed(() => {
   const o = order.value
   if (!o) return null
-  const date = o.completed_at || o.closed_at || o.created_at || o.updated_at
+  const date = o.order_date || o.completed_at || o.closed_at || o.created_at || o.updated_at
   return date ? formatDate(date) : null
 })
 
@@ -1118,23 +1118,41 @@ onUnmounted(() => {
 
     <!-- Order Details -->
     <div v-else class="space-y-6">
-      <!-- Order Info Grid — customer denser; phone folded in (#2149) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
-        <!-- Customer + phone -->
-        <div class="bg-surface border border-border rounded-xl p-4 md:col-span-2 xl:col-span-1">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.detail.saleCustomer') }}</p>
-          <p class="text-base font-bold text-text-primary leading-snug break-words">
+      <!-- Meta cards — gastos / compra-directa pattern (#2162) -->
+      <PurchasesPurchaseOrderHeader :columns="4">
+        <PurchasesPurchaseInfoCard
+          v-if="order.order_number"
+          :label="t('ventas.detail.number')"
+          icon-path="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+        >
+          <p class="text-lg font-mono font-semibold text-text-primary">#{{ order.order_number }}</p>
+        </PurchasesPurchaseInfoCard>
+
+        <PurchasesPurchaseInfoCard
+          :label="t('ventas.common.fecha')"
+          icon-path="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        >
+          <p class="text-lg font-semibold text-text-primary">
+            {{ saleReceiptSoldAt || '—' }}
+          </p>
+        </PurchasesPurchaseInfoCard>
+
+        <PurchasesPurchaseInfoCard
+          :label="t('ventas.detail.saleCustomer')"
+          icon-path="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+        >
+          <p class="text-lg font-semibold text-text-primary leading-snug break-words">
             {{ saleCustomerCardLabel }}
           </p>
           <p
-            class="mt-1 text-sm font-medium tabular-nums"
+            class="text-sm font-medium tabular-nums"
             :class="saleCustomerIdentity.contact.phone ? 'text-text-primary' : 'text-text-tertiary'"
           >
             {{ saleCustomerIdentity.contact.phone || t('ventas.common.sinTelefono') }}
           </p>
           <p
             v-if="saleCustomerIdentity.contact.email && saleCustomerIdentity.contact.email !== preInvoiceContactLabel"
-            class="mt-1 text-xs text-text-secondary break-all"
+            class="text-xs text-text-secondary break-all"
           >
             {{ saleCustomerIdentity.contact.email }}
           </p>
@@ -1142,101 +1160,148 @@ onUnmounted(() => {
             v-if="canAssociateOrderCustomer"
             type="button"
             :disabled="isAssociatingCustomer"
-            class="mt-2 text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+            class="mt-1 text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
             @click="openCustomerModal"
           >
             {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
           </button>
-          <p v-if="customerAssociationError" class="mt-2 text-xs text-destructive">
+          <p v-if="customerAssociationError" class="text-xs text-destructive">
             {{ customerAssociationError }}
           </p>
-        </div>
+        </PurchasesPurchaseInfoCard>
 
-        <!-- Waiter (checkout / mesa close attribution — #663/#665/#666) -->
-        <div
-          class="bg-surface border border-border rounded-xl p-4"
+        <PurchasesPurchaseInfoCard
+          :label="t('ventas.common.mesero')"
+          icon-path="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
         >
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.mesero') }}</p>
           <NuxtLink
             v-if="order.served_by_member_id"
             :to="`/equipo/miembros/${order.served_by_member_id}`"
-            class="text-base font-bold text-primary hover:underline"
+            class="text-lg font-semibold text-primary hover:underline"
           >
             {{ order.served_by_member_name || t('ventas.detail.assigned') }}
           </NuxtLink>
-          <p v-else class="text-base font-bold text-text-tertiary">
+          <p v-else class="text-lg font-semibold text-text-tertiary">
             {{ t('ventas.detail.unassigned') }}
           </p>
-        </div>
+        </PurchasesPurchaseInfoCard>
 
-        <!-- Payment Method -->
-        <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
-          class="border border-info/50 bg-info/5 rounded-xl p-4 text-start w-full"
-          :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-info/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
-          @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
-          :aria-label="order.split_payments && order.split_payments.length > 0 ? t('ventas.detail.viewSplitDetail') : undefined">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-base font-bold text-info leading-tight">
-              <template v-if="order.split_payments && order.split_payments.length > 0">
-                {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
-              </template>
-              <template v-else>
-                {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : t('ventas.common.sinRegistrar') }}
-              </template>
-            </p>
-            <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
+        <component
+          :is="order.split_payments?.length ? 'button' : 'div'"
+          :type="order.split_payments?.length ? 'button' : undefined"
+          class="text-start w-full rounded-lg"
+          :class="order.split_payments?.length
+            ? 'hover:bg-info/5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30 -m-2 p-2'
+            : ''"
+          :aria-label="order.split_payments?.length ? t('ventas.detail.viewSplitDetail') : undefined"
+          @click="order.split_payments?.length ? showSplitPaymentsPanel = true : undefined"
+        >
+          <PurchasesPurchaseInfoCard
+            :label="t('ventas.common.metodoPago')"
+            icon-path="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          >
+            <div class="flex items-center gap-2">
+              <p class="text-lg font-semibold leading-tight" :class="order.split_payments?.length ? 'text-info' : 'text-text-primary'">
+                <template v-if="order.split_payments?.length">
+                  {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
+                </template>
+                <template v-else>
+                  {{ order.payment_method ? resolveLabel(order.payment_method, order.payment_method_id) : t('ventas.common.sinRegistrar') }}
+                </template>
+              </p>
+              <svg
+                v-if="order.split_payments?.length"
+                class="w-4 h-4 text-info flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </PurchasesPurchaseInfoCard>
         </component>
 
-        <button
-          v-if="order.status === 'pending'"
-          type="button"
-          @click="openFinalizeSalePanel"
-          class="bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group md:col-span-2 xl:col-span-4 order-last"
+        <PurchasesPurchaseInfoCard
+          :label="t('ventas.ordenes.colSource')"
+          icon-path="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
         >
-          <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
-          <div class="flex items-center justify-between gap-3">
-            <span class="text-base font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
-            <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-          </div>
-        </button>
-
-        <!-- Source / Origin -->
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('ventas.ordenes.colSource') }}</p>
-          <span class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full" :class="{
-            'bg-emerald-100 text-emerald-700': order.is_delivery,
-            'bg-amber-100 text-amber-700': !order.is_delivery && order.source === 'barra',
-            'bg-crocus-100 text-crocus-700': !order.is_delivery && order.source === 'mesa',
-            'bg-blue-100 text-blue-700': !order.is_delivery && (order.source === 'pos' || !order.source),
-          }">
+          <span
+            class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full"
+            :class="{
+              'bg-emerald-100 text-emerald-700': order.is_delivery,
+              'bg-amber-100 text-amber-700': !order.is_delivery && order.source === 'barra',
+              'bg-crocus-100 text-crocus-700': !order.is_delivery && order.source === 'mesa',
+              'bg-blue-100 text-blue-700': !order.is_delivery && (order.source === 'pos' || !order.source),
+            }"
+          >
             <template v-if="!order.is_delivery">
-              <svg v-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+              <svg
+                v-if="order.source === 'barra'"
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+                />
               </svg>
-              <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+              <svg
+                v-else-if="order.source === 'mesa'"
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
+                />
               </svg>
-              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <svg
+                v-else
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
               </svg>
             </template>
             {{ saleReceiptLocationLabel || t('ventas.common.pos') }}
           </span>
-        </div>
+        </PurchasesPurchaseInfoCard>
+      </PurchasesPurchaseOrderHeader>
 
-      </div>
+      <button
+        v-if="order.status === 'pending'"
+        type="button"
+        class="mb-6 bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
+        @click="openFinalizeSalePanel"
+      >
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-base font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
+          <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </div>
+      </button>
 
       <!-- Delivery Info Section (only for delivery orders) -->
       <div v-if="order.is_delivery" class="bg-surface border border-border rounded-2xl overflow-hidden">

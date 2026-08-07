@@ -1,0 +1,34 @@
+issue: 2162
+title: "ui(ventas/abastecimiento): unify detail meta cards with Fecha like gastos"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2162-detail-meta-cards
+risk: low
+
+paths:
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - pages/ventas/[id].vue
+  - .wr/2162.yaml
+
+ac:
+  - "Compra directa: Número card + separate Fecha from purchase_date"
+  - "Ventas: border-2 PurchaseOrderHeader + PurchaseInfoCard meta panel"
+  - "Ventas Fecha uses order_date (API field); fix saleReceiptSoldAt"
+  - "Keep Cliente/Mesero/Método (split click)/Origen + pending finalize CTA"
+  - "Gastos pattern parity for labels/icon wells"
+
+out_of_scope:
+  - print pipelines
+  - list pages / edit forms
+  - API changes
+  - rewriting gastos
+
+hints:
+  entry: "compras-directas header; ventas meta grid ~1120; saleReceiptSoldAt ~728"
+  pattern: "PurchasesPurchaseOrderHeader + PurchaseInfoCard; gastos [id] Número/Fecha"
+  tests: "static assert; no build/lint"
+
+skip:
+  audits: [ux, color, typography]
