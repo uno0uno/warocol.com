@@ -2,13 +2,13 @@
 
 Bienvenido a la documentación de WARO. Aquí encuentras todo lo que necesitas para operar tu restaurante día a día.
 
-La documentación replica la estructura del menú lateral de la plataforma: tres grupos (Principal, Herramientas, Cuenta) con sus módulos.
+La documentación replica la estructura del menú lateral: Primeros pasos, luego Principal, Herramientas, Cuenta y Dev.
 
 ---
 
 ## Primeros pasos
 
-- [Primeros pasos](./usuarios/primeros-pasos) — configuración inicial de tu cuenta
+- [Primeros pasos](./usuarios/primeros-pasos) — login y orden recomendado para empezar
 
 ---
 
@@ -31,7 +31,6 @@ La documentación replica la estructura del menú lateral de la plataforma: tres
 | [Operaciones](./usuarios/operaciones) | Comandas & cocina, mesas, personalización y propinas |
 | [Abastecimiento](./usuarios/abastecimiento) | Proveedores, compras, stock, ajustes, ingredientes propios y calidad de datos |
 | [Equipo](./usuarios/equipo) | Miembros, salarios, nómina y perfil de meseros |
-| [Integraciones](../dev) | API pública para construir integraciones |
 
 ## Cuenta
 
@@ -39,3 +38,10 @@ La documentación replica la estructura del menú lateral de la plataforma: tres
 |--------|------------------|
 | [Mi Negocio](./usuarios/negocio) | Perfil público, horarios, contacto y configuración de pedidos online |
 | [Mi Plan](./usuarios/mi-plan) | Suscripción, historial de pagos y uso de IA |
+
+## Dev
+
+| Recurso | Para qué |
+|---------|----------|
+| [Integraciones](./dev) | API pública para construir integraciones |
+| [CLI](./cli) | Herramientas de línea de comandos |

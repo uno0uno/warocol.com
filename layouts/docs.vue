@@ -29,6 +29,7 @@ type NavEntry   = NavSection | NavItem
 const nav: NavEntry[] = [
   { label: 'Primeros pasos',  path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
 
+  { section: 'Principal' },
   { label: 'POS',             path: '/docs/usuarios/pos',            icon: ComputerDesktopIcon },
   { label: 'Ventas',          path: '/docs/usuarios/ventas',         icon: ShoppingCartIcon },
   { label: 'Despacho',        path: '/docs/usuarios/despacho',       icon: MapPinIcon },
@@ -41,13 +42,13 @@ const nav: NavEntry[] = [
   { label: 'Operaciones',      path: '/docs/usuarios/operaciones',   icon: AdjustmentsHorizontalIcon },
   { label: 'Abastecimiento',   path: '/docs/usuarios/abastecimiento', icon: TruckIcon },
   { label: 'Equipo',           path: '/docs/usuarios/equipo',        icon: UserGroupIcon },
-  { label: 'Integraciones',    path: '/docs/dev',                    icon: CodeBracketIcon },
 
   { section: 'Cuenta' },
   { label: 'Mi Negocio',      path: '/docs/usuarios/negocio',        icon: BuildingStorefrontIcon },
   { label: 'Mi Plan',         path: '/docs/usuarios/mi-plan',        icon: CreditCardIcon },
 
   { section: 'Dev' },
+  { label: 'Integraciones',    path: '/docs/dev',                    icon: CodeBracketIcon },
   { label: 'CLI',             path: '/docs/cli',                     icon: CommandLineIcon },
 ]
 
