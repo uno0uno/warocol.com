@@ -44,7 +44,7 @@ Bei jedem Ereignis sehen Sie u. a.:
 |-----------|--------------------------|
 | Produkte im Warenkorb **vor dem Senden zum Tab** oder vor Server-Synchronisation | Nur Aktionen, die den Server erreichen, werden auditiert |
 | Aktionen **vor dem Deployment** des Protokolls für Ihren Betrieb | Erfassung beginnt bei Aktivierung in Produktion; kein Rückfüllen der Vergangenheit |
-| Storno einer **vollständigen Verkauf** unter Verkäufe → Bestellungen | Anderer Ablauf; nicht dasselbe wie Teilstorno beim Checkout |
+| Storno eines **vollständigen Verkaufs** unter Verkäufe → Bestellungen | Anderer Ablauf; nicht dasselbe wie Teilstorno beim Checkout |
 | Preisänderungen, Rabatte oder Menükonfiguration | Außerhalb des POS-MVP |
 
 Wenn die Liste direkt nach Aktivierung leer ist, ist das normal: Ereignisse erscheinen, wenn das Team die Version mit Protokoll nutzt.
