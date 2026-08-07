@@ -39,9 +39,9 @@ test('maps US English articles to USD offer and en_US meta', () => {
   assert.equal(market.ogLocale, 'en_US')
   assert.equal(market.inLanguage, 'en-US')
   assert.equal(market.currency, 'USD')
-  assert.equal(market.annualPrice, '300')
-  assert.equal(market.monthlyPrice, '25')
-  assert.equal(market.annualPriceLabel, 'USD $300/year')
+  assert.equal(market.annualPrice, '360')
+  assert.equal(market.monthlyPrice, '30')
+  assert.equal(market.annualPriceLabel, 'USD $30/month')
   assert.equal(market.areaServedName, 'United States')
 })
 

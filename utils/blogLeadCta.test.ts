@@ -37,14 +37,14 @@ test('keeps Colombia ES COP copy when market is CO', () => {
   assert.match(price.headline, /COP 95\.900/)
 })
 
-test('shows EN CTA with USD $300/year for US English market', () => {
+test('shows EN CTA with USD $30/month for US English market', () => {
   const pos = getBlogLeadCta('software-pos-restaurants', 'final', US_EN)
-  assert.match(pos.headline, /USD \$300\/year/)
+  assert.match(pos.headline, /USD \$30\/month/)
   assert.match(pos.microcopy, /No card/i)
   assert.match(pos.button, /demo/i)
 
   const price = getBlogLeadCta('restaurant-pos-pricing', 'price', US_EN)
-  assert.match(price.headline, /USD \$300\/year/)
+  assert.match(price.headline, /USD \$30\/month/)
   assert.equal(price.button, 'See my options')
 })
 

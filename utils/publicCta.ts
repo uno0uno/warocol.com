@@ -68,7 +68,7 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
   if (market.isUsEn) {
     return {
       annualPrice: market.annualPriceLabel,
-      monthlyEquivalent: 'under USD $25/month',
+      monthlyEquivalent: 'under USD $30/month',
       activation: 'Module access activates after payment.',
     }
   }
@@ -93,7 +93,7 @@ export function resolveTrialPriceAnchor(options: {
   }
 
   if (isUs) {
-    return isEn ? 'under USD $25/month' : 'menos de USD $25/mes'
+    return isEn ? 'under USD $30/month' : 'menos de USD $30/mes'
   }
 
   return isEn ? 'under COP 8,000/month' : PUBLIC_OFFER.monthlyEquivalent
