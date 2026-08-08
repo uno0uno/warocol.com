@@ -1,13 +1,9 @@
 <template>
   <div class="page-layout">
     <UiSubmitBusyOverlay
-      :busy="isSaving || isUploading || isDeleting"
-      :label="isDeleting
-        ? t('abastecimiento.compraDirectaDetalle.deleting')
-        : (isSaving ? t('abastecimiento.compraDirectaDetalle.saving') : t('abastecimiento.compraDirectaDetalle.uploading'))"
-      :hint="isDeleting
-        ? t('abastecimiento.compraDirectaDetalle.deletingHint')
-        : (isSaving ? t('abastecimiento.compraDirectaDetalle.savingHint') : t('abastecimiento.compraDirectaDetalle.uploadingHint'))"
+      :busy="isSaving || isUploading"
+      :label="isSaving ? t('abastecimiento.compraDirectaDetalle.saving') : t('abastecimiento.compraDirectaDetalle.uploading')"
+      :hint="isSaving ? t('abastecimiento.compraDirectaDetalle.savingHint') : t('abastecimiento.compraDirectaDetalle.uploadingHint')"
       variant="glass"
       indicator="matrix"
     />

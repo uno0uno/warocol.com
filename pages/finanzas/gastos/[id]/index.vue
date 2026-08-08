@@ -2,8 +2,8 @@
   <div class="page-layout">
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
-      :label="isDeleting ? t('finanzas.gastos.deleting') : t('finanzas.gastos.updating')"
-      :hint="isDeleting ? t('finanzas.gastos.deletingBody') : t('finanzas.gastos.updatingBody')"
+      :label="t('finanzas.gastos.updating')"
+      :hint="t('finanzas.gastos.updatingBody')"
       variant="glass"
       indicator="matrix"
     />
@@ -1266,7 +1266,6 @@ const performDeleteExpense = async () => {
   if (isDeleting.value) return
 
   isDeleting.value = true
-  isSubmitting.value = true
   try {
     await $fetch(`/api/finance/expenses/${expenseId}`, {
       method: 'DELETE'
@@ -1282,7 +1281,6 @@ const performDeleteExpense = async () => {
     alert(error?.data?.detail || t('finanzas.gastos.deleteError'))
   } finally {
     isDeleting.value = false
-    isSubmitting.value = false
   }
 }
 </script>
