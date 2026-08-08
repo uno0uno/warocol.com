@@ -64,7 +64,7 @@
                 ref="cancelButton"
                 type="button"
                 :disabled="loading"
-                class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
+                class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium whitespace-nowrap hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
                 @click="cancel"
               >
                 {{ cancelLabel }}
@@ -73,7 +73,7 @@
                 type="button"
                 :disabled="loading"
                 :class="[
-                  'flex-1 min-h-[44px] py-3 px-4 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2',
+                  'flex-1 min-h-[44px] py-3 px-4 rounded-lg font-semibold whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2',
                   variant === 'destructive'
                     ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive'
                     : 'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary',
