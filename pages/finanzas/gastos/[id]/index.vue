@@ -128,11 +128,11 @@
                 </svg>
                 <span>{{ t('finanzas.gastos.detailTitle') }}</span>
               </h3>
-              <div v-if="!isEditing" class="flex items-center gap-2">
+              <div v-if="!isEditing" class="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   @click="startEditing"
-                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium whitespace-nowrap shrink-0"
                 >
                   {{ t('common.edit') }}
                 </button>
@@ -140,7 +140,7 @@
                   type="button"
                   @click="requestDeleteExpense"
                   :disabled="isDeleting"
-                  class="px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 text-sm font-medium disabled:opacity-50"
+                  class="px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 text-sm font-medium whitespace-nowrap shrink-0 disabled:opacity-50"
                 >
                   {{ t('finanzas.common.delete') }}
                 </button>
@@ -1272,9 +1272,11 @@ const performDeleteExpense = async () => {
     })
 
     showDeleteConfirm.value = false
+    // Navigate first — invalidating the detail query while still on this page
+    // briefly shows CommonsTheErrorState ("unavailable") before leave.
+    await navigateTo('/finanzas/gastos', { replace: true })
     cache.invalidateQueries({ key: ['finance', 'expenses'] })
     cache.invalidateQueries({ key: ['expense', expenseId] })
-    await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error deleting expense:', error)
     showDeleteConfirm.value = false

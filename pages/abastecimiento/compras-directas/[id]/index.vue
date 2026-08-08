@@ -120,11 +120,11 @@
           </h3>
 
           <!-- Edit / Delete -->
-          <div v-if="!isEditMode" class="flex items-center gap-2">
+          <div v-if="!isEditMode" class="flex items-center gap-2 shrink-0">
             <button
               type="button"
               @click="enterEditMode"
-              class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center space-x-1"
+              class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center space-x-1 whitespace-nowrap shrink-0"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -133,7 +133,7 @@
             </button>
             <button
               type="button"
-              class="px-3 py-1.5 text-xs font-medium text-destructive border-2 border-border rounded-lg hover:border-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+              class="px-3 py-1.5 text-xs font-medium text-destructive border-2 border-border rounded-lg hover:border-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap shrink-0 disabled:opacity-50"
               :disabled="isDeleting"
               :aria-label="t('abastecimiento.compraDirectaDetalle.deleteAria')"
               @click="requestDeletePurchase"
@@ -866,9 +866,11 @@ async function performDeletePurchase() {
       method: 'DELETE',
     })
     showDeleteConfirm.value = false
+    // Navigate first — invalidating the detail query while still on this page
+    // briefly shows CommonsTheErrorState ("unavailable") before leave.
+    await navigateTo('/abastecimiento/compras-directas', { replace: true })
     cache.invalidateQueries({ key: ['suppliers', 'direct-purchases'] })
     cache.invalidateQueries({ key: ['purchase-direct', purchaseId] })
-    await navigateTo('/abastecimiento/compras-directas')
   } catch (error: any) {
     console.error('Error deleting direct purchase:', error)
     showDeleteConfirm.value = false
