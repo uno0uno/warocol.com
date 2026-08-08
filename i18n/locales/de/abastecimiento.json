@@ -376,7 +376,12 @@
       "viewDetail": "Details anzeigen",
       "previous": "Zurück",
       "next": "Weiter",
-      "showing": "Zeige {start} bis {end} von {total} Einkäufen"
+      "showing": "Zeige {start} bis {end} von {total} Einkäufen",
+      "delete": "Löschen",
+      "deleteAria": "Direkteinkauf löschen",
+      "deleteConfirm": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden.",
+      "deleteError": "Direkteinkauf konnte nicht gelöscht werden",
+      "deleting": "Wird gelöscht…"
     },
     "compraDirectaDetalle": {
       "saving": "Änderungen werden gespeichert...",
@@ -468,7 +473,12 @@
         "payment_amount": "Gezahlter Betrag",
         "payment_date": "Zahlungsdatum",
         "cancellation_reason": "Stornierungsgrund"
-      }
+      },
+      "delete": "Einkauf löschen",
+      "deleteAria": "Direkteinkauf löschen",
+      "deleteConfirm": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden.",
+      "deleteError": "Direkteinkauf konnte nicht gelöscht werden",
+      "deleting": "Wird gelöscht…"
     },
     "glossary": {
       "warehouseItem": "Lagerartikel",

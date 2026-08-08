@@ -376,7 +376,12 @@
       "viewDetail": "查看详情",
       "previous": "上一页",
       "next": "下一页",
-      "showing": "显示第 {start} 到 {end} 项，共 {total} 项采购"
+      "showing": "显示第 {start} 到 {end} 项，共 {total} 项采购",
+      "delete": "删除",
+      "deleteAria": "删除直接采购",
+      "deleteConfirm": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。",
+      "deleteError": "无法删除直接采购",
+      "deleting": "正在删除…"
     },
     "compraDirectaDetalle": {
       "saving": "正在保存更改...",
@@ -468,7 +473,12 @@
         "payment_amount": "已付金额",
         "payment_date": "支付日期",
         "cancellation_reason": "取消原因"
-      }
+      },
+      "delete": "删除采购",
+      "deleteAria": "删除直接采购",
+      "deleteConfirm": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。",
+      "deleteError": "无法删除直接采购",
+      "deleting": "正在删除…"
     },
     "glossary": {
       "warehouseItem": "仓库商品",
