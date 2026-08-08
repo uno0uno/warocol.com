@@ -376,7 +376,12 @@
       "viewDetail": "View details",
       "previous": "Previous",
       "next": "Next",
-      "showing": "Showing {start} to {end} of {total} purchases"
+      "showing": "Showing {start} to {end} of {total} purchases",
+      "delete": "Delete",
+      "deleteAria": "Delete direct purchase",
+      "deleteConfirm": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone.",
+      "deleteError": "Could not delete the direct purchase",
+      "deleting": "Deleting…"
     },
     "compraDirectaDetalle": {
       "saving": "Saving changes...",
@@ -483,7 +488,12 @@
         "payment_amount": "Amount paid",
         "payment_date": "Payment date",
         "cancellation_reason": "Cancellation reason"
-      }
+      },
+      "delete": "Delete purchase",
+      "deleteAria": "Delete direct purchase",
+      "deleteConfirm": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone.",
+      "deleteError": "Could not delete the direct purchase",
+      "deleting": "Deleting…"
     },
     "glossary": {
       "warehouseItem": "Warehouse item",

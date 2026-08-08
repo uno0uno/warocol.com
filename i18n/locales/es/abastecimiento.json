@@ -376,7 +376,12 @@
       "viewDetail": "Ver detalle",
       "previous": "Anterior",
       "next": "Siguiente",
-      "showing": "Mostrando {start} a {end} de {total} compras"
+      "showing": "Mostrando {start} a {end} de {total} compras",
+      "delete": "Eliminar",
+      "deleteAria": "Eliminar compra directa",
+      "deleteConfirm": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer.",
+      "deleteError": "No se pudo eliminar la compra directa",
+      "deleting": "Eliminando…"
     },
     "compraDirectaDetalle": {
       "saving": "Guardando cambios...",
@@ -483,7 +488,12 @@
         "payment_amount": "Monto pagado",
         "payment_date": "Fecha de pago",
         "cancellation_reason": "Razón de cancelación"
-      }
+      },
+      "delete": "Eliminar compra",
+      "deleteAria": "Eliminar compra directa",
+      "deleteConfirm": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer.",
+      "deleteError": "No se pudo eliminar la compra directa",
+      "deleting": "Eliminando…"
     },
     "glossary": {
       "warehouseItem": "Artículo de bodega",

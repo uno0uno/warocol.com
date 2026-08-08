@@ -376,7 +376,12 @@
       "viewDetail": "Ver detalhes",
       "previous": "Anterior",
       "next": "Próximo",
-      "showing": "Exibindo {start} a {end} de {total} compras"
+      "showing": "Exibindo {start} a {end} de {total} compras",
+      "delete": "Excluir",
+      "deleteAria": "Excluir compra direta",
+      "deleteConfirm": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita.",
+      "deleteError": "Não foi possível excluir a compra direta",
+      "deleting": "Excluindo…"
     },
     "compraDirectaDetalle": {
       "saving": "Salvando alterações...",
@@ -468,7 +473,12 @@
         "payment_amount": "Valor pago",
         "payment_date": "Data de pagamento",
         "cancellation_reason": "Motivo do cancelamento"
-      }
+      },
+      "delete": "Excluir compra",
+      "deleteAria": "Excluir compra direta",
+      "deleteConfirm": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita.",
+      "deleteError": "Não foi possível excluir a compra direta",
+      "deleting": "Excluindo…"
     },
     "glossary": {
       "warehouseItem": "Item de estoque",

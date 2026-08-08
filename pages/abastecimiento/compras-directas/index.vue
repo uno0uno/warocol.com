@@ -196,6 +196,16 @@
               :title="t('abastecimiento.comprasDirectas.viewDetail')">
               <EyeIcon class="h-4 w-4" />
             </button>
+            <button
+              type="button"
+              class="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+              :title="t('abastecimiento.comprasDirectas.delete')"
+              :aria-label="t('abastecimiento.comprasDirectas.deleteAria')"
+              :disabled="isDeletingId === row.id"
+              @click.stop="deletePurchase(row.id)"
+            >
+              <TrashIcon class="h-4 w-4" />
+            </button>
           </div>
         </template>
       </UiResponsiveDataView>
@@ -270,13 +280,16 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, EyeIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { onMounted, onUnmounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 const { t } = useI18n({ useScope: 'global' })
+const cache = useQueryCache()
+const isDeletingId = ref<string | null>(null)
 
 useHead({
   title: () => t('abastecimiento.head.comprasDirectas')
@@ -490,6 +503,27 @@ const clearFilters = () => {
 
 const viewPurchase = (purchase: any) => {
   navigateTo(`/abastecimiento/compras-directas/${purchase.id}`)
+}
+
+const deletePurchase = async (purchaseId: string) => {
+  if (!confirm(t('abastecimiento.comprasDirectas.deleteConfirm'))) {
+    return
+  }
+
+  isDeletingId.value = purchaseId
+  try {
+    await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
+      method: 'DELETE',
+    })
+    cache.invalidateQueries({ key: ['suppliers', 'direct-purchases'] })
+    cache.invalidateQueries({ key: ['purchase-direct', purchaseId] })
+    await refetch()
+  } catch (error: any) {
+    console.error('Error deleting direct purchase:', error)
+    alert(error?.data?.detail || t('abastecimiento.comprasDirectas.deleteError'))
+  } finally {
+    isDeletingId.value = null
+  }
 }
 
 const previousPage = () => {

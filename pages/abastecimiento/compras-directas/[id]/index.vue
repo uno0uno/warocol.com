@@ -75,6 +75,21 @@
       </PurchasesPurchaseOrderHeader>
 
       <div
+        v-if="!isEditMode"
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2"
+      >
+        <button
+          type="button"
+          class="inline-flex min-h-[40px] items-center justify-center rounded-lg border-2 border-border px-4 text-sm font-medium text-destructive transition-colors hover:border-destructive hover:bg-destructive/10 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+          :disabled="isDeleting"
+          :aria-label="t('abastecimiento.compraDirectaDetalle.deleteAria')"
+          @click="deletePurchase"
+        >
+          {{ isDeleting ? t('abastecimiento.compraDirectaDetalle.deleting') : t('abastecimiento.compraDirectaDetalle.delete') }}
+        </button>
+      </div>
+
+      <div
         v-if="canPayPurchase"
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
       >
@@ -727,7 +742,7 @@ import { enUS, es } from 'date-fns/locale'
 import { computed, inject, nextTick, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
-import { useQuery } from '@pinia/colada'
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useWarehouseCopy } from '~/composables/useWarehouseCopy'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
@@ -740,12 +755,14 @@ import type { PrintFormatChoice } from '~/components/ui/PrintFormatChooserModal.
 const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
+const cache = useQueryCache()
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
 const { printElement: printTicketElement } = useCajaTicketPrint()
 const { settingsData } = useReceiptPrintSettings()
 const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 const printFormatModalOpen = ref(false)
+const isDeleting = ref(false)
 
 const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
@@ -823,6 +840,27 @@ const canPayPurchase = computed(() => {
 async function handlePaymentRegistered() {
   showPaymentPanel.value = false
   await refetch()
+}
+
+async function deletePurchase() {
+  if (!confirm(t('abastecimiento.compraDirectaDetalle.deleteConfirm'))) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
+      method: 'DELETE',
+    })
+    cache.invalidateQueries({ key: ['suppliers', 'direct-purchases'] })
+    cache.invalidateQueries({ key: ['purchase-direct', purchaseId] })
+    await navigateTo('/abastecimiento/compras-directas')
+  } catch (error: any) {
+    console.error('Error deleting direct purchase:', error)
+    alert(error?.data?.detail || t('abastecimiento.compraDirectaDetalle.deleteError'))
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 // Fetch ingredients for add item modal

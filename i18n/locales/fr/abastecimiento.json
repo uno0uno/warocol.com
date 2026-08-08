@@ -376,7 +376,12 @@
       "viewDetail": "Voir les détails",
       "previous": "Précédent",
       "next": "Suivant",
-      "showing": "Affichage de {start} à {end} sur {total} achats"
+      "showing": "Affichage de {start} à {end} sur {total} achats",
+      "delete": "Supprimer",
+      "deleteAria": "Supprimer l’achat direct",
+      "deleteConfirm": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible.",
+      "deleteError": "Impossible de supprimer l’achat direct",
+      "deleting": "Suppression…"
     },
     "compraDirectaDetalle": {
       "saving": "Enregistrement des modifications...",
@@ -468,7 +473,12 @@
         "payment_amount": "Montant payé",
         "payment_date": "Date de paiement",
         "cancellation_reason": "Raison d'annulation"
-      }
+      },
+      "delete": "Supprimer l’achat",
+      "deleteAria": "Supprimer l’achat direct",
+      "deleteConfirm": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible.",
+      "deleteError": "Impossible de supprimer l’achat direct",
+      "deleting": "Suppression…"
     },
     "glossary": {
       "warehouseItem": "Article de stock",
