@@ -393,7 +393,9 @@
       "recurringCreateHelp": "如果费用定期重复，请勾选此选项。",
       "docsDescription": "请附上与此费用相关的发票、收据或其他文件。",
       "removeNamedFile": "删除 {name}",
-      "noPaymentMethod": "无支付方式"
+      "noPaymentMethod": "无支付方式",
+      "deleteConfirmTitle": "删除支出？",
+      "deleteConfirmMessage": "确定要删除此支出吗？此操作无法撤销。"
     },
     "pagos": {
       "title": "付款管理",

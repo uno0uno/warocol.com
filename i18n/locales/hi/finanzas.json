@@ -393,7 +393,9 @@
       "recurringCreateHelp": "यदि खर्च समय-समय पर दोहराया जाता है तो इस विकल्प को चुनें।",
       "docsDescription": "इस खर्च से संबंधित चालान, रसीदें या अन्य दस्तावेज़ संलग्न करें।",
       "removeNamedFile": "{name} हटाएँ",
-      "noPaymentMethod": "कोई तरीका नहीं"
+      "noPaymentMethod": "कोई तरीका नहीं",
+      "deleteConfirmTitle": "खर्च हटाएँ?",
+      "deleteConfirmMessage": "क्या आप वाकई इस खर्च को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।"
     },
     "pagos": {
       "title": "भुगतान प्रबंधन",

@@ -393,7 +393,9 @@
       "recurringCreateHelp": "حدد هذا الخيار إذا كان المصروف يتكرر بشكل دوري.",
       "docsDescription": "أرفق الفواتير أو الإيصالات أو المستندات الأخرى المتعلقة بهذا المصروف.",
       "removeNamedFile": "إزالة {name}",
-      "noPaymentMethod": "لا توجد طريقة"
+      "noPaymentMethod": "لا توجد طريقة",
+      "deleteConfirmTitle": "حذف المصروف؟",
+      "deleteConfirmMessage": "هل أنت متأكد أنك تريد حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء."
     },
     "pagos": {
       "title": "إدارة المدفوعات",

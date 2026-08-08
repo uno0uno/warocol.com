@@ -393,7 +393,9 @@
       "recurringCreateHelp": "Diese Option markieren, wenn die Ausgabe regelmäßig anfällt.",
       "docsDescription": "Rechnungen, Belege oder andere Dokumente zu dieser Ausgabe anhängen.",
       "removeNamedFile": "{name} entfernen",
-      "noPaymentMethod": "Keine Methode"
+      "noPaymentMethod": "Keine Methode",
+      "deleteConfirmTitle": "Ausgabe löschen?",
+      "deleteConfirmMessage": "Möchten Sie diese Ausgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
     },
     "pagos": {
       "title": "Zahlungsverwaltung",

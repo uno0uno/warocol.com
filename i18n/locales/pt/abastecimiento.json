@@ -381,7 +381,9 @@
       "deleteAria": "Excluir compra direta",
       "deleteConfirm": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita.",
       "deleteError": "Não foi possível excluir a compra direta",
-      "deleting": "Excluindo…"
+      "deleting": "Excluindo…",
+      "deleteConfirmTitle": "Excluir compra direta?",
+      "deleteConfirmMessage": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita."
     },
     "compraDirectaDetalle": {
       "saving": "Salvando alterações...",
@@ -478,7 +480,10 @@
       "deleteAria": "Excluir compra direta",
       "deleteConfirm": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita.",
       "deleteError": "Não foi possível excluir a compra direta",
-      "deleting": "Excluindo…"
+      "deleting": "Excluindo…",
+      "deleteConfirmTitle": "Excluir compra direta?",
+      "deleteConfirmMessage": "Excluir esta compra direta? O estoque e os lançamentos contábeis associados serão revertidos. Esta ação não pode ser desfeita.",
+      "deletingHint": "Estamos excluindo a compra direta e revertendo estoque e lançamentos."
     },
     "glossary": {
       "warehouseItem": "Item de estoque",

@@ -381,7 +381,9 @@
       "deleteAria": "Eliminar compra directa",
       "deleteConfirm": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer.",
       "deleteError": "No se pudo eliminar la compra directa",
-      "deleting": "Eliminando…"
+      "deleting": "Eliminando…",
+      "deleteConfirmTitle": "¿Eliminar compra directa?",
+      "deleteConfirmMessage": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer."
     },
     "compraDirectaDetalle": {
       "saving": "Guardando cambios...",
@@ -493,7 +495,10 @@
       "deleteAria": "Eliminar compra directa",
       "deleteConfirm": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer.",
       "deleteError": "No se pudo eliminar la compra directa",
-      "deleting": "Eliminando…"
+      "deleting": "Eliminando…",
+      "deleteConfirmTitle": "¿Eliminar compra directa?",
+      "deleteConfirmMessage": "¿Eliminar esta compra directa? Se revertirán el inventario y los asientos contables asociados. Esta acción no se puede deshacer.",
+      "deletingHint": "Estamos eliminando la compra directa y revirtiendo inventario y asientos."
     },
     "glossary": {
       "warehouseItem": "Artículo de bodega",

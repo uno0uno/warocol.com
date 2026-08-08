@@ -381,7 +381,9 @@
       "deleteAria": "删除直接采购",
       "deleteConfirm": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。",
       "deleteError": "无法删除直接采购",
-      "deleting": "正在删除…"
+      "deleting": "正在删除…",
+      "deleteConfirmTitle": "删除直接采购？",
+      "deleteConfirmMessage": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。"
     },
     "compraDirectaDetalle": {
       "saving": "正在保存更改...",
@@ -478,7 +480,10 @@
       "deleteAria": "删除直接采购",
       "deleteConfirm": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。",
       "deleteError": "无法删除直接采购",
-      "deleting": "正在删除…"
+      "deleting": "正在删除…",
+      "deleteConfirmTitle": "删除直接采购？",
+      "deleteConfirmMessage": "删除此直接采购？库存及相关会计分录将被冲回。此操作无法撤销。",
+      "deletingHint": "正在删除直接采购并冲回库存与会计分录。"
     },
     "glossary": {
       "warehouseItem": "仓库商品",

@@ -393,7 +393,9 @@
       "recurringCreateHelp": "Cochez cette option si la dépense se répète périodiquement.",
       "docsDescription": "Joignez les factures, reçus ou autres documents liés à cette dépense.",
       "removeNamedFile": "Supprimer {name}",
-      "noPaymentMethod": "Aucune méthode"
+      "noPaymentMethod": "Aucune méthode",
+      "deleteConfirmTitle": "Supprimer la dépense ?",
+      "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer cette dépense ? Cette action est irréversible."
     },
     "pagos": {
       "title": "Gestion des paiements",

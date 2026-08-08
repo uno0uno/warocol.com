@@ -202,7 +202,7 @@
               :title="t('abastecimiento.comprasDirectas.delete')"
               :aria-label="t('abastecimiento.comprasDirectas.deleteAria')"
               :disabled="isDeletingId === row.id"
-              @click.stop="deletePurchase(row.id)"
+              @click.stop="requestDeletePurchase(row.id)"
             >
               <TrashIcon class="h-4 w-4" />
             </button>
@@ -276,12 +276,24 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <UiConfirmActionModal
+      v-model="showDeleteConfirm"
+      :title="t('abastecimiento.comprasDirectas.deleteConfirmTitle')"
+      :message="t('abastecimiento.comprasDirectas.deleteConfirmMessage')"
+      :confirm-label="t('abastecimiento.comprasDirectas.delete')"
+      :cancel-label="t('common.cancel')"
+      :loading-label="t('abastecimiento.comprasDirectas.deleting')"
+      variant="destructive"
+      :loading="isDeletingId !== null"
+      @confirm="performDeletePurchase"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
@@ -505,21 +517,37 @@ const viewPurchase = (purchase: any) => {
   navigateTo(`/abastecimiento/compras-directas/${purchase.id}`)
 }
 
-const deletePurchase = async (purchaseId: string) => {
-  if (!confirm(t('abastecimiento.comprasDirectas.deleteConfirm'))) {
-    return
-  }
+const deleteTargetId = ref<string | null>(null)
+const showDeleteConfirm = computed({
+  get: () => deleteTargetId.value !== null,
+  set: (open: boolean) => {
+    if (!open && isDeletingId.value === null) {
+      deleteTargetId.value = null
+    }
+  },
+})
+
+const requestDeletePurchase = (purchaseId: string) => {
+  if (isDeletingId.value) return
+  deleteTargetId.value = purchaseId
+}
+
+const performDeletePurchase = async () => {
+  const purchaseId = deleteTargetId.value
+  if (!purchaseId || isDeletingId.value) return
 
   isDeletingId.value = purchaseId
   try {
     await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
       method: 'DELETE',
     })
+    deleteTargetId.value = null
     cache.invalidateQueries({ key: ['suppliers', 'direct-purchases'] })
     cache.invalidateQueries({ key: ['purchase-direct', purchaseId] })
     await refetch()
   } catch (error: any) {
     console.error('Error deleting direct purchase:', error)
+    deleteTargetId.value = null
     alert(error?.data?.detail || t('abastecimiento.comprasDirectas.deleteError'))
   } finally {
     isDeletingId.value = null

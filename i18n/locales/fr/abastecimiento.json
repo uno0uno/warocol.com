@@ -381,7 +381,9 @@
       "deleteAria": "Supprimer l’achat direct",
       "deleteConfirm": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible.",
       "deleteError": "Impossible de supprimer l’achat direct",
-      "deleting": "Suppression…"
+      "deleting": "Suppression…",
+      "deleteConfirmTitle": "Supprimer l'achat direct ?",
+      "deleteConfirmMessage": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible."
     },
     "compraDirectaDetalle": {
       "saving": "Enregistrement des modifications...",
@@ -478,7 +480,10 @@
       "deleteAria": "Supprimer l’achat direct",
       "deleteConfirm": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible.",
       "deleteError": "Impossible de supprimer l’achat direct",
-      "deleting": "Suppression…"
+      "deleting": "Suppression…",
+      "deleteConfirmTitle": "Supprimer l'achat direct ?",
+      "deleteConfirmMessage": "Supprimer cet achat direct ? Le stock et les écritures comptables associées seront annulés. Cette action est irréversible.",
+      "deletingHint": "Nous supprimons l'achat direct et annulons le stock et les écritures."
     },
     "glossary": {
       "warehouseItem": "Article de stock",
