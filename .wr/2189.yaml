@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2189
+title: "Delete confirm modal + loading for gastos and compras directas; align detail delete next to edit"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2189-delete-confirm-modal
+
+paths:
+  - pages/finanzas/gastos/index.vue
+  - pages/finanzas/gastos/[id]/index.vue
+  - pages/abastecimiento/compras-directas/index.vue
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - i18n/locales/*/abastecimiento.json
+  - i18n/locales/*/finanzas.json
+  - components/ui/ConfirmActionModal.vue
+
+ac:
+  - Gastos list+detail: UiConfirmActionModal instead of window.confirm; cancel = no API
+  - Compras directas list+detail: same modal + loading while DELETE runs
+  - Compra directa detail: Delete beside Edit (gastos header pattern); remove standalone delete row
+  - Gastos detail keeps Edit|Delete placement; only confirm UX changes
+  - Error clears modal/busy; document not deleted; i18n x8
+
+out_of_scope:
+  - Soft delete / API / GL / inventory
+  - Cancel mid-flight network DELETE
+  - Attachment delete confirms
+
+hints:
+  entry: "UiConfirmActionModal + request/performDelete pattern"
+  pattern: "pages/abastecimiento/proveedor/[id].vue:387-396 showDeleteConfirm + loading"
+  tests: "none (UI-only; manual list/detail cancel + confirm)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review + wr-review"

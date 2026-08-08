@@ -381,7 +381,9 @@
       "deleteAria": "Direkteinkauf löschen",
       "deleteConfirm": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden.",
       "deleteError": "Direkteinkauf konnte nicht gelöscht werden",
-      "deleting": "Wird gelöscht…"
+      "deleting": "Wird gelöscht…",
+      "deleteConfirmTitle": "Direkteinkauf löschen?",
+      "deleteConfirmMessage": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden."
     },
     "compraDirectaDetalle": {
       "saving": "Änderungen werden gespeichert...",
@@ -478,7 +480,10 @@
       "deleteAria": "Direkteinkauf löschen",
       "deleteConfirm": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden.",
       "deleteError": "Direkteinkauf konnte nicht gelöscht werden",
-      "deleting": "Wird gelöscht…"
+      "deleting": "Wird gelöscht…",
+      "deleteConfirmTitle": "Direkteinkauf löschen?",
+      "deleteConfirmMessage": "Diesen Direkteinkauf löschen? Bestand und zugehörige Buchungen werden rückgängig gemacht. Dies kann nicht rückgängig gemacht werden.",
+      "deletingHint": "Der Direkteinkauf wird gelöscht und Bestand sowie Buchungen werden rückgängig gemacht."
     },
     "glossary": {
       "warehouseItem": "Lagerartikel",

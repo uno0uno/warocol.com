@@ -138,8 +138,9 @@
                 </button>
                 <button
                   type="button"
-                  @click="deleteExpense"
-                  class="px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 text-sm font-medium"
+                  @click="requestDeleteExpense"
+                  :disabled="isDeleting"
+                  class="px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 text-sm font-medium disabled:opacity-50"
                 >
                   {{ t('finanzas.common.delete') }}
                 </button>
@@ -723,6 +724,18 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <UiConfirmActionModal
+      v-model="showDeleteConfirm"
+      :title="t('finanzas.gastos.deleteConfirmTitle')"
+      :message="t('finanzas.gastos.deleteConfirmMessage')"
+      :confirm-label="t('finanzas.common.delete')"
+      :cancel-label="t('finanzas.common.cancel')"
+      :loading-label="t('finanzas.gastos.deleting')"
+      variant="destructive"
+      :loading="isDeleting"
+      @confirm="performDeleteExpense"
+    />
   </div>
 </template>
 
@@ -1242,11 +1255,15 @@ const formatPeriodLabel = (periodMonth: string) => {
   }).format(date)
 }
 
-// Delete expense
-const deleteExpense = async () => {
-  if (!confirm(t('finanzas.gastos.deleteConfirm'))) {
-    return
-  }
+const showDeleteConfirm = ref(false)
+
+const requestDeleteExpense = () => {
+  if (isDeleting.value) return
+  showDeleteConfirm.value = true
+}
+
+const performDeleteExpense = async () => {
+  if (isDeleting.value) return
 
   isDeleting.value = true
   isSubmitting.value = true
@@ -1255,11 +1272,13 @@ const deleteExpense = async () => {
       method: 'DELETE'
     })
 
+    showDeleteConfirm.value = false
     cache.invalidateQueries({ key: ['finance', 'expenses'] })
     cache.invalidateQueries({ key: ['expense', expenseId] })
     await navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error deleting expense:', error)
+    showDeleteConfirm.value = false
     alert(error?.data?.detail || t('finanzas.gastos.deleteError'))
   } finally {
     isDeleting.value = false

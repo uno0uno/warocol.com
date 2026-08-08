@@ -381,7 +381,9 @@
       "deleteAria": "Delete direct purchase",
       "deleteConfirm": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone.",
       "deleteError": "Could not delete the direct purchase",
-      "deleting": "Deleting…"
+      "deleting": "Deleting…",
+      "deleteConfirmTitle": "Delete direct purchase?",
+      "deleteConfirmMessage": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone."
     },
     "compraDirectaDetalle": {
       "saving": "Saving changes...",
@@ -493,7 +495,10 @@
       "deleteAria": "Delete direct purchase",
       "deleteConfirm": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone.",
       "deleteError": "Could not delete the direct purchase",
-      "deleting": "Deleting…"
+      "deleting": "Deleting…",
+      "deleteConfirmTitle": "Delete direct purchase?",
+      "deleteConfirmMessage": "Delete this direct purchase? Inventory and related journal entries will be reversed. This cannot be undone.",
+      "deletingHint": "We are deleting the direct purchase and reversing inventory and journal entries."
     },
     "glossary": {
       "warehouseItem": "Warehouse item",

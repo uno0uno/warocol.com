@@ -151,24 +151,43 @@ const expensesTableColumns = computed(() => [
   { key: 'actions', title: '', sortable: false }
 ])
 
-// Delete expense
-const deleteExpense = async (expenseId: string) => {
-  if (!confirm(t('finanzas.gastos.deleteConfirm'))) {
-    return
-  }
+const deleteTargetId = ref<string | null>(null)
+const isDeletingId = ref<string | null>(null)
+const showDeleteConfirm = computed({
+  get: () => deleteTargetId.value !== null,
+  set: (open: boolean) => {
+    if (!open && isDeletingId.value === null) {
+      deleteTargetId.value = null
+    }
+  },
+})
 
+const requestDeleteExpense = (expenseId: string) => {
+  if (isDeletingId.value) return
+  deleteTargetId.value = expenseId
+}
+
+const performDeleteExpense = async () => {
+  const expenseId = deleteTargetId.value
+  if (!expenseId || isDeletingId.value) return
+
+  isDeletingId.value = expenseId
   try {
     await $fetch(`/api/finance/expenses/${expenseId}`, {
       method: 'DELETE'
     })
 
+    deleteTargetId.value = null
     // Invalidate list + detail so UI updates optimistically (progressive refresh)
     cache.invalidateQueries({ key: ['finance', 'expenses'] })
     cache.invalidateQueries({ key: ['expense', expenseId] })
     await refetch()
   } catch (error: any) {
     console.error('Error deleting expense:', error)
+    deleteTargetId.value = null
     alert(error?.data?.detail || t('finanzas.gastos.deleteError'))
+  } finally {
+    isDeletingId.value = null
   }
 }
 
@@ -362,8 +381,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               </svg>
             </NuxtLink>
             <button
-              @click="deleteExpense(row.id)"
-              class="text-destructive hover:text-destructive/80 transition-colors"
+              type="button"
+              :disabled="isDeletingId === row.id"
+              @click="requestDeleteExpense(row.id)"
+              class="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
               :title="t('finanzas.common.delete')"
               :aria-label="t('finanzas.common.delete')"
             >
@@ -427,6 +448,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       :cancel-label="t('billing.close')"
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
+    />
+
+    <UiConfirmActionModal
+      v-model="showDeleteConfirm"
+      :title="t('finanzas.gastos.deleteConfirmTitle')"
+      :message="t('finanzas.gastos.deleteConfirmMessage')"
+      :confirm-label="t('finanzas.common.delete')"
+      :cancel-label="t('finanzas.common.cancel')"
+      :loading-label="t('finanzas.gastos.deleting')"
+      variant="destructive"
+      :loading="isDeletingId !== null"
+      @confirm="performDeleteExpense"
     />
   </div>
 </template>

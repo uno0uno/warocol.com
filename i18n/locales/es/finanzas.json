@@ -333,6 +333,8 @@
       "docsLabel": "Documentos:",
       "register": "+ Registrar gasto",
       "deleteConfirm": "¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.",
+      "deleteConfirmTitle": "¿Eliminar gasto?",
+      "deleteConfirmMessage": "¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.",
       "detailTitle": "Detalle del Gasto",
       "field": "Campo",
       "value": "Valor",

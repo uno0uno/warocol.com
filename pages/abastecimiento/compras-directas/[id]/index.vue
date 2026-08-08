@@ -1,9 +1,13 @@
 <template>
   <div class="page-layout">
     <UiSubmitBusyOverlay
-      :busy="isSaving || isUploading"
-      :label="isSaving ? t('abastecimiento.compraDirectaDetalle.saving') : t('abastecimiento.compraDirectaDetalle.uploading')"
-      :hint="isSaving ? t('abastecimiento.compraDirectaDetalle.savingHint') : t('abastecimiento.compraDirectaDetalle.uploadingHint')"
+      :busy="isSaving || isUploading || isDeleting"
+      :label="isDeleting
+        ? t('abastecimiento.compraDirectaDetalle.deleting')
+        : (isSaving ? t('abastecimiento.compraDirectaDetalle.saving') : t('abastecimiento.compraDirectaDetalle.uploading'))"
+      :hint="isDeleting
+        ? t('abastecimiento.compraDirectaDetalle.deletingHint')
+        : (isSaving ? t('abastecimiento.compraDirectaDetalle.savingHint') : t('abastecimiento.compraDirectaDetalle.uploadingHint'))"
       variant="glass"
       indicator="matrix"
     />
@@ -75,21 +79,6 @@
       </PurchasesPurchaseOrderHeader>
 
       <div
-        v-if="!isEditMode"
-        class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2"
-      >
-        <button
-          type="button"
-          class="inline-flex min-h-[40px] items-center justify-center rounded-lg border-2 border-border px-4 text-sm font-medium text-destructive transition-colors hover:border-destructive hover:bg-destructive/10 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
-          :disabled="isDeleting"
-          :aria-label="t('abastecimiento.compraDirectaDetalle.deleteAria')"
-          @click="deletePurchase"
-        >
-          {{ isDeleting ? t('abastecimiento.compraDirectaDetalle.deleting') : t('abastecimiento.compraDirectaDetalle.delete') }}
-        </button>
-      </div>
-
-      <div
         v-if="canPayPurchase"
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
       >
@@ -134,17 +123,28 @@
             <span>{{ t('abastecimiento.common.items') }} ({{ editItems.length }})</span>
           </h3>
 
-          <!-- Edit Toggle Button -->
-          <button
-            v-if="!isEditMode"
-            @click="enterEditMode"
-            class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center space-x-1"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span>{{ t('abastecimiento.compraDirectaDetalle.edit') }}</span>
-          </button>
+          <!-- Edit / Delete -->
+          <div v-if="!isEditMode" class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="enterEditMode"
+              class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center space-x-1"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>{{ t('abastecimiento.compraDirectaDetalle.edit') }}</span>
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-xs font-medium text-destructive border-2 border-border rounded-lg hover:border-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+              :disabled="isDeleting"
+              :aria-label="t('abastecimiento.compraDirectaDetalle.deleteAria')"
+              @click="requestDeletePurchase"
+            >
+              {{ t('abastecimiento.compraDirectaDetalle.delete') }}
+            </button>
+          </div>
 
           <div v-else class="flex items-center gap-2">
             <button
@@ -733,6 +733,18 @@
       :cancel-label="t('abastecimiento.compraDirectaDetalle.printFormatCancel')"
       @select="onPrintFormatSelect"
     />
+
+    <UiConfirmActionModal
+      v-model="showDeleteConfirm"
+      :title="t('abastecimiento.compraDirectaDetalle.deleteConfirmTitle')"
+      :message="t('abastecimiento.compraDirectaDetalle.deleteConfirmMessage')"
+      :confirm-label="t('abastecimiento.compraDirectaDetalle.delete')"
+      :cancel-label="t('abastecimiento.compraDirectaDetalle.cancel')"
+      :loading-label="t('abastecimiento.compraDirectaDetalle.deleting')"
+      variant="destructive"
+      :loading="isDeleting"
+      @confirm="performDeletePurchase"
+    />
   </div>
 </template>
 
@@ -842,21 +854,28 @@ async function handlePaymentRegistered() {
   await refetch()
 }
 
-async function deletePurchase() {
-  if (!confirm(t('abastecimiento.compraDirectaDetalle.deleteConfirm'))) {
-    return
-  }
+const showDeleteConfirm = ref(false)
+
+function requestDeletePurchase() {
+  if (isDeleting.value) return
+  showDeleteConfirm.value = true
+}
+
+async function performDeletePurchase() {
+  if (isDeleting.value) return
 
   isDeleting.value = true
   try {
     await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
       method: 'DELETE',
     })
+    showDeleteConfirm.value = false
     cache.invalidateQueries({ key: ['suppliers', 'direct-purchases'] })
     cache.invalidateQueries({ key: ['purchase-direct', purchaseId] })
     await navigateTo('/abastecimiento/compras-directas')
   } catch (error: any) {
     console.error('Error deleting direct purchase:', error)
+    showDeleteConfirm.value = false
     alert(error?.data?.detail || t('abastecimiento.compraDirectaDetalle.deleteError'))
   } finally {
     isDeleting.value = false

@@ -393,7 +393,9 @@
       "recurringCreateHelp": "Marque esta opção se o gasto se repete periodicamente.",
       "docsDescription": "Anexe faturas, recibos ou outros documentos relacionados a este gasto.",
       "removeNamedFile": "Remover {name}",
-      "noPaymentMethod": "Sem método"
+      "noPaymentMethod": "Sem método",
+      "deleteConfirmTitle": "Excluir despesa?",
+      "deleteConfirmMessage": "Tem certeza de que deseja excluir esta despesa? Esta ação não pode ser desfeita."
     },
     "pagos": {
       "title": "Gestão de Pagamentos",
