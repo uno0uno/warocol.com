@@ -626,8 +626,6 @@ const eventStyle = (type: string) => {
   return map[type] ?? { badge: 'bg-surface-secondary text-text-secondary', label: type }
 }
 
-const savings = (_plan: BillingPlan) => billingOfferAnnualSavings(priceOffer.value)
-
 onMounted(async () => {
   setRefreshHandler(loadAll)
   await restoreBillingIntent()
