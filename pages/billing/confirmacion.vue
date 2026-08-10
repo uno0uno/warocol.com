@@ -12,7 +12,7 @@
 
       <div class="mt-6 flex flex-col gap-3">
         <button
-          v-if="paddleTxnId && (view === 'pending' || view === 'failed' || view === 'unknown')"
+          v-if="showContinuePaddleCheckout"
           type="button"
           class="min-h-11 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           :disabled="openingCheckout"
@@ -38,7 +38,12 @@
         <NuxtLink
           v-else
           to="/gestion/billing"
-          class="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          :class="[
+            'inline-flex min-h-11 items-center justify-center rounded-md px-5 py-2 text-sm font-semibold',
+            showContinuePaddleCheckout
+              ? 'border border-border text-text-primary'
+              : 'bg-primary text-primary-foreground',
+          ]"
         >
           {{ t('onboarding.viewSubscription') }}
         </NuxtLink>
@@ -84,6 +89,15 @@ const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
 const returnAttemptId = ref<string | null>(null)
 const paddleTxnId = ref<string | null>(null)
 const openingCheckout = ref(false)
+const paddleCheckoutDone = ref(false)
+
+const showContinuePaddleCheckout = computed(() =>
+  Boolean(
+    paddleTxnId.value
+    && !paddleCheckoutDone.value
+    && (view.value === 'pending' || view.value === 'failed' || view.value === 'unknown'),
+  ),
+)
 
 const icon = computed(() => view.value === 'approved'
   ? CheckCircleIcon
@@ -132,7 +146,8 @@ const openPaddleOverlay = async (manual = false) => {
     view.value = 'unknown'
     return
   }
-  if (!manual && isPaddleTransactionMarkedDone(txn)) {
+  if (isPaddleTransactionMarkedDone(txn)) {
+    paddleCheckoutDone.value = true
     view.value = 'pending'
     await cache.invalidateQueries({ key: ['billing'] })
     return
@@ -143,11 +158,12 @@ const openPaddleOverlay = async (manual = false) => {
     view.value = 'pending'
     await openTransactionCheckout(txn, {
       onCompleted: async () => {
+        paddleCheckoutDone.value = true
         view.value = 'pending'
         await cache.invalidateQueries({ key: ['billing'] })
       },
       onClosed: () => {
-        // Keep pending + allow "continue checkout"
+        // Keep pending + allow "continue checkout" if not completed
         view.value = 'pending'
       },
       onError: (message) => {
