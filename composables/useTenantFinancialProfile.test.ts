@@ -36,7 +36,7 @@ const response: TenantFinancialProfileResponse = {
     colombia_payroll: true,
     matias_dian: true,
     cop_wallet: true,
-    wompi: true,
+    wompi: false,
     fixed_cop_discounts: true,
   },
   eligibility: { eligible: true, lock_type: 'none', reason_codes: [] },
