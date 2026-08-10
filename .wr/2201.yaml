@@ -1,0 +1,49 @@
+issue: 2201
+title: "fix(billing): filter intl plans + declutter plan picker UX"
+repo: both
+repo_remote: "uno0uno/warocol.com + uno0uno/api-warolabs"
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2201-intl-plans-declutter
+
+paths:
+  - app/routers/billing.py
+  - app/services/billing_service.py
+  - tests/test_billing_plans_price_offer.py
+  - pages/gestion/billing/index.vue
+  - composables/useBilling.ts
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+
+ac:
+  - Non-CO: GET /billing/plans omits facturacion-electronica; CO keeps it
+  - Starter displays $0 / free — never regional price_offer on starter
+  - Pro shows regional monthly price_offer
+  - Plan picker decluttered: short blurb + max ~5 highlights; full quotas behind "ver detalle"
+  - Hierarchy: Pro recommended; Starter secondary; FE distinct when CO
+  - Subscribe rejects ineligible FE plan for non-CO
+  - Tests: API country filter (+ front util if extracted)
+
+out_of_scope:
+  - Paddle catalog / country segment matrix
+  - Full billing redesign outside plan picker / compare
+
+hints:
+  entry: "tenant_list_plans + activePlans / offerMonthlyLabel in billing/index.vue"
+  pattern: "ELECTRONIC_INVOICE_PLAN_SLUG + STARTER_PLAN_SLUG in billing_service"
+  tests_api: "venv/bin/python -m pytest tests/test_billing_plans_price_offer.py -q"
+  tests_front: "existing targeted test only if present for useBilling/billing"
+
+risk:
+  sensitive: true
+  areas: [payments]
+  note: "Filter catalog + display only; no checkout amount formula change"
+
+skip:
+  audits: [color, typography]
+  note: "Light UX densify in-page only; no full UX skill audit"
+
+companion:
+  api_branch: wr-2201-intl-plans-filter
+  front_branch: wr-2201-intl-plans-declutter
+  closes_issue: "uno0uno/warocol.com#2201"

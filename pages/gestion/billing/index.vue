@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { useBilling, type BillingPlan, type BillingQuotaKey, BILLING_UNLIMITED_SENTINEL, STARTER_PLAN_SLUG, PRO_PLAN_SLUG } from '~/composables/useBilling'
+import {
+  useBilling,
+  type BillingPlan,
+  type BillingQuotaKey,
+  BILLING_UNLIMITED_SENTINEL,
+  STARTER_PLAN_SLUG,
+  PRO_PLAN_SLUG,
+  ELECTRONIC_INVOICE_PLAN_SLUG,
+  isStarterPlanSlug,
+  isPaidCheckoutPlanSlug,
+} from '~/composables/useBilling'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
@@ -117,6 +127,16 @@ const featureEntries = (plan: BillingPlan) =>
     )
     .map(([key, value]) => ({ key, value }))
 
+const PLAN_CARD_HIGHLIGHT_KEYS: BillingQuotaKey[] = [
+  'menu_products',
+  'menu_categories',
+  'completed_online_orders_per_month',
+  'admin_users',
+  'electronic_invoices_per_period',
+]
+
+const expandedPlanDetails = ref<Record<string, boolean>>({})
+
 const quotaRowsForPlan = (plan: BillingPlan) =>
   quotaDisplayConfig
     .map((config) => {
@@ -134,6 +154,27 @@ const quotaRowsForPlan = (plan: BillingPlan) =>
       }
     })
     .filter((row): row is QuotaDisplayConfig & { limit: number; value: string } => row !== null)
+
+const highlightQuotaRows = (plan: BillingPlan) => {
+  const rows = quotaRowsForPlan(plan)
+  const preferred = PLAN_CARD_HIGHLIGHT_KEYS
+    .map((key) => rows.find((row) => row.key === key))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+  if (preferred.length > 0) return preferred.slice(0, 5)
+  return rows.slice(0, 5)
+}
+
+const isRecommendedPlan = (plan: BillingPlan) => plan.slug === PRO_PLAN_SLUG
+
+const isElectronicInvoicePlan = (plan: BillingPlan) =>
+  plan.slug === ELECTRONIC_INVOICE_PLAN_SLUG
+
+const togglePlanDetails = (planId: string) => {
+  expandedPlanDetails.value = {
+    ...expandedPlanDetails.value,
+    [planId]: !expandedPlanDetails.value[planId],
+  }
+}
 
 interface BillingTermsIntent {
   tenant_id: string
@@ -355,6 +396,10 @@ const openModal = async () => {
 }
 
 const selectPlan = (plan: BillingPlan) => {
+  if (!isPaidCheckoutPlanSlug(plan.slug)) {
+    showModal.value = false
+    return
+  }
   selectedPlan.value = plan
   subscribeError.value = null
   wizardStep.value = 2
@@ -534,6 +579,16 @@ const offerMonthlyLabel = computed(() => {
   if (!priceOffer.value) return '—'
   return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
 })
+
+const planPriceLabel = (plan: BillingPlan) => {
+  if (isStarterPlanSlug(plan.slug)) return t('billing.freePrice')
+  return offerMonthlyLabel.value
+}
+
+const planPriceSuffix = (plan: BillingPlan) => {
+  if (isStarterPlanSlug(plan.slug)) return ''
+  return t('billing.perMonth')
+}
 
 const cycleLabel = computed(() => {
   if (subscription.value?.billing_cycle === 'monthly') return t('billing.monthly')
@@ -997,41 +1052,61 @@ watch(() => currentTenant.value?.id, async () => {
               <div
                 v-for="plan in activePlans"
                 :key="plan.id"
-                class="bg-surface-secondary border border-border rounded-xl p-5 flex flex-col gap-4 w-full"
+                :class="[
+                  'rounded-xl p-5 flex flex-col gap-3 w-full border',
+                  isRecommendedPlan(plan)
+                    ? 'bg-primary/5 border-primary/40 ring-1 ring-primary/20'
+                    : isElectronicInvoicePlan(plan)
+                      ? 'bg-surface-secondary border-border'
+                      : 'bg-surface-secondary border-border opacity-95',
+                ]"
               >
-                <div>
-                  <h3 class="text-base font-bold text-text-primary">{{ plan.name }}</h3>
-                  <p v-if="plan.description" class="text-sm text-text-secondary mt-0.5">{{ plan.description }}</p>
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <h3 class="text-base font-bold text-text-primary">{{ plan.name }}</h3>
+                    <p class="text-sm text-text-secondary mt-0.5 line-clamp-2">
+                      {{
+                        isStarterPlanSlug(plan.slug)
+                          ? t('billing.starterPlanBadge')
+                          : (plan.description || t('billing.starterUpgradeHint'))
+                      }}
+                    </p>
+                  </div>
+                  <span
+                    v-if="isRecommendedPlan(plan)"
+                    class="shrink-0 text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary text-primary-foreground"
+                  >
+                    {{ t('billing.recommended') }}
+                  </span>
+                  <span
+                    v-else-if="isStarterPlanSlug(plan.slug)"
+                    class="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border border-border text-text-secondary"
+                  >
+                    {{ t('billing.currentPlan') }}
+                  </span>
                 </div>
 
-                <div>
-                  <div class="flex items-end gap-1">
-                    <span class="text-3xl font-bold text-text-primary">
-                      {{ offerMonthlyLabel }}
-                    </span>
-                    <span class="text-sm text-text-secondary mb-1">{{ t('billing.perMonth') }}</span>
-                  </div>
+                <div class="flex items-end gap-1">
+                  <span class="text-3xl font-bold text-text-primary">
+                    {{ planPriceLabel(plan) }}
+                  </span>
+                  <span v-if="planPriceSuffix(plan)" class="text-sm text-text-secondary mb-1">
+                    {{ planPriceSuffix(plan) }}
+                  </span>
                 </div>
 
                 <ul class="space-y-1.5 flex-1">
-                  <li class="flex items-center gap-2 text-sm text-text-secondary">
+                  <li
+                    v-if="!isStarterPlanSlug(plan.slug)"
+                    class="flex items-center gap-2 text-sm text-text-secondary"
+                  >
                     <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     {{ plan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}
                   </li>
                   <li
-                    v-for="feature in featureEntries(plan)"
-                    :key="feature.key"
-                    class="flex items-center gap-2 text-sm text-text-secondary"
-                  >
-                    <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {{ feature.value }}
-                  </li>
-                  <li
-                    v-for="quota in quotaRowsForPlan(plan)"
+                    v-for="quota in highlightQuotaRows(plan)"
                     :key="quota.key"
                     class="flex items-start gap-2 text-sm text-text-secondary"
                   >
@@ -1046,10 +1121,60 @@ watch(() => currentTenant.value?.id, async () => {
                 </ul>
 
                 <button
+                  type="button"
+                  class="text-xs font-medium text-primary self-start hover:underline"
+                  @click="togglePlanDetails(plan.id)"
+                >
+                  {{
+                    expandedPlanDetails[plan.id]
+                      ? t('billing.hidePlanDetails')
+                      : t('billing.seePlanDetails')
+                  }}
+                </button>
+
+                <ul
+                  v-if="expandedPlanDetails[plan.id]"
+                  class="space-y-1.5 pt-1 border-t border-border"
+                >
+                  <li
+                    v-for="feature in featureEntries(plan)"
+                    :key="feature.key"
+                    class="flex items-center gap-2 text-sm text-text-secondary"
+                  >
+                    <svg class="w-4 h-4 text-status-success-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {{ feature.value }}
+                  </li>
+                  <li
+                    v-for="quota in quotaRowsForPlan(plan)"
+                    :key="`full-${quota.key}`"
+                    class="flex items-start gap-2 text-sm text-text-secondary"
+                  >
+                    <svg class="w-4 h-4 text-status-success-text shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>
+                      {{ quota.label }}:
+                      <span class="font-semibold text-text-primary">{{ quota.value }}</span>
+                    </span>
+                  </li>
+                </ul>
+
+                <button
+                  v-if="isPaidCheckoutPlanSlug(plan.slug)"
                   @click="selectPlan(plan)"
                   class="w-full min-h-[44px] px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   {{ t('billing.chooseThisPlan') }}
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  disabled
+                  class="w-full min-h-[44px] px-4 py-2.5 rounded-lg border border-border text-sm font-semibold text-text-secondary cursor-default"
+                >
+                  {{ t('billing.currentPlan') }}
                 </button>
               </div>
             </div>
