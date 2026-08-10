@@ -4,6 +4,10 @@ import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
   shouldShowBillingRecoveryAlert,
+  formatBillingOfferAmount,
+  billingOfferAnnualSavings,
+  billingEventProviderRef,
+  billingEventProviderLabelKey,
 } from '~/utils/billingPresentation'
 
 interface Column {
@@ -19,7 +23,7 @@ const { t, locale } = useI18n({ useScope: 'global' })
 useHead({ title: () => t('billing.paymentHistoryTitle') })
 
 const {
-  plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
+  plans, priceOffer, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
 } = useBilling()
 
@@ -491,8 +495,8 @@ const slideHeaderStyle = computed(() => {
 const eventReference = (item: any): string => {
   if (!item) return '—'
   const meta = item.metadata || {}
-  if (meta.wompi_transaction_id) return String(meta.wompi_transaction_id)
-  if (meta.gateway_reference) return String(meta.gateway_reference)
+  const providerRef = billingEventProviderRef(meta)
+  if (providerRef) return providerRef
   const url = meta.checkout_url as string | undefined
   if (url) {
     const match = url.match(/\/l\/([^/?#]+)/)
@@ -507,8 +511,9 @@ const eventReference = (item: any): string => {
 
 const eventAmount = (item: any): string | null => {
   const val = item?.amount ?? item?.metadata?.amount
-  if (val) return formatCOP(Number(val))
-  return null
+  if (val == null || val === '') return null
+  const currency = String(item?.currency || item?.metadata?.currency || 'USD').toUpperCase()
+  return formatBillingOfferAmount(Number(val), currency, toNumberLocaleTag(locale.value))
 }
 
 
@@ -519,8 +524,24 @@ const loadAll = async () => {
 
 const { formatDate, formatDateTime } = useFormatters()
 
-const formatCOP = (value: number) =>
-  new Intl.NumberFormat(toNumberLocaleTag(locale.value), { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+const formatOffer = (amount: number, currency?: string) =>
+  formatBillingOfferAmount(
+    amount,
+    currency || priceOffer.value?.currency || 'USD',
+    toNumberLocaleTag(locale.value),
+  )
+
+const offerAnnualLabel = computed(() => {
+  if (!priceOffer.value) return '—'
+  return formatOffer(priceOffer.value.annual_amount, priceOffer.value.currency)
+})
+
+const offerSavingsLabel = computed(() => {
+  if (!priceOffer.value) return null
+  const saved = billingOfferAnnualSavings(priceOffer.value)
+  if (saved <= 0) return null
+  return formatOffer(saved, priceOffer.value.currency)
+})
 
 const cycleLabel = computed(() => {
   if (subscription.value?.billing_cycle === 'monthly') return t('billing.monthly')
@@ -604,8 +625,6 @@ const eventStyle = (type: string) => {
   }
   return map[type] ?? { badge: 'bg-surface-secondary text-text-secondary', label: type }
 }
-
-const savings = (plan: BillingPlan) => plan.price_monthly * 12 - plan.price_annual
 
 onMounted(async () => {
   setRefreshHandler(loadAll)
@@ -779,7 +798,7 @@ watch(() => currentTenant.value?.id, async () => {
               <div class="flex flex-col items-center gap-0.5 py-1">
                 <span class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</span>
                 <span class="text-sm font-bold text-text-primary leading-tight">
-                  {{ formatCOP(proPlan.price_annual) }}
+                  {{ offerAnnualLabel }}
                   <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
                 </span>
               </div>
@@ -996,12 +1015,12 @@ watch(() => currentTenant.value?.id, async () => {
                 <div>
                   <div class="flex items-end gap-1">
                     <span class="text-3xl font-bold text-text-primary">
-                      {{ formatCOP(plan.price_annual) }}
+                      {{ offerAnnualLabel }}
                     </span>
                     <span class="text-sm text-text-secondary mb-1">{{ t('billing.perYear') }}</span>
                   </div>
-                  <p v-if="savings(plan) > 0" class="text-sm text-status-success-text font-medium mt-0.5">
-                    {{ t('billing.youSave', { amount: formatCOP(savings(plan)) }) }}
+                  <p v-if="offerSavingsLabel" class="text-sm text-status-success-text font-medium mt-0.5">
+                    {{ t('billing.youSave', { amount: offerSavingsLabel }) }}
                   </p>
                 </div>
 
@@ -1072,7 +1091,7 @@ watch(() => currentTenant.value?.id, async () => {
                   <p class="text-xs text-text-secondary mt-0.5">{{ t('billing.oneTimeTwelveMonths') }}</p>
                 </div>
                 <p class="text-xl font-bold text-text-primary">
-                  {{ formatCOP(selectedPlan.price_annual) }}
+                  {{ offerAnnualLabel }}
                 </p>
               </div>
               <div v-if="quotaRowsForPlan(selectedPlan).length > 0" class="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
@@ -1118,7 +1137,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <span>{{ subscribing ? t('billing.processing') : t('billing.payWithWompi') }}</span>
+              <span>{{ subscribing ? t('billing.processing') : t('billing.payWithPaddle') }}</span>
             </button>
 
             <!-- Security note -->
@@ -1126,7 +1145,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              {{ t('billing.secureWompiPayment') }}
+              {{ t('billing.securePaddlePayment') }}
             </div>
           </template>
 
@@ -1223,7 +1242,7 @@ watch(() => currentTenant.value?.id, async () => {
             <p class="text-3xl font-bold text-text-primary leading-none">
               {{ eventAmount(selectedEvent) ?? '—' }}
             </p>
-            <p v-if="selectedEvent.amount || selectedEvent.metadata?.amount" class="text-xs text-text-secondary mt-1.5">{{ t('billing.processedByWompi') }}</p>
+            <p v-if="selectedEvent.amount || selectedEvent.metadata?.amount" class="text-xs text-text-secondary mt-1.5">{{ t(billingEventProviderLabelKey(selectedEvent.metadata)) }}</p>
             <p v-else-if="selectedEvent.event_type === 'gift_granted'" class="text-xs text-text-secondary mt-1.5">{{ t('billing.noCostCourtesy') }}</p>
           </div>
 
@@ -1248,14 +1267,14 @@ watch(() => currentTenant.value?.id, async () => {
               </div>
             </div>
 
-            <!-- Transaction ID -->
-            <div v-if="selectedEvent.metadata?.wompi_transaction_id" class="flex items-center justify-between gap-3 px-4 py-3">
+            <!-- Transaction ID (Paddle preferred, Wompi legacy) -->
+            <div v-if="billingEventProviderRef(selectedEvent.metadata)" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
                 <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.transactionId') }}</p>
-                <p class="text-sm font-mono text-text-primary truncate">{{ selectedEvent.metadata.wompi_transaction_id }}</p>
+                <p class="text-sm font-mono text-text-primary truncate">{{ billingEventProviderRef(selectedEvent.metadata) }}</p>
               </div>
               <button
-                @click="copyToClipboard(String(selectedEvent.metadata.wompi_transaction_id), 'txn')"
+                @click="copyToClipboard(String(billingEventProviderRef(selectedEvent.metadata)), 'txn')"
                 :aria-label="copiedField === 'txn' ? t('billing.copied') : t('billing.copyId')"
                 class="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors"
               >
@@ -1271,7 +1290,7 @@ watch(() => currentTenant.value?.id, async () => {
             <!-- Gateway reference -->
             <div v-if="selectedEvent.metadata?.gateway_reference" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
-                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.wompiReference') }}</p>
+                <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.paymentReference') }}</p>
                 <p class="text-sm font-mono text-text-primary truncate">{{ selectedEvent.metadata.gateway_reference }}</p>
               </div>
               <button

@@ -50,7 +50,7 @@ import {
 } from '~/utils/onboardingPayment'
 
 // The API remains the auth boundary. This meta only lets pending sessions reach
-// the Wompi return page without weakening the guards on any operational route.
+// the payment return page (Paddle / legacy Wompi) without weakening operational guards.
 definePageMeta({ publicAccess: true, robots: 'noindex, nofollow' })
 
 type ReturnView = 'loading' | 'approved' | 'pending' | 'failed' | 'unknown'
@@ -132,8 +132,21 @@ const checkOnboardingReturn = async () => {
 
 const checkLegacyReturn = async () => {
   const transactionId = typeof route.query.id === 'string' ? route.query.id : null
-  if (!transactionId) {
+  const paddleTxn = typeof route.query.paddle_txn === 'string'
+    ? route.query.paddle_txn
+    : (typeof route.query._ptxn === 'string' ? route.query._ptxn : null)
+
+  // Paddle checkout return: webhook activates asynchronously — show pending.
+  if (!transactionId && paddleTxn) {
     view.value = 'pending'
+    await cache.invalidateQueries({ key: ['billing'] })
+    return
+  }
+
+  if (!transactionId) {
+    // No provider query id (common Paddle redirect) — treat as pending confirmation.
+    view.value = 'pending'
+    await cache.invalidateQueries({ key: ['billing'] })
     return
   }
   try {

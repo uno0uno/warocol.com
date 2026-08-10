@@ -55,6 +55,20 @@ export interface BillingPlan {
   is_active: boolean
 }
 
+export interface BillingPriceOffer {
+  segment: string
+  currency: string
+  monthly_amount_minor: number
+  annual_amount_minor: number
+  monthly_amount: number
+  annual_amount: number
+}
+
+export interface BillingPlansResponse {
+  plans: BillingPlan[]
+  price_offer: BillingPriceOffer
+}
+
 export interface TenantSubscription {
   id: string
   tenant_id: string
@@ -95,6 +109,12 @@ export function isStarterAccessLevel(level?: AccessStatus['level'] | null): bool
 export interface SubscribeResult {
   checkout_url: string
   status: string
+  currency?: string
+  amount_in_cents?: number
+  provider?: string
+  gateway_reference?: string
+  attempt_id?: string
+  plan_id?: string
 }
 
 export interface BillingEvent {
@@ -543,11 +563,14 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
 
   // ── Queries ───────────────────────────────────────────────────────────────────
 
-  const { data: plans, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
+  const { data: plansResponse, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
     key: ['billing', 'plans'],
     enabled: () => import.meta.client && loadOverview && canViewBilling(),
-    query: () => $fetch<BillingPlan[]>('/api/billing/plans'),
+    query: () => $fetch<BillingPlansResponse>('/api/billing/plans'),
   })
+
+  const plans = computed<BillingPlan[] | undefined>(() => plansResponse.value?.plans)
+  const priceOffer = computed<BillingPriceOffer | null>(() => plansResponse.value?.price_offer ?? null)
 
   const { data: subscription, status: subscriptionStatus, asyncStatus: subscriptionAsyncStatus } = useQuery({
     key: () => ['billing', 'subscription', tenantId.value],
@@ -648,7 +671,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
 
   // True when any query is background-refreshing with existing cache data
   const isRefreshing = computed(() =>
-    (plansAsyncStatus.value === 'loading' && plans.value != null) ||
+    (plansAsyncStatus.value === 'loading' && plansResponse.value != null) ||
     (subscriptionAsyncStatus.value === 'loading' && subscription.value != null) ||
     (accessStatusAsyncStatus.value === 'loading' && accessStatus.value != null) ||
     (usageAsyncStatus.value === 'loading' && usageHistoryData.value != null) ||
@@ -730,6 +753,7 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
 
   return {
     plans,
+    priceOffer,
     subscription,
     accessStatus,
     remainingUsage,
