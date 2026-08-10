@@ -155,13 +155,14 @@ const quotaRowsForPlan = (plan: BillingPlan) =>
     })
     .filter((row): row is QuotaDisplayConfig & { limit: number; value: string } => row !== null)
 
-const highlightQuotaRows = (plan: BillingPlan) => {
+const highlightQuotaRows = (plan: BillingPlan, opts?: { includeScanLimit?: boolean }) => {
   const rows = quotaRowsForPlan(plan)
   const preferred = PLAN_CARD_HIGHLIGHT_KEYS
     .map((key) => rows.find((row) => row.key === key))
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
-  if (preferred.length > 0) return preferred.slice(0, 5)
-  return rows.slice(0, 5)
+  const budget = opts?.includeScanLimit ? 4 : 5
+  if (preferred.length > 0) return preferred.slice(0, budget)
+  return rows.slice(0, budget)
 }
 
 const isRecommendedPlan = (plan: BillingPlan) => plan.slug === PRO_PLAN_SLUG
@@ -1057,12 +1058,18 @@ watch(() => currentTenant.value?.id, async () => {
                   isRecommendedPlan(plan)
                     ? 'bg-primary/5 border-primary/40 ring-1 ring-primary/20'
                     : isElectronicInvoicePlan(plan)
-                      ? 'bg-surface-secondary border-border'
+                      ? 'bg-surface border-dashed border-border'
                       : 'bg-surface-secondary border-border opacity-95',
                 ]"
               >
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
+                    <p
+                      v-if="isElectronicInvoicePlan(plan)"
+                      class="text-[11px] font-semibold uppercase tracking-wide text-text-secondary mb-1"
+                    >
+                      {{ t('billing.colombiaAddOn') }}
+                    </p>
                     <h3 class="text-base font-bold text-text-primary">{{ plan.name }}</h3>
                     <p class="text-sm text-text-secondary mt-0.5 line-clamp-2">
                       {{
@@ -1079,7 +1086,7 @@ watch(() => currentTenant.value?.id, async () => {
                     {{ t('billing.recommended') }}
                   </span>
                   <span
-                    v-else-if="isStarterPlanSlug(plan.slug)"
+                    v-else-if="isStarterPlanSlug(plan.slug) && isStarterTenant"
                     class="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border border-border text-text-secondary"
                   >
                     {{ t('billing.currentPlan') }}
@@ -1106,7 +1113,7 @@ watch(() => currentTenant.value?.id, async () => {
                     {{ plan.scan_limit.toLocaleString(toNumberLocaleTag(locale)) }} {{ t('billing.scansPerMonth') }}
                   </li>
                   <li
-                    v-for="quota in highlightQuotaRows(plan)"
+                    v-for="quota in highlightQuotaRows(plan, { includeScanLimit: !isStarterPlanSlug(plan.slug) })"
                     :key="quota.key"
                     class="flex items-start gap-2 text-sm text-text-secondary"
                   >
@@ -1174,7 +1181,7 @@ watch(() => currentTenant.value?.id, async () => {
                   disabled
                   class="w-full min-h-[44px] px-4 py-2.5 rounded-lg border border-border text-sm font-semibold text-text-secondary cursor-default"
                 >
-                  {{ t('billing.currentPlan') }}
+                  {{ isStarterTenant ? t('billing.currentPlan') : t('billing.freePrice') }}
                 </button>
               </div>
             </div>
