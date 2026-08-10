@@ -370,7 +370,10 @@
     "wompiReference": "مرجع Wompi",
     "copyReference": "نسخ المرجع",
     "paymentLink": "رابط الدفع",
-    "openPaymentLink": "فتح رابط الدفع"
+    "openPaymentLink": "فتح رابط الدفع",
+    "monthlySubscription": "اشتراك شهري · يُفوتر كل شهر",
+    "perMonth": "/ شهر",
+    "billedMonthly": "رسوم متكررة · تجديد شهري"
   },
   "terms": {
     "title": "الشروط والأحكام",

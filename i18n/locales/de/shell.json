@@ -370,7 +370,10 @@
     "wompiReference": "Wompi-Referenz",
     "copyReference": "Referenz kopieren",
     "paymentLink": "Zahlungslink",
-    "openPaymentLink": "Zahlungslink öffnen"
+    "openPaymentLink": "Zahlungslink öffnen",
+    "monthlySubscription": "Monatsabonnement · Monatliche Abrechnung",
+    "perMonth": "/ Monat",
+    "billedMonthly": "Wiederkehrende Zahlung · Monatliche Verlängerung"
   },
   "terms": {
     "title": "Allgemeine Geschäftsbedingungen",

@@ -434,7 +434,10 @@
     "wompiReference": "Enlace Wompi",
     "copyReference": "Copiar referencia",
     "paymentLink": "Enlace de pago",
-    "openPaymentLink": "Abrir enlace de pago"
+    "openPaymentLink": "Abrir enlace de pago",
+    "monthlySubscription": "Suscripción mensual · Cobro cada mes",
+    "perMonth": "/ mes",
+    "billedMonthly": "Cobro recurrente · Renovación mensual"
   },
   "terms": {
     "title": "Términos y Condiciones",

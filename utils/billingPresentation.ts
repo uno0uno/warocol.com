@@ -45,7 +45,7 @@ export const formatBillingOfferAmount = (
     maximumFractionDigits: 2,
   }).format(amount)
 
-/** Annual list is 10× monthly → two months “saved” vs paying monthly. */
+/** Legacy annual 10× list — two months “saved” vs paying monthly (display-only helper). */
 export const billingOfferAnnualSavings = (offer: BillingPriceOffer | null | undefined) =>
   offer ? offer.monthly_amount * 2 : 0
 
