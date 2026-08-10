@@ -434,7 +434,10 @@
     "wompiReference": "Wompi reference",
     "copyReference": "Copy reference",
     "paymentLink": "Payment link",
-    "openPaymentLink": "Open payment link"
+    "openPaymentLink": "Open payment link",
+    "monthlySubscription": "Monthly subscription · Billed every month",
+    "perMonth": "/ month",
+    "billedMonthly": "Recurring charge · Renews monthly"
   },
   "terms": {
     "title": "Terms and Conditions",

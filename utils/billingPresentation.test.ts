@@ -65,7 +65,7 @@ test('cancelled, expired and overdue subscriptions use recovery alert', () => {
   }
 })
 
-test('formats SaaS offer amounts and annual savings', () => {
+test('formats SaaS offer monthly amounts and legacy annual savings helper', () => {
   const offer: BillingPriceOffer = {
     segment: 'usd_9',
     currency: 'USD',
@@ -75,7 +75,8 @@ test('formats SaaS offer amounts and annual savings', () => {
     annual_amount: 90,
   }
   assert.equal(billingOfferAnnualSavings(offer), 18)
-  assert.match(formatBillingOfferAmount(90, 'USD', 'en-US'), /\$90/)
+  assert.match(formatBillingOfferAmount(9, 'USD', 'en-US'), /\$9/)
+  assert.match(formatBillingOfferAmount(30, 'EUR', 'en-US'), /€30/)
 })
 
 test('prefers paddle transaction id over wompi for event refs', () => {

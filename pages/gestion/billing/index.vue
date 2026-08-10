@@ -5,7 +5,6 @@ import {
   canStartBillingSubscription,
   shouldShowBillingRecoveryAlert,
   formatBillingOfferAmount,
-  billingOfferAnnualSavings,
   billingEventProviderRef,
   billingEventProviderLabelKey,
 } from '~/utils/billingPresentation'
@@ -377,7 +376,7 @@ const handleSubscribe = async () => {
   }
 
   try {
-    const result = await subscribeOrThrow(selectedPlan.value.id, 'annual', payerEmail.value)
+    const result = await subscribeOrThrow(selectedPlan.value.id, 'monthly', payerEmail.value)
     if (!result?.checkout_url) {
       subscribeError.value = t('billing.paymentStartError')
       return
@@ -531,16 +530,9 @@ const formatOffer = (amount: number, currency?: string) =>
     toNumberLocaleTag(locale.value),
   )
 
-const offerAnnualLabel = computed(() => {
+const offerMonthlyLabel = computed(() => {
   if (!priceOffer.value) return '—'
-  return formatOffer(priceOffer.value.annual_amount, priceOffer.value.currency)
-})
-
-const offerSavingsLabel = computed(() => {
-  if (!priceOffer.value) return null
-  const saved = billingOfferAnnualSavings(priceOffer.value)
-  if (saved <= 0) return null
-  return formatOffer(saved, priceOffer.value.currency)
+  return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
 })
 
 const cycleLabel = computed(() => {
@@ -798,8 +790,8 @@ watch(() => currentTenant.value?.id, async () => {
               <div class="flex flex-col items-center gap-0.5 py-1">
                 <span class="text-xs font-semibold uppercase tracking-widest text-primary">{{ proPlan.name }}</span>
                 <span class="text-sm font-bold text-text-primary leading-tight">
-                  {{ offerAnnualLabel }}
-                  <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perYear') }}</span>
+                  {{ offerMonthlyLabel }}
+                  <span class="text-[11px] font-normal text-text-secondary">{{ t('billing.perMonth') }}</span>
                 </span>
               </div>
             </template>
@@ -986,7 +978,7 @@ watch(() => currentTenant.value?.id, async () => {
           <!-- ── STEP 1: Plan selection ── -->
           <template v-if="wizardStep === 1">
             <p class="text-sm text-text-secondary text-center leading-relaxed">
-              {{ t('billing.annualSubscription') }}
+              {{ t('billing.monthlySubscription') }}
             </p>
 
             <!-- Plans loading -->
@@ -1015,13 +1007,10 @@ watch(() => currentTenant.value?.id, async () => {
                 <div>
                   <div class="flex items-end gap-1">
                     <span class="text-3xl font-bold text-text-primary">
-                      {{ offerAnnualLabel }}
+                      {{ offerMonthlyLabel }}
                     </span>
-                    <span class="text-sm text-text-secondary mb-1">{{ t('billing.perYear') }}</span>
+                    <span class="text-sm text-text-secondary mb-1">{{ t('billing.perMonth') }}</span>
                   </div>
-                  <p v-if="offerSavingsLabel" class="text-sm text-status-success-text font-medium mt-0.5">
-                    {{ t('billing.youSave', { amount: offerSavingsLabel }) }}
-                  </p>
                 </div>
 
                 <ul class="space-y-1.5 flex-1">
@@ -1087,11 +1076,11 @@ watch(() => currentTenant.value?.id, async () => {
             <div class="bg-surface-secondary rounded-xl p-4">
               <div class="flex justify-between items-center gap-4">
                 <div>
-                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · {{ t('billing.annual') }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ t('billing.oneTimeTwelveMonths') }}</p>
+                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · {{ t('billing.monthly') }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ t('billing.billedMonthly') }}</p>
                 </div>
                 <p class="text-xl font-bold text-text-primary">
-                  {{ offerAnnualLabel }}
+                  {{ offerMonthlyLabel }}
                 </p>
               </div>
               <div v-if="quotaRowsForPlan(selectedPlan).length > 0" class="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">

@@ -370,7 +370,10 @@
     "wompiReference": "Link Wompi",
     "copyReference": "Copiar referência",
     "paymentLink": "Link de pagamento",
-    "openPaymentLink": "Abrir link de pagamento"
+    "openPaymentLink": "Abrir link de pagamento",
+    "monthlySubscription": "Assinatura mensal · Cobrança todo mês",
+    "perMonth": "/ mês",
+    "billedMonthly": "Cobrança recorrente · Renovação mensal"
   },
   "terms": {
     "title": "Termos e Condições",

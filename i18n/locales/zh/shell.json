@@ -370,7 +370,10 @@
     "wompiReference": "Wompi 链接",
     "copyReference": "复制链接",
     "paymentLink": "付款链接",
-    "openPaymentLink": "打开付款链接"
+    "openPaymentLink": "打开付款链接",
+    "monthlySubscription": "月度订阅 · 按月计费",
+    "perMonth": "/ 月",
+    "billedMonthly": "循环扣费 · 按月续订"
   },
   "terms": {
     "title": "条款与条件",

@@ -370,7 +370,10 @@
     "wompiReference": "Wompi संदर्भ",
     "copyReference": "संदर्भ कॉपी करें",
     "paymentLink": "भुगतान लिंक",
-    "openPaymentLink": "भुगतान लिंक खोलें"
+    "openPaymentLink": "भुगतान लिंक खोलें",
+    "monthlySubscription": "मासिक सदस्यता · हर महीने बिल",
+    "perMonth": "/ माह",
+    "billedMonthly": "आवर्ती शुल्क · मासिक नवीनीकरण"
   },
   "terms": {
     "title": "नियम और शर्तें",
