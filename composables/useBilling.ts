@@ -97,9 +97,14 @@ export const BILLING_UNLIMITED_SENTINEL = 1_000_000
 
 export const STARTER_PLAN_SLUG = 'starter'
 export const PRO_PLAN_SLUG = 'pro'
+export const ELECTRONIC_INVOICE_PLAN_SLUG = 'facturacion-electronica'
 
 export function isStarterPlanSlug(slug?: string | null): boolean {
   return slug === STARTER_PLAN_SLUG
+}
+
+export function isPaidCheckoutPlanSlug(slug?: string | null): boolean {
+  return Boolean(slug) && slug !== STARTER_PLAN_SLUG
 }
 
 export function isStarterAccessLevel(level?: AccessStatus['level'] | null): boolean {
