@@ -136,6 +136,7 @@ const PLAN_CARD_HIGHLIGHT_KEYS: BillingQuotaKey[] = [
 ]
 
 const expandedPlanDetails = ref<Record<string, boolean>>({})
+const step2ShowPlanDetails = ref(false)
 
 const quotaRowsForPlan = (plan: BillingPlan) =>
   quotaDisplayConfig
@@ -164,6 +165,12 @@ const highlightQuotaRows = (plan: BillingPlan, opts?: { includeScanLimit?: boole
   if (preferred.length > 0) return preferred.slice(0, budget)
   return rows.slice(0, budget)
 }
+
+/** Step 2 expand: skip unlimited sentinels and "not included" zeros — avoid 1.000.000 noise. */
+const checkoutDetailQuotaRows = (plan: BillingPlan) =>
+  quotaRowsForPlan(plan).filter(
+    (row) => row.limit > 0 && row.limit < BILLING_UNLIMITED_SENTINEL,
+  )
 
 const isRecommendedPlan = (plan: BillingPlan) => plan.slug === PRO_PLAN_SLUG
 
@@ -403,6 +410,7 @@ const selectPlan = (plan: BillingPlan) => {
   }
   selectedPlan.value = plan
   subscribeError.value = null
+  step2ShowPlanDetails.value = false
   wizardStep.value = 2
 }
 
@@ -1204,8 +1212,8 @@ watch(() => currentTenant.value?.id, async () => {
               <p class="text-sm text-text-secondary">{{ t('billing.emailReceiptHint') }}</p>
             </div>
 
-            <!-- Plan summary -->
-            <div class="bg-surface-secondary rounded-xl p-4">
+            <!-- Plan summary (compact — quotas behind optional detail, #2203) -->
+            <div class="bg-surface-secondary rounded-xl p-4 space-y-3">
               <div class="flex justify-between items-center gap-4">
                 <div>
                   <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · {{ t('billing.monthly') }}</p>
@@ -1215,9 +1223,24 @@ watch(() => currentTenant.value?.id, async () => {
                   {{ offerMonthlyLabel }}
                 </p>
               </div>
-              <div v-if="quotaRowsForPlan(selectedPlan).length > 0" class="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+              <button
+                v-if="checkoutDetailQuotaRows(selectedPlan).length > 0"
+                type="button"
+                class="text-xs font-medium text-primary hover:underline"
+                @click="step2ShowPlanDetails = !step2ShowPlanDetails"
+              >
+                {{
+                  step2ShowPlanDetails
+                    ? t('billing.hidePlanDetails')
+                    : t('billing.seePlanDetails')
+                }}
+              </button>
+              <div
+                v-if="step2ShowPlanDetails"
+                class="pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2"
+              >
                 <div
-                  v-for="quota in quotaRowsForPlan(selectedPlan)"
+                  v-for="quota in checkoutDetailQuotaRows(selectedPlan)"
                   :key="quota.key"
                   class="text-xs text-text-secondary"
                 >

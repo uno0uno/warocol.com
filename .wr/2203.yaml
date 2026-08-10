@@ -1,0 +1,34 @@
+issue: 2203
+title: "fix(billing): declutter checkout step 2 email confirmation"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2203-declutter-checkout-step2
+
+paths:
+  - pages/gestion/billing/index.vue
+
+# i18n: reuse billing.seePlanDetails / hidePlanDetails from #2201 — no new keys
+
+ac:
+  - Step 2 compact: plan · cycle · price (+ billedMonthly line)
+  - Full quota dump not shown by default (remove or Ver detalle)
+  - Email + Paddle CTA primary
+  - No 1.000.000 sentinel noise in collapsed view
+  - Subscribe flow still reaches Paddle
+
+out_of_scope:
+  - step 1 picker, API, compare matrix
+
+hints:
+  entry: "wizardStep === 2 block ~1196 in billing/index.vue"
+  pattern: "reuse seePlanDetails / hidePlanDetails from #2201; drop quotaRowsForPlan grid by default"
+  tests: "none targeted — manual AC"
+
+risk:
+  sensitive: false
+  areas: [billing-ui]
+
+skip:
+  audits: [color, typography]
