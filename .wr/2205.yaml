@@ -1,0 +1,39 @@
+issue: 2205
+title: "feat(billing): open Paddle.js overlay on confirmacion ?_ptxn="
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2205-paddlejs-confirmacion
+
+paths:
+  - pages/billing/confirmacion.vue
+  - composables/usePaddleCheckout.ts
+  - nuxt.config.ts
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .env.example
+
+ac:
+  - Load Paddle.js v2; on ?_ptxn=txn_ open Checkout.open({ transactionId })
+  - Sandbox vs live via NUXT_PUBLIC_PADDLE_CLIENT_TOKEN + NUXT_PUBLIC_PADDLE_ENVIRONMENT
+  - After checkout.completed → pending/approved UI (webhook); don't false-unknown when session ok
+  - Local http://localhost:8080/billing/confirmacion works
+  - Revisit completed txn → status UI, don't awkwardly reopen
+
+out_of_scope:
+  - API webhooks, price catalog, Website Approval ops
+
+hints:
+  entry: "pages/billing/confirmacion.vue checkLegacyReturn _ptxn branch"
+  pattern: "Paddle.Environment.set('sandbox'); Paddle.Initialize({ token }); Paddle.Checkout.open({ transactionId })"
+  script: "https://cdn.paddle.com/paddle/v2/paddle.js"
+  tests: "none targeted — manual smoke"
+
+risk:
+  sensitive: true
+  areas: [payments]
+  note: "client-side token only (test_/live_); no API secrets in front"
+
+skip:
+  audits: [color, typography]
