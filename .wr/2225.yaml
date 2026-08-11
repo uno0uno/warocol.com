@@ -1,0 +1,48 @@
+# Compact plan for wr-exec / wr-fast. Keep <=80 lines.
+issue: 2225
+title: "Login: sanitize errors + i18n on verification-code step"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2225-login-error-i18n
+parent_epic: uno0uno/warocol.com#2224
+
+paths:
+  - components/Auth/LoginForm.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - utils/authLoginErrors.ts
+  - utils/authLoginErrors.test.ts
+
+ac:
+  - Magic-link send failure never shows raw API/proxy message; uses i18n
+  - Verify-code failure never shows raw err.message; uses i18n
+  - Code-step UI stays on existing auth.* keys; EN locale shows English errors
+  - Map by status / known API message / network → magicLinkError | invalidCode | new network/rateLimit keys
+  - Keep isInternalAccessDeniedError path unchanged
+  - Unit tests for mapper; manual ES+EN login fail + bad code
+
+out_of_scope:
+  - Menu pagination (#2226)
+  - Auth email HTML templates
+  - Registration / invitation / customer-verify (unless tiny shared util is reused later)
+  - API message/code changes (front-first; no api_warocol.com PR)
+
+hints:
+  entry: "LoginForm handleSubmit catch ~261; verifyCode catch ~316"
+  pattern: "Keep getInternalAccessDeniedMessage; never assign err.data.message to UI"
+  api_messages: "Invalid or expired verification code; Failed to send magic link; Verification failed"
+  i18n_existing: "auth.magicLinkError, auth.invalidCode, auth.codeRequired, auth.authError"
+  tests: "node --test utils/authLoginErrors.test.ts"
+
+risk:
+  sensitive: true
+  areas: [auth]
+  review: false
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#2224"
