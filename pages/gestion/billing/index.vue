@@ -464,23 +464,32 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
 }
 
 const abandoningCheckout = ref(false)
+const abandonConfirmOpen = ref(false)
+
+const openAbandonConfirm = () => {
+  if (abandoningCheckout.value) return
+  billingActionError.value = null
+  abandonConfirmOpen.value = true
+}
+
 const handleAbandonPendingCheckout = async () => {
-  if (!import.meta.client) return
-  const ok = window.confirm(t('billing.abandonCheckoutConfirm'))
-  if (!ok) return
+  if (!import.meta.client || abandoningCheckout.value) return
   abandoningCheckout.value = true
   billingActionError.value = null
   try {
     const abandoned = await abandonPendingCheckout()
     if (!abandoned) {
+      abandonConfirmOpen.value = false
       billingActionError.value = t('billing.abandonCheckoutError')
       return
     }
+    abandonConfirmOpen.value = false
     await Promise.all([
       fetchBillingOverview(),
       accessStore.load(),
     ])
   } catch {
+    abandonConfirmOpen.value = false
     billingActionError.value = t('billing.abandonCheckoutError')
   } finally {
     abandoningCheckout.value = false
@@ -790,10 +799,10 @@ watch(() => currentTenant.value?.id, async () => {
               <button
                 type="button"
                 :disabled="checkoutRedirecting || abandoningCheckout"
-                @click="handleAbandonPendingCheckout"
+                @click="openAbandonConfirm"
                 class="min-h-[36px] px-4 rounded-lg border border-border text-text-primary text-sm font-semibold hover:bg-surface-secondary active:scale-95 transition-all disabled:opacity-50"
               >
-                {{ abandoningCheckout ? t('billing.validating') : t('billing.abandonCheckout') }}
+                {{ t('billing.abandonCheckout') }}
               </button>
             </div>
           </div>
@@ -1524,6 +1533,18 @@ watch(() => currentTenant.value?.id, async () => {
       </div>
     </Transition>
     </Teleport>
+
+    <UiConfirmActionModal
+      v-model="abandonConfirmOpen"
+      :title="t('billing.abandonCheckoutTitle')"
+      :message="t('billing.abandonCheckoutConfirm')"
+      :confirm-label="t('billing.abandonCheckout')"
+      :cancel-label="t('billing.close')"
+      :loading-label="t('billing.validating')"
+      variant="destructive"
+      :loading="abandoningCheckout"
+      @confirm="handleAbandonPendingCheckout"
+    />
   </div>
 </template>
 
