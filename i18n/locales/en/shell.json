@@ -443,7 +443,6 @@
     "monthlySubscription": "Monthly subscription · Billed every month",
     "perMonth": "/ month",
     "billedMonthly": "Recurring charge · Renews monthly",
-    "continuePaddleCheckout": "Continue Paddle checkout",
     "paddleCheckoutPendingDescription": "Complete payment in the form below. When it finishes, we will update your plan automatically.",
     "paddleTokenMissing": "Paddle client token is missing (NUXT_PUBLIC_PADDLE_CLIENT_TOKEN).",
     "paddleCheckoutOpenError": "Could not open Paddle checkout. Please try again.",

@@ -41,6 +41,7 @@ declare global {
 
 let scriptPromise: Promise<void> | null = null
 let initializedToken: string | null = null
+let activeEventHandler: ((event: PaddleEvent) => void) | null = null
 
 function loadPaddleScript (): Promise<void> {
   if (!import.meta.client) return Promise.resolve()
@@ -95,7 +96,7 @@ export function usePaddleCheckout () {
     return raw === 'production' || raw === 'live' ? 'production' : 'sandbox'
   })
 
-  async function ensureInitialized (eventCallback?: (event: PaddleEvent) => void) {
+  async function ensureInitialized () {
     const token = clientToken.value
     if (!token) {
       throw new Error('missing_paddle_client_token')
@@ -110,7 +111,9 @@ export function usePaddleCheckout () {
       }
       paddle.Initialize({
         token,
-        eventCallback,
+        eventCallback: (event) => {
+          activeEventHandler?.(event)
+        },
       })
       initializedToken = token
     }
@@ -138,9 +141,10 @@ export function usePaddleCheckout () {
     }
 
     const displayMode = options?.displayMode || 'inline'
+    // Paddle.js frameTarget is a CSS class name (not an element id).
     const frameTarget = options?.frameTarget || PADDLE_INLINE_FRAME_ID
 
-    const paddle = await ensureInitialized((event) => {
+    activeEventHandler = (event) => {
       const name = event.name || event.type || ''
       if (name === 'checkout.completed') {
         markPaddleTransactionDone(transactionId)
@@ -151,7 +155,9 @@ export function usePaddleCheckout () {
         const detail = String(event.data?.error || event.data?.message || name)
         handlers?.onError?.(detail)
       }
-    })
+    }
+
+    const paddle = await ensureInitialized()
 
     const settings: PaddleCheckoutOpenOptions['settings'] = {
       displayMode,

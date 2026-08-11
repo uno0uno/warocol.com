@@ -16,8 +16,7 @@
       <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
     </div>
     <div
-      :id="PADDLE_INLINE_FRAME_ID"
-      class="min-h-[520px] w-full rounded-xl border border-border bg-surface p-2 sm:p-4"
+      :class="[PADDLE_INLINE_FRAME_ID, 'min-h-[520px] w-full rounded-xl border border-border bg-surface p-2 sm:p-4']"
       aria-live="polite"
     />
     <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">

@@ -443,7 +443,6 @@
     "monthlySubscription": "Suscripción mensual · Cobro cada mes",
     "perMonth": "/ mes",
     "billedMonthly": "Cobro recurrente · Renovación mensual",
-    "continuePaddleCheckout": "Continuar pago con Paddle",
     "paddleCheckoutPendingDescription": "Completa el pago en el formulario de abajo. Cuando termine, actualizaremos tu plan automáticamente.",
     "paddleTokenMissing": "Falta configurar el token de Paddle (NUXT_PUBLIC_PADDLE_CLIENT_TOKEN).",
     "paddleCheckoutOpenError": "No se pudo abrir el checkout de Paddle. Intenta de nuevo.",
