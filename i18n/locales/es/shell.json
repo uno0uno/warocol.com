@@ -442,7 +442,11 @@
     "openPaymentLink": "Abrir enlace de pago",
     "monthlySubscription": "Suscripción mensual · Cobro cada mes",
     "perMonth": "/ mes",
-    "billedMonthly": "Cobro recurrente · Renovación mensual"
+    "billedMonthly": "Cobro recurrente · Renovación mensual",
+    "abandonCheckout": "Cancelar intento",
+    "abandonCheckoutConfirm": "¿Cancelar este intento de pago? Volverás al plan Starter y podrás elegir un plan de nuevo.",
+    "abandonCheckoutError": "No se pudo cancelar el intento de pago. Intenta de nuevo.",
+    "eventCheckoutAbandoned": "Checkout abandonado"
   },
   "terms": {
     "title": "Términos y Condiciones",
