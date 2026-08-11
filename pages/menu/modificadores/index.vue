@@ -172,7 +172,25 @@
       </template>
     </UiResponsiveDataView>
 
-    <div v-if="(groupsData?.total ?? 0) > itemsPerPage" class="flex items-center justify-end px-1 py-2">
+    <div
+      v-if="(groupsData?.total ?? 0) > 0"
+      class="flex flex-col gap-2 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="flex items-center gap-2">
+        <label for="menu-modificadores-page-size" class="text-sm text-text-secondary whitespace-nowrap">
+          {{ t('menu.common.rowsPerPage') }}
+        </label>
+        <select
+          id="menu-modificadores-page-size"
+          :value="itemsPerPage"
+          class="min-h-[36px] rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
+          @change="onItemsPerPageChange"
+        >
+          <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+        </select>
+      </div>
+
+      <template v-if="(groupsData?.total ?? 0) > itemsPerPage">
       <div class="flex flex-1 justify-between sm:hidden">
         <button
           @click="previousPage"
@@ -193,7 +211,7 @@
           {{ t('menu.modificadores.next') }}
         </button>
       </div>
-      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-end">
+      <div class="hidden sm:flex sm:items-center sm:justify-end">
           <nav class="relative z-0 inline-flex items-center gap-1" :aria-label="t('menu.modificadores.pagination')">
             <button
               @click="previousPage"
@@ -222,6 +240,7 @@
             </button>
           </nav>
       </div>
+      </template>
     </div>
 
     <!-- Detalles expandidos (solo desktop) -->
@@ -338,6 +357,14 @@ const {
 
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
+const pageSizeOptions = [10, 20, 30] as const
+
+const onItemsPerPageChange = (event: Event) => {
+  const next = Number((event.target as HTMLSelectElement).value)
+  if (!(pageSizeOptions as readonly number[]).includes(next)) return
+  itemsPerPage.value = next
+  currentPage.value = 1
+}
 const expandedRows = ref(new Set())
 const requiredFilter = ref<'required' | 'optional' | ''>('')
 const requiredHeaderOptions = computed(() => [

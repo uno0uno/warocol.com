@@ -1,0 +1,48 @@
+# Compact plan for wr-exec. Keep <=80 lines.
+issue: 2226
+title: "Menu: page-size selector on productos, recetas, modificadores"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2226-menu-page-size
+parent_epic: uno0uno/warocol.com#2224
+
+paths:
+  - pages/menu/productos/index.vue
+  - pages/menu/recetas/index.vue
+  - pages/menu/modificadores/index.vue
+  - i18n/locales/es/menu.json
+  - i18n/locales/en/menu.json
+
+ac:
+  - Default itemsPerPage remains 20 on all three lists
+  - Select options 10 / 20 / 30; change resets currentPage to 1 (query key already includes limit → refetch)
+  - Page-size control visible when total > 0 (not only when total > itemsPerPage)
+  - Pagination nav can stay behind existing total > itemsPerPage gate
+  - i18n ES/EN label e.g. menu.*.rowsPerPage or shared menu.rowsPerPage
+  - No API contract change (existing limit query param)
+
+out_of_scope:
+  - Login / auth (#2225)
+  - Other modules’ pagination
+  - New design-system pagination component
+  - Persist page size in localStorage
+
+hints:
+  entry: "itemsPerPage = ref(20) — productos:~1000, recetas:~312, modificadores:~340"
+  pattern: "Inline <select> near each pagination footer; mirror local button/border styles"
+  query: "useQuery key already has limit: itemsPerPage — changing size refetches"
+  show_gate: "productos:774; recetas:124; modificadores:175 currently hide whole footer if total <= limit"
+  tests: "manual — switch 10/20/30 on each list with >20 rows; confirm page resets to 1"
+
+risk:
+  sensitive: false
+  areas: []
+  review: false
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#2224"

@@ -34,7 +34,8 @@
       "guardado": "Guardado",
       "active": "Activa",
       "inactive": "Inactiva",
-      "incompatibleUnitError": "Selecciona una unidad compatible para cada artículo de bodega."
+      "incompatibleUnitError": "Selecciona una unidad compatible para cada artículo de bodega.",
+      "rowsPerPage": "Filas por página"
     },
     "productos": {
       "editMode": "Modo edición",

@@ -34,7 +34,8 @@
       "guardado": "Saved",
       "active": "Active",
       "inactive": "Inactive",
-      "incompatibleUnitError": "Select a compatible unit for each warehouse item."
+      "incompatibleUnitError": "Select a compatible unit for each warehouse item.",
+      "rowsPerPage": "Rows per page"
     },
     "productos": {
       "editMode": "Edit mode",
