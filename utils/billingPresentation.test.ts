@@ -7,6 +7,7 @@ import {
   billingOfferAnnualSavings,
   canStartBillingSubscription,
   formatBillingOfferAmount,
+  normalizeLocalPaddleCheckoutUrl,
   shouldShowBillingRecoveryAlert,
   type BillingPriceOffer,
 } from './billingPresentation.ts'
@@ -117,5 +118,18 @@ test('prefers paddle transaction id over wompi for event refs', () => {
   assert.equal(
     billingEventProviderLabelKey({ wompi_transaction_id: 'txn_w' }),
     'billing.processedByWompi',
+  )
+})
+
+test('normalizes local paddle checkout urls to http without waro-colombia prefix', () => {
+  assert.equal(
+    normalizeLocalPaddleCheckoutUrl(
+      'https://localhost:8080/waro-colombia/billing/confirmacion?_ptxn=txn_x',
+    ),
+    'http://localhost:8080/billing/confirmacion?_ptxn=txn_x',
+  )
+  assert.equal(
+    normalizeLocalPaddleCheckoutUrl('https://warocol.com/billing/confirmacion?_ptxn=txn_x'),
+    'https://warocol.com/billing/confirmacion?_ptxn=txn_x',
   )
 })

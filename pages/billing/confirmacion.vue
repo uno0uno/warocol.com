@@ -3,6 +3,40 @@
     <CommonsTheCustomLoader size="large" />
   </div>
 
+  <!-- Inline Paddle pay surface (#2209) — full page, not overlay modal -->
+  <div
+    v-else-if="showInlineCheckout"
+    class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6"
+  >
+    <div class="mb-6 text-center">
+      <h1 class="text-2xl font-bold text-text-primary">{{ t('onboarding.paymentPendingTitle') }}</h1>
+      <p class="mt-2 text-sm leading-6 text-text-secondary">
+        {{ t('billing.paddleCheckoutPendingDescription') }}
+      </p>
+      <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
+    </div>
+    <div
+      :class="[PADDLE_INLINE_FRAME_ID, 'min-h-[520px] w-full rounded-xl border border-border bg-surface p-2 sm:p-4']"
+      aria-live="polite"
+    />
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <button
+        v-if="isOnboardingReturn"
+        type="button"
+        class="min-h-11 rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
+        @click="checkReturn"
+      >
+        {{ t('onboarding.paymentRefresh') }}
+      </button>
+      <NuxtLink
+        to="/gestion/billing"
+        class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
+      >
+        {{ t('billing.backToBilling') }}
+      </NuxtLink>
+    </div>
+  </div>
+
   <div v-else class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center">
     <div class="w-full rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
       <component :is="icon" class="mx-auto h-14 w-14" :class="iconClass" aria-hidden="true" />
@@ -14,7 +48,7 @@
         <button
           v-if="isOnboardingReturn && view !== 'failed'"
           type="button"
-          class="min-h-11 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          class="min-h-11 rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
           @click="checkReturn"
         >
           {{ t('onboarding.paymentRefresh') }}
@@ -48,6 +82,11 @@ import {
   writeCheckoutContext,
   type OnboardingCheckoutContext,
 } from '~/utils/onboardingPayment'
+import {
+  isPaddleTransactionMarkedDone,
+  PADDLE_INLINE_FRAME_ID,
+  usePaddleCheckout,
+} from '~/composables/usePaddleCheckout'
 
 // The API remains the auth boundary. This meta only lets pending sessions reach
 // the payment return page (Paddle / legacy Wompi) without weakening operational guards.
@@ -62,12 +101,26 @@ const tenantsStore = useTenantsStore()
 const accessStore = useAccessStore()
 const cache = useQueryCache()
 const { loadStatus, loadPaymentStatus } = useOnboarding()
+const { openTransactionCheckout, clientToken } = usePaddleCheckout()
 
 const view = ref<ReturnView>('loading')
 const errorMessage = ref('')
 const isOnboardingReturn = ref(false)
 const checkoutContext = ref<OnboardingCheckoutContext | null>(null)
 const returnAttemptId = ref<string | null>(null)
+const paddleTxnId = ref<string | null>(null)
+const openingCheckout = ref(false)
+const paddleCheckoutDone = ref(false)
+const inlineCheckoutMounted = ref(false)
+
+const showInlineCheckout = computed(() =>
+  Boolean(
+    paddleTxnId.value
+    && !paddleCheckoutDone.value
+    && inlineCheckoutMounted.value
+    && (view.value === 'pending' || view.value === 'failed' || view.value === 'unknown'),
+  ),
+)
 
 const icon = computed(() => view.value === 'approved'
   ? CheckCircleIcon
@@ -85,10 +138,19 @@ const title = computed(() => view.value === 'approved'
 const description = computed(() => view.value === 'approved'
   ? t('onboarding.paymentApprovedDescription')
   : view.value === 'pending'
-    ? t('onboarding.paymentPendingDescription')
+    ? (paddleTxnId.value
+        ? t('billing.paddleCheckoutPendingDescription')
+        : t('onboarding.paymentPendingDescription'))
     : view.value === 'failed'
       ? t('onboarding.paymentFailedDescription')
       : t('onboarding.paymentUnknownDescription'))
+
+const readPaddleTxnFromRoute = () => {
+  const paddleTxn = typeof route.query.paddle_txn === 'string'
+    ? route.query.paddle_txn
+    : (typeof route.query._ptxn === 'string' ? route.query._ptxn : null)
+  return paddleTxn && paddleTxn.startsWith('txn_') ? paddleTxn : null
+}
 
 const refreshActivatedSession = async () => {
   const session = await authStore.refreshSession()
@@ -99,9 +161,65 @@ const refreshActivatedSession = async () => {
   return true
 }
 
+const openPaddleInline = async () => {
+  const txn = paddleTxnId.value
+  if (!txn || !import.meta.client) return
+  if (!clientToken.value) {
+    errorMessage.value = t('billing.paddleTokenMissing')
+    view.value = 'unknown'
+    inlineCheckoutMounted.value = false
+    return
+  }
+  if (isPaddleTransactionMarkedDone(txn)) {
+    paddleCheckoutDone.value = true
+    inlineCheckoutMounted.value = false
+    view.value = 'pending'
+    await cache.invalidateQueries({ key: ['billing'] })
+    return
+  }
+  openingCheckout.value = true
+  errorMessage.value = ''
+  view.value = 'pending'
+  inlineCheckoutMounted.value = true
+  try {
+    // Wait for the frame target to exist in the DOM
+    await nextTick()
+    await openTransactionCheckout(txn, {
+      onCompleted: async () => {
+        paddleCheckoutDone.value = true
+        inlineCheckoutMounted.value = false
+        view.value = 'pending'
+        await cache.invalidateQueries({ key: ['billing'] })
+      },
+      onClosed: () => {
+        view.value = 'pending'
+      },
+      onError: (message) => {
+        errorMessage.value = message
+      },
+    }, {
+      displayMode: 'inline',
+      frameTarget: PADDLE_INLINE_FRAME_ID,
+    })
+  } catch (err: any) {
+    const code = String(err?.message || err || '')
+    errorMessage.value = code === 'missing_paddle_client_token'
+      ? t('billing.paddleTokenMissing')
+      : t('billing.paddleCheckoutOpenError')
+    view.value = 'unknown'
+    inlineCheckoutMounted.value = false
+  } finally {
+    openingCheckout.value = false
+  }
+}
+
 const checkOnboardingReturn = async () => {
   const context = checkoutContext.value
   const attemptId = returnAttemptId.value || context?.attemptId
+  if (paddleTxnId.value) {
+    await openPaddleInline()
+    return
+  }
   if (!attemptId) {
     view.value = 'unknown'
     return
@@ -132,19 +250,13 @@ const checkOnboardingReturn = async () => {
 
 const checkLegacyReturn = async () => {
   const transactionId = typeof route.query.id === 'string' ? route.query.id : null
-  const paddleTxn = typeof route.query.paddle_txn === 'string'
-    ? route.query.paddle_txn
-    : (typeof route.query._ptxn === 'string' ? route.query._ptxn : null)
 
-  // Paddle checkout return: webhook activates asynchronously — show pending.
-  if (!transactionId && paddleTxn) {
-    view.value = 'pending'
-    await cache.invalidateQueries({ key: ['billing'] })
+  if (!transactionId && paddleTxnId.value) {
+    await openPaddleInline()
     return
   }
 
   if (!transactionId) {
-    // No provider query id (common Paddle redirect) — treat as pending confirmation.
     view.value = 'pending'
     await cache.invalidateQueries({ key: ['billing'] })
     return
@@ -165,6 +277,7 @@ const checkLegacyReturn = async () => {
 const checkReturn = async () => {
   view.value = 'loading'
   errorMessage.value = ''
+  paddleTxnId.value = readPaddleTxnFromRoute()
   try {
     const session = await authStore.refreshSession()
     if (isPendingOnboardingSession(session) || isActiveOnboardingSetupSession(session)) {
@@ -176,6 +289,12 @@ const checkReturn = async () => {
     isOnboardingReturn.value = false
     await checkLegacyReturn()
   } catch (err: any) {
+    // Still open Paddle when ?_ptxn= is present — checkout does not require session.
+    if (paddleTxnId.value) {
+      isOnboardingReturn.value = false
+      await openPaddleInline()
+      return
+    }
     isOnboardingReturn.value = true
     errorMessage.value = t('onboarding.paymentSessionError')
     view.value = 'unknown'
