@@ -403,11 +403,12 @@
                 />
                 <UiStatusBadge
                   v-if="isOpenSaleShell(item)"
-                  :value="t('menu.productos.customizeOpenSale')"
+                  :value="t('menu.productos.openSaleStatusShort')"
                   :title="t('menu.productos.customizeOpenSale')"
                   format="text"
                   variant="secondary"
                   size="sm"
+                  class="whitespace-nowrap"
                 />
                 <UiStatusBadge
                   v-else
@@ -603,12 +604,12 @@
             <div class="flex justify-center">
               <UiStatusBadge
                 v-if="isOpenSaleShell(item)"
-                :value="t('menu.productos.customizeOpenSale')"
+                :value="t('menu.productos.openSaleStatusShort')"
                 :title="t('menu.productos.customizeOpenSale')"
                 format="text"
                 variant="secondary"
                 size="sm"
-                class="whitespace-nowrap max-w-[7rem]"
+                class="whitespace-nowrap"
               />
               <UiStatusBadge
                 v-else
@@ -775,18 +776,29 @@
           v-if="productsData.total > 0"
           class="mt-4 bg-white px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border border-titan-200 rounded-lg"
         >
-          <div class="flex items-center gap-2">
+          <div class="relative flex items-center gap-2">
             <label for="menu-productos-page-size" class="text-sm text-titan-700 whitespace-nowrap">
               {{ t('menu.common.rowsPerPage') }}
             </label>
-            <select
-              id="menu-productos-page-size"
-              :value="itemsPerPage"
-              class="min-h-[36px] rounded-md border border-titan-200 bg-white px-2 text-sm text-titan-700 focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
-              @change="onItemsPerPageChange"
-            >
-              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-            </select>
+            <div class="relative">
+              <select
+                id="menu-productos-page-size"
+                :value="itemsPerPage"
+                class="min-h-[36px] min-w-[4.75rem] appearance-none rounded-md border border-titan-200 bg-white ps-2.5 pe-8 text-sm text-titan-700 focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring cursor-pointer [&::-ms-expand]:hidden"
+                @change="onItemsPerPageChange"
+              >
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+              </select>
+              <svg
+                class="pointer-events-none absolute end-2 top-1/2 h-4 w-4 -translate-y-1/2 text-titan-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
 
           <template v-if="productsData.total > itemsPerPage">

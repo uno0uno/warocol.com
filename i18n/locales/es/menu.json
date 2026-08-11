@@ -76,6 +76,7 @@
       "notApplicable": "No aplica",
       "noMargin": "Sin margen",
       "customizeOpenSale": "Activa o desactiva venta libre en Operaciones → Personalizar",
+      "openSaleStatusShort": "Personalizar",
       "editProduct": "Editar producto",
       "pagination": "Paginación",
       "showingProducts": "Mostrando {start} a {end} de {total} productos",
