@@ -4,6 +4,167 @@ export interface BillingPresentationState {
   accessLevel?: string | null
 }
 
+export type BillingScenarioId =
+  | 'starter_or_none'
+  | 'active'
+  | 'pending_checkout'
+  | 'pending_restart'
+  | 'past_due_warning'
+  | 'past_due_read_only'
+  | 'blocked'
+  | 'cancelled'
+  | 'expired'
+
+export type BillingPrimaryAction = 'none' | 'open_subscribe' | 'complete_checkout' | 'recover'
+
+export interface BillingScenarioPresentation {
+  id: BillingScenarioId
+  primaryAction: BillingPrimaryAction
+  /** Pending checkout only — Cancelar intento stays secondary */
+  showAbandonSecondary: boolean
+  showRecoveryAlert: boolean
+  alertTone: 'none' | 'warning' | 'critical'
+  /** i18n key under billing.* or full path already prefixed */
+  alertTitleKey: string | null
+  primaryLabelKey: string | null
+}
+
+/**
+ * Single matrix for Mi Plan header CTA + recovery alert (#2222).
+ * Does not change API grace rules — presentation only.
+ */
+export function resolveBillingScenario (
+  state: BillingPresentationState,
+): BillingScenarioPresentation {
+  const status = state.subscriptionStatus ?? null
+  const level = state.accessLevel ?? null
+  const hasCheckout = Boolean(state.checkoutUrl)
+
+  if (status === 'pending' && hasCheckout) {
+    return {
+      id: 'pending_checkout',
+      primaryAction: 'complete_checkout',
+      showAbandonSecondary: true,
+      showRecoveryAlert: false,
+      alertTone: 'none',
+      alertTitleKey: null,
+      primaryLabelKey: 'billing.completePayment',
+    }
+  }
+
+  if (status === 'pending') {
+    return {
+      id: 'pending_restart',
+      primaryAction: 'open_subscribe',
+      showAbandonSecondary: false,
+      showRecoveryAlert: false,
+      alertTone: 'none',
+      alertTitleKey: null,
+      primaryLabelKey: 'billing.subscribe',
+    }
+  }
+
+  if (status === 'past_due' && level === 'full_with_warning') {
+    return {
+      id: 'past_due_warning',
+      primaryAction: 'recover',
+      showAbandonSecondary: false,
+      showRecoveryAlert: true,
+      alertTone: 'warning',
+      alertTitleKey: 'billing.paymentFailedGrace',
+      primaryLabelKey: hasCheckout ? 'billing.completePayment' : 'billing.updatePayment',
+    }
+  }
+
+  if (status === 'past_due' && level === 'read_only') {
+    return {
+      id: 'past_due_read_only',
+      primaryAction: 'recover',
+      showAbandonSecondary: false,
+      showRecoveryAlert: true,
+      alertTone: 'warning',
+      alertTitleKey: 'billing.aiSuspended',
+      primaryLabelKey: hasCheckout ? 'billing.completePayment' : 'billing.updatePayment',
+    }
+  }
+
+  if (status === 'cancelled') {
+    return {
+      id: 'cancelled',
+      primaryAction: 'open_subscribe',
+      showAbandonSecondary: false,
+      showRecoveryAlert: true,
+      alertTone: 'critical',
+      alertTitleKey: 'billing.subscriptionCancelledTitle',
+      primaryLabelKey: 'billing.reactivate',
+    }
+  }
+
+  if (status === 'expired') {
+    return {
+      id: 'expired',
+      primaryAction: hasCheckout ? 'complete_checkout' : 'open_subscribe',
+      showAbandonSecondary: false,
+      showRecoveryAlert: true,
+      alertTone: 'critical',
+      alertTitleKey: 'billing.subscriptionExpired',
+      primaryLabelKey: hasCheckout ? 'billing.completePayment' : 'billing.reactivate',
+    }
+  }
+
+  // past_due past grace, or any non-pending subscription with blocked access
+  // (do not treat onboarding with no subscription row + blocked as recovery)
+  if (
+    status === 'past_due'
+    || (level === 'blocked' && status && status !== 'pending')
+  ) {
+    return {
+      id: 'blocked',
+      primaryAction: hasCheckout ? 'complete_checkout' : 'open_subscribe',
+      showAbandonSecondary: false,
+      showRecoveryAlert: true,
+      alertTone: 'critical',
+      alertTitleKey: 'billing.subscriptionExpired',
+      primaryLabelKey: hasCheckout ? 'billing.completePayment' : 'billing.reactivate',
+    }
+  }
+
+  if (status === 'active') {
+    return {
+      id: 'active',
+      primaryAction: 'none',
+      showAbandonSecondary: false,
+      showRecoveryAlert: false,
+      alertTone: 'none',
+      alertTitleKey: null,
+      primaryLabelKey: null,
+    }
+  }
+
+  // No row / Starter (incl. access blocked with no subscription — onboarding)
+  return {
+    id: 'starter_or_none',
+    primaryAction: 'open_subscribe',
+    showAbandonSecondary: false,
+    showRecoveryAlert: false,
+    alertTone: 'none',
+    alertTitleKey: null,
+    primaryLabelKey: 'billing.upgradeToPro',
+  }
+}
+
+export const canStartBillingSubscription = ({
+  subscriptionStatus,
+  checkoutUrl,
+  accessLevel,
+}: BillingPresentationState) => {
+  const scenario = resolveBillingScenario({ subscriptionStatus, checkoutUrl, accessLevel })
+  return scenario.primaryAction === 'open_subscribe' && !scenario.showRecoveryAlert
+}
+
+export const shouldShowBillingRecoveryAlert = (state: BillingPresentationState) =>
+  resolveBillingScenario(state).showRecoveryAlert
+
 export interface BillingPriceOffer {
   segment: string
   currency: string
@@ -12,25 +173,6 @@ export interface BillingPriceOffer {
   monthly_amount: number
   annual_amount: number
 }
-
-export const canStartBillingSubscription = ({
-  subscriptionStatus,
-  checkoutUrl,
-  accessLevel,
-}: BillingPresentationState) =>
-  !subscriptionStatus ||
-  subscriptionStatus === 'cancelled' ||
-  subscriptionStatus === 'expired' ||
-  (subscriptionStatus === 'pending' && !checkoutUrl) ||
-  (accessLevel === 'blocked' && !checkoutUrl)
-
-export const shouldShowBillingRecoveryAlert = ({
-  subscriptionStatus,
-  accessLevel,
-}: BillingPresentationState) =>
-  !!subscriptionStatus &&
-  subscriptionStatus !== 'pending' &&
-  (subscriptionStatus === 'past_due' || accessLevel === 'blocked')
 
 /** Format SaaS list price from Paddle price_offer (major units). */
 export const formatBillingOfferAmount = (
