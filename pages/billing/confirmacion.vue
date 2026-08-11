@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { isActiveOnboardingSetupSession, isPendingOnboardingSession } from '~/utils/onboardingFlow'
+import { isActiveOnboardingSetupSession, isPendingOnboardingSession, shouldOpenPaddleInsteadOfSetupRedirect } from '~/utils/onboardingFlow'
 import {
   clearCheckoutContext,
   isUuid,
@@ -282,6 +282,11 @@ const checkReturn = async () => {
     const session = await authStore.refreshSession()
     if (isPendingOnboardingSession(session) || isActiveOnboardingSetupSession(session)) {
       isOnboardingReturn.value = true
+      // Starter/setup + pending Pro checkout: open Paddle, do not bounce to Mi Plan (#2217)
+      if (shouldOpenPaddleInsteadOfSetupRedirect(paddleTxnId.value)) {
+        await openPaddleInline()
+        return
+      }
       if (isActiveOnboardingSetupSession(session) && await refreshActivatedSession()) return
       await checkOnboardingReturn()
       return

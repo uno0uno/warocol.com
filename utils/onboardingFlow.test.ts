@@ -11,6 +11,7 @@ import {
   isPendingBillingPath,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
+  shouldOpenPaddleInsteadOfSetupRedirect,
 } from './onboardingFlow.ts'
 
 test('classifies active, pending, customer and anonymous sessions', () => {
@@ -56,6 +57,15 @@ test('allows pending sessions to stay on billing and payment return paths', () =
   assert.equal(isPendingBillingPath('/gestion/billing/uso'), true)
   assert.equal(isPendingBillingPath('/billing/confirmacion'), true)
   assert.equal(isPendingBillingPath('/ventas'), false)
+})
+
+test('open Paddle txn skips active+setup redirect to Mi Plan (#2217)', () => {
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('txn_01abc'), true)
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('txn_01kzrq05y0tqp70djn7r8n0dxw'), true)
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(null), false)
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(undefined), false)
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(''), false)
+  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('not-a-txn'), false)
 })
 
 test('normalizes onboarding steps safely', () => {
