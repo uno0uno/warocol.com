@@ -444,7 +444,8 @@
     "perMonth": "/ mes",
     "billedMonthly": "Cobro recurrente · Renovación mensual",
     "abandonCheckout": "Cancelar intento",
-    "abandonCheckoutConfirm": "¿Cancelar este intento de pago? Volverás al plan Starter y podrás elegir un plan de nuevo.",
+    "abandonCheckoutTitle": "Cancelar intento de pago",
+    "abandonCheckoutConfirm": "Cancelarás este intento de pago, volverás al plan Starter y podrás elegir un plan de nuevo.",
     "abandonCheckoutError": "No se pudo cancelar el intento de pago. Intenta de nuevo.",
     "eventCheckoutAbandoned": "Checkout abandonado"
   },
