@@ -549,6 +549,8 @@
     "customerPortal": "Ir al portal de clientes",
     "codeSentToast": "Código enviado a tu email",
     "magicLinkError": "Error al enviar el magic link. Intenta nuevamente.",
+    "networkError": "Problema de conexión. Revisa tu internet e intenta de nuevo.",
+    "rateLimited": "Demasiados intentos. Espera un momento e intenta de nuevo.",
     "codeRequired": "Ingresa un código de 6 dígitos",
     "accessGranted": "¡Acceso autorizado! Redirigiendo...",
     "invalidCode": "Código inválido o expirado",

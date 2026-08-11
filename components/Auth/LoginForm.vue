@@ -149,6 +149,7 @@ import {
   getInternalAccessDeniedMessage,
   isInternalAccessDeniedError,
 } from '~/utils/internalAccess'
+import { resolveAuthLoginErrorKey } from '~/utils/authLoginErrors'
 import { isOnboardingEntrySession } from '~/utils/onboardingFlow'
 import { prefillRegistrationEmail } from '~/utils/registrationFlow'
 
@@ -258,7 +259,7 @@ async function handleSubmit() {
       showCustomerPortalLink.value = true
       error.value = getInternalAccessDeniedMessage()
     } else {
-      error.value = err?.data?.message || err?.message || t('auth.magicLinkError')
+      error.value = t(resolveAuthLoginErrorKey(err, 'magic_link'))
     }
   } finally {
     loading.value = false
@@ -313,7 +314,7 @@ async function verifyCode() {
       error.value = getInternalAccessDeniedMessage()
       return
     }
-    error.value = err.message || t('auth.invalidCode')
+    error.value = t(resolveAuthLoginErrorKey(err, 'verify_code'))
   } finally {
     verifyingCode.value = false
   }
