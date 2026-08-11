@@ -658,7 +658,8 @@ const subscriptionStatusStyle = computed(() =>
 )
 
 const pastDueAlert = computed(() => {
-  if (!subscription.value || (subscription.value.status !== 'past_due' && !isBillingBlocked.value)) return null
+  // Align with shouldShowBillingRecoveryAlert: never treat pending checkout as "expired".
+  if (!subscription.value || !showBillingRecoveryAlert.value) return null
 
   if (isBillingBlocked.value) {
     return {
