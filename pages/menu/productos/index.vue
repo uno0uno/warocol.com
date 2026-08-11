@@ -770,8 +770,26 @@
           </template>
         </UiResponsiveDataView>
 
-        <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+        <!-- Pagination + page size (#2226) -->
+        <div
+          v-if="productsData.total > 0"
+          class="mt-4 bg-white px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border border-titan-200 rounded-lg"
+        >
+          <div class="flex items-center gap-2">
+            <label for="menu-productos-page-size" class="text-sm text-titan-700 whitespace-nowrap">
+              {{ t('menu.common.rowsPerPage') }}
+            </label>
+            <select
+              id="menu-productos-page-size"
+              :value="itemsPerPage"
+              class="min-h-[36px] rounded-md border border-titan-200 bg-white px-2 text-sm text-titan-700 focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
+              @change="onItemsPerPageChange"
+            >
+              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+            </select>
+          </div>
+
+          <template v-if="productsData.total > itemsPerPage">
           <div class="flex-1 flex justify-between sm:hidden">
             <button
               @click="previousPage"
@@ -792,7 +810,7 @@
               {{ t('common.next') }}
             </button>
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between sm:gap-4">
             <div>
               <p class="text-sm text-titan-700">
                 {{ t('menu.productos.showingProducts', { start: startItem, end: endItem, total: productsData.total }) }}
@@ -839,6 +857,7 @@
               </nav>
             </div>
           </div>
+          </template>
         </div>
       </div>
     </div>
@@ -998,6 +1017,14 @@ let syncingProductTypeRoute = false
 
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
+const pageSizeOptions = [10, 20, 30] as const
+
+const onItemsPerPageChange = (event: Event) => {
+  const next = Number((event.target as HTMLSelectElement).value)
+  if (!(pageSizeOptions as readonly number[]).includes(next)) return
+  itemsPerPage.value = next
+  currentPage.value = 1
+}
 
 const productTypeHeaderFilter = computed({
   get: () => (normalizeProductTypeFilter(productTypeFilter.value) === 'all' ? '' : productTypeFilter.value),

@@ -120,8 +120,26 @@
           </template>
         </UiResponsiveDataView>
 
-        <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="flex items-center justify-end px-1 py-2">
+        <!-- Pagination + page size (#2226) -->
+        <div
+          v-if="productsData.total > 0"
+          class="flex flex-col gap-2 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div class="flex items-center gap-2">
+            <label for="menu-recetas-page-size" class="text-sm text-text-secondary whitespace-nowrap">
+              {{ t('menu.common.rowsPerPage') }}
+            </label>
+            <select
+              id="menu-recetas-page-size"
+              :value="itemsPerPage"
+              class="min-h-[36px] rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
+              @change="onItemsPerPageChange"
+            >
+              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+            </select>
+          </div>
+
+          <template v-if="productsData.total > itemsPerPage">
           <div class="flex flex-1 justify-between sm:hidden">
             <button
               @click="previousPage"
@@ -142,7 +160,7 @@
               {{ t('menu.recetas.next') }}
             </button>
           </div>
-          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-end">
+          <div class="hidden sm:flex sm:items-center sm:justify-end">
               <nav class="relative z-0 inline-flex items-center gap-1" aria-label="Pagination">
                 <button
                   @click="previousPage"
@@ -171,6 +189,7 @@
                 </button>
               </nav>
           </div>
+          </template>
         </div>
 
         <!-- Detalles expandidos (solo desktop) -->
@@ -310,6 +329,14 @@ const {
 
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
+const pageSizeOptions = [10, 20, 30] as const
+
+const onItemsPerPageChange = (event: Event) => {
+  const next = Number((event.target as HTMLSelectElement).value)
+  if (!(pageSizeOptions as readonly number[]).includes(next)) return
+  itemsPerPage.value = next
+  currentPage.value = 1
+}
 const expandedRows = ref(new Set())
 const statusFilter = ref<'active' | 'inactive' | ''>('')
 const statusHeaderOptions = [
