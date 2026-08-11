@@ -47,6 +47,14 @@ export const isActiveOnboardingSetupSession = (session: unknown) =>
   && getSessionLifecycle(session) === 'active'
   && normalizeOnboardingNextStep(getSessionNextStep(session)) === 'setup'
 
+/**
+ * Payment return with an open Paddle txn must open checkout, not bounce
+ * active+setup (Starter) sessions to Mi Plan (#2217).
+ */
+export const shouldOpenPaddleInsteadOfSetupRedirect = (
+  paddleTxnId: string | null | undefined,
+) => Boolean(paddleTxnId && String(paddleTxnId).startsWith('txn_'))
+
 export const isOnboardingEntrySession = (session: unknown) =>
   isPendingOnboardingSession(session)
 

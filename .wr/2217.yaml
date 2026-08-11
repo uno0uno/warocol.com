@@ -1,0 +1,41 @@
+# Compact Codex plan for wr-fast #2217.
+issue: 2217
+title: "Don't redirect confirmacion to Mi Plan when ?_ptxn= is present"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2217-confirmacion-ptxn-no-redirect
+
+paths:
+  - pages/billing/confirmacion.vue
+  - utils/onboardingFlow.ts
+  - utils/onboardingFlow.test.ts
+  - .wr/2217.yaml
+
+ac:
+  - "With ?_ptxn=txn_… active+setup stays on confirmacion and opens Paddle inline"
+  - "Without txn id, active+setup still redirects to Mi Plan"
+  - "Pending onboarding / no-_ptxn paths unchanged"
+  - "Unit test for shouldOpenPaddleInsteadOfSetupRedirect"
+
+out_of_scope:
+  - Paddle dashboard / https forcing
+  - normalizeLocalPaddleCheckoutUrl (#2211)
+  - abandon modal (#2215)
+  - API access (#2213)
+
+hints:
+  entry: "checkReturn before refreshActivatedSession"
+  pattern: "shouldOpenPaddleInsteadOfSetupRedirect then openPaddleInline"
+  tests: "node --test utils/onboardingFlow.test.ts"
+
+risk:
+  sensitive: false
+  areas: [billing-ui, onboarding]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review"
