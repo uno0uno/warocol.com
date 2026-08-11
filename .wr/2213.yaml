@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-fast #2213 (front).
+issue: 2213
+title: "Keep Starter access while first Pro checkout is pending"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2213-pending-starter-access
+
+paths:
+  - pages/gestion/billing/index.vue
+  - utils/billingPresentation.test.ts
+  - .wr/2213.yaml
+
+ac:
+  - "Mi Plan does not show subscription-expired banner for pending checkout"
+  - "pastDueAlert gated by shouldShowBillingRecoveryAlert (excludes pending)"
+  - "Completar pago / Cancelar intento still available via existing CTAs"
+  - "presentation tests cover pending + starter access"
+
+out_of_scope:
+  - abandon-checkout (#2210)
+  - inline Paddle (#2209)
+  - Hosted Checkout
+  - API access logic (companion PR)
+
+hints:
+  entry: "pastDueAlert + shouldShowBillingRecoveryAlert"
+  pattern: "utils/billingPresentation.ts:shouldShowBillingRecoveryAlert"
+  tests: "node --test utils/billingPresentation.test.ts"
+
+risk:
+  sensitive: true
+  areas: [payments, billing-ui]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Merge with API companion; human /wr-review recommended"
