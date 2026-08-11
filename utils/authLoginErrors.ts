@@ -12,18 +12,6 @@ export type AuthLoginErrorKey =
   | 'auth.rateLimited'
   | 'auth.authError'
 
-const INVALID_CODE_NEEDLES = [
-  'invalid or expired verification code',
-  'invalid or expired token',
-  'verification failed',
-  'invalid code',
-  'expired code',
-  'código inválido',
-  'codigo invalido',
-  'código expirado',
-  'codigo expirado',
-]
-
 const SEND_FAIL_NEEDLES = [
   'failed to send magic link',
   'failed to send',
