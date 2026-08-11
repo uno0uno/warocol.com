@@ -1,0 +1,40 @@
+issue: 2219
+title: "Paddle thank-you page after checkout.completed (webhook-safe)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2219-paddle-thank-you
+
+paths:
+  - pages/billing/confirmacion.vue
+  - utils/paddleThankYou.ts
+  - utils/paddleThankYou.test.ts
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .wr/2219.yaml
+
+ac:
+  - "checkout.completed → thank-you / activating UI (hide pay form)"
+  - "Poll /api/billing/paddle/transaction-status until ready or timeout"
+  - "CTA Mi Plan when ready; refresh on lag"
+  - "Does not activate from client event alone"
+
+out_of_scope:
+  - Wompi verify-payment removal
+  - Mi Plan CTA redesign
+
+hints:
+  entry: "startPaddleThankYou + pollPaddleThankYouOnce"
+  pattern: "utils/paddleThankYou.ts"
+  tests: "node --test utils/paddleThankYou.test.ts"
+
+risk:
+  sensitive: true
+  areas: [payments, billing-ui]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: "Ship with API companion; human /wr-review recommended"
