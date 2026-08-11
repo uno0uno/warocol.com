@@ -184,19 +184,21 @@
           <select
             id="menu-modificadores-page-size"
             :value="itemsPerPage"
-            class="min-h-[36px] min-w-[4.75rem] appearance-none rounded-lg border border-border bg-surface ps-2.5 pe-8 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring cursor-pointer [&::-ms-expand]:hidden"
+            class="min-h-[36px] min-w-[4.75rem] appearance-none bg-none rounded-lg border border-border bg-surface ps-2.5 pe-8 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring cursor-pointer [&::-ms-expand]:hidden"
+            style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;"
             @change="onItemsPerPageChange"
           >
             <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
           </select>
           <svg
-            class="pointer-events-none absolute end-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
+            class="pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary"
             fill="none"
             stroke="currentColor"
+            stroke-width="2"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
         </div>
       </div>
