@@ -17,6 +17,7 @@ import {
   formatBillingOfferAmount,
   billingEventProviderRef,
   billingEventProviderLabelKey,
+  normalizeLocalPaddleCheckoutUrl,
 } from '~/utils/billingPresentation'
 
 interface Column {
@@ -436,7 +437,7 @@ const handleSubscribe = async () => {
       return
     }
     clearBillingIntent()
-    await navigateTo(result.checkout_url, { external: true })
+    await navigateTo(normalizeLocalPaddleCheckoutUrl(result.checkout_url), { external: true })
   } catch (err) {
     if (isTermsAcceptanceRequiredError(err)) {
       await redirectToTermsAcceptance()
@@ -459,7 +460,7 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
     return
   }
 
-  await navigateTo(checkoutUrl, { external: true })
+  await navigateTo(normalizeLocalPaddleCheckoutUrl(checkoutUrl), { external: true })
   checkoutRedirecting.value = false
 }
 

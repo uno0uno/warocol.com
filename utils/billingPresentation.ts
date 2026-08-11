@@ -63,3 +63,24 @@ export const billingEventProviderLabelKey = (metadata: Record<string, unknown> |
   if (metadata.wompi_transaction_id || metadata.provider === 'wompi') return 'billing.processedByWompi'
   return 'billing.processedByProvider'
 }
+
+/**
+ * Paddle may return https://localhost even when the default payment link is http.
+ * Local Nuxt has no TLS — force http and drop a mistaken /waro-colombia prefix (#2205).
+ */
+export function normalizeLocalPaddleCheckoutUrl (url: string): string {
+  try {
+    const parsed = new URL(url)
+    const localHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
+    if (!localHost) return url
+    parsed.protocol = 'http:'
+    if (parsed.pathname === '/waro-colombia') {
+      parsed.pathname = '/'
+    } else if (parsed.pathname.startsWith('/waro-colombia/')) {
+      parsed.pathname = parsed.pathname.slice('/waro-colombia'.length) || '/'
+    }
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
