@@ -97,7 +97,7 @@ export function resolveAuthLoginErrorKey (
   const status = extractAuthLoginStatus(input)
   const message = extractAuthLoginRawMessage(input)
 
-  if (status === 429 || messageMatches(message, ['rate limit', 'too many', 'demasiadas'])) {
+  if (status === 429 || messageMatches(message, ['rate limit', 'too many', 'demasiado', 'demasiados', 'demasiadas'])) {
     return 'auth.rateLimited'
   }
 
@@ -110,18 +110,10 @@ export function resolveAuthLoginErrorKey (
   }
 
   if (status !== null && status >= 500) {
-    return kind === 'verify_code' ? 'auth.invalidCode' : 'auth.magicLinkError'
+    return kind === 'verify_code' ? 'auth.authError' : 'auth.magicLinkError'
   }
 
   if (kind === 'verify_code') {
-    if (
-      status === 400
-      || status === 401
-      || status === 404
-      || messageMatches(message, INVALID_CODE_NEEDLES)
-    ) {
-      return 'auth.invalidCode'
-    }
     return 'auth.invalidCode'
   }
 
