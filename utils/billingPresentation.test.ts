@@ -8,6 +8,7 @@ import {
   canStartBillingSubscription,
   formatBillingOfferAmount,
   normalizeLocalPaddleCheckoutUrl,
+  resolveBillingScenario,
   shouldShowBillingRecoveryAlert,
   type BillingPriceOffer,
 } from './billingPresentation.ts'
@@ -21,6 +22,8 @@ test('payment-pending onboarding without a subscription can subscribe', () => {
 
   assert.equal(canStartBillingSubscription(state), true)
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
+  assert.equal(resolveBillingScenario(state).id, 'starter_or_none')
+  assert.equal(resolveBillingScenario(state).primaryLabelKey, 'billing.upgradeToPro')
 })
 
 test('pending subscription with checkout completes the existing payment', () => {
@@ -33,6 +36,11 @@ test('pending subscription with checkout completes the existing payment', () => 
   assert.equal(canStartBillingSubscription(state), false)
   // First Pro checkout or renew-pending: Completar pago CTA, not expired banner (#2213)
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
+  const scenario = resolveBillingScenario(state)
+  assert.equal(scenario.id, 'pending_checkout')
+  assert.equal(scenario.primaryAction, 'complete_checkout')
+  assert.equal(scenario.showAbandonSecondary, true)
+  assert.equal(scenario.primaryLabelKey, 'billing.completePayment')
 })
 
 test('first Pro pending with starter access hides recovery/expired alert', () => {
@@ -55,6 +63,7 @@ test('pending subscription without checkout can restart payment', () => {
 
   assert.equal(canStartBillingSubscription(state), true)
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
+  assert.equal(resolveBillingScenario(state).id, 'pending_restart')
 })
 
 test('after abandon (no subscription) can start billing again', () => {
@@ -77,15 +86,87 @@ test('active subscription does not expose subscription actions', () => {
 
   assert.equal(canStartBillingSubscription(state), false)
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
+  assert.equal(resolveBillingScenario(state).primaryAction, 'none')
 })
 
-test('cancelled, expired and overdue subscriptions use recovery alert', () => {
-  for (const subscriptionStatus of ['cancelled', 'expired', 'past_due']) {
-    assert.equal(shouldShowBillingRecoveryAlert({
+test('past_due full_with_warning uses grace copy and update/complete CTA', () => {
+  const withCheckout = resolveBillingScenario({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: 'https://checkout.example.test',
+    accessLevel: 'full_with_warning',
+  })
+  assert.equal(withCheckout.id, 'past_due_warning')
+  assert.equal(withCheckout.alertTitleKey, 'billing.paymentFailedGrace')
+  assert.equal(withCheckout.primaryLabelKey, 'billing.completePayment')
+  assert.equal(withCheckout.showRecoveryAlert, true)
+  assert.equal(canStartBillingSubscription({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: 'https://checkout.example.test',
+    accessLevel: 'full_with_warning',
+  }), false)
+
+  const without = resolveBillingScenario({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'full_with_warning',
+  })
+  assert.equal(without.primaryLabelKey, 'billing.updatePayment')
+})
+
+test('past_due read_only uses AI suspended title', () => {
+  const scenario = resolveBillingScenario({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'read_only',
+  })
+  assert.equal(scenario.id, 'past_due_read_only')
+  assert.equal(scenario.alertTitleKey, 'billing.aiSuspended')
+  assert.equal(scenario.alertTone, 'warning')
+  assert.equal(shouldShowBillingRecoveryAlert({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'read_only',
+  }), true)
+})
+
+test('blocked past grace uses expired title and recover CTA in alert only', () => {
+  const scenario = resolveBillingScenario({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'blocked',
+  })
+  assert.equal(scenario.id, 'blocked')
+  assert.equal(scenario.alertTitleKey, 'billing.subscriptionExpired')
+  assert.equal(scenario.primaryLabelKey, 'billing.reactivate')
+  assert.equal(canStartBillingSubscription({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'blocked',
+  }), false)
+  assert.equal(shouldShowBillingRecoveryAlert({
+    subscriptionStatus: 'past_due',
+    checkoutUrl: null,
+    accessLevel: 'blocked',
+  }), true)
+})
+
+test('cancelled and expired use recovery alert (not header subscribe)', () => {
+  for (const subscriptionStatus of ['cancelled', 'expired'] as const) {
+    const state = {
       subscriptionStatus,
       checkoutUrl: null,
       accessLevel: 'blocked',
-    }), true)
+    }
+    assert.equal(shouldShowBillingRecoveryAlert(state), true)
+    assert.equal(canStartBillingSubscription(state), false)
+    const scenario = resolveBillingScenario(state)
+    assert.equal(scenario.showRecoveryAlert, true)
+    assert.equal(
+      scenario.alertTitleKey,
+      subscriptionStatus === 'cancelled'
+        ? 'billing.subscriptionCancelledTitle'
+        : 'billing.subscriptionExpired',
+    )
   }
 })
 

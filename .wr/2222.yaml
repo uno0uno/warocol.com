@@ -1,0 +1,37 @@
+# Machine contract for wr-fast — LLM reads once; humans use issue summary + PR.
+issue: 2222
+title: "Mi Plan: one primary CTA + clear copy per billing scenario"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2222-billing-cta-matrix
+risk: low
+
+paths:
+  - utils/billingPresentation.ts
+  - utils/billingPresentation.test.ts
+  - pages/gestion/billing/index.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+
+ac:
+  - Documented resolveBillingScenario matrix for starter/pending/past_due/blocked/cancelled/expired
+  - At most one primary CTA per scenario; Cancelar intento secondary on pending_checkout
+  - Alert titles distinguish grace vs expired vs cancelled; pending never uses expired
+  - Mi Plan consumes resolveBillingScenario for header + recovery alert labels
+  - i18n ES/EN for paymentFailedGrace, subscriptionCancelledTitle, updatePayment
+  - No grace/API/webhook/thank-you changes
+
+out_of_scope:
+  - Paddle Customer Portal
+  - GRACE_PERIOD_DAYS / WARNING_THRESHOLD_DAYS
+  - thank-you poll (#2219) / abandon API
+
+hints:
+  entry: "resolveBillingScenario — utils/billingPresentation.ts"
+  pattern: "canStart + recovery alert derived from matrix; pastDueAlert from alertTitleKey"
+  tests: "node --test utils/billingPresentation.test.ts"
+
+skip:
+  audits: [ux, color, typography]

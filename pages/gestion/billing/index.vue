@@ -14,6 +14,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import {
   canStartBillingSubscription,
   shouldShowBillingRecoveryAlert,
+  resolveBillingScenario,
   formatBillingOfferAmount,
   billingEventProviderRef,
   billingEventProviderLabelKey,
@@ -498,13 +499,15 @@ const handleAbandonPendingCheckout = async () => {
 }
 
 // ── Should show subscribe/reactivate button ──────────────────────
-const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
 const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
 const billingPresentationState = computed(() => ({
   subscriptionStatus: subscription.value?.status ?? null,
   checkoutUrl: subscription.value?.checkout_url ?? null,
   accessLevel: accessStatus.value?.level ?? null,
 }))
+const billingScenario = computed(() =>
+  resolveBillingScenario(billingPresentationState.value)
+)
 const showBillingRecoveryAlert = computed(() =>
   shouldShowBillingRecoveryAlert(billingPresentationState.value)
 )
@@ -514,17 +517,19 @@ const requiresTermsAcceptance = computed(() =>
 const canSubscribe = computed(() => {
   return canStartBillingSubscription(billingPresentationState.value)
 })
+const showPendingCheckoutActions = computed(() =>
+  billingScenario.value.id === 'pending_checkout' && !showBillingRecoveryAlert.value
+)
 const primaryBillingActionLabel = computed(() => {
-  if (!subscription.value || subscription.value.status === 'pending') {
-    return t('billing.subscribe')
-  }
-  if (isAccessBlocked.value) return t('billing.reactivate')
-  return t('billing.reactivate')
+  const key = billingScenario.value.primaryLabelKey
+  return key ? t(key) : t('billing.subscribe')
 })
 const recoveryActionLabel = computed(() => {
   if (requiresTermsAcceptance.value) return t('billing.acceptTerms')
-  if (hasExistingCheckout.value) return t('billing.payNow')
-  return subscription.value ? t('billing.reactivate') : t('billing.subscribe')
+  const key = billingScenario.value.primaryLabelKey
+  if (key) return t(key)
+  if (hasExistingCheckout.value) return t('billing.completePayment')
+  return subscription.value ? t('billing.reactivate') : t('billing.upgradeToPro')
 })
 const handleRecoveryAction = async () => {
   billingActionError.value = null
@@ -639,8 +644,6 @@ const cycleLabel = computed(() => {
   return '—'
 })
 
-const isBillingBlocked = computed(() => accessStatus.value?.level === 'blocked')
-
 const statusStyle = (status: string, accessLevel?: string | null) => {
   if (status === 'past_due' && accessLevel === 'blocked') {
     return {
@@ -668,35 +671,22 @@ const subscriptionStatusStyle = computed(() =>
 )
 
 const pastDueAlert = computed(() => {
-  // Align with shouldShowBillingRecoveryAlert: never treat pending checkout as "expired".
-  if (!subscription.value || !showBillingRecoveryAlert.value) return null
+  const scenario = billingScenario.value
+  if (!scenario.showRecoveryAlert || !scenario.alertTitleKey) return null
 
-  if (isBillingBlocked.value) {
-    return {
-      bg: 'bg-status-critical-bg/40',
-      icon: 'text-status-critical-text',
-      title: t('billing.subscriptionExpired'),
-      titleClass: 'text-status-critical-text',
-      message: accessStatus.value?.message || t('billing.renewForAccess'),
-    }
-  }
-
-  if (accessStatus.value?.level === 'read_only') {
-    return {
-      bg: 'bg-status-warning-bg/40',
-      icon: 'text-status-warning-text',
-      title: t('billing.aiSuspended'),
-      titleClass: 'text-status-warning-text',
-      message: accessStatus.value?.message || t('billing.renewForFullAccess'),
-    }
-  }
+  const critical = scenario.alertTone === 'critical'
+  const defaultMessage = critical
+    ? t('billing.renewForAccess')
+    : scenario.id === 'past_due_read_only'
+      ? t('billing.renewForFullAccess')
+      : t('billing.accessGracePeriod')
 
   return {
-    bg: 'bg-status-warning-bg/40',
-    icon: 'text-status-warning-text',
-    title: t('billing.paymentPending'),
-    titleClass: 'text-status-warning-text',
-    message: accessStatus.value?.message || t('billing.accessGracePeriod'),
+    bg: critical ? 'bg-status-critical-bg/40' : 'bg-status-warning-bg/40',
+    icon: critical ? 'text-status-critical-text' : 'text-status-warning-text',
+    title: t(scenario.alertTitleKey),
+    titleClass: critical ? 'text-status-critical-text' : 'text-status-warning-text',
+    message: accessStatus.value?.message || defaultMessage,
   }
 })
 
@@ -784,9 +774,9 @@ watch(() => currentTenant.value?.id, async () => {
               {{ primaryBillingActionLabel }}
             </button>
 
-            <!-- Pending: complete payment or abandon (#2210) -->
+            <!-- Pending: complete payment or abandon (#2210 / #2222) -->
             <div
-              v-else-if="!showBillingRecoveryAlert && subscription?.status === 'pending' && subscription.checkout_url"
+              v-else-if="showPendingCheckoutActions && subscription?.checkout_url"
               class="flex flex-wrap items-center gap-2"
             >
               <button
