@@ -76,6 +76,7 @@
       "notApplicable": "Not applicable",
       "noMargin": "No margin",
       "customizeOpenSale": "Enable or disable open sale in Operations → Customize",
+      "openSaleStatusShort": "Customize",
       "editProduct": "Edit product",
       "pagination": "Pagination",
       "showingProducts": "Showing {start} to {end} of {total} products",

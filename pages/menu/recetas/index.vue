@@ -125,18 +125,31 @@
           v-if="productsData.total > 0"
           class="flex flex-col gap-2 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div class="flex items-center gap-2">
+          <div class="relative flex items-center gap-2">
             <label for="menu-recetas-page-size" class="text-sm text-text-secondary whitespace-nowrap">
               {{ t('menu.common.rowsPerPage') }}
             </label>
-            <select
-              id="menu-recetas-page-size"
-              :value="itemsPerPage"
-              class="min-h-[36px] rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
-              @change="onItemsPerPageChange"
-            >
-              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-            </select>
+            <div class="relative">
+              <select
+                id="menu-recetas-page-size"
+                :value="itemsPerPage"
+                class="min-h-[36px] min-w-[4.75rem] appearance-none bg-none rounded-lg border border-border bg-surface ps-2.5 pe-8 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring cursor-pointer [&::-ms-expand]:hidden"
+                style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;"
+                @change="onItemsPerPageChange"
+              >
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+              </select>
+              <svg
+                class="pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
           </div>
 
           <template v-if="productsData.total > itemsPerPage">
