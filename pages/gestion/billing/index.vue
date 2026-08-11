@@ -479,6 +479,7 @@ const handleAbandonPendingCheckout = async () => {
   try {
     const abandoned = await abandonPendingCheckout()
     if (!abandoned) {
+      abandonConfirmOpen.value = false
       billingActionError.value = t('billing.abandonCheckoutError')
       return
     }
@@ -488,6 +489,7 @@ const handleAbandonPendingCheckout = async () => {
       accessStore.load(),
     ])
   } catch {
+    abandonConfirmOpen.value = false
     billingActionError.value = t('billing.abandonCheckoutError')
   } finally {
     abandoningCheckout.value = false
