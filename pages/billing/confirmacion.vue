@@ -19,7 +19,7 @@
           to="/gestion/billing"
           class="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
         >
-          {{ t('onboarding.viewSubscription') }}
+          {{ t('billing.backToBilling') }}
         </NuxtLink>
         <button
           v-else
@@ -261,7 +261,7 @@ const pollPaddleThankYouOnce = async () => {
       return
     }
     if (thankYouPhase.value === 'activating') scheduleThankYouPoll()
-  } catch (err: any) {
+  } catch {
     pollAttempt.value += 1
     thankYouPhase.value = paddleThankYouPhaseFromStatus(null, pollAttempt.value)
     if (pollAttempt.value >= PADDLE_THANK_YOU_MAX_ATTEMPTS) {
