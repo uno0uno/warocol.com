@@ -44,6 +44,17 @@ test('pending subscription without checkout can restart payment', () => {
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
 })
 
+test('after abandon (no subscription) can start billing again', () => {
+  const state = {
+    subscriptionStatus: null,
+    checkoutUrl: null,
+    accessLevel: 'starter',
+  }
+
+  assert.equal(canStartBillingSubscription(state), true)
+  assert.equal(shouldShowBillingRecoveryAlert(state), false)
+})
+
 test('active subscription does not expose subscription actions', () => {
   const state = {
     subscriptionStatus: 'active',

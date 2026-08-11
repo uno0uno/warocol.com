@@ -442,7 +442,11 @@
     "openPaymentLink": "Open payment link",
     "monthlySubscription": "Monthly subscription · Billed every month",
     "perMonth": "/ month",
-    "billedMonthly": "Recurring charge · Renews monthly"
+    "billedMonthly": "Recurring charge · Renews monthly",
+    "abandonCheckout": "Cancel attempt",
+    "abandonCheckoutConfirm": "Cancel this payment attempt? You will return to the Starter plan and can choose a plan again.",
+    "abandonCheckoutError": "Could not cancel the payment attempt. Please try again.",
+    "eventCheckoutAbandoned": "Checkout abandoned"
   },
   "terms": {
     "title": "Terms and Conditions",

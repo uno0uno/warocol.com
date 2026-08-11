@@ -33,7 +33,7 @@ useHead({ title: () => t('billing.paymentHistoryTitle') })
 
 const {
   plans, priceOffer, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
-  fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow,
+  fetchPlans, fetchMyEvents, fetchBillingOverview, subscribeOrThrow, abandonPendingCheckout,
 } = useBilling()
 
 const { currentTenant } = useTenantReactive()
@@ -463,6 +463,30 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
   checkoutRedirecting.value = false
 }
 
+const abandoningCheckout = ref(false)
+const handleAbandonPendingCheckout = async () => {
+  if (!import.meta.client) return
+  const ok = window.confirm(t('billing.abandonCheckoutConfirm'))
+  if (!ok) return
+  abandoningCheckout.value = true
+  billingActionError.value = null
+  try {
+    const abandoned = await abandonPendingCheckout()
+    if (!abandoned) {
+      billingActionError.value = t('billing.abandonCheckoutError')
+      return
+    }
+    await Promise.all([
+      fetchBillingOverview(),
+      accessStore.load(),
+    ])
+  } catch {
+    billingActionError.value = t('billing.abandonCheckoutError')
+  } finally {
+    abandoningCheckout.value = false
+  }
+}
+
 // ── Should show subscribe/reactivate button ──────────────────────
 const isAccessBlocked = computed(() => accessStatus.value?.level === 'blocked')
 const hasExistingCheckout = computed(() => !!subscription.value?.checkout_url)
@@ -668,6 +692,7 @@ const pastDueAlert = computed(() => {
 const eventStyle = (type: string) => {
   const map: Record<string, { badge: string; label: string }> = {
     subscribe_initiated:    { badge: 'bg-surface-secondary text-text-secondary',        label: t('billing.eventSubscribeInitiated') },
+    checkout_abandoned:     { badge: 'bg-surface-secondary text-text-secondary',        label: t('billing.eventCheckoutAbandoned') },
     gift_granted:           { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventGiftGranted') },
     subscription_created:   { badge: 'bg-status-info-bg text-status-info-text',         label: t('billing.eventSubscriptionCreated') },
     subscription_renewed:   { badge: 'bg-status-success-bg text-status-success-text',   label: t('billing.eventRenewal') },
@@ -748,16 +773,28 @@ watch(() => currentTenant.value?.id, async () => {
               {{ primaryBillingActionLabel }}
             </button>
 
-            <!-- Pending: complete payment -->
-            <button
+            <!-- Pending: complete payment or abandon (#2210) -->
+            <div
               v-else-if="!showBillingRecoveryAlert && subscription?.status === 'pending' && subscription.checkout_url"
-              type="button"
-              :disabled="checkoutRedirecting"
-              @click="handleExistingCheckout(subscription.checkout_url)"
-              class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center"
+              class="flex flex-wrap items-center gap-2"
             >
-              {{ checkoutRedirecting ? t('billing.validating') : t('billing.completePayment') }}
-            </button>
+              <button
+                type="button"
+                :disabled="checkoutRedirecting || abandoningCheckout"
+                @click="handleExistingCheckout(subscription.checkout_url)"
+                class="min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all flex items-center disabled:opacity-50"
+              >
+                {{ checkoutRedirecting ? t('billing.validating') : t('billing.completePayment') }}
+              </button>
+              <button
+                type="button"
+                :disabled="checkoutRedirecting || abandoningCheckout"
+                @click="handleAbandonPendingCheckout"
+                class="min-h-[36px] px-4 rounded-lg border border-border text-text-primary text-sm font-semibold hover:bg-surface-secondary active:scale-95 transition-all disabled:opacity-50"
+              >
+                {{ abandoningCheckout ? t('billing.validating') : t('billing.abandonCheckout') }}
+              </button>
+            </div>
           </div>
         </div>
 
