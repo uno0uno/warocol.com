@@ -31,7 +31,19 @@ test('pending subscription with checkout completes the existing payment', () => 
   }
 
   assert.equal(canStartBillingSubscription(state), false)
+  // First Pro checkout or renew-pending: Completar pago CTA, not expired banner (#2213)
   assert.equal(shouldShowBillingRecoveryAlert(state), false)
+})
+
+test('first Pro pending with starter access hides recovery/expired alert', () => {
+  assert.equal(
+    shouldShowBillingRecoveryAlert({
+      subscriptionStatus: 'pending',
+      checkoutUrl: 'https://checkout.example.test',
+      accessLevel: 'starter',
+    }),
+    false,
+  )
 })
 
 test('pending subscription without checkout can restart payment', () => {
@@ -39,6 +51,17 @@ test('pending subscription without checkout can restart payment', () => {
     subscriptionStatus: 'pending',
     checkoutUrl: null,
     accessLevel: 'blocked',
+  }
+
+  assert.equal(canStartBillingSubscription(state), true)
+  assert.equal(shouldShowBillingRecoveryAlert(state), false)
+})
+
+test('after abandon (no subscription) can start billing again', () => {
+  const state = {
+    subscriptionStatus: null,
+    checkoutUrl: null,
+    accessLevel: 'starter',
   }
 
   assert.equal(canStartBillingSubscription(state), true)

@@ -643,6 +643,14 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
     onSettled: () => cache.invalidateQueries({ key: ['billing'] }),
   })
 
+  const abandonPendingCheckoutMutation = useMutation({
+    mutation: () =>
+      $fetch<{ status: string }>('/api/billing/subscription/abandon-checkout', {
+        method: 'POST',
+      }),
+    onSettled: () => cache.invalidateQueries({ key: ['billing'] }),
+  })
+
   // ── Derived data ──────────────────────────────────────────────────────────────
   const usageHistory = computed<ScanMonthlyEntry[]>(() => usageHistoryData.value ?? [])
   const events = computed<BillingEvent[]>(() => eventsData.value?.events ?? [])
@@ -756,6 +764,15 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
     }
   }
 
+  const abandonPendingCheckout = async (): Promise<boolean> => {
+    try {
+      await abandonPendingCheckoutMutation.mutateAsync()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   return {
     plans,
     priceOffer,
@@ -780,5 +797,6 @@ export const useBilling = (options: { overview?: boolean } = {}) => {
     subscribe,
     subscribeOrThrow,
     cancelSubscription,
+    abandonPendingCheckout,
   }
 }

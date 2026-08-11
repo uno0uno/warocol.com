@@ -446,7 +446,12 @@
     "paddleCheckoutPendingDescription": "Completa el pago en el formulario de abajo. Cuando termine, actualizaremos tu plan automáticamente.",
     "paddleTokenMissing": "Falta configurar el token de Paddle (NUXT_PUBLIC_PADDLE_CLIENT_TOKEN).",
     "paddleCheckoutOpenError": "No se pudo abrir el checkout de Paddle. Intenta de nuevo.",
-    "backToBilling": "Volver a Mi Plan"
+    "backToBilling": "Volver a Mi Plan",
+    "abandonCheckout": "Cancelar intento",
+    "abandonCheckoutTitle": "Cancelar intento de pago",
+    "abandonCheckoutConfirm": "Cancelarás este intento de pago, volverás al plan Starter y podrás elegir un plan de nuevo.",
+    "abandonCheckoutError": "No se pudo cancelar el intento de pago. Intenta de nuevo.",
+    "eventCheckoutAbandoned": "Checkout abandonado"
   },
   "terms": {
     "title": "Términos y Condiciones",
