@@ -17,16 +17,25 @@
         @clear="onClearModificadoresFilters"
       >
         <template #trailing>
-          <button
-            type="button"
-            :title="t('menu.modificadores.newGroup')"
-            class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
-            @click="goToCreateGroup"
-          >
-            <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
-            <span class="hidden sm:inline">{{ t('menu.modificadores.newGroup') }}</span>
-            <span class="sm:hidden">{{ t('menu.modificadores.newShort') }}</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-primary whitespace-nowrap hover:bg-surface-secondary"
+              @click="showBulkImport = true"
+            >
+              {{ t('menu.modificadores.bulkImport') }}
+            </button>
+            <button
+              type="button"
+              :title="t('menu.modificadores.newGroup')"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
+              @click="goToCreateGroup"
+            >
+              <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
+              <span class="hidden sm:inline">{{ t('menu.modificadores.newGroup') }}</span>
+              <span class="sm:hidden">{{ t('menu.modificadores.newShort') }}</span>
+            </button>
+          </div>
         </template>
       </UiAdvancedFiltersBar>
       <!-- Tabla de Grupos de Modificadores -->
@@ -333,6 +342,13 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <MenuImportUpload
+      :open="showBulkImport"
+      entity="modifiers"
+      @close="showBulkImport = false"
+      @imported="onBulkImported"
+    />
   </div>
 </template>
 
@@ -379,6 +395,7 @@ const onItemsPerPageChange = (event: Event) => {
   currentPage.value = 1
 }
 const expandedRows = ref(new Set())
+const showBulkImport = ref(false)
 const requiredFilter = ref<'required' | 'optional' | ''>('')
 const requiredHeaderOptions = computed(() => [
   { label: t('menu.modificadores.required'), value: 'required' },
@@ -573,6 +590,11 @@ const goToEditGroup = (groupId: string) => {
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
   await Promise.all([refetchGroups(), refetchStats()])
+}
+
+const onBulkImported = async () => {
+  showBulkImport.value = false
+  await handleRefresh()
 }
 
 onMounted(() => {

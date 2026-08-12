@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 const props = withDefaults(
-  defineProps<{ open: boolean; entity?: 'warehouse' | 'recipe_bases' | 'products' }>(),
+  defineProps<{ open: boolean; entity?: 'warehouse' | 'recipe_bases' | 'products' | 'modifiers' }>(),
   { entity: 'warehouse' },
 )
 const emit = defineEmits<{ close: []; imported: [] }>()
@@ -124,6 +124,7 @@ const toast = useToast()
 const i18nPrefix = computed(() => {
   if (props.entity === 'recipe_bases') return 'menu.recetas.bulkImport'
   if (props.entity === 'products') return 'menu.productos.bulkImport'
+  if (props.entity === 'modifiers') return 'menu.modificadores.bulkImport'
   return 'abastecimiento.glossary.bulkImport'
 })
 const i18nTitle = computed(() => `${i18nPrefix.value}Title`)
@@ -139,7 +140,12 @@ const i18nQuotaExceeded = computed(() => `${i18nPrefix.value}QuotaExceeded`)
 const i18nDryRun = computed(() => `${i18nPrefix.value}DryRun`)
 const i18nCommit = computed(() => `${i18nPrefix.value}Commit`)
 const i18nCommitted = computed(() => `${i18nPrefix.value}Committed`)
-const isMenuEntity = computed(() => props.entity === 'recipe_bases' || props.entity === 'products')
+const isMenuEntity = computed(
+  () =>
+    props.entity === 'recipe_bases'
+    || props.entity === 'products'
+    || props.entity === 'modifiers',
+)
 
 const templateHref = computed(() => `/api/menu/imports/template/${props.entity}`)
 const uploadPath = computed(() => `/api/menu/imports/${props.entity}/upload`)
