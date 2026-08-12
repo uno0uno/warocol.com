@@ -82,6 +82,8 @@ const {
   }),
   enabled: () => !!currentTenant.value && !!customerId.value,
   staleTime: 30_000,
+  // Keep last successful payload while filters/page change keys (#2230)
+  placeholderData: (previousData) => previousData,
 })
 
 const isLoading = computed(() => !apiData.value && !fetchError.value)
