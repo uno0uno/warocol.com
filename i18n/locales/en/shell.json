@@ -116,8 +116,8 @@
   "negocio": {
     "pageTitle": "My Business",
     "completeProfileHint": "Complete your profile so customers can find you",
-    "editProfile": "Edit profile",
-    "editBusinessInfo": "Edit business info",
+    "editProfile": "Edit name & images",
+    "editBusinessInfo": "Edit details & hours",
     "noSocial": "No social profiles",
     "cancel": "Cancel",
     "save": "Save",
