@@ -1391,6 +1391,15 @@ const toggleActive = async () => {
   }
 }
 
+const imageModalOpen = ref(false)
+const imageModalType = ref<'logo' | 'banner'>('logo')
+type ImageField = 'logo_url' | 'banner_url'
+type ProfilePatchResponse = { data?: Record<string, any> } & Record<string, any>
+
+const unwrapProfileResponse = (response: ProfilePatchResponse | null | undefined) => {
+  return response?.data && typeof response.data === 'object' ? response.data : response
+}
+
 const refreshBusinessProfileCaches = async () => {
   await Promise.all([refreshProfile(), tenantsStore.fetchBusinessProfile()])
 }
