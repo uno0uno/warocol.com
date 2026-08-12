@@ -4,23 +4,23 @@
     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
     role="dialog"
     aria-modal="true"
-    :aria-label="t('abastecimiento.glossary.bulkImportTitle')"
+    :aria-label="t(i18nTitle)"
     @click.self="emit('close')"
   >
     <div class="w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface border border-border p-4 sm:p-6 flex flex-col gap-4">
       <div class="flex items-start justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold text-text-primary">
-            {{ t('abastecimiento.glossary.bulkImportTitle') }}
+            {{ t(i18nTitle) }}
           </h2>
           <p class="text-sm text-text-secondary mt-1">
-            {{ t('abastecimiento.glossary.bulkImportHint') }}
+            {{ t(i18nHint) }}
           </p>
         </div>
         <button
           type="button"
           class="min-h-[40px] min-w-[40px] rounded-lg border border-border text-text-secondary"
-          :aria-label="t('abastecimiento.glossary.bulkImportClose')"
+          :aria-label="t(i18nClose)"
           @click="emit('close')"
         >
           ×
@@ -29,13 +29,13 @@
 
       <div class="flex flex-wrap gap-2">
         <a
-          href="/api/menu/imports/template/warehouse"
+          :href="templateHref"
           class="btn-secondary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center"
         >
-          {{ t('abastecimiento.glossary.bulkImportDownloadTemplate') }}
+          {{ t(i18nDownloadTemplate) }}
         </a>
         <label class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium cursor-pointer inline-flex items-center">
-          {{ t('abastecimiento.glossary.bulkImportUpload') }}
+          {{ t(i18nUpload) }}
           <input
             type="file"
             accept=".csv,text/csv"
@@ -47,7 +47,7 @@
       </div>
 
       <p v-if="job" class="text-sm text-text-secondary">
-        {{ job.file_name }} · {{ t('abastecimiento.glossary.bulkImportStatus') }}: <span class="font-medium text-text-primary">{{ job.status }}</span>
+        {{ job.file_name }} · {{ t(i18nStatus) }}: <span class="font-medium text-text-primary">{{ job.status }}</span>
         <a
           v-if="job.download_url"
           :href="job.download_url"
@@ -55,22 +55,22 @@
           rel="noopener"
           class="ml-2 text-primary underline text-xs"
         >
-          {{ t('abastecimiento.glossary.bulkImportDownloadOriginal') }}
+          {{ t(i18nDownloadOriginal) }}
         </a>
       </p>
 
       <div v-if="report" class="rounded-xl border border-border p-3 space-y-2 text-sm">
         <p class="text-state-success-text">
-          {{ t('abastecimiento.glossary.bulkImportValid', { n: report.valid?.length ?? job?.row_valid ?? 0 }) }}
+          {{ t(i18nValid, { n: report.valid?.length ?? job?.row_valid ?? 0 }) }}
         </p>
         <p class="text-destructive">
-          {{ t('abastecimiento.glossary.bulkImportInvalid', { n: report.errors?.length ?? job?.row_invalid ?? 0 }) }}
+          {{ t(i18nInvalid, { n: report.errors?.length ?? job?.row_invalid ?? 0 }) }}
         </p>
         <p v-if="report.needs_product_count" class="text-text-secondary">
           {{ t('abastecimiento.glossary.bulkImportNeedsProduct', { n: report.needs_product_count }) }}
         </p>
         <p v-if="report.quota_exceeded" class="text-destructive font-medium">
-          {{ t('abastecimiento.glossary.bulkImportQuotaExceeded') }}
+          {{ t(i18nQuotaExceeded) }}
         </p>
         <ul v-if="report.errors?.length" class="max-h-40 overflow-y-auto text-xs text-destructive space-y-1">
           <li v-for="(e, i) in report.errors.slice(0, 50)" :key="i">
@@ -86,7 +86,7 @@
           :disabled="!jobId || busy"
           @click="runDryRun"
         >
-          {{ t('abastecimiento.glossary.bulkImportDryRun') }}
+          {{ t(i18nDryRun) }}
         </button>
         <button
           type="button"
@@ -94,24 +94,63 @@
           :disabled="!canCommit || busy"
           @click="runCommit"
         >
-          {{ t('abastecimiento.glossary.bulkImportCommit') }}
+          {{ t(i18nCommit) }}
         </button>
       </div>
 
       <p v-if="commitMsg" class="text-sm text-state-success-text">{{ commitMsg }}</p>
       <p v-if="errorMsg" class="text-sm text-destructive" role="alert">{{ errorMsg }}</p>
 
-      <MenuImportJobHistory :jobs="jobs" @select="loadJob" />
+      <MenuImportJobHistory
+        :jobs="jobs"
+        :title="isRecipes ? t('menu.recetas.bulkImportHistory') : undefined"
+        :empty="isRecipes ? t('menu.recetas.bulkImportNoJobs') : undefined"
+        @select="loadJob"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ open: boolean }>()
+const props = withDefaults(
+  defineProps<{ open: boolean; entity?: 'warehouse' | 'recipe_bases' }>(),
+  { entity: 'warehouse' },
+)
 const emit = defineEmits<{ close: []; imported: [] }>()
 
 const { t } = useI18n({ useScope: 'global' })
 const toast = useToast()
+
+const isRecipes = computed(() => props.entity === 'recipe_bases')
+const i18nPrefix = computed(() =>
+  isRecipes.value ? 'menu.recetas.bulkImport' : 'abastecimiento.glossary.bulkImport',
+)
+const i18nTitle = computed(() => `${i18nPrefix.value}Title`)
+const i18nHint = computed(() => `${i18nPrefix.value}Hint`)
+const i18nClose = computed(() =>
+  isRecipes.value ? 'menu.recetas.bulkImportClose' : 'abastecimiento.glossary.bulkImportClose',
+)
+const i18nDownloadTemplate = computed(() => `${i18nPrefix.value}DownloadTemplate`)
+const i18nUpload = computed(() => `${i18nPrefix.value}Upload`)
+const i18nStatus = computed(() => `${i18nPrefix.value}Status`)
+const i18nDownloadOriginal = computed(() => `${i18nPrefix.value}DownloadOriginal`)
+const i18nValid = computed(() => `${i18nPrefix.value}Valid`)
+const i18nInvalid = computed(() => `${i18nPrefix.value}Invalid`)
+const i18nQuotaExceeded = computed(() => `${i18nPrefix.value}QuotaExceeded`)
+const i18nDryRun = computed(() => `${i18nPrefix.value}DryRun`)
+const i18nCommit = computed(() => `${i18nPrefix.value}Commit`)
+const i18nCommitted = computed(() => `${i18nPrefix.value}Committed`)
+
+const templateHref = computed(() =>
+  isRecipes.value
+    ? '/api/menu/imports/template/recipe_bases'
+    : '/api/menu/imports/template/warehouse',
+)
+const uploadPath = computed(() =>
+  isRecipes.value
+    ? '/api/menu/imports/recipe_bases/upload'
+    : '/api/menu/imports/warehouse/upload',
+)
 
 const busy = ref(false)
 const jobId = ref<string | null>(null)
@@ -129,7 +168,9 @@ const canCommit = computed(
 )
 
 async function refreshJobs() {
-  const res = await $fetch<{ success: boolean; data: any[] }>('/api/menu/imports/jobs')
+  const res = await $fetch<{ success: boolean; data: any[] }>('/api/menu/imports/jobs', {
+    params: { entity_type: props.entity },
+  })
   jobs.value = res.data || []
 }
 
@@ -153,7 +194,7 @@ async function onFile(ev: Event) {
   try {
     const body = new FormData()
     body.append('file', file)
-    const res = await $fetch<{ success: boolean; data: any }>('/api/menu/imports/warehouse/upload', {
+    const res = await $fetch<{ success: boolean; data: any }>(uploadPath.value, {
       method: 'POST',
       body,
     })
@@ -198,7 +239,7 @@ async function runCommit() {
       { method: 'POST' },
     )
     job.value = { ...job.value, ...res.data }
-    commitMsg.value = t('abastecimiento.glossary.bulkImportCommitted', {
+    commitMsg.value = t(i18nCommitted.value, {
       n: res.data.row_committed ?? 0,
     })
     toast.success(commitMsg.value)
@@ -215,6 +256,11 @@ watch(
   () => props.open,
   async (v) => {
     if (v) {
+      jobId.value = null
+      job.value = null
+      report.value = null
+      commitMsg.value = ''
+      errorMsg.value = ''
       await refreshJobs()
     }
   },

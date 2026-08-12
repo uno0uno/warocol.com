@@ -23,6 +23,13 @@
           <template #trailing>
             <button
               type="button"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-primary whitespace-nowrap hover:bg-surface-secondary"
+              @click="showBulkImport = true"
+            >
+              {{ t('menu.recetas.bulkImport') }}
+            </button>
+            <button
+              type="button"
               :title="t('menu.recetas.newRecipe')"
               class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
               @click="onNewRecipe"
@@ -296,6 +303,13 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <MenuImportUpload
+      :open="showBulkImport"
+      entity="recipe_bases"
+      @close="showBulkImport = false"
+      @imported="onBulkImported"
+    />
   </div>
 </template>
 
@@ -322,6 +336,12 @@ const onNewRecipe = () => {
   void handleRecipesCreateClick(() => {
     router.push('/menu/recetas/crear')
   })
+}
+
+const showBulkImport = ref(false)
+const onBulkImported = () => {
+  showBulkImport.value = false
+  void refetch()
 }
 
 definePageMeta({
