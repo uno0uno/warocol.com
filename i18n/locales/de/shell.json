@@ -111,8 +111,8 @@
   "negocio": {
     "pageTitle": "Mein Geschäft",
     "completeProfileHint": "Vervollständigen Sie Ihr Profil, damit Kunden Sie finden können",
-    "editProfile": "Profil bearbeiten",
-    "editBusinessInfo": "Geschäftsinformationen bearbeiten",
+    "editProfile": "Bild und Name bearbeiten",
+    "editBusinessInfo": "Daten und Öffnungszeiten bearbeiten",
     "noSocial": "Keine sozialen Profile",
     "cancel": "Abbrechen",
     "save": "Speichern",

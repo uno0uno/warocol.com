@@ -116,8 +116,8 @@
   "negocio": {
     "pageTitle": "Mi Negocio",
     "completeProfileHint": "Completa tu perfil para que tus clientes te encuentren",
-    "editProfile": "Editar perfil",
-    "editBusinessInfo": "Editar información",
+    "editProfile": "Editar imagen y nombre",
+    "editBusinessInfo": "Editar datos y horario",
     "noSocial": "Sin redes sociales",
     "cancel": "Cancelar",
     "save": "Guardar",

@@ -111,8 +111,8 @@
   "negocio": {
     "pageTitle": "我的业务",
     "completeProfileHint": "完善您的资料，以便客户找到您",
-    "editProfile": "编辑资料",
-    "editBusinessInfo": "编辑业务信息",
+    "editProfile": "编辑图片和名称",
+    "editBusinessInfo": "编辑资料与营业时间",
     "noSocial": "暂无社交账号",
     "cancel": "取消",
     "save": "保存",
