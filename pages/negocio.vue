@@ -737,14 +737,8 @@
         </template>
       </div>
 
-      <!-- ══════ ORDEN CATEGORÍAS MENÚ ONLINE ══════ -->
-      <NegocioOnlineMenuCategoryOrder />
-
-      <!-- ══════ ORDEN PRODUCTOS MENÚ ONLINE ══════ -->
-      <NegocioOnlineMenuProductOrder />
-
       <!-- ══════ REDES SOCIALES ══════ -->
-      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
           {{ t('negocio.socialMedia') }}
@@ -794,6 +788,12 @@
           </div>
         </template>
       </div>
+
+      <!-- ══════ ORDEN CATEGORÍAS MENÚ ONLINE ══════ -->
+      <NegocioOnlineMenuCategoryOrder />
+
+      <!-- ══════ ORDEN PRODUCTOS MENÚ ONLINE ══════ -->
+      <NegocioOnlineMenuProductOrder />
 
     </div>
 
