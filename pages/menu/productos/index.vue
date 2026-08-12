@@ -66,6 +66,13 @@
               </button>
               <button
                 type="button"
+                class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-primary whitespace-nowrap hover:bg-surface-secondary"
+                @click="showBulkImport = true"
+              >
+                {{ t('menu.productos.bulkImport') }}
+              </button>
+              <button
+                type="button"
                 :title="t('menu.productos.newProduct')"
                 class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-shell-cta-bg px-4 py-2 text-center text-sm font-medium text-shell-cta-text whitespace-nowrap transition-all hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring"
                 @click="onNewProduct"
@@ -916,6 +923,13 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <MenuImportUpload
+      :open="showBulkImport"
+      entity="products"
+      @close="showBulkImport = false"
+      @imported="onBulkImported"
+    />
   </div>
 </template>
 
@@ -1632,6 +1646,12 @@ onMounted(() => {
   setRefreshHandler(refetch)
   ensureBillingOverview()
 })
+const showBulkImport = ref(false)
+const onBulkImported = () => {
+  showBulkImport.value = false
+  void refetch()
+}
+
 useMenuReturnRefresh('/menu/productos', refetch)
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {

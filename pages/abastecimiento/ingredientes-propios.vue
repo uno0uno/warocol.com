@@ -293,6 +293,11 @@
           <div v-else class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold capitalize" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
             <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0">{{ t('abastecimiento.glossary.archived') }}</span>
+            <span
+              v-else-if="needsProductIds.has(row.id)"
+              class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-state-warning-bg text-state-warning-text flex-shrink-0"
+              :title="t('abastecimiento.glossary.needsProductHint')"
+            >{{ t('abastecimiento.glossary.needsProduct') }}</span>
           </div>
         </template>
 
@@ -568,6 +573,21 @@ const sortField = ref('')
 const sortDirection = ref('asc')
 const showPanel = ref(false)
 const showBulkImport = ref(false)
+const needsProductIds = ref<Set<string>>(new Set())
+
+async function refreshNeedsProduct() {
+  // v1: refreshes on mount / Bodega import; cross-page clear after Productos
+  // finish_resale requires revisiting Bodega (no shared cache bus yet).
+  try {
+    const res = await $fetch<{ success: boolean; data: { id: string }[] }>(
+      '/api/menu/imports/incomplete-resale',
+    )
+    needsProductIds.value = new Set((res.data || []).map(r => r.id))
+  } catch {
+    needsProductIds.value = new Set()
+  }
+}
+
 const panelIngredient = ref<any>(null)
 const showArchived = ref(false)
 const showArchiveModal = ref(false)
@@ -782,6 +802,7 @@ const onSaved = () => {
 
 const onBulkImported = () => {
   refetch()
+  void refreshNeedsProduct()
 }
 
 const openArchiveModal = (ingredient: any) => {
@@ -858,6 +879,7 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 onMounted(() => {
   setRefreshHandler(refetch)
   ensureBillingOverview()
+  void refreshNeedsProduct()
 })
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(refetch))
