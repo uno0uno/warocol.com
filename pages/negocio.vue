@@ -204,6 +204,44 @@
         </div>
       </div>
 
+      <!-- ══════ PEDIDOS ONLINE TOGGLE (warocol.com#2240) ══════ -->
+      <div
+        v-if="businessProfile && !isEditingAny"
+        class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
+        :class="businessProfile.accepts_online_orders
+          ? 'border-border bg-surface'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+      >
+        <div class="min-w-0">
+          <p
+            class="text-sm font-semibold leading-snug"
+            :class="businessProfile.accepts_online_orders ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
+          >
+            {{ businessProfile.accepts_online_orders ? t('negocio.onlineOrdersActive') : t('negocio.onlineOrdersInactive') }}
+          </p>
+          <p
+            class="text-xs mt-0.5 leading-snug"
+            :class="businessProfile.accepts_online_orders ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
+          >
+            {{ t('negocio.onlineOrdersHelp') }}
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingOnlineOrders ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="businessProfile.accepts_online_orders ? t('negocio.disableOnlineOrders') : t('negocio.enableOnlineOrders')"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="businessProfile.accepts_online_orders"
+            @change="toggleOnlineOrders"
+            :disabled="isTogglingOnlineOrders"
+          />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
+      </div>
+
       <!-- ══════ PUBLIC LINK CARD ══════ -->
       <div
         v-if="publicUrl"
@@ -651,14 +689,6 @@
         <template v-if="!isEditingOps">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">{{ t('negocio.orderStatus') }}</span>
-              <UiStatusBadge
-                :variant="businessProfile?.accepts_online_orders ? 'success' : 'secondary'"
-                :value="businessProfile?.accepts_online_orders ? t('negocio.activePlural') : t('negocio.disabledPlural')"
-                format="text"
-              />
-            </div>
-            <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">{{ t('negocio.estimatedPrepTime') }}</span>
               <span class="text-sm font-semibold text-text-primary">{{ businessProfile?.estimated_preparation_time }} min</span>
             </div>
@@ -673,19 +703,9 @@
           </div>
         </template>
 
-        <!-- Edit -->
+        <!-- Edit: prep / min / max only — master online toggle lives outside Edit (#2240) -->
         <template v-else>
           <div class="space-y-4">
-            <div class="flex items-center justify-between py-1">
-              <div>
-                <p class="text-sm font-medium text-text-primary">{{ t('negocio.onlineOrders') }}</p>
-                <p class="text-xs text-text-secondary mt-0.5">{{ t('negocio.onlineOrdersHelp') }}</p>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="editForm.accepts_online_orders" type="checkbox" class="sr-only peer" />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.prepTimeMinutes') }}</label>
@@ -1278,7 +1298,7 @@ const saveOpsChanges = async () => {
         city_slug: editForm.city_slug || null,
         neighborhood: editForm.neighborhood || null,
         timezone: normalizeTimezone(editForm.timezone),
-        accepts_online_orders: editForm.accepts_online_orders,
+        accepts_online_orders: businessProfile.value?.accepts_online_orders ?? editForm.accepts_online_orders,
         min_order_amount: editForm.min_order_amount,
         online_order_max_amount: normalizeOnlineOrderMaxAmount(editForm.online_order_max_amount),
         estimated_preparation_time: editForm.estimated_preparation_time,
@@ -1391,6 +1411,38 @@ const toggleActive = async () => {
   }
 }
 
+// ─── Toggle online orders (warocol.com#2240) ───
+const isTogglingOnlineOrders = ref(false)
+const toggleOnlineOrders = async () => {
+  if (!businessProfile.value || isTogglingOnlineOrders.value) return
+  isTogglingOnlineOrders.value = true
+  const newState = !businessProfile.value.accepts_online_orders
+  try {
+    await $fetch('/api/api/tenant/public-profile', {
+      method: 'PATCH',
+      body: { accepts_online_orders: newState },
+    })
+    editForm.accepts_online_orders = newState
+    await refreshBusinessProfileCaches()
+    toast.success(
+      newState ? t('negocio.onlineOrdersEnabled') : t('negocio.onlineOrdersDisabled'),
+      {
+        title: newState
+          ? t('negocio.onlineOrdersEnabledTitle')
+          : t('negocio.onlineOrdersDisabledTitle'),
+      },
+    )
+  } catch (error: any) {
+    toast.error(
+      formatApiValidationError(error.data?.detail, t('negocio.toggleError')),
+      { title: t('negocio.error') },
+    )
+  } finally {
+    isTogglingOnlineOrders.value = false
+  }
+}
+
+// ─── Image upload modal ───
 const imageModalOpen = ref(false)
 const imageModalType = ref<'logo' | 'banner'>('logo')
 type ImageField = 'logo_url' | 'banner_url'

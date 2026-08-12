@@ -1,0 +1,47 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2240
+title: "Negocio: toggle Pedidos online outside Edit (like directory visibility)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2240-online-orders-toggle
+
+paths:
+  - pages/negocio.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - i18n/locales/pt/shell.json
+  - i18n/locales/fr/shell.json
+  - i18n/locales/de/shell.json
+  - i18n/locales/zh/shell.json
+  - i18n/locales/ar/shell.json
+  - i18n/locales/hi/shell.json
+
+ac:
+  - View-mode toggle card for accepts_online_orders (directory UX pattern)
+  - PATCH public-profile immediately; busy + toast like toggleActive
+  - Remove master switch from Edit; keep prep/min/max in Edit
+  - Stats strip reflects live accepts_online_orders after toggle
+  - i18n keys for aria/help/toasts across shell locales
+
+out_of_scope:
+  - API/migration changes
+  - Online menu category/product order UI
+  - QR mesa product flags
+  - Plan quota gating
+
+hints:
+  entry: "pages/negocio.vue — directory toggle ~152; Pedidos section ~640"
+  pattern: "toggleActive + POST /public-profile/toggle; online uses PATCH /public-profile"
+  tests: "none (no targeted front test for negocio page)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual smoke /negocio toggle outside Edit"
