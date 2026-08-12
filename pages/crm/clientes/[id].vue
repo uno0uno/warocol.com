@@ -59,22 +59,36 @@ const ordersOpen = ref(true)
 const carteraOpen = ref(false)
 const walletOpen = ref(false)
 
-// ── Data fetch ────────────────────────────────────────────────────────────
-const { data: apiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `customer-detail-${customerId.value}`,
-  () => $fetch(`/api/orders/customers/${customerId.value}`, {
+// ── Data fetch (progressive / optimistic — #2230) ─────────────────────────
+const {
+  data: apiData,
+  asyncStatus: detailAsyncStatus,
+  error: fetchError,
+  refetch,
+} = useQuery({
+  key: () => ['crm', 'customer-detail', currentTenant.value?.id, customerId.value, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    page: ordersPage.value,
+    per_page: TABLE_PAGE_SIZE,
+  }],
+  query: () => $fetch(`/api/orders/customers/${customerId.value}`, {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
       page: ordersPage.value,
       per_page: TABLE_PAGE_SIZE,
-    }
+    },
   }),
-  {
-    server: false,
-    watch: [currentTenant, dateRangeDates, ordersPage],
-  }
-)
+  enabled: () => !!currentTenant.value && !!customerId.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => !apiData.value && !fetchError.value)
+const isRefreshing = computed(() => detailAsyncStatus.value === 'loading' && apiData.value != null)
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+registerProgressiveLoading(isRefreshing)
 
 const customer = computed(() => (apiData.value as any)?.customer || null)
 const realEmail = computed(() => {
@@ -256,7 +270,7 @@ const saveEdit = async () => {
       }
     })
     showEditForm.value = false
-    await refresh()
+    await refetch()
   } catch (err: any) {
     editError.value = err?.data?.detail || t('analitica.customerDetail.editError')
   } finally {
@@ -314,7 +328,7 @@ const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 
 const onWarosAssigned = async (payload: { newBalance: number }) => {
   // Refetch main data to get updated Waros balance + transactions
-  await refresh()
+  await refetch()
 }
 
 const formatWarosDate = (isoDate: string) => {
@@ -443,25 +457,27 @@ const submitPayment = async () => {
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
+  setRefreshHandler(refetch)
   fetchCartera()
 })
 
 onUnmounted(() => {
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
+  clearRefreshHandler()
 })
 </script>
 
 <template>
   <div class="space-y-4">
 
-    <!-- Loading -->
+    <!-- Cold load only — refetches keep content + header matrix (#2230) -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- 404 / Error -->
-    <div v-else-if="fetchError || (!isLoading && !customer)" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
+    <div v-else-if="fetchError || !customer" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
       <p class="text-xl font-semibold text-text-primary">{{ t('analitica.customerDetail.notFound') }}</p>
       <p class="text-sm text-text-secondary">{{ (fetchError as any)?.message || t('analitica.customerDetail.notFoundSub') }}</p>
       <button @click="goBack" class="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors min-h-[44px]">

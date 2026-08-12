@@ -1,0 +1,40 @@
+# Compact plan for wr-fast #2230. Keep <=80 lines.
+issue: 2230
+title: "CRM customer detail: progressive/optimistic load"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2230-crm-customer-progressive-load
+
+paths:
+  - pages/crm/clientes/[id].vue
+
+ac:
+  - Cold load: centered loader only until first payload (no blank forever)
+  - Refetch (dates/page/tenant): keep content; header matrix via registerProgressiveLoading
+  - Main payload via Pinia Colada useQuery (not blocking useAsyncData pending)
+  - Error/not-found still clear when no customer
+  - Manual: open customer from list without full-page flash on revisit/filter change
+
+out_of_scope:
+  - CRM list redesign / index.vue seeding unless trivial
+  - Cartera/wallet mutation UX
+  - API contract changes
+
+hints:
+  entry: "pages/crm/clientes/[id].vue useAsyncData ~63 + v-if isLoading ~459"
+  pattern: "pages/finanzas/gastos/[id]/index.vue — useQuery + isLoading=!data&&!error + isRefreshing + registerProgressiveLoading"
+  list: "index.vue already useQuery progressive; detail should match"
+  replace_refresh: "refresh() calls → refetch()"
+  tests: "manual smoke only (no unit harness for this page)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: ""
