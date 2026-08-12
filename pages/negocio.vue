@@ -155,19 +155,13 @@
         class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
         :class="businessProfile.is_active
           ? 'border-border bg-surface'
-          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+          : 'border-primary/30 bg-primary/5'"
       >
         <div class="min-w-0">
-          <p
-            class="text-sm font-semibold leading-snug"
-            :class="businessProfile.is_active ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
-          >
+          <p class="text-sm font-semibold leading-snug text-text-primary">
             {{ businessProfile.is_active ? t('negocio.visibleInDirectory') : t('negocio.hiddenBusiness') }}
           </p>
-          <p
-            class="text-xs mt-0.5 leading-snug"
-            :class="businessProfile.is_active ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
-          >
+          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
             {{ businessProfile.is_active ? t('negocio.appearsInDirectory', { path: publicCityPath }) : t('negocio.activateForDirectory') }}
           </p>
         </div>
@@ -210,19 +204,13 @@
         class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
         :class="businessProfile.accepts_online_orders
           ? 'border-border bg-surface'
-          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+          : 'border-primary/30 bg-primary/5'"
       >
         <div class="min-w-0">
-          <p
-            class="text-sm font-semibold leading-snug"
-            :class="businessProfile.accepts_online_orders ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
-          >
+          <p class="text-sm font-semibold leading-snug text-text-primary">
             {{ businessProfile.accepts_online_orders ? t('negocio.onlineOrdersActive') : t('negocio.onlineOrdersInactive') }}
           </p>
-          <p
-            class="text-xs mt-0.5 leading-snug"
-            :class="businessProfile.accepts_online_orders ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
-          >
+          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
             {{ t('negocio.onlineOrdersHelp') }}
           </p>
         </div>
@@ -289,10 +277,10 @@
 
         <div
           v-if="businessProfile && !businessProfile.is_active"
-          class="flex items-start gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg"
+          class="flex items-start gap-2 px-3 py-2 bg-primary/5 border border-primary/30 rounded-lg"
         >
-          <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-          <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
+          <ExclamationTriangleIcon class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+          <p class="text-xs text-text-secondary leading-snug">
             {{ t('negocio.publicPageInactive') }}
           </p>
         </div>

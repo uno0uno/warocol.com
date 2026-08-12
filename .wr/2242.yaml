@@ -1,0 +1,40 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2242
+title: "Negocio: calm offline toggles — primary/surface instead of amber flood"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2242-calm-negocio-toggles
+
+paths:
+  - pages/negocio.vue
+
+ac:
+  - Directory + Pedidos online OFF use calm primary/surface (no amber fill/text)
+  - Titles/help use text-text-primary / text-text-secondary ON and OFF
+  - Switch ON stays primary
+  - Public-link inactive hint in same block uses calm primary treatment
+  - Status meaning via copy + switch (not amber alone)
+  - Dark mode readable via semantic tokens
+
+out_of_scope:
+  - Global design-token redesign
+  - City-missing / Starter quota amber warnings (true alerts)
+  - Typography scale / API
+
+hints:
+  entry: "pages/negocio.vue directory + online toggles + publicPageInactive"
+  pattern: "OFF → border-primary/30 bg-primary/5; ON → border-border bg-surface"
+  tests: "none (visual; no targeted front test)"
+  base_branch: "wr-2240-online-orders-toggle (#2241 open)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "manual smoke /negocio OFF toggles without amber flood"
