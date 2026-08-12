@@ -103,8 +103,8 @@
 
       <MenuImportJobHistory
         :jobs="jobs"
-        :title="isRecipes ? t('menu.recetas.bulkImportHistory') : undefined"
-        :empty="isRecipes ? t('menu.recetas.bulkImportNoJobs') : undefined"
+        :title="isMenuEntity ? t(`${i18nPrefix}History`) : undefined"
+        :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : undefined"
         @select="loadJob"
       />
     </div>
@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 const props = withDefaults(
-  defineProps<{ open: boolean; entity?: 'warehouse' | 'recipe_bases' }>(),
+  defineProps<{ open: boolean; entity?: 'warehouse' | 'recipe_bases' | 'products' }>(),
   { entity: 'warehouse' },
 )
 const emit = defineEmits<{ close: []; imported: [] }>()
@@ -121,15 +121,14 @@ const emit = defineEmits<{ close: []; imported: [] }>()
 const { t } = useI18n({ useScope: 'global' })
 const toast = useToast()
 
-const isRecipes = computed(() => props.entity === 'recipe_bases')
-const i18nPrefix = computed(() =>
-  isRecipes.value ? 'menu.recetas.bulkImport' : 'abastecimiento.glossary.bulkImport',
-)
+const i18nPrefix = computed(() => {
+  if (props.entity === 'recipe_bases') return 'menu.recetas.bulkImport'
+  if (props.entity === 'products') return 'menu.productos.bulkImport'
+  return 'abastecimiento.glossary.bulkImport'
+})
 const i18nTitle = computed(() => `${i18nPrefix.value}Title`)
 const i18nHint = computed(() => `${i18nPrefix.value}Hint`)
-const i18nClose = computed(() =>
-  isRecipes.value ? 'menu.recetas.bulkImportClose' : 'abastecimiento.glossary.bulkImportClose',
-)
+const i18nClose = computed(() => `${i18nPrefix.value}Close`)
 const i18nDownloadTemplate = computed(() => `${i18nPrefix.value}DownloadTemplate`)
 const i18nUpload = computed(() => `${i18nPrefix.value}Upload`)
 const i18nStatus = computed(() => `${i18nPrefix.value}Status`)
@@ -140,17 +139,10 @@ const i18nQuotaExceeded = computed(() => `${i18nPrefix.value}QuotaExceeded`)
 const i18nDryRun = computed(() => `${i18nPrefix.value}DryRun`)
 const i18nCommit = computed(() => `${i18nPrefix.value}Commit`)
 const i18nCommitted = computed(() => `${i18nPrefix.value}Committed`)
+const isMenuEntity = computed(() => props.entity === 'recipe_bases' || props.entity === 'products')
 
-const templateHref = computed(() =>
-  isRecipes.value
-    ? '/api/menu/imports/template/recipe_bases'
-    : '/api/menu/imports/template/warehouse',
-)
-const uploadPath = computed(() =>
-  isRecipes.value
-    ? '/api/menu/imports/recipe_bases/upload'
-    : '/api/menu/imports/warehouse/upload',
-)
+const templateHref = computed(() => `/api/menu/imports/template/${props.entity}`)
+const uploadPath = computed(() => `/api/menu/imports/${props.entity}/upload`)
 
 const busy = ref(false)
 const jobId = ref<string | null>(null)
