@@ -1,0 +1,44 @@
+# Compact plan for wr-fast. Keep <=80 lines.
+issue: 2265
+title: "fix(menu): plain-language carga masiva + dropzone + CSV help examples"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2265-menu-import-ux-copy
+base: wr-2263-menu-import-slideover
+
+paths:
+  - components/menu/MenuImportUpload.vue
+  - i18n/locales/es/menu.json
+  - i18n/locales/en/menu.json
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+  - .wr/2265.yaml
+
+ac:
+  - Plain-language hints/CTAs; no recipe_name/finish_resale jargon in UI
+  - Import gated after successful review + disabled reason
+  - Dashed dropzone drag+click; no native No file chosen
+  - Per-entity how-to + example + columns note (headers stay EN)
+  - Result/CTA copy: ready to load / Load {n}
+
+out_of_scope:
+  - CSV header aliases in API
+  - Schema changes
+  - Locales beyond es/en
+
+hints:
+  entry: "components/menu/MenuImportUpload.vue"
+  pattern: "components/Commons/ImageUploadModal.vue dropzone"
+  tests: "python3 json load i18n; rg no finish_resale/recipe_name/dry-run in bulkImport strings"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "merge after #2264"
