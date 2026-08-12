@@ -1,0 +1,42 @@
+# Compact plan for wr-fast #2234. Keep <=80 lines.
+issue: 2234
+title: "Purchase units: InlineDots feedback when setting default"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2234-purchase-unit-default-dots
+
+paths:
+  - components/ingredientes/IngredientPurchaseUnitsField.vue
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+
+ac:
+  - Edit Predeterminar shows CommonsInlineDots on that row until PUT+refresh done
+  - While setting default, disable other Predeterminar/delete on the list
+  - Create-mode draft setDefault stays sync (no dots)
+  - Default badge moves after refresh
+  - Manual smoke on resale product with multiple PUs
+
+out_of_scope:
+  - Catalog chip label redesign
+  - Conversion math
+  - Create-mode draft UX beyond sync default
+
+hints:
+  entry: "IngredientPurchaseUnitsField setDefaultUnit ~547"
+  pattern: "CategoriaPanel CommonsInlineDots busy button; deletingUnitId already used for delete"
+  state: "settingDefaultUnitId ref; swap Predeterminar label with dots when matching id"
+  tests: "manual / static assert settingDefaultUnitId + CommonsInlineDots in edit row"
+  i18n: "abastecimiento.glossary.settingDefaultAria"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: ""

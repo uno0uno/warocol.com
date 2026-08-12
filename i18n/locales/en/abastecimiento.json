@@ -601,6 +601,7 @@
       "purchaseUnits": "Purchase units",
       "setDefault": "Set default",
       "default": "Default",
+      "settingDefaultAria": "Updating default purchase unit",
       "removeUnit": "Remove unit {name}",
       "addUnit": "Add unit",
       "newPurchaseUnit": "New purchase unit",

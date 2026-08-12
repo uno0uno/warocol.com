@@ -601,6 +601,7 @@
       "purchaseUnits": "Unidades de compra",
       "setDefault": "Predeterminar",
       "default": "predeterminado",
+      "settingDefaultAria": "Actualizando unidad predeterminada",
       "removeUnit": "Eliminar unidad {name}",
       "addUnit": "Agregar unidad",
       "newPurchaseUnit": "Nueva unidad de compra",
