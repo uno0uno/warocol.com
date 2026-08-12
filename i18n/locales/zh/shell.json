@@ -154,6 +154,7 @@
     "onlineOrders": "在线订单",
     "contact": "联系方式",
     "noContact": "无联系信息",
+    "noHours": "尚未配置营业时间",
     "address": "地址",
     "neighborhood": "街区",
     "country": "国家",
