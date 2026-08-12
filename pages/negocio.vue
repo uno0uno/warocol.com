@@ -22,7 +22,7 @@
           <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
 
           <!-- First-time setup hint -->
-          <div v-if="!businessProfile && isEditMode" class="absolute inset-x-0 bottom-3 flex justify-center">
+          <div v-if="!businessProfile && isEditingBrand" class="absolute inset-x-0 bottom-3 flex justify-center">
             <span class="text-white/90 text-xs font-medium drop-shadow bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm">
               {{ t('negocio.completeProfileHint') }}
             </span>
@@ -31,14 +31,14 @@
           <!-- Edit / Save buttons — top-right of banner -->
           <div class="absolute top-3 end-3 flex items-center gap-2">
             <button
-              v-if="!isEditMode"
-              @click="enterEditMode"
+              v-if="!isEditingAny"
+              @click="enterBrandEdit"
               class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-primary border border-white/40 rounded-lg hover:bg-white transition-colors flex items-center gap-1.5 shadow-sm"
             >
               <PencilSquareIcon class="w-3.5 h-3.5" />
               {{ t('negocio.editProfile') }}
             </button>
-            <template v-else>
+            <template v-else-if="isEditingBrand">
               <button
                 @click="cancelEdit"
                 class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-secondary border border-white/40 rounded-lg hover:bg-white transition-colors shadow-sm"
@@ -46,7 +46,7 @@
                 {{ t('negocio.cancel') }}
               </button>
               <button
-                @click="saveChanges"
+                @click="saveBrandChanges"
                 :disabled="isSaving || !editForm.display_name.trim()"
                 class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
               >
@@ -72,7 +72,7 @@
         <div class="px-4 sm:px-6 pb-4 sm:pb-6 pt-10 sm:pt-12">
 
           <!-- Name + badges (view mode) -->
-          <div v-if="!isEditMode" class="mb-2">
+          <div v-if="!isEditingBrand" class="mb-2">
             <h1 class="text-xl sm:text-2xl font-bold text-text-primary leading-tight">
               {{ businessProfile?.display_name }}
             </h1>
@@ -91,7 +91,7 @@
           </div>
 
           <!-- Name input (edit mode) -->
-          <div v-else class="mb-3">
+          <div v-if="isEditingBrand" class="mb-3">
             <input
               v-model="editForm.display_name"
               type="text"
@@ -101,15 +101,15 @@
           </div>
 
           <!-- Description (view) -->
-          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-primary/80 leading-relaxed">
+          <p v-if="!isEditingBrand && businessProfile?.description" class="text-sm text-text-primary/80 leading-relaxed">
             {{ businessProfile.description }}
           </p>
-          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic">
+          <p v-else-if="!isEditingBrand && !businessProfile?.description" class="text-sm text-text-secondary italic">
             {{ t('negocio.noDescription') }}
           </p>
 
           <!-- Edit fields: description + urls -->
-          <div v-if="isEditMode" class="space-y-3 mt-3">
+          <div v-if="isEditingBrand" class="space-y-3 mt-3">
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.publicDescription') }}</label>
               <textarea
@@ -151,7 +151,7 @@
 
       <!-- ══════ DIRECTORIO TOGGLE ══════ -->
       <div
-        v-if="businessProfile && !isEditMode"
+        v-if="businessProfile && !isEditingAny"
         class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
         :class="businessProfile.is_active
           ? 'border-border bg-surface'
@@ -190,7 +190,7 @@
       <!-- City-missing warning (warocol.com#615): toggle is on but no city
            was picked, so the business won't appear in any directory page. -->
       <div
-        v-if="directoryWarning && !isEditMode"
+        v-if="directoryWarning && !isEditingAny"
         class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-4 py-3"
       >
         <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
@@ -265,7 +265,7 @@
            section below owns the editable inputs for these fields,
            so showing the read-only summary at the same time duplicates
            labels and confuses the operator about where to edit. -->
-      <div v-if="businessProfile && !isEditMode" class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
+      <div v-if="businessProfile && !isEditingAny" class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-start sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             {{ t('negocio.prepTimeShort') }}
@@ -308,7 +308,7 @@
         Do not gate Mi Negocio save/edit on plan quotas — Despacho and Mi Negocio stay ungated.
       -->
       <div
-        v-if="isStarterPlan && businessProfile?.accepts_online_orders && !isEditMode"
+        v-if="isStarterPlan && businessProfile?.accepts_online_orders && !isEditingAny"
         class="rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20"
       >
         <p class="text-sm font-medium text-amber-900 dark:text-amber-100">
@@ -324,13 +324,44 @@
 
       <!-- ══════ CONTACTO ══════ -->
       <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <MapPinIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          {{ t('negocio.contact') }}
-        </h3>
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2">
+            <MapPinIcon class="w-5 h-5 text-primary flex-shrink-0" />
+            {{ t('negocio.contact') }}
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="!isEditingAny"
+              type="button"
+              @click="enterOpsEdit"
+              class="px-3 py-1.5 text-xs font-medium bg-surface-secondary text-text-primary border border-border rounded-lg hover:bg-surface-secondary/80 transition-colors flex items-center gap-1.5"
+            >
+              <PencilSquareIcon class="w-3.5 h-3.5" />
+              {{ t('negocio.editBusinessInfo') }}
+            </button>
+            <template v-else-if="isEditingOps">
+              <button
+                type="button"
+                @click="cancelEdit"
+                class="px-3 py-1.5 text-xs font-medium bg-surface-secondary text-text-secondary border border-border rounded-lg hover:bg-surface-secondary/80 transition-colors"
+              >
+                {{ t('negocio.cancel') }}
+              </button>
+              <button
+                type="button"
+                @click="saveOpsChanges"
+                :disabled="isSaving"
+                class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <CheckIcon class="w-3.5 h-3.5" />
+                {{ t('negocio.save') }}
+              </button>
+            </template>
+          </div>
+        </div>
 
         <!-- View -->
-        <template v-if="!isEditMode">
+        <template v-if="!isEditingOps">
           <div class="space-y-2.5">
             <div v-if="businessProfile?.address || businessProfile?.city" class="flex items-start gap-3">
               <MapPinIcon class="w-4 h-4 text-text-secondary flex-shrink-0 mt-0.5" />
@@ -487,7 +518,7 @@
 
       <!-- ══════ HORARIO ══════ -->
       <div
-        v-if="businessProfile || isEditMode"
+        v-if="businessProfile || isEditingOps"
         class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6"
       >
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
@@ -496,7 +527,7 @@
         </h3>
 
         <!-- View -->
-        <template v-if="!isEditMode">
+        <template v-if="!isEditingOps">
           <div class="mb-4 flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
             <span class="text-sm text-text-secondary">{{ t('negocio.timezone') }}</span>
             <span class="text-sm font-semibold text-text-primary text-end">
@@ -617,7 +648,7 @@
         </h3>
 
         <!-- View -->
-        <template v-if="!isEditMode">
+        <template v-if="!isEditingOps">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">{{ t('negocio.orderStatus') }}</span>
@@ -705,16 +736,22 @@
       <NegocioOnlineMenuProductOrder />
 
       <!-- ══════ REDES SOCIALES ══════ -->
-      <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
           {{ t('negocio.socialMedia') }}
         </h3>
 
         <!-- View -->
-        <template v-if="!isEditMode">
+        <template v-if="!isEditingOps">
           <div class="space-y-2.5">
-            <div v-for="(value, key) in businessProfile.social_media" :key="key">
+            <p
+              v-if="!hasSocialMedia"
+              class="text-sm text-text-secondary italic"
+            >
+              {{ t('negocio.noSocial') }}
+            </p>
+            <div v-for="(value, key) in (businessProfile?.social_media || {})" :key="key">
               <div v-if="value" class="flex items-center gap-3">
                 <span class="text-xs font-medium text-text-secondary uppercase tracking-wide w-20 flex-shrink-0">{{ key }}</span>
                 <span class="text-sm text-text-primary truncate">{{ value }}</span>
@@ -820,7 +857,11 @@ const toast = useToast()
 // Tax config moved to /facturacion page
 
 // ─── Edit state ───
-const isEditMode = ref(false)
+type NegocioEditScope = 'brand' | 'ops' | null
+const editScope = ref<NegocioEditScope>(null)
+const isEditingBrand = computed(() => editScope.value === 'brand')
+const isEditingOps = computed(() => editScope.value === 'ops')
+const isEditingAny = computed(() => editScope.value !== null)
 const isSaving = ref(false)
 
 // ─── Edit form ───
@@ -979,7 +1020,7 @@ const selectHighlightedCity = () => {
 }
 
 watch(selectedCity, (city) => {
-  if (isEditMode.value && city) citySearchTerm.value = city.city
+  if (isEditingOps.value && city) citySearchTerm.value = city.city
 })
 
 watch(() => visibleCityResults.value.length, (length) => {
@@ -999,12 +1040,12 @@ const directoryWarning = computed(() => {
 
 // ─── Computed visuals ───
 const logoSrc = computed(() => {
-  if (isEditMode.value) return editForm.logo_url || null
+  if (isEditingBrand.value) return editForm.logo_url || null
   return businessProfile.value?.logo_url || null
 })
 
 const effectiveBannerStyle = computed(() => {
-  const url = isEditMode.value ? editForm.banner_url : businessProfile.value?.banner_url
+  const url = isEditingBrand.value ? editForm.banner_url : businessProfile.value?.banner_url
   if (url) return { backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
   return {}
 })
@@ -1113,14 +1154,17 @@ const normalizeOnlineOrderMaxAmount = (value: number | string | null | undefined
   return Math.max(0, Math.round(n))
 }
 
-// ─── Edit actions ───
-const enterEditMode = () => {
-  const bp = businessProfile.value  // may be null for first-time setup
-
+// ─── Edit actions (warocol.com#2246 — brand vs ops scopes) ───
+const loadBrandForm = () => {
+  const bp = businessProfile.value
   editForm.display_name = bp?.display_name || ''
   editForm.description = bp?.description || ''
   editForm.logo_url = bp?.logo_url || ''
   editForm.banner_url = bp?.banner_url || ''
+}
+
+const loadOpsForm = () => {
+  const bp = businessProfile.value
   editForm.phone_number = bp?.phone_number || ''
   editForm.email = bp?.email || ''
   editForm.address = bp?.address || ''
@@ -1157,16 +1201,25 @@ const enterEditMode = () => {
     twitter: sm.twitter || '',
     tiktok: sm.tiktok || '',
   }
-
   syncCitySearchTerm()
-  isEditMode.value = true
+}
+
+const enterBrandEdit = () => {
+  if (isEditingOps.value) return
+  loadBrandForm()
+  editScope.value = 'brand'
+}
+
+const enterOpsEdit = () => {
+  if (isEditingBrand.value) return
+  loadOpsForm()
+  editScope.value = 'ops'
 }
 
 watch(
   () => financialProfile.value?.country_code,
   (countryCode) => {
-    if (!isEditMode.value || !countryCode) return
-    // Only catch late-arriving profile while form still on legacy default.
+    if (!isEditingOps.value || !countryCode) return
     if (editForm.timezone !== DEFAULT_TENANT_TIMEZONE) return
     editForm.timezone = resolveTimezonePrefill({
       storedTimezone: businessProfile.value?.timezone,
@@ -1176,7 +1229,77 @@ watch(
 )
 
 const cancelEdit = () => {
-  isEditMode.value = false
+  editScope.value = null
+}
+
+const saveBrandChanges = async () => {
+  isSaving.value = true
+  try {
+    await $fetch('/api/api/tenant/public-profile', {
+      method: 'PATCH',
+      body: {
+        display_name: editForm.display_name,
+        description: editForm.description || null,
+        logo_url: editForm.logo_url || null,
+        banner_url: editForm.banner_url || null,
+      },
+    })
+    await refreshBusinessProfileCaches()
+    editScope.value = null
+    toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
+  } catch (error: any) {
+    toast.error(
+      formatApiValidationError(error.data?.detail, t('negocio.saveError')),
+      { title: t('negocio.error') },
+    )
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const saveOpsChanges = async () => {
+  isSaving.value = true
+  try {
+    const cleanedHours: Record<string, any> = {}
+    for (const day of DAY_ORDER) {
+      const d = editForm.business_hours[day]
+      cleanedHours[day] = d.closed
+        ? { closed: true }
+        : { open: d.open, close: d.close, closed: false }
+    }
+
+    await $fetch('/api/api/tenant/public-profile', {
+      method: 'PATCH',
+      body: {
+        phone_number: editForm.phone_number || null,
+        email: editForm.email || null,
+        address: editForm.address || null,
+        city: editForm.city || null,
+        city_slug: editForm.city_slug || null,
+        neighborhood: editForm.neighborhood || null,
+        timezone: normalizeTimezone(editForm.timezone),
+        accepts_online_orders: editForm.accepts_online_orders,
+        min_order_amount: editForm.min_order_amount,
+        online_order_max_amount: normalizeOnlineOrderMaxAmount(editForm.online_order_max_amount),
+        estimated_preparation_time: editForm.estimated_preparation_time,
+        business_hours: cleanedHours,
+        social_media: (() => {
+          const smEntries = Object.entries(editForm.social_media).filter(([_, v]) => v?.trim())
+          return smEntries.length > 0 ? Object.fromEntries(smEntries) : null
+        })(),
+      },
+    })
+    await refreshBusinessProfileCaches()
+    editScope.value = null
+    toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
+  } catch (error: any) {
+    toast.error(
+      formatApiValidationError(error.data?.detail, t('negocio.saveError')),
+      { title: t('negocio.error') },
+    )
+  } finally {
+    isSaving.value = false
+  }
 }
 
 // ─── Public link (URL + copy + share) ───
@@ -1268,55 +1391,6 @@ const toggleActive = async () => {
   }
 }
 
-const saveChanges = async () => {
-  isSaving.value = true
-  try {
-    const cleanedHours: Record<string, any> = {}
-    for (const day of DAY_ORDER) {
-      const d = editForm.business_hours[day]
-      cleanedHours[day] = d.closed
-        ? { closed: true }
-        : { open: d.open, close: d.close, closed: false }
-    }
-
-    const payload = {
-      display_name: editForm.display_name,
-      description: editForm.description || null,
-      logo_url: editForm.logo_url || null,
-      banner_url: editForm.banner_url || null,
-      phone_number: editForm.phone_number || null,
-      email: editForm.email || null,
-      address: editForm.address || null,
-      city: editForm.city || null,
-      city_slug: editForm.city_slug || null,
-      neighborhood: editForm.neighborhood || null,
-      timezone: normalizeTimezone(editForm.timezone),
-      accepts_online_orders: editForm.accepts_online_orders,
-      min_order_amount: editForm.min_order_amount,
-      online_order_max_amount: normalizeOnlineOrderMaxAmount(editForm.online_order_max_amount),
-      estimated_preparation_time: editForm.estimated_preparation_time,
-      business_hours: cleanedHours,
-      social_media: (() => {
-        const smEntries = Object.entries(editForm.social_media).filter(([_, v]) => v?.trim())
-        return smEntries.length > 0 ? Object.fromEntries(smEntries) : null
-      })(),
-    }
-
-    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
-    await refreshBusinessProfileCaches()
-    isEditMode.value = false
-    toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
-  } catch (error: any) {
-    toast.error(
-      formatApiValidationError(error.data?.detail, t('negocio.saveError')),
-      { title: t('negocio.error') },
-    )
-  } finally {
-    isSaving.value = false
-  }
-}
-
-// ─── Image upload modal ───
 const imageModalOpen = ref(false)
 const imageModalType = ref<'logo' | 'banner'>('logo')
 type ImageField = 'logo_url' | 'banner_url'
@@ -1360,7 +1434,7 @@ const handleImageUploaded = async (url: string) => {
   }
 
   // No profile yet — enter edit mode so user can complete required fields
-  if (!isEditMode.value) enterEditMode()
+  if (!isEditingAny.value) enterBrandEdit()
   editForm[field] = url
   toast.success(t('negocio.imageReady'), { title: t('negocio.imageUploaded') })
 }
@@ -1368,13 +1442,13 @@ const handleImageUploaded = async (url: string) => {
 // ─── Auto-enter edit mode when no profile ───
 // NOTE: No { immediate: true } — with server: false, useAsyncData hasn't started
 // on the first synchronous tick (pending=false, data=null), which would incorrectly
-// trigger enterEditMode() on every navigation. This watch fires once the fetch
+// trigger enterBrandEdit() on every navigation. This watch fires once the fetch
 // actually completes (pending goes true→false), so the nil-profile check is reliable.
 watch(
   [isBusinessProfileLoading, businessProfile] as const,
   ([loading, profile]) => {
-    if (!loading && !profile && !isEditMode.value) {
-      enterEditMode()
+    if (!loading && !profile && !isEditingAny.value) {
+      enterBrandEdit()
     }
   }
 )
