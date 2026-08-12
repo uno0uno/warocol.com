@@ -427,6 +427,7 @@
 
     <MenuImportUpload
       :open="showBulkImport"
+      entity="warehouse"
       @close="showBulkImport = false"
       @imported="onBulkImported"
     />

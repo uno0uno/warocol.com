@@ -1,10 +1,10 @@
 <template>
   <div class="border-t border-border pt-4 mt-2">
     <h3 class="text-sm font-semibold text-text-primary mb-2">
-      {{ t('abastecimiento.glossary.bulkImportHistory') }}
+      {{ title || t('abastecimiento.glossary.bulkImportHistory') }}
     </h3>
     <p v-if="!jobs?.length" class="text-sm text-text-secondary">
-      {{ t('abastecimiento.glossary.bulkImportNoJobs') }}
+      {{ empty || t('abastecimiento.glossary.bulkImportNoJobs') }}
     </p>
     <ul v-else class="space-y-1 max-h-48 overflow-y-auto">
       <li v-for="j in jobs" :key="j.id">
@@ -22,7 +22,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ jobs: any[] }>()
+defineProps<{
+  jobs: any[]
+  title?: string
+  empty?: string
+}>()
 const emit = defineEmits<{ select: [id: string] }>()
 const { t } = useI18n({ useScope: 'global' })
 </script>
