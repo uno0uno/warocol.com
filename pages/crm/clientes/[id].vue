@@ -466,7 +466,7 @@ onMounted(() => {
 onUnmounted(() => {
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
-  clearRefreshHandler()
+  clearRefreshHandler(refetch)
 })
 </script>
 
