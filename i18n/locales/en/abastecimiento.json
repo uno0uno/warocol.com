@@ -521,6 +521,7 @@
       "bulkImportClose": "Close",
       "bulkImportNoJobs": "No imports yet",
       "bulkImportStatus": "Status",
+      "bulkImportDownloadOriginal": "Download original",
       "typeFood": "Food",
       "typeFoodDescription": "Weight or volume · gr, ml, kg",
       "typeSupply": "Supply",

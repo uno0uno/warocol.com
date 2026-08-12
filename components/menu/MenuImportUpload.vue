@@ -48,6 +48,15 @@
 
       <p v-if="job" class="text-sm text-text-secondary">
         {{ job.file_name }} · {{ t('abastecimiento.glossary.bulkImportStatus') }}: <span class="font-medium text-text-primary">{{ job.status }}</span>
+        <a
+          v-if="job.download_url"
+          :href="job.download_url"
+          target="_blank"
+          rel="noopener"
+          class="ml-2 text-primary underline text-xs"
+        >
+          {{ t('abastecimiento.glossary.bulkImportDownloadOriginal') }}
+        </a>
       </p>
 
       <div v-if="report" class="rounded-xl border border-border p-3 space-y-2 text-sm">

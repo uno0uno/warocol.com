@@ -521,6 +521,7 @@
       "bulkImportClose": "Cerrar",
       "bulkImportNoJobs": "Aún no hay cargas",
       "bulkImportStatus": "Estado",
+      "bulkImportDownloadOriginal": "Descargar original",
       "typeFood": "Alimento",
       "typeFoodDescription": "Peso o volumen · gr, ml, kg",
       "typeSupply": "Insumo",
