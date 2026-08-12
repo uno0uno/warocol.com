@@ -145,20 +145,34 @@
         <div v-for="u in existingUnits" :key="u.id" class="flex items-center justify-between px-3 py-2 gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <span class="text-sm text-text-primary truncate">{{ u.purchase_unit_label }}</span>
+            <span
+              v-if="settingDefaultUnitId === u.id"
+              class="inline-flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0 min-h-[22px]"
+            >
+              <CommonsInlineDots
+                :size="4"
+                color="currentColor"
+                :aria-label="t('abastecimiento.glossary.settingDefaultAria')"
+              />
+            </span>
             <button
-              v-if="!u.is_default"
+              v-else-if="!u.is_default"
               type="button"
-              class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
+              :disabled="listActionsLocked"
+              class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0 disabled:opacity-40 disabled:pointer-events-none"
               @click="setDefaultUnit(u.id)"
             >
               {{ t('abastecimiento.glossary.setDefault') }}
             </button>
-            <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">{{ t('abastecimiento.glossary.default') }}</span>
+            <span
+              v-else
+              class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0"
+            >{{ t('abastecimiento.glossary.default') }}</span>
           </div>
           <span class="text-xs text-text-tertiary font-mono flex-shrink-0 text-end">{{ formatUnitFactorLabel(u.conversion_factor) }}</span>
           <button
             type="button"
-            :disabled="deletingUnitId === u.id"
+            :disabled="listActionsLocked || deletingUnitId === u.id"
             :aria-label="t('abastecimiento.glossary.removeUnit', { name: u.purchase_unit_label })"
             class="text-text-tertiary hover:text-destructive transition-colors disabled:opacity-40 flex-shrink-0"
             @click="deleteUnit(u.id)"
@@ -386,8 +400,13 @@ const existingUnits = ref<any[]>([])
 const loading = ref(false)
 const savingUnit = ref(false)
 const deletingUnitId = ref<string | null>(null)
+const settingDefaultUnitId = ref<string | null>(null)
 const formError = ref('')
 const newUnit = ref({ purchase_unit_label: '', conversion_factor: null as number | null })
+
+const listActionsLocked = computed(() =>
+  settingDefaultUnitId.value != null || deletingUnitId.value != null || savingUnit.value,
+)
 
 function formatConversionFactor(value: number | string | null | undefined) {
   return formatDomainQuantity(value, CONVERSION_PRECISION, normalizeUiLocale(locale.value))
@@ -545,16 +564,21 @@ async function addSuggestionPurchaseUnit(suggestion: PurchaseUnitSuggestion) {
 }
 
 async function setDefaultUnit(unitId: string) {
+  if (listActionsLocked.value) return
+  settingDefaultUnitId.value = unitId
   try {
     await $fetch(`/api/suppliers/ingredient-purchase-units/${unitId}`, {
       method: 'PUT',
       body: { is_default: true },
     })
     await refreshPurchaseUnits()
-  } catch { /* ignore */ }
+  } catch { /* ignore */ } finally {
+    settingDefaultUnitId.value = null
+  }
 }
 
 async function deleteUnit(unitId: string) {
+  if (listActionsLocked.value) return
   deletingUnitId.value = unitId
   try {
     await $fetch(`/api/suppliers/ingredient-purchase-units/${unitId}`, { method: 'DELETE' })
