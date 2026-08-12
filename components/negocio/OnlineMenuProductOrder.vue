@@ -237,7 +237,7 @@ watch(selectedCategoryId, () => {
           id="online-menu-product-order-category"
           v-model="selectedCategoryId"
           class="input-base w-full max-w-md px-3 py-2 text-sm"
-          :disabled="isSavingProductOrder"
+          :disabled="isSavingProductOrder || isDraggingProductOrder"
         >
           <option
             v-for="category in eligibleCategories"
