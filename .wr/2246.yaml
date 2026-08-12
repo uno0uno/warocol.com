@@ -1,0 +1,49 @@
+# Compact plan for wr-exec. Keep <=80 lines.
+issue: 2246
+title: "Negocio: split edit — public profile vs business information"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2246-split-negocio-edit
+parent_epic: 2244
+
+paths:
+  - pages/negocio.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - i18n/locales/pt/shell.json
+  - i18n/locales/fr/shell.json
+  - i18n/locales/de/shell.json
+  - i18n/locales/zh/shell.json
+  - i18n/locales/ar/shell.json
+  - i18n/locales/hi/shell.json
+
+ac:
+  - No single page-wide Edit that morphs every card at once
+  - Brand fields editable in isolation
+  - Operational fields editable in isolation
+  - Cancel restores only active scope; PATCH only that scope
+  - Toggles + online-menu order outside edit scopes
+  - No-profile onboarding enters brand edit
+  - Redes always visible with empty copy
+
+out_of_scope:
+  - API changes
+  - Re-implementing #2245 Horario gate
+  - Global tokens
+
+hints:
+  entry: "editScope brand|ops|null"
+  base: "wr-2245-horario-view-empty"
+  tests: "python assert editScope + i18n keys"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#2244"
