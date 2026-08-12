@@ -522,6 +522,7 @@
       "bulkImportNoJobs": "Aún no hay cargas",
       "bulkImportStatus": "Estado",
       "bulkImportDownloadOriginal": "Descargar original",
+      "bulkImportQuotaExceeded": "El plan no tiene cupo para esta carga. Reduce filas o actualiza el plan antes de confirmar.",
       "typeFood": "Alimento",
       "typeFoodDescription": "Peso o volumen · gr, ml, kg",
       "typeSupply": "Insumo",

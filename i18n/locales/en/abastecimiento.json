@@ -522,6 +522,7 @@
       "bulkImportNoJobs": "No imports yet",
       "bulkImportStatus": "Status",
       "bulkImportDownloadOriginal": "Download original",
+      "bulkImportQuotaExceeded": "Your plan quota cannot fit this import. Reduce rows or upgrade before confirming.",
       "typeFood": "Food",
       "typeFoodDescription": "Weight or volume · gr, ml, kg",
       "typeSupply": "Supply",

@@ -69,9 +69,12 @@
         <p v-if="report.needs_product_count" class="text-text-secondary">
           {{ t('abastecimiento.glossary.bulkImportNeedsProduct', { n: report.needs_product_count }) }}
         </p>
+        <p v-if="report.quota_exceeded" class="text-destructive font-medium">
+          {{ t('abastecimiento.glossary.bulkImportQuotaExceeded') }}
+        </p>
         <ul v-if="report.errors?.length" class="max-h-40 overflow-y-auto text-xs text-destructive space-y-1">
           <li v-for="(e, i) in report.errors.slice(0, 50)" :key="i">
-            fila {{ e.row }} · {{ e.field }}: {{ e.error }}
+            <template v-if="e.row != null">fila {{ e.row }} · </template>{{ e.field }}: {{ e.error }}
           </li>
         </ul>
       </div>
@@ -119,7 +122,10 @@ const commitMsg = ref('')
 const errorMsg = ref('')
 
 const canCommit = computed(
-  () => job.value?.status === 'dry_run' && (job.value?.row_valid ?? 0) > 0,
+  () =>
+    job.value?.status === 'dry_run'
+    && (job.value?.row_valid ?? 0) > 0
+    && !report.value?.quota_exceeded,
 )
 
 async function refreshJobs() {
