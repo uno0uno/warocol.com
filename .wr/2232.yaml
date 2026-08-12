@@ -1,0 +1,49 @@
+# Compact plan for wr-fast #2232. Keep <=80 lines.
+issue: 2232
+title: "Dual-unit resale/bodega: purchase units from ml|gr catalog + add in ml|gr or und"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2232-dual-unit-purchase-units
+
+paths:
+  - components/menu/ProductResaleCreateForm.vue
+  - components/ingredientes/IngredientPurchaseUnitsField.vue
+  - composables/useIngredientPurchaseUnitsDraft.ts
+  - composables/useIngredientPurchaseUnitsDraft.test.ts
+  - components/ingredientes/IngredientePropioPanel.vue
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+
+ac:
+  - Resale product form (create/edit/convert): when equivalence ml|gr set, suggest catalog PUs for that base
+  - Predeterminar works for catalog or custom; persists is_default on linked ingredient
+  - Add unit: quantity in ml|gr OR und; convert to und via unit_weight before save
+  - Bodega food+und+weight same behavior; no regress food gr/ml create or supply/service
+  - Keep und storage + API catalog conversion; no API schema change
+  - Manual: tequila und+750ml — botella/onza in ml; shows in compra/recipe selectors
+
+out_of_scope:
+  - API / purchase-unit schema
+  - Rewrite compra/receta selectors
+  - supply/service; food with base gr/ml
+  - Global shared unit catalog across ingredients
+
+hints:
+  entry: "ProductResaleCreateForm + IngredientPurchaseUnitsField base-unit=und"
+  pattern: "useIngredientUnitOptions UNIT_CATALOG + buildDualUnitCatalogOptions; IngredientePropioPanel UNIT_TYPES volumen/peso"
+  convert: "und_factor = qty_ml_or_gr / unit_weight_gr when input mode is weight"
+  seed: "catalog chips quick-add; draft/API storage stays und"
+  tests: "bunx vitest run composables/useIngredientPurchaseUnitsDraft.test.ts"
+  i18n: "quantity mode toggle labels under abastecimiento.glossary"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: ""
