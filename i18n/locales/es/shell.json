@@ -159,6 +159,7 @@
     "onlineOrders": "Pedidos online",
     "contact": "Contacto",
     "noContact": "Sin información de contacto",
+    "noHours": "Sin horario configurado",
     "address": "Dirección",
     "neighborhood": "Barrio",
     "country": "País",

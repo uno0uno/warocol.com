@@ -159,6 +159,7 @@
     "onlineOrders": "Online orders",
     "contact": "Contact",
     "noContact": "No contact information",
+    "noHours": "No hours configured",
     "address": "Address",
     "neighborhood": "Neighborhood",
     "country": "Country",

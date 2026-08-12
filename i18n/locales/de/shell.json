@@ -154,6 +154,7 @@
     "onlineOrders": "Online-Bestellungen",
     "contact": "Kontakt",
     "noContact": "Keine Kontaktinformationen",
+    "noHours": "Keine Öffnungszeiten konfiguriert",
     "address": "Adresse",
     "neighborhood": "Stadtteil",
     "country": "Land",

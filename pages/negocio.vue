@@ -486,7 +486,10 @@
       </div>
 
       <!-- ══════ HORARIO ══════ -->
-      <div v-if="businessProfile?.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <div
+        v-if="businessProfile || isEditMode"
+        class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6"
+      >
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <ClockIcon class="w-5 h-5 text-primary flex-shrink-0" />
           {{ t('negocio.hours') }}
@@ -500,7 +503,13 @@
               {{ businessTimezoneLabel }}
             </span>
           </div>
-          <div class="space-y-0">
+          <p
+            v-if="!hasConfiguredBusinessHours"
+            class="text-sm text-text-secondary italic"
+          >
+            {{ t('negocio.noHours') }}
+          </p>
+          <div v-else class="space-y-0">
             <div
               v-for="(dayKey, index) in DAY_ORDER"
               :key="dayKey"
@@ -1036,6 +1045,12 @@ const timezoneLabel = (value?: string | null) => {
 }
 
 const businessTimezoneLabel = computed(() => timezoneLabel(businessProfile.value?.timezone))
+
+/** True when profile has a non-empty business_hours object (all-closed still counts as configured). */
+const hasConfiguredBusinessHours = computed(() => {
+  const hours = businessProfile.value?.business_hours
+  return !!hours && typeof hours === 'object' && Object.keys(hours).length > 0
+})
 
 const isToday = (i: number) => {
   const weekdayMap: Record<string, string> = {

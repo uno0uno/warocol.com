@@ -154,6 +154,7 @@
     "onlineOrders": "الطلبات عبر الإنترنت",
     "contact": "جهة الاتصال",
     "noContact": "لا توجد معلومات اتصال",
+    "noHours": "لم يتم تكوين ساعات العمل",
     "address": "العنوان",
     "neighborhood": "الحي",
     "country": "البلد",

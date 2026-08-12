@@ -1,0 +1,46 @@
+# Compact plan for wr-exec. Keep <=80 lines.
+issue: 2245
+title: "Negocio: always show Horario in view (empty state)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2245-horario-view-empty
+parent_epic: 2244
+
+paths:
+  - pages/negocio.vue
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - i18n/locales/pt/shell.json
+  - i18n/locales/fr/shell.json
+  - i18n/locales/de/shell.json
+  - i18n/locales/zh/shell.json
+  - i18n/locales/ar/shell.json
+  - i18n/locales/hi/shell.json
+
+ac:
+  - Horario card visible in view when business_hours is null/empty
+  - Empty/not-configured copy uses text-text-secondary (not amber)
+  - Configured hours still show open/close + today highlight
+  - Edit-mode hours editor unchanged
+
+out_of_scope:
+  - Split edit / global Editar (#2246)
+  - API changes
+  - Redes/Contacto visibility gates
+
+hints:
+  entry: "pages/negocio.vue Horario card"
+  pattern: "gate businessProfile||isEditMode; empty via hasConfiguredBusinessHours + negocio.noHours"
+  tests: "python json key check"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#2244"
