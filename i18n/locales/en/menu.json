@@ -278,7 +278,7 @@
       "bulkImportInvalidFileType": "Please use a CSV file.",
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
-      "bulkImportHelpBody": "Each row is a product: name, price, and category. To finish an incomplete warehouse resale, mark that row as finish-resale in the template.",
+      "bulkImportHelpBody": "Each row is a product: name, price, and category. To finish an incomplete warehouse resale, mark that row in the template to complete the pending resale.",
       "bulkImportHelpExample": "Example: Americano coffee · 5000 · Hot drinks\nFinish resale: Coke 350ml · 3500 · Drinks"
     },
     "recetas": {
