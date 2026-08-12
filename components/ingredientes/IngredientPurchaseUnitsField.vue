@@ -256,7 +256,7 @@
               {{ addHintPreview }}
             </template>
             <template v-else>
-              {{ t('abastecimiento.glossary.emptyUnitHint') }}
+              {{ emptyAddHint }}
             </template>
           </p>
           <button
