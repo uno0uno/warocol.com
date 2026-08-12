@@ -66,6 +66,13 @@
                 : t('abastecimiento.glossary.catalogEditMode') }}
             </button>
             <button
+              type="button"
+              class="min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap border border-border bg-background text-text-secondary hover:text-text-primary"
+              @click="showBulkImport = true"
+            >
+              {{ t('abastecimiento.glossary.bulkImport') }}
+            </button>
+            <button
               @click="openCreatePanel"
               class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap"
             >
@@ -418,6 +425,12 @@
       @restored="onRestored"
     />
 
+    <MenuImportUpload
+      :open="showBulkImport"
+      @close="showBulkImport = false"
+      @imported="onBulkImported"
+    />
+
     <!-- Archive Confirmation Modal -->
     <Teleport to="body">
       <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
@@ -553,6 +566,7 @@ const itemsPerPage = ref(50)
 const sortField = ref('')
 const sortDirection = ref('asc')
 const showPanel = ref(false)
+const showBulkImport = ref(false)
 const panelIngredient = ref<any>(null)
 const showArchived = ref(false)
 const showArchiveModal = ref(false)
@@ -762,6 +776,10 @@ const openCreatePanel = () => {
 }
 
 const onSaved = () => {
+  refetch()
+}
+
+const onBulkImported = () => {
   refetch()
 }
 
