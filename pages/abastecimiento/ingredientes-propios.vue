@@ -576,6 +576,8 @@ const showBulkImport = ref(false)
 const needsProductIds = ref<Set<string>>(new Set())
 
 async function refreshNeedsProduct() {
+  // v1: refreshes on mount / Bodega import; cross-page clear after Productos
+  // finish_resale requires revisiting Bodega (no shared cache bus yet).
   try {
     const res = await $fetch<{ success: boolean; data: { id: string }[] }>(
       '/api/menu/imports/incomplete-resale',
