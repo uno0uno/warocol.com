@@ -1,3 +1,5 @@
+import { UNIT_CATALOG } from '@/composables/useIngredientUnitOptions'
+
 export interface DraftPurchaseUnit {
   purchase_unit_label: string
   purchase_unit: string
@@ -11,6 +13,8 @@ export interface PurchaseUnitSuggestion {
   conversion_factor: number
 }
 
+export type PurchaseQuantityInputMode = 'und' | 'weight'
+
 export const UND_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
   { purchase_unit: 'und', label: 'Unidad', conversion_factor: 1 },
 ]
@@ -18,6 +22,55 @@ export const UND_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
 export const HR_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
   { purchase_unit: 'hr', label: 'Hora', conversion_factor: 1 },
 ]
+
+/** Dual-unit und stock + equivalence in gr|ml (resale / food pieza). */
+export function isDualUnitPurchaseConfig(
+  baseUnit: string,
+  unitWeightGr: number | null | undefined,
+  unitWeightUnit: 'gr' | 'ml' | null | undefined,
+): boolean {
+  return (
+    baseUnit === 'und'
+    && unitWeightGr != null
+    && unitWeightGr > 0
+    && (unitWeightUnit === 'gr' || unitWeightUnit === 'ml')
+  )
+}
+
+/** Convert a quantity expressed in gr|ml into und using unit_weight. */
+export function weightQuantityToUndFactor(weightQty: number, unitWeightGr: number): number {
+  if (!(weightQty > 0) || !(unitWeightGr > 0)) return 0
+  return weightQty / unitWeightGr
+}
+
+export function undFactorToWeightQuantity(undFactor: number, unitWeightGr: number): number {
+  if (!(undFactor > 0) || !(unitWeightGr > 0)) return 0
+  return undFactor * unitWeightGr
+}
+
+/**
+ * Catalog purchase suggestions for dual-unit und ingredients.
+ * conversion_factor is always in base und (catalog ml|gr ÷ unit_weight).
+ */
+export function buildDualUnitPurchaseSuggestions(
+  weightUnit: 'gr' | 'ml',
+  unitWeightGr: number,
+): PurchaseUnitSuggestion[] {
+  if (!(unitWeightGr > 0)) return [...UND_PURCHASE_UNIT_SUGGESTIONS]
+
+  const catalog = Object.entries(UNIT_CATALOG)
+    .filter(([, entry]) => entry.base === weightUnit)
+    .map(([key, entry]) => ({
+      purchase_unit: key,
+      label: entry.label,
+      conversion_factor: entry.factor / unitWeightGr,
+    }))
+
+  return [
+    ...UND_PURCHASE_UNIT_SUGGESTIONS,
+    ...catalog,
+  ]
+}
 
 export function defaultUndPurchaseUnitsDraft(): DraftPurchaseUnit[] {
   return suggestionsToDraftUnits(UND_PURCHASE_UNIT_SUGGESTIONS)

@@ -77,13 +77,17 @@
       v-model:draft-units="draftUnits"
       mode="create"
       base-unit="und"
+      :unit-weight-gr="unitWeightGr"
+      :unit-weight-unit="unitWeightUnit"
     />
     <IngredientesIngredientPurchaseUnitsField
       v-else
       mode="edit"
       :ingredient-id="linkedIngredientId"
       base-unit="und"
-      :pending-suggestions="undPurchaseUnitSuggestions"
+      :unit-weight-gr="unitWeightGr"
+      :unit-weight-unit="unitWeightUnit"
+      :pending-suggestions="pendingPurchaseUnitSuggestions"
     />
   </div>
 </template>
@@ -91,7 +95,9 @@
 <script setup lang="ts">
 import {
   UND_PURCHASE_UNIT_SUGGESTIONS,
+  buildDualUnitPurchaseSuggestions,
   defaultUndPurchaseUnitsDraft,
+  isDualUnitPurchaseConfig,
   type DraftPurchaseUnit,
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 
@@ -114,7 +120,12 @@ const props = withDefaults(
   },
 )
 
-const undPurchaseUnitSuggestions = UND_PURCHASE_UNIT_SUGGESTIONS
+const pendingPurchaseUnitSuggestions = computed(() => {
+  if (isDualUnitPurchaseConfig('und', unitWeightGr.value, unitWeightUnit.value) && unitWeightGr.value) {
+    return buildDualUnitPurchaseSuggestions(unitWeightUnit.value, unitWeightGr.value)
+  }
+  return UND_PURCHASE_UNIT_SUGGESTIONS
+})
 
 const uid = useId()
 const weightInputId = `resale-weight-${uid}`

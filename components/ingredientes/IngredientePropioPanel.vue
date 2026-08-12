@@ -365,7 +365,9 @@
             mode="edit"
             :ingredient-id="ingredient.id"
             :base-unit="form.unit"
-            :pending-suggestions="editSuggestions"
+            :unit-weight-gr="form.unit === 'und' ? form.unitWeightGr : null"
+            :unit-weight-unit="form.unit === 'und' ? unitWeightUnit : null"
+            :pending-suggestions="editPurchaseUnitSuggestions"
           />
 
           <!-- Categoría -->
@@ -482,6 +484,8 @@ import {
   defaultUndPurchaseUnitsDraft,
   persistDraftPurchaseUnits,
   suggestionsToDraftUnits,
+  buildDualUnitPurchaseSuggestions,
+  isDualUnitPurchaseConfig,
   HR_PURCHASE_UNIT_SUGGESTIONS,
   UND_PURCHASE_UNIT_SUGGESTIONS,
   usesCustomPurchaseUnitsDraft,
@@ -643,6 +647,16 @@ const currentSuggestions = computed(() =>
 const editSuggestions = computed(() =>
   UNIT_TYPES.find(t => t.unit === form.value.unit)?.suggestions ?? []
 )
+
+const editPurchaseUnitSuggestions = computed(() => {
+  if (
+    isDualUnitPurchaseConfig(form.value.unit, form.value.unitWeightGr, unitWeightUnit.value)
+    && form.value.unitWeightGr
+  ) {
+    return buildDualUnitPurchaseSuggestions(unitWeightUnit.value, form.value.unitWeightGr)
+  }
+  return editSuggestions.value
+})
 
 const typeCardClass = (type: IngredientDbType) => [
   'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-start min-h-[44px]',
