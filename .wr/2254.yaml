@@ -1,0 +1,64 @@
+# Compact plan for wr-exec. Keep <=80 lines.
+issue: 2254
+title: "Batch: Menu import foundation — jobs, R2, dry-run, bodega (+ resale)"
+repo: both
+repo_remote: uno0uno/warocol.com
+parent_epic: uno0uno/warocol.com#2253
+cwd_front: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+cwd_api: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+stack: both
+branch: wr-2254-menu-import-foundation
+
+paths:
+  # API (api-warolabs)
+  - sql/YYYYMMDD_menu_import_jobs.sql
+  - app/routers/menu_import.py
+  - app/services/menu_import_service.py
+  - app/services/products_service.py
+  - app/services/ingredients_service.py
+  - app/services/aws_s3_service.py
+  - tests/test_menu_import_warehouse.py
+  # Front (warocol.com)
+  - pages/abastecimiento/ingredientes-propios.vue
+  - components/menu/MenuImportUpload.vue
+  - components/menu/MenuImportJobHistory.vue
+  - i18n/locales/*/shell.json
+  - .wr/2254.yaml
+
+ac:
+  - menu_import_jobs + private R2 file (folder menu/imports/); presigned download
+  - Statuses uploaded → dry_run → committed|failed; dry-run writes zero catalog rows
+  - Warehouse CSV dry-run/commit via create_tenant_ingredient; duplicate name = error
+  - is_resale requires und + unit_weight; quotas tenant_ingredients (+ menu_products if pair)
+  - Decision A: missing price/category → ingredient only + needs_product; badge for #2256
+  - If price+category present + create_product → shared create_resale_pair (same end-state as auto_resale)
+  - Front: Bodega entry — template, upload, dry-run report, confirm, job history
+  - Closes uno0uno/warocol.com#2254 (API PR note companion)
+
+decisions:
+  incomplete_resale: A_ingredient_only_until_sell_fields
+  file_format_v1: csv
+  duplicates: error
+  partial_import: valid_rows_after_confirm
+  retention_days: 90
+
+out_of_scope:
+  - Recipe/product/modifier templates (#2255–#2257)
+  - Upsert-by-name; XLSX-only polish
+  - Relaxing ProductBase price/category for draft products
+
+hints:
+  entry: "menu_import_service + ingredientes-propios Carga masiva"
+  pattern: "purchase_tracking_service.py:211 R2; products_service.py:165 auto_resale; ingredients_service.py:519 und guard"
+  tests: "pytest tests/test_menu_import_warehouse.py -q"
+
+risk:
+  sensitive: false
+  areas: [billing-quotas, inventory-create, r2]
+  note: "Extract create_resale_pair; do not fork unit/resale rules"
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "/wr-next uno0uno/warocol.com#2253"
