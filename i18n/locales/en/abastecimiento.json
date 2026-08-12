@@ -508,7 +508,7 @@
       "waroTemplates": "Waro templates",
       "bulkImport": "Bulk import",
       "bulkImportTitle": "Warehouse bulk import",
-      "bulkImportHint": "Download the template, fill it in, and upload. We check the file before creating items.",
+      "bulkImportHint": "Upload the file; we check it before creating items.",
       "bulkImportDownloadTemplate": "Download template",
       "bulkImportReview": "Check file",
       "bulkImportReviewHint": "Upload and check the file first. Nothing is saved yet.",

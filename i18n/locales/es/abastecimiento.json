@@ -508,7 +508,7 @@
       "waroTemplates": "Plantillas Waro",
       "bulkImport": "Carga masiva",
       "bulkImportTitle": "Carga masiva de bodega",
-      "bulkImportHint": "Baja la plantilla, complétala y súbela. Revisamos el archivo antes de crear artículos.",
+      "bulkImportHint": "Sube el archivo y lo revisamos antes de crear artículos.",
       "bulkImportDownloadTemplate": "Descargar plantilla",
       "bulkImportReview": "Comprobar archivo",
       "bulkImportReviewHint": "Primero sube y comprueba el archivo. Nada se guarda todavía.",

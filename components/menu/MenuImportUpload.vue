@@ -27,7 +27,7 @@
                md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-border" aria-hidden="true" />
         </div>
 
         <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
@@ -68,37 +68,45 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <!-- Template + how-to -->
-          <section class="space-y-3" aria-labelledby="menu-import-step-template">
-            <h3 id="menu-import-step-template" class="text-sm font-semibold text-text-primary">
-              {{ t(i18nStepTemplate) }}
-            </h3>
-            <a
-              :href="templateHref"
-              class="btn-secondary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center"
-            >
-              {{ t(i18nDownloadTemplate) }}
-            </a>
-            <div class="rounded-xl border border-border bg-surface-secondary/40 px-3 py-3 space-y-2">
-              <p class="text-sm font-medium text-text-primary">
-                {{ t(i18nHelpTitle) }}
-              </p>
-              <p class="text-xs text-text-secondary leading-relaxed">
-                {{ t(i18nHelpBody) }}
-              </p>
-              <p class="text-xs text-text-primary leading-relaxed font-medium whitespace-pre-line">
-                {{ t(i18nHelpExample) }}
-              </p>
-              <p class="text-xs text-text-tertiary leading-relaxed">
-                {{ t(i18nHelpColumnsNote) }}
-              </p>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          <!-- Template (compact) -->
+          <section class="space-y-2" aria-labelledby="menu-import-step-template">
+            <div class="flex items-center justify-between gap-3">
+              <h3
+                id="menu-import-step-template"
+                class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+              >
+                {{ t(i18nStepTemplate) }}
+              </h3>
+              <a
+                :href="templateHref"
+                class="text-sm font-medium text-primary hover:underline"
+              >
+                {{ t(i18nDownloadTemplate) }}
+              </a>
             </div>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-text-secondary hover:text-text-primary select-none">
+                {{ t(i18nHelpTitle) }}
+              </summary>
+              <div class="mt-2 space-y-1.5 text-text-secondary leading-relaxed">
+                <p>{{ t(i18nHelpBody) }}</p>
+                <p class="whitespace-pre-line text-text-tertiary">
+                  {{ t(i18nHelpExample) }}
+                </p>
+                <p class="text-text-tertiary">
+                  {{ t(i18nHelpColumnsNote) }}
+                </p>
+              </div>
+            </details>
           </section>
 
-          <!-- File dropzone -->
+          <!-- Dropzone (hero) -->
           <section class="space-y-2" aria-labelledby="menu-import-step-file">
-            <h3 id="menu-import-step-file" class="text-sm font-semibold text-text-primary">
+            <h3
+              id="menu-import-step-file"
+              class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+            >
               {{ t(i18nStepFile) }}
             </h3>
             <input
@@ -115,8 +123,8 @@
               class="relative border-2 border-dashed rounded-xl transition-colors overflow-hidden cursor-pointer"
               :class="isDragging
                 ? 'border-primary bg-primary/5'
-                : 'border-border/60 hover:border-primary/50 bg-surface-secondary'"
-              :aria-label="t(i18nDropPrompt)"
+                : 'border-border hover:border-primary/40 bg-surface-secondary/50'"
+              :aria-label="`${t(i18nDropPrompt)} ${t(i18nDropSelect)}`"
               :aria-disabled="busy"
               @click="openFilePicker"
               @keydown.enter.prevent="openFilePicker"
@@ -125,9 +133,9 @@
               @dragleave.prevent="isDragging = false"
               @drop.prevent="onDrop"
             >
-              <div class="flex flex-col items-center justify-center py-8 px-5 text-center">
+              <div class="flex flex-col items-center justify-center py-10 px-5 text-center">
                 <svg
-                  class="w-8 h-8 text-text-secondary/40 mb-2"
+                  class="w-8 h-8 text-text-tertiary mb-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -140,59 +148,58 @@
                     d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                   />
                 </svg>
-                <p class="text-sm font-medium text-text-primary">
+                <p class="text-sm text-text-primary">
                   {{ t(i18nDropPrompt) }}
-                  <span class="text-primary">{{ t(i18nDropSelect) }}</span>
+                  <span class="font-medium text-primary">{{ t(i18nDropSelect) }}</span>
                 </p>
-                <p class="text-xs text-text-secondary mt-1">
+                <p class="text-xs text-text-tertiary mt-1">
                   {{ t(i18nDropHint) }}
                 </p>
               </div>
             </div>
-            <p v-if="job" class="text-sm text-text-secondary">
+            <p v-if="job" class="text-xs text-text-secondary">
               <span class="font-medium text-text-primary">{{ job.file_name }}</span>
-              · {{ t(i18nStatus) }}:
-              <span class="font-medium text-text-primary">{{ statusLabel(job.status) }}</span>
+              <span class="text-text-tertiary"> · {{ statusLabel(job.status) }}</span>
               <a
                 v-if="job.download_url"
                 :href="job.download_url"
                 target="_blank"
                 rel="noopener"
-                class="ms-2 text-primary underline text-xs"
+                class="ms-2 text-primary underline"
               >
                 {{ t(i18nDownloadOriginal) }}
               </a>
             </p>
-            <p v-else class="text-xs text-text-tertiary">
-              {{ t(i18nNoFileYet) }}
-            </p>
           </section>
 
-          <!-- Result -->
+          <!-- Result (only after review) -->
           <section
             v-if="report"
             class="space-y-2"
             aria-labelledby="menu-import-step-result"
           >
-            <h3 id="menu-import-step-result" class="text-sm font-semibold text-text-primary">
+            <h3
+              id="menu-import-step-result"
+              class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+            >
               {{ t(i18nStepResult) }}
             </h3>
-            <div class="rounded-xl border border-border p-3 space-y-2 text-sm">
+            <div class="space-y-1.5 text-sm">
               <p class="text-state-success-text">
                 {{ t(i18nValid, { n: readyCount }) }}
               </p>
               <p class="text-destructive">
                 {{ t(i18nInvalid, { n: errorCount }) }}
               </p>
-              <p v-if="report.needs_product_count" class="text-text-secondary">
+              <p v-if="report.needs_product_count" class="text-xs text-text-secondary">
                 {{ t('abastecimiento.glossary.bulkImportNeedsProduct', { n: report.needs_product_count }) }}
               </p>
-              <p v-if="report.quota_exceeded" class="text-destructive font-medium">
+              <p v-if="report.quota_exceeded" class="text-xs text-destructive font-medium">
                 {{ t(i18nQuotaExceeded) }}
               </p>
               <ul
                 v-if="report.errors?.length"
-                class="max-h-40 overflow-y-auto text-xs text-destructive space-y-1"
+                class="max-h-36 overflow-y-auto text-xs text-destructive space-y-1 pt-1"
               >
                 <li v-for="(e, i) in report.errors.slice(0, 50)" :key="i">
                   <template v-if="e.row != null">{{ t(i18nErrorRow, { row: e.row }) }} · </template>{{ e.field }}: {{ e.error }}
@@ -204,18 +211,33 @@
           <p v-if="commitMsg" class="text-sm text-state-success-text">{{ commitMsg }}</p>
           <p v-if="errorMsg" class="text-sm text-destructive" role="alert">{{ errorMsg }}</p>
 
-          <MenuImportJobHistory
-            :jobs="jobs"
-            :title="t(i18nStepHistory)"
-            :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
-            :status-label-fn="statusLabel"
-            @select="loadJob"
-          />
+          <details class="border-t border-border pt-4">
+            <summary
+              class="cursor-pointer text-xs font-semibold uppercase tracking-wide text-text-tertiary select-none hover:text-text-secondary"
+            >
+              {{ t(i18nStepHistory) }}
+              <span v-if="jobs.length" class="normal-case font-normal tracking-normal">
+                ({{ jobs.length }})
+              </span>
+            </summary>
+            <div class="mt-2">
+              <MenuImportJobHistory
+                :jobs="jobs"
+                hide-title
+                :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
+                :status-label-fn="statusLabel"
+                @select="loadJob"
+              />
+            </div>
+          </details>
         </div>
 
         <div class="flex-shrink-0 border-t border-border px-6 py-4 bg-surface space-y-2">
-          <p class="text-xs text-text-tertiary leading-snug">
-            {{ canCommit ? t(i18nReviewHintReady) : (commitBlockedReason || t(i18nReviewHint)) }}
+          <p
+            v-if="!canCommit && commitBlockedReason"
+            class="text-xs text-text-tertiary leading-snug"
+          >
+            {{ commitBlockedReason }}
           </p>
           <div class="flex flex-wrap gap-2">
             <button
@@ -262,14 +284,11 @@ const i18nTitle = computed(() => `${i18nPrefix.value}Title`)
 const i18nHint = computed(() => `${i18nPrefix.value}Hint`)
 const i18nClose = computed(() => `${i18nPrefix.value}Close`)
 const i18nDownloadTemplate = computed(() => `${i18nPrefix.value}DownloadTemplate`)
-const i18nStatus = computed(() => `${i18nPrefix.value}Status`)
 const i18nDownloadOriginal = computed(() => `${i18nPrefix.value}DownloadOriginal`)
 const i18nValid = computed(() => `${i18nPrefix.value}Valid`)
 const i18nInvalid = computed(() => `${i18nPrefix.value}Invalid`)
 const i18nQuotaExceeded = computed(() => `${i18nPrefix.value}QuotaExceeded`)
 const i18nReview = computed(() => `${i18nPrefix.value}Review`)
-const i18nReviewHint = computed(() => `${i18nPrefix.value}ReviewHint`)
-const i18nReviewHintReady = computed(() => `${i18nPrefix.value}ReviewHintReady`)
 const i18nCommit = computed(() => `${i18nPrefix.value}Commit`)
 const i18nCommitted = computed(() => `${i18nPrefix.value}Committed`)
 const i18nStepTemplate = computed(() => `${i18nPrefix.value}StepTemplate`)
@@ -283,7 +302,6 @@ const i18nHelpColumnsNote = computed(() => `${i18nPrefix.value}HelpColumnsNote`)
 const i18nDropPrompt = computed(() => `${i18nPrefix.value}DropPrompt`)
 const i18nDropSelect = computed(() => `${i18nPrefix.value}DropSelect`)
 const i18nDropHint = computed(() => `${i18nPrefix.value}DropHint`)
-const i18nNoFileYet = computed(() => `${i18nPrefix.value}NoFileYet`)
 const i18nErrorRow = computed(() => `${i18nPrefix.value}ErrorRow`)
 const i18nNeedFile = computed(() => `${i18nPrefix.value}NeedFile`)
 const i18nNeedReview = computed(() => `${i18nPrefix.value}NeedReview`)
