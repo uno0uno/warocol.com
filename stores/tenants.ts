@@ -65,7 +65,7 @@ export const useTenantsStore = defineStore('tenants', () => {
 
   // ── User tenants query ────────────────────────────────────────────────────────
   // Client-only: SSR has no session cookie → /api/tenants/user-tenants 401 (#977).
-  const { data: tenantData, status, asyncStatus, refetch } = useQuery({
+  const { data: tenantData, status, asyncStatus } = useQuery({
     key: ['tenants', 'user'],
     enabled: () => import.meta.client,
     query: async () => {
@@ -101,6 +101,9 @@ export const useTenantsStore = defineStore('tenants', () => {
       const fromSession = tenants.find(t => t.id === session.currentTenant!.id)
       if (fromSession) { selectedTenant.value = fromSession; return }
     }
+    // Keep an explicit selection (e.g. just-created tenant) if this snapshot
+    // is stale and omitted it. Do not fall back to tenants[0].
+    if (selectedTenant.value) return
     selectedTenant.value = tenants[0]
   })
 
@@ -171,8 +174,23 @@ export const useTenantsStore = defineStore('tenants', () => {
 
   // ── Public action wrappers ────────────────────────────────────────────────────
 
-  /** Trigger a fresh fetch of user tenants (awaitable — resolves when data is loaded) */
-  const fetchUserTenants = () => refetch()
+  type UserTenantsCache = { tenants: Tenant[]; session: { success: boolean; currentTenant?: { id: string } } | null }
+
+  /** Insert or replace a tenant in the selector list (create-tenant handoff). */
+  const upsertUserTenant = (tenant: Tenant) => {
+    const current = cache.getQueryData(['tenants', 'user']) as UserTenantsCache | undefined
+    const existing = current?.tenants ?? []
+    const tenants = existing.some(item => item.id === tenant.id)
+      ? existing.map(item => item.id === tenant.id ? { ...item, ...tenant } : item)
+      : [...existing, tenant].sort((a, b) => a.name.localeCompare(b.name))
+    cache.setQueryData(['tenants', 'user'], {
+      tenants,
+      session: current?.session ?? null,
+    })
+  }
+
+  /** Force a network refetch of user tenants (awaitable). */
+  const fetchUserTenants = () => cache.invalidateQueries({ key: ['tenants', 'user'] })
 
   /** Force-refresh the business profile (e.g. after PATCH to public-profile) */
   const fetchBusinessProfile = () =>
@@ -233,6 +251,7 @@ export const useTenantsStore = defineStore('tenants', () => {
 
     // Actions
     fetchUserTenants,
+    upsertUserTenant,
     fetchBusinessProfile,
     selectTenant,
     selectTenantBySlug,

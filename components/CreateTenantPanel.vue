@@ -447,12 +447,16 @@ const submit = async () => {
       return
     }
 
-    await tenantsStore.fetchUserTenants()
+    tenantsStore.upsertUserTenant(tenant)
     const switched = await tenantsStore.selectTenant(tenant)
     if (!switched) {
       errors.value = { general: t('onboarding.activationError') }
       return
     }
+    // switch-tenant nukes the query cache; refetch then keep the new row
+    // in the selector even if the list snapshot is still stale.
+    await tenantsStore.fetchUserTenants()
+    tenantsStore.upsertUserTenant(tenant)
 
     if (response.data?.resumed) {
       toast.info(t('shell.createTenantResumed'))
