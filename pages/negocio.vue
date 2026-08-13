@@ -47,7 +47,7 @@
               </button>
               <button
                 @click="saveBrandChanges"
-                :disabled="isSaving || !editForm.display_name.trim() || !editForm.slug.trim()"
+                :disabled="isSaving || !editForm.display_name.trim() || !normalizedEditSlug"
                 class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
               >
                 <CheckIcon class="w-3.5 h-3.5" />
@@ -272,8 +272,8 @@
           <div class="flex items-center px-3 py-2 bg-surface-secondary border border-border rounded-lg sm:flex-1 min-w-0 min-h-[44px]">
             <span
               class="text-sm font-mono text-text-primary truncate select-all"
-              :title="publicUrl"
-            >{{ publicUrl || slugPreviewPath }}</span>
+              :title="publicUrlPreview || publicUrl"
+            >{{ publicUrlPreview || publicUrl || slugPreviewPath }}</span>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -1351,20 +1351,34 @@ const saveOpsChanges = async () => {
 
 // ─── Public link (URL + copy + share) ───
 const runtimeConfig = useRuntimeConfig()
+const normalizedEditSlug = computed(() => normalizeStorefrontSlug(editForm.slug))
+const savedStorefrontSlug = computed(
+  () => businessProfile.value?.slug || currentTenant.value?.slug || '',
+)
 const slugPreviewPath = computed(() => {
   const slug = isEditingBrand.value
-    ? normalizeStorefrontSlug(editForm.slug)
-    : (businessProfile.value?.slug || currentTenant.value?.slug || '')
+    ? normalizedEditSlug.value
+    : savedStorefrontSlug.value
   return slug ? `/${slug}` : '/…'
 })
 
-const publicUrl = computed(() => {
+const publicUrlPreview = computed(() => {
   // Prefer the public profile slug (storefront URL slug, e.g. "sandwichito-monroy"),
   // not the internal tenant slug (e.g. "warocolombia"). They can differ.
   // While editing brand, preview the draft slug so the public-link card stays in sync.
   const slug = isEditingBrand.value
-    ? normalizeStorefrontSlug(editForm.slug)
-    : (businessProfile.value?.slug || currentTenant.value?.slug)
+    ? normalizedEditSlug.value
+    : savedStorefrontSlug.value
+  if (!slug) return ''
+  const base = (typeof window !== 'undefined' && window.location?.origin)
+    || (runtimeConfig.public.siteUrl as string | undefined)
+    || 'https://warocol.com'
+  return `${base.replace(/\/$/, '')}/${slug}`
+})
+
+/** Copy/share always use the last saved slug, not an unsaved draft. */
+const publicUrl = computed(() => {
+  const slug = savedStorefrontSlug.value
   if (!slug) return ''
   // Use the live origin so the URL matches the current environment
   // (localhost in dev, dev.warocol.com on staging, warocol.com in prod).
