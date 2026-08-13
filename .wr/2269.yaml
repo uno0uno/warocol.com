@@ -1,0 +1,40 @@
+# Compact plan for wr-fast. Keep <=80 lines.
+issue: 2269
+title: "fix(shell): use glass SubmitBusyOverlay on logout"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2269-logout-glass-overlay
+
+paths:
+  - components/DashboardSidebar.vue
+  - components/ui/SubmitBusyOverlay.vue
+  - .wr/2269.yaml
+
+ac:
+  - Logout shows fullscreen glass busy overlay (same as submit flows)
+  - Matrix indicator via UiSubmitBusyOverlay glass + matrix
+  - Copy uses shell.loggingOut / shell.pleaseWait (badge shell.logout)
+  - Remove opaque logout-overlay / logout-card CSS
+  - Logout flow unchanged; overlay blocks while busy (z-[9999])
+
+out_of_scope:
+  - customer-portal logout
+  - API/auth changes
+  - UiLoadingMatrix redesign
+
+hints:
+  entry: "components/DashboardSidebar.vue handleLogout"
+  pattern: "pages/menu/productos/crear.vue UiSubmitBusyOverlay glass+matrix"
+  tests: "rg logout-overlay DashboardSidebar → empty; rg UiSubmitBusyOverlay DashboardSidebar"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""

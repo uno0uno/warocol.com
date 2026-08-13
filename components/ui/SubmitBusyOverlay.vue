@@ -8,14 +8,20 @@ const props = withDefaults(defineProps<{
   busy?: boolean
   label?: string
   hint?: string
+  /** Pill above the loader; defaults to common.submitBusy */
+  badge?: string
   fullscreen?: boolean
+  /** Tailwind z-* class for fullscreen overlay (logout needs above shell chrome) */
+  fullscreenZClass?: string
   variant?: OverlayVariant
   indicator?: OverlayIndicator
 }>(), {
   busy: false,
   label: '',
   hint: '',
+  badge: '',
   fullscreen: true,
+  fullscreenZClass: 'z-50',
   variant: 'glass',
   indicator: 'matrix',
 })
@@ -24,7 +30,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 const overlayPositionClass = computed(() =>
   props.fullscreen
-    ? 'fixed inset-0 z-50'
+    ? `fixed inset-0 ${props.fullscreenZClass}`
     : 'absolute inset-0 z-20 rounded-[inherit]'
 )
 
@@ -36,6 +42,7 @@ const panelClass = computed(() =>
 
 const displayLabel = computed(() => props.label || t('common.processing'))
 const displayHint = computed(() => props.hint || '')
+const displayBadge = computed(() => props.badge || t('common.submitBusy'))
 const labelId = computed(() => `submit-busy-${displayLabel.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'state'}`)
 const hintId = computed(() => displayHint.value ? `${labelId.value}-hint` : undefined)
 </script>
@@ -67,7 +74,7 @@ const hintId = computed(() => displayHint.value ? `${labelId.value}-hint` : unde
             <div
               class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary"
             >
-              {{ t('common.submitBusy') }}
+              {{ displayBadge }}
             </div>
 
             <CommonsTheCustomLoader

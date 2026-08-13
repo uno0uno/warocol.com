@@ -1,15 +1,14 @@
 <template>
   <div>
-  <!-- Loading Global Overlay -->
-  <Teleport to="body">
-    <div v-if="isLoggingOut" class="logout-overlay fixed inset-0 flex items-center justify-center z-[9999]">
-      <div class="logout-card rounded-2xl shadow-xl p-8 flex flex-col items-center">
-        <UiLoadingMatrix class="mb-4" size="9px" color="currentColor" />
-        <p class="logout-title text-lg font-medium">{{ t('shell.loggingOut') }}</p>
-        <p class="logout-message text-sm mt-2">{{ t('shell.pleaseWait') }}</p>
-      </div>
-    </div>
-  </Teleport>
+  <UiSubmitBusyOverlay
+    :busy="isLoggingOut"
+    :label="t('shell.loggingOut')"
+    :hint="t('shell.pleaseWait')"
+    :badge="t('shell.logout')"
+    variant="glass"
+    indicator="matrix"
+    fullscreen-z-class="z-[9999]"
+  />
 
   <UiBaseSidebar
     :overlay="props.overlay"
@@ -273,22 +272,6 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.logout-overlay {
-  background-color: hsl(var(--nav-overlay-bg) / 0.5);
-}
-
-.logout-card {
-  background-color: hsl(var(--nav-overlay-card-bg));
-}
-
-.logout-title {
-  color: hsl(var(--nav-overlay-title));
-}
-
-.logout-message {
-  color: hsl(var(--nav-overlay-message));
-}
-
 /*
   Sidebar navigation states read semantic nav tokens. Alpha remains local here
   because the sidebar hierarchy depends on subtle idle/hover/active emphasis.
