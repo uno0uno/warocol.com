@@ -87,13 +87,23 @@ export function resolveTrialPriceAnchor(options: {
   const isMexico = country === 'MX' || currency === 'MXN'
   const isUs = country === 'US' || currency === 'USD'
 
+  const planProFallback = () => (isEn ? 'Plan Pro' : 'el Plan Pro')
+
   if (isMexico) {
     // No approved MXN list price yet — avoid showing COP to MX tenants.
-    return isEn ? 'Plan Pro' : 'el Plan Pro'
+    return planProFallback()
   }
 
   if (isUs) {
     return isEn ? 'under USD $30/month' : 'menos de USD $30/mes'
+  }
+
+  // COP marketing copy is Colombia-only. Any other catalog country/currency
+  // (AR/ARS, PE/PEN, …) follows the MX fallback — no invented FX amounts.
+  const hasCountry = Boolean(country)
+  const hasCurrency = Boolean(currency)
+  if ((hasCountry && country !== 'CO') || (hasCurrency && currency !== 'COP')) {
+    return planProFallback()
   }
 
   return isEn ? 'under COP 8,000/month' : PUBLIC_OFFER.monthlyEquivalent

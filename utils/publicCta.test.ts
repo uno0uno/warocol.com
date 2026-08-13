@@ -140,6 +140,36 @@ test('omitted market keeps Colombia ES COP public CTAs', () => {
   assert.equal(omitted.button, 'Crear cuenta y elegir plan')
 })
 
+test('trial banner price anchor avoids COP for Argentina and other catalog tenants', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'AR', currencyCode: 'ARS' }),
+    'el Plan Pro',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'AR', currencyCode: 'ARS' }),
+    'Plan Pro',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'PE', currencyCode: 'PEN' }),
+    'el Plan Pro',
+  )
+  assert.doesNotMatch(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'AR', currencyCode: 'ARS' }),
+    /COP/i,
+  )
+  assert.doesNotMatch(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: null, currencyCode: 'ARS' }),
+    /COP/i,
+  )
+})
+
+test('trial banner price anchor keeps COP when country and currency are unknown', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es' }),
+    PUBLIC_OFFER.monthlyEquivalent,
+  )
+})
+
 test('trial banner price anchor uses USD for US tenants', () => {
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'en', countryCode: 'US', currencyCode: 'USD' }),
