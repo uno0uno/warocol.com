@@ -43,6 +43,9 @@
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   {{ t('shell.createTenantSubtitle') }}
                 </p>
+                <p class="text-xs text-text-tertiary leading-snug mt-1">
+                  {{ t('shell.createTenantResumeHint') }}
+                </p>
               </div>
             </div>
             <button
@@ -238,6 +241,7 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n({ useScope: 'global' })
 const { locale: appLocale } = useAppLocale()
+const toast = useToast()
 const tenantsStore = useTenantsStore()
 const authStore = useAuthStore()
 const accessStore = useAccessStore()
@@ -447,6 +451,10 @@ const submit = async () => {
     if (!switched) {
       errors.value = { general: t('onboarding.activationError') }
       return
+    }
+
+    if (response.data?.resumed) {
+      toast.info(t('shell.createTenantResumed'))
     }
 
     emit('update:modelValue', false)

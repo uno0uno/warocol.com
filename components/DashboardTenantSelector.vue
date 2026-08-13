@@ -23,7 +23,7 @@
                 ref="searchInputRef"
                 v-model="tenantSearch"
                 type="text"
-                placeholder="Buscar negocio..."
+                :placeholder="t('shell.searchTenants')"
                 class="flex-1 bg-transparent text-sm text-form-control-text placeholder-form-control-placeholder outline-none"
               />
               <button v-if="tenantSearch" @click="tenantSearch = ''" class="text-form-control-placeholder hover:text-form-control-text">
@@ -32,9 +32,9 @@
             </div>
           </div>
           <div class="overflow-y-auto px-3 pb-4 space-y-0.5">
-            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-form-control-help text-center">Cargando...</div>
+            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-form-control-help text-center">{{ t('shell.loadingTenants') }}</div>
             <template v-else>
-              <div v-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-form-control-help text-center">Sin resultados</div>
+              <div v-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-form-control-help text-center">{{ t('shell.noTenantResults') }}</div>
               <button
                 v-for="tenant in filteredTenants"
                 :key="tenant.id"
