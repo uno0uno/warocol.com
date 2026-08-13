@@ -37,7 +37,7 @@
     "enableAlerts": "ध्वनि अलर्ट सक्षम करें",
     "noNotifications": "कोई नई सूचना नहीं",
     "noTenant": "कोई टेनेंट नहीं",
-    "selectTenant": "टेनेंट चुनें",
+    "selectTenant": "व्यवसाय चुनें",
     "loadingTenants": "टेनेंट लोड हो रहे हैं...",
     "noTenants": "कोई टेनेंट उपलब्ध नहीं है",
     "createTenant": "बनाएँ",

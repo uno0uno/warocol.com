@@ -40,7 +40,7 @@
     "enableAlerts": "Activar alertas sonoras",
     "noNotifications": "Sin notificaciones nuevas",
     "noTenant": "Sin tenant",
-    "selectTenant": "Seleccionar Tenant",
+    "selectTenant": "Seleccionar negocio",
     "loadingTenants": "Cargando tenants...",
     "noTenants": "No hay tenants disponibles",
     "createTenant": "Crear",

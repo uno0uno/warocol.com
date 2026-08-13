@@ -11,7 +11,7 @@
         <div class="absolute inset-0 bg-overlay-backdrop-strong/60 backdrop-blur-sm" @click="closeTenantModal" />
         <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-sheet-surface-bg sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
           <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sheet-border flex-shrink-0">
-            <p class="text-sm font-semibold text-modal-surface-text">{{ t('shell.settings') }}</p>
+            <p class="text-sm font-semibold text-modal-surface-text">{{ t('shell.selectTenant') }}</p>
             <button @click="closeTenantModal" class="p-1.5 rounded-lg text-shell-notification-muted-text hover:bg-shell-notification-hover-bg hover:text-shell-notification-text focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors">
               <XMarkIcon class="w-4 h-4" />
             </button>
