@@ -21,7 +21,7 @@ paths:
 ac:
   - UiAccordionSection (chevron, tokens, closed by default, ~40px hit)
   - MenuImportUpload help + history use it; no raw details
-  - Help includes WARO units list for warehouse/recipes/modifiers
+  - Help units: warehouse = FOOD_UNITS only (gr/kg/ml/lt/und); recipes/modifiers = base + configured purchase units
   - Optional arqueo hub migrated to same component
 
 out_of_scope:

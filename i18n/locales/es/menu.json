@@ -365,7 +365,7 @@
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Repite el mismo nombre de receta en cada línea de ingredientes. Los ingredientes deben existir ya en bodega, con una unidad que WARO entienda.",
       "bulkImportHelpExample": "Ejemplo (misma receta en 2 líneas):\nSalsa tomate · Tomate · 1 · kg\nSalsa tomate · Cebolla · 0.2 · kg",
-      "bulkImportHelpUnits": "Unidades que WARO entiende: peso gr, kg, libra, arroba, bulto_25kg; volumen ml, lt, botella, galon; conteo und; tiempo hr. Usa una unidad compatible con el artículo en bodega (o con sus unidades de compra)."
+      "bulkImportHelpUnits": "En unit usa la unidad base del artículo en bodega (gr, kg, ml, lt, und) o una unidad de compra ya configurada en ese artículo (p. ej. libra, arroba, bulto_25kg, botella, galon, hr). Si no existe esa unidad de compra, la fila falla."
     },
     "modificadores": {
       "searchPlaceholder": "Buscar grupo o producto...",
@@ -516,7 +516,7 @@
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Repite el nombre del grupo en cada opción. Esta carga no asigna productos; eso se hace después en el grupo.",
       "bulkImportHelpExample": "Ejemplo (mismo grupo en 2 líneas):\nPunto de cocción · Término medio · 0\nPunto de cocción · Bien asado · 0",
-      "bulkImportHelpUnits": "Unidades que WARO entiende: peso gr, kg, libra, arroba, bulto_25kg; volumen ml, lt, botella, galon; conteo und; tiempo hr. Usa una unidad compatible con el artículo en bodega (o con sus unidades de compra)."
+      "bulkImportHelpUnits": "Si la opción descuenta bodega, en ingredient_unit usa la unidad base del artículo (gr, kg, ml, lt, und) o una unidad de compra ya configurada en ese artículo (p. ej. libra, arroba, bulto_25kg, botella, galon, hr)."
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",

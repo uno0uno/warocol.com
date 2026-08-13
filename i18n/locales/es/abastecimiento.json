@@ -802,7 +802,7 @@
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Cada fila es un artículo de bodega. Si es reventa, puedes dejar precio/categoría vacíos y completarlos después en Productos.",
       "bulkImportHelpExample": "Ejemplo: Tomate · unidad kg · costo 4000\nReventa incompleta: Coca 350ml · sin precio aún",
-      "bulkImportHelpUnits": "Unidades que WARO entiende: peso gr, kg, libra, arroba, bulto_25kg; volumen ml, lt, botella, galon; conteo und; tiempo hr. Usa una unidad compatible con el artículo en bodega (o con sus unidades de compra)."
+      "bulkImportHelpUnits": "Columna unit (unidad de stock): solo gr, kg, ml, lt o und. Reventa incompleta debe ir en und. unit_weight_unit solo admite gr o ml."
     },
     "calidad": {
       "qualityScore": "Score de calidad",

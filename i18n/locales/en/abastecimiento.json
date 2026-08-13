@@ -802,7 +802,7 @@
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Each row is a warehouse item. For resale you can leave price/category empty and finish later in Products.",
       "bulkImportHelpExample": "Example: Tomato · unit kg · cost 4000\nIncomplete resale: Coke 350ml · no price yet",
-      "bulkImportHelpUnits": "Units WARO understands: weight gr, kg, libra, arroba, bulto_25kg; volume ml, lt, botella, galon; count und; time hr. Use a unit compatible with the warehouse item (or its purchase units)."
+      "bulkImportHelpUnits": "Column unit (stock unit): only gr, kg, ml, lt, or und. Incomplete resale must use und. unit_weight_unit only allows gr or ml."
     },
     "calidad": {
       "qualityScore": "Data quality score",
