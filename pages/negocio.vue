@@ -441,24 +441,28 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="sm:col-span-2">
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.address') }}</label>
-              <input v-model="editForm.address" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Calle 123 # 45-67" />
+              <input v-model="editForm.address" type="text" class="input-base w-full px-3 py-2 text-sm" :placeholder="t('negocio.addressPlaceholder')" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.neighborhood') }}</label>
-              <input v-model="editForm.neighborhood" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Chapinero" />
+              <input v-model="editForm.neighborhood" type="text" class="input-base w-full px-3 py-2 text-sm" :placeholder="t('negocio.neighborhoodPlaceholder')" />
             </div>
             <div>
               <label for="negocio-country" class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.country') }}</label>
-              <select
+              <input
                 id="negocio-country"
-                v-model="editForm.country"
+                :value="editForm.country"
+                type="text"
                 disabled
-                aria-describedby="negocio-country-help"
+                readonly
+                :aria-describedby="isColombiaTenant ? 'negocio-country-help' : undefined"
                 class="input-base w-full px-3 py-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+              />
+              <p
+                v-if="isColombiaTenant"
+                id="negocio-country-help"
+                class="text-[10px] text-text-tertiary mt-1"
               >
-                <option value="Colombia">Colombia</option>
-              </select>
-              <p id="negocio-country-help" class="text-[10px] text-text-tertiary mt-1">
                 {{ t('negocio.colombiaOnly') }}
               </p>
             </div>
@@ -556,7 +560,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.phone') }}</label>
-              <input v-model="editForm.phone_number" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
+              <input v-model="editForm.phone_number" type="text" class="input-base w-full px-3 py-2 text-sm" :placeholder="phonePlaceholder" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.email') }}</label>
@@ -736,7 +740,7 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.minimumOrderCop') }}</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.minimumOrderCop', { currency: currencyCode }) }}</label>
                 <input
                   v-model.number="editForm.min_order_amount"
                   type="text"
@@ -746,7 +750,7 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.maximumOnlineLimitCop') }}</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.maximumOnlineLimitCop', { currency: currencyCode }) }}</label>
                 <input
                   v-model.number="editForm.online_order_max_amount"
                   type="text"
@@ -795,7 +799,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.whatsapp') }}</label>
-              <input v-model="editForm.social_media.whatsapp" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
+              <input v-model="editForm.social_media.whatsapp" type="text" class="input-base w-full px-3 py-2 text-sm" :placeholder="phonePlaceholder" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.facebook') }}</label>
@@ -868,6 +872,7 @@ import {
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { DEFAULT_TENANT_TIMEZONE, resolveTimezonePrefill } from '~/utils/bogotaDate'
+import { phonePlaceholderForCountry } from '~/utils/countryCallingCodes'
 
 definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -878,6 +883,7 @@ const accessStore = useAccessStore()
 const isStarterPlan = computed(() => accessStore.planSlug === 'starter')
 const tenantsStore = useTenantsStore()
 const { profile: financialProfile } = useTenantFinancialProfile()
+const { formatCurrency: formatTenantCurrency, currencyCode } = useFormatters()
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -910,7 +916,7 @@ const editForm = reactive({
   phone_number: '',
   email: '',
   address: '',
-  country: 'Colombia',
+  country: '',
   city: '',
   city_slug: '',
   neighborhood: '',
@@ -1148,24 +1154,39 @@ const hasSocialMedia = computed(() => {
   return sm && Object.values(sm).some(v => !!v)
 })
 
+const tenantCountryCode = computed(() =>
+  String(financialProfile.value?.country_code || '').trim().toUpperCase(),
+)
+const isColombiaTenant = computed(() => tenantCountryCode.value === 'CO')
+const phonePlaceholder = computed(() => phonePlaceholderForCountry(tenantCountryCode.value))
+
+const regionDisplayName = (code: string) => {
+  if (!code) return ''
+  try {
+    return new Intl.DisplayNames([locale.value], { type: 'region' }).of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
+const resolveCountryLabel = (stored?: string | null) => {
+  const name = String(stored || '').trim()
+  if (name) return name
+  const code = tenantCountryCode.value
+  return code ? (regionDisplayName(code) || code) : ''
+}
+
 // Both formatters normalize the input to a number first because the API
 // serializes Decimal fields (e.g. min_order_amount) as JSON strings like
 // "0.00" — JS coerces strings in arithmetic but a string like "0.00" is
 // truthy, so `if (!value)` falsely fell through and the literal "0.00"
 // ended up in the template (warocol.com#626).
 const formatCurrency = (value: number | string | null | undefined) => {
-  const n = Number(value) || 0
-  if (!n) return '$0'
-  return new Intl.NumberFormat(toNumberLocaleTag(locale.value), { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+  return formatTenantCurrency(Number(value) || 0)
 }
 
 const formatCurrencyCompact = (value: number | string | null | undefined) => {
-  const n = Number(value) || 0
-  if (!n) return '$0'
-  if (n >= 1000) {
-    return `$${(n / 1000).toFixed(0)}k`
-  }
-  return `$${n}`
+  return formatTenantCurrency(Number(value) || 0, { notation: 'compact' })
 }
 
 const formatOnlineOrderMaxAmount = (value: number | string | null | undefined) => {
@@ -1206,7 +1227,7 @@ const loadOpsForm = () => {
   editForm.phone_number = bp?.phone_number || ''
   editForm.email = bp?.email || ''
   editForm.address = bp?.address || ''
-  editForm.country = bp?.country || 'Colombia'
+  editForm.country = resolveCountryLabel(bp?.country)
   editForm.city = bp?.city || ''
   editForm.city_slug = bp?.city_slug || ''
   editForm.neighborhood = bp?.neighborhood || ''
@@ -1258,6 +1279,9 @@ watch(
   () => financialProfile.value?.country_code,
   (countryCode) => {
     if (!isEditingOps.value || !countryCode) return
+    if (!editForm.country) {
+      editForm.country = resolveCountryLabel(businessProfile.value?.country)
+    }
     if (editForm.timezone !== DEFAULT_TENANT_TIMEZONE) return
     editForm.timezone = resolveTimezonePrefill({
       storedTimezone: businessProfile.value?.timezone,
