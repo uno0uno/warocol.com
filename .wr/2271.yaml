@@ -1,0 +1,44 @@
+issue: 2271
+title: "feat(negocio): editable storefront slug + opaque uniqueness on register"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2271-editable-storefront-slug
+
+paths:
+  - pages/negocio.vue
+  - components/Auth/RegistrationForm.vue
+  - utils/businessIdentityError.ts
+  - utils/businessIdentityError.test.ts
+  - i18n/locales/es/shell.json
+  - i18n/locales/en/shell.json
+  - .wr/2271.yaml
+
+ac:
+  - "/negocio shows/edits public slug with /{slug} preview"
+  - "Save uniqueness via API; opaque choose-another on conflict (no hints)"
+  - "Registration maps BUSINESS_IDENTITY_UNAVAILABLE (and leaky slug-taken) to opaque copy"
+  - "Copy states rename does not keep old URL (no automatic redirect)"
+  - "i18n es/en for labels + opaque errors"
+
+out_of_scope:
+  - Unlocking country selector
+  - API alias migration / opaque tenant_config messages (companion #832)
+  - Analytics for slug hits
+
+hints:
+  entry: "pages/negocio.vue saveBrandChanges + RegistrationForm verifyCode"
+  pattern: "utils/authLoginErrors.ts opaque mapping; PATCH /api/api/tenant/public-profile slug"
+  tests: "bun test utils/businessIdentityError.test.ts"
+  companion: "api-warolabs#832 / PR #833"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Coordinate merge with API #833; human QA on /negocio slug conflict"

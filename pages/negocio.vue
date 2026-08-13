@@ -47,7 +47,7 @@
               </button>
               <button
                 @click="saveBrandChanges"
-                :disabled="isSaving || !editForm.display_name.trim()"
+                :disabled="isSaving || !editForm.display_name.trim() || !normalizedEditSlug"
                 class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
               >
                 <CheckIcon class="w-3.5 h-3.5" />
@@ -118,6 +118,30 @@
                 rows="2"
                 :placeholder="t('negocio.descriptionPlaceholder')"
               />
+            </div>
+            <div>
+              <label for="negocio-storefront-slug" class="block text-xs font-medium text-text-secondary mb-1">
+                {{ t('negocio.storefrontSlug') }}
+              </label>
+              <div class="flex items-center gap-0 min-h-[44px] rounded-lg border border-border bg-surface-secondary overflow-hidden">
+                <span class="ps-3 text-sm font-mono text-text-secondary whitespace-nowrap select-none">/</span>
+                <input
+                  id="negocio-storefront-slug"
+                  v-model="editForm.slug"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  class="input-base flex-1 min-w-0 border-0 bg-transparent px-1 py-2 text-sm font-mono shadow-none focus:ring-0"
+                  :placeholder="t('negocio.storefrontSlugPlaceholder')"
+                  :aria-describedby="'negocio-storefront-slug-hint'"
+                  @blur="editForm.slug = normalizeStorefrontSlug(editForm.slug)"
+                />
+              </div>
+              <p id="negocio-storefront-slug-hint" class="mt-1 text-xs text-text-secondary leading-snug">
+                {{ t('negocio.storefrontSlugHint') }}
+                <span class="font-mono text-text-primary">{{ slugPreviewPath }}</span>
+                {{ t('negocio.storefrontSlugNoRedirect') }}
+              </p>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -232,7 +256,7 @@
 
       <!-- ══════ PUBLIC LINK CARD ══════ -->
       <div
-        v-if="publicUrl"
+        v-if="publicUrl || isEditingBrand"
         class="bg-surface border-2 border-border rounded-xl p-4 sm:p-5"
       >
         <div class="flex items-center gap-2 mb-2">
@@ -248,14 +272,14 @@
           <div class="flex items-center px-3 py-2 bg-surface-secondary border border-border rounded-lg sm:flex-1 min-w-0 min-h-[44px]">
             <span
               class="text-sm font-mono text-text-primary truncate select-all"
-              :title="publicUrl"
-            >{{ publicUrl }}</span>
+              :title="publicUrlPreview || publicUrl"
+            >{{ publicUrlPreview || publicUrl || slugPreviewPath }}</span>
           </div>
           <div class="flex items-center gap-2">
             <button
               type="button"
               @click="copyPublicLink"
-              :disabled="isCopyingLink"
+              :disabled="isCopyingLink || !publicUrl"
               :aria-label="t('negocio.copyPublicLinkAria', { url: publicUrl })"
               class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -265,7 +289,7 @@
             <button
               type="button"
               @click="sharePublicLink"
-              :disabled="isSharingLink"
+              :disabled="isSharingLink || !publicUrl"
               :aria-label="t('negocio.sharePublicLinkAria')"
               class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-surface-secondary text-text-primary border border-border rounded-lg hover:bg-surface-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -820,6 +844,10 @@ import {
   resolveCityFromSearchTerm,
   formatApiValidationError,
 } from '~/composables/useCityCatalog'
+import {
+  normalizeStorefrontSlug,
+  resolveProfileSaveErrorMessage,
+} from '~/utils/businessIdentityError'
 import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
 import { usePOSStore } from '~/stores/usePOSStore'
 import {
@@ -876,6 +904,7 @@ const isSaving = ref(false)
 const editForm = reactive({
   display_name: '',
   description: '',
+  slug: '',
   logo_url: '',
   banner_url: '',
   phone_number: '',
@@ -1167,6 +1196,7 @@ const loadBrandForm = () => {
   const bp = businessProfile.value
   editForm.display_name = bp?.display_name || ''
   editForm.description = bp?.description || ''
+  editForm.slug = bp?.slug || currentTenant.value?.slug || ''
   editForm.logo_url = bp?.logo_url || ''
   editForm.banner_url = bp?.banner_url || ''
 }
@@ -1241,6 +1271,9 @@ const cancelEdit = () => {
 }
 
 const saveBrandChanges = async () => {
+  const slug = normalizeStorefrontSlug(editForm.slug)
+  editForm.slug = slug
+  if (!editForm.display_name.trim() || !slug) return
   isSaving.value = true
   try {
     await $fetch('/api/api/tenant/public-profile', {
@@ -1248,6 +1281,7 @@ const saveBrandChanges = async () => {
       body: {
         display_name: editForm.display_name,
         description: editForm.description || null,
+        slug,
         logo_url: editForm.logo_url || null,
         banner_url: editForm.banner_url || null,
       },
@@ -1255,9 +1289,14 @@ const saveBrandChanges = async () => {
     await refreshBusinessProfileCaches()
     editScope.value = null
     toast.success(t('negocio.profileSaved'), { title: t('negocio.saved') })
-  } catch (error: any) {
+  } catch (error: unknown) {
     toast.error(
-      formatApiValidationError(error.data?.detail, t('negocio.saveError')),
+      resolveProfileSaveErrorMessage(
+        error,
+        t('negocio.businessIdentityUnavailable'),
+        t('negocio.saveError'),
+        formatApiValidationError,
+      ),
       { title: t('negocio.error') },
     )
   } finally {
@@ -1312,10 +1351,34 @@ const saveOpsChanges = async () => {
 
 // ─── Public link (URL + copy + share) ───
 const runtimeConfig = useRuntimeConfig()
-const publicUrl = computed(() => {
+const normalizedEditSlug = computed(() => normalizeStorefrontSlug(editForm.slug))
+const savedStorefrontSlug = computed(
+  () => businessProfile.value?.slug || currentTenant.value?.slug || '',
+)
+const slugPreviewPath = computed(() => {
+  const slug = isEditingBrand.value
+    ? normalizedEditSlug.value
+    : savedStorefrontSlug.value
+  return slug ? `/${slug}` : '/…'
+})
+
+const publicUrlPreview = computed(() => {
   // Prefer the public profile slug (storefront URL slug, e.g. "sandwichito-monroy"),
   // not the internal tenant slug (e.g. "warocolombia"). They can differ.
-  const slug = businessProfile.value?.slug || currentTenant.value?.slug
+  // While editing brand, preview the draft slug so the public-link card stays in sync.
+  const slug = isEditingBrand.value
+    ? normalizedEditSlug.value
+    : savedStorefrontSlug.value
+  if (!slug) return ''
+  const base = (typeof window !== 'undefined' && window.location?.origin)
+    || (runtimeConfig.public.siteUrl as string | undefined)
+    || 'https://warocol.com'
+  return `${base.replace(/\/$/, '')}/${slug}`
+})
+
+/** Copy/share always use the last saved slug, not an unsaved draft. */
+const publicUrl = computed(() => {
+  const slug = savedStorefrontSlug.value
   if (!slug) return ''
   // Use the live origin so the URL matches the current environment
   // (localhost in dev, dev.warocol.com on staging, warocol.com in prod).
