@@ -5,7 +5,7 @@
   >
     <summary
       class="cursor-pointer list-none min-h-[40px] px-3 py-2.5 flex items-center justify-between gap-3
-             text-sm font-medium text-text-primary select-none
+             text-sm font-semibold text-text-primary select-none
              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-lg"
     >
       <span class="min-w-0 flex items-center gap-2">

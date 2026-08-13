@@ -37,6 +37,12 @@
       "incompatibleUnitError": "Select a compatible unit for each warehouse item.",
       "rowsPerPage": "Rows per page"
     },
+    "bulkImportHelpSections": {
+      "overview": "Overview",
+      "example": "Example",
+      "units": "Units",
+      "columns": "Columns"
+    },
     "productos": {
       "editMode": "Edit mode",
       "viewCatalog": "View catalog",
@@ -279,7 +285,7 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Each row is a product: name, price, and category. To finish an incomplete warehouse resale, mark that row in the template to complete the pending resale.",
-      "bulkImportHelpExample": "Example: Americano coffee · 5000 · Hot drinks\nFinish resale: Coke 350ml · 3500 · Drinks"
+      "bulkImportHelpExample": "Americano coffee · 5000 · Hot drinks\nFinish resale: Coke 350ml · 3500 · Drinks"
     },
     "recetas": {
       "searchPlaceholder": "Search recipes...",
@@ -364,8 +370,8 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Repeat the same recipe name on each ingredient line. Ingredients must already exist in the warehouse with a unit WARO understands.",
-      "bulkImportHelpExample": "Example (same recipe on 2 lines):\nTomato sauce · Tomato · 1 · kg\nTomato sauce · Onion · 0.2 · kg",
-      "bulkImportHelpUnits": "In unit use the warehouse item’s base unit (gr, kg, ml, lt, und) or a purchase unit already configured on that item (e.g. libra, arroba, bulto_25kg, botella, galon, hr). If that purchase unit is missing, the row fails."
+      "bulkImportHelpExample": "Same recipe on 2 lines:\nTomato sauce · Tomato · 1 · kg\nTomato sauce · Onion · 0.2 · kg",
+      "bulkImportHelpUnits": "Item base unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr\nIf that purchase unit is missing on the item, the row fails."
     },
     "modificadores": {
       "searchPlaceholder": "Search group or product...",
@@ -515,8 +521,8 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Repeat the group name on each option row. This import does not attach products; do that later on the group.",
-      "bulkImportHelpExample": "Example (same group on 2 lines):\nCooking point · Medium · 0\nCooking point · Well done · 0",
-      "bulkImportHelpUnits": "If the option deducts warehouse stock, in ingredient_unit use the item’s base unit (gr, kg, ml, lt, und) or a purchase unit already configured on that item (e.g. libra, arroba, bulto_25kg, botella, galon, hr)."
+      "bulkImportHelpExample": "Same group on 2 lines:\nCooking point · Medium · 0\nCooking point · Well done · 0",
+      "bulkImportHelpUnits": "If the option deducts warehouse stock, in ingredient_unit use:\nBase unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr"
     },
     "categorias": {
       "searchPlaceholder": "Search category...",

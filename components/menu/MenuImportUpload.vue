@@ -86,17 +86,39 @@
               </a>
             </div>
             <UiAccordionSection :title="t(i18nHelpTitle)">
-              <div class="space-y-1.5 text-xs text-text-secondary leading-relaxed">
-                <p>{{ t(i18nHelpBody) }}</p>
-                <p class="whitespace-pre-line text-text-tertiary">
-                  {{ t(i18nHelpExample) }}
-                </p>
-                <p v-if="showUnitsHelp" class="text-text-tertiary">
-                  {{ t(i18nHelpUnits) }}
-                </p>
-                <p class="text-text-tertiary">
-                  {{ t(i18nHelpColumnsNote) }}
-                </p>
+              <div class="space-y-3">
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.overview') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpBody) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.example') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpExample) }}
+                  </p>
+                </div>
+                <div v-if="showUnitsHelp">
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.units') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpUnits) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.columns') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpColumnsNote) }}
+                  </p>
+                </div>
               </div>
             </UiAccordionSection>
           </section>
