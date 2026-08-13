@@ -30,6 +30,8 @@ describe('tenant date helpers', () => {
     assert.equal(defaultTimezoneForCountry('pa'), 'America/Panama')
     assert.equal(defaultTimezoneForCountry('US'), 'America/New_York')
     assert.equal(defaultTimezoneForCountry('CA'), 'America/Toronto')
+    assert.equal(defaultTimezoneForCountry('AR'), 'America/Argentina/Buenos_Aires')
+    assert.equal(defaultTimezoneForCountry('MX'), 'America/Mexico_City')
     assert.equal(defaultTimezoneForCountry('xx'), DEFAULT_TENANT_TIMEZONE)
   })
 
