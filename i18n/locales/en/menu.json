@@ -364,7 +364,8 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Repeat the same recipe name on each ingredient line. Ingredients must already exist in the warehouse with a unit WARO understands.",
-      "bulkImportHelpExample": "Example (same recipe on 2 lines):\nTomato sauce · Tomato · 1 · kg\nTomato sauce · Onion · 0.2 · kg"
+      "bulkImportHelpExample": "Example (same recipe on 2 lines):\nTomato sauce · Tomato · 1 · kg\nTomato sauce · Onion · 0.2 · kg",
+      "bulkImportHelpUnits": "Units WARO understands: weight gr, kg, libra, arroba, bulto_25kg; volume ml, lt, botella, galon; count und; time hr. Use a unit compatible with the warehouse item (or its purchase units)."
     },
     "modificadores": {
       "searchPlaceholder": "Search group or product...",
@@ -514,7 +515,8 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Repeat the group name on each option row. This import does not attach products; do that later on the group.",
-      "bulkImportHelpExample": "Example (same group on 2 lines):\nCooking point · Medium · 0\nCooking point · Well done · 0"
+      "bulkImportHelpExample": "Example (same group on 2 lines):\nCooking point · Medium · 0\nCooking point · Well done · 0",
+      "bulkImportHelpUnits": "Units WARO understands: weight gr, kg, libra, arroba, bulto_25kg; volume ml, lt, botella, galon; count und; time hr. Use a unit compatible with the warehouse item (or its purchase units)."
     },
     "categorias": {
       "searchPlaceholder": "Search category...",

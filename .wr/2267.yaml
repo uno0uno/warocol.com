@@ -1,0 +1,45 @@
+# Compact plan for wr-fast. Keep <=80 lines.
+issue: 2267
+title: "fix(ui): reusable accordion for carga masiva help + history"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2267-ui-accordion-menu-import
+base: wr-2265-menu-import-ux-copy
+
+paths:
+  - components/ui/UiAccordionSection.vue
+  - components/menu/MenuImportUpload.vue
+  - pages/finanzas/arqueo/index.vue
+  - i18n/locales/es/menu.json
+  - i18n/locales/en/menu.json
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+  - .wr/2267.yaml
+
+ac:
+  - UiAccordionSection (chevron, tokens, closed by default, ~40px hit)
+  - MenuImportUpload help + history use it; no raw details
+  - Help includes WARO units list for warehouse/recipes/modifiers
+  - Optional arqueo hub migrated to same component
+
+out_of_scope:
+  - Recipe CSV auto-create bodega
+  - Nuxt UI UAccordion
+  - App-wide accordion migration
+
+hints:
+  entry: "components/ui/UiAccordionSection.vue"
+  pattern: "pages/finanzas/arqueo/index.vue details+chevron"
+  tests: "rg no <details in MenuImportUpload; python3 json load"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "merge after #2266"

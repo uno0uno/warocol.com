@@ -801,7 +801,8 @@
       "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Each row is a warehouse item. For resale you can leave price/category empty and finish later in Products.",
-      "bulkImportHelpExample": "Example: Tomato · unit kg · cost 4000\nIncomplete resale: Coke 350ml · no price yet"
+      "bulkImportHelpExample": "Example: Tomato · unit kg · cost 4000\nIncomplete resale: Coke 350ml · no price yet",
+      "bulkImportHelpUnits": "Units WARO understands: weight gr, kg, libra, arroba, bulto_25kg; volume ml, lt, botella, galon; count und; time hr. Use a unit compatible with the warehouse item (or its purchase units)."
     },
     "calidad": {
       "qualityScore": "Data quality score",
