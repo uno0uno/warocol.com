@@ -324,6 +324,7 @@ import {
 } from '~/utils/publicCta'
 import { suggestCountryFromLocale } from '~/utils/countryLocale'
 import { trackOnboardingEvent } from '~/utils/onboardingAnalytics'
+import { isBusinessIdentityConflict } from '~/utils/businessIdentityError'
 import {
   countryNeedsJurisdiction,
   normalizeJurisdictionOptions,
@@ -548,7 +549,14 @@ const sendRegistration = async (isResend: boolean) => {
     toast.success(t('auth.codeSentToast'))
     await nextTick()
     focusInput('registration-code')
-  } catch {
+  } catch (err) {
+    if (isBusinessIdentityConflict(err)) {
+      fieldErrors.businessName = t('auth.businessIdentityUnavailable')
+      error.value = t('auth.businessIdentityUnavailable')
+      await nextTick()
+      focusInput('registration-business-name')
+      return
+    }
     error.value = t('auth.registrationSendError')
   } finally {
     sending.value = false
@@ -600,7 +608,17 @@ const verifyCode = async () => {
       return
     }
     throw new Error('session_not_created')
-  } catch {
+  } catch (err) {
+    if (isBusinessIdentityConflict(err)) {
+      phase.value = 'form'
+      verificationCode.value = ''
+      fieldErrors.businessName = t('auth.businessIdentityUnavailable')
+      error.value = t('auth.businessIdentityUnavailable')
+      persistDraft()
+      await nextTick()
+      focusInput('registration-business-name')
+      return
+    }
     error.value = t('auth.invalidCode')
     nextTick(() => focusInput('registration-code'))
   } finally {
