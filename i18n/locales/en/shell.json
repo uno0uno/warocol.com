@@ -188,6 +188,7 @@
     "colombiaOnly": "Waro currently operates only in Colombia.",
     "city": "City",
     "cityPlaceholder": "Search city or municipality...",
+    "cityTextPlaceholder": "City",
     "clearCity": "Clear city",
     "cityDirectoryHelp": "Defines which directory lists your business (warocol.com/city).",
     "cityCatalogError": "We could not load the catalog. You can continue editing the rest of your profile and try again later.",

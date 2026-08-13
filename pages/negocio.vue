@@ -469,8 +469,9 @@
             <div>
               <label for="negocio-city" class="block text-xs font-medium text-text-secondary mb-1">
                 {{ t('negocio.city') }}
-                <span class="text-amber-600" aria-hidden="true">*</span>
+                <span v-if="isColombiaTenant" class="text-amber-600" aria-hidden="true">*</span>
               </label>
+              <template v-if="isColombiaTenant">
               <div ref="citySearchAnchorRef" class="relative">
                 <input
                   id="negocio-city"
@@ -557,6 +558,15 @@
               >
                 {{ t('negocio.cityCatalogError') }}
               </p>
+              </template>
+              <input
+                v-else
+                id="negocio-city"
+                v-model="editForm.city"
+                type="text"
+                class="input-base w-full px-3 py-2 text-sm"
+                :placeholder="t('negocio.cityTextPlaceholder')"
+              />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('negocio.phone') }}</label>
@@ -884,6 +894,10 @@ const isStarterPlan = computed(() => accessStore.planSlug === 'starter')
 const tenantsStore = useTenantsStore()
 const { profile: financialProfile } = useTenantFinancialProfile()
 const { formatCurrency: formatTenantCurrency, currencyCode } = useFormatters()
+const isColombiaTenant = computed(() => {
+  const code = String(financialProfile.value?.country_code || '').trim().toUpperCase()
+  return !code || code === 'CO'
+})
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -1078,7 +1092,9 @@ const publicCityPath = computed(() => {
 })
 
 const directoryWarning = computed(() => {
-  return businessProfile.value?.is_active && !businessProfile.value?.city_slug
+  return isColombiaTenant.value
+    && businessProfile.value?.is_active
+    && !businessProfile.value?.city_slug
 })
 
 // ─── Computed visuals ───
@@ -1355,7 +1371,7 @@ const saveOpsChanges = async () => {
         email: editForm.email || null,
         address: editForm.address || null,
         city: editForm.city || null,
-        city_slug: editForm.city_slug || null,
+        city_slug: isColombiaTenant.value ? (editForm.city_slug || null) : null,
         neighborhood: editForm.neighborhood || null,
         timezone: normalizeTimezone(editForm.timezone),
         accepts_online_orders: businessProfile.value?.accepts_online_orders ?? editForm.accepts_online_orders,

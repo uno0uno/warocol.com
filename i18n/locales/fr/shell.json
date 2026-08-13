@@ -178,6 +178,7 @@
     "colombiaOnly": "Pour l'instant, WaRo n'opère qu'en Colombie.",
     "city": "Ville",
     "cityPlaceholder": "Rechercher une ville ou une municipalité...",
+    "cityTextPlaceholder": "Ville",
     "clearCity": "Effacer la ville",
     "cityDirectoryHelp": "Définit dans quel annuaire votre établissement apparaît (warocol.com/ville).",
     "cityCatalogError": "Nous n'avons pas pu charger le catalogue. Vous pouvez continuer à modifier le reste de votre profil et réessayer plus tard.",
