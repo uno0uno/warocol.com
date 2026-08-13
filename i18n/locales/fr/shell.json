@@ -37,7 +37,7 @@
     "enableAlerts": "Activer les alertes sonores",
     "noNotifications": "Aucune nouvelle notification",
     "noTenant": "Aucun tenant",
-    "selectTenant": "Sélectionner un tenant",
+    "selectTenant": "Sélectionner un établissement",
     "loadingTenants": "Chargement des tenants...",
     "noTenants": "Aucun tenant disponible",
     "createTenant": "Créer",

@@ -37,7 +37,7 @@
     "enableAlerts": "启用警报音",
     "noNotifications": "无新通知",
     "noTenant": "无租户",
-    "selectTenant": "选择租户",
+    "selectTenant": "选择商家",
     "loadingTenants": "正在加载租户...",
     "noTenants": "无可用租户",
     "createTenant": "创建",

@@ -180,11 +180,10 @@
     </UiBottomSheetModal>
 
     <!-- Tenant Selector Modal -->
-    <UiBottomSheetModal v-model="showTenantModal" :title="t('shell.settings')" max-height="lg">
+    <UiBottomSheetModal v-model="showTenantModal" :title="t('shell.selectTenant')" max-height="lg">
       <div class="p-4 space-y-6">
         <!-- Tenant Selector -->
         <div>
-          <label class="text-sm text-text-secondary font-medium mb-2 block">{{ t('shell.selectTenant') }}</label>
           <div class="space-y-2">
             <div v-if="isLoadingTenants" class="text-sm text-text-secondary py-2">
               {{ t('shell.loadingTenants') }}
