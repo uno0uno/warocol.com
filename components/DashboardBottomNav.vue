@@ -189,32 +189,42 @@
             <div v-if="isLoadingTenants" class="text-sm text-text-secondary py-2">
               {{ t('shell.loadingTenants') }}
             </div>
-            <div v-else-if="tenants.length === 0" class="text-sm text-text-secondary py-2">
-              {{ t('shell.noTenants') }}
-            </div>
-            <button
-              v-else
-              v-for="tenant in tenants"
-              :key="tenant.id"
-              @click="selectTenant(tenant)"
-              :disabled="isLoadingTenants"
-              class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              :class="selectedTenant?.id === tenant.id
-                ? 'border-primary bg-icon-button-primary-bg'
-                : 'border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg'"
-            >
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'"
-                ></div>
-                <span class="font-medium text-text-primary">{{ tenant.name }}</span>
+            <template v-else>
+              <div v-if="tenants.length === 0" class="text-sm text-text-secondary py-2">
+                {{ t('shell.noTenants') }}
               </div>
-              <CheckCircleIcon
-                v-if="selectedTenant?.id === tenant.id"
-                class="w-5 h-5 text-primary"
-              />
-            </button>
+              <button
+                v-for="tenant in tenants"
+                :key="tenant.id"
+                @click="selectTenant(tenant)"
+                :disabled="isLoadingTenants"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="selectedTenant?.id === tenant.id
+                  ? 'border-primary bg-icon-button-primary-bg'
+                  : 'border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg'"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-3 h-3 rounded-full"
+                    :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'"
+                  ></div>
+                  <span class="font-medium text-text-primary">{{ tenant.name }}</span>
+                </div>
+                <CheckCircleIcon
+                  v-if="selectedTenant?.id === tenant.id"
+                  class="w-5 h-5 text-primary"
+                />
+              </button>
+              <button
+                v-if="isSuperuser"
+                type="button"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-dashed border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg transition-colors"
+                @click="openCreatePanel"
+              >
+                <PlusIcon class="w-5 h-5 text-primary" />
+                <span class="font-medium text-text-primary">{{ t('shell.createTenant') }}</span>
+              </button>
+            </template>
           </div>
         </div>
 
@@ -238,6 +248,8 @@
         </div>
       </div>
     </UiBottomSheetModal>
+
+    <CreateTenantPanel v-model="showCreatePanel" />
   </div>
 </template>
 
@@ -250,6 +262,7 @@ import {
   SpeakerXMarkIcon,
   CheckCircleIcon,
   Cog6ToothIcon,
+  PlusIcon,
   CreditCardIcon,
   DocumentTextIcon,
   ShoppingBagIcon,
@@ -302,6 +315,7 @@ const isLoading = computed(() => isRefreshing.value || isProgressiveLoading.valu
 
 // Modal state
 const showTenantModal = ref(false)
+const showCreatePanel = ref(false)
 const showMenuModal = ref(false)
 const showNotificationsModal = ref(false)
 
@@ -373,6 +387,11 @@ const isSuperuser = computed(() =>
 const selectTenant = async (tenant: Tenant) => {
   showTenantModal.value = false  // close immediately, don't wait
   await selectTenantWithBillingGuard(tenant)
+}
+
+const openCreatePanel = () => {
+  showTenantModal.value = false
+  showCreatePanel.value = true
 }
 </script>
 

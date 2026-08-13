@@ -33,20 +33,30 @@
           </div>
           <div class="overflow-y-auto px-3 pb-4 space-y-0.5">
             <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-form-control-help text-center">Cargando...</div>
-            <div v-else-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-form-control-help text-center">Sin resultados</div>
-            <button
-              v-else
-              v-for="tenant in filteredTenants"
-              :key="tenant.id"
-              @click="selectTenant(tenant)"
-              :disabled="isLoadingTenants"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-start disabled:opacity-50"
-              :class="selectedTenant?.id === tenant.id ? 'bg-shell-notification-accent-bg text-shell-notification-text font-medium' : 'text-shell-notification-muted-text hover:bg-shell-notification-hover-bg'"
-            >
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-shell-account-indicator-bg' : 'bg-badge-neutral-bg'" />
-              <span class="truncate">{{ tenant.name }}</span>
-              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ms-auto text-shell-account-icon-text flex-shrink-0" />
-            </button>
+            <template v-else>
+              <div v-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-form-control-help text-center">Sin resultados</div>
+              <button
+                v-for="tenant in filteredTenants"
+                :key="tenant.id"
+                @click="selectTenant(tenant)"
+                :disabled="isLoadingTenants"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-start disabled:opacity-50"
+                :class="selectedTenant?.id === tenant.id ? 'bg-shell-notification-accent-bg text-shell-notification-text font-medium' : 'text-shell-notification-muted-text hover:bg-shell-notification-hover-bg'"
+              >
+                <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-shell-account-indicator-bg' : 'bg-badge-neutral-bg'" />
+                <span class="truncate">{{ tenant.name }}</span>
+                <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ms-auto text-shell-account-icon-text flex-shrink-0" />
+              </button>
+              <button
+                v-if="isSuperuser"
+                type="button"
+                class="w-full flex items-center gap-3 px-3 py-2.5 mt-1 rounded-lg text-sm font-medium text-shell-notification-text hover:bg-shell-notification-hover-bg transition-colors text-start"
+                @click="openCreatePanel"
+              >
+                <PlusIcon class="w-4 h-4 flex-shrink-0" />
+                <span>{{ t('shell.createTenant') }}</span>
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -81,16 +91,19 @@
       </div>
     </NuxtLink>
   </div>
+
+  <CreateTenantPanel v-model="showCreatePanel" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { Tenant } from '~/stores/tenants'
 import { useAuthStore } from '~/stores/auth'
 
 const showTenantModal = ref(false)
+const showCreatePanel = ref(false)
 const tenantSearch = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
@@ -107,6 +120,11 @@ const openTenantModal = () => {
 }
 const closeTenantModal = () => { showTenantModal.value = false }
 
+const openCreatePanel = () => {
+  closeTenantModal()
+  showCreatePanel.value = true
+}
+
 const { t } = useI18n()
 const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
@@ -115,6 +133,10 @@ const isLoadingTenants = computed(() => tenantsStore.isLoading)
 const { selectTenantWithBillingGuard } = useDashboardTenantSwitch()
 
 const authStore = useAuthStore()
+const isSuperuser = computed(() =>
+  authStore.displayUser?.role === 'superuser' ||
+  authStore.session?.user?.role === 'superuser'
+)
 const userName = computed(() => authStore.displayUser.name)
 const userAvatar = computed(() => authStore.displayUser.avatar)
 const userInitials = computed(() => {
