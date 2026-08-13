@@ -89,8 +89,8 @@
             </p>
           </div>
 
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div class="flex flex-col gap-1.5">
+          <div class="grid gap-4">
+            <div class="flex flex-col gap-1.5 min-w-0">
               <label :for="countryId" class="text-sm font-medium text-text-primary">
                 {{ t('onboarding.country') }} <span class="text-destructive">*</span>
               </label>
@@ -99,7 +99,7 @@
                 v-model="businessCountryCode"
                 required
                 :disabled="saving || optionsLoading"
-                :class="inputClass"
+                :class="selectClass"
                 :aria-invalid="Boolean(errors.businessCountryCode)"
                 @change="handleBusinessCountryChange"
               >
@@ -117,7 +117,7 @@
               </p>
             </div>
 
-            <div class="flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5 min-w-0">
               <label :for="currencyId" class="text-sm font-medium text-text-primary">
                 {{ t('onboarding.currency') }} <span class="text-destructive">*</span>
               </label>
@@ -126,7 +126,7 @@
                 v-model="baseCurrencyCode"
                 required
                 :disabled="saving || optionsLoading || !businessCountryCode"
-                :class="inputClass"
+                :class="selectClass"
                 :aria-invalid="Boolean(errors.baseCurrencyCode)"
                 @change="clearError('baseCurrencyCode')"
               >
@@ -151,7 +151,7 @@
               v-model="taxJurisdictionCode"
               required
               :disabled="saving || optionsLoading"
-              :class="inputClass"
+              :class="selectClass"
               :aria-invalid="Boolean(errors.taxJurisdictionCode)"
               :aria-describedby="errors.taxJurisdictionCode ? `${jurisdictionId}-error` : `${jurisdictionId}-hint`"
               @change="clearError('taxJurisdictionCode')"
@@ -252,6 +252,7 @@ const countryId = `create-tenant-country-${uid}`
 const currencyId = `create-tenant-currency-${uid}`
 const jurisdictionId = `create-tenant-jurisdiction-${uid}`
 const inputClass = 'input-base w-full min-h-11 px-4 py-2'
+const selectClass = `${inputClass} min-w-0 pe-10`
 
 const nameInput = ref<HTMLInputElement | null>(null)
 const businessName = ref('')
