@@ -178,6 +178,7 @@
     "colombiaOnly": "في الوقت الحالي، تعمل WaRo في كولومبيا فقط.",
     "city": "المدينة",
     "cityPlaceholder": "ابحث عن مدينة أو بلدية...",
+    "cityTextPlaceholder": "المدينة",
     "clearCity": "مسح المدينة",
     "cityDirectoryHelp": "يحدد الدليل الذي يظهر فيه عملك (warocol.com/city).",
     "cityCatalogError": "لم نتمكن من تحميل الكتالوج. يمكنك متابعة تعديل بقية الملف الشخصي والمحاولة مرة أخرى.",

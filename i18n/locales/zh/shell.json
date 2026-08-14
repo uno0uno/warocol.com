@@ -178,6 +178,7 @@
     "colombiaOnly": "目前 WaRo 仅在哥伦比亚运营。",
     "city": "城市",
     "cityPlaceholder": "搜索城市或市镇...",
+    "cityTextPlaceholder": "城市",
     "clearCity": "清除城市",
     "cityDirectoryHelp": "定义您的商家出现在哪个目录中 (warocol.com/city)。",
     "cityCatalogError": "无法加载目录。您可以继续编辑资料的其余部分，稍后再试。",

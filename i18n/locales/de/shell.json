@@ -178,6 +178,7 @@
     "colombiaOnly": "WARO ist derzeit nur in Kolumbien tätig.",
     "city": "Stadt",
     "cityPlaceholder": "Stadt oder Gemeinde suchen...",
+    "cityTextPlaceholder": "Stadt",
     "clearCity": "Stadt löschen",
     "cityDirectoryHelp": "Legt fest, in welchem Verzeichnis Ihr Geschäft erscheint (warocol.com/stadt).",
     "cityCatalogError": "Der Katalog konnte nicht geladen werden. Sie können den Rest Ihres Profils weiter bearbeiten und es später erneut versuchen.",
