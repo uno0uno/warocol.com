@@ -471,7 +471,7 @@
                 {{ t('negocio.city') }}
                 <span v-if="isColombiaTenant" class="text-amber-600" aria-hidden="true">*</span>
               </label>
-              <template v-if="isColombiaTenant">
+              <template v-if="hasCityCatalog">
               <div ref="citySearchAnchorRef" class="relative">
                 <input
                   id="negocio-city"
@@ -482,7 +482,7 @@
                   :aria-expanded="cityDropdownOpen"
                   :aria-controls="cityListboxId"
                   :aria-activedescendant="activeCityOptionId"
-                  :aria-describedby="cityHelpId"
+                  :aria-describedby="isColombiaTenant ? cityHelpId : undefined"
                   autocomplete="off"
                   class="input-base w-full px-3 py-2 ps-9 pe-10 text-sm"
                   :placeholder="t('negocio.cityPlaceholder')"
@@ -549,7 +549,7 @@
                   </li>
                 </ul>
               </Teleport>
-              <p :id="cityHelpId" class="text-[10px] text-text-tertiary mt-1">
+              <p v-if="isColombiaTenant" :id="cityHelpId" class="text-[10px] text-text-tertiary mt-1">
                 {{ t('negocio.cityDirectoryHelp') }}
               </p>
               <p
@@ -857,6 +857,7 @@ import {
   filterCityCatalog,
   resolveCityFromSearchTerm,
   formatApiValidationError,
+  hasCuratedCityCatalog,
 } from '~/composables/useCityCatalog'
 import {
   normalizeStorefrontSlug,
@@ -894,10 +895,11 @@ const isStarterPlan = computed(() => accessStore.planSlug === 'starter')
 const tenantsStore = useTenantsStore()
 const { profile: financialProfile } = useTenantFinancialProfile()
 const { formatCurrency: formatTenantCurrency, currencyCode } = useFormatters()
-const isColombiaTenant = computed(() => {
-  const code = String(financialProfile.value?.country_code || '').trim().toUpperCase()
-  return !code || code === 'CO'
-})
+const tenantCountryCode = computed(() =>
+  String(financialProfile.value?.country_code || '').trim().toUpperCase(),
+)
+const isColombiaTenant = computed(() => !tenantCountryCode.value || tenantCountryCode.value === 'CO')
+const hasCityCatalog = computed(() => hasCuratedCityCatalog(tenantCountryCode.value))
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -947,14 +949,33 @@ const editForm = reactive({
 const {
   cities: cityCatalog,
   fetchCatalog: ensureCityCatalog,
-  isLoading: cityCatalogLoading,
-  error: cityCatalogError,
-  hasLoaded: cityCatalogLoaded,
+  fetchCatalogForCountry,
+  extraCities,
+  extraLoading,
+  extraError,
+  extraLoaded,
+  isLoading: cityCatalogLoadingCo,
+  error: cityCatalogErrorCo,
+  hasLoaded: cityCatalogLoadedCo,
 } = useCityCatalog()
-// Make sure the selector has the full catalog (include_empty=true). The SSR
-// plugin already warmed this — this is a no-op on subsequent visits and only
-// hits the API on a fresh client load.
-onMounted(() => { ensureCityCatalog({ includeEmpty: true }) })
+
+const pickerCities = computed(() => (isColombiaTenant.value ? cityCatalog.value : extraCities.value))
+const cityCatalogLoading = computed(() => (isColombiaTenant.value ? cityCatalogLoadingCo.value : extraLoading.value))
+const cityCatalogError = computed(() => (isColombiaTenant.value ? cityCatalogErrorCo.value : extraError.value))
+const cityCatalogLoaded = computed(() => (isColombiaTenant.value ? cityCatalogLoadedCo.value : extraLoaded.value))
+
+watch(
+  () => [hasCityCatalog.value, isColombiaTenant.value, tenantCountryCode.value] as const,
+  () => {
+    if (!hasCityCatalog.value) return
+    if (isColombiaTenant.value) {
+      void ensureCityCatalog({ includeEmpty: true })
+      return
+    }
+    void fetchCatalogForCountry(tenantCountryCode.value, { includeEmpty: true })
+  },
+  { immediate: true },
+)
 
 const CITY_RESULT_LIMIT = 40
 const cityListboxId = 'negocio-city-results'
@@ -967,11 +988,11 @@ const citySearchActiveIndex = ref(0)
 const cityDepartment = (city: PublicCity) => cityDepartmentLabel(city)
 
 const selectedCity = computed(() =>
-  cityCatalog.value.find((c) => c.city_slug === editForm.city_slug) ?? null,
+  pickerCities.value.find((c) => c.city_slug === editForm.city_slug) ?? null,
 )
 
 const visibleCityResults = computed(() =>
-  filterCityCatalog(cityCatalog.value, citySearchTerm.value, CITY_RESULT_LIMIT),
+  filterCityCatalog(pickerCities.value, citySearchTerm.value, CITY_RESULT_LIMIT),
 )
 
 const cityDropdownOpen = computed(() =>
@@ -993,7 +1014,7 @@ const { panelStyle: cityPanelStyle, updatePlacement: updateCitySearchPlacement }
 const cityEmptyMessage = computed(() => {
   if (cityCatalogLoading.value) return t('negocio.loadingCities')
   if (cityCatalogError.value) return t('negocio.cityCatalogUnavailable')
-  if (!cityCatalog.value.length && cityCatalogLoaded.value) return t('negocio.noCities')
+  if (!pickerCities.value.length && cityCatalogLoaded.value) return t('negocio.noCities')
   return t('negocio.noResults')
 })
 
@@ -1010,7 +1031,7 @@ const syncCitySearchTerm = () => {
 
 const onCityChange = (slug: string) => {
   editForm.city_slug = slug
-  const entry = cityCatalog.value.find((c) => c.city_slug === slug)
+  const entry = pickerCities.value.find((c) => c.city_slug === slug)
   editForm.city = entry?.city || ''
   syncCitySearchTerm()
 }
@@ -1030,7 +1051,7 @@ const clearCitySelection = () => {
 }
 
 const onCitySearchInput = () => {
-  const resolved = resolveCityFromSearchTerm(cityCatalog.value, citySearchTerm.value)
+  const resolved = resolveCityFromSearchTerm(pickerCities.value, citySearchTerm.value)
   if (resolved) {
     editForm.city_slug = resolved.city_slug
     editForm.city = resolved.city
@@ -1052,7 +1073,7 @@ const openCitySearch = () => {
 
 const closeCitySearch = () => {
   if (!editForm.city_slug && citySearchTerm.value.trim()) {
-    const match = resolveCityFromSearchTerm(cityCatalog.value, citySearchTerm.value)
+    const match = resolveCityFromSearchTerm(pickerCities.value, citySearchTerm.value)
     if (match) onCityChange(match.city_slug)
   }
   citySearchOpen.value = false
@@ -1179,10 +1200,6 @@ const hasSocialMedia = computed(() => {
   return sm && Object.values(sm).some(v => !!v)
 })
 
-const tenantCountryCode = computed(() =>
-  String(financialProfile.value?.country_code || '').trim().toUpperCase(),
-)
-const isColombiaTenant = computed(() => tenantCountryCode.value === 'CO')
 const phonePlaceholder = computed(() => phonePlaceholderForCountry(tenantCountryCode.value))
 
 const regionDisplayName = (code: string) => {
@@ -1371,7 +1388,7 @@ const saveOpsChanges = async () => {
         email: editForm.email || null,
         address: editForm.address || null,
         city: editForm.city || null,
-        city_slug: isColombiaTenant.value ? (editForm.city_slug || null) : null,
+        city_slug: hasCityCatalog.value ? (editForm.city_slug || null) : null,
         neighborhood: editForm.neighborhood || null,
         timezone: normalizeTimezone(editForm.timezone),
         accepts_online_orders: businessProfile.value?.accepts_online_orders ?? editForm.accepts_online_orders,

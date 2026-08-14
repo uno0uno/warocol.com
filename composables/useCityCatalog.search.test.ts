@@ -4,6 +4,7 @@ import {
   filterCityCatalog,
   resolveCityFromSearchTerm,
   formatApiValidationError,
+  hasCuratedCityCatalog,
   type PublicCity,
 } from './useCityCatalog.ts'
 
@@ -42,5 +43,14 @@ describe('city catalog search helpers', () => {
       'fallback',
     )
     assert.match(message, /read-only/)
+  })
+
+  it('treats CO AR MX US as curated catalogs and others as free-text', () => {
+    assert.equal(hasCuratedCityCatalog('CO'), true)
+    assert.equal(hasCuratedCityCatalog('AR'), true)
+    assert.equal(hasCuratedCityCatalog('MX'), true)
+    assert.equal(hasCuratedCityCatalog('US'), true)
+    assert.equal(hasCuratedCityCatalog('PE'), false)
+    assert.equal(hasCuratedCityCatalog(''), true)
   })
 })
