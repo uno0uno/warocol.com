@@ -25,12 +25,11 @@ const siteUrl = (config.public as Record<string, unknown>).siteUrl as string || 
 
 const ccParam = Array.isArray(route.params.cc) ? route.params.cc[0] : route.params.cc
 const cc = String(ccParam || '').toLowerCase()
+const isExtraDirectory = EXTRA_DIRECTORY_COUNTRIES.has(cc)
 
 if (cc === 'co') {
   await navigateTo('/ciudades', { redirectCode: 301 })
-  return
-}
-if (!EXTRA_DIRECTORY_COUNTRIES.has(cc)) {
+} else if (!isExtraDirectory) {
   throw createError({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
@@ -39,9 +38,11 @@ const countryCode = cc.toUpperCase()
 
 const { data: responseData } = await useAsyncData(
   () => `extra-city-hub-${cc}`,
-  () => $fetch<{ data?: PublicCity[] }>('/api/public/restaurant/cities', {
-    params: { country_code: countryCode, include_empty: false },
-  }),
+  () => isExtraDirectory
+    ? $fetch<{ data?: PublicCity[] }>('/api/public/restaurant/cities', {
+        params: { country_code: countryCode, include_empty: false },
+      })
+    : Promise.resolve({ data: [] as PublicCity[] }),
   { server: true },
 )
 
@@ -66,7 +67,7 @@ useHead({
 </script>
 
 <template>
-  <div class="ciudades-page">
+  <div v-if="isExtraDirectory" class="ciudades-page">
     <section class="ciudades-hero">
       <h1 class="ciudades-title font-quantico">RESTAURANTES EN {{ countryLabel.toUpperCase() }}</h1>
       <p class="ciudades-subtitle">
