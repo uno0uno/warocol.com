@@ -87,7 +87,7 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
-import { resolveTrialPriceAnchor } from '~/utils/publicCta'
+import { resolveTrialPriceAnchor, TRIAL_PRICE_PENDING_SLOT } from '~/utils/publicCta'
 import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
 
 const { t, locale } = useI18n()
@@ -129,7 +129,9 @@ const subscriptionBannerMessage = computed(() => {
       countryCode: financialProfile.value?.country_code,
       currencyCode: financialProfile.value?.base_currency_code,
     })
-    return t('shell.subscriptionTrial', { priceAnchor })
+    return t('shell.subscriptionTrial', {
+      priceAnchor: priceAnchor ?? TRIAL_PRICE_PENDING_SLOT,
+    })
   }
   if (status.message) return status.message
   if (level === 'read_only') return t('shell.subscriptionReadOnly')

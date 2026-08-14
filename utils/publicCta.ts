@@ -87,12 +87,14 @@ function trialPriceCopy(
   return isEn ? en : es
 }
 
-/** In-app Starter trial banner price slot (warocol.com#1917, #2293). */
+/** In-app Starter trial banner price slot (warocol.com#1917, #2293, #2302). */
+export const TRIAL_PRICE_PENDING_SLOT = '__PRICE_PENDING__'
+
 export function resolveTrialPriceAnchor(options: {
   locale?: string | null
   countryCode?: string | null
   currencyCode?: string | null
-} = {}): string {
+} = {}): string | null {
   const isEn = String(options.locale || '').toLowerCase().startsWith('en')
   const country = String(options.countryCode || '').toUpperCase()
   const currency = String(options.currencyCode || '').toUpperCase()
@@ -102,8 +104,9 @@ export function resolveTrialPriceAnchor(options: {
   const usd30 = () => trialPriceCopy(isEn, 'menos de USD $30/mes', 'under USD $30/month')
   const eur30 = () => trialPriceCopy(isEn, 'menos de EUR €30/mes', 'under EUR €30/month')
 
+  // No COP fallback while country/currency are still loading (warocol.com#2302).
+  if (!country && !currency) return null
   // Marketing exception: CO stays COP even though Paddle charges usd_9.
-  if (!country && !currency) return copLine()
   if (country === 'CO' || (!country && currency === 'COP')) return copLine()
 
   if (country) {

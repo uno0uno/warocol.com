@@ -25,8 +25,17 @@
         />
       </svg>
 
-      <p class="text-xs sm:text-sm font-medium flex-1 leading-snug">
-        {{ message }}
+      <p
+        class="text-xs sm:text-sm font-medium flex-1 leading-snug"
+        :aria-busy="pricePending"
+      >
+        <template v-if="pricePendingParts">
+          {{ pricePendingParts.before }}<span
+            class="trial-price-skeleton"
+            aria-hidden="true"
+          /><template v-if="pricePendingParts.after">{{ pricePendingParts.after }}</template>
+        </template>
+        <template v-else>{{ message }}</template>
         <span
           v-if="graceDaysRemaining != null && level === 'read_only'"
           class="opacity-80"
@@ -54,6 +63,8 @@
 </template>
 
 <script setup lang="ts">
+import { TRIAL_PRICE_PENDING_SLOT } from '~/utils/publicCta'
+
 const props = defineProps<{
   level: 'starter' | 'full_with_warning' | 'read_only'
   message: string
@@ -61,6 +72,13 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
+
+const pricePendingParts = computed(() => {
+  if (!props.message.includes(TRIAL_PRICE_PENDING_SLOT)) return null
+  const [before, after] = props.message.split(TRIAL_PRICE_PENDING_SLOT)
+  return { before, after: after ?? '' }
+})
+const pricePending = computed(() => pricePendingParts.value != null)
 
 const isVisible = computed(
   () =>
@@ -86,3 +104,28 @@ const ctaLabel = computed(() => {
   return t('shell.subscriptionRenewCta')
 })
 </script>
+
+<style scoped>
+.trial-price-skeleton {
+  display: inline-block;
+  vertical-align: -0.15em;
+  width: 9.5rem;
+  height: 0.85em;
+  margin: 0 0.2em;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    currentColor 25%,
+    color-mix(in srgb, currentColor 45%, transparent) 50%,
+    currentColor 75%
+  );
+  background-size: 200% 100%;
+  opacity: 0.28;
+  animation: trial-price-shimmer 1.5s infinite;
+}
+@keyframes trial-price-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+</style>
+
