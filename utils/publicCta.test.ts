@@ -99,23 +99,40 @@ test('trial banner price anchor stays COP for Colombia tenants', () => {
   )
 })
 
-test('trial banner price anchor avoids COP for Mexico tenants', () => {
+test('trial banner price anchor uses USD $9 for usd_9 catalog tenants', () => {
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'es', countryCode: 'MX', currencyCode: 'MXN' }),
-    'el Plan Pro',
+    'menos de USD $9/mes',
   )
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'en', countryCode: 'MX', currencyCode: 'MXN' }),
-    'Plan Pro',
+    'under USD $9/month',
   )
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'es', countryCode: null, currencyCode: 'MXN' }),
-    'el Plan Pro',
+    'menos de USD $9/mes',
   )
-  assert.doesNotMatch(
-    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'MX', currencyCode: 'MXN' }),
-    /COP/i,
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'AR', currencyCode: 'ARS' }),
+    'menos de USD $9/mes',
   )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'PE', currencyCode: 'PEN' }),
+    'menos de USD $9/mes',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'CL', currencyCode: 'CLP' }),
+    'menos de USD $9/mes',
+  )
+  for (const opts of [
+    { locale: 'es', countryCode: 'MX', currencyCode: 'MXN' },
+    { locale: 'es', countryCode: 'AR', currencyCode: 'ARS' },
+    { locale: 'es', countryCode: null, currencyCode: 'ARS' },
+  ]) {
+    const line = resolveTrialPriceAnchor(opts)
+    assert.doesNotMatch(line, /COP/i)
+    assert.doesNotMatch(line, /\$30/)
+  }
 })
 
 test('public CTAs render EN + USD $30/month for US English market', () => {
@@ -140,7 +157,7 @@ test('omitted market keeps Colombia ES COP public CTAs', () => {
   assert.equal(omitted.button, 'Crear cuenta y elegir plan')
 })
 
-test('trial banner price anchor uses USD for US tenants', () => {
+test('trial banner price anchor uses USD $30 for usd_30 catalog tenants', () => {
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'en', countryCode: 'US', currencyCode: 'USD' }),
     'under USD $30/month',
@@ -149,8 +166,38 @@ test('trial banner price anchor uses USD for US tenants', () => {
     resolveTrialPriceAnchor({ locale: 'es', countryCode: 'US', currencyCode: 'USD' }),
     'menos de USD $30/mes',
   )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'PA', currencyCode: 'USD' }),
+    'menos de USD $30/mes',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'GB', currencyCode: 'GBP' }),
+    'under USD $30/month',
+  )
   assert.doesNotMatch(
     resolveTrialPriceAnchor({ locale: 'en', countryCode: 'US', currencyCode: 'USD' }),
     /COP/i,
+  )
+})
+
+test('trial banner price anchor uses EUR €30 for eurozone catalog tenants', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'ES', currencyCode: 'EUR' }),
+    'menos de EUR €30/mes',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'en', countryCode: 'DE', currencyCode: 'EUR' }),
+    'under EUR €30/month',
+  )
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: null, currencyCode: 'EUR' }),
+    'menos de EUR €30/mes',
+  )
+})
+
+test('trial banner price anchor keeps COP when country and currency are unknown', () => {
+  assert.equal(
+    resolveTrialPriceAnchor({ locale: 'es' }),
+    PUBLIC_OFFER.monthlyEquivalent,
   )
 })

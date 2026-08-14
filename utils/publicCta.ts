@@ -75,7 +75,19 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
   return PUBLIC_OFFER
 }
 
-/** In-app Starter trial banner price slot (warocol.com#1917). */
+/** Paddle charge segments mirrored from api billing_pricing.resolve_price_segment. */
+const EUR_30_COUNTRIES = new Set(['ES', 'DE', 'FR', 'NL'])
+const USD_30_COUNTRIES = new Set(['US', 'PA', 'GB', 'CA', 'AU', 'NZ', 'SG', 'AE'])
+
+function trialPriceCopy(
+  isEn: boolean,
+  es: string,
+  en: string,
+): string {
+  return isEn ? en : es
+}
+
+/** In-app Starter trial banner price slot (warocol.com#1917, #2293). */
 export function resolveTrialPriceAnchor(options: {
   locale?: string | null
   countryCode?: string | null
@@ -84,19 +96,25 @@ export function resolveTrialPriceAnchor(options: {
   const isEn = String(options.locale || '').toLowerCase().startsWith('en')
   const country = String(options.countryCode || '').toUpperCase()
   const currency = String(options.currencyCode || '').toUpperCase()
-  const isMexico = country === 'MX' || currency === 'MXN'
-  const isUs = country === 'US' || currency === 'USD'
 
-  if (isMexico) {
-    // No approved MXN list price yet — avoid showing COP to MX tenants.
-    return isEn ? 'Plan Pro' : 'el Plan Pro'
+  const copLine = () => trialPriceCopy(isEn, PUBLIC_OFFER.monthlyEquivalent, 'under COP 8,000/month')
+  const usd9 = () => trialPriceCopy(isEn, 'menos de USD $9/mes', 'under USD $9/month')
+  const usd30 = () => trialPriceCopy(isEn, 'menos de USD $30/mes', 'under USD $30/month')
+  const eur30 = () => trialPriceCopy(isEn, 'menos de EUR €30/mes', 'under EUR €30/month')
+
+  // Marketing exception: CO stays COP even though Paddle charges usd_9.
+  if (!country && !currency) return copLine()
+  if (country === 'CO' || (!country && currency === 'COP')) return copLine()
+
+  if (country) {
+    if (EUR_30_COUNTRIES.has(country)) return eur30()
+    if (USD_30_COUNTRIES.has(country)) return usd30()
+    return usd9()
   }
 
-  if (isUs) {
-    return isEn ? 'under USD $30/month' : 'menos de USD $30/mes'
-  }
-
-  return isEn ? 'under COP 8,000/month' : PUBLIC_OFFER.monthlyEquivalent
+  if (currency === 'EUR') return eur30()
+  if (currency === 'USD') return usd30()
+  return usd9()
 }
 
 // Activate only after recording a verifiable source, date, scope and disclosure here.
