@@ -10,18 +10,41 @@ import { useCityCatalog } from '~/composables/useCityCatalog'
  *
  * Mounted by `pages/[tenant]/index.vue` when the URL slug matches a city
  * in the catalog. Tenant slugs continue to render the tenant profile.
+ * Extra-country magazines (warocol.com#2296) pass `countryCode` and render
+ * at `/ciudades/{cc}/{city}` — never `/{slug}`.
  */
 interface Props {
   citySlug: string
+  countryCode?: string | null
+  cityName?: string | null
 }
 const props = defineProps<Props>()
 
 const config = useRuntimeConfig()
 const siteUrl = (config.public as Record<string, unknown>).siteUrl as string || 'https://warocol.com'
 
+const extraCountry = computed(() => {
+  const raw = String(props.countryCode || '').trim().toLowerCase()
+  if (raw === 'ar' || raw === 'mx' || raw === 'us') return raw
+  return null
+})
+const listCacheKey = computed(() => (
+  extraCountry.value
+    ? `restaurants-${extraCountry.value}-${props.citySlug}`
+    : `restaurants-${props.citySlug}`
+))
+const directoryPath = computed(() => (
+  extraCountry.value
+    ? `/ciudades/${extraCountry.value}/${props.citySlug}`
+    : `/${props.citySlug}`
+))
+const hubPath = computed(() => (
+  extraCountry.value ? `/ciudades/${extraCountry.value}` : '/ciudades'
+))
+
 const { findCity } = useCityCatalog()
 const catalogEntry = computed(() => findCity(props.citySlug))
-const cityName = computed(() => catalogEntry.value?.city ?? props.citySlug)
+const cityName = computed(() => props.cityName || catalogEntry.value?.city || props.citySlug)
 const heroImageSrc = '/hero_bogota_waro_colombia.png'
 
 const {
@@ -29,11 +52,13 @@ const {
   error: fetchError,
   pending,
 } = await useAsyncData(
-  () => `restaurants-${props.citySlug}`,
+  () => listCacheKey.value,
   () => $fetch('/api/public/restaurant/list', {
-    params: { city_slug: props.citySlug },
+    params: extraCountry.value
+      ? { city_slug: props.citySlug, country_code: extraCountry.value.toUpperCase() }
+      : { city_slug: props.citySlug },
   }),
-  { server: true, watch: [() => props.citySlug] },
+  { server: true, watch: [() => props.citySlug, extraCountry] },
 )
 
 const restaurants = computed(() => (responseData.value as { data?: unknown[] } | null)?.data ?? [])
@@ -52,7 +77,7 @@ useSeoMeta({
   ogTitle: () => `Restaurantes en ${cityName.value} - Waro Colombia`,
   ogDescription: () => `Descubre los mejores restaurantes en ${cityName.value}. Explora menús, precios y haz tus pedidos en línea.`,
   ogType: 'website',
-  ogUrl: () => `${siteUrl}/${props.citySlug}`,
+  ogUrl: () => `${siteUrl}${directoryPath.value}`,
   ogSiteName: 'Waro Colombia',
   ogLocale: 'es_CO',
   twitterCard: 'summary_large_image',
@@ -62,7 +87,7 @@ useSeoMeta({
 })
 
 useHead(() => ({
-  link: [{ rel: 'canonical', href: `${siteUrl}/${props.citySlug}` }],
+  link: [{ rel: 'canonical', href: `${siteUrl}${directoryPath.value}` }],
   meta: isEmptyDirectory.value
     ? [{ name: 'robots', content: 'noindex,follow' }]
     : [],
@@ -109,7 +134,7 @@ useHead(() => ({
       <p class="text-text-secondary mb-6">{{ error }}</p>
       <button
         class="directory-btn"
-        @click="refreshNuxtData(`restaurants-${props.citySlug}`)"
+        @click="refreshNuxtData(listCacheKey)"
       >
         Reintentar
       </button>
@@ -117,7 +142,7 @@ useHead(() => ({
 
     <!-- Restaurants Grid -->
     <section v-else-if="hasRestaurants" class="directory-body">
-      <NuxtLink to="/ciudades" class="directory-back">
+      <NuxtLink :to="hubPath" class="directory-back">
         <ChevronRightIcon class="directory-back__icon" aria-hidden="true" />
         Todas las ciudades
       </NuxtLink>
@@ -218,7 +243,7 @@ useHead(() => ({
       <div class="text-6xl mb-6" aria-hidden="true">🍽️</div>
       <h2 class="text-2xl font-bold text-text-primary mb-4">Aún no hay restaurantes en {{ cityName }}</h2>
       <p class="text-text-secondary mb-6">Estamos sumando restaurantes en esta ciudad. Pronto vas a encontrar opciones aquí.</p>
-      <NuxtLink to="/ciudades" class="directory-btn">
+      <NuxtLink :to="hubPath" class="directory-btn">
         Ver ciudades
         <ChevronRightIcon class="w-4 h-4" aria-hidden="true" />
       </NuxtLink>
