@@ -1,0 +1,35 @@
+issue: 2317
+title: "fix(menu): remove unit cost box from modifier option rows"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2317-hide-option-unit-cost
+
+paths:
+  - components/menu/MenuModifierOptionEditor.vue
+
+ac:
+  - No Costo unit. box on warehouse, resale, recipe, or menu-product option rows
+  - Receta base options do not show empty Insumos de la receta or a second + Agregar
+  - Existing extra recipe_lines still render so data is not lost
+  - Cantidad x receta usable without overlapping a cost box
+  - Published option save/load unchanged
+
+out_of_scope:
+  - Product/recipe composition cost UI outside modifiers
+  - API cost calculation
+  - Save payload / unit_cost persistence
+
+hints:
+  entry: "components/menu/MenuModifierOptionEditor.vue used on /menu/modificadores/:id and crear"
+  pattern: "Hide recipe_lines unless length > 0; drop unitCost boxes and unused cost computeds"
+  tests: "none (Vue editor UI only; do not run bun build/lint)"
+
+risk: low
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "ready-for-review label; skip wr-review (risk low)"
