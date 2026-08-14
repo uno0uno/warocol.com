@@ -1,0 +1,39 @@
+issue: 2313
+title: "SEO: 404 unknown blog slugs, alias 301s, noindex thin pages, branded 404"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2313-blog-seo-404
+risk: low
+
+paths:
+  - utils/blogSeoRedirects.js
+  - utils/blogSeoRedirects.test.js
+  - utils/thinPublicTenant.ts
+  - utils/thinPublicTenant.test.ts
+  - pages/blog/[slug].vue
+  - pages/[tenant]/index.vue
+  - error.vue
+  - nuxt.config.ts
+
+ac:
+  - Unknown /blog/:slug is HTTP 404 via createError fatal, not 200 with fallback title Artículo | Waro Colombia
+  - Branded error.vue renders (Quantico + HomeFoodBackground, Spanish)
+  - 301 single hop best-pos-for-restaurant and software-para-restaurantes
+  - Thin comandas/facturacion slugs stay 404 (no 301)
+  - Thin public tenants noindex via onboarding-/test- prefix or missing/empty menu; no customer names in git
+  - Published articles unchanged
+
+out_of_scope:
+  - facturacion US banner
+  - Hardcoded customer tenant slugs
+  - Redirect chains from software-para-restaurante
+
+hints:
+  entry: "pages/blog/[slug].vue useAsyncData + createError"
+  pattern: "utils/blogSeoRedirects.js + server/middleware/blog-seo-redirects.ts; pages/ciudades/[cc]/index.vue 404"
+  tests: "vitest run utils/blogSeoRedirects.test.js utils/thinPublicTenant.test.ts"
+
+skip:
+  audits: [ux, color, typography]

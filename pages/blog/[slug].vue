@@ -55,13 +55,26 @@ interface ArticleResponse {
 // Fetch article from API
 const slug = route.params.slug as string
 
-const { data: articleData, pending, error: fetchError } = useAsyncData<ArticleResponse>(
+const { data: articleData, pending, error: fetchError } = await useAsyncData<ArticleResponse>(
   `blog-article-${slug}`,
   () => $fetch(`/api/blog/${slug}`),
   { server: true }
 )
 
 const article = computed(() => articleData.value?.data || null)
+
+if (!pending.value && !article.value) {
+  const status = Number(
+    (fetchError.value as { statusCode?: number; status?: number } | null)?.statusCode
+    ?? (fetchError.value as { statusCode?: number; status?: number } | null)?.status
+    ?? 404,
+  )
+  throw createError({
+    statusCode: status >= 500 ? 502 : 404,
+    statusMessage: status >= 500 ? 'Bad Gateway' : 'Not Found',
+    fatal: true,
+  })
+}
 
 const articleMarket = computed(() =>
   resolveArticleMarket({
@@ -184,7 +197,7 @@ const articleSchema = computed(() => {
 })
 
 useSeoMeta({
-  title: () => article.value?.meta_title || article.value?.title || 'Artículo | Waro Colombia',
+  title: () => article.value?.meta_title || article.value?.title || '',
   description: () => article.value?.meta_descripcion || article.value?.description || '',
   ogType: 'article',
   ogSiteName: 'Waro Colombia',
@@ -218,20 +231,6 @@ useHead({
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center min-h-screen">
       <CommonsTheCustomLoader size="large" />
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-screen">
-      <div class="text-center px-4">
-        <p class="text-2xl font-bold text-text-primary mb-2">Error al cargar el artículo</p>
-        <p class="text-lg text-text-secondary mb-4">{{ fetchError.message }}</p>
-        <NuxtLink
-          to="/blog"
-          class="text-lg text-badge-primary-text hover:text-badge-primary-text underline"
-        >
-          Volver al blog
-        </NuxtLink>
-      </div>
     </div>
 
     <!-- Article Content -->
@@ -301,18 +300,5 @@ useHead({
         </template>
       </BlogArticleContent>
     </article>
-
-    <!-- Not Found State -->
-    <div v-else class="flex items-center justify-center min-h-screen">
-      <div class="text-center px-4">
-        <p class="text-2xl font-bold text-text-primary mb-2">Artículo no encontrado</p>
-        <NuxtLink
-          to="/blog"
-          class="text-lg text-badge-primary-text hover:text-badge-primary-text underline"
-        >
-          Volver al blog
-        </NuxtLink>
-      </div>
-    </div>
   </div>
 </template>
