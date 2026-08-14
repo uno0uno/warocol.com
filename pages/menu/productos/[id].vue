@@ -631,7 +631,7 @@
 
             <WarehouseCategoryIngredientSelector
               v-if="!isResaleProduct"
-              :key="`product-edit-category-ingredients-${productId}`"
+              :key="`product-edit-category-ingredients-${productId}-${categorySelectorEpoch}`"
               class="mb-4"
               input-id="product-edit-category-ingredients"
               :existing-ingredient-ids="existingIngredientIds"
@@ -643,12 +643,7 @@
             />
 
             <!-- Lista de ingredientes -->
-            <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
-              <p class="text-sm font-medium">{{ t('menu.productos.emptyAdditionalLines') }}</p>
-              <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
-            </div>
-
-            <div v-else class="space-y-3 mb-4">
+            <div v-if="form.ingredients.length" class="space-y-3 mb-4">
               <div
                 v-if="categoryPreparedRows.length && form.ingredients.length"
                 class="flex items-center gap-3 pt-1"
@@ -1210,6 +1205,7 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
 const categorySelectorCategories = ref<WarehouseCategoryRow[]>([])
+const categorySelectorEpoch = ref(0)
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
@@ -1422,9 +1418,10 @@ const form = ref({
   costo_percibido: null as number | null,
 })
 
-const existingIngredientIds = computed(() =>
-  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
-)
+const existingIngredientIds = computed(() => [
+  ...form.value.ingredients.map(row => row.ingredient_id),
+  ...categoryPreparedRows.value.map(row => row.ingredient_id),
+].filter(Boolean))
 const combinedIngredients = computed(() => [
   ...form.value.ingredients,
   ...mapPreparedRowsToProduct(categoryPreparedRows.value),
@@ -1837,8 +1834,10 @@ const handleSubmit = async () => {
       }
     }
 
-    cache.invalidateQueries()
+    cache.invalidateQueries({ key: ['menu', 'products'] })
+    cache.invalidateQueries({ key: ['menu', 'products-resale'] })
     await refresh()
+    categorySelectorEpoch.value += 1
     toast.success(t('menu.productos.updatedToast'), { title: t('menu.productos.saved') })
   } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)

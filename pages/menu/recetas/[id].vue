@@ -77,7 +77,7 @@
               <MenuIngredientProductHint class="mb-4" />
 
               <WarehouseCategoryIngredientSelector
-                :key="`recipe-edit-category-ingredients-${recipeId}`"
+                :key="`recipe-edit-category-ingredients-${recipeId}-${categorySelectorEpoch}`"
                 class="mb-4"
                 input-id="recipe-edit-category-ingredients"
                 :existing-ingredient-ids="existingIngredientIds"
@@ -88,13 +88,7 @@
                 @update:prepared-rows="onCategoryPreparedRows"
               />
 
-              <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
-                <Icon name="heroicons:cube" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
-                <p class="text-sm font-medium mb-0.5">{{ t('menu.recetas.form.emptyLines') }}</p>
-                <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
-              </div>
-
-              <div v-else class="space-y-3">
+              <div v-if="form.ingredients.length" class="space-y-3">
                 <div
                   v-if="categoryPreparedRows.length && form.ingredients.length"
                   class="flex items-center gap-3 pt-1"
@@ -315,6 +309,7 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 const categoryPreparedRows = ref<PreparedWarehouseCategoryIngredient[]>([])
 const categorySelectorCategories = ref<WarehouseCategoryRow[]>([])
+const categorySelectorEpoch = ref(0)
 
 function syncCategorySelectorLayout() {
   if (!availableIngredients.value.length) return
@@ -431,9 +426,10 @@ const form = ref({
   }>
 })
 
-const existingIngredientIds = computed(() =>
-  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
-)
+const existingIngredientIds = computed(() => [
+  ...form.value.ingredients.map(row => row.ingredient_id),
+  ...categoryPreparedRows.value.map(row => row.ingredient_id),
+].filter(Boolean))
 const combinedIngredients = computed(() => [
   ...form.value.ingredients,
   ...mapPreparedRowsToRecipe(categoryPreparedRows.value),
@@ -548,8 +544,9 @@ const handleSubmit = async () => {
       }
     })
 
-    cache.invalidateQueries()
+    cache.invalidateQueries({ key: ['menu', 'recipe-bases'] })
     await refresh()
+    categorySelectorEpoch.value += 1
     toast.success(t('menu.recetas.form.updated'), { title: t('menu.common.guardado') })
   } catch (error: any) {
     console.error('Error updating recipe base:', error)

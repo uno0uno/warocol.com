@@ -129,7 +129,7 @@
 
               <WarehouseCategoryIngredientSelector
                 ref="warehouseCategorySelectorRef"
-                :key="`modifier-edit-category-bulk-${groupId}`"
+                :key="`modifier-edit-category-bulk-${groupId}-${categorySelectorEpoch}`"
                 class="mb-4"
                 :input-id="`modifier-edit-warehouse-category-bulk-${groupId}`"
                 :existing-ingredient-ids="existingWarehouseIngredientIds"
@@ -260,7 +260,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -340,6 +340,7 @@ const isRefreshingGroup = computed(() => isLoadingGroup.value && groupData.value
 
 /** After save, keep the edited form instead of re-hydrating from GET. */
 const skipNextGroupHydrate = ref(false)
+const categorySelectorEpoch = ref(0)
 
 const { availableIngredients } = useMenuIngredientsQuery()
 
@@ -690,10 +691,12 @@ async function handleSubmit() {
     // Optimistic: keep current form (products, options, etc.); sync cache only.
     skipNextGroupHydrate.value = true
     groupData.value = response
+    await nextTick()
     skipNextGroupHydrate.value = false
 
     cache.invalidateQueries({ key: ['menu', 'modifier-groups'] })
     cache.invalidateQueries({ key: ['menu', 'modifier-stats'] })
+    categorySelectorEpoch.value += 1
     toast.success(t('menu.modificadores.updatedSuccess'), { title: t('menu.modificadores.saved') })
   } catch (error: any) {
     console.error('Error updating modifier group:', error)
