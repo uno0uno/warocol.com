@@ -472,83 +472,35 @@
                 <span v-if="isColombiaTenant" class="text-amber-600" aria-hidden="true">*</span>
               </label>
               <template v-if="hasCityCatalog">
-              <div ref="citySearchAnchorRef" class="relative">
-                <input
-                  id="negocio-city"
-                  v-model="citySearchTerm"
-                  type="text"
-                  role="combobox"
-                  aria-autocomplete="list"
-                  :aria-expanded="cityDropdownOpen"
-                  :aria-controls="cityListboxId"
-                  :aria-activedescendant="activeCityOptionId"
-                  :aria-describedby="isColombiaTenant ? cityHelpId : undefined"
-                  autocomplete="off"
-                  class="input-base w-full px-3 py-2 ps-9 pe-10 text-sm"
-                  :placeholder="t('negocio.cityPlaceholder')"
-                  @input="onCitySearchInput"
-                  @focus="openCitySearch"
-                  @blur="closeCitySearchSoon"
-                  @keydown.down.prevent="moveCityHighlight(1)"
-                  @keydown.up.prevent="moveCityHighlight(-1)"
-                  @keydown.enter.prevent="selectHighlightedCity"
-                  @keydown.esc.prevent="closeCitySearch"
-                />
-                <MagnifyingGlassIcon
-                  class="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
-                  aria-hidden="true"
-                />
-                <button
-                  v-if="citySearchTerm"
-                  type="button"
-                  class="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                  :aria-label="t('negocio.clearCity')"
-                  @mousedown.prevent
-                  @click="clearCitySelection"
-                >
-                  <XMarkIcon class="h-4 w-4" aria-hidden="true" />
-                </button>
-                <span
-                  v-else-if="cityCatalogLoading"
-                  class="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-text-tertiary/30 border-t-text-tertiary"
-                  aria-hidden="true"
-                />
-              </div>
-              <Teleport to="body">
-                <ul
-                  v-if="cityDropdownOpen"
-                  :id="cityListboxId"
-                  role="listbox"
-                  :style="cityPanelStyle"
-                  class="bg-surface border border-border rounded-lg shadow-lg overflow-y-auto"
-                >
-                  <li
-                    v-for="(city, index) in visibleCityResults"
-                    :id="cityOptionId(city)"
-                    :key="city.city_slug"
-                    role="option"
-                    :aria-selected="index === citySearchActiveIndex"
-                    :class="[
-                      'min-h-[44px] cursor-pointer px-3 py-2 text-sm flex flex-col justify-center',
-                      index === citySearchActiveIndex ? 'bg-surface-secondary text-text-primary' : 'text-text-primary hover:bg-surface-secondary',
-                    ]"
-                    @mousedown.prevent="selectCity(city)"
-                  >
-                    <span class="font-medium leading-snug">{{ city.city }}</span>
-                    <span v-if="cityDepartment(city)" class="text-xs text-text-secondary leading-snug">
-                      {{ cityDepartment(city) }}
+              <UiCatalogSearchCombobox
+                v-model="citySearchTerm"
+                input-id="negocio-city"
+                :options="citySearchOptions"
+                :placeholder="t('negocio.cityPlaceholder')"
+                :loading="cityCatalogLoading"
+                :error="cityCatalogError"
+                :allow-create="false"
+                :listbox-label="t('negocio.city')"
+                :loading-label="t('negocio.loadingCities')"
+                :empty-label="cityEmptyMessage"
+                :error-label="t('negocio.cityCatalogUnavailable')"
+                input-class="input-base w-full px-3 py-2 ps-8 pe-8 text-sm"
+                @search="onCitySearchInput"
+                @select="onCityComboboxSelect"
+                @close="onCitySearchClose"
+              >
+                <template #option="{ option }">
+                  <span class="flex min-w-0 flex-col py-0.5">
+                    <span class="font-medium leading-snug">{{ option.label }}</span>
+                    <span
+                      v-if="option.raw && cityDepartment(option.raw)"
+                      class="text-xs text-text-secondary leading-snug"
+                    >
+                      {{ cityDepartment(option.raw) }}
                     </span>
-                  </li>
-                  <li
-                    v-if="!visibleCityResults.length"
-                    role="presentation"
-                    aria-hidden="true"
-                    class="px-3 py-2 text-sm text-text-secondary/70 select-none"
-                  >
-                    {{ cityEmptyMessage }}
-                  </li>
-                </ul>
-              </Teleport>
+                  </span>
+                </template>
+              </UiCatalogSearchCombobox>
               <p v-if="isColombiaTenant" :id="cityHelpId" class="text-[10px] text-text-tertiary mt-1">
                 {{ t('negocio.cityDirectoryHelp') }}
               </p>
@@ -848,11 +800,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import {
   useCityCatalog,
   type PublicCity,
-  normalizeCitySearch,
   cityDepartmentLabel,
   filterCityCatalog,
   resolveCityFromSearchTerm,
@@ -863,7 +814,6 @@ import {
   normalizeStorefrontSlug,
   resolveProfileSaveErrorMessage,
 } from '~/utils/businessIdentityError'
-import { useCatalogSearchDropdownPlacement } from '~/composables/useCatalogSearchDropdownPlacement'
 import { usePOSStore } from '~/stores/usePOSStore'
 import {
   BuildingStorefrontIcon,
@@ -879,8 +829,6 @@ import {
   ClipboardDocumentIcon,
   ShareIcon,
   ExclamationTriangleIcon,
-  MagnifyingGlassIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { DEFAULT_TENANT_TIMEZONE, resolveTimezonePrefill } from '~/utils/bogotaDate'
 import { phonePlaceholderForCountry } from '~/utils/countryCallingCodes'
@@ -978,12 +926,8 @@ watch(
 )
 
 const CITY_RESULT_LIMIT = 40
-const cityListboxId = 'negocio-city-results'
 const cityHelpId = 'negocio-city-help'
-const citySearchAnchorRef = ref<HTMLElement | null>(null)
 const citySearchTerm = ref('')
-const citySearchOpen = ref(false)
-const citySearchActiveIndex = ref(0)
 
 const cityDepartment = (city: PublicCity) => cityDepartmentLabel(city)
 
@@ -991,24 +935,13 @@ const selectedCity = computed(() =>
   pickerCities.value.find((c) => c.city_slug === editForm.city_slug) ?? null,
 )
 
-const visibleCityResults = computed(() =>
-  filterCityCatalog(pickerCities.value, citySearchTerm.value, CITY_RESULT_LIMIT),
-)
-
-const cityDropdownOpen = computed(() =>
-  citySearchOpen.value
-  && (
-    visibleCityResults.value.length > 0
-    || Boolean(citySearchTerm.value.trim())
-    || cityCatalogLoading.value
-    || cityCatalogLoaded.value
-    || Boolean(cityCatalogError.value)
-  ),
-)
-
-const { panelStyle: cityPanelStyle, updatePlacement: updateCitySearchPlacement } = useCatalogSearchDropdownPlacement(
-  citySearchAnchorRef,
-  cityDropdownOpen,
+const citySearchOptions = computed(() =>
+  filterCityCatalog(pickerCities.value, citySearchTerm.value, CITY_RESULT_LIMIT).map((city) => ({
+    id: city.city_slug,
+    label: city.city,
+    class: 'items-start whitespace-normal',
+    raw: city,
+  })),
 )
 
 const cityEmptyMessage = computed(() => {
@@ -1018,15 +951,8 @@ const cityEmptyMessage = computed(() => {
   return t('negocio.noResults')
 })
 
-const activeCityOptionId = computed(() => {
-  const city = visibleCityResults.value[citySearchActiveIndex.value]
-  return city ? cityOptionId(city) : undefined
-})
-
-const cityOptionId = (city: PublicCity) => `negocio-city-option-${city.city_slug}`
-
 const syncCitySearchTerm = () => {
-  citySearchTerm.value = selectedCity.value?.city || editForm.city || ''
+  citySearchTerm.value = selectedCity.value?.city || (editForm.city_slug ? editForm.city : '') || ''
 }
 
 const onCityChange = (slug: string) => {
@@ -1036,75 +962,36 @@ const onCityChange = (slug: string) => {
   syncCitySearchTerm()
 }
 
-const selectCity = (city: PublicCity) => {
+const onCityComboboxSelect = (option: { raw?: PublicCity }) => {
+  const city = option.raw
+  if (!city?.city_slug) return
   onCityChange(city.city_slug)
-  closeCitySearch()
-}
-
-const clearCitySelection = () => {
-  citySearchTerm.value = ''
-  editForm.city_slug = ''
-  editForm.city = ''
-  citySearchActiveIndex.value = 0
-  citySearchOpen.value = true
-  nextTick(updateCitySearchPlacement)
 }
 
 const onCitySearchInput = () => {
-  const resolved = resolveCityFromSearchTerm(pickerCities.value, citySearchTerm.value)
-  if (resolved) {
-    editForm.city_slug = resolved.city_slug
-    editForm.city = resolved.city
-  } else {
-    const currentSelection = selectedCity.value
-    if (!currentSelection || normalizeCitySearch(citySearchTerm.value) !== normalizeCitySearch(currentSelection.city)) {
-      editForm.city_slug = ''
-      editForm.city = ''
-    }
-  }
-  citySearchActiveIndex.value = 0
-  citySearchOpen.value = true
+  if (selectedCity.value && citySearchTerm.value.trim() === selectedCity.value.city) return
+  editForm.city_slug = ''
+  editForm.city = ''
 }
 
-const openCitySearch = () => {
-  citySearchOpen.value = true
-  nextTick(updateCitySearchPlacement)
-}
-
-const closeCitySearch = () => {
+const onCitySearchClose = () => {
   if (!editForm.city_slug && citySearchTerm.value.trim()) {
     const match = resolveCityFromSearchTerm(pickerCities.value, citySearchTerm.value)
-    if (match) onCityChange(match.city_slug)
+    if (match) {
+      onCityChange(match.city_slug)
+      return
+    }
   }
-  citySearchOpen.value = false
-  citySearchActiveIndex.value = 0
+  if (!editForm.city_slug) {
+    citySearchTerm.value = ''
+    editForm.city = ''
+    return
+  }
   syncCitySearchTerm()
-}
-
-const closeCitySearchSoon = () => {
-  setTimeout(closeCitySearch, 150)
-}
-
-const moveCityHighlight = (delta: number) => {
-  if (!citySearchOpen.value) openCitySearch()
-  const count = visibleCityResults.value.length
-  if (!count) return
-  citySearchActiveIndex.value = (citySearchActiveIndex.value + delta + count) % count
-}
-
-const selectHighlightedCity = () => {
-  const city = visibleCityResults.value[citySearchActiveIndex.value]
-  if (city) selectCity(city)
 }
 
 watch(selectedCity, (city) => {
   if (isEditingOps.value && city) citySearchTerm.value = city.city
-})
-
-watch(() => visibleCityResults.value.length, (length) => {
-  if (citySearchActiveIndex.value >= length) {
-    citySearchActiveIndex.value = Math.max(0, length - 1)
-  }
 })
 
 const publicCityPath = computed(() => {
@@ -1371,6 +1258,7 @@ const saveBrandChanges = async () => {
 }
 
 const saveOpsChanges = async () => {
+  if (hasCityCatalog.value) onCitySearchClose()
   isSaving.value = true
   try {
     const cleanedHours: Record<string, any> = {}
