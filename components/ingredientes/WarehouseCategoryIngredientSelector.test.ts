@@ -335,4 +335,43 @@ describe('WarehouseCategoryIngredientSelector', () => {
       warehouse_category_id: 'category-1',
     }])
   })
+
+  it('keeps category rows when existing ids shrink after layout split', async () => {
+    vi.stubGlobal('$fetch', vi.fn(async () => ({
+      data: {
+        ingredients: [{
+          ingredient_id: 'ingredient-1',
+          name: 'Arroz',
+          unit: 'gr',
+          warehouse_category_id: 'category-1',
+        }],
+        empty_category_ids: [],
+        unavailable_category_ids: [],
+      },
+    })))
+    vi.stubGlobal('useI18n', () => ({ t: (key: string) => key }))
+    const wrapper = mount(WarehouseCategoryIngredientSelector, {
+      props: { existingIngredientIds: [] },
+      global: {
+        components: { UiWarehouseCategorySearchInput: WarehouseCategorySearchInputStub },
+      },
+    })
+
+    await wrapper.get('[data-test="select-category"]').trigger('click')
+    await flushPromises()
+    await wrapper.setProps({ existingIngredientIds: ['ingredient-1'] })
+    await flushPromises()
+    await wrapper.setProps({ existingIngredientIds: [] })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Arroz')
+    const emittedRows = wrapper.emitted('update:preparedRows') ?? []
+    expect(emittedRows.at(-1)?.[0]).toEqual([{
+      ingredient_id: 'ingredient-1',
+      name: 'Arroz',
+      quantity: null,
+      unit: 'gr',
+      warehouse_category_id: 'category-1',
+    }])
+  })
 })

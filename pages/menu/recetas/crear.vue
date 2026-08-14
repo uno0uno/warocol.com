@@ -101,15 +101,7 @@
                   @update:prepared-rows="onCategoryPreparedRows"
                 />
 
-                <div v-if="form.ingredients.length === 0 && categoryPreparedRows.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
-                  <svg class="w-12 h-12 mx-auto mb-3 text-text-tertiary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  <p class="text-sm font-medium mb-0.5">{{ t('menu.recetas.form.emptyLines') }}</p>
-                  <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
-                </div>
-
-                <div v-else class="space-y-3">
+                <div v-if="form.ingredients.length" class="space-y-3">
                   <div
                     v-if="categoryPreparedRows.length && form.ingredients.length"
                     class="flex items-center gap-3 pt-1"
@@ -331,9 +323,10 @@ function getIngredientUnitOptions(ingredientId: string) {
   })
 }
 
-const existingIngredientIds = computed(() =>
-  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
-)
+const existingIngredientIds = computed(() => [
+  ...form.value.ingredients.map(row => row.ingredient_id),
+  ...categoryPreparedRows.value.map(row => row.ingredient_id),
+].filter(Boolean))
 const combinedIngredients = computed(() => [
   ...form.value.ingredients,
   ...mapPreparedRowsToRecipe(categoryPreparedRows.value),

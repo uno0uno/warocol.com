@@ -275,6 +275,7 @@ watch(
 watch(
   () => props.existingIngredientIds,
   (ids, previousIds) => {
+    if (!props.hidePreparedIngredientRows) return
     if (!selectedCategories.value.length) return
 
     const previous = new Set(previousIds ?? [])
