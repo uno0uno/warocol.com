@@ -18,31 +18,33 @@ const ccParam = Array.isArray(route.params.cc) ? route.params.cc[0] : route.para
 const cityParam = Array.isArray(route.params.city) ? route.params.city[0] : route.params.city
 const cc = String(ccParam || '').toLowerCase()
 const citySlug = String(cityParam || '').toLowerCase()
+const isExtraDirectory = EXTRA_DIRECTORY_COUNTRIES.has(cc) && Boolean(citySlug)
 
 if (cc === 'co') {
   await navigateTo(citySlug ? `/${citySlug}` : '/ciudades', { redirectCode: 301 })
-  return
-}
-if (!EXTRA_DIRECTORY_COUNTRIES.has(cc) || !citySlug) {
+} else if (!isExtraDirectory) {
   throw createError({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
 const { data: responseData } = await useAsyncData(
   () => `extra-city-entry-${cc}-${citySlug}`,
-  () => $fetch<{ data?: PublicCity[] }>('/api/public/restaurant/cities', {
-    params: { country_code: cc.toUpperCase(), include_empty: true },
-  }),
+  () => isExtraDirectory
+    ? $fetch<{ data?: PublicCity[] }>('/api/public/restaurant/cities', {
+        params: { country_code: cc.toUpperCase(), include_empty: true },
+      })
+    : Promise.resolve({ data: [] as PublicCity[] }),
   { server: true },
 )
 
 const catalogEntry = (responseData.value?.data ?? []).find((city) => city.city_slug === citySlug)
-if (!catalogEntry) {
+if (isExtraDirectory && !catalogEntry) {
   throw createError({ statusCode: 404, statusMessage: 'Not Found' })
 }
 </script>
 
 <template>
   <DirectoryView
+    v-if="catalogEntry"
     :city-slug="citySlug"
     :country-code="cc"
     :city-name="catalogEntry.city"
