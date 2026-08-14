@@ -8,11 +8,26 @@
     v-else-if="showThankYou"
     class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center px-4"
   >
-    <div class="w-full rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
-      <component :is="thankYouIcon" class="mx-auto h-14 w-14" :class="thankYouIconClass" aria-hidden="true" />
-      <h1 class="mt-4 text-2xl font-bold text-text-primary">{{ thankYouTitle }}</h1>
-      <p class="mt-2 text-sm leading-6 text-text-secondary">{{ thankYouDescription }}</p>
-      <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
+    <div
+      class="w-full rounded-2xl border bg-surface p-6 text-center sm:p-8"
+      :class="statusCardBorderClass(thankYouTone)"
+      :role="thankYouWaiting ? 'status' : undefined"
+      :aria-live="thankYouWaiting ? 'polite' : undefined"
+    >
+      <div
+        class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+        :class="statusWellClass(thankYouTone)"
+      >
+        <component
+          :is="thankYouIcon"
+          class="h-8 w-8"
+          :class="[thankYouIconClass, thankYouWaiting ? 'animate-pulse motion-reduce:animate-none' : '']"
+          aria-hidden="true"
+        />
+      </div>
+      <h1 class="mt-5 text-xl font-bold leading-snug text-text-primary text-balance sm:text-2xl">{{ thankYouTitle }}</h1>
+      <p class="mt-2 text-sm leading-6 text-text-secondary text-pretty">{{ thankYouDescription }}</p>
+      <p v-if="errorMessage" class="mt-3 text-sm text-state-danger-text" role="alert">{{ errorMessage }}</p>
       <div class="mt-6 flex flex-col gap-3">
         <NuxtLink
           v-if="thankYouPhase === 'ready'"
@@ -74,12 +89,27 @@
     </div>
   </div>
 
-  <div v-else class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center">
-    <div class="w-full rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
-      <component :is="icon" class="mx-auto h-14 w-14" :class="iconClass" aria-hidden="true" />
-      <h1 class="mt-4 text-2xl font-bold text-text-primary">{{ title }}</h1>
-      <p class="mt-2 text-sm leading-6 text-text-secondary">{{ description }}</p>
-      <p v-if="errorMessage" class="mt-3 text-sm text-status-danger-text" role="alert">{{ errorMessage }}</p>
+  <div v-else class="mx-auto flex min-h-[420px] max-w-lg items-center justify-center px-4">
+    <div
+      class="w-full rounded-2xl border bg-surface p-6 text-center sm:p-8"
+      :class="statusCardBorderClass(returnTone)"
+      :role="returnWaiting ? 'status' : undefined"
+      :aria-live="returnWaiting ? 'polite' : undefined"
+    >
+      <div
+        class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+        :class="statusWellClass(returnTone)"
+      >
+        <component
+          :is="icon"
+          class="h-8 w-8"
+          :class="[iconClass, returnWaiting ? 'animate-pulse motion-reduce:animate-none' : '']"
+          aria-hidden="true"
+        />
+      </div>
+      <h1 class="mt-5 text-xl font-bold leading-snug text-text-primary text-balance sm:text-2xl">{{ title }}</h1>
+      <p class="mt-2 text-sm leading-6 text-text-secondary text-pretty">{{ description }}</p>
+      <p v-if="errorMessage" class="mt-3 text-sm text-state-danger-text" role="alert">{{ errorMessage }}</p>
 
       <div class="mt-6 flex flex-col gap-3">
         <button
@@ -131,6 +161,12 @@ import {
   type PaddleThankYouPhase,
   type PaddleTxnStatusResponse,
 } from '~/utils/paddleThankYou'
+import {
+  returnToneFromView,
+  statusCardBorderClass,
+  statusWellClass,
+  thankYouToneFromPhase,
+} from '~/utils/billingConfirmStatus'
 
 // The API remains the auth boundary. This meta only lets pending sessions reach
 // the payment return page (Paddle / legacy Wompi) without weakening operational guards.
@@ -176,8 +212,8 @@ const icon = computed(() => view.value === 'approved'
   ? CheckCircleIcon
   : view.value === 'pending' ? ClockIcon : ExclamationTriangleIcon)
 const iconClass = computed(() => view.value === 'approved'
-  ? 'text-status-success-text'
-  : view.value === 'pending' ? 'text-status-warning-text' : 'text-status-danger-text')
+  ? 'text-state-success-icon'
+  : view.value === 'pending' ? 'text-state-warning-icon' : 'text-state-danger-icon')
 const title = computed(() => view.value === 'approved'
   ? t('onboarding.paymentApprovedTitle')
   : view.value === 'pending'
@@ -201,9 +237,9 @@ const thankYouIcon = computed(() =>
       : ClockIcon,
 )
 const thankYouIconClass = computed(() =>
-  thankYouPhase.value === 'ready' ? 'text-status-success-text'
-    : thankYouPhase.value === 'timeout' ? 'text-status-warning-text'
-      : 'text-status-warning-text',
+  thankYouPhase.value === 'ready' ? 'text-state-success-icon'
+    : thankYouPhase.value === 'timeout' ? 'text-state-warning-icon'
+      : 'text-state-warning-icon',
 )
 const thankYouTitle = computed(() =>
   thankYouPhase.value === 'ready' ? t('billing.paddleThankYouTitle')
@@ -215,6 +251,11 @@ const thankYouDescription = computed(() =>
     : thankYouPhase.value === 'timeout' ? t('billing.paddleThankYouTimeoutDescription')
       : t('billing.paddleThankYouActivatingDescription'),
 )
+
+const thankYouWaiting = computed(() => thankYouPhase.value === 'activating')
+const returnWaiting = computed(() => view.value === 'pending')
+const thankYouTone = computed(() => thankYouToneFromPhase(thankYouPhase.value))
+const returnTone = computed(() => returnToneFromView(view.value))
 
 const readPaddleTxnFromRoute = () => {
   const paddleTxn = typeof route.query.paddle_txn === 'string'

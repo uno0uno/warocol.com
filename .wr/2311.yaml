@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2311
+title: "Polish billing confirmation verifying cards (motion + hierarchy)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2311-confirmacion-status-cards
+
+paths:
+  - pages/billing/confirmacion.vue
+  - utils/billingConfirmStatus.ts
+  - utils/billingConfirmStatus.test.ts
+
+ac:
+  - Pending and activating cards are not empty bordered boxes; title, body, and status are distinct
+  - Waiting uses semantic tokens plus icon/well pulse; not color alone
+  - Pulse loops while verifying and is off under prefers-reduced-motion
+  - Ready / timeout / failed stay readable with the same card model
+  - Spanish titles wrap at narrow width; existing refresh and back actions remain
+  - No Paddle iframe, webhook, or API changes
+
+out_of_scope:
+  - Paddle iframe internals
+  - PayPal / Google Pay
+  - Telegram / billing webhooks
+  - Other billing pages
+  - pages/facturacion/index.vue (unrelated local dirty file)
+
+hints:
+  entry: "pages/billing/confirmacion.vue thank-you + pending cards"
+  pattern: "LeadModalForm success well: rounded-full bg + ring-8"
+  tests: "vitest run utils/billingConfirmStatus.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "gh issue edit 2311 --add-label ready-for-review"
