@@ -94,7 +94,7 @@
       {{ quantityAdjustmentHint }}
     </p>
 
-    <div v-if="uiOptionType === 'WAREHOUSE'" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+    <div v-if="uiOptionType === 'WAREHOUSE'" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-10">
       <div class="min-w-0 sm:col-span-2 lg:col-span-5">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.warehouseItemRequired') }}</label>
         <UiIngredientSearchInput
@@ -129,13 +129,9 @@
           >{{ opt.label }}</option>
         </select>
       </div>
-      <div class="min-w-0 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2 lg:col-span-2">
-        <p class="text-xs font-medium text-text-secondary">{{ t('menu.modificadores.unitCost') }}</p>
-        <p class="mt-1 text-sm font-medium text-text-primary tabular-nums">{{ ingredientCostLabel }}</p>
-      </div>
     </div>
 
-    <div v-else-if="uiOptionType === 'RESALE'" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+    <div v-else-if="uiOptionType === 'RESALE'" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-10">
       <div class="min-w-0 sm:col-span-2 lg:col-span-5">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.resaleProductRequired') }}</label>
         <UiProductSearchInput
@@ -170,10 +166,6 @@
           >{{ opt.label }}</option>
         </select>
       </div>
-      <div class="min-w-0 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2 lg:col-span-2">
-        <p class="text-xs font-medium text-text-secondary">{{ t('menu.modificadores.unitCost') }}</p>
-        <p class="mt-1 text-sm font-medium text-text-primary tabular-nums">{{ ingredientCostLabel }}</p>
-      </div>
     </div>
 
     <div v-else-if="uiOptionType === 'RECIPE'" class="space-y-3">
@@ -190,20 +182,14 @@
           </option>
         </select>
       </div>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div class="min-w-0">
-          <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.recipeQuantity') }}</label>
-          <UiDecimalInput
-            v-model="modifier.recipe_base_quantity"
-            :min="0.01"
-            :precision="6"
-            class="input-base w-full px-3 py-2 text-sm"
-          />
-        </div>
-        <div class="min-w-0 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
-          <p class="text-xs font-medium text-text-secondary">{{ t('menu.modificadores.unitCost') }}</p>
-          <p class="mt-1 text-sm font-medium text-text-primary tabular-nums">{{ recipeCostLabel }}</p>
-        </div>
+      <div class="min-w-0 sm:max-w-xs">
+        <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.recipeQuantity') }}</label>
+        <UiDecimalInput
+          v-model="modifier.recipe_base_quantity"
+          :min="0.01"
+          :precision="6"
+          class="input-base w-full min-h-[38px] px-3 py-2 text-sm"
+        />
       </div>
       <div
         v-if="modifier.recipe_base_type_id && recipeBaseIngredients.length > 0"
@@ -221,24 +207,24 @@
         </div>
       </div>
 
-      <div class="space-y-2 pt-2 border-t border-border">
-        <h4 class="text-sm font-medium text-text-primary">{{ WAREHOUSE_COPY.recipeCostLines }}</h4>
-
-        <div v-if="modifier.recipe_lines.length" class="space-y-2">
-          <div
-            v-for="(line, lineIndex) in modifier.recipe_lines"
-            :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
-            class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
-          >
-            <div class="md:col-span-5">
-              <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
-              <UiIngredientSearchInput
-                :key="`modifier-recipe-line-${line.ingredient_id || lineIndex}`"
-                :initial-value="recipeLineSearchLabel(line)"
-                :allow-create="true"
-                @select="ingredient => $emit('select-recipe-line', lineIndex, ingredient)"
-                @create="name => $emit('create-recipe-line', lineIndex, name)"
-              />
+      <div
+        v-if="modifier.recipe_lines.length"
+        class="space-y-2"
+      >
+        <div
+          v-for="(line, lineIndex) in modifier.recipe_lines"
+          :key="`${line.ingredient_id || 'new'}-${lineIndex}`"
+          class="grid grid-cols-1 gap-2 rounded-lg border border-border p-3 md:grid-cols-12"
+        >
+          <div class="md:col-span-5">
+            <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
+            <UiIngredientSearchInput
+              :key="`modifier-recipe-line-${line.ingredient_id || lineIndex}`"
+              :initial-value="recipeLineSearchLabel(line)"
+              :allow-create="true"
+              @select="ingredient => $emit('select-recipe-line', lineIndex, ingredient)"
+              @create="name => $emit('create-recipe-line', lineIndex, name)"
+            />
           </div>
           <div class="md:col-span-3">
             <UiDecimalInput
@@ -272,22 +258,12 @@
           >
             ×
           </button>
-          </div>
         </div>
-
-        <button
-          type="button"
-          class="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-shell-icon-bg px-3 text-sm font-medium text-shell-icon-text"
-          @click="addRecipeLine"
-        >
-          <Icon name="heroicons:plus" class="h-4 w-4 flex-shrink-0" />
-          {{ t('menu.recetas.form.addLine') }}
-        </button>
       </div>
     </div>
 
-    <div v-else-if="uiOptionType === 'PRODUCT'" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      <div class="min-w-0 sm:col-span-2">
+    <div v-else-if="uiOptionType === 'PRODUCT'" class="space-y-3">
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.menuProduct }} *</label>
         <UiProductSearchInput
           :key="`modifier-prod-${modifier.linked_product_id ?? index}`"
@@ -297,7 +273,7 @@
           @select="onProductSelect"
         />
       </div>
-      <div class="min-w-0">
+      <div class="min-w-0 sm:max-w-xs">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.productQuantity') }}</label>
         <UiDecimalInput
           v-model="modifier.linked_product_quantity"
@@ -305,10 +281,6 @@
           :precision="6"
           class="input-base w-full px-3 py-2 text-sm"
         />
-      </div>
-      <div class="min-w-0 rounded-lg border border-border bg-surface-secondary/40 px-3 py-2">
-        <p class="text-xs font-medium text-text-secondary">{{ t('menu.modificadores.unitCost') }}</p>
-        <p class="mt-1 text-sm font-medium text-text-primary tabular-nums">{{ productCostLabel }}</p>
       </div>
     </div>
 
@@ -345,7 +317,7 @@ import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 import { fetchResaleLinkedIngredient } from '~/composables/useResaleLinkedIngredient'
 
 const { t } = useI18n({ useScope: 'global' })
-const { formatCurrency, currencyCode, currencyMinorUnits } = useFormatters()
+const { currencyCode, currencyMinorUnits } = useFormatters()
 const WAREHOUSE_COPY = useWarehouseCopy()
 
 const props = defineProps<{
@@ -408,15 +380,6 @@ function recipeLineSearchLabel(line: ModifierRecipeLineForm) {
   if (line.ingredient_name?.trim()) return line.ingredient_name.trim()
   if (!line.ingredient_id) return ''
   return String(props.getIngredientById(line.ingredient_id)?.name || '')
-}
-
-function addRecipeLine() {
-  props.modifier.recipe_lines.push({
-    ingredient_id: '',
-    ingredient_name: '',
-    quantity: null,
-    unit: null,
-  })
 }
 
 function removeRecipeLine(lineIndex: number) {
@@ -485,40 +448,6 @@ function scaledRecipeQty(ing: Record<string, unknown>) {
   return formatDomainQuantity(Number(ing.base_quantity ?? ing.quantity ?? 0) * mult, 6)
 }
 
-function estimateRecipeCost(): number | null {
-  if (!props.modifier.recipe_base_type_id) return null
-  let total = 0
-  let hasLine = false
-  for (const ing of recipeBaseIngredients.value) {
-    const qty = Number(ing.base_quantity ?? ing.quantity ?? 0) * (Number(props.modifier.recipe_base_quantity) || 1)
-    const unitCost = Number(ing.costo_unitario ?? ing.unit_cost ?? 0)
-    if (qty > 0) hasLine = true
-    total += qty * unitCost
-  }
-  return hasLine ? total : null
-}
-
-const ingredientCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
-  const ing = props.modifier.ingredient_id
-    ? props.getIngredientById(props.modifier.ingredient_id)
-    : undefined
-  const unit = Number(ing?.costo_unitario ?? 0)
-  const qty = Number(props.modifier.ingredient_quantity) || 0
-  if (!unit || !qty) return '—'
-  return formatCurrency(unit * qty)
-})
-
-const recipeCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
-  const est = estimateRecipeCost()
-  return est != null ? formatCurrency(est) : '—'
-})
-
-const productCostLabel = computed(() => {
-  if (props.modifier.unit_cost != null) return formatCurrency(props.modifier.unit_cost)
-  return '—'
-})
 </script>
 
 <style scoped>
