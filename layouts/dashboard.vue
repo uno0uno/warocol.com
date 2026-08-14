@@ -26,6 +26,7 @@
         v-if="showSubscriptionBanner && subscriptionBannerLevel"
         :level="subscriptionBannerLevel"
         :message="subscriptionBannerMessage"
+        :message-pending="starterBannerPending"
         :grace-days-remaining="accessStatus?.grace_days_remaining"
       />
 
@@ -87,7 +88,7 @@ import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
-import { resolveTrialPriceAnchor, TRIAL_PRICE_PENDING_SLOT } from '~/utils/publicCta'
+import { resolveTrialPriceAnchor } from '~/utils/publicCta'
 import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
 
 const { t, locale } = useI18n()
@@ -118,6 +119,15 @@ const subscriptionBannerLevel = computed<SubscriptionBannerLevel | null>(() => {
 
 const showSubscriptionBanner = computed(() => subscriptionBannerLevel.value != null)
 
+const starterBannerPending = computed(() => {
+  if (subscriptionBannerLevel.value !== 'starter') return false
+  return !resolveTrialPriceAnchor({
+    locale: locale.value,
+    countryCode: financialProfile.value?.country_code,
+    currencyCode: financialProfile.value?.base_currency_code,
+  })
+})
+
 const subscriptionBannerMessage = computed(() => {
   const status = accessStatus.value
   const level = subscriptionBannerLevel.value
@@ -129,9 +139,8 @@ const subscriptionBannerMessage = computed(() => {
       countryCode: financialProfile.value?.country_code,
       currencyCode: financialProfile.value?.base_currency_code,
     })
-    return t('shell.subscriptionTrial', {
-      priceAnchor: priceAnchor ?? TRIAL_PRICE_PENDING_SLOT,
-    })
+    if (!priceAnchor) return ''
+    return t('shell.subscriptionTrial', { priceAnchor })
   }
   if (status.message) return status.message
   if (level === 'read_only') return t('shell.subscriptionReadOnly')

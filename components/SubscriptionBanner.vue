@@ -5,7 +5,13 @@
     :role="level === 'starter' ? 'status' : 'alert'"
   >
     <div class="flex items-center gap-3 px-4 sm:px-6 md:px-8 py-2.5">
+      <span
+        v-if="messagePending"
+        class="trial-banner-skeleton trial-banner-skeleton--icon flex-shrink-0"
+        aria-hidden="true"
+      />
       <svg
+        v-else
         class="w-4 h-4 flex-shrink-0"
         fill="currentColor"
         viewBox="0 0 20 20"
@@ -25,17 +31,20 @@
         />
       </svg>
 
-      <p
-        class="text-xs sm:text-sm font-medium flex-1 leading-snug"
-        :aria-busy="pricePending"
+      <div
+        v-if="messagePending"
+        class="flex-1 min-w-0 space-y-1.5 py-0.5"
+        aria-busy="true"
+        aria-hidden="true"
       >
-        <template v-if="pricePendingParts">
-          {{ pricePendingParts.before }}<span
-            class="trial-price-skeleton"
-            aria-hidden="true"
-          /><template v-if="pricePendingParts.after">{{ pricePendingParts.after }}</template>
-        </template>
-        <template v-else>{{ message }}</template>
+        <span class="trial-banner-skeleton trial-banner-skeleton--full" />
+        <span class="trial-banner-skeleton trial-banner-skeleton--mid" />
+      </div>
+      <p
+        v-else
+        class="text-xs sm:text-sm font-medium flex-1 leading-snug"
+      >
+        {{ message }}
         <span
           v-if="graceDaysRemaining != null && level === 'read_only'"
           class="opacity-80"
@@ -51,7 +60,13 @@
         </span>
       </p>
 
+      <span
+        v-if="messagePending"
+        class="trial-banner-skeleton trial-banner-skeleton--cta flex-shrink-0"
+        aria-hidden="true"
+      />
       <NuxtLink
+        v-else
         to="/gestion/billing"
         :class="ctaClass"
         class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[44px] flex items-center whitespace-nowrap transition-opacity hover:opacity-80"
@@ -63,22 +78,16 @@
 </template>
 
 <script setup lang="ts">
-import { TRIAL_PRICE_PENDING_SLOT } from '~/utils/publicCta'
-
 const props = defineProps<{
   level: 'starter' | 'full_with_warning' | 'read_only'
   message: string
+  messagePending?: boolean
   graceDaysRemaining?: number | null
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
 
-const pricePendingParts = computed(() => {
-  if (!props.message.includes(TRIAL_PRICE_PENDING_SLOT)) return null
-  const [before, after] = props.message.split(TRIAL_PRICE_PENDING_SLOT)
-  return { before, after: after ?? '' }
-})
-const pricePending = computed(() => pricePendingParts.value != null)
+const messagePending = computed(() => Boolean(props.messagePending))
 
 const isVisible = computed(
   () =>
@@ -106,12 +115,8 @@ const ctaLabel = computed(() => {
 </script>
 
 <style scoped>
-.trial-price-skeleton {
-  display: inline-block;
-  vertical-align: -0.15em;
-  width: 9.5rem;
-  height: 0.85em;
-  margin: 0 0.2em;
+.trial-banner-skeleton {
+  display: block;
   border-radius: 4px;
   background: linear-gradient(
     90deg,
@@ -121,9 +126,29 @@ const ctaLabel = computed(() => {
   );
   background-size: 200% 100%;
   opacity: 0.28;
-  animation: trial-price-shimmer 1.5s infinite;
+  animation: trial-banner-shimmer 1.5s infinite;
 }
-@keyframes trial-price-shimmer {
+.trial-banner-skeleton--icon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+}
+.trial-banner-skeleton--full {
+  height: 0.7rem;
+  width: 100%;
+  max-width: 42rem;
+}
+.trial-banner-skeleton--mid {
+  height: 0.7rem;
+  width: 72%;
+  max-width: 28rem;
+}
+.trial-banner-skeleton--cta {
+  width: 7.25rem;
+  height: 2.75rem;
+  border-radius: 0.5rem;
+}
+@keyframes trial-banner-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }

@@ -88,8 +88,6 @@ function trialPriceCopy(
 }
 
 /** In-app Starter trial banner price slot (warocol.com#1917, #2293, #2302). */
-export const TRIAL_PRICE_PENDING_SLOT = '__PRICE_PENDING__'
-
 export function resolveTrialPriceAnchor(options: {
   locale?: string | null
   countryCode?: string | null
