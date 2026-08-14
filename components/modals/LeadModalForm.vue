@@ -155,15 +155,18 @@ function validate(): boolean {
 async function handleSubmit() {
   if (!validate()) return
 
-  isSubmitting.value = true
+    isSubmitting.value = true
   try {
+    const visitorKey = useCookie('waro_visitor_key').value?.trim()
+    const body: Record<string, string> = {
+      email: form.value.email.trim().toLowerCase(),
+      phone: form.value.phone.replace(/\D/g, ''),
+      button_source: props.buttonSource,
+    }
+    if (visitorKey) body.visitor_key = visitorKey
     const res = await $fetch<{ success: boolean; already_registered: boolean }>('/api/leads/capture', {
       method: 'POST',
-      body: {
-        email: form.value.email.trim().toLowerCase(),
-        phone: form.value.phone.replace(/\D/g, ''),
-        button_source: props.buttonSource,
-      },
+      body,
     })
 
     isAlreadyRegistered.value = res.already_registered
