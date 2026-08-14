@@ -66,9 +66,12 @@
 
         <!-- Configuración/Tenant -->
         <button
-          @click="showTenantModal = true"
-          :aria-label="t('shell.settings')"
+          type="button"
+          :aria-label="t('shell.selectTenant')"
+          :aria-haspopup="true"
+          :aria-expanded="showTenantModal"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-icon-button-neutral-hover-bg focus:outline-none focus:ring-2 focus:ring-icon-button-focus-ring"
+          @click="showTenantModal = true"
         >
           <Cog6ToothIcon class="w-5 h-5 text-icon-button-neutral-text" />
         </button>
@@ -180,68 +183,33 @@
     </UiBottomSheetModal>
 
     <!-- Tenant Selector Modal -->
-    <UiBottomSheetModal v-model="showTenantModal" :title="t('shell.selectTenant')" max-height="lg">
-      <div class="p-4 space-y-6">
-        <!-- Tenant Selector -->
-        <div>
-          <div class="space-y-2">
-            <div v-if="isLoadingTenants" class="text-sm text-text-secondary py-2">
-              {{ t('shell.loadingTenants') }}
-            </div>
-            <template v-else>
-              <div v-if="tenants.length === 0" class="text-sm text-text-secondary py-2">
-                {{ t('shell.noTenants') }}
-              </div>
-              <button
-                v-for="tenant in tenants"
-                :key="tenant.id"
-                @click="selectTenant(tenant)"
-                :disabled="isLoadingTenants"
-                class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                :class="selectedTenant?.id === tenant.id
-                  ? 'border-primary bg-icon-button-primary-bg'
-                  : 'border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg'"
-              >
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-3 h-3 rounded-full"
-                    :class="selectedTenant?.id === tenant.id ? 'bg-primary' : 'bg-badge-neutral-bg'"
-                  ></div>
-                  <span class="font-medium text-text-primary">{{ tenant.name }}</span>
-                </div>
-                <CheckCircleIcon
-                  v-if="selectedTenant?.id === tenant.id"
-                  class="w-5 h-5 text-primary"
-                />
-              </button>
-              <button
-                v-if="isSuperuser"
-                type="button"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-dashed border-form-control-border hover:border-form-control-focus-border hover:bg-icon-button-neutral-hover-bg transition-colors"
-                @click="openCreatePanel"
-              >
-                <PlusIcon class="w-5 h-5 text-primary" />
-                <span class="font-medium text-text-primary">{{ t('shell.createTenant') }}</span>
-              </button>
-            </template>
-          </div>
-        </div>
+    <UiBottomSheetModal
+      v-model="showTenantModal"
+      :title="t('shell.selectTenant')"
+      max-height="lg"
+      fill-content
+    >
+      <div class="flex min-h-0 flex-1 flex-col">
+        <DashboardTenantPickerList
+          ref="pickerRef"
+          @select="selectTenant"
+          @create="openCreatePanel"
+        />
 
-        <!-- User Info -->
-        <div class="pt-4 border-t border-sheet-border">
+        <div class="flex-shrink-0 pt-2 pb-4 border-t border-sheet-border">
           <NuxtLink
             to="/perfil"
             :aria-label="t('perfil.navigation.open')"
-            class="flex items-center gap-3 px-4 py-3 bg-shell-account-hover-bg rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="flex items-center gap-3 mx-3 px-3 py-2.5 min-h-11 rounded-lg hover:bg-shell-notification-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
             @click="showTenantModal = false"
           >
-            <div class="w-10 h-10 bg-primary rounded-full overflow-hidden flex items-center justify-center font-bold text-primary-foreground text-sm">
-              <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover" />
+            <div class="w-9 h-9 bg-shell-account-avatar-bg border border-shell-account-avatar-border rounded-full overflow-hidden flex items-center justify-center font-bold text-shell-account-icon-text text-sm">
+              <img v-if="userAvatar" :src="userAvatar" :alt="t('perfil.avatar.alt', { name: userName })" class="h-full w-full object-cover">
               <span v-else aria-hidden="true">{{ userInitials }}</span>
             </div>
-            <div>
-              <div class="font-semibold text-sm text-text-primary">{{ userName }}</div>
-              <div class="text-xs text-text-secondary">{{ userEmail }}</div>
+            <div class="min-w-0 text-start">
+              <div class="font-semibold text-sm text-text-primary truncate">{{ userName }}</div>
+              <div class="text-xs text-text-secondary truncate">{{ userEmail }}</div>
             </div>
           </NuxtLink>
         </div>
@@ -259,14 +227,12 @@ import {
   BellIcon,
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
-  CheckCircleIcon,
   Cog6ToothIcon,
-  PlusIcon,
   CreditCardIcon,
   DocumentTextIcon,
   ShoppingBagIcon,
 } from '@heroicons/vue/24/outline'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 import { notificationDespachoPath, notificationDespachoTitle, notificationIsTermsAcceptanceRequired } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
@@ -317,6 +283,13 @@ const showTenantModal = ref(false)
 const showCreatePanel = ref(false)
 const showMenuModal = ref(false)
 const showNotificationsModal = ref(false)
+const pickerRef = ref<{ resetAndFocus: () => Promise<void> } | null>(null)
+
+watch(showTenantModal, async (open) => {
+  if (!open) return
+  await nextTick()
+  await pickerRef.value?.resetAndFocus()
+})
 
 // Notifications
 const { notifications, markAsRead } = useNotifications()
@@ -360,15 +333,6 @@ const formatRelativeTime = (dateStr: string): string => {
   return t('shell.daysAgo', { n: days })
 }
 
-// Use tenants store
-const tenantsStore = useTenantsStore()
-
-// Computed properties from store
-const tenants = computed(() => tenantsStore.tenants)
-const selectedTenant = computed(() => tenantsStore.selectedTenant)
-const isLoadingTenants = computed(() => tenantsStore.isLoading)
-
-// Use auth store for user data
 const authStore = useAuthStore()
 const userName = computed(() => authStore.displayUser.name)
 const userEmail = computed(() => authStore.displayUser.email || t('perfil.navigation.noEmail'))
@@ -377,10 +341,6 @@ const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
-const isSuperuser = computed(() =>
-  authStore.displayUser?.role === 'superuser' ||
-  authStore.session?.user?.role === 'superuser'
-)
 
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
