@@ -19,11 +19,20 @@ import { computed } from 'vue'
 
 export interface PublicCity {
   country: string
+  country_code?: string | null
   city: string
   city_slug: string
   tenant_count: number
   department?: string | null
   department_name?: string | null
+}
+
+/** Countries with a curated Negocio picker (warocol.com#2295). SSR dispatch stays CO-only. */
+export const CURATED_CITY_COUNTRY_CODES = new Set(['CO', 'AR', 'MX', 'US'])
+
+export function hasCuratedCityCatalog(countryCode?: string | null): boolean {
+  const code = String(countryCode || 'CO').trim().toUpperCase() || 'CO'
+  return CURATED_CITY_COUNTRY_CODES.has(code)
 }
 
 /** Common misspellings / spoken variants → catalog slug (warocol.com#1740). */
@@ -229,6 +238,52 @@ export function useCityCatalog() {
     return findCity(seg)
   }
 
+  const extraCities = useState<PublicCity[]>('city-catalog-extra', () => [])
+  const extraCountry = useState<string>('city-catalog-extra-cc', () => '')
+  const extraLoading = useState<boolean>('city-catalog-extra-loading', () => false)
+  const extraError = useState<string | null>('city-catalog-extra-error', () => null)
+  const extraLoaded = useState<boolean>('city-catalog-extra-loaded', () => false)
+
+  const fetchCatalogForCountry = async (
+    countryCode: string,
+    opts?: { includeEmpty?: boolean },
+  ): Promise<void> => {
+    const cc = String(countryCode || 'CO').trim().toUpperCase() || 'CO'
+    if (cc === 'CO') {
+      await fetchCatalog(opts)
+      return
+    }
+    if (extraCountry.value === cc && extraCities.value.length > 0) {
+      extraError.value = null
+      extraLoaded.value = true
+      return
+    }
+    extraCountry.value = cc
+    extraLoading.value = true
+    extraError.value = null
+    extraLoaded.value = false
+    extraCities.value = []
+    try {
+      const res = await $fetch<{ success: boolean; data: PublicCity[] }>(
+        '/api/public/restaurant/cities',
+        {
+          params: {
+            include_empty: opts?.includeEmpty ? 'true' : 'false',
+            country_code: cc,
+          },
+        },
+      )
+      extraCities.value = res?.data ?? []
+      extraLoaded.value = true
+    } catch (err) {
+      extraCities.value = []
+      extraLoaded.value = true
+      extraError.value = err instanceof Error ? err.message : 'No se pudo cargar el catálogo de ciudades.'
+    } finally {
+      extraLoading.value = false
+    }
+  }
+
   return {
     cities,
     citySlugSet,
@@ -237,6 +292,11 @@ export function useCityCatalog() {
     isCityRoute,
     cityFromRoute,
     fetchCatalog,
+    fetchCatalogForCountry,
+    extraCities,
+    extraLoading,
+    extraError,
+    extraLoaded,
     isLoading,
     error,
     hasLoaded,
