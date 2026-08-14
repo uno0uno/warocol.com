@@ -8,6 +8,7 @@ import DirectoryView from '~/components/directory/DirectoryView.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useToast } from '~/composables/useToast'
 import { useCityCatalog } from '~/composables/useCityCatalog'
+import { shouldNoindexPublicTenant } from '~/utils/thinPublicTenant'
 
 const route = useRoute()
 const router = useRouter()
@@ -130,6 +131,16 @@ const isRefreshing = computed(() =>
   (menuAsyncStatus.value === 'loading' && menuData.value != null)
 )
 
+const shouldNoindex = computed(() => {
+  if (isCity.value) return false
+  if (isInitialLoading.value) return false
+  return shouldNoindexPublicTenant({
+    slug: tenantSlug.value,
+    hasRestaurant: Boolean(restaurant.value),
+    productCount: products.value.length,
+  })
+})
+
 // Format business hours for schema.org
 function formatOpeningHours(businessHours) {
   if (!businessHours) return []
@@ -233,6 +244,7 @@ useSeoMeta({
   twitterTitle: () => restaurant.value?.seo_title || restaurant.value?.display_name || '',
   twitterDescription: () => restaurant.value?.seo_description || restaurant.value?.description || '',
   twitterImage: () => restaurant.value?.banner_url || restaurant.value?.logo_url || '',
+  robots: () => (shouldNoindex.value ? 'noindex, follow' : undefined),
 })
 
 useHead({

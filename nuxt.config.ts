@@ -19,6 +19,14 @@ export default defineNuxtConfig({
       redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 },
       prerender: false
     },
+    '/blog/software-para-restaurantes': {
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 },
+      prerender: false
+    },
+    '/blog/best-pos-for-restaurant': {
+      redirect: { to: '/blog/best-pos-system-for-restaurant', statusCode: 301 },
+      prerender: false
+    },
     '/blog/software-restaurantes-gratis-colombia': {
       redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 },
       prerender: false
