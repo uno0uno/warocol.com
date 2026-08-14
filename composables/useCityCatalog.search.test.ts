@@ -45,12 +45,15 @@ describe('city catalog search helpers', () => {
     assert.match(message, /read-only/)
   })
 
-  it('treats CO AR MX US as curated catalogs and others as free-text', () => {
+  it('treats all 23 Negocio countries as curated catalogs', () => {
     assert.equal(hasCuratedCityCatalog('CO'), true)
     assert.equal(hasCuratedCityCatalog('AR'), true)
     assert.equal(hasCuratedCityCatalog('MX'), true)
     assert.equal(hasCuratedCityCatalog('US'), true)
-    assert.equal(hasCuratedCityCatalog('PE'), false)
+    assert.equal(hasCuratedCityCatalog('PE'), true)
+    assert.equal(hasCuratedCityCatalog('ES'), true)
+    assert.equal(hasCuratedCityCatalog('CL'), true)
     assert.equal(hasCuratedCityCatalog(''), true)
+    assert.equal(hasCuratedCityCatalog('ZZ'), false)
   })
 })

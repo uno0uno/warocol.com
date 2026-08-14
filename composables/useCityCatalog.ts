@@ -27,8 +27,11 @@ export interface PublicCity {
   department_name?: string | null
 }
 
-/** Countries with a curated Negocio picker (warocol.com#2295). SSR dispatch stays CO-only. */
-export const CURATED_CITY_COUNTRY_CODES = new Set(['CO', 'AR', 'MX', 'US'])
+/** Negocio countries with a catalog picker (warocol.com#2308). SSR dispatch stays CO-only. */
+export const CURATED_CITY_COUNTRY_CODES = new Set([
+  'CO', 'PA', 'CL', 'US', 'CA', 'DO', 'UY', 'AU', 'NZ', 'SG', 'AE',
+  'AR', 'MX', 'PE', 'CR', 'BR', 'ES', 'GB', 'DE', 'FR', 'NL', 'IN', 'CN',
+])
 
 export function hasCuratedCityCatalog(countryCode?: string | null): boolean {
   const code = String(countryCode || 'CO').trim().toUpperCase() || 'CO'
