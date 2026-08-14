@@ -16,6 +16,18 @@ export const COUNTRY_DEFAULT_TIMEZONES: Record<string, string> = {
   NZ: 'Pacific/Auckland',
   SG: 'Asia/Singapore',
   AE: 'Asia/Dubai',
+  AR: 'America/Argentina/Buenos_Aires',
+  MX: 'America/Mexico_City',
+  PE: 'America/Lima',
+  CR: 'America/Costa_Rica',
+  BR: 'America/Sao_Paulo',
+  ES: 'Europe/Madrid',
+  GB: 'Europe/London',
+  DE: 'Europe/Berlin',
+  FR: 'Europe/Paris',
+  NL: 'Europe/Amsterdam',
+  IN: 'Asia/Kolkata',
+  CN: 'Asia/Shanghai',
 }
 
 export function defaultTimezoneForCountry(countryCode?: string | null): string {
