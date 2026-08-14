@@ -195,9 +195,8 @@ test('trial banner price anchor uses EUR €30 for eurozone catalog tenants', ()
   )
 })
 
-test('trial banner price anchor keeps COP when country and currency are unknown', () => {
-  assert.equal(
-    resolveTrialPriceAnchor({ locale: 'es' }),
-    PUBLIC_OFFER.monthlyEquivalent,
-  )
+test('trial banner price anchor is pending when country and currency are unknown', () => {
+  assert.equal(resolveTrialPriceAnchor({ locale: 'es' }), null)
+  assert.equal(resolveTrialPriceAnchor({ locale: 'en' }), null)
+  assert.equal(resolveTrialPriceAnchor({}), null)
 })
