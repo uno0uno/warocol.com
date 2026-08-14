@@ -1258,6 +1258,7 @@ const saveBrandChanges = async () => {
 }
 
 const saveOpsChanges = async () => {
+  if (hasCityCatalog.value) onCitySearchClose()
   isSaving.value = true
   try {
     const cleanedHours: Record<string, any> = {}
