@@ -92,6 +92,38 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching cities for sitemap:', error)
   }
 
+  // Extra-country magazines (warocol.com#2296) — never emit `/{slug}` for
+  // AR/MX/US. Hubs and populated cities live under `/ciudades/{cc}/…`.
+  const extraCountryCodes = ['AR', 'MX', 'US'] as const
+  for (const code of extraCountryCodes) {
+    const cc = code.toLowerCase()
+    cityUrls.push({
+      loc: `/ciudades/${cc}`,
+      lastmod: today,
+      changefreq: 'weekly',
+      priority: '0.8',
+    })
+    try {
+      const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }
+      const response = await $fetch<{ success: boolean; data: Array<{ city_slug: string }> }>(
+        `${apiUrl}/public/restaurant/cities`,
+        { query: { include_empty: 'false', country_code: code }, headers: fetchHeaders }
+      )
+      if (response?.data?.length > 0) {
+        for (const city of response.data) {
+          cityUrls.push({
+            loc: `/ciudades/${cc}/${city.city_slug}`,
+            lastmod: today,
+            changefreq: 'weekly',
+            priority: '0.85',
+          })
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching ${code} cities for sitemap:`, error)
+    }
+  }
+
   // URLs base
   const baseUrls = [
     { loc: '/', lastmod: today, changefreq: 'daily', priority: '1.0' },
