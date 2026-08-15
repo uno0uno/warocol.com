@@ -71,6 +71,24 @@ export const OPERATION_EVENT_ACTIONS = [
   'payment_voided',
   'comanda_line_cancelled',
   'promotion_deleted',
+  'customer_created',
+  'customer_updated',
+  'expense_created',
+  'expense_updated',
+  'expense_deleted',
+  'expense_paid',
+  'expense_instance_created',
+  'expense_instance_updated',
+  'shift_opened',
+  'cierre_created',
+  'cierre_deleted',
+  'shift_deleted',
+  'period_closed',
+  'credit_payment_registered',
+  'journal_entry_created',
+  'journal_entry_posted',
+  'journal_entry_voided',
+  'invoice_emitted',
 ] as const
 
 export const ACTION_LABELS: Record<string, string> = {
@@ -85,6 +103,24 @@ export const ACTION_LABELS: Record<string, string> = {
   payment_voided: 'Pago anulado',
   comanda_line_cancelled: 'Línea de comanda cancelada',
   promotion_deleted: 'Promoción eliminada',
+  customer_created: 'Cliente creado',
+  customer_updated: 'Cliente actualizado',
+  expense_created: 'Gasto creado',
+  expense_updated: 'Gasto actualizado',
+  expense_deleted: 'Gasto eliminado',
+  expense_paid: 'Gasto pagado',
+  expense_instance_created: 'Cuota de gasto creada',
+  expense_instance_updated: 'Cuota de gasto actualizada',
+  shift_opened: 'Turno abierto',
+  cierre_created: 'Cierre registrado',
+  cierre_deleted: 'Cierre eliminado',
+  shift_deleted: 'Apertura de turno cancelada',
+  period_closed: 'Período mensual cerrado',
+  credit_payment_registered: 'Pago a crédito registrado',
+  journal_entry_created: 'Asiento creado',
+  journal_entry_posted: 'Asiento publicado',
+  journal_entry_voided: 'Asiento anulado',
+  invoice_emitted: 'Factura electrónica emitida',
 }
 
 export const CHANNEL_LABELS: Record<string, string> = {
@@ -105,6 +141,24 @@ export const operationActionI18nKeys: Record<string, string> = {
   payment_voided: 'actionPaymentVoided',
   comanda_line_cancelled: 'actionComandaCancelled',
   promotion_deleted: 'actionPromotionDeleted',
+  customer_created: 'actionCustomerCreated',
+  customer_updated: 'actionCustomerUpdated',
+  expense_created: 'actionExpenseCreated',
+  expense_updated: 'actionExpenseUpdated',
+  expense_deleted: 'actionExpenseDeleted',
+  expense_paid: 'actionExpensePaid',
+  expense_instance_created: 'actionExpenseInstanceCreated',
+  expense_instance_updated: 'actionExpenseInstanceUpdated',
+  shift_opened: 'actionShiftOpened',
+  cierre_created: 'actionCierreCreated',
+  cierre_deleted: 'actionCierreDeleted',
+  shift_deleted: 'actionShiftDeleted',
+  period_closed: 'actionPeriodClosed',
+  credit_payment_registered: 'actionCreditPaymentRegistered',
+  journal_entry_created: 'actionJournalCreated',
+  journal_entry_posted: 'actionJournalPosted',
+  journal_entry_voided: 'actionJournalVoided',
+  invoice_emitted: 'actionInvoiceEmitted',
 }
 
 export function formatOperationEventActor(row: OperationEventRow): string {
@@ -155,6 +209,9 @@ export function formatOperationEventSummary(
       ? `${translate('operaciones.bitacora.order')} #${payload.order_number}`
       : `Orden #${payload.order_number}`
   }
+
+  const label = payload.label as string | undefined
+  if (label) return label
 
   return '—'
 }
