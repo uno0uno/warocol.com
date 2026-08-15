@@ -349,3 +349,37 @@ export function formatOperationEventTableName(payload: Record<string, unknown>):
   const name = payload.table_name as string | undefined
   return name?.trim() || null
 }
+
+function payloadOrderNumber(payload: Record<string, unknown> | undefined): string | null {
+  const raw = payload?.order_number
+  if (raw == null || raw === '') return null
+  const value = String(raw).trim()
+  return value || null
+}
+
+export function operationEventOrderHref(row: Pick<OperationEventRow, 'order_id' | 'payload'>): string | null {
+  if (!row.order_id) return null
+  const number = payloadOrderNumber(row.payload)
+  return number
+    ? `/ventas/${row.order_id}?n=${encodeURIComponent(number)}`
+    : `/ventas/${row.order_id}`
+}
+
+export function operationEventOrderLabel(
+  row: Pick<OperationEventRow, 'order_id' | 'payload'>,
+  fallback: string,
+): string | null {
+  if (!row.order_id) return null
+  const number = payloadOrderNumber(row.payload)
+  return number ? `#${number}` : fallback
+}
+
+export function operationEventOrderLink(
+  row: Pick<OperationEventRow, 'order_id' | 'payload'>,
+  fallback: string,
+): { to: string; label: string } | null {
+  const to = operationEventOrderHref(row)
+  const label = operationEventOrderLabel(row, fallback)
+  if (!to || !label) return null
+  return { to, label }
+}

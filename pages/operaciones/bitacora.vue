@@ -14,6 +14,7 @@ import {
   formatOperationEventTableName,
   operationActionI18nKeys,
   operationDomainNavKeys,
+  operationEventOrderLink,
 } from '~/composables/useOperationEvents'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
@@ -175,6 +176,9 @@ const summaryFor = (row: OperationEventRow) =>
 
 const tableNameFor = (row: OperationEventRow) =>
   formatOperationEventTableName(row.payload ?? {})
+
+const orderLinkFor = (row: OperationEventRow) =>
+  operationEventOrderLink(row, t('operaciones.bitacora.order'))
 </script>
 
 <template>
@@ -319,12 +323,12 @@ const tableNameFor = (row: OperationEventRow) =>
 
         <template #cell-links="{ row }">
           <NuxtLink
-            v-if="row.order_id"
-            :to="`/ventas/${row.order_id}`"
-            class="text-xs text-primary hover:underline"
+            v-if="orderLinkFor(row)"
+            :to="orderLinkFor(row)!.to"
+            class="text-xs text-primary hover:underline tabular-nums"
             @click.stop
           >
-            {{ t('operaciones.bitacora.order') }}
+            {{ orderLinkFor(row)!.label }}
           </NuxtLink>
           <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
@@ -430,10 +434,13 @@ const tableNameFor = (row: OperationEventRow) =>
               <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">{{ t('operaciones.bitacora.reason') }}</p>
               <p class="text-text-primary">{{ selectedEvent.reason }}</p>
             </div>
-            <div v-if="selectedEvent.order_id">
+            <div v-if="selectedEvent.order_id && orderLinkFor(selectedEvent)">
               <p class="text-xs font-medium text-text-tertiary uppercase tracking-wide">{{ t('operaciones.bitacora.order') }}</p>
-              <NuxtLink :to="`/ventas/${selectedEvent.order_id}`" class="text-primary hover:underline">
-                {{ selectedEvent.order_id }}
+              <NuxtLink
+                :to="orderLinkFor(selectedEvent)!.to"
+                class="text-primary hover:underline tabular-nums"
+              >
+                {{ orderLinkFor(selectedEvent)!.label }}
               </NuxtLink>
             </div>
             <div>

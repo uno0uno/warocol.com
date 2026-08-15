@@ -45,6 +45,13 @@ const route = useRoute()
 const router = useRouter()
 
 const orderId = computed(() => route.params.id as string)
+const missingOrderNumber = computed(() => {
+  const raw = route.query.n
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+})
 
 // Split payments slide-over
 const showSplitPaymentsPanel = ref(false)
@@ -1109,7 +1116,8 @@ onUnmounted(() => {
     <div v-else-if="fetchError || !order" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">{{ t('ventas.detail.orderNotFound') }}</p>
-        <p class="text-sm text-text-secondary mb-6">{{ fetchError?.message || t('ventas.detail.orderNotFound') }}</p>
+        <p v-if="missingOrderNumber" class="text-sm text-text-secondary mb-6 tabular-nums">#{{ missingOrderNumber }}</p>
+        <p v-else class="text-sm text-text-secondary mb-6">{{ fetchError?.message || t('ventas.detail.orderNotFound') }}</p>
         <button @click="goBack" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
           {{ t('ventas.common.volver') }}
         </button>
