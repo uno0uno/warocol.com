@@ -32,13 +32,15 @@ Cada fila de POS es un evento automático generado cuando el equipo usa el punto
 
 | Acción en la Bitácora | Qué significa |
 |----------------------|-----------------|
-| **Producto agregado al tab** | Se añadió un ítem al tab de una mesa o barra |
 | **Producto eliminado del tab** | Se quitó un ítem del tab (mesa/barra) |
 | **Cantidad modificada** | Se cambió la cantidad de un ítem en el tab |
+| **Ítem editado en el tab** | Se cambió un producto ya guardado (notas, modificadores, etc.) |
+| **Edición bloqueada (cocina)** | Se intentó editar un ítem que cocina ya aceptó |
 | **Tab vaciado** | Se vació el tab de una sesión de mesa o barra |
 | **Línea eliminada del carrito** | Se eliminó un producto del carrito en mostrador o barra |
 | **Carrito vaciado** | Se vació el carrito completo |
 | **Pago anulado** | Se anuló un pago parcial ya registrado en el checkout |
+| **Producto agregado al tab** (histórico) | Ya no se escribe; las filas viejas siguen filtrables |
 
 En cada evento verás, entre otros datos:
 
@@ -57,6 +59,7 @@ En cada evento verás, entre otros datos:
 
 | Situación | Por qué no aparece |
 |-----------|-------------------|
+| Productos **agregados** al tab | Dejó de registrarse para no llenar el historial; las filas antiguas siguen visibles si filtras esa acción |
 | Productos en el carrito **antes de enviarlos al tab** o antes de que el carrito quede sincronizado con el servidor | Solo se auditan acciones que llegan al servidor |
 | Acciones **anteriores al despliegue** de la bitácora en tu negocio | El registro es desde la activación en producción, no rellena el pasado |
 | Anulación de una **venta completa** desde Ventas → Órdenes | Todavía es otro flujo; no es lo mismo que anular un pago parcial en checkout |
