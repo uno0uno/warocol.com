@@ -96,7 +96,7 @@ En cada evento verás, entre otros datos:
 - **Canal** — Mesa, Barra o Mostrador en POS; en otros módulos puede ir vacío
 - **Resumen** — producto y cantidad, o datos del pago anulado
 - **Mesa** — nombre de la mesa cuando aplica
-- **Motivo** — texto capturado en el POS (ver políticas abajo)
+- **Motivo** — texto capturado en el POS; se ve al abrir el detalle del evento (ver políticas abajo)
 - **Orden** — enlace a la venta cuando existe
 
 ---
@@ -132,7 +132,7 @@ Usa **Limpiar** para quitar todos los filtros. La lista se actualiza al cambiar 
 
 ### Producto ya enviado a cocina (mesa o barra)
 
-Si las **comandas** están activas y el producto **ya salió a cocina** (ya no está en estado “nuevo”), al eliminarlo del tab el POS pide un **motivo obligatorio** antes de confirmar. Ese texto queda guardado en la columna **Motivo** de la Bitácora y cocina sigue viendo la línea anulada en el KDS.
+Si las **comandas** están activas y el producto **ya salió a cocina** (ya no está en estado “nuevo”), al eliminarlo del tab el POS pide un **motivo obligatorio** antes de confirmar. Ese texto queda en el detalle del evento en la Bitácora y cocina sigue viendo la línea anulada en el KDS.
 
 Si el producto **aún no se envió a cocina**, puedes eliminarlo sin escribir motivo.
 

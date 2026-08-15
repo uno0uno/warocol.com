@@ -153,7 +153,6 @@ const columns = computed<Column[]>(() => [
   { key: 'action', title: t('operaciones.bitacora.action'), sortable: false },
   { key: 'summary', title: t('operaciones.bitacora.summary'), sortable: false },
   { key: 'table_name', title: t('operaciones.bitacora.table'), sortable: false },
-  { key: 'reason', title: t('operaciones.bitacora.reason'), sortable: false },
   { key: 'links', title: '', sortable: false, align: 'right' },
 ])
 
@@ -315,10 +314,6 @@ const orderLinkFor = (row: OperationEventRow) =>
 
         <template #cell-table_name="{ row }">
           <span class="text-sm text-text-secondary">{{ tableNameFor(row) ?? '—' }}</span>
-        </template>
-
-        <template #cell-reason="{ value }">
-          <span class="text-sm text-text-secondary line-clamp-2">{{ value || '—' }}</span>
         </template>
 
         <template #cell-links="{ row }">
