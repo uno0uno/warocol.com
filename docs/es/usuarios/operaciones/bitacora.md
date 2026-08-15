@@ -74,12 +74,25 @@ Solo quedan acciones que **el servidor guardó**: un cliente nuevo o editado, un
 | **Factura electrónica emitida** | Se emitió una factura nueva (reintentar una ya aceptada no duplica la fila) |
 
 Filtra por **módulo** CRM, Finanzas o Facturación para ver solo esos eventos.
+## Qué registra la Bitácora (Menú, Abastecimiento, Equipo, Integraciones y Negocio)
+
+Solo quedan acciones que **el servidor guardó**: un producto o receta, una compra, un miembro, un token o el perfil del negocio. Abrir listados, importar fila a fila o subir una imagen no crea una fila por cada clic.
+
+| Acción en la Bitácora | Qué significa |
+|----------------------|-----------------|
+| **Producto / receta / modificadores** | Alta, cambio o baja de un ítem persistido del menú; reordenar el menú en línea cuenta como un evento |
+| **Compra / compra directa / ajuste de stock** | Crear o transicionar una compra, o ajustar inventario a mano |
+| **Miembro / invitación / rol** | Quitar a alguien del equipo, cambiar rol, enviar o cancelar una invitación |
+| **Token de API** | Crear, editar, revocar o borrar un token de Integraciones |
+| **Perfil / impuestos / datos financieros** | Guardar el perfil público, impuestos de venta o el perfil financiero (no cada tecla) |
+
+Filtra por **módulo** Menú, Abastecimiento, Equipo, Integraciones o Mi negocio para ver solo esos eventos.
 
 En cada evento verás, entre otros datos:
 
 - **Cuándo** — fecha y hora
 - **Usuario** — quién realizó la acción en el sistema
-- **Módulo** — POS, Ventas, Despacho, CRM, Finanzas o Facturación según de dónde salió la acción
+- **Módulo** — POS, Ventas, Despacho, CRM, Finanzas, Facturación, Menú, Abastecimiento, Equipo, Integraciones o Mi negocio según de dónde salió la acción
 - **Canal** — Mesa, Barra o Mostrador en POS; en otros módulos puede ir vacío
 - **Resumen** — producto y cantidad, o datos del pago anulado
 - **Mesa** — nombre de la mesa cuando aplica
