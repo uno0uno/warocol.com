@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
 import { blogLeadSource } from '~/utils/blogLeadCta'
 import type { BlogLeadCtaContent } from '~/utils/blogLeadCta'
+import {
+  TRAIL_SCROLL_THRESHOLDS,
+  articleScrollPct,
+  sendTrailEvent,
+} from '~/utils/trailBeacon'
 
 interface Props {
   content: string
@@ -26,6 +31,91 @@ const readingProgress = ref(0)
 const articleRef = ref<HTMLElement | null>(null)
 const leadModal = useLeadModal()
 const insertedCtas: HTMLElement[] = []
+const visitorCookie = useCookie<string | null>('waro_visitor_key')
+const firedScroll = new Set<number>()
+let maxScrollPct = 0
+let dwellAccumMs = 0
+let dwellStartedAt = 0
+let leaveSent = false
+
+function trailVisitorKey(): string | null {
+  const value = visitorCookie.value
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function trailPath(): string {
+  return props.slug ? `/blog/${props.slug}` : ''
+}
+
+function pauseTrailDwell() {
+  if (!dwellStartedAt) return
+  dwellAccumMs += Math.max(0, Math.round(performance.now() - dwellStartedAt))
+  dwellStartedAt = 0
+}
+
+function resumeTrailDwell() {
+  if (document.hidden || dwellStartedAt) return
+  dwellStartedAt = performance.now()
+}
+
+function onTrailVisibility() {
+  if (document.hidden) pauseTrailDwell()
+  else resumeTrailDwell()
+}
+
+function onTrailScroll() {
+  if (!articleRef.value || !props.slug) return
+  const pct = articleScrollPct(articleRef.value)
+  if (pct > maxScrollPct) maxScrollPct = pct
+  const visitorKey = trailVisitorKey()
+  if (!visitorKey) return
+  for (const threshold of TRAIL_SCROLL_THRESHOLDS) {
+    if (pct < threshold || firedScroll.has(threshold)) continue
+    firedScroll.add(threshold)
+    sendTrailEvent({
+      visitor_key: visitorKey,
+      path: trailPath(),
+      event_type: 'scroll_depth',
+      scroll_pct: threshold,
+    })
+  }
+}
+
+function sendTrailLeave() {
+  if (leaveSent || !props.slug) return
+  leaveSent = true
+  pauseTrailDwell()
+  const visitorKey = trailVisitorKey()
+  if (!visitorKey) return
+  sendTrailEvent({
+    visitor_key: visitorKey,
+    path: trailPath(),
+    event_type: 'page_leave',
+    scroll_pct: maxScrollPct,
+    dwell_ms: dwellAccumMs,
+  })
+}
+
+function resetTrailEngagement() {
+  firedScroll.clear()
+  maxScrollPct = 0
+  dwellAccumMs = 0
+  dwellStartedAt = 0
+  leaveSent = false
+}
+
+function startTrailEngagement() {
+  if (!props.slug) return
+  resetTrailEngagement()
+  resumeTrailDwell()
+  nextTick(() => onTrailScroll())
+}
+
+function stopTrailListeners() {
+  window.removeEventListener('scroll', onTrailScroll)
+  document.removeEventListener('visibilitychange', onTrailVisibility)
+  window.removeEventListener('pagehide', sendTrailLeave)
+}
 
 function buildMidCta(cta: BlogLeadCtaContent, index: number, source: string): HTMLElement {
   const wrap = document.createElement('div')
@@ -80,6 +170,13 @@ onMounted(() => {
   window.addEventListener('scroll', update, { passive: true })
   onUnmounted(() => window.removeEventListener('scroll', update))
 
+  if (props.slug) {
+    window.addEventListener('scroll', onTrailScroll, { passive: true })
+    document.addEventListener('visibilitychange', onTrailVisibility)
+    window.addEventListener('pagehide', sendTrailLeave)
+    startTrailEngagement()
+  }
+
   nextTick(() => {
     if (!articleRef.value) return
 
@@ -106,7 +203,15 @@ onMounted(() => {
   })
 })
 
+watch(() => props.slug, (next, prev) => {
+  if (!prev || next === prev) return
+  sendTrailLeave()
+  startTrailEngagement()
+})
+
 onUnmounted(() => {
+  stopTrailListeners()
+  sendTrailLeave()
   insertedCtas.splice(0).forEach(node => node.remove())
 })
 </script>
