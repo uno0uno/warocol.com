@@ -59,11 +59,27 @@ Estos eventos aparecen cuando alguien **guarda un cambio** en una orden o un tic
 
 Filtra por **módulo** Ventas o Despacho para ver solo esos eventos. Si la fila tiene una orden, el enlace **Orden** abre el detalle de esa venta.
 
+## Qué registra la Bitácora (CRM, Finanzas y Facturación)
+
+Solo quedan acciones que **el servidor guardó**: un cliente nuevo o editado, un gasto, un cierre de caja, un asiento o una factura electrónica emitida. Abrir listados, reportes o la auditoría DIAN no crea filas.
+
+| Acción en la Bitácora | Qué significa |
+|----------------------|-----------------|
+| **Cliente creado / actualizado** | Se dio de alta o se cambió un cliente ya persistido (no cuenta una búsqueda que no crea) |
+| **Gasto creado / actualizado / eliminado / pagado** | Alta, cambio, baja o pago de un gasto |
+| **Turno abierto / cierre registrado** | Apertura de arqueo o cierre Z guardado |
+| **Período mensual cerrado** | Se cerró el mes contable |
+| **Pago a crédito registrado** | Abono a una venta a crédito |
+| **Asiento creado / publicado / anulado** | Borrador, publicación o anulación de un asiento |
+| **Factura electrónica emitida** | Se emitió una factura nueva (reintentar una ya aceptada no duplica la fila) |
+
+Filtra por **módulo** CRM, Finanzas o Facturación para ver solo esos eventos.
+
 En cada evento verás, entre otros datos:
 
 - **Cuándo** — fecha y hora
 - **Usuario** — quién realizó la acción en el sistema
-- **Módulo** — POS, Ventas o Despacho según de dónde salió la acción; CRM y demás cuando estén activos
+- **Módulo** — POS, Ventas, Despacho, CRM, Finanzas o Facturación según de dónde salió la acción
 - **Canal** — Mesa, Barra o Mostrador en POS; en otros módulos puede ir vacío
 - **Resumen** — producto y cantidad, o datos del pago anulado
 - **Mesa** — nombre de la mesa cuando aplica
