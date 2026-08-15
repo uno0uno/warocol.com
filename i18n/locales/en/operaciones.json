@@ -87,12 +87,15 @@
       "searchPlaceholder": "Search product…",
       "filterChannel": "Filter by channel",
       "filterAction": "Filter by action",
+      "filterModule": "Filter by module",
       "emptyTitle": "No events in this period",
       "emptyBody": "The log records tab deletions, payment voids and cart changes. If you just enabled it, events appear when the team uses the POS.",
       "pageOf": "Page {page} of {total}",
       "all": "All"
       ,"allChannels": "All channels"
       ,"allActions": "All actions"
+      ,"allModules": "All modules"
+      ,"module": "Module"
       ,"close": "Close"
       ,"order": "Order"
       ,"system": "System"

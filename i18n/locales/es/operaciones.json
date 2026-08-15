@@ -87,12 +87,15 @@
       "searchPlaceholder": "Buscar producto…",
       "filterChannel": "Filtrar por canal",
       "filterAction": "Filtrar por acción",
+      "filterModule": "Filtrar por módulo",
       "emptyTitle": "Sin eventos en este período",
       "emptyBody": "La bitácora registra eliminaciones de tab, anulaciones de pago y cambios en carrito. Si acabas de activar la función, los eventos aparecerán cuando el equipo use POS.",
       "pageOf": "Página {page} de {total}",
       "all": "Todas"
       ,"allChannels": "Todos los canales"
       ,"allActions": "Todas las acciones"
+      ,"allModules": "Todos los módulos"
+      ,"module": "Módulo"
       ,"close": "Cerrar"
       ,"order": "Orden"
       ,"system": "Sistema"
