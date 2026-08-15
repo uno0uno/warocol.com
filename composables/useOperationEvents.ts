@@ -71,6 +71,11 @@ export const OPERATION_EVENT_ACTIONS = [
   'payment_voided',
   'comanda_line_cancelled',
   'promotion_deleted',
+  'order_status_changed',
+  'order_item_deleted',
+  'order_item_modifier_deleted',
+  'comanda_status_changed',
+  'comanda_recalled',
 ] as const
 
 export const ACTION_LABELS: Record<string, string> = {
@@ -85,6 +90,11 @@ export const ACTION_LABELS: Record<string, string> = {
   payment_voided: 'Pago anulado',
   comanda_line_cancelled: 'Línea de comanda cancelada',
   promotion_deleted: 'Promoción eliminada',
+  order_status_changed: 'Estado de la orden cambiado',
+  order_item_deleted: 'Producto eliminado de la venta',
+  order_item_modifier_deleted: 'Modificador eliminado de la venta',
+  comanda_status_changed: 'Estado de comanda cambiado',
+  comanda_recalled: 'Comanda recuperada',
 }
 
 export const CHANNEL_LABELS: Record<string, string> = {
@@ -105,6 +115,11 @@ export const operationActionI18nKeys: Record<string, string> = {
   payment_voided: 'actionPaymentVoided',
   comanda_line_cancelled: 'actionComandaCancelled',
   promotion_deleted: 'actionPromotionDeleted',
+  order_status_changed: 'actionOrderStatusChanged',
+  order_item_deleted: 'actionOrderItemDeleted',
+  order_item_modifier_deleted: 'actionOrderItemModifierDeleted',
+  comanda_status_changed: 'actionComandaStatusChanged',
+  comanda_recalled: 'actionComandaRecalled',
 }
 
 export function formatOperationEventActor(row: OperationEventRow): string {
