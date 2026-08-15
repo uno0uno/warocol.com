@@ -8,10 +8,12 @@ import {
   ACTION_LABELS,
   CHANNEL_LABELS,
   OPERATION_EVENT_ACTIONS,
+  OPERATION_EVENT_DOMAINS,
   formatOperationEventActor,
   formatOperationEventSummary,
   formatOperationEventTableName,
   operationActionI18nKeys,
+  operationDomainNavKeys,
 } from '~/composables/useOperationEvents'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
 import { useFormatters } from '~/composables/useFormatters'
@@ -26,8 +28,15 @@ const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
+const domainFilter = ref<string | null>(null)
 const channelFilter = ref<string | null>(null)
 const actionFilter = ref<string | null>(null)
+const domainHeaderFilter = computed({
+  get: () => domainFilter.value ?? '',
+  set: (value: string | boolean) => {
+    domainFilter.value = typeof value === 'string' && value ? value : null
+  },
+})
 const channelHeaderFilter = computed({
   get: () => channelFilter.value ?? '',
   set: (value: string | boolean) => {
@@ -40,6 +49,10 @@ const actionHeaderFilter = computed({
     actionFilter.value = typeof value === 'string' && value ? value : null
   },
 })
+const domainHeaderOptions = computed(() => OPERATION_EVENT_DOMAINS.map(domain => ({
+  value: domain,
+  label: t(`nav.${operationDomainNavKeys[domain]}`),
+})))
 const channelHeaderOptions = computed(() => [
   { value: 'mesa', label: t('operaciones.bitacora.channelTable') },
   { value: 'barra', label: t('operaciones.bitacora.channelBar') },
@@ -57,16 +70,17 @@ const hasActiveFilters = computed(
   () =>
     !!appliedSearch.value
     || !!dateRangeDates.value
+    || !!domainFilter.value
     || !!channelFilter.value
     || !!actionFilter.value,
 )
 
-watch([dateRange, channelFilter, actionFilter, appliedSearch], () => {
+watch([dateRange, domainFilter, channelFilter, actionFilter, appliedSearch], () => {
   currentPage.value = 1
 })
 
 const queryParams = computed(() => ({
-  domain: 'pos',
+  domain: domainFilter.value ?? undefined,
   limit: PAGE_SIZE,
   offset: (currentPage.value - 1) * PAGE_SIZE,
   date_from: dateRange.value.from ?? undefined,
@@ -109,6 +123,7 @@ const goToPage = (page: number) => {
 const clearFilters = () => {
   clearSearch()
   clearDateRange()
+  domainFilter.value = null
   channelFilter.value = null
   actionFilter.value = null
   currentPage.value = 1
@@ -132,6 +147,7 @@ const detailPayloadJson = computed(() => {
 const columns = computed<Column[]>(() => [
   { key: 'created_at', title: t('operaciones.bitacora.when'), sortable: false },
   { key: 'actor', title: t('operaciones.bitacora.user'), sortable: false },
+  { key: 'domain', title: t('operaciones.bitacora.module'), sortable: false },
   { key: 'channel', title: t('operaciones.bitacora.channel'), sortable: false },
   { key: 'action', title: t('operaciones.bitacora.action'), sortable: false },
   { key: 'summary', title: t('operaciones.bitacora.summary'), sortable: false },
@@ -144,7 +160,12 @@ const actionLabel = (action: string) => {
   const key = operationActionI18nKeys[action]
   return key ? t(`operaciones.bitacora.${key}`) : ACTION_LABELS[action] ?? action
 }
-const channelLabel = (channel: string) => {
+const domainLabel = (domain: string) => {
+  const navKey = operationDomainNavKeys[domain]
+  return navKey ? t(`nav.${navKey}`) : domain
+}
+const channelLabel = (channel: string | null | undefined) => {
+  if (!channel) return '—'
   const keys: Record<string, string> = { mesa: 'channelTable', barra: 'channelBar', mostrador: 'channelCounter' }
   return keys[channel] ? t(`operaciones.bitacora.${keys[channel]}`) : CHANNEL_LABELS[channel] ?? channel
 }
@@ -176,6 +197,16 @@ const tableNameFor = (row: OperationEventRow) =>
         @clear="clearFilters"
       >
         <template #additional-filters>
+          <select
+            v-model="domainFilter"
+            :class="filterSelectClass"
+            class="md:hidden"
+            :aria-label="t('operaciones.bitacora.filterModule')"
+          >
+            <option :value="null">{{ t('operaciones.bitacora.allModules') }}</option>
+            <option v-for="option in domainHeaderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+
           <select
             v-model="channelFilter"
             :class="filterSelectClass"
@@ -221,6 +252,17 @@ const tableNameFor = (row: OperationEventRow) =>
         row-size="sm"
         @row-click="openDetail"
       >
+        <template #header-domain>
+          <UiTableHeaderFilter
+            v-model="domainHeaderFilter"
+            :title="t('operaciones.bitacora.module')"
+            filter-type="select"
+            :options="domainHeaderOptions"
+            :all-label="t('operaciones.bitacora.allModules')"
+            align="left"
+          />
+        </template>
+
         <template #header-channel>
           <UiTableHeaderFilter
             v-model="channelHeaderFilter"
@@ -249,6 +291,10 @@ const tableNameFor = (row: OperationEventRow) =>
 
         <template #cell-actor="{ row }">
           <span class="text-sm text-text-primary">{{ formatOperationEventActor(row) }}</span>
+        </template>
+
+        <template #cell-domain="{ value }">
+          <span class="text-xs font-medium text-text-secondary">{{ domainLabel(value) }}</span>
         </template>
 
         <template #cell-channel="{ value }">
@@ -296,6 +342,8 @@ const tableNameFor = (row: OperationEventRow) =>
             <p class="text-sm text-text-primary mt-0.5">{{ summaryFor(row) }}</p>
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-text-secondary">
               <span>{{ formatOperationEventActor(row) }}</span>
+              <span>·</span>
+              <span>{{ domainLabel(row.domain) }}</span>
               <span>·</span>
               <span>{{ channelLabel(row.channel) }}</span>
               <template v-if="tableNameFor(row)">
@@ -360,7 +408,7 @@ const tableNameFor = (row: OperationEventRow) =>
                 {{ actionLabel(selectedEvent.action) }}
               </h3>
               <p class="text-xs text-text-secondary mt-0.5">
-                {{ formatDateTime(selectedEvent.created_at) }} · {{ channelLabel(selectedEvent.channel) }}
+                {{ formatDateTime(selectedEvent.created_at) }} · {{ domainLabel(selectedEvent.domain) }} · {{ channelLabel(selectedEvent.channel) }}
               </p>
             </div>
             <button

@@ -1,10 +1,38 @@
-/** POS operation audit log helpers (warocol.com#787). */
+/** Operation audit log helpers for Bitácora (warocol.com#787 / #2323). */
+
+export const OPERATION_EVENT_DOMAINS = [
+  'pos',
+  'ventas',
+  'despacho',
+  'crm',
+  'finanzas',
+  'facturacion',
+  'menu',
+  'abastecimiento',
+  'equipo',
+  'integraciones',
+  'mi_negocio',
+] as const
+
+export const operationDomainNavKeys: Record<string, string> = {
+  pos: 'pos',
+  ventas: 'ventas',
+  despacho: 'despacho',
+  crm: 'crm',
+  finanzas: 'finanzas',
+  facturacion: 'facturacion',
+  menu: 'menu',
+  abastecimiento: 'abastecimiento',
+  equipo: 'equipo',
+  integraciones: 'integraciones',
+  mi_negocio: 'miNegocio',
+}
 
 export type OperationEventRow = {
   id: string
   created_at: string
   domain: string
-  channel: string
+  channel: string | null
   action: string
   actor_user_id: string | null
   actor_user_name: string | null
