@@ -1,6 +1,6 @@
 # Bitácora de operaciones
 
-La **Bitácora de operaciones** es el registro de auditoría de acciones que **quedan guardadas en el servidor**: quién creó, editó o eliminó un registro, cuándo y —cuando aplica— con qué motivo. Hoy verás sobre todo eventos de POS; otros módulos se irán sumando.
+La **Bitácora de operaciones** es el registro de auditoría de acciones que **quedan guardadas en el servidor**: quién creó, editó o eliminó un registro, cuándo y —cuando aplica— con qué motivo. Incluye eventos de POS, ventas, despacho y comandas; otros módulos se irán sumando.
 
 ## Cómo acceder
 
@@ -44,6 +44,36 @@ Cada fila de POS es un evento automático generado cuando el equipo usa el punto
 
 ---
 
+## Qué registra la Bitácora (Ventas y Despacho)
+
+Estos eventos aparecen cuando alguien **guarda un cambio** en una orden o un ticket de cocina. No se registra cada recarga del listado.
+
+| Acción en la Bitácora | Qué significa |
+|----------------------|-----------------|
+| **Estado de la orden cambiado** | Se canceló, completó o cambió el estado de una venta o de un domicilio |
+| **Producto eliminado de la venta** | Se quitó un ítem ya guardado de una orden |
+| **Modificador eliminado de la venta** | Se quitó un modificador de un ítem de la orden |
+| **Estado de comanda cambiado** | Cocina o despacho avanzó o canceló un ticket |
+| **Comanda recuperada** | Se reabrió un ticket entregado (ventana de 15 minutos) |
+| **Línea de comanda cancelada** | Se anuló una línea del ticket de cocina |
+
+Filtra por **módulo** Ventas o Despacho para ver solo esos eventos. Si la fila tiene una orden, el enlace **Orden** abre el detalle de esa venta.
+
+## Qué registra la Bitácora (CRM, Finanzas y Facturación)
+
+Solo quedan acciones que **el servidor guardó**: un cliente nuevo o editado, un gasto, un cierre de caja, un asiento o una factura electrónica emitida. Abrir listados, reportes o la auditoría DIAN no crea filas.
+
+| Acción en la Bitácora | Qué significa |
+|----------------------|-----------------|
+| **Cliente creado / actualizado** | Se dio de alta o se cambió un cliente ya persistido (no cuenta una búsqueda que no crea) |
+| **Gasto creado / actualizado / eliminado / pagado** | Alta, cambio, baja o pago de un gasto |
+| **Turno abierto / cierre registrado** | Apertura de arqueo o cierre Z guardado |
+| **Período mensual cerrado** | Se cerró el mes contable |
+| **Pago a crédito registrado** | Abono a una venta a crédito |
+| **Asiento creado / publicado / anulado** | Borrador, publicación o anulación de un asiento |
+| **Factura electrónica emitida** | Se emitió una factura nueva (reintentar una ya aceptada no duplica la fila) |
+
+Filtra por **módulo** CRM, Finanzas o Facturación para ver solo esos eventos.
 ## Qué registra la Bitácora (Menú, Abastecimiento, Equipo, Integraciones y Negocio)
 
 Solo quedan acciones que **el servidor guardó**: un producto o receta, una compra, un miembro, un token o el perfil del negocio. Abrir listados, importar fila a fila o subir una imagen no crea una fila por cada clic.
@@ -62,7 +92,7 @@ En cada evento verás, entre otros datos:
 
 - **Cuándo** — fecha y hora
 - **Usuario** — quién realizó la acción en el sistema
-- **Módulo** — POS, Menú, Abastecimiento, Equipo, Integraciones o Mi negocio según de dónde salió la acción
+- **Módulo** — POS, Ventas, Despacho, CRM, Finanzas, Facturación, Menú, Abastecimiento, Equipo, Integraciones o Mi negocio según de dónde salió la acción
 - **Canal** — Mesa, Barra o Mostrador en POS; en otros módulos puede ir vacío
 - **Resumen** — producto y cantidad, o datos del pago anulado
 - **Mesa** — nombre de la mesa cuando aplica
@@ -78,7 +108,6 @@ En cada evento verás, entre otros datos:
 | Productos **agregados** al tab | Dejó de registrarse para no llenar el historial; las filas antiguas siguen visibles si filtras esa acción |
 | Productos en el carrito **antes de enviarlos al tab** o antes de que el carrito quede sincronizado con el servidor | Solo se auditan acciones que llegan al servidor |
 | Acciones **anteriores al despliegue** de la bitácora en tu negocio | El registro es desde la activación en producción, no rellena el pasado |
-| Anulación de una **venta completa** desde Ventas → Órdenes | Todavía es otro flujo; no es lo mismo que anular un pago parcial en checkout |
 | Cambios de precio, descuentos o configuración del menú | Se irán sumando por módulo; el POS MVP no los cubría |
 
 Si el listado está vacío justo después de activar la función, es normal: los eventos aparecen cuando el personal empiece a operar con la versión que incluye la bitácora.
