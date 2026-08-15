@@ -1,0 +1,37 @@
+issue: 2334
+title: Show Bitácora order number as a link; keep it if the sale is gone
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2334-bitacora-order-link
+risk: low
+
+paths:
+  - pages/operaciones/bitacora.vue
+  - composables/useOperationEvents.ts
+  - pages/ventas/[id].vue
+  - app/services/operation_events_service.py
+  - tests/test_operation_events.py
+
+ac:
+  - List and event detail link label is # + payload.order_number when order_id is set
+  - Click goes to /ventas/{order_id} with ?n= when number is known
+  - Old rows without order_number still link; never show UUID as the label
+  - record_operation_event snapshots orders.order_number into payload when omitted
+  - Sales detail empty state shows #n from query when the sale is gone
+  - Missing sale is not a crash; user can go back to Ventas
+
+out_of_scope:
+  - Finalize sale panel (#2333)
+  - POS event types
+  - Schema SQL
+  - Historical payload backfill
+
+hints:
+  entry: "operationEventOrderLink / bitacora order column / ventas/[id] empty state"
+  pattern: "pages/operaciones/bitacora.vue cell-links"
+  tests: "cd api_warocol.com && ./venv/bin/pytest tests/test_operation_events.py -q"
+
+next:
+  after_pr: ""
