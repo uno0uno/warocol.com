@@ -1,3 +1,5 @@
+import { sendTrailEvent } from '~/utils/trailBeacon'
+
 export default defineNuxtPlugin(() => {
   const router = useRouter()
   const visitorKey = ensureVisitorKey()
@@ -5,35 +7,17 @@ export default defineNuxtPlugin(() => {
   router.afterEach((to) => {
     if (!shouldTrack(to.path)) return
     const query = to.query
-    const payload = {
+    sendTrailEvent({
       visitor_key: visitorKey,
-      site_key: 'warocol.com',
       path: to.path,
+      event_type: 'page_view',
       referrer: document.referrer || undefined,
       utm_source: firstQuery(query.utm_source),
       utm_medium: firstQuery(query.utm_medium),
       utm_campaign: firstQuery(query.utm_campaign),
       utm_term: firstQuery(query.utm_term),
       utm_content: firstQuery(query.utm_content),
-    }
-    const body = JSON.stringify(payload)
-    try {
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(
-          '/api/public/trail/events',
-          new Blob([body], { type: 'application/json' }),
-        )
-        return
-      }
-    } catch {
-      // fall through to fetch
-    }
-    fetch('/api/public/trail/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-      keepalive: true,
-    }).catch(() => {})
+    })
   })
 })
 
