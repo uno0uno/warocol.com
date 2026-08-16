@@ -9,7 +9,7 @@
       <div class="flex flex-col gap-2">
         <p class="text-lg font-bold leading-tight text-ebony-900">¡Gracias por escribirnos!</p>
         <p class="text-sm leading-relaxed text-ebony-500 max-w-[240px] mx-auto">
-          Recibimos tu mensaje. Nos pondremos en contacto contigo muy pronto.
+          {{ successBody }}
         </p>
       </div>
       <button
@@ -30,7 +30,7 @@
       <div class="flex flex-col gap-2">
         <p class="text-lg font-bold leading-tight text-ebony-900">Ya tenemos tu solicitud</p>
         <p class="text-sm leading-relaxed text-ebony-500 max-w-[240px] mx-auto">
-          Disculpa si enviaste el formulario más de una vez. Ya estás en nuestra lista y pronto te contactamos.
+          {{ duplicateBody }}
         </p>
       </div>
       <button
@@ -120,19 +120,42 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   buttonSource: string
-}>()
+  campaignSlug?: string
+  whatsappFollowUp?: boolean
+}>(), {
+  campaignSlug: '',
+  whatsappFollowUp: false,
+})
 
 const emit = defineEmits<{ close: [] }>()
 
 const { error } = useToast()
+const route = useRoute()
 
 const form = ref({ email: '', phone: '' })
 const errors = ref({ email: '', phone: '' })
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
 const isAlreadyRegistered = ref(false)
+
+const successBody = computed(() =>
+  props.whatsappFollowUp
+    ? 'Recibimos tus datos. En un momento te escribimos por WhatsApp al número que dejaste.'
+    : 'Recibimos tu mensaje. Nos pondremos en contacto contigo muy pronto.',
+)
+
+const duplicateBody = computed(() =>
+  props.whatsappFollowUp
+    ? 'Ya estás en nuestra lista. Te escribimos por WhatsApp al número que dejaste.'
+    : 'Disculpa si enviaste el formulario más de una vez. Ya estás en nuestra lista y pronto te contactamos.',
+)
+
+function firstQuery(value: unknown): string | undefined {
+  if (Array.isArray(value)) return typeof value[0] === 'string' ? value[0] : undefined
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
 
 function validate(): boolean {
   errors.value = { email: '', phone: '' }
@@ -164,6 +187,17 @@ async function handleSubmit() {
       button_source: props.buttonSource,
     }
     if (visitorKey) body.visitor_key = visitorKey
+    if (props.campaignSlug) body.campaign_slug = props.campaignSlug
+    const utmSource = firstQuery(route.query.utm_source)
+    const utmMedium = firstQuery(route.query.utm_medium)
+    const utmCampaign = firstQuery(route.query.utm_campaign)
+    const utmTerm = firstQuery(route.query.utm_term)
+    const utmContent = firstQuery(route.query.utm_content)
+    if (utmSource) body.utm_source = utmSource
+    if (utmMedium) body.utm_medium = utmMedium
+    if (utmCampaign) body.utm_campaign = utmCampaign
+    if (utmTerm) body.utm_term = utmTerm
+    if (utmContent) body.utm_content = utmContent
     const res = await $fetch<{ success: boolean; already_registered: boolean }>('/api/leads/capture', {
       method: 'POST',
       body,
