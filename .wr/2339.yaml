@@ -1,0 +1,32 @@
+issue: 2339
+title: "Dynamic squeeze copy from campaign landing template (image or video)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2339-landing-template
+risk: low
+
+paths:
+  - pages/landing/[slug].vue
+  - components/modals/LeadModalForm.vue
+
+ac:
+  - /landing/:slug renders title/description from GET landing JSON, not hardcoded body copy
+  - CTA label and WhatsApp microcopy come from JSON when present
+  - Media slot: image_url only → image; video_url → click-to-play (no autoplay); both → image is poster
+  - Missing template still shows campaign.name + form
+
+out_of_scope:
+  - YouTube embed
+  - Campaign admin UI
+  - Recording/uploading final videos
+  - Click-to-WhatsApp
+
+hints:
+  entry: "pages/landing/[slug].vue"
+  pattern: "LeadModalForm already posts campaign_slug; add submitLabel + microcopy props"
+  tests: "no bun build/lint"
+
+skip:
+  audits: [ux, color, typography]
